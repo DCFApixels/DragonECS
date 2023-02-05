@@ -71,7 +71,7 @@ namespace DCFApixels.DragonECS
         #region Destroy
         public void Destroy()
         {
-            _id = Consts.DEAD_WORLD_ID;
+            _id = DEAD_WORLD_ID;
         }
         #endregion
 

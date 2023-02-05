@@ -9,12 +9,12 @@ namespace DCFApixels.DragonECS
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
     public readonly struct ent : IEquatable<long>, IEquatable<ent>
     {
-        //private const int ID_BITS = 32;
-        //private const int GEN_BITS = 16;
-        //private const int WORLD_BITS = 8;
-        //private const int COM_BITS = 8;
+        public static readonly long NULL = 0;
 
-        public readonly long _full;
+        // id - 32 bits
+        // gen - 16 bits
+        // world - 8 bits
+        public readonly long _full; 
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public int id
@@ -29,15 +29,18 @@ namespace DCFApixels.DragonECS
             get => (short)((_full << 32) >> 48);
 
         }
+
+        // 255 = однозначно указывает что сущьность мертва или NULL
+        // но чтобы значене default было NULL сульностью, мир хранится в виде ID + 1
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public byte world
+        public byte world 
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (byte)((_full << 48) >> 56);
+            get => (byte)(((_full << 48) >> 56) - 1);
 
         }
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public byte com
+        public byte type
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (byte)((_full << 56) >> 56);
@@ -49,7 +52,7 @@ namespace DCFApixels.DragonECS
         {
             _full = ((long)id) << 32;
             _full += ((long)gen) << 16;
-            _full += ((long)world) << 8;
+            _full += ((long)(++world)) << 8; // сдвиг айдишников + 1
             _full += com;
         }
 
@@ -57,12 +60,6 @@ namespace DCFApixels.DragonECS
         public ent(long value)
         {
             _full = value;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TypeCode GetTypeCode()
-        {
-            return TypeCode.Int64;
         }
 
         #region GetHashCode
@@ -109,5 +106,13 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator ent(in long value) => new ent(value);
         #endregion
+    }
+
+    public static class entExtensions
+    {
+        public static bool IsNull(this in ent self)
+        {
+            return self == ent.NULL;
+        }
     }
 }

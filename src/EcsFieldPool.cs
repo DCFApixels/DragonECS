@@ -12,19 +12,22 @@ namespace DCFApixels.DragonECS
     }
     public class EcsFieldPool<T> : IEcsFieldPool
     {
+        private int _id;
         private SparseSet _sparseSet;
         private T[] _denseItems;
 
-        public EcsFieldPool(int capacity)
-        {
-            _denseItems = new T[capacity];
-            _sparseSet = new SparseSet(capacity);
-        }
+        public int ID => _id;
 
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref _denseItems[_sparseSet[index]];
+        }
+
+        public EcsFieldPool(int capacity)
+        {
+            _denseItems = new T[capacity];
+            _sparseSet = new SparseSet(capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
