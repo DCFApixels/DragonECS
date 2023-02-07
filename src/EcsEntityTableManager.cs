@@ -9,29 +9,29 @@ namespace DCFApixels.DragonECS
     public class EcsEntityTableManager
     {
         private int _count;
-        private IEcsFieldPool[] _fieldPools;
+        private IEcsPool[] _fieldPools;
 
         private int _idIncrement;
         private Dictionary<IDKey, int> _ids;
 
         public EcsEntityTableManager(int capacity)
         {
-            _fieldPools = new IEcsFieldPool[capacity];
+            _fieldPools = new IEcsPool[capacity];
             _ids = new Dictionary<IDKey, int>(capacity);
             _count = 0;
         }
 
-        public EcsFieldPool<T> GetFieldPool<T>(int id)
+        public EcsPool<T> GetFieldPool<T>(int id)
         {
             if(id < _count)
-                return (EcsFieldPool<T>)_fieldPools[id];
+                return (EcsPool<T>)_fieldPools[id];
         
             _count++;
             if(_fieldPools.Length < _count)
             {
                 Array.Resize(ref _fieldPools, _fieldPools.Length << 1);
             }
-            EcsFieldPool<T> newPool = new EcsFieldPool<T>(7);
+            EcsPool<T> newPool = null;// new EcsFieldPool<T>(7);
             _fieldPools[id] = newPool;
             return newPool;
         }

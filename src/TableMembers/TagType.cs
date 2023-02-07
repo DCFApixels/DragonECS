@@ -6,6 +6,5 @@ using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsTable { }
+    public struct TagType { }
 }
-

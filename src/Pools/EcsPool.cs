@@ -5,31 +5,37 @@ using UnityEngine;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsFieldPool
-    {
-        public bool Has(int index);
-        public void Add(int index);
-    }
-    public class EcsFieldPool<T> : IEcsFieldPool
+    public class EcsPool<T> : IEcsPool
     {
         private int _id;
-        private SparseSet _sparseSet;
+        private readonly EcsWorld _source;
+        private readonly EcsType _type;
+        private readonly SparseSet _sparseSet;
         private T[] _denseItems;
 
+        #region Properites
+        public EcsWorld World => _source;
         public int ID => _id;
-
+        public EcsType Type => _type;
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref _denseItems[_sparseSet[index]];
         }
 
-        public EcsFieldPool(int capacity)
+        #endregion
+
+        #region Constructors
+        public EcsPool(EcsWorld source, EcsType type, int capacity)
         {
+            _source = source;
+            _type = type;
             _denseItems = new T[capacity];
             _sparseSet = new SparseSet(capacity);
         }
+        #endregion
 
+        #region Add/Has/Get/Del
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Add(int index)
         {
@@ -44,8 +50,15 @@ namespace DCFApixels.DragonECS
             return _sparseSet.Contains(index);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Del(int index)
+        {
+            _sparseSet.Remove(index);
+        }
+        #endregion
+
         #region IEcsFieldPool
-        void IEcsFieldPool.Add(int index)
+        void IEcsPool.Add(int index)
         {
             Add(index);
         }

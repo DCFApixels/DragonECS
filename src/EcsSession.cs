@@ -10,8 +10,8 @@ namespace DCFApixels.DragonECS
 
     public class EcsSession
     {
-        private List<IEcsSystem> _allSystems;
-        private ReadOnlyCollection<IEcsSystem> _ecsSystemsSealed;
+        private List<IEcsProcessor> _allProcessors;
+        private ReadOnlyCollection<IEcsProcessor> _allProcessorsSealed;
 
         private bool _isInit = false;
         private bool _isDestoryed = false;
@@ -20,49 +20,49 @@ namespace DCFApixels.DragonECS
         private Dictionary<string, EcsWorld> _worldsDict = new Dictionary<string, EcsWorld>();
         private List<EcsWorld> _worlds = new List<EcsWorld>();
 
-        private Dictionary<Type, IEcsSystemsRunner> _runners;
-        private Dictionary<Type, IEcsSystemsMessenger> _messengers;
-        private EcsSystemsRunner<_Run> _runRunnerCache;
+        private Dictionary<Type, IEcsProcessorsRunner> _runners;
+        private Dictionary<Type, IEcsProcessorsMessenger> _messengers;
+        private EcsProcessorsRunner<_Run> _runRunnerCache;
 
         #region Properties
-        public ReadOnlyCollection<IEcsSystem> AllSystems => _ecsSystemsSealed;
+        public ReadOnlyCollection<IEcsProcessor> AllProcessors => _allProcessorsSealed;
 
         #endregion
 
         #region React Runners/Messengers
-        public EcsSystemsRunner<TDoTag> GetRunner<TDoTag>()
+        public EcsProcessorsRunner<TDoTag> GetRunner<TDoTag>()
             where TDoTag : IEcsDoTag
         {
             Type type = typeof(TDoTag);
-            if (_runners.TryGetValue(type, out IEcsSystemsRunner result))
+            if (_runners.TryGetValue(type, out IEcsProcessorsRunner result))
             {
-                return (EcsSystemsRunner<TDoTag>)result;
+                return (EcsProcessorsRunner<TDoTag>)result;
             }
-            result = new EcsSystemsRunner<TDoTag>(this);
+            result = new EcsProcessorsRunner<TDoTag>(this);
             _runners.Add(type, result);
-            return (EcsSystemsRunner<TDoTag>)result;
+            return (EcsProcessorsRunner<TDoTag>)result;
         }
 
-        public EcsSystemsMessenger<TMessege> GetMessenger<TMessege>()
+        public EcsProcessorsMessenger<TMessege> GetMessenger<TMessege>()
             where TMessege : IEcsMessage
         {
             Type type = typeof(TMessege);
-            if (_messengers.TryGetValue(type, out IEcsSystemsMessenger result))
+            if (_messengers.TryGetValue(type, out IEcsProcessorsMessenger result))
             {
-                return (EcsSystemsMessenger<TMessege>)result;
+                return (EcsProcessorsMessenger<TMessege>)result;
             }
-            result = new EcsSystemsMessenger<TMessege>(this);
+            result = new EcsProcessorsMessenger<TMessege>(this);
             _messengers.Add(type, result);
-            return (EcsSystemsMessenger<TMessege>)result;
+            return (EcsProcessorsMessenger<TMessege>)result;
         }
         #endregion
 
         #region Configuration
-        public EcsSession Add(IEcsSystem system)
+        public EcsSession Add(IEcsProcessor system)
         {
             CheckInitForMethod(nameof(AddWorld));
 
-            _allSystems.Add(system);
+            _allProcessors.Add(system);
             return this;
         }
         public EcsSession AddWorld(string name)
@@ -79,7 +79,7 @@ namespace DCFApixels.DragonECS
         public void Init()
         {
             CheckInitForMethod(nameof(Init));
-            _ecsSystemsSealed = _allSystems.AsReadOnly();
+            _allProcessorsSealed = _allProcessors.AsReadOnly();
             _isInit = true;
 
             GetRunner<_PreInit>().Run();

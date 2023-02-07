@@ -10,7 +10,7 @@ namespace DCFApixels.DragonECS
     public interface IEcsMemberCachePool<TSelf, T> : IEcsTableMember
         where TSelf: struct, IEcsTableMember
     {
-        public EcsFieldPool<T> Pool { get; }
-        public void Inject(out TSelf self, EcsFieldPool<T> pool);
+        public EcsPool<T> Pool { get; }
+        public void Inject(out TSelf self, EcsPool<T> pool);
     }
 }

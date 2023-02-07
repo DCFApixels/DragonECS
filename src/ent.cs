@@ -14,6 +14,7 @@ namespace DCFApixels.DragonECS
         // id - 32 bits
         // gen - 16 bits
         // world - 8 bits
+        // empty - 8 bits
         public readonly long _full; 
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -48,12 +49,12 @@ namespace DCFApixels.DragonECS
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ent(int id, short gen, byte world, byte com)
+        public ent(int id, short gen, byte world)
         {
             _full = ((long)id) << 32;
             _full += ((long)gen) << 16;
             _full += ((long)(++world)) << 8; // сдвиг айдишников + 1
-            _full += com;
+            //_full += ...;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -13,10 +13,12 @@ namespace DCFApixels.DragonECS
 
         private byte _id = DEAD_WORLD_ID;
         
-        private Dictionary<Type, IEcsFieldPool> _pools;
+        private Dictionary<Type, IEcsPool> _pools;
         private SparseSet _entities = new SparseSet();
         private short[] _gens;
-        private byte[] _components;
+
+        private List<EcsFilter>[] _filtersByIncludedComponents;
+        private List<EcsFilter>[] _filtersByExcludedComponents;
 
         //private Dictionary<Type, IEcsEntityTable> _tables;
 
@@ -28,7 +30,7 @@ namespace DCFApixels.DragonECS
         #region Constructors
         public EcsWorld()
         {
-            _pools = new Dictionary<Type, IEcsFieldPool>();
+            _pools = new Dictionary<Type, IEcsPool>();
             _entities = new SparseSet();
         }
         #endregion
@@ -41,17 +43,17 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetPool
-        public EcsFieldPool<T> GetPool<T>()
+        public EcsPool<T> GetPool<T>()
         {
             Type type = typeof(T);
-            if (_pools.TryGetValue(type, out IEcsFieldPool pool))
+            if (_pools.TryGetValue(type, out IEcsPool pool))
             {
-                return (EcsFieldPool<T>)pool;
+                return (EcsPool<T>)pool;
             }
 
             //pool = new EcsPool<T>();
             _pools.Add(type, pool);
-            return (EcsFieldPool<T>)pool;
+            return (EcsPool<T>)pool;
         }
         #endregion
 
@@ -60,11 +62,10 @@ namespace DCFApixels.DragonECS
         {
             int entityID = _entities.GetFree();
             _entities.Normalize(ref _gens);
-            _entities.Normalize(ref _components);
             _gens[entityID]++;
 
 
-            return new ent(entityID, _gens[entityID], _id, _components[entityID]);
+            return new ent(entityID, _gens[entityID], _id);
         }
         #endregion
 
@@ -75,7 +76,19 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        private void Resize()
+        internal void OnEntityFieldAdd(int entityID, EcsType chaangedField)
+        {
+
+        }
+
+
+        internal void OnEntityFieldDel(int entityID, EcsType chaangedField)
+        {
+            
+        }
+
+
+        public class Mask
         {
 
         }
