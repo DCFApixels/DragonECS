@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 namespace DCFApixels.DragonECS
 {
     public readonly struct EcsField<T> : IEcsMemberCachePool<EcsField<T>, T>
+        where T :struct
     {
         private readonly EcsPool<T> _pool;
         private readonly int _poolID;
@@ -57,6 +58,7 @@ namespace DCFApixels.DragonECS
     }
 
     public readonly struct EcsIncField<T> : IEcsMemberCachePool<EcsIncField<T>, T>
+        where T :struct
     {
         private readonly EcsPool<T> _pool;
         private readonly int _poolID;
@@ -98,6 +100,7 @@ namespace DCFApixels.DragonECS
     }
 
     public struct EcsExcField<T> : IEcsMemberCachePool<EcsExcField<T>, T>
+        where T :struct
     {
         private readonly EcsPool<T> _pool;
         private readonly int _poolID;

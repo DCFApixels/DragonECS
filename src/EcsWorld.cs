@@ -14,25 +14,28 @@ namespace DCFApixels.DragonECS
 
         private byte _id = DEAD_WORLD_ID;
         
-        private Dictionary<Type, IEcsPool> _pools;
+        private IEcsPool[] _pools;
+        private SparseSet _memToPoolIDSet;
+
+
         private SparseSet _entities = new SparseSet();
         private short[] _gens;
 
         private List<EcsFilter>[] _filtersByIncludedComponents;
         private List<EcsFilter>[] _filtersByExcludedComponents;
 
-        //private Dictionary<Type, IEcsEntityTable> _tables;
-
         #region Properties
         public int ID => _id;
         public bool IsAlive => _id != DEAD_WORLD_ID;
+        public bool IsEmpty => _entities.Count < 0;
         #endregion
 
         #region Constructors
         public EcsWorld()
         {
-            _pools = new Dictionary<Type, IEcsPool>();
+            _pools = new IEcsPool[512];
             _entities = new SparseSet();
+            _memToPoolIDSet = new SparseSet(512);
         }
         #endregion
 
@@ -45,14 +48,16 @@ namespace DCFApixels.DragonECS
 
         #region GetPool
         public EcsPool<T> GetPool<T>(mem<T> member)
+            where T : struct
         {
-            Type type = typeof(T);
+            if(_memToPoolIDSet.Contains(member.uniqueID))
+
             if (_pools.TryGetValue(type, out IEcsPool pool))
             {
                 return (EcsPool<T>)pool;
             }
 
-            //pool = new EcsPool<T>();
+            pool = new EcsPool<T>(this, member, 512);//TODO сделать чтоб объем можно было указывать через конфиг
             _pools.Add(type, pool);
             return (EcsPool<T>)pool;
         }
@@ -92,11 +97,11 @@ namespace DCFApixels.DragonECS
         public class Mask
         {
             private readonly EcsWorld _world;
-            internal int[] Include;
-            internal int[] Exclude;
-            internal int IncludeCount;
-            internal int ExcludeCount;
-            internal int Hash;
+            internal int[] include;
+            internal int[] exclude;
+            internal int includeCount;
+            internal int excludeCount;
+            internal int hash;
 #if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
             bool _built;
 #endif
@@ -104,17 +109,17 @@ namespace DCFApixels.DragonECS
             internal Mask(EcsWorld world)
             {
                 _world = world;
-                Include = new int[8];
-                Exclude = new int[2];
+                include = new int[8];
+                exclude = new int[2];
                 Reset();
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void Reset()
             {
-                IncludeCount = 0;
-                ExcludeCount = 0;
-                Hash = 0;
+                includeCount = 0;
+                excludeCount = 0;
+                hash = 0;
 #if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
                 _built = false;
 #endif
@@ -126,11 +131,11 @@ namespace DCFApixels.DragonECS
                 var poolId = _world.GetPool(member).ID;
 #if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
                 if (_built) { throw new Exception("Cant change built mask."); }
-                if (Array.IndexOf(Include, poolId, 0, IncludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
-                if (Array.IndexOf(Exclude, poolId, 0, ExcludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
+                if (Array.IndexOf(include, poolId, 0, includeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
+                if (Array.IndexOf(exclude, poolId, 0, excludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
 #endif
-                if (IncludeCount == Include.Length) { Array.Resize(ref Include, IncludeCount << 1); }
-                Include[IncludeCount++] = poolId;
+                if (includeCount == include.Length) { Array.Resize(ref include, includeCount << 1); }
+                include[includeCount++] = poolId;
                 return this;
             }
 
@@ -140,11 +145,11 @@ namespace DCFApixels.DragonECS
                 var poolId = _world.GetPool(member).ID;
 #if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
                 if (_built) { throw new Exception("Cant change built mask."); }
-                if (Array.IndexOf(Include, poolId, 0, IncludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
-                if (Array.IndexOf(Exclude, poolId, 0, ExcludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
+                if (Array.IndexOf(include, poolId, 0, includeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
+                if (Array.IndexOf(exclude, poolId, 0, excludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
 #endif
-                if (ExcludeCount == Exclude.Length) { Array.Resize(ref Exclude, ExcludeCount << 1); }
-                Exclude[ExcludeCount++] = poolId;
+                if (excludeCount == exclude.Length) { Array.Resize(ref exclude, excludeCount << 1); }
+                exclude[excludeCount++] = poolId;
                 return this;
             }
         }

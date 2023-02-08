@@ -1,4 +1,6 @@
-﻿namespace DCFApixels.DragonECS
+﻿using System;
+
+namespace DCFApixels.DragonECS
 {
     public struct tag { }
 }

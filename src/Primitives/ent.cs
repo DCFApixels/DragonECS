@@ -30,11 +30,10 @@ namespace DCFApixels.DragonECS
             get => (short)((_full << 32) >> 48);
 
         }
-
         // 255 = однозначно указывает что сущьность мертва или NULL
         // но чтобы значене default было NULL сульностью, мир хранится в виде ID + 1
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public byte world 
+        public byte world
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (byte)(((_full << 48) >> 56) - 1);

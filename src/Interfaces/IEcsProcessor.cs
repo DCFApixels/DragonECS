@@ -30,8 +30,16 @@
         {
             this.entity = entity;
         }
-
     }
+    public readonly struct _OnNewEntityGenRecycled : IEcsMessage
+    {
+        public readonly ent entity;
+        public _OnNewEntityGenRecycled(ent entity)
+        {
+            this.entity = entity;
+        }
+    }
+
     public interface IEcsDoMessege<TMessage> : IEcsProcessor
         where TMessage : IEcsMessage
     {

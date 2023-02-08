@@ -5,43 +5,37 @@ using DCFApixels.DragonECS.Reflection;
 namespace DCFApixels.DragonECS
 {
     public readonly struct mem<T> : IEquatable<mem<T>>, IEquatable<int>
+            where T : struct
     {
-        public static readonly mem<T> NULL = new mem<T>(-1);
+        public static readonly mem<T> NULL = default;
 
-        internal readonly int offsetedUniqueID;
+        internal readonly int uniqueID;
 
         #region Properties
-        public int UniqueID
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => offsetedUniqueID - 1;
-        }
         public bool HasValue
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => offsetedUniqueID != 0;
+            get => uniqueID != 0;
         }
         #endregion
 
         #region Constructors
-        private mem(int uniqueID)
-        {
-            offsetedUniqueID = uniqueID + 1;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private mem(int uniqueID) => this.uniqueID = uniqueID;
         #endregion
 
         #region Equals
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool Equals(object obj) => obj is mem<T> key && offsetedUniqueID == key.offsetedUniqueID;
+        public override bool Equals(object obj) => obj is mem<T> key && uniqueID == key.uniqueID;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(mem<T> other) => offsetedUniqueID == other.offsetedUniqueID;
+        public bool Equals(mem<T> other) => uniqueID == other.uniqueID;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(int other) => offsetedUniqueID == (other + 1);
+        public bool Equals(int other) => uniqueID == other;
         #endregion
 
         #region GetHashCode/ToString
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() => offsetedUniqueID - 1;
+        public override int GetHashCode() => uniqueID;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString() => HasValue ? MemberDeclarator.GetMemberInfo(this).ToString() : "NULL";
