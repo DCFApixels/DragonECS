@@ -5,12 +5,12 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public readonly struct EcsTag : IEcsMemberCachePool<EcsTag, TagType>
+    public readonly struct EcsTag : IEcsMemberCachePool<EcsTag, tag>
     {
-        private readonly EcsPool<TagType> _pool;
+        private readonly EcsPool<tag> _pool;
         private readonly int _poolID;
 
-        public EcsPool<TagType> Pool => _pool;
+        public EcsPool<tag> Pool => _pool;
         public int PoolID => _poolID;
 
         private EcsTag(int poolID)
@@ -18,7 +18,7 @@ namespace DCFApixels.DragonECS
             _pool = null;
             _poolID = poolID;
         }
-        internal EcsTag(EcsPool<TagType> pool)
+        internal EcsTag(EcsPool<tag> pool)
         {
             _pool = pool;
             _poolID = pool.ID;
@@ -32,17 +32,17 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsTag(in int poolID) => new EcsTag(poolID);
 
-        void IEcsMemberCachePool<EcsTag, TagType>.Inject(out EcsTag self, EcsPool<TagType> pool)
+        void IEcsMemberCachePool<EcsTag, tag>.Inject(out EcsTag self, EcsPool<tag> pool)
         {
             self = new EcsTag(pool);
         }
     }
-    public readonly struct EcsIncTag : IEcsMemberCachePool<EcsIncTag, TagType>
+    public readonly struct EcsIncTag : IEcsMemberCachePool<EcsIncTag, tag>
     {
-        private readonly EcsPool<TagType> _pool;
+        private readonly EcsPool<tag> _pool;
         private readonly int _poolID;
 
-        public EcsPool<TagType> Pool => _pool;
+        public EcsPool<tag> Pool => _pool;
         public int PoolID => _poolID;
 
         private EcsIncTag(int poolID)
@@ -50,7 +50,7 @@ namespace DCFApixels.DragonECS
             _pool = null;
             _poolID = poolID;
         }
-        internal EcsIncTag(EcsPool<TagType> pool)
+        internal EcsIncTag(EcsPool<tag> pool)
         {
             _pool = pool;
             _poolID = pool.ID;
@@ -59,17 +59,17 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsIncTag(in int poolID) => new EcsIncTag(poolID);
 
-        void IEcsMemberCachePool<EcsIncTag, TagType>.Inject(out EcsIncTag self, EcsPool<TagType> pool)
+        void IEcsMemberCachePool<EcsIncTag, tag>.Inject(out EcsIncTag self, EcsPool<tag> pool)
         {
             self = new EcsIncTag(pool);
         }
     }
-    public readonly struct EcsExcTag : IEcsMemberCachePool<EcsExcTag, TagType>
+    public readonly struct EcsExcTag : IEcsMemberCachePool<EcsExcTag, tag>
     {
-        private readonly EcsPool<TagType> _pool;
+        private readonly EcsPool<tag> _pool;
         private readonly int _poolID;
 
-        public EcsPool<TagType> Pool => _pool;
+        public EcsPool<tag> Pool => _pool;
         public int PoolID => _poolID;
 
         private EcsExcTag(int poolID)
@@ -77,7 +77,7 @@ namespace DCFApixels.DragonECS
             _pool = null;
             _poolID = poolID;
         }
-        internal EcsExcTag(EcsPool<TagType> pool)
+        internal EcsExcTag(EcsPool<tag> pool)
         {
             _pool = pool;
             _poolID = pool.ID;
@@ -86,7 +86,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsExcTag(in int poolID) => new EcsExcTag(poolID);
 
-        void IEcsMemberCachePool<EcsExcTag, TagType>.Inject(out EcsExcTag self, EcsPool<TagType> pool)
+        void IEcsMemberCachePool<EcsExcTag, tag>.Inject(out EcsExcTag self, EcsPool<tag> pool)
         {
             self = new EcsExcTag(pool);
         }

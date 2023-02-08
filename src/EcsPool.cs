@@ -1,22 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
+using DCFApixels.DragonECS.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCFApixels.DragonECS
 {
+    public interface IEcsPool
+    {
+        public EcsWorld World { get; }
+        public int ID { get; }
+        public EcsMemberBase Type { get; }
+        public bool Has(int index);
+        public void Add(int index);
+        public void Del(int index);
+    }
+
     public class EcsPool<T> : IEcsPool
     {
         private int _id;
         private readonly EcsWorld _source;
-        private readonly EcsType _type;
+        private readonly EcsMember<T> _type;
         private readonly SparseSet _sparseSet;
         private T[] _denseItems;
 
         #region Properites
         public EcsWorld World => _source;
         public int ID => _id;
-        public EcsType Type => _type;
+        public EcsMemberBase Type => _type;
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -26,7 +37,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        public EcsPool(EcsWorld source, EcsType type, int capacity)
+        public EcsPool(EcsWorld source, EcsMember<T> type, int capacity)
         {
             _source = source;
             _type = type;

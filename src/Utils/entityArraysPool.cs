@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
-    public class entityArraysPool
+    public class EntityArraysPool
     {
         //public int[]
     }

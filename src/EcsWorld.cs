@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -43,7 +44,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetPool
-        public EcsPool<T> GetPool<T>()
+        public EcsPool<T> GetPool<T>(mem<T> member)
         {
             Type type = typeof(T);
             if (_pools.TryGetValue(type, out IEcsPool pool))
@@ -76,13 +77,13 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        internal void OnEntityFieldAdd(int entityID, EcsType chaangedField)
+        internal void OnEntityFieldAdd(int entityID, mem<T> chaangedField)
         {
 
         }
 
 
-        internal void OnEntityFieldDel(int entityID, EcsType chaangedField)
+        internal void OnEntityFieldDel(int entityID, EcsMember chaangedField)
         {
             
         }
@@ -90,7 +91,65 @@ namespace DCFApixels.DragonECS
 
         public class Mask
         {
+            private readonly EcsWorld _world;
+            internal int[] Include;
+            internal int[] Exclude;
+            internal int IncludeCount;
+            internal int ExcludeCount;
+            internal int Hash;
+#if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
+            bool _built;
+#endif
 
+            internal Mask(EcsWorld world)
+            {
+                _world = world;
+                Include = new int[8];
+                Exclude = new int[2];
+                Reset();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            void Reset()
+            {
+                IncludeCount = 0;
+                ExcludeCount = 0;
+                Hash = 0;
+#if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
+                _built = false;
+#endif
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Mask Inc<T>(EcsMember member) where T : struct
+            {
+                var poolId = _world.GetPool<T>().GetId();
+#if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
+                if (_built) { throw new Exception("Cant change built mask."); }
+                if (Array.IndexOf(Include, poolId, 0, IncludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
+                if (Array.IndexOf(Exclude, poolId, 0, ExcludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
+#endif
+                if (IncludeCount == Include.Length) { Array.Resize(ref Include, IncludeCount << 1); }
+                Include[IncludeCount++] = poolId;
+                return this;
+            }
+
+#if UNITY_2020_3_OR_NEWER
+            [UnityEngine.Scripting.Preserve]
+#endif
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Mask Exc<T>(EcsMember member) where T : struct
+            {
+                var poolId = _world.GetPool<T>().GetId();
+#if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
+                if (_built) { throw new Exception("Cant change built mask."); }
+                if (Array.IndexOf(Include, poolId, 0, IncludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
+                if (Array.IndexOf(Exclude, poolId, 0, ExcludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
+#endif
+                if (ExcludeCount == Exclude.Length) { Array.Resize(ref Exclude, ExcludeCount << 1); }
+                Exclude[ExcludeCount++] = poolId;
+                return this;
+            }
         }
     }
 }

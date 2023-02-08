@@ -22,6 +22,16 @@
 
 
     public interface IEcsMessage { }
+    public readonly struct _OnNewEntityCreated : IEcsMessage
+    {
+        public readonly ent entity;
+
+        public _OnNewEntityCreated(ent entity)
+        {
+            this.entity = entity;
+        }
+
+    }
     public interface IEcsDoMessege<TMessage> : IEcsProcessor
         where TMessage : IEcsMessage
     {

@@ -19,6 +19,7 @@ namespace DCFApixels.DragonECS
         private readonly SparseSet _entities;
 
         private DelayedOp[] _delayedOps;
+        private int _delayedOpsCount;
 
         private int _lockCount;
 
@@ -49,7 +50,7 @@ namespace DCFApixels.DragonECS
         internal void Add(int entityID)
         {
             if (_lockCount > 0)
-                AddDelayedOp(entityID, false);
+                AddDelayedOp(entityID, true);
             _entities.Add(entityID);
         }
 
@@ -62,15 +63,32 @@ namespace DCFApixels.DragonECS
 
         private void AddDelayedOp(int entityID, bool isAdd)
         {
+            if(_delayedOpsCount >= _delayedOps.Length)
+            {
+                Array.Resize(ref _delayedOps, _delayedOps.Length << 1);
+            }
+
+            _delayedOps[_delayedOpsCount].Entity = entityID;
+            _delayedOps[_delayedOpsCount].Added = isAdd;
         }
 
         #region GetEnumerator
         private void Unlock()
         {
 #if DEBUG
-            if (_lockCount <= 0) { throw new Exception($"Invalid lock-unlock balance for {nameof(EcsFilter)}."); }
+            if (_lockCount <= 0) 
+            { 
+                throw new Exception($"Invalid lock-unlock balance for {nameof(EcsFilter)}."); 
+            }
 #endif
             _lockCount--;
+            if (_lockCount <= 0)
+            {
+                for (int i = 0; i < _delayedOpsCount; i++)
+                {
+                    
+                }
+            }
         }
         public Enumerator GetEnumerator()
         {
@@ -112,7 +130,7 @@ namespace DCFApixels.DragonECS
             }
         }
 
-        struct DelayedOp
+        private struct DelayedOp
         {
             public bool Added;
             public int Entity;

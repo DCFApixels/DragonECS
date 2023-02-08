@@ -7,10 +7,14 @@ namespace DCFApixels.DragonECS
     public abstract class EcsTable
     {
         internal EcsFilter _filter;
+
+        public EcsTable(ref TableBuilder tableBuilder) { }
+
         public EcsFilter Filter
         {
             get => _filter;
         }
+
     }
 }
 
