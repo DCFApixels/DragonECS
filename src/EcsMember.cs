@@ -9,10 +9,8 @@ namespace DCFApixels.DragonECS
     {
         public static class MemberDeclarator
         {
-#if !DCFA_ECS_NO_SANITIZE_CHECKS
-            private static HashSet<string> _usedNames = new HashSet<string>(1024);
-#endif
-            private static EcsMemberBase[] _member = new EcsMemberBase[1024];
+            private static Dictionary<string, EcsMemberBase> _nameMembersPairs = new Dictionary<string, EcsMemberBase>(1024);
+            private static EcsMemberBase[] _members = new EcsMemberBase[1024];
             private static int _typesCount = 0;
             public static EcsMember<T> Declare<T>(string name)
             {
@@ -22,21 +20,31 @@ namespace DCFApixels.DragonECS
                 {
                     throw new EcsFrameworkException($"Maximum available members exceeded. The member of \"{name}\" was not declared");
                 }
-                if (_usedNames.Contains(name))
+                if (_nameMembersPairs.ContainsKey(name))
                 {
                     throw new EcsFrameworkException($"The node with the name \"{name}\" has already been declared");
                 }
-                _usedNames.Add(name);
 #endif
-                if (_typesCount >= _member.Length)
+                if (_typesCount >= _members.Length)
                 {
-                    Array.Resize(ref _member, _member.Length << 1);
+                    Array.Resize(ref _members, _members.Length << 1);
                 }
 
                 EcsMember<T> member = new EcsMember<T>(name, _typesCount);
-                _member[_typesCount++] = member;
+                _nameMembersPairs.Add(name, member);
+                _members[_typesCount++] = member;
 
                 return member;
+            }
+
+            public static EcsMember<T> GetOrDeclareMember<T>(string name)
+            {
+                if(_nameMembersPairs.TryGetValue(name,out EcsMemberBase memberBase))
+                {
+                    return (EcsMember<T>)memberBase;
+                }
+
+                return Declare<T>(name);
             }
 
             public static EcsMember<T> GetMemberInfo<T>(mem<T> member)
@@ -44,11 +52,11 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DCFA_ECS_NO_SANITIZE_CHECKS
                 if (member.HasValue == false)
                 {
-                    throw new ArgumentException($"The member argument is empty");
+                    throw new ArgumentException($"The mem<{typeof(T).Name}> argument is empty");
                 }
 #endif
 
-                return (EcsMember<T>)_member[member.UniqueID];
+                return (EcsMember<T>)_members[member.UniqueID];
             }
         }
 

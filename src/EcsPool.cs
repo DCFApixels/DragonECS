@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DCFApixels.DragonECS.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using System;
 
 namespace DCFApixels.DragonECS
 {
@@ -73,6 +74,14 @@ namespace DCFApixels.DragonECS
         {
             Add(index);
         }
+        #endregion
+
+        #region Equals/GetHashCode
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode() => _type.GetHashCode();
         #endregion
     }
 }

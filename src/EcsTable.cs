@@ -8,7 +8,7 @@ namespace DCFApixels.DragonECS
     {
         internal EcsFilter _filter;
 
-        public EcsTable(ref TableBuilder tableBuilder) { }
+        public EcsTable(ref TableBuilder builder) { }
 
         public EcsFilter Filter
         {

@@ -56,7 +56,7 @@ namespace DCFApixels.DragonECS
         public static bool operator !=(in mem<T> left, in mem<T> right) => !left.Equals(right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator mem<T>(string name) => new mem<T>(MemberDeclarator.Declare<T>(name).UniqueID);
+        public static implicit operator mem<T>(string name) => new mem<T>(MemberDeclarator.GetOrDeclareMember<T>(name).UniqueID);
         #endregion
     }
 }

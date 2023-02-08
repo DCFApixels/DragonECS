@@ -77,13 +77,13 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        internal void OnEntityFieldAdd(int entityID, mem<T> chaangedField)
+        internal void OnEntityFieldAdd(int entityID, int changedPool)
         {
 
         }
 
 
-        internal void OnEntityFieldDel(int entityID, EcsMember chaangedField)
+        internal void OnEntityFieldDel(int entityID, int changedPool)
         {
             
         }
@@ -97,7 +97,7 @@ namespace DCFApixels.DragonECS
             internal int IncludeCount;
             internal int ExcludeCount;
             internal int Hash;
-#if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
+#if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
             bool _built;
 #endif
 
@@ -115,16 +115,16 @@ namespace DCFApixels.DragonECS
                 IncludeCount = 0;
                 ExcludeCount = 0;
                 Hash = 0;
-#if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
+#if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
                 _built = false;
 #endif
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Mask Inc<T>(EcsMember member) where T : struct
+            public Mask Inc<T>(mem<T> member) where T : struct
             {
-                var poolId = _world.GetPool<T>().GetId();
-#if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
+                var poolId = _world.GetPool(member).ID;
+#if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
                 if (_built) { throw new Exception("Cant change built mask."); }
                 if (Array.IndexOf(Include, poolId, 0, IncludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
                 if (Array.IndexOf(Exclude, poolId, 0, ExcludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
@@ -134,14 +134,11 @@ namespace DCFApixels.DragonECS
                 return this;
             }
 
-#if UNITY_2020_3_OR_NEWER
-            [UnityEngine.Scripting.Preserve]
-#endif
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Mask Exc<T>(EcsMember member) where T : struct
+            public Mask Exc<T>(mem<T> member) where T : struct
             {
-                var poolId = _world.GetPool<T>().GetId();
-#if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
+                var poolId = _world.GetPool(member).ID;
+#if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
                 if (_built) { throw new Exception("Cant change built mask."); }
                 if (Array.IndexOf(Include, poolId, 0, IncludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
                 if (Array.IndexOf(Exclude, poolId, 0, ExcludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }

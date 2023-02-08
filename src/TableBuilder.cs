@@ -12,15 +12,15 @@ namespace DCFApixels.DragonECS
 
         public EcsPool<T> Cache<T>(mem<T> member)
         {
-
+            throw new NotImplementedException();
         }
         public EcsPool<T> Inc<T>(mem<T> member)
         {
-
+            throw new NotImplementedException();
         }
         public EcsPool<T> Exc<T>(mem<T> member)
         {
-
+            throw new NotImplementedException();
         }
     }
 }

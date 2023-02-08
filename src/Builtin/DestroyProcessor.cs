@@ -10,6 +10,13 @@
 
     public class DestroyedTable : EcsTable
     {
-        private EcsIncTag _destroyedTag;
+        public readonly EcsPool<tag> isDestroyed;
+
+        public static mem<tag> isDestroyedMem = "isDestroyed";
+
+        public DestroyedTable(ref TableBuilder builder) : base(ref builder)
+        {
+            isDestroyed = builder.Inc(isDestroyedMem);
+        }
     }
 }
