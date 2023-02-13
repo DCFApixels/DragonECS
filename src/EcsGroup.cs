@@ -3,7 +3,19 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public class EcsGroup
+    public interface IEcsReadonlyGroup 
+    {
+        public EcsWorld World { get; }
+        public int Count { get; }
+        public EcsGroup.Enumerator GetEnumerator();
+    }
+    public interface IEcsGroup : IEcsReadonlyGroup
+    {
+        public void Add(int entityID);
+        public void Remove(int entityID);
+    }
+
+    public class EcsGroup : IEcsGroup
     {
         private EcsWorld _source;
         private SparseSet _entities;
@@ -15,7 +27,7 @@ namespace DCFApixels.DragonECS
 
         #region Properties
         public EcsWorld World => _source;
-        public int EntitiesCount => _entities.Count;
+        public int Count => _entities.Count;
         #endregion
 
         #region Constrcutors
@@ -52,6 +64,24 @@ namespace DCFApixels.DragonECS
             ref DelayedOp delayedOd = ref _delayedOps[_delayedOpsCount];
             delayedOd.Entity = entityID;
             delayedOd.Added = isAdd;
+        }
+        #endregion
+
+        #region AddGroup/RemoveGroup
+        public void AddGroup(IEcsReadonlyGroup group)
+        {
+            foreach (var item in group)
+            {
+                _entities.TryAdd(item.id);
+            }
+        }
+
+        public void RemoveGroup(IEcsReadonlyGroup group)
+        {
+            foreach (var item in group)
+            {
+                _entities.TryRemove(item.id);
+            }
         }
         #endregion
 

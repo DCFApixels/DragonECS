@@ -25,6 +25,9 @@ namespace DCFApixels.DragonECS
         private List<EcsFilter>[] _filtersByIncludedComponents;
         private List<EcsFilter>[] _filtersByExcludedComponents;
 
+        private EcsFilter[] _filters;
+        private SparseSet _maskIDToFilterID;
+
         #region Properties
         public int ID => _id;
         public bool IsAlive => _id != DEAD_WORLD_ID;
@@ -37,6 +40,24 @@ namespace DCFApixels.DragonECS
             _pools = new IEcsPool[512];
             _entities = new SparseSet(512);
             _componentIDToPoolID = new SparseSet(512);
+            _maskIDToFilterID = new SparseSet(512);
+            _filters = new EcsFilter[512];
+        }
+        #endregion
+
+        #region Filters
+        public EcsFilter GetFilter<TMask>(TMask mask) where TMask : Mask
+        {
+            if (_maskIDToFilterID.TryAdd(mask.ID, ref _filters))
+            {
+                EcsFilter filter = new EcsFilter(this, mask, 512);
+                _filters[_maskIDToFilterID.IndexOf(mask.ID)] = filter;
+                return filter;
+            }
+            else
+            {
+                return _filters[_maskIDToFilterID.IndexOf(mask.ID)];
+            }
         }
         #endregion
 
@@ -86,19 +107,20 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region IsMaskCompatible/IsMaskCompatibleWithout
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool IsMaskCompatible(Mask filterMask, int entity)
+        public bool IsMaskCompatible(Mask mask, int entity)
         {
-            for (int i = 0, iMax = filterMask.includeCount; i < iMax; i++)
+            for (int i = 0, iMax = mask.IncCount; i < iMax; i++)
             {
-                if (!_pools[filterMask.include[i]].Has(entity))
+                if (!_pools[_componentIDToPoolID[mask.Include[i]]].Has(entity))
                 {
                     return false;
                 }
             }
-            for (int i = 0, iMax = filterMask.excludeCount; i < iMax; i++)
+            for (int i = 0, iMax = mask.ExcCount; i < iMax; i++)
             {
-                if (_pools[filterMask.exclude[i]].Has(entity))
+                if (_pools[_componentIDToPoolID[mask.Exclude[i]]].Has(entity))
                 {
                     return false;
                 }
@@ -107,27 +129,29 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool IsMaskCompatibleWithout(Mask filterMask, int entity, int componentId)
+        public bool IsMaskCompatibleWithout(Mask mask, int entity, int otherPoolID)
         {
-            for (int i = 0, iMax = filterMask.includeCount; i < iMax; i++)
+            for (int i = 0, iMax = mask.IncCount; i < iMax; i++)
             {
-                var typeId = filterMask.include[i];
-                if (typeId == componentId || !_pools[typeId].Has(entity))
+                int poolID = _componentIDToPoolID[mask.Include[i]];
+                if (poolID == otherPoolID || !_pools[poolID].Has(entity))
                 {
                     return false;
                 }
             }
-            for (int i = 0, iMax = filterMask.excludeCount; i < iMax; i++)
+            for (int i = 0, iMax = mask.ExcCount; i < iMax; i++)
             {
-                var typeId = filterMask.exclude[i];
-                if (typeId != componentId && _pools[typeId].Has(entity))
+                int poolID = _componentIDToPoolID[mask.Exclude[i]];
+                if (poolID != otherPoolID && _pools[poolID].Has(entity))
                 {
                     return false;
                 }
             }
             return true;
         }
+        #endregion
 
+        #region EntityChangedReact
         internal void OnEntityComponentAdded(int entityID, int changedPoolID)
         {
             var includeList = _filtersByIncludedComponents[changedPoolID];
@@ -155,96 +179,32 @@ namespace DCFApixels.DragonECS
             }
         }
 
-
-        internal void OnEntityComponentRemoved(int entityID, int changedPool)
+        internal void OnEntityComponentRemoved(int entityID, int changedPoolID)
         {
+            var includeList = _filtersByIncludedComponents[changedPoolID];
+            var excludeList = _filtersByExcludedComponents[changedPoolID];
 
-        }
-
-
-        public class Mask
-        {
-            private readonly EcsWorld _world;
-            internal int[] include;
-            internal int[] exclude;
-            internal int includeCount;
-            internal int excludeCount;
-
-#if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
-            bool _built;
-#endif
-
-            internal Mask(EcsWorld world)
+            if (includeList != null)
             {
-                _world = world;
-                include = new int[8];
-                exclude = new int[2];
-                Reset();
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            void Reset()
-            {
-                includeCount = 0;
-                excludeCount = 0;
-#if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
-                _built = false;
-#endif
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Mask Inc<T>() where T : struct
-            {
-                var poolId = _world.GetPool<T>().ID;
-#if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
-                if (_built) { throw new Exception("Cant change built mask."); }
-                if (Array.IndexOf(include, poolId, 0, includeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
-                if (Array.IndexOf(exclude, poolId, 0, excludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
-#endif
-                if (includeCount == include.Length) { Array.Resize(ref include, includeCount << 1); }
-                include[includeCount++] = poolId;
-                return this;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Mask Exc<T>() where T : struct
-            {
-                var poolId = _world.GetPool<T>().ID;
-#if DEBUG && !DCFAECS_NO_SANITIZE_CHECKS
-                if (_built) { throw new Exception("Cant change built mask."); }
-                if (Array.IndexOf(include, poolId, 0, includeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
-                if (Array.IndexOf(exclude, poolId, 0, excludeCount) != -1) { throw new Exception($"{typeof(T).Name} already in constraints list."); }
-#endif
-                if (excludeCount == exclude.Length) { Array.Resize(ref exclude, excludeCount << 1); }
-                exclude[excludeCount++] = poolId;
-                return this;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public EcsFilter End(int capacity = 512)
-            {
-#if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
-                if (_built) { throw new Exception("Cant change built mask."); }
-                _built = true;
-#endif
-                Array.Sort(include, 0, includeCount);
-                Array.Sort(exclude, 0, excludeCount);
-
-                var (filter, isNew) = _world.GetFilterInternal(this, capacity);
-                if (!isNew) { Recycle(); }
-                return filter;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            void Recycle()
-            {
-                Reset();
-                if (_world._masksCount == _world._masks.Length)
+                foreach (var filter in includeList)
                 {
-                    Array.Resize(ref _world._masks, _world._masksCount << 1);
+                    if (IsMaskCompatible(filter.Mask, entityID))
+                    {
+                        filter.Remove(entityID);
+                    }
                 }
-                _world._masks[_world._masksCount++] = this;
+            }
+            if (excludeList != null)
+            {
+                foreach (var filter in excludeList)
+                {
+                    if (IsMaskCompatibleWithout(filter.Mask, entityID, changedPoolID))
+                    {
+                        filter.Add(entityID);
+                    }
+                }
             }
         }
+        #endregion
     }
 }

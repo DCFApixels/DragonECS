@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
 {
-    public class EcsProcessorsGMessenger<TMessage> : IEcsProcessorsMessenger<TMessage>
+    public class EcsProcessorsGMessenger<TMessage> : IEcsProcessorsMessenger<TMessage>, IDisposable
        where TMessage : IEcsMessage
     {
         private readonly EcsSession _source;
@@ -35,5 +36,6 @@ namespace DCFApixels.DragonECS
         }
 
         public void Destroy() => _source.OnMessengerDetroyed(this);
+        void IDisposable.Dispose() => Destroy();
     }
 }

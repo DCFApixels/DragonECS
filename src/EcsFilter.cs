@@ -1,174 +1,465 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
+    #region Incs/Excs base
+    public interface ICondition
+    {
+        public int[] GetComponentsIDs();
+    }
+    #endregion
+
+    #region Incs
+    public interface IInc : ICondition { }
+
+    public struct Inc<T0> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID,
+                ComponentType<T5>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID,
+                ComponentType<T5>.uniqueID,
+                ComponentType<T6>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID,
+                ComponentType<T5>.uniqueID,
+                ComponentType<T6>.uniqueID,
+                ComponentType<T7>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID,
+                ComponentType<T5>.uniqueID,
+                ComponentType<T6>.uniqueID,
+                ComponentType<T7>.uniqueID,
+                ComponentType<T8>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID,
+                ComponentType<T5>.uniqueID,
+                ComponentType<T6>.uniqueID,
+                ComponentType<T7>.uniqueID,
+                ComponentType<T8>.uniqueID,
+                ComponentType<T9>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID,
+                ComponentType<T5>.uniqueID,
+                ComponentType<T6>.uniqueID,
+                ComponentType<T7>.uniqueID,
+                ComponentType<T8>.uniqueID,
+                ComponentType<T9>.uniqueID,
+                ComponentType<T10>.uniqueID
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : IInc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID,
+                ComponentType<T5>.uniqueID,
+                ComponentType<T6>.uniqueID,
+                ComponentType<T7>.uniqueID,
+                ComponentType<T8>.uniqueID,
+                ComponentType<T9>.uniqueID,
+                ComponentType<T10>.uniqueID,
+                ComponentType<T11>.uniqueID
+            };
+        }
+    }
+    #endregion
+
+    #region Excs
+    public interface IExc : ICondition { }
+
+    public struct Exc<T0> : IExc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID
+            };
+        }
+    }
+    public struct Exc<T0, T1> : IExc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID
+            };
+        }
+    }
+    public struct Exc<T0, T1, T2> : IExc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID
+            };
+        }
+    }
+    public struct Exc<T0, T1, T2, T3> : IExc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID
+            };
+        }
+    }
+    public struct Exc<T0, T1, T2, T3, T4> : IExc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID
+            };
+        }
+    }
+    public struct Exc<T0, T1, T2, T3, T4, T5> : IExc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID,
+                ComponentType<T5>.uniqueID
+            };
+        }
+    }
+    public struct Exc<T0, T1, T2, T3, T4, T5, T6> : IExc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID,
+                ComponentType<T5>.uniqueID,
+                ComponentType<T6>.uniqueID
+            };
+        }
+    }
+    public struct Exc<T0, T1, T2, T3, T4, T5, T6, T7> : IExc
+    {
+        public int[] GetComponentsIDs()
+        {
+            return new int[]
+            {
+                ComponentType<T0>.uniqueID,
+                ComponentType<T1>.uniqueID,
+                ComponentType<T2>.uniqueID,
+                ComponentType<T3>.uniqueID,
+                ComponentType<T4>.uniqueID,
+                ComponentType<T5>.uniqueID,
+                ComponentType<T6>.uniqueID,
+                ComponentType<T7>.uniqueID
+            };
+        }
+    }
+    #endregion
+
+    #region Masks
+    public abstract class Mask
+    {
+        protected internal static int _typeIDIncrement = 0;
+
+        internal abstract int[] Include { get; }
+        internal abstract int[] Exclude { get; }
+
+        public abstract int ID { get; }
+
+        public int IncCount
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Include.Length;
+        }
+        public int ExcCount
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Exclude.Length;
+        }
+    }
+    public sealed class Mask<TInc> : Mask
+        where TInc : struct, IInc
+    {
+        internal static readonly int[] include = new TInc().GetComponentsIDs();
+        internal static readonly int[] exclude = Array.Empty<int>();
+        public static readonly int id = _typeIDIncrement++;
+        private static Mask<TInc> _instance = new Mask<TInc>();
+
+        private Mask() { }
+
+        public static Mask<TInc> Instance
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _instance;
+        }
+        public override int ID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => id;
+        }
+        internal override int[] Include
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => include;
+        }
+        internal override int[] Exclude
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => exclude;
+        }
+    }
+    public sealed class Mask<TInc, TExc> : Mask
+        where TInc : struct, IInc
+        where TExc : struct, IExc
+    {
+        internal static readonly int[] include = new TInc().GetComponentsIDs();
+        internal static readonly int[] exclude = new TExc().GetComponentsIDs();
+        public static readonly int id = _typeIDIncrement++;
+        private static Mask<TInc, TExc> _instance = new Mask<TInc, TExc>();
+
+        private Mask() { }
+
+        public static Mask<TInc, TExc> Instance
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _instance;
+        }
+        public override int ID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => id;
+        }
+        internal override int[] Include
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => include;
+        }
+        internal override int[] Exclude
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => exclude;
+        }
+    }
+    #endregion
+
+    #region Filter
     public interface IEcsFilter
     {
         public EcsWorld World { get; }
+        public Mask Mask { get; }
+        public IEcsReadonlyGroup Entities { get; }
         public int EntitiesCount { get; }
     }
-
-
-    public abstract class MaskBase
-    {
-        protected internal static int _typeIDIncrement = 0;
-    }
-    public abstract class IncBase { }
-    public abstract class ExcBase { }
-
-    public sealed class Inc<A> : IncBase { }
-    public sealed class Inc<A, b> : IncBase { }
-    public sealed class Exc<A> : ExcBase { }
-    public sealed class Exc<A, B> : ExcBase { }
-    public sealed class Mask<TInc> : MaskBase
-        where TInc : IncBase
-    {
-        public static readonly int typeID = _typeIDIncrement++;
-    }
-    public sealed class Mask<TInc, TExc> : MaskBase
-        where TInc : IncBase
-        where TExc : ExcBase
-    {
-        public static readonly int typeID = _typeIDIncrement++;
-    }
-
 
     public class EcsFilter : IEcsFilter
     {
         private readonly EcsWorld _source;
-        private readonly EcsWorld.Mask _mask;
-        private readonly SparseSet _entities;
-
-        private DelayedOp[] _delayedOps;
-        private int _delayedOpsCount;
-
-        private int _lockCount;
+        private readonly EcsGroup _entities;
+        private readonly Mask _mask;
 
         #region Properties
-        public EcsWorld World => _source;
-        public EcsWorld.Mask Mask => _mask;
-        public int EntitiesCount => _entities.Count;
+        public EcsWorld World
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _source;
+        }
+        public Mask Mask
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _mask;
+        }
+        public IEcsReadonlyGroup Entities
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _entities;
+        }
+        public int EntitiesCount
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _entities.Count;
+        }
         #endregion
 
         #region Constrcutors
-        internal EcsFilter(EcsWorld source, EcsWorld.Mask mask, int capasity)
+        internal EcsFilter(EcsWorld source, Mask mask, int capasity)
         {
             _source = source;
             _mask = mask;
-            _entities = new SparseSet(capasity);
-            _delayedOps = new DelayedOp[512];
-            _lockCount = 0;
+            _entities = new EcsGroup(source, capasity);
         }
         #endregion
 
-
-        internal void Change(int entityID, bool isAdd)
-        {
-            if (isAdd)
-                Add(entityID);
-            else
-                Remove(entityID);
-        }
+        #region EntityChangedReact
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Add(int entityID)
         {
-            if (_lockCount > 0)
-                AddDelayedOp(entityID, true);
             _entities.Add(entityID);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Remove(int entityID)
         {
-            if (_lockCount > 0)
-                AddDelayedOp(entityID, false);
             _entities.Remove(entityID);
-        }
-
-        private void AddDelayedOp(int entityID, bool isAdd)
-        {
-            if(_delayedOpsCount >= _delayedOps.Length)
-            {
-                Array.Resize(ref _delayedOps, _delayedOps.Length << 1);
-            }
-            ref DelayedOp delayedOd = ref _delayedOps[_delayedOpsCount];
-            delayedOd.Entity = entityID;
-            delayedOd.Added = isAdd;
-        }
-
-        #region GetEnumerator
-        private void Unlock()
-        {
-#if DEBUG
-            if (_lockCount <= 0) 
-            { 
-                throw new Exception($"Invalid lock-unlock balance for {nameof(EcsFilter)}."); 
-            }
-#endif
-            if (--_lockCount <= 0)
-            {
-                for (int i = 0; i < _delayedOpsCount; i++)
-                {
-                    ref DelayedOp op = ref _delayedOps[i];
-                    if (op.Added)
-                    {
-                        Add(op.Entity);
-                    }
-                    else
-                    {
-                        Remove(op.Entity);
-                    }
-                }
-            }
-        }
-        public Enumerator GetEnumerator()
-        {
-            _lockCount++;
-            return new Enumerator(this);
-        }
-        #endregion
-
-        #region Utils
-        public ref struct Enumerator
-        {
-            private readonly EcsFilter _source;
-            private readonly SparseSet _entities;
-            private int _index;
-
-            public Enumerator(EcsFilter filter)
-            {
-                _source = filter;
-                _entities = filter._entities;
-                _index = -1;
-            }
-
-            public int Current
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _entities[_index];
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                return ++_index < _entities.Count;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose()
-            {
-                _source.Unlock();
-            }
-        }
-
-        private struct DelayedOp
-        {
-            public bool Added;
-            public int Entity;
         }
         #endregion
     }
+    #endregion
 }

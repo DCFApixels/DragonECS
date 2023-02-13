@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
 {
@@ -7,7 +8,7 @@ namespace DCFApixels.DragonECS
         public EcsSession Source { get; }
         public void Run();
     }
-    public class EcsProcessorsRunner<TDoTag> : IEcsProcessorsRunner
+    public class EcsProcessorsRunner<TDoTag> : IEcsProcessorsRunner, IDisposable
         where TDoTag : IEcsDoTag
     {
         private readonly EcsSession _source;
@@ -40,5 +41,6 @@ namespace DCFApixels.DragonECS
         }
 
         public void Destroy() => _source.OnRunnerDetroyed(this);
+        void IDisposable.Dispose() => Destroy();
     }
 }

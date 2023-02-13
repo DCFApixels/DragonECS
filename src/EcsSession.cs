@@ -44,11 +44,7 @@ namespace DCFApixels.DragonECS
         internal void OnRunnerDetroyed<TDoTag>(EcsProcessorsRunner<TDoTag> target)
             where TDoTag : IEcsDoTag
         {
-            Type type = typeof(TDoTag);
-            if (_runners.ContainsKey(type))
-            {
-                _runners.Remove(type);
-            }
+            _runners.Remove(typeof(TDoTag));
         }
 
         public EcsProcessorsMessenger<TMessege> GetMessenger<TMessege>()
@@ -78,11 +74,7 @@ namespace DCFApixels.DragonECS
         internal void OnMessengerDetroyed<TMessege>(IEcsProcessorsMessenger<TMessege> target)
             where TMessege : IEcsMessage
         {
-            Type type = typeof(TMessege);
-            if (_messengers.ContainsKey(type))
-            {
-                _messengers.Remove(type);
-            }
+            _messengers.Remove(typeof(TMessege));
         }
         #endregion
 
