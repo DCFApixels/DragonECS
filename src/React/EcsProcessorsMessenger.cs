@@ -6,23 +6,24 @@ namespace DCFApixels.DragonECS
     {
         public EcsSession Source { get; }
     }
-    public class EcsProcessorsMessenger<TMessage> : IEcsProcessorsMessenger
+    public interface IEcsProcessorsMessenger<TMessage> : IEcsProcessorsMessenger where TMessage : IEcsMessage { }
+    public class EcsProcessorsMessenger<TMessage> : IEcsProcessorsMessenger<TMessage>
        where TMessage : IEcsMessage
     {
-        private EcsSession _source;
-        private IEcsDoMessege<TMessage>[] _targets;
+        private readonly EcsSession _source;
+        private readonly IReceive<TMessage>[] _targets;
 
         public EcsSession Source => _source;
-        public IReadOnlyList<IEcsDoMessege<TMessage>> Systems => _targets;
+        public IReadOnlyList<IReceive<TMessage>> Targets => _targets;
 
         internal EcsProcessorsMessenger(EcsSession source)
         {
             _source = source;
-            List<IEcsDoMessege<TMessage>> list = new List<IEcsDoMessege<TMessage>>();
+            List<IReceive<TMessage>> list = new List<IReceive<TMessage>>();
 
             foreach (var item in _source.AllProcessors)
             {
-                if (item is IEcsDoMessege<TMessage> targetItem)
+                if (item is IReceive<TMessage> targetItem)
                 {
                     list.Add(targetItem);
                 }
@@ -34,8 +35,10 @@ namespace DCFApixels.DragonECS
         {
             foreach (var item in _targets)
             {
-                item.Do(_source, message);
+                item.Do(_source, in message);
             }
         }
+
+        public void Destroy() => _source.OnMessengerDetroyed(this);
     }
 }

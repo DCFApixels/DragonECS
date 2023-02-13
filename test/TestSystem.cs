@@ -6,18 +6,26 @@ using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
-    public class TestSystem : IEcsDo<_Init>, IEcsDo<_Run>, IEcsDo<_Destroy>
+    public class TestSystem : 
+        IReceive<_OnInject<SharedData>>, 
+        IDo<_Init>, IDo<_Run>, IDo<_Destroy>
     {
-        void IEcsDo<_Init>.Do(EcsSession engine)
+        private SharedData _sharedData;
+        void IReceive<_OnInject<SharedData>>.Do(EcsSession session, in _OnInject<SharedData> m) => _sharedData = m.data;
+
+
+        void IDo<_Init>.Do(EcsSession session)
         {
         }
 
-        void IEcsDo<_Run>.Do(EcsSession engine)
+        void IDo<_Run>.Do(EcsSession session)
+        {
+            
+        }
+
+        void IDo<_Destroy>.Do(EcsSession session)
         {
         }
 
-        void IEcsDo<_Destroy>.Do(EcsSession engine)
-        {
-        }
     }
 }

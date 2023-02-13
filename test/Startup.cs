@@ -9,12 +9,14 @@ namespace DCFApixels.DragonECS
     {
 
         private EcsSession _ecsSession;
+        public SharedData _data = new SharedData();
 
         private void Start()
         {
             _ecsSession
                 .AddWorld("")
                 .Add(new TestSystem())
+                .Inject(_data)
                 .Init();
         }
 

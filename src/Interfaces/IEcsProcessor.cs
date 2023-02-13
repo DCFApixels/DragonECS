@@ -8,15 +8,15 @@
     public struct _Run : IEcsDoTag { }
     public struct _Destroy : IEcsDoTag { }
     public struct _PostDestroy : IEcsDoTag { }
-    public interface IEcsDo<TTag> : IEcsProcessor
+    public interface IDo<TTag> : IEcsProcessor
         where TTag : IEcsDoTag
     {
         public void Do(EcsSession session);
     }
     public interface IEcsSimpleCycleProcessor :
-    IEcsDo<_Init>,
-    IEcsDo<_Run>,
-    IEcsDo<_Destroy>
+    IDo<_Init>,
+    IDo<_Run>,
+    IDo<_Destroy>
     { }
 
 
@@ -40,9 +40,32 @@
         }
     }
 
-    public interface IEcsDoMessege<TMessage> : IEcsProcessor
+    public readonly struct _OnInject<T> : IEcsMessage
+    {
+        public readonly T data;
+        public _OnInject(T data)
+        {
+            this.data = data;
+        }
+    }
+    public interface IReceive<TMessage> : IEcsProcessor
         where TMessage : IEcsMessage
     {
-        public void Do(EcsSession session, in TMessage message);
+        public void Do(EcsSession session, in TMessage m);
+    }
+
+
+    public struct _OnComponentRemoved : IEcsMessage
+    {
+        public int entityID;
+    }
+    public struct _OnComponentAdded : IEcsMessage
+    {
+        public int entityID;
+    }
+    public interface IEcsGReceive<TMessage> : IEcsProcessor
+        where TMessage : IEcsMessage
+    {
+        public void Do<T>(EcsSession session, in TMessage m, in T obj);
     }
 }

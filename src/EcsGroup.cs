@@ -1,48 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsFilter
+    public class EcsGroup
     {
-        public EcsWorld World { get; }
-        public int EntitiesCount { get; }
-    }
-
-
-    public abstract class MaskBase
-    {
-        protected internal static int _typeIDIncrement = 0;
-    }
-    public abstract class IncBase { }
-    public abstract class ExcBase { }
-
-    public sealed class Inc<A> : IncBase { }
-    public sealed class Inc<A, b> : IncBase { }
-    public sealed class Exc<A> : ExcBase { }
-    public sealed class Exc<A, B> : ExcBase { }
-    public sealed class Mask<TInc> : MaskBase
-        where TInc : IncBase
-    {
-        public static readonly int typeID = _typeIDIncrement++;
-    }
-    public sealed class Mask<TInc, TExc> : MaskBase
-        where TInc : IncBase
-        where TExc : ExcBase
-    {
-        public static readonly int typeID = _typeIDIncrement++;
-    }
-
-
-    public class EcsFilter : IEcsFilter
-    {
-        private readonly EcsWorld _source;
-        private readonly EcsWorld.Mask _mask;
-        private readonly SparseSet _entities;
+        private EcsWorld _source;
+        private SparseSet _entities;
 
         private DelayedOp[] _delayedOps;
         private int _delayedOpsCount;
@@ -51,37 +15,28 @@ namespace DCFApixels.DragonECS
 
         #region Properties
         public EcsWorld World => _source;
-        public EcsWorld.Mask Mask => _mask;
         public int EntitiesCount => _entities.Count;
         #endregion
 
         #region Constrcutors
-        internal EcsFilter(EcsWorld source, EcsWorld.Mask mask, int capasity)
+        public EcsGroup(EcsWorld world,  int entitiesCapacity, int delayedOpsCapacity = 128)
         {
-            _source = source;
-            _mask = mask;
-            _entities = new SparseSet(capasity);
-            _delayedOps = new DelayedOp[512];
+            _source = world;
+            _entities = new SparseSet(entitiesCapacity);
+            _delayedOps = new DelayedOp[delayedOpsCapacity];
             _lockCount = 0;
         }
         #endregion
 
-
-        internal void Change(int entityID, bool isAdd)
-        {
-            if (isAdd)
-                Add(entityID);
-            else
-                Remove(entityID);
-        }
-        internal void Add(int entityID)
+        #region add/remove
+        public void Add(int entityID)
         {
             if (_lockCount > 0)
                 AddDelayedOp(entityID, true);
             _entities.Add(entityID);
         }
 
-        internal void Remove(int entityID)
+        public void Remove(int entityID)
         {
             if (_lockCount > 0)
                 AddDelayedOp(entityID, false);
@@ -90,7 +45,7 @@ namespace DCFApixels.DragonECS
 
         private void AddDelayedOp(int entityID, bool isAdd)
         {
-            if(_delayedOpsCount >= _delayedOps.Length)
+            if (_delayedOpsCount >= _delayedOps.Length)
             {
                 Array.Resize(ref _delayedOps, _delayedOps.Length << 1);
             }
@@ -98,14 +53,15 @@ namespace DCFApixels.DragonECS
             delayedOd.Entity = entityID;
             delayedOd.Added = isAdd;
         }
+        #endregion
 
         #region GetEnumerator
         private void Unlock()
         {
 #if DEBUG
-            if (_lockCount <= 0) 
-            { 
-                throw new Exception($"Invalid lock-unlock balance for {nameof(EcsFilter)}."); 
+            if (_lockCount <= 0)
+            {
+                throw new Exception($"Invalid lock-unlock balance for {nameof(EcsFilter)}.");
             }
 #endif
             if (--_lockCount <= 0)
@@ -134,21 +90,27 @@ namespace DCFApixels.DragonECS
         #region Utils
         public ref struct Enumerator
         {
-            private readonly EcsFilter _source;
+            private readonly EcsGroup _source;
             private readonly SparseSet _entities;
             private int _index;
+            private Entity _currentEntity;
 
-            public Enumerator(EcsFilter filter)
+            public Enumerator(EcsGroup group)
             {
-                _source = filter;
-                _entities = filter._entities;
+                _source = group;
+                _entities = group._entities;
                 _index = -1;
+                _currentEntity = new Entity(group.World, -1);
             }
 
-            public int Current
+            public Entity Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _entities[_index];
+                get
+                {
+                    _currentEntity.id = _entities[_index];
+                    return _currentEntity;
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -161,6 +123,13 @@ namespace DCFApixels.DragonECS
             public void Dispose()
             {
                 _source.Unlock();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Reset()
+            {
+                _index = -1;
+                _currentEntity.id = -1;
             }
         }
 

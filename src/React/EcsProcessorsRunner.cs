@@ -10,20 +10,20 @@ namespace DCFApixels.DragonECS
     public class EcsProcessorsRunner<TDoTag> : IEcsProcessorsRunner
         where TDoTag : IEcsDoTag
     {
-        private EcsSession _source;
-        private IEcsDo<TDoTag>[] _targets;
+        private readonly EcsSession _source;
+        private readonly IDo<TDoTag>[] _targets;
 
         public EcsSession Source => _source;
-        public IReadOnlyList<IEcsDo<TDoTag>> Systems => _targets;
+        public IReadOnlyList<IDo<TDoTag>> Targets => _targets;
 
         internal EcsProcessorsRunner(EcsSession source)
         {
             _source = source;
-            List<IEcsDo<TDoTag>> list = new List<IEcsDo<TDoTag>>();
+            List<IDo<TDoTag>> list = new List<IDo<TDoTag>>();
 
             foreach (var item in _source.AllProcessors)
             {
-                if (item is IEcsDo<TDoTag> targetItem)
+                if (item is IDo<TDoTag> targetItem)
                 {
                     list.Add(targetItem);
                 }
@@ -38,5 +38,7 @@ namespace DCFApixels.DragonECS
                 item.Do(_source);
             }
         }
+
+        public void Destroy() => _source.OnRunnerDetroyed(this);
     }
 }
