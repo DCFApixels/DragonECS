@@ -15,7 +15,7 @@ namespace DCFApixels.DragonECS
         public void Remove(int entityID);
     }
 
-    public class EcsGroup : IEcsGroup
+    public class EcsGroup : IEcsGroup 
     {
         private EcsWorld _source;
         private SparseSet _entities;

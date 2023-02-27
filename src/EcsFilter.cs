@@ -19,7 +19,7 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID
+                ComponentType<T0>.globalID
             };
         }
     }
@@ -29,8 +29,8 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID
             };
         }
     }
@@ -40,9 +40,9 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID
             };
         }
     }
@@ -52,10 +52,10 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID
             };
         }
     }
@@ -65,11 +65,11 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID
             };
         }
     }
@@ -79,12 +79,12 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID,
-                ComponentType<T5>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID,
+                ComponentType<T5>.globalID
             };
         }
     }
@@ -94,13 +94,13 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID,
-                ComponentType<T5>.uniqueID,
-                ComponentType<T6>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID,
+                ComponentType<T5>.globalID,
+                ComponentType<T6>.globalID
             };
         }
     }
@@ -110,14 +110,14 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID,
-                ComponentType<T5>.uniqueID,
-                ComponentType<T6>.uniqueID,
-                ComponentType<T7>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID,
+                ComponentType<T5>.globalID,
+                ComponentType<T6>.globalID,
+                ComponentType<T7>.globalID
             };
         }
     }
@@ -127,15 +127,15 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID,
-                ComponentType<T5>.uniqueID,
-                ComponentType<T6>.uniqueID,
-                ComponentType<T7>.uniqueID,
-                ComponentType<T8>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID,
+                ComponentType<T5>.globalID,
+                ComponentType<T6>.globalID,
+                ComponentType<T7>.globalID,
+                ComponentType<T8>.globalID
             };
         }
     }
@@ -145,16 +145,16 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID,
-                ComponentType<T5>.uniqueID,
-                ComponentType<T6>.uniqueID,
-                ComponentType<T7>.uniqueID,
-                ComponentType<T8>.uniqueID,
-                ComponentType<T9>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID,
+                ComponentType<T5>.globalID,
+                ComponentType<T6>.globalID,
+                ComponentType<T7>.globalID,
+                ComponentType<T8>.globalID,
+                ComponentType<T9>.globalID
             };
         }
     }
@@ -164,17 +164,17 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID,
-                ComponentType<T5>.uniqueID,
-                ComponentType<T6>.uniqueID,
-                ComponentType<T7>.uniqueID,
-                ComponentType<T8>.uniqueID,
-                ComponentType<T9>.uniqueID,
-                ComponentType<T10>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID,
+                ComponentType<T5>.globalID,
+                ComponentType<T6>.globalID,
+                ComponentType<T7>.globalID,
+                ComponentType<T8>.globalID,
+                ComponentType<T9>.globalID,
+                ComponentType<T10>.globalID
             };
         }
     }
@@ -184,18 +184,18 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID,
-                ComponentType<T5>.uniqueID,
-                ComponentType<T6>.uniqueID,
-                ComponentType<T7>.uniqueID,
-                ComponentType<T8>.uniqueID,
-                ComponentType<T9>.uniqueID,
-                ComponentType<T10>.uniqueID,
-                ComponentType<T11>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID,
+                ComponentType<T5>.globalID,
+                ComponentType<T6>.globalID,
+                ComponentType<T7>.globalID,
+                ComponentType<T8>.globalID,
+                ComponentType<T9>.globalID,
+                ComponentType<T10>.globalID,
+                ComponentType<T11>.globalID
             };
         }
     }
@@ -210,7 +210,7 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID
+                ComponentType<T0>.globalID
             };
         }
     }
@@ -220,8 +220,8 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID
             };
         }
     }
@@ -231,9 +231,9 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID
             };
         }
     }
@@ -243,10 +243,10 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID
             };
         }
     }
@@ -256,11 +256,11 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID
             };
         }
     }
@@ -270,12 +270,12 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID,
-                ComponentType<T5>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID,
+                ComponentType<T5>.globalID
             };
         }
     }
@@ -285,13 +285,13 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID,
-                ComponentType<T5>.uniqueID,
-                ComponentType<T6>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID,
+                ComponentType<T5>.globalID,
+                ComponentType<T6>.globalID
             };
         }
     }
@@ -301,14 +301,14 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentType<T0>.uniqueID,
-                ComponentType<T1>.uniqueID,
-                ComponentType<T2>.uniqueID,
-                ComponentType<T3>.uniqueID,
-                ComponentType<T4>.uniqueID,
-                ComponentType<T5>.uniqueID,
-                ComponentType<T6>.uniqueID,
-                ComponentType<T7>.uniqueID
+                ComponentType<T0>.globalID,
+                ComponentType<T1>.globalID,
+                ComponentType<T2>.globalID,
+                ComponentType<T3>.globalID,
+                ComponentType<T4>.globalID,
+                ComponentType<T5>.globalID,
+                ComponentType<T6>.globalID,
+                ComponentType<T7>.globalID
             };
         }
     }

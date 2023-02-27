@@ -13,7 +13,7 @@ namespace DCFApixels.DragonECS
         public EcsWorld World { get; }
         public int ID { get; }
         public bool Has(int index);
-        public void Add(int index);
+        public void Write(int index);
         public void Del(int index);
     }
 
@@ -49,33 +49,34 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Write(int index)
         {
-            return ref _denseItems[_sparseSet[index]];
+            if (_sparseSet.Contains(index))
+            {
+                return ref _denseItems[_sparseSet[index]];
+            }
+            else
+            {
+                _sparseSet.Add(index);
+                _sparseSet.Normalize(ref _denseItems);
+                return ref _denseItems[_sparseSet.IndexOf(index)];
+            }
         }
 
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Add(int index)
-        {
-            _sparseSet.Add(index);
-            _sparseSet.Normalize(ref _denseItems);
-            return ref _denseItems[_sparseSet.IndexOf(index)];
-        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int index)
         {
-            return _sparseSet.Contains(index);
+            return _sparseSet.IndexOf(index) > 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Del(int index)
         {
-            _sparseSet.Remove(index);
+            _sparseSet.RemoveAt(index);
         }
         #endregion
 
         #region IEcsFieldPool
-        void IEcsPool.Add(int index)
+        void IEcsPool.Write(int index)
         {
-            Add(index);
+            Write(index);
         }
         #endregion
 
@@ -86,5 +87,29 @@ namespace DCFApixels.DragonECS
         }
         public override int GetHashCode() => _source.GetHashCode() + ID;
         #endregion
+    }
+
+    public static partial class EntityExtensions
+    {
+        public static ref readonly T Read<T>(this in Entity self)
+            where T : struct
+        {
+            return ref self.world.GetPool<T>().Read(self.id);
+        }
+        public static ref T Write<T>(this in Entity self)
+            where T : struct
+        {
+            return ref self.world.GetPool<T>().Write(self.id);
+        }
+        public static bool Has<T>(this in Entity self)
+            where T : struct
+        {
+            return self.world.GetPool<T>().Has(self.id);
+        }
+        public static void Del<T>(this in Entity self)
+            where T : struct
+        {
+            self.world.GetPool<T>().Del(self.id);
+        }
     }
 }

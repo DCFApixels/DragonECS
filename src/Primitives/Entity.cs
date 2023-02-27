@@ -110,11 +110,6 @@ namespace DCFApixels.DragonECS
         {
             return self == ent.NULL;
         }
-
-        public static Entity UseIn(in ent self, EcsSession session)
-        {
-            session.GetWorld()
-        }
     }
 
     public ref struct Entity

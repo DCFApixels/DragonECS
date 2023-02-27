@@ -9,6 +9,9 @@ namespace DCFApixels.DragonECS
 
     public class EcsSession
     {
+        private int _id;
+
+
         private List<IEcsProcessor> _allProcessors;
         private ReadOnlyCollection<IEcsProcessor> _allProcessorsSealed;
 
@@ -151,5 +154,9 @@ namespace DCFApixels.DragonECS
            // return new ent(target.id, target.world._gens[target.id], -1000);
         }
         #endregion
+
+
+
+
     }
 }

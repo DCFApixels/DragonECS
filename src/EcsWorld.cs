@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
+
+    public class EcsWorldMap
+    {
+
+    }
     public class EcsWorld
     {
         public const int MAX_WORLDS = byte.MaxValue; //Номер последнего мира 254
@@ -14,7 +19,7 @@ namespace DCFApixels.DragonECS
 
         private byte _id = DEAD_WORLD_ID;
 
-        private float _timeScale;//TODO реализовать собсвенныйтайм склей для разных миров
+        //private float _timeScale;//TODO реализовать собсвенныйтайм склей для разных миров
 
         private IEcsPool[] _pools;
         private SparseSet _componentIDToPoolID;
@@ -45,27 +50,11 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Filters
-        public EcsFilter GetFilter<TMask>(TMask mask) where TMask : Mask
-        {
-            if (_maskIDToFilterID.TryAdd(mask.ID, ref _filters))
-            {
-                EcsFilter filter = new EcsFilter(this, mask, 512);
-                _filters[_maskIDToFilterID.IndexOf(mask.ID)] = filter;
-                return filter;
-            }
-            else
-            {
-                return _filters[_maskIDToFilterID.IndexOf(mask.ID)];
-            }
-        }
-        #endregion
-
-        #region GetPool
+        #region Pools
         public EcsPool<T> GetPool<T>()
             where T : struct
         {
-            int uniqueID = ComponentType<T>.uniqueID;
+            int uniqueID = ComponentType<T>.globalID;
             int poolIndex = _componentIDToPoolID.IndexOf(uniqueID);
             if (poolIndex >= 0)
             {
@@ -85,6 +74,22 @@ namespace DCFApixels.DragonECS
 
             _pools[_componentIDToPoolID.IndexOf(poolIndex)] = pool;
             return pool;
+        }
+        #endregion
+
+        #region Filters
+        public EcsFilter GetFilter<TMask>(TMask mask) where TMask : Mask
+        {
+            if (_maskIDToFilterID.TryAdd(mask.ID, ref _filters))
+            {
+                EcsFilter filter = new EcsFilter(this, mask, 512);
+                _filters[_maskIDToFilterID.IndexOf(mask.ID)] = filter;
+                return filter;
+            }
+            else
+            {
+                return _filters[_maskIDToFilterID.IndexOf(mask.ID)];
+            }
         }
         #endregion
 
