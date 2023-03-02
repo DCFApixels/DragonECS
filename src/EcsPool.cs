@@ -10,28 +10,34 @@ namespace DCFApixels.DragonECS
 {
     public interface IEcsPool
     {
-        public EcsWorld World { get; }
+        public IEcsWorld World { get; }
         public int ID { get; }
         public bool Has(int index);
         public void Write(int index);
         public void Del(int index);
     }
 
-    public class EcsPool<T> : IEcsPool
+    public interface IEcsPool<T> : IEcsPool
+        where T : struct
+    {
+        public ref readonly T Read(int entity);
+        public new ref T Write(int entity);
+    }
+    public class EcsPool<T> : IEcsPool<T>
         where T : struct
     {
         private readonly int _id;
-        private readonly EcsWorld _source;
+        private readonly IEcsWorld _source;
         private readonly SparseSet _sparseSet;
         private T[] _denseItems;
 
         #region Properites
-        public EcsWorld World => _source;
+        public IEcsWorld World => _source;
         public int ID => _id;
         #endregion
 
         #region Constructors
-        public EcsPool(EcsWorld source, int capacity)
+        public EcsPool(IEcsWorld source, int capacity)
         {
             _source = source;
             _sparseSet = new SparseSet(capacity);
@@ -42,34 +48,36 @@ namespace DCFApixels.DragonECS
 
         #region Read/Write/Has/Del
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T Read(int index)
+        public ref readonly T Read(int entity)
         {
-            return ref _denseItems[_sparseSet[index]];
+            return ref _denseItems[_sparseSet[entity]];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Write(int index)
+        public ref T Write(int entity)
         {
-            if (_sparseSet.Contains(index))
+            if (_sparseSet.Contains(entity))
             {
-                return ref _denseItems[_sparseSet[index]];
+                return ref _denseItems[_sparseSet[entity]];
             }
             else
             {
-                _sparseSet.Add(index);
+                _sparseSet.Add(entity);
                 _sparseSet.Normalize(ref _denseItems);
-                return ref _denseItems[_sparseSet.IndexOf(index)];
+                _source.OnEntityComponentAdded(entity, _id);
+                return ref _denseItems[_sparseSet.IndexOf(entity)];
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(int index)
+        public bool Has(int entity)
         {
-            return _sparseSet.IndexOf(index) > 0;
+            return _sparseSet.IndexOf(entity) > 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Del(int index)
+        public void Del(int entity)
         {
-            _sparseSet.RemoveAt(index);
+            _sparseSet.RemoveAt(entity);
+            _source.OnEntityComponentRemoved(entity, _id);
         }
         #endregion
 

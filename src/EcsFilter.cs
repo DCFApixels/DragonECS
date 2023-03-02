@@ -6,196 +6,37 @@ namespace DCFApixels.DragonECS
     #region Incs/Excs base
     public interface ICondition
     {
-        public int[] GetComponentsIDs();
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype;
     }
     #endregion
 
     #region Incs
     public interface IInc : ICondition { }
 
+    public struct Inc : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype => Array.Empty<int>();
+    }
     public struct Inc<T0> : IInc
     {
-        public int[] GetComponentsIDs()
+        public int[] GetComponentsIDs<TWorldArchetype>()
+            where TWorldArchetype : IWorldArchetype
         {
             return new int[]
             {
-                ComponentType<T0>.globalID
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID
             };
         }
     }
     public struct Inc<T0, T1> : IInc
     {
-        public int[] GetComponentsIDs()
+        public int[] GetComponentsIDs<TWorldArchetype>()
+            where TWorldArchetype : IWorldArchetype
         {
             return new int[]
             {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID
-            };
-        }
-    }
-    public struct Inc<T0, T1, T2> : IInc
-    {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID
-            };
-        }
-    }
-    public struct Inc<T0, T1, T2, T3> : IInc
-    {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID
-            };
-        }
-    }
-    public struct Inc<T0, T1, T2, T3, T4> : IInc
-    {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID
-            };
-        }
-    }
-    public struct Inc<T0, T1, T2, T3, T4, T5> : IInc
-    {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID,
-                ComponentType<T5>.globalID
-            };
-        }
-    }
-    public struct Inc<T0, T1, T2, T3, T4, T5, T6> : IInc
-    {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID,
-                ComponentType<T5>.globalID,
-                ComponentType<T6>.globalID
-            };
-        }
-    }
-    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7> : IInc
-    {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID,
-                ComponentType<T5>.globalID,
-                ComponentType<T6>.globalID,
-                ComponentType<T7>.globalID
-            };
-        }
-    }
-    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8> : IInc
-    {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID,
-                ComponentType<T5>.globalID,
-                ComponentType<T6>.globalID,
-                ComponentType<T7>.globalID,
-                ComponentType<T8>.globalID
-            };
-        }
-    }
-    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInc
-    {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID,
-                ComponentType<T5>.globalID,
-                ComponentType<T6>.globalID,
-                ComponentType<T7>.globalID,
-                ComponentType<T8>.globalID,
-                ComponentType<T9>.globalID
-            };
-        }
-    }
-    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : IInc
-    {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID,
-                ComponentType<T5>.globalID,
-                ComponentType<T6>.globalID,
-                ComponentType<T7>.globalID,
-                ComponentType<T8>.globalID,
-                ComponentType<T9>.globalID,
-                ComponentType<T10>.globalID
-            };
-        }
-    }
-    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : IInc
-    {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID,
-                ComponentType<T5>.globalID,
-                ComponentType<T6>.globalID,
-                ComponentType<T7>.globalID,
-                ComponentType<T8>.globalID,
-                ComponentType<T9>.globalID,
-                ComponentType<T10>.globalID,
-                ComponentType<T11>.globalID
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID
             };
         }
     }
@@ -204,112 +45,114 @@ namespace DCFApixels.DragonECS
     #region Excs
     public interface IExc : ICondition { }
 
+    public struct Exc : IExc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype => Array.Empty<int>();
+    }
     public struct Exc<T0> : IExc
     {
-        public int[] GetComponentsIDs()
+        public int[] GetComponentsIDs<TWorldArchetype>()
+            where TWorldArchetype : IWorldArchetype
         {
             return new int[]
             {
-                ComponentType<T0>.globalID
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
             };
         }
     }
     public struct Exc<T0, T1> : IExc
     {
-        public int[] GetComponentsIDs()
+        public int[] GetComponentsIDs<TWorldArchetype>()
+            where TWorldArchetype : IWorldArchetype
         {
             return new int[]
             {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID
             };
         }
     }
-    public struct Exc<T0, T1, T2> : IExc
+    #endregion
+
+    #region BakedMask
+    public abstract class BakedMask
     {
-        public int[] GetComponentsIDs()
+        internal readonly int[] Inc;
+        internal readonly int[] Exc;
+        internal readonly Mask Mask;
+
+        internal int IncCount
         {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID
-            };
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Inc.Length;
+        }
+        internal int ExcCount
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Exc.Length;
+        }
+
+        //Уникальный айди в рамках одного архиетипа мира
+        internal abstract int UniqueID { get; }
+        internal abstract Type WorldArchetypeType { get; }
+
+        protected BakedMask(int[] inc, int[] exc, Mask mask)
+        {
+            Inc = inc;
+            Exc = exc;
+            Mask = mask;
         }
     }
-    public struct Exc<T0, T1, T2, T3> : IExc
+
+    public abstract class BakedMask<TWorldArchetype> : BakedMask
     {
-        public int[] GetComponentsIDs()
-        {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID
-            };
-        }
+        internal static int increment = 1;
+        internal static int capacity = 512;
+
+        protected BakedMask(int[] inc, int[] exc, Mask mask) : base(inc, exc, mask) { }
     }
-    public struct Exc<T0, T1, T2, T3, T4> : IExc
+
+    public sealed class BakedMask<TWorldArchetype, TMask> : BakedMask<TWorldArchetype>
+        where TWorldArchetype : IWorldArchetype
+        where TMask : MaskSingleton<TMask>
     {
-        public int[] GetComponentsIDs()
+        public static readonly int uniqueID;
+
+        static BakedMask()
         {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID
-            };
+            uniqueID = increment++;
+#if DEBUG || DCFAECS_NO_SANITIZE_CHECKS
+            if (uniqueID >= ushort.MaxValue)
+                throw new EcsFrameworkException($"No more room for new BakedMask for this {typeof(TWorldArchetype).FullName} IWorldArchetype");
+#endif
+            if (increment > capacity)
+                capacity <<= 1;
+            _instance = new BakedMask<TWorldArchetype, TMask>();
         }
-    }
-    public struct Exc<T0, T1, T2, T3, T4, T5> : IExc
-    {
-        public int[] GetComponentsIDs()
+
+        private BakedMask() : base(
+            MaskSingleton<TMask>.Instance.MakeInc<IWorldArchetype>(),
+            MaskSingleton<TMask>.Instance.MakeExc<IWorldArchetype>(),
+            MaskSingleton<TMask>.Instance)
+        { }
+
+        private static readonly BakedMask<TWorldArchetype, TMask> _instance = new BakedMask<TWorldArchetype, TMask>();
+        public static BakedMask<TWorldArchetype, TMask> Instance
         {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID,
-                ComponentType<T5>.globalID
-            };
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _instance;
         }
-    }
-    public struct Exc<T0, T1, T2, T3, T4, T5, T6> : IExc
-    {
-        public int[] GetComponentsIDs()
+
+        internal override int UniqueID
         {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID,
-                ComponentType<T5>.globalID,
-                ComponentType<T6>.globalID
-            };
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => uniqueID;
         }
-    }
-    public struct Exc<T0, T1, T2, T3, T4, T5, T6, T7> : IExc
-    {
-        public int[] GetComponentsIDs()
+
+        internal override Type WorldArchetypeType
         {
-            return new int[]
-            {
-                ComponentType<T0>.globalID,
-                ComponentType<T1>.globalID,
-                ComponentType<T2>.globalID,
-                ComponentType<T3>.globalID,
-                ComponentType<T4>.globalID,
-                ComponentType<T5>.globalID,
-                ComponentType<T6>.globalID,
-                ComponentType<T7>.globalID
-            };
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(IWorldArchetype);
         }
     }
     #endregion
@@ -317,111 +160,76 @@ namespace DCFApixels.DragonECS
     #region Masks
     public abstract class Mask
     {
-        protected internal static int _typeIDIncrement = 0;
-
-        internal abstract int[] Include { get; }
-        internal abstract int[] Exclude { get; }
-
-        public abstract int ID { get; }
-
-        public int IncCount
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Include.Length;
-        }
-        public int ExcCount
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Exclude.Length;
-        }
+        internal abstract int[] MakeInc<TWorldArchetype>() where TWorldArchetype : IWorldArchetype;
+        internal abstract int[] MakeExc<TWorldArchetype>() where TWorldArchetype : IWorldArchetype;
+        public abstract BakedMask GetBaked<TWorldArchetype>() where TWorldArchetype : IWorldArchetype;
     }
-    public sealed class Mask<TInc> : Mask
-        where TInc : struct, IInc
+    public abstract class MaskSingleton<TSelf> : Mask 
+        where TSelf : Mask
     {
-        internal static readonly int[] include = new TInc().GetComponentsIDs();
-        internal static readonly int[] exclude = Array.Empty<int>();
-        public static readonly int id = _typeIDIncrement++;
-        private static Mask<TInc> _instance = new Mask<TInc>();
-
-        private Mask() { }
-
-        public static Mask<TInc> Instance
+        protected static TSelf _instance;
+        internal static TSelf Instance
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _instance;
         }
-        public override int ID
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => id;
-        }
-        internal override int[] Include
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => include;
-        }
-        internal override int[] Exclude
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => exclude;
-        }
     }
-    public sealed class Mask<TInc, TExc> : Mask
+
+    public class Mask<TInc> : MaskSingleton<Mask<TInc>>
+        where TInc : struct, IInc
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal override int[] MakeInc<TWorldArchetype>() => new TInc().GetComponentsIDs<TWorldArchetype>();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal override int[] MakeExc<TWorldArchetype>() => Array.Empty<int>();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override BakedMask GetBaked<TWorldArchetype>()
+        {
+            return BakedMask<TWorldArchetype, Mask<TInc>>.Instance;
+        }
+
+        static Mask() { _instance = new Mask<TInc>(); }
+    }
+    public class Mask<TInc, TExc> : MaskSingleton<Mask<TInc, TExc>>
         where TInc : struct, IInc
         where TExc : struct, IExc
     {
-        internal static readonly int[] include = new TInc().GetComponentsIDs();
-        internal static readonly int[] exclude = new TExc().GetComponentsIDs();
-        public static readonly int id = _typeIDIncrement++;
-        private static Mask<TInc, TExc> _instance = new Mask<TInc, TExc>();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal override int[] MakeInc<TWorldArchetype>() => new TInc().GetComponentsIDs<TWorldArchetype>();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal override int[] MakeExc<TWorldArchetype>() => new TExc().GetComponentsIDs<TWorldArchetype>();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override BakedMask GetBaked<TWorldArchetype>()
+        {
+            return BakedMask<TWorldArchetype, Mask<TInc, TExc>>.Instance;
+        }
 
-        private Mask() { }
-
-        public static Mask<TInc, TExc> Instance
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _instance;
-        }
-        public override int ID
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => id;
-        }
-        internal override int[] Include
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => include;
-        }
-        internal override int[] Exclude
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => exclude;
-        }
+        static Mask() { _instance = new Mask<TInc, TExc>(); }
     }
     #endregion
 
     #region Filter
     public interface IEcsFilter
     {
-        public EcsWorld World { get; }
-        public Mask Mask { get; }
+        public IEcsWorld World { get; }
+        public BakedMask Mask { get; }
         public IEcsReadonlyGroup Entities { get; }
         public int EntitiesCount { get; }
     }
 
     public class EcsFilter : IEcsFilter
     {
-        private readonly EcsWorld _source;
+        private readonly IEcsWorld _source;
         private readonly EcsGroup _entities;
-        private readonly Mask _mask;
+        private readonly BakedMask _mask;
 
         #region Properties
-        public EcsWorld World
+        public IEcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _source;
         }
-        public Mask Mask
+        public BakedMask Mask
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _mask;
@@ -439,7 +247,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constrcutors
-        internal EcsFilter(EcsWorld source, Mask mask, int capasity)
+        internal EcsFilter(IEcsWorld source, BakedMask mask, int capasity)
         {
             _source = source;
             _mask = mask;

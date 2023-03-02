@@ -8,7 +8,7 @@ namespace DCFApixels.DragonECS
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
     public readonly struct ent : IEquatable<long>, IEquatable<ent>
     {
-        public static readonly long NULL = 0;
+        public static readonly ent NULL = default;
 
         // id - 32 bits
         // gen - 16 bits
@@ -23,25 +23,25 @@ namespace DCFApixels.DragonECS
             get => (int)(_full >> 32);
         }
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public short gen
+        public ushort gen
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (short)((_full << 32) >> 48);
+            get => (ushort)((_full << 32) >> 48);
 
         }
         // но чтобы значене default было NULL сульностью, мир хранится в виде ID + 1
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public short world
+        public ushort world
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (short)(((_full << 48) >> 48) - 1);
+            get => (ushort)(((_full << 48) >> 48) - 1);
 
         }
         #endregion
 
         #region Constructors
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ent(int id, short gen, short world)
+        public ent(int id, short gen, ushort world)
         {
             _full = ((long)id) << 32;
             _full += ((long)gen) << 16;
@@ -112,11 +112,11 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public ref struct Entity
+    public readonly ref struct Entity
     {
-        internal EcsWorld world;
-        internal int id;
-        public Entity(EcsWorld world, int id)
+        internal readonly IEcsWorld world;
+        internal readonly int id;
+        public Entity(IEcsWorld world, ent id)
         {
             this.world = world;
             this.id = id;

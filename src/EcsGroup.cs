@@ -5,7 +5,7 @@ namespace DCFApixels.DragonECS
 {
     public interface IEcsReadonlyGroup 
     {
-        public EcsWorld World { get; }
+        public IEcsWorld World { get; }
         public int Count { get; }
         public EcsGroup.Enumerator GetEnumerator();
     }
@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
 
     public class EcsGroup : IEcsGroup 
     {
-        private EcsWorld _source;
+        private IEcsWorld _source;
         private SparseSet _entities;
 
         private DelayedOp[] _delayedOps;
@@ -26,12 +26,12 @@ namespace DCFApixels.DragonECS
         private int _lockCount;
 
         #region Properties
-        public EcsWorld World => _source;
+        public IEcsWorld World => _source;
         public int Count => _entities.Count;
         #endregion
 
         #region Constrcutors
-        public EcsGroup(EcsWorld world,  int entitiesCapacity, int delayedOpsCapacity = 128)
+        public EcsGroup(IEcsWorld world,  int entitiesCapacity, int delayedOpsCapacity = 128)
         {
             _source = world;
             _entities = new SparseSet(entitiesCapacity);

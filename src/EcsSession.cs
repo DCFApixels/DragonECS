@@ -19,8 +19,8 @@ namespace DCFApixels.DragonECS
         private bool _isDestoryed = false;
 
         private int _worldIdIncrement;
-        private Dictionary<string, EcsWorld> _worldsDict = new Dictionary<string, EcsWorld>();
-        private List<EcsWorld> _worlds = new List<EcsWorld>();
+        private Dictionary<string, IEcsWorld> _worldsDict = new Dictionary<string, IEcsWorld>();
+        private List<IEcsWorld> _worlds = new List<IEcsWorld>();
 
         private Dictionary<Type, IEcsProcessorsRunner> _runners;
         private Dictionary<Type, IEcsProcessorsMessenger> _messengers;
@@ -89,11 +89,12 @@ namespace DCFApixels.DragonECS
             _allProcessors.Add(system);
             return this;
         }
-        public EcsSession AddWorld(string name)
+        public EcsSession AddWorld<TArchetype>(EcsWorld<TArchetype> world, string name = "")
+            where TArchetype : IWorldArchetype
         {
             CheckInitForMethod(nameof(AddWorld));
 
-            //_worlds.Add(new EcsWorld(_worldIdIncrement++));
+            _worlds.Add(new EcsWorld(_worldIdIncrement++));
             return this;
         }
 
