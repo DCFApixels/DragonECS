@@ -6,8 +6,13 @@ using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
+    public interface IEcsInject<T>
+    {
+        public void Inject(T obj);
+    }
     public class InjectProcessor<T> : IDo<_PreInit>
     {
+
         private T _injectedData;
 
         public InjectProcessor(T injectedData)

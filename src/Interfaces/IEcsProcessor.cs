@@ -1,6 +1,5 @@
 ﻿namespace DCFApixels.DragonECS
 {
-    public interface IEcsProcessor { }
 
     public struct _PreInit { }
     public struct _Init { }

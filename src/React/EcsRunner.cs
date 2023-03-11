@@ -7,35 +7,35 @@ using System.Runtime.CompilerServices;
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    sealed class RunnerFilterAttribute : Attribute
+    sealed class EcsRunnerFilterAttribute : Attribute
     {
         public readonly Type interfaceType;
         public readonly object filter;
-        public RunnerFilterAttribute(Type interfaceType, object filter)
+        public EcsRunnerFilterAttribute(Type interfaceType, object filter)
         {
             this.interfaceType = interfaceType;
             this.filter = filter;
         }
     }
 
-    public interface IProcessor { }
+    public interface IEcsProcessor { }
 
-    public static class IProcessorExtensions
+    public static class IEcsProcessorExtensions
     {
-        public static bool IsRunner(this IProcessor self)
+        public static bool IsRunner(this IEcsProcessor self)
         {
-            return self is IRunner;
+            return self is IEcsRunner;
         }
     }
 
-    internal static class RunnerActivator
+    internal static class EcsRunnerActivator
     {
         private static bool _isInit = false;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Init()
         {
             if (_isInit) return;
-            Type targetType = typeof(Runner<>);
+            Type targetType = typeof(EcsRunner<>);
             var subclasses = Assembly.GetAssembly(targetType).GetTypes().Where(type => type.BaseType != null && type.BaseType.IsGenericType && targetType == type.BaseType.GetGenericTypeDefinition());
             foreach (var item in subclasses)
             {
@@ -45,10 +45,11 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public interface IRunner { }
 
-    public abstract class Runner<TInterface> : IProcessor, IRunner
-        where TInterface : IProcessor
+    public interface IEcsRunner { }
+
+    public abstract class EcsRunner<TInterface> : IEcsProcessor, IEcsRunner
+        where TInterface : IEcsProcessor
     {
         internal static void Init(Type subclass)
         {
@@ -66,58 +67,56 @@ namespace DCFApixels.DragonECS
             {
                 throw new ArgumentException($"{typeof(TInterface).FullName} is not interface");
             }
-            if (interfaces.Length != 1 || interfaces[0] != typeof(IProcessor))
+            if (interfaces.Length != 1 || interfaces[0] != typeof(IEcsProcessor))
             {
-                throw new ArgumentException($"{typeof(TInterface).FullName} does not directly inherit the {nameof(IProcessor)} interface");
+                throw new ArgumentException($"{typeof(TInterface).FullName} does not directly inherit the {nameof(IEcsProcessor)} interface");
             }
 #endif
             _subclass = subclass;
         }
 
-        public static TInterface Instantiate(IEnumerable<IProcessor> targets, object filter)
+        public static TInterface Instantiate(IEnumerable<IEcsProcessor> targets, object filter)
         {
             Type interfaceType = typeof(TInterface);
 
-            IEnumerable<IProcessor> newTargets;
+            IEnumerable<TInterface> newTargets = targets.OfType<TInterface>();
 
             if (filter != null)
             {
-                newTargets = targets.Where(o =>
+                newTargets = newTargets.Where(o =>
                 {
                     if (o is TInterface == false) return false;
-                    var atr = o.GetType().GetCustomAttribute<RunnerFilterAttribute>();
+                    var atr = o.GetType().GetCustomAttribute<EcsRunnerFilterAttribute>();
                     return atr != null && atr.interfaceType == interfaceType && atr.filter.Equals(filter);
                 });
             }
             else
             {
-                newTargets = targets.Where(o =>
+                newTargets = newTargets.Where(o =>
                 {
                     if (o is TInterface == false) return false;
-                    var atr = o.GetType().GetCustomAttribute<RunnerFilterAttribute>();
+                    var atr = o.GetType().GetCustomAttribute<EcsRunnerFilterAttribute>();
                     return atr == null || atr.interfaceType == interfaceType && atr.filter == null;
                 });
             }
 
-            return Instantiate(newTargets.Select(o => (TInterface)o).ToArray());
+            return Instantiate(newTargets.ToArray());
         }
-        public static TInterface Instantiate(IEnumerable<IProcessor> targets)
+        public static TInterface Instantiate(IEnumerable<IEcsProcessor> targets)
         {
-            return Instantiate(targets.Where(o => o is TInterface).Select(o => (TInterface)o).ToArray());
+            return Instantiate(targets.OfType<TInterface>().ToArray());
         }
         internal static TInterface Instantiate(TInterface[] targets)
         {
-            RunnerActivator.Init();
-            var instance = (Runner<TInterface>)Activator.CreateInstance(_subclass);
-            return (TInterface)(IProcessor)instance.Set(targets);
+            EcsRunnerActivator.Init();
+            var instance = (EcsRunner<TInterface>)Activator.CreateInstance(_subclass);
+            return (TInterface)(IEcsProcessor)instance.Set(targets);
         }
-
-
 
         private static Type _subclass;
         protected TInterface[] targets;
 
-        private Runner<TInterface> Set(TInterface[] targets)
+        private EcsRunner<TInterface> Set(TInterface[] targets)
         {
             this.targets = targets;
             return this;
