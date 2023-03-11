@@ -28,23 +28,79 @@ namespace DCFApixels.DragonECS
         }
     }
 
+
     internal static class EcsRunnerActivator
     {
-        private static bool _isInit = false;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Init()
+        private static Dictionary<Guid, Type> _runnerTypes; //interface guid/ Runner type pairs;
+
+        static EcsRunnerActivator()
         {
-            if (_isInit) return;
-            Type targetType = typeof(EcsRunner<>);
-            var subclasses = Assembly.GetAssembly(targetType).GetTypes().Where(type => type.BaseType != null && type.BaseType.IsGenericType && targetType == type.BaseType.GetGenericTypeDefinition());
-            foreach (var item in subclasses)
+            List<Exception> exceptions = new List<Exception>();
+
+            Type runnerBaseType = typeof(EcsRunner<>);
+
+            List<Type> newRunnerTypes = new List<Type>();
+            newRunnerTypes = Assembly.GetAssembly(runnerBaseType)
+                .GetTypes()
+                .Where(type => type.BaseType != null && type.BaseType.IsGenericType && runnerBaseType == type.BaseType.GetGenericTypeDefinition())
+                .ToList();
+
+#if DEBUG
+            for (int i = 0; i < newRunnerTypes.Count; i++)
             {
-                item.BaseType.GetMethod("Init", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { item });
+                var e = CheckRunnerValide(newRunnerTypes[i]);
+                if (e != null)
+                {
+                    newRunnerTypes.RemoveAt(i--);
+                    exceptions.Add(e);
+                }
             }
-            _isInit = true;
+#endif
+            _runnerTypes = new Dictionary<Guid, Type>();
+            foreach (var item in newRunnerTypes)
+            {
+                Type intrf = item.GetInterfaces()[2]; //TODO доработать это место. Во-первых убрать магическое число 2, во-вторых сделать так чтоб брался только наследованный интерфейс, а не все
+                _runnerTypes.Add(intrf.GUID, item);
+            }
+
+            if (exceptions.Count > 0)
+            {
+                foreach (var item in exceptions) throw item;
+            }
+        }
+
+        private static Exception CheckRunnerValide(Type type) //TODO доработать проверку валидности реалиазации ранера
+        {
+            if (type.ReflectedType != null)
+                return new Exception($"{type.FullName}.ReflectedType must be Null, but equal to {type.ReflectedType.FullName}");
+
+            //var interfaces = type.GetInterfaces(); 
+            //if (interfaces.Length != 1 || interfaces[0].GUID != typeof())
+            //{
+            //}
+
+            return null;
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InitFor<TInterface>() where TInterface : IEcsProcessor
+        {
+            Type interfaceType = typeof(TInterface);
+            Guid interfaceGuid = interfaceType.GUID;
+
+            if (!_runnerTypes.TryGetValue(interfaceGuid, out Type runnerType))
+            {
+                throw new Exception();
+            }
+            if (interfaceType.IsGenericType)
+            {
+                Type[] genericTypes = interfaceType.GetGenericArguments();
+                runnerType = runnerType.MakeGenericType(genericTypes);
+            }
+            EcsRunner<TInterface>.Init(runnerType);
         }
     }
-
 
     public interface IEcsRunner { }
 
@@ -79,11 +135,11 @@ namespace DCFApixels.DragonECS
         {
             Type interfaceType = typeof(TInterface);
 
-            IEnumerable<TInterface> newTargets = targets.OfType<TInterface>();
+            IEnumerable<IEcsProcessor> newTargets;
 
             if (filter != null)
             {
-                newTargets = newTargets.Where(o =>
+                newTargets = targets.Where(o =>
                 {
                     if (o is TInterface == false) return false;
                     var atr = o.GetType().GetCustomAttribute<EcsRunnerFilterAttribute>();
@@ -92,7 +148,7 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                newTargets = newTargets.Where(o =>
+                newTargets = targets.Where(o =>
                 {
                     if (o is TInterface == false) return false;
                     var atr = o.GetType().GetCustomAttribute<EcsRunnerFilterAttribute>();
@@ -100,20 +156,25 @@ namespace DCFApixels.DragonECS
                 });
             }
 
-            return Instantiate(newTargets.ToArray());
+            return Instantiate(newTargets.Select(o => (TInterface)o).ToArray());
         }
         public static TInterface Instantiate(IEnumerable<IEcsProcessor> targets)
         {
-            return Instantiate(targets.OfType<TInterface>().ToArray());
+            return Instantiate(targets.Where(o => o is TInterface).Select(o => (TInterface)o).ToArray());
         }
         internal static TInterface Instantiate(TInterface[] targets)
         {
-            EcsRunnerActivator.Init();
+            if (_subclass == null)
+                EcsRunnerActivator.InitFor<TInterface>();
+
             var instance = (EcsRunner<TInterface>)Activator.CreateInstance(_subclass);
             return (TInterface)(IEcsProcessor)instance.Set(targets);
         }
 
         private static Type _subclass;
+
+        protected static void SetSublcass(Type type) => _subclass = type;
+
         protected TInterface[] targets;
 
         private EcsRunner<TInterface> Set(TInterface[] targets)

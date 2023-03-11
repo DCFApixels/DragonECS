@@ -1,10 +1,9 @@
 ﻿namespace DCFApixels.DragonECS
 {
-    public class DestroyProcessor : IDo<_Run>
+    public class DestroyProcessor : IEcsRunSystem
     {
-        void IDo<_Run>.Do(EcsSession session)
+        public void Run(EcsSession session)
         {
-
         }
     }
 

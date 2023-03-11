@@ -40,57 +40,34 @@ namespace DCFApixels.DragonECS
         private int _id;
 
 
-        private List<IEcsProcessor> _allProcessors;
-        private ReadOnlyCollection<IEcsProcessor> _allProcessorsSealed;
+        private List<IEcsProcessor> _allSystems;
+        private ReadOnlyCollection<IEcsProcessor> _allSystemsSealed;
 
         private bool _isInit = false;
         private bool _isDestoryed = false;
 
 
-        private Dictionary<Type, IEcsProcessorsRunner> _runners;
-        private Dictionary<Type, IEcsProcessorsMessenger> _messengers;
-        private EcsProcessorsRunner<_Run> _runRunnerCache;
+        private Dictionary<Type, IEcsRunner> _runners;
+        private IEcsRunSystem _runRunnerCache;
 
         private EcsWorldMap _worldMap = new EcsWorldMap();
 
         #region Properties
-        public ReadOnlyCollection<IEcsProcessor> AllProcessors => _allProcessorsSealed;
+        public ReadOnlyCollection<IEcsProcessor> AllProcessors => _allSystemsSealed;
 
         #endregion
 
         #region React Runners/Messengers
-        public EcsProcessorsRunner<TDoTag> GetRunner<TDoTag>()
+        public T GetRunner<T>() where T : IEcsProcessor
         {
-            Type type = typeof(TDoTag);
-            if (_runners.TryGetValue(type, out IEcsProcessorsRunner result))
+            Type type = typeof(T);
+            if (_runners.TryGetValue(type, out IEcsRunner result))
             {
-                return (EcsProcessorsRunner<TDoTag>)result;
+                return (T)result;
             }
-            result = new EcsProcessorsRunner<TDoTag>(this);
+            result = (IEcsRunner)EcsRunner<T>.Instantiate(_allSystems);
             _runners.Add(type, result);
-            return (EcsProcessorsRunner<TDoTag>)result;
-        }
-        internal void OnRunnerDetroyed<TDoTag>(EcsProcessorsRunner<TDoTag> target)
-        {
-            _runners.Remove(typeof(TDoTag));
-        }
-
-        public EcsProcessorsMessenger<TMessege> GetMessenger<TMessege>()
-            where TMessege : IEcsMessage
-        {
-            Type type = typeof(EcsProcessorsMessenger<TMessege>);
-            if (_messengers.TryGetValue(type, out IEcsProcessorsMessenger result))
-            {
-                return (EcsProcessorsMessenger<TMessege>)result;
-            }
-            result = new EcsProcessorsMessenger<TMessege>(this);
-            _messengers.Add(type, result);
-            return (EcsProcessorsMessenger<TMessege>)result;
-        }
-        internal void OnMessengerDetroyed<TMessege>(IEcsProcessorsMessenger<TMessege> target)
-            where TMessege : IEcsMessage
-        {
-            _messengers.Remove(typeof(TMessege));
+            return (T)result;
         }
         #endregion
 
@@ -98,7 +75,7 @@ namespace DCFApixels.DragonECS
         public EcsSession Add(IEcsProcessor system)
         {
             CheckInitForMethod(nameof(AddWorld));
-            _allProcessors.Add(system);
+            _allSystems.Add(system);
             return this;
         }
         public EcsSession AddWorld<TArchetype>(EcsWorld<TArchetype> world, string name = "")
@@ -116,29 +93,28 @@ namespace DCFApixels.DragonECS
         {
             CheckInitForMethod(nameof(Init));
             _worldMap.Build();
-            _allProcessorsSealed = _allProcessors.AsReadOnly();
+            _allSystemsSealed = _allSystems.AsReadOnly();
             _isInit = true;
 
-            GetMessenger<_OnInject<EcsWorldMap>>().Send(new _OnInject<EcsWorldMap>(_worldMap));
+            GetRunner<IEcsInject<EcsWorldMap>>().Inject(_worldMap);
 
-            GetRunner<_PreInit>().Run();
-            GetRunner<_Init>().Run();
+            GetRunner<IEcsPreInitSystem>().PreInit(this);
+            GetRunner<IEcsInitSystem>().Init(this);
 
-            _runRunnerCache = GetRunner<_Run>();
+            _runRunnerCache = GetRunner<IEcsRunSystem>();
         }
         public void Run()
         {
             CheckDestroyForMethod(nameof(Run));
 
-
-            _runRunnerCache.Run();
+            _runRunnerCache.Run(this);
         }
         public void Destroy()
         {
             CheckDestroyForMethod(nameof(Run));
             _isDestoryed = true;
-            GetRunner<_Destroy>().Run();
-            GetRunner<_PostDestroy>().Run();
+
+            GetRunner<IEcsDestroySystem>().Destroy(this);
         }
         #endregion
 

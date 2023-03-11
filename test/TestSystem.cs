@@ -6,26 +6,23 @@ using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
-    public class TestSystem : 
-        IReceive<_OnInject<SharedData>>, 
-        IDo<_Init>, IDo<_Run>, IDo<_Destroy>
+    public class TestSystem :
+        IEcsInject<SharedData>,
+        IEcsSimpleCycleSystem
     {
         private SharedData _sharedData;
-        void IReceive<_OnInject<SharedData>>.Do(EcsSession session, in _OnInject<SharedData> m) => _sharedData = m.data;
+        public void Inject(SharedData obj) => _sharedData = obj;
 
 
-        void IDo<_Init>.Do(EcsSession session)
+
+        public void Init(EcsSession session)
         {
         }
-
-        void IDo<_Run>.Do(EcsSession session)
-        {
-            
-        }
-
-        void IDo<_Destroy>.Do(EcsSession session)
+        public void Run(EcsSession session)
         {
         }
-
+        public void Destroy(EcsSession session)
+        {
+        }
     }
 }

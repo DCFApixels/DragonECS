@@ -6,13 +6,23 @@ using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsInject<T>
+    public interface IEcsInject<T> : IEcsProcessor
     {
         public void Inject(T obj);
     }
-    public class InjectProcessor<T> : IDo<_PreInit>
+    public class InjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
     {
+        void IEcsInject<T>.Inject(T obj)
+        {
+            foreach (var item in targets)
+            {
+                item.Inject(obj);
+            }
+        }
+    }
 
+    public class InjectProcessor<T> : IEcsPreInitSystem
+    {
         private T _injectedData;
 
         public InjectProcessor(T injectedData)
@@ -20,11 +30,10 @@ namespace DCFApixels.DragonECS
             _injectedData = injectedData;
         }
 
-        void IDo<_PreInit>.Do(EcsSession session)
+        public void PreInit(EcsSession session)
         {
-            var messenger = session.GetMessenger<_OnInject<T>>();
-            messenger.Send(new _OnInject<T>(_injectedData));
-            messenger.Destroy();
+            var injector = session.GetRunner<IEcsInject<T>>();
+            injector.Inject(_injectedData);
         }
     }
 
