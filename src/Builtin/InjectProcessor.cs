@@ -10,7 +10,7 @@ namespace DCFApixels.DragonECS
     {
         public void Inject(T obj);
     }
-    public class InjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
+    public sealed class InjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
     {
         void IEcsInject<T>.Inject(T obj)
         {

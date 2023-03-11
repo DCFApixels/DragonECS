@@ -13,7 +13,7 @@ namespace DCFApixels.DragonECS
 
         private void Start()
         {
-            _ecsSession
+            _ecsSession = new EcsSession()
                 .Add(new TestSystem())
                 .Inject(_data)
                 .Init();

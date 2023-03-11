@@ -40,22 +40,29 @@ namespace DCFApixels.DragonECS
         private int _id;
 
 
-        private List<IEcsProcessor> _allSystems;
+        private readonly List<IEcsProcessor> _allSystems;
         private ReadOnlyCollection<IEcsProcessor> _allSystemsSealed;
 
         private bool _isInit = false;
         private bool _isDestoryed = false;
 
 
-        private Dictionary<Type, IEcsRunner> _runners;
+        private readonly Dictionary<Type, IEcsRunner> _runners;
         private IEcsRunSystem _runRunnerCache;
 
-        private EcsWorldMap _worldMap = new EcsWorldMap();
+        private readonly EcsWorldMap _worldMap;
 
         #region Properties
         public ReadOnlyCollection<IEcsProcessor> AllProcessors => _allSystemsSealed;
 
         #endregion
+
+        public EcsSession()
+        {
+            _allSystems = new List<IEcsProcessor>(128);
+            _runners = new Dictionary<Type, IEcsRunner>();
+            _worldMap = new EcsWorldMap();
+        }
 
         #region React Runners/Messengers
         public T GetRunner<T>() where T : IEcsProcessor
@@ -89,7 +96,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region LifeCycle
-        public void Init()
+        public EcsSession Init()
         {
             CheckInitForMethod(nameof(Init));
             _worldMap.Build();
@@ -102,6 +109,8 @@ namespace DCFApixels.DragonECS
             GetRunner<IEcsInitSystem>().Init(this);
 
             _runRunnerCache = GetRunner<IEcsRunSystem>();
+
+            return this;
         }
         public void Run()
         {
@@ -111,7 +120,7 @@ namespace DCFApixels.DragonECS
         }
         public void Destroy()
         {
-            CheckDestroyForMethod(nameof(Run));
+            CheckDestroyForMethod(nameof(Destroy));
             _isDestoryed = true;
 
             GetRunner<IEcsDestroySystem>().Destroy(this);
@@ -126,7 +135,7 @@ namespace DCFApixels.DragonECS
         }
         private void CheckDestroyForMethod(string methodName)
         {
-            if (_isInit)
+            if (_isDestoryed)
                 throw new MethodAccessException($"Запрещено вызывать метод {methodName}, после уничтожения {nameof(EcsSession)}");
         }
         #endregion

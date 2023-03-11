@@ -59,7 +59,7 @@ namespace DCFApixels.DragonECS
             _runnerTypes = new Dictionary<Guid, Type>();
             foreach (var item in newRunnerTypes)
             {
-                Type intrf = item.GetInterfaces()[2]; //TODO доработать это место. Во-первых убрать магическое число 2, во-вторых сделать так чтоб брался только наследованный интерфейс, а не все
+                Type intrf = item.GetInterfaces().Where(o => o != typeof(IEcsRunner) && o != typeof(IEcsProcessor)).First(); //TODO оптимизировать это место
                 _runnerTypes.Add(intrf.GUID, item);
             }
 
@@ -87,7 +87,12 @@ namespace DCFApixels.DragonECS
         public static void InitFor<TInterface>() where TInterface : IEcsProcessor
         {
             Type interfaceType = typeof(TInterface);
-            Guid interfaceGuid = interfaceType.GUID;
+            Type nonGenericInterfaceType = interfaceType;
+            if (nonGenericInterfaceType.IsGenericType)
+            {
+                nonGenericInterfaceType = nonGenericInterfaceType.GetGenericTypeDefinition();
+            }
+            Guid interfaceGuid = nonGenericInterfaceType.GUID;
 
             if (!_runnerTypes.TryGetValue(interfaceGuid, out Type runnerType))
             {
