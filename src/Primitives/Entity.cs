@@ -31,17 +31,17 @@ namespace DCFApixels.DragonECS
         }
         // но чтобы значене default было NULL сульностью, мир хранится в виде ID + 1
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ushort world
+        public short world
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (ushort)(((_full << 48) >> 48) - 1);
+            get => (short)(((_full << 48) >> 48) - 1);
 
         }
         #endregion
 
         #region Constructors
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ent(int id, short gen, ushort world)
+        public ent(int id, short gen, short world)
         {
             _full = ((long)id) << 32;
             _full += ((long)gen) << 16;
@@ -104,22 +104,83 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    public static class entExtensions
+    public static partial class entExtensions
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNull(this in ent self)
         {
             return self == ent.NULL;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref readonly T Read<T>(this in ent self)
+            where T : struct
+        {
+            return ref EcsWorld.Worlds[self.world].GetPool<T>().Read(self.id);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T Write<T>(this in ent self)
+            where T : struct
+        {
+            return ref EcsWorld.Worlds[self.world].GetPool<T>().Write(self.id);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Has<T>(this in ent self)
+            where T : struct
+        {
+            return EcsWorld.Worlds[self.world].GetPool<T>().Has(self.id);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Del<T>(this in ent self)
+            where T : struct
+        {
+            EcsWorld.Worlds[self.world].GetPool<T>().Del(self.id);
+        }
     }
 
-    public readonly ref struct Entity
+    public struct Entity
     {
-        internal readonly IEcsWorld world;
-        internal readonly int id;
-        public Entity(IEcsWorld world, ent id)
+        public IEcsWorld world;
+        public int id;
+
+        public Entity(IEcsWorld world, int id)
         {
             this.world = world;
             this.id = id;
+        }
+    }
+
+    public static partial class EntityExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNull(this in Entity self)
+        {
+            return self.world == null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref readonly T Read<T>(this in Entity self)
+            where T : struct
+        {
+            return ref self.world.GetPool<T>().Read(self.id);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T Write<T>(this in Entity self)
+            where T : struct
+        {
+            return ref self.world.GetPool<T>().Write(self.id);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Has<T>(this in Entity self)
+            where T : struct
+        {
+            return self.world.GetPool<T>().Has(self.id);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Del<T>(this in Entity self)
+            where T : struct
+        {
+            self.world.GetPool<T>().Del(self.id);
         }
     }
 }

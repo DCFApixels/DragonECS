@@ -14,7 +14,6 @@ namespace DCFApixels.DragonECS
         private void Start()
         {
             _ecsSession
-                .AddWorld("")
                 .Add(new TestSystem())
                 .Inject(_data)
                 .Init();

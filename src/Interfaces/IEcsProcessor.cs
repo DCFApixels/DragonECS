@@ -2,14 +2,12 @@
 {
     public interface IEcsProcessor { }
 
-    public interface IEcsDoTag { }
-    public struct _PreInit : IEcsDoTag { }
-    public struct _Init : IEcsDoTag { }
-    public struct _Run : IEcsDoTag { }
-    public struct _Destroy : IEcsDoTag { }
-    public struct _PostDestroy : IEcsDoTag { }
+    public struct _PreInit { }
+    public struct _Init { }
+    public struct _Run { }
+    public struct _Destroy { }
+    public struct _PostDestroy { }
     public interface IDo<TTag> : IEcsProcessor
-        where TTag : IEcsDoTag
     {
         public void Do(EcsSession session);
     }
@@ -52,20 +50,5 @@
         where TMessage : IEcsMessage
     {
         public void Do(EcsSession session, in TMessage m);
-    }
-
-
-    public struct _OnComponentRemoved : IEcsMessage
-    {
-        public int entityID;
-    }
-    public struct _OnComponentAdded : IEcsMessage
-    {
-        public int entityID;
-    }
-    public interface IEcsGReceive<TMessage> : IEcsProcessor
-        where TMessage : IEcsMessage
-    {
-        public void Do<T>(EcsSession session, in TMessage m, in T obj);
     }
 }

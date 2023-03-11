@@ -3,115 +3,124 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
-using coretype = System.Int32;
 
 namespace DCFApixels.DragonECS
 {
-    public class SparseSet : IEnumerable<coretype>, ICollection<coretype>, IReadOnlyCollection<coretype>
+    public class SparseSet : IEnumerable<int>, ICollection<int>, IReadOnlyCollection<int>
     {
-        public const int DEFAULT_CAPACITY = 16;
-        public const int MAX_CAPACITY = coretype.MaxValue;
+        public const int DEFAULT_DENSE_CAPACITY = 8;
+        public const int DEFAULT_SPARSE_CAPACITY = 16;
 
-        private coretype[] _dense;
-        private coretype[] _sparse;
+        public const int MIN_CAPACITY = 4;
 
-        private coretype _count;
+        public const int MAX_CAPACITY = int.MaxValue;
 
-        private coretype _denseCapacity;
+        private int[] _dense;
+        private int[] _sparse;
+
+        private int _count;
 
         #region Properties
-        public int Count => _count;
-        public int CapacityDense
+        public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _denseCapacity;
+            get => _count;
         }
-        public int CapacitySparse
+        public int CapacityDense
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _dense.Length;
         }
-
-        public coretype this[int index]
+        public int CapacitySparse
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#if DEBUG
+            get => _sparse.Length;
+        }
+
+        public int this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                ThrowHalper.CheckOutOfRange(this, (coretype)index);
+#if DEBUG
+                ThrowHalper.CheckOutOfRange(this, index);
+#endif
                 return _dense[index];
             }
-#else
-            get => _dense[index];
-#endif
         }
         #endregion
 
         #region Constructors
-        public SparseSet() : this(DEFAULT_CAPACITY) { }
-        public SparseSet(coretype capacity)
+        public SparseSet() : this(DEFAULT_DENSE_CAPACITY, DEFAULT_SPARSE_CAPACITY) { }
+        public SparseSet(int denseCapacity, int sparseCapacity)
         {
-#if DEBUG
-            ThrowHalper.CheckCapacity(capacity);
-#endif 
-            _dense = new coretype[capacity];
-            _sparse = new coretype[capacity];
-            for (coretype i = 0; i < _sparse.Length; i++)
-            {
-                _dense[i] = i;
-                _sparse[i] = i;
-            }
-            _count = 0;
-            _denseCapacity = 0;
+            denseCapacity = denseCapacity < MIN_CAPACITY ? MIN_CAPACITY : NormalizeCapacity(denseCapacity);
+            sparseCapacity = sparseCapacity < MIN_CAPACITY ? MIN_CAPACITY : NormalizeCapacity(sparseCapacity);
+
+            _dense = new int[denseCapacity];
+            _sparse = new int[sparseCapacity];
+
+            Reset();
         }
         #endregion
 
-        #region Add/AddRange/GetFree
-        public void Add<T>(coretype value, ref T[] normalizedArray)
+        #region Add/AddRange
+        public void Add<T>(int value, ref T[] normalizedArray)
         {
             Add(value);
             Normalize(ref normalizedArray);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(coretype value)
+        public void Add(int value)
         {
 #if DEBUG
             ThrowHalper.CheckValueIsPositive(value);
             ThrowHalper.CheckValueNotContained(this, value);
 #endif
-            if (value > CapacitySparse)
+            if (_count >= _dense.Length)
+                Array.Resize(ref _dense, _dense.Length << 1);
+
+            if (value > _sparse.Length)
             {
-                coretype neadedSpace = (coretype)_dense.Length;
-                while (value >= neadedSpace) neadedSpace <<= 1;
-                Resize(neadedSpace);
+                int neadedSpace = _sparse.Length;
+                while (value >= neadedSpace)
+                    neadedSpace <<= 1;
+                int i = _sparse.Length;
+                Array.Resize(ref _sparse, neadedSpace);
+                //loop unwinding
+                for (; i < neadedSpace;)
+                {
+                    _sparse[i++] = -1;
+                    _sparse[i++] = -1;
+                    _sparse[i++] = -1;
+                    _sparse[i++] = -1;
+                }
             }
 
-            Swap(value, _count++);
-            if (_count > _denseCapacity) _denseCapacity <<= 1;
+            _dense[_count] = value;
+            _sparse[value] = _count++;
         }
 
-        public bool TryAdd<T>(coretype value, ref T[] normalizedArray)
+        public bool TryAdd<T>(int value, ref T[] normalizedArray)
         {
             if (Contains(value)) return false;
             Add(value);
             Normalize(ref normalizedArray);
             return true;
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAdd(coretype value)
+        public bool TryAdd(int value)
         {
             if (Contains(value)) return false;
             Add(value);
             return true;
         }
 
-        public void AddRange<T>(IEnumerable<coretype> range, ref T[] normalizedArray)
+        public void AddRange<T>(IEnumerable<int> range, ref T[] normalizedArray)
         {
             AddRange(range);
             Normalize(ref normalizedArray);
         }
-        public void AddRange(IEnumerable<coretype> range)
+        public void AddRange(IEnumerable<int> range)
         {
             foreach (var item in range)
             {
@@ -119,46 +128,28 @@ namespace DCFApixels.DragonECS
                 Add(item);
             }
         }
-
-        /// <summary>Adds a value between 0 and Capacity to the array and returns it.</summary>
-        /// <returns>Value between 0 and Capacity</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public coretype GetFree<T>(ref T[] normalizedArray)
-        {
-            coretype result = GetFree();
-            Normalize(ref normalizedArray);
-            return result;
-        }
-        /// <summary>Adds a value between 0 and Capacity to the array and returns it.</summary>
-        /// <returns>Value between 0 and Capacity</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public coretype GetFree()
-        {
-            if (++_count >= CapacitySparse) AddSpaces();
-            if (_count > _denseCapacity) _denseCapacity <<= 1;
-            return _dense[_count - 1];
-        }
         #endregion
 
         #region Contains
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(coretype value)
+        public bool Contains(int value)
         {
-            return value >= 0 && value < CapacitySparse && _sparse[value] < _count;
+            return value >= 0 && value < CapacitySparse && _sparse[value] >= 0;
         }
         #endregion
 
         #region Remove
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(coretype value)
+        public void Remove(int value)
         {
 #if DEBUG
             ThrowHalper.CheckValueContained(this, value);
 #endif
-            Swap(_sparse[value], --_count);
+            _dense[_sparse[value]] = _dense[--_count];
+            _sparse[_dense[_count]] = _sparse[value];
+            _sparse[value] = -1;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryRemove(coretype value)
+        public bool TryRemove(int value)
         {
             if (!Contains(value)) return false;
             Remove(value);
@@ -166,7 +157,7 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RemoveAt(coretype index)
+        public void RemoveAt(int index)
         {
 #if DEBUG
             ThrowHalper.CheckOutOfRange(this, index);
@@ -183,7 +174,7 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int IndexOf(coretype value)
+        public int IndexOf(int value)
         {
             if (value < 0 || !Contains(value)) return -1;
             return _sparse[value];
@@ -191,8 +182,8 @@ namespace DCFApixels.DragonECS
 
         public void Sort()
         {
-            coretype increment = 0;
-            for (coretype i = 0; i < CapacitySparse; i++)
+            int increment = 0;
+            for (int i = 0; i < CapacitySparse; i++)
             {
                 if (_sparse[i] < _count)
                 {
@@ -204,18 +195,17 @@ namespace DCFApixels.DragonECS
 
         public void HardSort()
         {
-            coretype inc = 0;
-            coretype inc2 = _count;
-            for (coretype i = 0; i < CapacitySparse; i++)
+            int inc = 0;
+            int inc2 = _count;
+            for (int i = 0; i < CapacitySparse; i++)
             {
-                if (_sparse[i] < _count)
+                if (_sparse[i] >= 0)
                 {
                     _sparse[i] = inc;
                     _dense[inc++] = i;
                 }
                 else
                 {
-                    _sparse[i] = inc2;
                     _dense[inc2++] = i;
                 }
             }
@@ -225,14 +215,14 @@ namespace DCFApixels.DragonECS
         {
             other._count = _count;
             if (CapacitySparse != other.CapacitySparse)
-            {
-                other.Resize(CapacitySparse);
-            }
-            _dense.CopyTo(other._dense, 0);
+                Array.Resize(ref other._sparse, CapacitySparse);
+            if (CapacityDense != other.CapacityDense)
+                Array.Resize(ref other._dense, CapacityDense);
             _sparse.CopyTo(other._sparse, 0);
+            _dense.CopyTo(other._dense, 0);
         }
 
-        public void CopyTo(coretype[] array, int arrayIndex)
+        public void CopyTo(int[] array, int arrayIndex)
         {
 #if DEBUG
             if (arrayIndex < 0) throw new ArgumentException("arrayIndex is less than 0");
@@ -243,6 +233,12 @@ namespace DCFApixels.DragonECS
                 array[arrayIndex] = this[i];
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int NormalizeCapacity(int value)
+        {
+            return value + (MIN_CAPACITY - (value % MIN_CAPACITY));
+        }
         #endregion
 
         #region Clear/Reset
@@ -251,52 +247,26 @@ namespace DCFApixels.DragonECS
         public void Reset()
         {
             Clear();
-            for (coretype i = 0; i < _dense.Length; i++)
+            //loop unwinding
+            for (int i = 0; i < _sparse.Length;)
             {
-                _dense[i] = i;
-                _sparse[i] = i;
+                _sparse[i++] = -1;
+                _sparse[i++] = -1;
+                _sparse[i++] = -1;
+                _sparse[i++] = -1;
             }
         }
-        public void Reset(coretype newCapacity)
+
+        public void Reset(int newDenseCapacity, int newSparseCapacity)
         {
-#if DEBUG
-            ThrowHalper.CheckCapacity(newCapacity);
-#endif 
+            newDenseCapacity = newDenseCapacity < MIN_CAPACITY ? MIN_CAPACITY : NormalizeCapacity(newDenseCapacity);
+            newSparseCapacity = newSparseCapacity < MIN_CAPACITY ? MIN_CAPACITY : NormalizeCapacity(newSparseCapacity);
+
+            if (CapacitySparse != newSparseCapacity)
+                Array.Resize(ref _sparse, newSparseCapacity);
+            if (CapacityDense != newDenseCapacity)
+                Array.Resize(ref _dense, newDenseCapacity);
             Reset();
-            Resize(newCapacity);
-        }
-        #endregion
-
-        #region AddSpace/Resize
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AddSpaces() => Resize((_count << 1));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Resize(int newSpace)
-        {
-            coretype oldspace = (short)_dense.Length;
-            Array.Resize(ref _dense, newSpace);
-            Array.Resize(ref _sparse, newSpace);
-
-            for (coretype i = oldspace; i < newSpace; i++)
-            {
-                _dense[i] = i;
-                _sparse[i] = i;
-            }
-        }
-        #endregion
-
-        #region Swap
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Swap(coretype fromIndex, coretype toIndex)
-        {
-            coretype value = _dense[toIndex];
-            coretype oldValue = _dense[fromIndex];
-
-            _dense[toIndex] = oldValue;
-            _dense[fromIndex] = value;
-            _sparse[_dense[fromIndex]] = fromIndex;
-            _sparse[_dense[toIndex]] = toIndex;
         }
         #endregion
 
@@ -306,19 +276,19 @@ namespace DCFApixels.DragonECS
 
         public ref struct RefEnumerator
         {
-            private readonly coretype[] _dense;
-            private readonly coretype _count;
-            private coretype _index;
+            private readonly int[] _dense;
+            private readonly int _count;
+            private int _index;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public RefEnumerator(coretype[] values, coretype count)
+            public RefEnumerator(int[] values, int count)
             {
                 _dense = values;
                 _count = count;
                 _index = -1;
             }
 
-            public coretype Current
+            public int Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _dense[_index];
@@ -334,20 +304,20 @@ namespace DCFApixels.DragonECS
             public void Reset() => _index = -1;
         }
 
-        IEnumerator<coretype> IEnumerable<coretype>.GetEnumerator() => new Enumerator(_dense, _count);
+        IEnumerator<int> IEnumerable<int>.GetEnumerator() => new Enumerator(_dense, _count);
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(_dense, _count);
-        public struct Enumerator : IEnumerator<coretype> //to implement the IEnumerable interface and use the ref structure, 2 Enumerators were created.
+        public struct Enumerator : IEnumerator<int> //to implement the IEnumerable interface and use the ref structure, 2 Enumerators were created.
         {
-            private readonly coretype[] _dense;
-            private readonly coretype _count;
-            private coretype _index;
-            public Enumerator(coretype[] values, coretype count)
+            private readonly int[] _dense;
+            private readonly int _count;
+            private int _index;
+            public Enumerator(int[] values, int count)
             {
                 _dense = values;
                 _count = count;
                 _index = -1;
             }
-            public coretype Current => _dense[_index];
+            public int Current => _dense[_index];
             object IEnumerator.Current => _dense[_index];
             public void Dispose() { }
             public bool MoveNext() => ++_index < _count;
@@ -356,16 +326,16 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region ICollection
-        bool ICollection<coretype>.IsReadOnly => false;
+        bool ICollection<int>.IsReadOnly => false;
 
-        bool ICollection<coretype>.Remove(coretype value) => TryRemove(value);
+        bool ICollection<int>.Remove(int value) => TryRemove(value);
         #endregion
 
         #region Debug
         public string Log()
         {
             StringBuilder logbuild = new StringBuilder();
-            for (int i = 0; i < CapacitySparse; i++)
+            for (int i = 0; i < CapacityDense; i++)
             {
                 logbuild.Append(_dense[i] + ", ");
             }
@@ -376,14 +346,14 @@ namespace DCFApixels.DragonECS
             }
             logbuild.Append("\n\r --------------------------");
             logbuild.Append("\n\r");
-            for (int i = 0; i < CapacitySparse; i++)
+            for (int i = 0; i < CapacityDense; i++)
             {
                 logbuild.Append((i < _count ? _dense[i].ToString() : "_") + ", ");
             }
             logbuild.Append("\n\r");
             for (int i = 0; i < CapacitySparse; i++)
             {
-                logbuild.Append((_sparse[i] < _count ? _sparse[i].ToString() : "_") + ", ");
+                logbuild.Append((_sparse[i] >= 0 ? _sparse[i].ToString() : "_") + ", ");
             }
             logbuild.Append("\n\r Count: " + _count);
             logbuild.Append("\n\r Capacity: " + CapacitySparse);
@@ -396,7 +366,7 @@ namespace DCFApixels.DragonECS
         public bool IsValide_Debug()
         {
             bool isPass = true;
-            for (int index = 0; index < CapacitySparse; index++)
+            for (int index = 0; index < _count; index++)
             {
                 int value = _dense[index];
                 isPass = isPass && _sparse[value] == index;
@@ -407,27 +377,27 @@ namespace DCFApixels.DragonECS
 #if DEBUG
         private static class ThrowHalper
         {
-            public static void CheckCapacity(coretype capacity)
+            public static void CheckCapacity(int capacity)
             {
                 if (capacity < 0)
                     throw new ArgumentException("Capacity cannot be a negative number");
             }
-            public static void CheckValueIsPositive(coretype value)
+            public static void CheckValueIsPositive(int value)
             {
                 if (value < 0)
                     throw new ArgumentException("The SparseSet can only contain positive numbers");
             }
-            public static void CheckValueContained(SparseSet source, coretype value)
+            public static void CheckValueContained(SparseSet source, int value)
             {
                 if (!source.Contains(value))
                     throw new ArgumentException($"Value {value} is not contained");
             }
-            public static void CheckValueNotContained(SparseSet source, coretype value)
+            public static void CheckValueNotContained(SparseSet source, int value)
             {
                 if (source.Contains(value))
                     throw new ArgumentException($"Value {value} is already contained");
             }
-            public static void CheckOutOfRange(SparseSet source, coretype index)
+            public static void CheckOutOfRange(SparseSet source, int index)
             {
                 if (index < 0 || index >= source.Count)
                     throw new ArgumentOutOfRangeException($"Index {index} was out of range. Must be non-negative and less than the size of the collection.");

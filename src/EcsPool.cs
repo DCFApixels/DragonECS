@@ -40,7 +40,7 @@ namespace DCFApixels.DragonECS
         public EcsPool(IEcsWorld source, int capacity)
         {
             _source = source;
-            _sparseSet = new SparseSet(capacity);
+            _sparseSet = new SparseSet(capacity, capacity);
 
             _denseItems =new T[capacity];
         }
@@ -95,29 +95,5 @@ namespace DCFApixels.DragonECS
         }
         public override int GetHashCode() => _source.GetHashCode() + ID;
         #endregion
-    }
-
-    public static partial class EntityExtensions
-    {
-        public static ref readonly T Read<T>(this in Entity self)
-            where T : struct
-        {
-            return ref self.world.GetPool<T>().Read(self.id);
-        }
-        public static ref T Write<T>(this in Entity self)
-            where T : struct
-        {
-            return ref self.world.GetPool<T>().Write(self.id);
-        }
-        public static bool Has<T>(this in Entity self)
-            where T : struct
-        {
-            return self.world.GetPool<T>().Has(self.id);
-        }
-        public static void Del<T>(this in Entity self)
-            where T : struct
-        {
-            self.world.GetPool<T>().Del(self.id);
-        }
     }
 }

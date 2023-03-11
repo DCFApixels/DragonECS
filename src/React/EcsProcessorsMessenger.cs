@@ -32,6 +32,10 @@ namespace DCFApixels.DragonECS
             _targets = list.ToArray();
         }
 
+        public void Send(TMessage message)
+        {
+            Send(in message);
+        }
         public void Send(in TMessage message)
         {
             foreach (var item in _targets)

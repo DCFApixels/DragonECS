@@ -6,6 +6,34 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    public class EcsWorldMap
+    {
+        private Dictionary<(Type, string), IEcsWorld> _worlds = new Dictionary<(Type, string), IEcsWorld>(8);
+        private bool _built = false;
+
+        public void Add<TArchetype>(EcsWorld<TArchetype> world, string name = "")
+            where TArchetype : IWorldArchetype
+        {
+            if(_built) { throw new Exception($"Cant change built {nameof(EcsWorldMap)}"); }
+            _worlds.Add((typeof(TArchetype), name), world);
+        }
+
+        public EcsWorld<TArchetype> Get<TArchetype>(string name ="")
+            where TArchetype : IWorldArchetype
+        {
+            return (EcsWorld<TArchetype>)_worlds[(typeof(TArchetype), name)];
+        }
+
+        public IEcsWorld Get(Type type, string name = "")
+        {
+            return _worlds[(type, name)];
+        }
+
+        public void Build()
+        {
+            _built = true;
+        }
+    }
 
     public class EcsSession
     {
@@ -18,13 +46,12 @@ namespace DCFApixels.DragonECS
         private bool _isInit = false;
         private bool _isDestoryed = false;
 
-        private int _worldIdIncrement;
-        private Dictionary<string, IEcsWorld> _worldsDict = new Dictionary<string, IEcsWorld>();
-        private List<IEcsWorld> _worlds = new List<IEcsWorld>();
 
         private Dictionary<Type, IEcsProcessorsRunner> _runners;
         private Dictionary<Type, IEcsProcessorsMessenger> _messengers;
         private EcsProcessorsRunner<_Run> _runRunnerCache;
+
+        private EcsWorldMap _worldMap = new EcsWorldMap();
 
         #region Properties
         public ReadOnlyCollection<IEcsProcessor> AllProcessors => _allProcessorsSealed;
@@ -33,7 +60,6 @@ namespace DCFApixels.DragonECS
 
         #region React Runners/Messengers
         public EcsProcessorsRunner<TDoTag> GetRunner<TDoTag>()
-            where TDoTag : IEcsDoTag
         {
             Type type = typeof(TDoTag);
             if (_runners.TryGetValue(type, out IEcsProcessorsRunner result))
@@ -45,7 +71,6 @@ namespace DCFApixels.DragonECS
             return (EcsProcessorsRunner<TDoTag>)result;
         }
         internal void OnRunnerDetroyed<TDoTag>(EcsProcessorsRunner<TDoTag> target)
-            where TDoTag : IEcsDoTag
         {
             _runners.Remove(typeof(TDoTag));
         }
@@ -62,18 +87,6 @@ namespace DCFApixels.DragonECS
             _messengers.Add(type, result);
             return (EcsProcessorsMessenger<TMessege>)result;
         }
-        public EcsProcessorsGMessenger<TMessege> GetGMessenger<TMessege>()
-            where TMessege : IEcsMessage
-        {
-            Type type = typeof(EcsProcessorsGMessenger<TMessege>);
-            if (_messengers.TryGetValue(type, out IEcsProcessorsMessenger result))
-            {
-                return (EcsProcessorsGMessenger<TMessege>)result;
-            }
-            result = new EcsProcessorsMessenger<TMessege>(this);
-            _messengers.Add(type, result);
-            return (EcsProcessorsGMessenger<TMessege>)result;
-        }
         internal void OnMessengerDetroyed<TMessege>(IEcsProcessorsMessenger<TMessege> target)
             where TMessege : IEcsMessage
         {
@@ -85,7 +98,6 @@ namespace DCFApixels.DragonECS
         public EcsSession Add(IEcsProcessor system)
         {
             CheckInitForMethod(nameof(AddWorld));
-
             _allProcessors.Add(system);
             return this;
         }
@@ -93,8 +105,7 @@ namespace DCFApixels.DragonECS
             where TArchetype : IWorldArchetype
         {
             CheckInitForMethod(nameof(AddWorld));
-
-            _worlds.Add(new EcsWorld(_worldIdIncrement++));
+            _worldMap.Add(world, name);
             return this;
         }
 
@@ -104,8 +115,11 @@ namespace DCFApixels.DragonECS
         public void Init()
         {
             CheckInitForMethod(nameof(Init));
+            _worldMap.Build();
             _allProcessorsSealed = _allProcessors.AsReadOnly();
             _isInit = true;
+
+            GetMessenger<_OnInject<EcsWorldMap>>().Send(new _OnInject<EcsWorldMap>(_worldMap));
 
             GetRunner<_PreInit>().Run();
             GetRunner<_Init>().Run();
@@ -158,6 +172,7 @@ namespace DCFApixels.DragonECS
 
 
 
-
+        #region Utils
+        #endregion
     }
 }

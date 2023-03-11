@@ -8,20 +8,16 @@ using System.Threading.Tasks;
 namespace DCFApixels.DragonECS
 {
     public interface IWorldArchetype { }
-    public struct DefaultArchetype : IWorldArchetype { }
+    public struct DefaultWorld : IWorldArchetype { }
 
     public interface IEcsWorld
     {
-        public const int MAX_WORLDS = byte.MaxValue; //Номер последнего мира 254
-        public const int DEAD_WORLD_ID = byte.MaxValue; //Зарезервированный номер мира для мертвых сущьностей
-
         //private float _timeScale;//TODO реализовать собсвенныйтайм склей для разных миров
 
         #region Properties
-        public ushort ID { get; internal set; }
-        public bool IsAlive { get; }
         public bool IsEmpty { get; }
         public Type ArchetypeType { get; }
+        public int ID { get; }
         #endregion
 
         public EcsPool<T> GetPool<T>() where T : struct;
@@ -36,15 +32,29 @@ namespace DCFApixels.DragonECS
         internal void OnEntityComponentRemoved(int entityID, int changedPoolID);
     }
 
-    public class EcsWorld<TArchetype> : IEcsWorld
+
+    public abstract class EcsWorld
+    {
+        internal static IEcsWorld[] Worlds = new IEcsWorld[8];
+        private static IntDispenser _worldIdDispenser = new IntDispenser();
+
+        public readonly short id;
+
+        public EcsWorld()
+        {
+            id = (short)_worldIdDispenser.GetFree();
+            Worlds[id] = (IEcsWorld)this;
+        }
+    }
+
+    public sealed class EcsWorld<TArchetype> : EcsWorld, IEcsWorld
         where TArchetype : IWorldArchetype
     {
-        private ushort _id = IEcsWorld.DEAD_WORLD_ID;
+        private IntDispenser _entityDispenser;
+        private EcsGroup _entities;
 
-        private SparseSet _componentIDToPoolID;
-
-        private SparseSet _entities = new SparseSet();
         private short[] _gens;
+        private short[] _componentCounts;
 
         private IEcsPool[] _pools;
 
@@ -54,22 +64,18 @@ namespace DCFApixels.DragonECS
         private EcsFilter[] _filters;
 
         #region Properties
-        public ushort ID => _id;
-        ushort IEcsWorld.ID { get => _id; set => _id = value; }
-
-        public bool IsAlive => _id != IEcsWorld.DEAD_WORLD_ID;
         public bool IsEmpty => _entities.Count < 0;
         public Type ArchetypeType => typeof(TArchetype);
-
+        public int ID => id;
         #endregion
 
         #region Constructors
         public EcsWorld()
         {
+            _entityDispenser = new IntDispenser();
             _pools = new IEcsPool[512];
-            _entities = new SparseSet(512);
-            _componentIDToPoolID = new SparseSet(512);
-            _filters = new EcsFilter[512];
+            _filters = new EcsFilter[64];
+            _entities = new EcsGroup(this, 512);
         }
         #endregion
 
@@ -117,14 +123,14 @@ namespace DCFApixels.DragonECS
             BakedMask bakedMask = mask.GetBaked<TArchetype>();
             for (int i = 0, iMax = bakedMask.IncCount; i < iMax; i++)
             {
-                if (!_pools[_componentIDToPoolID[bakedMask.Inc[i]]].Has(entity))
+                if (!_pools[bakedMask.Inc[i]].Has(entity))
                 {
                     return false;
                 }
             }
             for (int i = 0, iMax = bakedMask.ExcCount; i < iMax; i++)
             {
-                if (_pools[_componentIDToPoolID[bakedMask.Exc[i]]].Has(entity))
+                if (_pools[bakedMask.Exc[i]].Has(entity))
                 {
                     return false;
                 }
@@ -137,7 +143,7 @@ namespace DCFApixels.DragonECS
             BakedMask bakedMask = mask.GetBaked<TArchetype>();
             for (int i = 0, iMax = bakedMask.IncCount; i < iMax; i++)
             {
-                int poolID = _componentIDToPoolID[bakedMask.Inc[i]];
+                int poolID = bakedMask.Inc[i];
                 if (poolID == otherPoolID || !_pools[poolID].Has(entity))
                 {
                     return false;
@@ -145,7 +151,7 @@ namespace DCFApixels.DragonECS
             }
             for (int i = 0, iMax = bakedMask.ExcCount; i < iMax; i++)
             {
-                int poolID = _componentIDToPoolID[bakedMask.Exc[i]];
+                int poolID = bakedMask.Exc[i];
                 if (poolID != otherPoolID && _pools[poolID].Has(entity))
                 {
                     return false;
@@ -212,20 +218,18 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region NewEntity
-        public Entity NewEntity()
+        public ent NewEntity()
         {
-            int entityID = _entities.GetFree();
-            _entities.Normalize(ref _gens);
-            _gens[entityID]++;
-
-            return new Entity(this, entityID);
+            int entid = _entityDispenser.GetFree();
+            if(_gens.Length < entid) Array.Resize(ref _gens, _gens.Length << 1);
+            return new ent(entid, _gens[entid]++, id);
         }
         #endregion
 
         #region Destroy
         public void Destroy()
         {
-            _id = IEcsWorld.DEAD_WORLD_ID;
+
         }
         #endregion
 

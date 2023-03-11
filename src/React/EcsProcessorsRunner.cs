@@ -9,7 +9,6 @@ namespace DCFApixels.DragonECS
         public void Run();
     }
     public class EcsProcessorsRunner<TDoTag> : IEcsProcessorsRunner, IDisposable
-        where TDoTag : IEcsDoTag
     {
         private readonly EcsSession _source;
         private readonly IDo<TDoTag>[] _targets;

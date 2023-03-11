@@ -34,13 +34,13 @@ namespace DCFApixels.DragonECS
         public EcsGroup(IEcsWorld world,  int entitiesCapacity, int delayedOpsCapacity = 128)
         {
             _source = world;
-            _entities = new SparseSet(entitiesCapacity);
+            _entities = new SparseSet(entitiesCapacity, entitiesCapacity);
             _delayedOps = new DelayedOp[delayedOpsCapacity];
             _lockCount = 0;
         }
         #endregion
 
-        #region add/remove
+        #region Add/Remove
         public void Add(int entityID)
         {
             if (_lockCount > 0)

@@ -17,9 +17,8 @@ namespace DCFApixels.DragonECS
 
         void IDo<_PreInit>.Do(EcsSession session)
         {
-            _OnInject<T> m = new _OnInject<T>(_injectedData);
             var messenger = session.GetMessenger<_OnInject<T>>();
-            messenger.Send(in m);
+            messenger.Send(new _OnInject<T>(_injectedData));
             messenger.Destroy();
         }
     }
