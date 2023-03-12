@@ -23,6 +23,23 @@ namespace DCFApixels.DragonECS
         public ref readonly T Read(int entity);
         public new ref T Write(int entity);
     }
+
+    public class EcsNullPool : IEcsPool
+    {
+        private readonly IEcsWorld _source;
+
+        public EcsNullPool(IEcsWorld source)
+        {
+            _source = source;
+        }
+
+        public IEcsWorld World => _source;
+        public int ID => -1;
+        public void Del(int index) { }
+        public bool Has(int index) => false;
+        public void Write(int index) { }
+    }
+    
     public class EcsPool<T> : IEcsPool<T>
         where T : struct
     {
@@ -37,9 +54,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        public EcsPool(IEcsWorld source, int capacity)
+        public EcsPool(IEcsWorld source, int id, int capacity)
         {
             _source = source;
+            _id = id;
             _sparseSet = new SparseSet(capacity, capacity);
 
             _denseItems =new T[capacity];
@@ -50,28 +68,29 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entity)
         {
-            return ref _denseItems[_sparseSet[entity]];
+            return ref _denseItems[_sparseSet.IndexOf(entity)];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Write(int entity)
         {
             if (_sparseSet.Contains(entity))
             {
-                return ref _denseItems[_sparseSet[entity]];
+                return ref _denseItems[_sparseSet.IndexOf(entity)];
             }
             else
             {
                 _sparseSet.Add(entity);
                 _sparseSet.Normalize(ref _denseItems);
                 _source.OnEntityComponentAdded(entity, _id);
-                return ref _denseItems[_sparseSet.IndexOf(entity)];
+                int indexof = _sparseSet.IndexOf(entity);
+                return ref _denseItems[indexof];
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entity)
         {
-            return _sparseSet.IndexOf(entity) > 0;
+            return _sparseSet.IndexOf(entity) >= 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Del(int entity)
@@ -81,7 +100,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region IEcsFieldPool
+        #region IEcsPool
         void IEcsPool.Write(int index)
         {
             Write(index);

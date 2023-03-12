@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
@@ -24,6 +24,7 @@ namespace DCFApixels.DragonECS
         public EcsFilter GetFilter<TInc>() where TInc : struct, IInc;
         public EcsFilter GetFilter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc;
         public ent NewEntity();
+        public void DelEntity(int entityID);
         public void Destroy();
 
         public bool IsMaskCompatible(EcsMask mask, int entity);
@@ -31,6 +32,14 @@ namespace DCFApixels.DragonECS
 
         internal void OnEntityComponentAdded(int entityID, int changedPoolID);
         internal void OnEntityComponentRemoved(int entityID, int changedPoolID);
+    }
+
+    public static class IEcsWorldExt
+    {
+        public static void DelEntity(this IEcsWorld self, ent entity)
+        {
+            self.DelEntity(entity.id);
+        }
     }
 
 
@@ -58,6 +67,7 @@ namespace DCFApixels.DragonECS
         private short[] _componentCounts;
 
         private IEcsPool[] _pools;
+        private EcsNullPool _nullPool;
 
         private List<EcsFilter>[] _filtersByIncludedComponents;
         private List<EcsFilter>[] _filtersByExcludedComponents;
@@ -74,7 +84,9 @@ namespace DCFApixels.DragonECS
         public EcsWorld()
         {
             _entityDispenser = new IntDispenser();
+            _nullPool = new EcsNullPool(this);
             _pools = new IEcsPool[512];
+            Array.Fill(_pools, _nullPool);
             _gens = new short[512];
             _filters = new EcsFilter[64];
             _entities = new EcsGroup(this, 512);
@@ -90,17 +102,21 @@ namespace DCFApixels.DragonECS
 
             if (uniqueID >= _pools.Length)
             {
+                int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, ComponentType.Capacity);
+                Array.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
+
                 Array.Resize(ref _filtersByIncludedComponents, ComponentType.Capacity);
                 Array.Resize(ref _filtersByExcludedComponents, ComponentType.Capacity);
             }
 
-            if (_pools[uniqueID] == null)
+            if (_pools[uniqueID] == _nullPool)
             {
-                _pools[uniqueID] = new EcsPool<T>(this, 512);
+                _pools[uniqueID] = new EcsPool<T>(this, ComponentType<T>.uniqueID, 512);
             }
             return (EcsPool<T>)_pools[uniqueID];
         }
+      
         #endregion
 
         #region GetFilter
@@ -124,33 +140,42 @@ namespace DCFApixels.DragonECS
 
         private EcsFilter NewFilter(EcsMask mask, int capacirty = 512)
         {
-            var newFilter = new EcsFilter(this, mask, capacirty);
+            var filter = new EcsFilter(this, mask, capacirty);
 
             for (int i = 0; i < mask.IncCount; i++)
             {
-                int poolid = mask.Inc[i];
-                var list = _filtersByIncludedComponents[poolid];
+                int componentID = mask.Inc[i];
+                var list = _filtersByIncludedComponents[componentID];
                 if (list == null)
                 {
                     list = new List<EcsFilter>(8);
-                    _filtersByIncludedComponents[poolid] = list;
+                    _filtersByIncludedComponents[componentID] = list;
                 }
-                list.Add(newFilter);
+                list.Add(filter);
             }
 
             for (int i = 0; i < mask.ExcCount; i++)
             {
-                int poolid = mask.Exc[i];
-                var list = _filtersByExcludedComponents[poolid];
+                int componentID = mask.Exc[i];
+                var list = _filtersByExcludedComponents[componentID];
                 if (list == null)
                 {
                     list = new List<EcsFilter>(8);
-                    _filtersByExcludedComponents[poolid] = list;
+                    _filtersByExcludedComponents[componentID] = list;
                 }
-                list.Add(newFilter);
+                list.Add(filter);
+            }
+            // scan exist entities for compatibility with new filter.
+            foreach (var item in _entities)
+            {
+                if (IsMaskCompatible(mask, item.id))
+                {
+                    filter.Add(item.id);
+                }
             }
 
-            return newFilter;
+
+            return filter;
         }
         #endregion
 
@@ -164,21 +189,17 @@ namespace DCFApixels.DragonECS
             for (int i = 0, iMax = mask.IncCount; i < iMax; i++)
             {
                 if (!_pools[mask.Inc[i]].Has(entity))
-                {
                     return false;
-                }
             }
             for (int i = 0, iMax = mask.ExcCount; i < iMax; i++)
             {
                 if (_pools[mask.Exc[i]].Has(entity))
-                {
                     return false;
-                }
             }
             return true;
         }
 
-        public bool IsMaskCompatibleWithout(EcsMask mask, int entity, int otherPoolID)
+        public bool IsMaskCompatibleWithout(EcsMask mask, int entity, int otherComponentID)
         {
 #if DEBUG || !DCFAECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TArchetype))
@@ -186,29 +207,25 @@ namespace DCFApixels.DragonECS
 #endif
             for (int i = 0, iMax = mask.IncCount; i < iMax; i++)
             {
-                int poolID = mask.Inc[i];
-                if (poolID == otherPoolID || !_pools[poolID].Has(entity))
-                {
+                int componentID = mask.Inc[i];
+                if (componentID == otherComponentID || !_pools[componentID].Has(entity))
                     return false;
-                }
             }
             for (int i = 0, iMax = mask.ExcCount; i < iMax; i++)
             {
                 int poolID = mask.Exc[i];
-                if (poolID != otherPoolID && _pools[poolID].Has(entity))
-                {
+                if (poolID != otherComponentID && _pools[poolID].Has(entity))
                     return false;
-                }
             }
             return true;
         }
         #endregion
 
         #region EntityChangedReact
-        void IEcsWorld.OnEntityComponentAdded(int entityID, int changedPoolID)
+        void IEcsWorld.OnEntityComponentAdded(int entityID, int componentID)
         {
-            var includeList = _filtersByIncludedComponents[changedPoolID];
-            var excludeList = _filtersByExcludedComponents[changedPoolID];
+            var includeList = _filtersByIncludedComponents[componentID];
+            var excludeList = _filtersByExcludedComponents[componentID];
 
             if (includeList != null)
             {
@@ -224,7 +241,7 @@ namespace DCFApixels.DragonECS
             {
                 foreach (var filter in excludeList)
                 {
-                    if (IsMaskCompatibleWithout(filter.Mask, entityID, changedPoolID))
+                    if (IsMaskCompatibleWithout(filter.Mask, entityID, componentID))
                     {
                         filter.Remove(entityID);
                     }
@@ -260,12 +277,18 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region NewEntity
+        #region NewEntity/DelEntity
         public ent NewEntity()
         {
             int entid = _entityDispenser.GetFree();
-            if(_gens.Length < entid) Array.Resize(ref _gens, _gens.Length << 1);
+            _entities.Add(entid);
+            if (_gens.Length < entid) Array.Resize(ref _gens, _gens.Length << 1);
             return new ent(entid, _gens[entid]++, id);
+        }
+        public void DelEntity(int entityID)
+        {
+            _entityDispenser.Release(entityID);
+            _entities.Remove(entityID);
         }
         #endregion
 

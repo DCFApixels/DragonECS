@@ -12,6 +12,7 @@ namespace DCFApixels.DragonECS
 
         public void Run(EcsSession session)
         {
+            var x = _world.GetFilter<Inc<TransfromCom, Velocity>>();
             foreach (var item in _world.GetFilter<Inc<TransfromCom, Velocity>>().Entities)
             {
                 item.Write<TransfromCom>().position += item.Read<Velocity>().value * Time.deltaTime;

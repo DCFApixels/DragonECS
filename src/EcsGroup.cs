@@ -61,7 +61,7 @@ namespace DCFApixels.DragonECS
             {
                 Array.Resize(ref _delayedOps, _delayedOps.Length << 1);
             }
-            ref DelayedOp delayedOd = ref _delayedOps[_delayedOpsCount];
+            ref DelayedOp delayedOd = ref _delayedOps[_delayedOpsCount++];
             delayedOd.Entity = entityID;
             delayedOd.Added = isAdd;
         }
@@ -108,6 +108,7 @@ namespace DCFApixels.DragonECS
                         Remove(op.Entity);
                     }
                 }
+                _delayedOpsCount = 0;
             }
         }
         public Enumerator GetEnumerator()
