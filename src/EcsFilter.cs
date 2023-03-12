@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Reflection;
 
 namespace DCFApixels.DragonECS
 {
     #region Incs/Excs base
-    public interface ICondition
+    public interface IMaskCondition
     {
         public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype;
     }
     #endregion
 
     #region Incs
-    public interface IInc : ICondition { }
+    public interface IInc : IMaskCondition { }
 
     public struct Inc : IInc
     {
@@ -43,7 +44,7 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region Excs
-    public interface IExc : ICondition { }
+    public interface IExc : IMaskCondition { }
 
     public struct Exc : IExc
     {
@@ -73,6 +74,93 @@ namespace DCFApixels.DragonECS
         }
     }
     #endregion
+
+
+
+    #region EcsMask
+    public sealed class EcsMask
+    {
+        internal readonly int UniqueID;
+        internal readonly int[] Inc;
+        internal readonly int[] Exc;
+        internal readonly int Hash;
+
+        internal int IncCount
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Inc.Length;
+        }
+        internal int ExcCount
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Inc.Length;
+        }
+        internal EcsMask(int uniqueID, int[] inc, int[] exc)
+        {
+            UniqueID = uniqueID;
+            Inc = inc;
+            Exc = exc;
+        }
+    }
+
+    public static class EcsMaskMap<TWorldArchetype>
+        where TWorldArchetype : IWorldArchetype
+    {
+        private static int _count;
+        private static int _capacity;
+
+        public static EcsMask GetMask<TInc, TExc>()
+            where TInc : struct, IInc
+            where TExc : struct, IExc
+        {
+            return Activator<TInc, TExc>.instance;
+        }
+
+        private class Activator<TInc, TExc>
+            where TInc : struct, IInc
+            where TExc : struct, IExc
+        {
+            static Activator()
+            {
+                var inc = new TInc().GetComponentsIDs<TWorldArchetype>();
+                var exc = new TExc().GetComponentsIDs<TWorldArchetype>();
+                Array.Sort(inc);
+                Array.Sort(exc);
+
+                Type[] sortedInc = new Type[inc.Length];
+                Type[] sortedExc = new Type[exc.Length];
+                for (int i = 0; i < sortedInc.Length; i++)
+                {
+                    sortedInc[i] = EcsWorld<TWorldArchetype>.ComponentType.types[inc[i]];
+                }
+                for (int i = 0; i < sortedInc.Length; i++)
+                {
+                    sortedExc[i] = EcsWorld<TWorldArchetype>.ComponentType.types[exc[i]];
+                }
+                Type thisType = typeof(Activator<TInc, TExc>);
+                Type sortedIncType = typeof(TInc).GetGenericTypeDefinition().MakeGenericType(sortedInc);
+                Type sortedExcType = typeof(TExc).GetGenericTypeDefinition().MakeGenericType(sortedExc);
+
+                Type targetType = typeof(Activator<,>).MakeGenericType(sortedIncType, sortedExcType);
+
+                if(targetType != thisType)
+                {
+                    instance = (EcsMask)targetType.GetField(nameof(instance), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).GetValue(null);
+                    return;
+                }
+
+                var id = _count++;
+                if (_count >= _capacity)
+                    _capacity <<= 1;
+
+                instance = new EcsMask(id, inc, exc);
+            }
+
+            public readonly static EcsMask instance;
+        }
+    }
+    #endregion
+
 
     #region BakedMask
     public abstract class BakedMask
@@ -193,16 +281,6 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override BakedMask GetBaked<TWorldArchetype>() => BakedMask<TWorldArchetype, Mask<TInc, TExc>>.Instance;
     }
-
-    internal static class ArrayExt
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static T[] Sort<T>(this T[] self)
-        {
-            Array.Sort(self);
-            return self;
-        }
-    }
     #endregion
 
     #region Filter
@@ -265,6 +343,21 @@ namespace DCFApixels.DragonECS
             _entities.Remove(entityID);
         }
         #endregion
+    }
+    #endregion
+
+    #region Utils
+    internal static class ArrayExt
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static T[] Sort<T>(this T[] self)
+        {
+            Array.Sort(self);
+
+            return self;
+        }
+
+
     }
     #endregion
 }

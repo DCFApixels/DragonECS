@@ -90,9 +90,9 @@ namespace DCFApixels.DragonECS
 
             if (uniqueID >= _pools.Length)
             {
-                Array.Resize(ref _pools, ComponentType.capacity);
-                Array.Resize(ref _filtersByIncludedComponents, ComponentType.capacity);
-                Array.Resize(ref _filtersByExcludedComponents, ComponentType.capacity);
+                Array.Resize(ref _pools, ComponentType.Capacity);
+                Array.Resize(ref _filtersByIncludedComponents, ComponentType.Capacity);
+                Array.Resize(ref _filtersByExcludedComponents, ComponentType.Capacity);
             }
 
             if (_pools[uniqueID] == null)
@@ -281,7 +281,11 @@ namespace DCFApixels.DragonECS
         internal abstract class ComponentType
         {
             internal static int increment = 1;
-            internal static int capacity = 512;
+            internal static int Capacity
+            {
+                get => types.Length;
+            }
+            internal static Type[] types;
         }
         internal sealed class ComponentType<T> : ComponentType
         {
@@ -296,11 +300,11 @@ namespace DCFApixels.DragonECS
                     throw new EcsFrameworkException($"No more room for new component for this {typeof(TArchetype).FullName} IWorldArchetype");
                 }
 #endif
-
-                if (increment > capacity)
+                if (increment > Capacity)
                 {
-                    capacity <<= 1;
+                    Array.Resize(ref types, Capacity << 1);
                 }
+                types[uniqueID] = typeof(T);
             }
         }
         #endregion
