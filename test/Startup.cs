@@ -9,13 +9,18 @@ namespace DCFApixels.DragonECS
     {
 
         private EcsSession _ecsSession;
+
+        [SerializeField]
         public SharedData _data = new SharedData();
 
         private void Start()
         {
             _ecsSession = new EcsSession()
-                .Add(new TestSystem())
                 .Inject(_data)
+                .AddWorld(new EcsWorld<DefaultWorld>())
+                .Add(new TestSystem())
+                .Add(new VelocitySystem())
+                .Add(new ViewSystem())
                 .Init();
         }
 

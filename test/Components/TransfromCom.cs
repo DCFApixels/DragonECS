@@ -7,10 +7,8 @@ using UnityEngine;
 
 namespace DCFApixels.DragonECS
 {
-    [Serializable]
-    public class SharedData
+    public struct TransfromCom
     {
-        public Transform view1;
-        public Transform view2;
+        public Vector3 position;
     }
 }

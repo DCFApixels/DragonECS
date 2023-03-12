@@ -40,8 +40,8 @@ namespace DCFApixels.DragonECS
         private int _id;
 
 
-        private readonly List<IEcsProcessor> _allSystems;
-        private ReadOnlyCollection<IEcsProcessor> _allSystemsSealed;
+        private readonly List<IEcsSystem> _allSystems;
+        private ReadOnlyCollection<IEcsSystem> _allSystemsSealed;
 
         private bool _isInit = false;
         private bool _isDestoryed = false;
@@ -53,19 +53,19 @@ namespace DCFApixels.DragonECS
         private readonly EcsWorldMap _worldMap;
 
         #region Properties
-        public ReadOnlyCollection<IEcsProcessor> AllProcessors => _allSystemsSealed;
+        public ReadOnlyCollection<IEcsSystem> AllProcessors => _allSystemsSealed;
 
         #endregion
 
         public EcsSession()
         {
-            _allSystems = new List<IEcsProcessor>(128);
+            _allSystems = new List<IEcsSystem>(128);
             _runners = new Dictionary<Type, IEcsRunner>();
             _worldMap = new EcsWorldMap();
         }
 
-        #region React Runners/Messengers
-        public T GetRunner<T>() where T : IEcsProcessor
+        #region Runners
+        public T GetRunner<T>() where T : IEcsSystem
         {
             Type type = typeof(T);
             if (_runners.TryGetValue(type, out IEcsRunner result))
@@ -79,7 +79,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Configuration
-        public EcsSession Add(IEcsProcessor system)
+        public EcsSession Add(IEcsSystem system)
         {
             CheckInitForMethod(nameof(AddWorld));
             _allSystems.Add(system);
@@ -92,7 +92,6 @@ namespace DCFApixels.DragonECS
             _worldMap.Add(world, name);
             return this;
         }
-
         #endregion
 
         #region LifeCycle
@@ -154,8 +153,6 @@ namespace DCFApixels.DragonECS
            // return new ent(target.id, target.world._gens[target.id], -1000);
         }
         #endregion
-
-
 
         #region Utils
         #endregion

@@ -16,13 +16,19 @@ namespace DCFApixels.DragonECS
             this.interfaceType = interfaceType;
             this.filter = filter;
         }
+
+        public EcsRunnerFilterAttribute(object filter)
+        {
+            interfaceType = null;
+            this.filter = filter;
+        }
     }
 
-    public interface IEcsProcessor { }
+    public interface IEcsSystem { }
 
     public static class IEcsProcessorExtensions
     {
-        public static bool IsRunner(this IEcsProcessor self)
+        public static bool IsRunner(this IEcsSystem self)
         {
             return self is IEcsRunner;
         }
@@ -59,7 +65,7 @@ namespace DCFApixels.DragonECS
             _runnerTypes = new Dictionary<Guid, Type>();
             foreach (var item in newRunnerTypes)
             {
-                Type intrf = item.GetInterfaces().Where(o => o != typeof(IEcsRunner) && o != typeof(IEcsProcessor)).First(); //TODO оптимизировать это место
+                Type intrf = item.GetInterfaces().Where(o => o != typeof(IEcsRunner) && o != typeof(IEcsSystem)).First(); //TODO оптимизировать это место
                 _runnerTypes.Add(intrf.GUID, item);
             }
 
@@ -84,7 +90,7 @@ namespace DCFApixels.DragonECS
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InitFor<TInterface>() where TInterface : IEcsProcessor
+        public static void InitFor<TInterface>() where TInterface : IEcsSystem
         {
             Type interfaceType = typeof(TInterface);
             Type nonGenericInterfaceType = interfaceType;
@@ -109,8 +115,8 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsRunner { }
 
-    public abstract class EcsRunner<TInterface> : IEcsProcessor, IEcsRunner
-        where TInterface : IEcsProcessor
+    public abstract class EcsRunner<TInterface> : IEcsSystem, IEcsRunner
+        where TInterface : IEcsSystem
     {
         internal static void Init(Type subclass)
         {
@@ -128,19 +134,19 @@ namespace DCFApixels.DragonECS
             {
                 throw new ArgumentException($"{typeof(TInterface).FullName} is not interface");
             }
-            if (interfaces.Length != 1 || interfaces[0] != typeof(IEcsProcessor))
+            if (interfaces.Length != 1 || interfaces[0] != typeof(IEcsSystem))
             {
-                throw new ArgumentException($"{typeof(TInterface).FullName} does not directly inherit the {nameof(IEcsProcessor)} interface");
+                throw new ArgumentException($"{typeof(TInterface).FullName} does not directly inherit the {nameof(IEcsSystem)} interface");
             }
 #endif
             _subclass = subclass;
         }
 
-        public static TInterface Instantiate(IEnumerable<IEcsProcessor> targets, object filter)
+        public static TInterface Instantiate(IEnumerable<IEcsSystem> targets, object filter)
         {
             Type interfaceType = typeof(TInterface);
 
-            IEnumerable<IEcsProcessor> newTargets;
+            IEnumerable<IEcsSystem> newTargets;
 
             if (filter != null)
             {
@@ -163,7 +169,7 @@ namespace DCFApixels.DragonECS
 
             return Instantiate(newTargets.Select(o => (TInterface)o).ToArray());
         }
-        public static TInterface Instantiate(IEnumerable<IEcsProcessor> targets)
+        public static TInterface Instantiate(IEnumerable<IEcsSystem> targets)
         {
             return Instantiate(targets.Where(o => o is TInterface).Select(o => (TInterface)o).ToArray());
         }
@@ -173,7 +179,7 @@ namespace DCFApixels.DragonECS
                 EcsRunnerActivator.InitFor<TInterface>();
 
             var instance = (EcsRunner<TInterface>)Activator.CreateInstance(_subclass);
-            return (TInterface)(IEcsProcessor)instance.Set(targets);
+            return (TInterface)(IEcsSystem)instance.Set(targets);
         }
 
         private static Type _subclass;

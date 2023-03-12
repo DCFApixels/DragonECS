@@ -1,18 +1,18 @@
 ﻿namespace DCFApixels.DragonECS
 {
-    public interface IEcsPreInitSystem : IEcsProcessor
+    public interface IEcsPreInitSystem : IEcsSystem
     {
         public void PreInit(EcsSession session);
     }
-    public interface IEcsInitSystem : IEcsProcessor
+    public interface IEcsInitSystem : IEcsSystem
     {
         public void Init(EcsSession session);
     }
-    public interface IEcsRunSystem : IEcsProcessor
+    public interface IEcsRunSystem : IEcsSystem
     {
         public void Run(EcsSession session);
     }
-    public interface IEcsDestroySystem : IEcsProcessor
+    public interface IEcsDestroySystem : IEcsSystem
     {
         public void Destroy(EcsSession session);
     }

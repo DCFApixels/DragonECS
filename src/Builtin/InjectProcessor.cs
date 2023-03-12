@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsInject<T> : IEcsProcessor
+    public interface IEcsInject<T> : IEcsSystem
     {
         public void Inject(T obj);
     }

@@ -110,11 +110,13 @@ namespace DCFApixels.DragonECS
         internal static int capacity = 512;
 
         protected BakedMask(int[] inc, int[] exc, Mask mask) : base(inc, exc, mask) { }
+
+
     }
 
     public sealed class BakedMask<TWorldArchetype, TMask> : BakedMask<TWorldArchetype>
         where TWorldArchetype : IWorldArchetype
-        where TMask : MaskSingleton<TMask>
+        where TMask : Mask, new()
     {
         public static readonly int uniqueID;
 
@@ -127,6 +129,7 @@ namespace DCFApixels.DragonECS
 #endif
             if (increment > capacity)
                 capacity <<= 1;
+
             _instance = new BakedMask<TWorldArchetype, TMask>();
         }
 
@@ -136,19 +139,17 @@ namespace DCFApixels.DragonECS
             MaskSingleton<TMask>.Instance)
         { }
 
-        private static readonly BakedMask<TWorldArchetype, TMask> _instance = new BakedMask<TWorldArchetype, TMask>();
+        private static readonly BakedMask<TWorldArchetype, TMask> _instance;
         public static BakedMask<TWorldArchetype, TMask> Instance
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _instance;
         }
-
         internal override int UniqueID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => uniqueID;
         }
-
         internal override Type WorldArchetypeType
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -164,47 +165,43 @@ namespace DCFApixels.DragonECS
         internal abstract int[] MakeExc<TWorldArchetype>() where TWorldArchetype : IWorldArchetype;
         public abstract BakedMask GetBaked<TWorldArchetype>() where TWorldArchetype : IWorldArchetype;
     }
-    public abstract class MaskSingleton<TSelf> : Mask 
-        where TSelf : Mask
+    public abstract class MaskSingleton<TSelf> 
+        where TSelf : Mask, new()
     {
-        protected static TSelf _instance;
+        protected static TSelf _instance = new TSelf();
         internal static TSelf Instance
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _instance;
         }
     }
-
-    public class Mask<TInc> : MaskSingleton<Mask<TInc>>
-        where TInc : struct, IInc
+    public class Mask<TInc> : Mask where TInc : struct, IInc
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal override int[] MakeInc<TWorldArchetype>() => new TInc().GetComponentsIDs<TWorldArchetype>();
+        internal override int[] MakeInc<TWorldArchetype>() => new TInc().GetComponentsIDs<TWorldArchetype>().Sort();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal override int[] MakeExc<TWorldArchetype>() => Array.Empty<int>();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override BakedMask GetBaked<TWorldArchetype>()
-        {
-            return BakedMask<TWorldArchetype, Mask<TInc>>.Instance;
-        }
-
-        static Mask() { _instance = new Mask<TInc>(); }
+        public override BakedMask GetBaked<TWorldArchetype>() => BakedMask<TWorldArchetype, Mask<TInc>>.Instance;
     }
-    public class Mask<TInc, TExc> : MaskSingleton<Mask<TInc, TExc>>
-        where TInc : struct, IInc
-        where TExc : struct, IExc
+    public class Mask<TInc, TExc> : Mask where TInc : struct, IInc where TExc : struct, IExc
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal override int[] MakeInc<TWorldArchetype>() => new TInc().GetComponentsIDs<TWorldArchetype>();
+        internal override int[] MakeInc<TWorldArchetype>() => new TInc().GetComponentsIDs<TWorldArchetype>().Sort();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal override int[] MakeExc<TWorldArchetype>() => new TExc().GetComponentsIDs<TWorldArchetype>();
+        internal override int[] MakeExc<TWorldArchetype>() => new TExc().GetComponentsIDs<TWorldArchetype>().Sort();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override BakedMask GetBaked<TWorldArchetype>()
-        {
-            return BakedMask<TWorldArchetype, Mask<TInc, TExc>>.Instance;
-        }
+        public override BakedMask GetBaked<TWorldArchetype>() => BakedMask<TWorldArchetype, Mask<TInc, TExc>>.Instance;
+    }
 
-        static Mask() { _instance = new Mask<TInc, TExc>(); }
+    internal static class ArrayExt
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static T[] Sort<T>(this T[] self)
+        {
+            Array.Sort(self);
+            return self;
+        }
     }
     #endregion
 

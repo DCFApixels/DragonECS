@@ -21,7 +21,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         public EcsPool<T> GetPool<T>() where T : struct;
-        public EcsFilter GetFilter<TMask>() where TMask : MaskSingleton<TMask>;
+        public EcsFilter GetFilter<TInc>() where TInc : struct, IInc;
+        public EcsFilter GetFilter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc;
         public ent NewEntity();
         public void Destroy();
 
@@ -74,8 +75,11 @@ namespace DCFApixels.DragonECS
         {
             _entityDispenser = new IntDispenser();
             _pools = new IEcsPool[512];
+            _gens = new short[512];
             _filters = new EcsFilter[64];
             _entities = new EcsGroup(this, 512);
+            _filtersByIncludedComponents = new List<EcsFilter>[16];
+            _filtersByExcludedComponents = new List<EcsFilter>[16];
         }
         #endregion
 
@@ -100,7 +104,16 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetFilter
-        public EcsFilter GetFilter<TMask>() where TMask : MaskSingleton<TMask>
+
+        public EcsFilter GetFilter<TInc>() where TInc : struct, IInc
+        {
+            return GetFilterInternal<Mask<TInc>>();
+        }
+        public EcsFilter GetFilter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc
+        {
+            return GetFilterInternal<Mask<TInc, TExc>>();
+        }
+        private EcsFilter GetFilterInternal<TMask>() where TMask : Mask, new()
         {
             var bakedmask = BakedMask<TArchetype, TMask>.Instance;
 
@@ -111,9 +124,40 @@ namespace DCFApixels.DragonECS
 
             if (_filters[bakedmask.UniqueID] == null)
             {
-                _filters[bakedmask.UniqueID] = new EcsFilter(this, bakedmask, 512);
+                _filters[bakedmask.UniqueID] = NewFilter(bakedmask);
             }
             return _filters[bakedmask.UniqueID];
+        }
+
+        private EcsFilter NewFilter(BakedMask mask, int capacirty = 512)
+        {
+            var newFilter = new EcsFilter(this, mask, capacirty);
+
+            for (int i = 0; i < mask.IncCount; i++)
+            {
+                int poolid = mask.Inc[i];
+                var list = _filtersByIncludedComponents[poolid];
+                if (list == null)
+                {
+                    list = new List<EcsFilter>(8);
+                    _filtersByIncludedComponents[poolid] = list;
+                }
+                list.Add(newFilter);
+            }
+
+            for (int i = 0; i < mask.ExcCount; i++)
+            {
+                int poolid = mask.Exc[i];
+                var list = _filtersByExcludedComponents[poolid];
+                if (list == null)
+                {
+                    list = new List<EcsFilter>(8);
+                    _filtersByExcludedComponents[poolid] = list;
+                }
+                list.Add(newFilter);
+            }
+
+            return newFilter;
         }
         #endregion
 
