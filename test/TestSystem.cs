@@ -26,6 +26,11 @@ namespace DCFApixels.DragonECS
             int has4 = x4.GetHashCode();
             int has5 = x5.GetHashCode();
 
+            Debug.Log("1 " + has1);
+            Debug.Log("2 " + has2);
+            Debug.Log("3 " + has3);
+            Debug.Log("4 " + has4);
+            Debug.Log("5 " + has5);
             var e = _world.NewEntity();
             e.Write<TransfromCom>().position = Vector3.zero;
             e.Write<View>().Ref = _sharedData.view1;

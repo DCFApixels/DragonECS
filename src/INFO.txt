@@ -4,3 +4,7 @@ DCFAECS_NO_SANITIZE_CHECKS - отвключение дополнительных
 
         public const int MAX_WORLDS = byte.MaxValue; //Номер последнего мира 254
         public const int DEAD_WORLD_ID = byte.MaxValue; //Зарезервированный номер мира для мертвых сущьностей
+
+
+
+#if DEBUG || !DCFAECS_NO_SANITIZE_CHECKS

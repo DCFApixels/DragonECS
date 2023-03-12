@@ -26,8 +26,8 @@ namespace DCFApixels.DragonECS
         public ent NewEntity();
         public void Destroy();
 
-        public bool IsMaskCompatible(Mask mask, int entity);
-        public bool IsMaskCompatibleWithout(Mask mask, int entity, int otherPoolID);
+        public bool IsMaskCompatible(EcsMask mask, int entity);
+        public bool IsMaskCompatibleWithout(EcsMask mask, int entity, int otherPoolID);
 
         internal void OnEntityComponentAdded(int entityID, int changedPoolID);
         internal void OnEntityComponentRemoved(int entityID, int changedPoolID);
@@ -105,31 +105,24 @@ namespace DCFApixels.DragonECS
 
         #region GetFilter
 
-        public EcsFilter GetFilter<TInc>() where TInc : struct, IInc
-        {
-            return GetFilterInternal<Mask<TInc>>();
-        }
+        public EcsFilter GetFilter<TInc>() where TInc : struct, IInc => GetFilter<TInc, Exc>();
         public EcsFilter GetFilter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc
         {
-            return GetFilterInternal<Mask<TInc, TExc>>();
-        }
-        private EcsFilter GetFilterInternal<TMask>() where TMask : Mask, new()
-        {
-            var bakedmask = BakedMask<TArchetype, TMask>.Instance;
+            var mask = EcsMaskMap<TArchetype>.GetMask<TInc, Exc>();
 
-            if (_filters.Length >= BakedMask<TArchetype>.capacity)
+            if (_filters.Length <= EcsMaskMap<TArchetype>.Capacity)
             {
-                Array.Resize(ref _filters, BakedMask<TArchetype>.capacity);
+                Array.Resize(ref _filters, EcsMaskMap<TArchetype>.Capacity);
             }
 
-            if (_filters[bakedmask.UniqueID] == null)
+            if (_filters[mask.UniqueID] == null)
             {
-                _filters[bakedmask.UniqueID] = NewFilter(bakedmask);
+                _filters[mask.UniqueID] = NewFilter(mask);
             }
-            return _filters[bakedmask.UniqueID];
+            return _filters[mask.UniqueID];
         }
 
-        private EcsFilter NewFilter(BakedMask mask, int capacirty = 512)
+        private EcsFilter NewFilter(EcsMask mask, int capacirty = 512)
         {
             var newFilter = new EcsFilter(this, mask, capacirty);
 
@@ -162,19 +155,22 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IsMaskCompatible/IsMaskCompatibleWithout
-        public bool IsMaskCompatible(Mask mask, int entity)
+        public bool IsMaskCompatible(EcsMask mask, int entity)
         {
-            BakedMask bakedMask = mask.GetBaked<TArchetype>();
-            for (int i = 0, iMax = bakedMask.IncCount; i < iMax; i++)
+#if DEBUG || !DCFAECS_NO_SANITIZE_CHECKS
+            if (mask.WorldArchetypeType != typeof(TArchetype))
+                throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TArchetype)");
+#endif
+            for (int i = 0, iMax = mask.IncCount; i < iMax; i++)
             {
-                if (!_pools[bakedMask.Inc[i]].Has(entity))
+                if (!_pools[mask.Inc[i]].Has(entity))
                 {
                     return false;
                 }
             }
-            for (int i = 0, iMax = bakedMask.ExcCount; i < iMax; i++)
+            for (int i = 0, iMax = mask.ExcCount; i < iMax; i++)
             {
-                if (_pools[bakedMask.Exc[i]].Has(entity))
+                if (_pools[mask.Exc[i]].Has(entity))
                 {
                     return false;
                 }
@@ -182,20 +178,23 @@ namespace DCFApixels.DragonECS
             return true;
         }
 
-        public bool IsMaskCompatibleWithout(Mask mask, int entity, int otherPoolID)
+        public bool IsMaskCompatibleWithout(EcsMask mask, int entity, int otherPoolID)
         {
-            BakedMask bakedMask = mask.GetBaked<TArchetype>();
-            for (int i = 0, iMax = bakedMask.IncCount; i < iMax; i++)
+#if DEBUG || !DCFAECS_NO_SANITIZE_CHECKS
+            if (mask.WorldArchetypeType != typeof(TArchetype))
+                throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TArchetype)");
+#endif
+            for (int i = 0, iMax = mask.IncCount; i < iMax; i++)
             {
-                int poolID = bakedMask.Inc[i];
+                int poolID = mask.Inc[i];
                 if (poolID == otherPoolID || !_pools[poolID].Has(entity))
                 {
                     return false;
                 }
             }
-            for (int i = 0, iMax = bakedMask.ExcCount; i < iMax; i++)
+            for (int i = 0, iMax = mask.ExcCount; i < iMax; i++)
             {
-                int poolID = bakedMask.Exc[i];
+                int poolID = mask.Exc[i];
                 if (poolID != otherPoolID && _pools[poolID].Has(entity))
                 {
                     return false;
@@ -215,7 +214,7 @@ namespace DCFApixels.DragonECS
             {
                 foreach (var filter in includeList)
                 {
-                    if (IsMaskCompatible(filter.Mask.Mask, entityID))
+                    if (IsMaskCompatible(filter.Mask, entityID))
                     {
                         filter.Add(entityID);
                     }
@@ -225,7 +224,7 @@ namespace DCFApixels.DragonECS
             {
                 foreach (var filter in excludeList)
                 {
-                    if (IsMaskCompatibleWithout(filter.Mask.Mask, entityID, changedPoolID))
+                    if (IsMaskCompatibleWithout(filter.Mask, entityID, changedPoolID))
                     {
                         filter.Remove(entityID);
                     }
@@ -242,7 +241,7 @@ namespace DCFApixels.DragonECS
             {
                 foreach (var filter in includeList)
                 {
-                    if (IsMaskCompatible(filter.Mask.Mask, entityID))
+                    if (IsMaskCompatible(filter.Mask, entityID))
                     {
                         filter.Remove(entityID);
                     }
@@ -252,7 +251,7 @@ namespace DCFApixels.DragonECS
             {
                 foreach (var filter in excludeList)
                 {
-                    if (IsMaskCompatibleWithout(filter.Mask.Mask, entityID, changedPoolID))
+                    if (IsMaskCompatibleWithout(filter.Mask, entityID, changedPoolID))
                     {
                         filter.Add(entityID);
                     }
@@ -278,33 +277,33 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Utils
-        internal abstract class ComponentType
+        internal static class ComponentType
         {
             internal static int increment = 1;
             internal static int Capacity
             {
                 get => types.Length;
             }
-            internal static Type[] types;
+            internal static Type[] types = new Type[64];
         }
-        internal sealed class ComponentType<T> : ComponentType
+        internal static class ComponentType<T>
         {
             internal static int uniqueID;
 
             static ComponentType()
             {
-                uniqueID = increment++;
+                uniqueID = ComponentType.increment++;
 #if DEBUG || DCFAECS_NO_SANITIZE_CHECKS
-                if (increment + 1 > ushort.MaxValue)
+                if (ComponentType.increment + 1 > ushort.MaxValue)
                 {
                     throw new EcsFrameworkException($"No more room for new component for this {typeof(TArchetype).FullName} IWorldArchetype");
                 }
 #endif
-                if (increment > Capacity)
+                if (uniqueID >= ComponentType.types.Length)
                 {
-                    Array.Resize(ref types, Capacity << 1);
+                    Array.Resize(ref ComponentType.types, ComponentType.types.Length << 1);
                 }
-                types[uniqueID] = typeof(T);
+                ComponentType.types[uniqueID] = typeof(T);
             }
         }
         #endregion
