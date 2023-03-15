@@ -29,12 +29,11 @@ namespace DCFApixels.DragonECS
             get => (ushort)((_full << 32) >> 48);
 
         }
-        // но чтобы значене default было NULL сульностью, мир хранится в виде ID + 1
         [EditorBrowsable(EditorBrowsableState.Never)]
         public short world
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (short)(((_full << 48) >> 48) - 1);
+            get => (short)((_full << 48) >> 48);
 
         }
         #endregion
@@ -45,7 +44,7 @@ namespace DCFApixels.DragonECS
         {
             _full = ((long)id) << 32;
             _full += ((long)gen) << 16;
-            _full += ++world; // сдвиг айдишников + 1
+            _full += world;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

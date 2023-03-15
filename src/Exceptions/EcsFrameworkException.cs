@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace DCFApixels.DragonECS
 {
@@ -8,8 +9,6 @@ namespace DCFApixels.DragonECS
         public EcsFrameworkException() { }
         public EcsFrameworkException(string message) : base(Exceptions.MESSAGE_SUFFIX + message) { }
         public EcsFrameworkException(string message, Exception inner) : base(Exceptions.MESSAGE_SUFFIX + message, inner) { }
-        protected EcsFrameworkException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+        protected EcsFrameworkException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 }

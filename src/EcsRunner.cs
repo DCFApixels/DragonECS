@@ -25,6 +25,8 @@ namespace DCFApixels.DragonECS
     }
 
     public interface IEcsSystem { }
+    public interface IEcsRunner { }
+
 
     public static class IEcsProcessorExtensions
     {
@@ -90,7 +92,7 @@ namespace DCFApixels.DragonECS
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InitFor<TInterface>() where TInterface : IEcsSystem
+        internal static void InitFor<TInterface>() where TInterface : IEcsSystem
         {
             Type interfaceType = typeof(TInterface);
             Type nonGenericInterfaceType = interfaceType;
@@ -113,15 +115,13 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public interface IEcsRunner { }
-
     public abstract class EcsRunner<TInterface> : IEcsSystem, IEcsRunner
         where TInterface : IEcsSystem
     {
         internal static void Init(Type subclass)
         {
 
-#if DEBUG || DCFAECS_NO_SANITIZE_CHECKS
+#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
             if (_subclass != null)
             {
                 throw new ArgumentException($"The Runner<{typeof(TInterface).FullName}> can only have one subclass");

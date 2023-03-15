@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DCFApixels.DragonECS
+﻿namespace DCFApixels.DragonECS
 {
     public interface IEcsInject<T> : IEcsSystem
     {
@@ -21,11 +15,11 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public class InjectProcessor<T> : IEcsPreInitSystem
+    public class InjectSystem<T> : IEcsPreInitSystem
     {
         private T _injectedData;
 
-        public InjectProcessor(T injectedData)
+        public InjectSystem(T injectedData)
         {
             _injectedData = injectedData;
         }
@@ -37,11 +31,11 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public static class InjectProcessorExstensions
+    public static class InjectSystemExstensions
     {
         public static EcsSession Inject<T>(this EcsSession self, T data)
         {
-            self.Add(new InjectProcessor<T>(data));
+            self.Add(new InjectSystem<T>(data));
             return self;
         }
 

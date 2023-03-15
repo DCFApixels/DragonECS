@@ -17,7 +17,7 @@
         public void Destroy(EcsSession session);
     }
 
-    public interface IEcsSimpleCycleSystem :
+    public interface IEcsBaseSystem :
         IEcsInitSystem,
         IEcsRunSystem,
         IEcsDestroySystem

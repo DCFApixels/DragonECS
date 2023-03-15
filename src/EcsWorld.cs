@@ -46,7 +46,7 @@ namespace DCFApixels.DragonECS
     public abstract class EcsWorld
     {
         internal static IEcsWorld[] Worlds = new IEcsWorld[8];
-        private static IntDispenser _worldIdDispenser = new IntDispenser();
+        private static IntDispenser _worldIdDispenser = new IntDispenser(1);
 
         public readonly short id;
 
@@ -182,7 +182,7 @@ namespace DCFApixels.DragonECS
         #region IsMaskCompatible/IsMaskCompatibleWithout
         public bool IsMaskCompatible(EcsMask mask, int entity)
         {
-#if DEBUG || !DCFAECS_NO_SANITIZE_CHECKS
+#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TArchetype))
                 throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TArchetype)");
 #endif
@@ -201,7 +201,7 @@ namespace DCFApixels.DragonECS
 
         public bool IsMaskCompatibleWithout(EcsMask mask, int entity, int otherComponentID)
         {
-#if DEBUG || !DCFAECS_NO_SANITIZE_CHECKS
+#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TArchetype))
                 throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TArchetype)");
 #endif
@@ -316,7 +316,7 @@ namespace DCFApixels.DragonECS
             static ComponentType()
             {
                 uniqueID = ComponentType.increment++;
-#if DEBUG || DCFAECS_NO_SANITIZE_CHECKS
+#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
                 if (ComponentType.increment + 1 > ushort.MaxValue)
                 {
                     throw new EcsFrameworkException($"No more room for new component for this {typeof(TArchetype).FullName} IWorldArchetype");
