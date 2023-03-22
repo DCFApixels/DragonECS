@@ -12,14 +12,14 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsWorld
     {
-        //private float _timeScale;//TODO реализовать собсвенныйтайм склей для разных миров
-
         #region Properties
+        //private float _timeScale;//TODO реализовать собсвенныйтайм склей для разных миров
         public bool IsEmpty { get; }
         public Type ArchetypeType { get; }
         public int ID { get; }
         #endregion
 
+        #region Methods
         public EcsPool<T> GetPool<T>() where T : struct;
         public EcsFilter GetFilter<TInc>() where TInc : struct, IInc;
         public EcsFilter GetFilter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc;
@@ -32,6 +32,7 @@ namespace DCFApixels.DragonECS
 
         internal void OnEntityComponentAdded(int entityID, int changedPoolID);
         internal void OnEntityComponentRemoved(int entityID, int changedPoolID);
+        #endregion
     }
 
     public static class IEcsWorldExt
@@ -41,7 +42,6 @@ namespace DCFApixels.DragonECS
             self.DelEntity(entity.id);
         }
     }
-
 
     public abstract class EcsWorld
     {
