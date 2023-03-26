@@ -13,31 +13,193 @@ namespace DCFApixels.DragonECS
 
     #region Incs
     public interface IInc : IMaskCondition { }
-
     public struct Inc : IInc
     {
         public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype => Array.Empty<int>();
     }
     public struct Inc<T0> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>()
-            where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
         {
             return new int[]
             {
-                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
             };
         }
     }
     public struct Inc<T0, T1> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>()
-            where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
         {
             return new int[]
             {
                 EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
-                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2> : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3> : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4> : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T4>.uniqueID,
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5> : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T4>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T5>.uniqueID,
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6> : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T4>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T5>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T6>.uniqueID,
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7> : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T4>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T5>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T6>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T7>.uniqueID,
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8> : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T4>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T5>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T6>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T7>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T8>.uniqueID,
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T4>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T5>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T6>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T7>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T8>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T9>.uniqueID,
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T4>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T5>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T6>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T7>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T8>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T9>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T10>.uniqueID,
+            };
+        }
+    }
+    public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : IInc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T4>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T5>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T6>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T7>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T8>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T9>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T10>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T11>.uniqueID,
             };
         }
     }
@@ -45,15 +207,13 @@ namespace DCFApixels.DragonECS
 
     #region Excs
     public interface IExc : IMaskCondition { }
-
     public struct Exc : IExc
     {
         public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype => Array.Empty<int>();
     }
     public struct Exc<T0> : IExc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>()
-            where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
         {
             return new int[]
             {
@@ -63,13 +223,66 @@ namespace DCFApixels.DragonECS
     }
     public struct Exc<T0, T1> : IExc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>()
-            where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
         {
             return new int[]
             {
                 EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
-                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+            };
+        }
+    }
+    public struct Exc<T0, T1, T2> : IExc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+            };
+        }
+    }
+    public struct Exc<T0, T1, T2, T3> : IExc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+            };
+        }
+    }
+    public struct Exc<T0, T1, T2, T3, T4> : IExc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T4>.uniqueID,
+            };
+        }
+    }
+    public struct Exc<T0, T1, T2, T3, T4, T5> : IExc
+    {
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        {
+            return new int[]
+            {
+                EcsWorld<TWorldArchetype>.ComponentType<T0>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T1>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T2>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T3>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T4>.uniqueID,
+                EcsWorld<TWorldArchetype>.ComponentType<T5>.uniqueID,
             };
         }
     }
@@ -236,21 +449,6 @@ namespace DCFApixels.DragonECS
             _entities.Remove(entityID);
         }
         #endregion
-    }
-    #endregion
-
-    #region Utils
-    internal static class ArrayExt
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static T[] Sort<T>(this T[] self)
-        {
-            Array.Sort(self);
-
-            return self;
-        }
-
-
     }
     #endregion
 }

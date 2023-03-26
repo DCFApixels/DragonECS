@@ -8,3 +8,9 @@ DCFAECS_NO_SANITIZE_CHECKS - отвключение дополнительных
 
 
 #if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+
+
+       // [EditorBrowsable(EditorBrowsableState.Never)]
+
+
+                //throw new EcsFrameworkException($"There is no suitable EcsRunner implementation for the {typeof(T).FullName} interface");

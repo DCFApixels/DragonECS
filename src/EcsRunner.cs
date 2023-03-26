@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq.Expressions;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -25,7 +28,12 @@ namespace DCFApixels.DragonECS
     }
 
     public interface IEcsSystem { }
-    public interface IEcsRunner { }
+    public interface IEcsRunner
+    {
+        public IList Targets { get; }
+        public object Filter { get; }
+        public bool IsHasFilter { get; }
+    }
 
 
     public static class IEcsProcessorExtensions
@@ -36,10 +44,9 @@ namespace DCFApixels.DragonECS
         }
     }
 
-
     internal static class EcsRunnerActivator
     {
-        private static Dictionary<Guid, Type> _runnerTypes; //interface guid/ Runner type pairs;
+        private static Dictionary<Guid, Type> _runnerHandlerTypes; //interface guid/Runner handler type pairs;
 
         static EcsRunnerActivator()
         {
@@ -47,28 +54,28 @@ namespace DCFApixels.DragonECS
 
             Type runnerBaseType = typeof(EcsRunner<>);
 
-            List<Type> newRunnerTypes = new List<Type>();
-            newRunnerTypes = Assembly.GetAssembly(runnerBaseType)
+            List<Type> runnerHandlerTypes = new List<Type>();
+            runnerHandlerTypes = Assembly.GetAssembly(runnerBaseType)
                 .GetTypes()
                 .Where(type => type.BaseType != null && type.BaseType.IsGenericType && runnerBaseType == type.BaseType.GetGenericTypeDefinition())
                 .ToList();
 
-#if DEBUG
-            for (int i = 0; i < newRunnerTypes.Count; i++)
+#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+            for (int i = 0; i < runnerHandlerTypes.Count; i++)
             {
-                var e = CheckRunnerValide(newRunnerTypes[i]);
+                var e = CheckRunnerValide(runnerHandlerTypes[i]);
                 if (e != null)
                 {
-                    newRunnerTypes.RemoveAt(i--);
+                    runnerHandlerTypes.RemoveAt(i--);
                     exceptions.Add(e);
                 }
             }
 #endif
-            _runnerTypes = new Dictionary<Guid, Type>();
-            foreach (var item in newRunnerTypes)
+            _runnerHandlerTypes = new Dictionary<Guid, Type>();
+            foreach (var item in runnerHandlerTypes)
             {
-                Type intrf = item.GetInterfaces().Where(o => o != typeof(IEcsRunner) && o != typeof(IEcsSystem)).First(); //TODO оптимизировать это место
-                _runnerTypes.Add(intrf.GUID, item);
+                Type interfaceType = item.GetInterfaces().Where(o => o != typeof(IEcsRunner) && o != typeof(IEcsSystem)).First(); //TODO оптимизировать это место
+                _runnerHandlerTypes.Add(interfaceType.GUID, item);
             }
 
             if (exceptions.Count > 0)
@@ -102,7 +109,7 @@ namespace DCFApixels.DragonECS
             }
             Guid interfaceGuid = nonGenericInterfaceType.GUID;
 
-            if (!_runnerTypes.TryGetValue(interfaceGuid, out Type runnerType))
+            if (!_runnerHandlerTypes.TryGetValue(interfaceGuid, out Type runnerType))
             {
                 throw new Exception();
             }
@@ -111,16 +118,17 @@ namespace DCFApixels.DragonECS
                 Type[] genericTypes = interfaceType.GetGenericArguments();
                 runnerType = runnerType.MakeGenericType(genericTypes);
             }
-            EcsRunner<TInterface>.Init(runnerType);
+            EcsRunner<TInterface>.Register(runnerType);
         }
     }
 
     public abstract class EcsRunner<TInterface> : IEcsSystem, IEcsRunner
         where TInterface : IEcsSystem
     {
-        internal static void Init(Type subclass)
+        #region Register
+        private static Type _subclass;
+        internal static void Register(Type subclass)
         {
-
 #if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
             if (_subclass != null)
             {
@@ -141,8 +149,14 @@ namespace DCFApixels.DragonECS
 #endif
             _subclass = subclass;
         }
+        #endregion
 
-        public static TInterface Instantiate(IEnumerable<IEcsSystem> targets, object filter)
+        #region FilterSystems
+        private static TInterface[] FilterSystems(IEnumerable<IEcsSystem> targets)
+        {
+            return targets.Where(o => o is TInterface).Select(o => (TInterface)o).ToArray();
+        }
+        private static TInterface[] FilterSystems(IEnumerable<IEcsSystem> targets, object filter)
         {
             Type interfaceType = typeof(TInterface);
 
@@ -166,32 +180,52 @@ namespace DCFApixels.DragonECS
                     return atr == null || atr.interfaceType == interfaceType && atr.filter == null;
                 });
             }
+            return newTargets.Select(o => (TInterface)o).ToArray();
+        }
+        #endregion
 
-            return Instantiate(newTargets.Select(o => (TInterface)o).ToArray());
-        }
-        public static TInterface Instantiate(IEnumerable<IEcsSystem> targets)
-        {
-            return Instantiate(targets.Where(o => o is TInterface).Select(o => (TInterface)o).ToArray());
-        }
-        internal static TInterface Instantiate(TInterface[] targets)
+        #region Instantiate
+        private static TInterface Instantiate(TInterface[] targets, bool isHasFilter, object filter)
         {
             if (_subclass == null)
                 EcsRunnerActivator.InitFor<TInterface>();
 
             var instance = (EcsRunner<TInterface>)Activator.CreateInstance(_subclass);
-            return (TInterface)(IEcsSystem)instance.Set(targets);
+            return (TInterface)(IEcsSystem)instance.Set(targets, isHasFilter, filter);
         }
-
-        private static Type _subclass;
-
-        protected static void SetSublcass(Type type) => _subclass = type;
+        public static TInterface Instantiate(IEnumerable<IEcsSystem> targets)
+        {
+            return Instantiate(FilterSystems(targets), false, null);
+        }
+        public static TInterface Instantiate(IEnumerable<IEcsSystem> targets, object filter)
+        {
+            return Instantiate(FilterSystems(targets, filter), true, filter);
+        }
+        #endregion
 
         protected TInterface[] targets;
+        private ReadOnlyCollection<TInterface> _targetsSealed;
+        private object _filter;
+        private bool _isHasFilter;
 
-        private EcsRunner<TInterface> Set(TInterface[] targets)
+        public IList Targets => _targetsSealed;
+        public object Filter => _filter;
+        public bool IsHasFilter => _isHasFilter;
+        private EcsRunner<TInterface> Set(TInterface[] targets, bool isHasFilter, object filter)
         {
             this.targets = targets;
+            _targetsSealed = new ReadOnlyCollection<TInterface>(targets);
+            _filter = filter;
+            _isHasFilter = isHasFilter;
             return this;
+        }
+
+        internal void Rebuild(IEnumerable<IEcsSystem> targets)
+        {
+            if(_isHasFilter)
+                Set(FilterSystems(targets), _isHasFilter, _filter);
+            else
+                Set(FilterSystems(targets, _filter), _isHasFilter, _filter);
         }
     }
 }

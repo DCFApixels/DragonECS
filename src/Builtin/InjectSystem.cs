@@ -4,6 +4,7 @@
     {
         public void Inject(T obj);
     }
+    [DebugColor(DebugColor.Gray)]
     public sealed class InjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
     {
         void IEcsInject<T>.Inject(T obj)
@@ -15,6 +16,7 @@
         }
     }
 
+    [DebugColor(DebugColor.Gray)]
     public class InjectSystem<T> : IEcsPreInitSystem
     {
         private T _injectedData;
@@ -24,37 +26,38 @@
             _injectedData = injectedData;
         }
 
-        public void PreInit(EcsSession session)
+        public void PreInit(EcsSystems systems)
         {
-            var injector = session.GetRunner<IEcsInject<T>>();
+            var injector = systems.GetRunner<IEcsInject<T>>();
             injector.Inject(_injectedData);
         }
     }
 
     public static class InjectSystemExstensions
     {
-        public static EcsSession Inject<T>(this EcsSession self, T data)
+        public static EcsSystems.Builder Inject<T>(this EcsSystems.Builder self, T data)
         {
             self.Add(new InjectSystem<T>(data));
             return self;
         }
-
-        public static EcsSession Inject<A, B>(this EcsSession self, A dataA, B dataB)
+        public static EcsSystems.Builder Inject<A, B>(this EcsSystems.Builder self, A a, B b)
         {
-            self.Inject(dataA).Inject(dataB);
+            self.Inject(a).Inject(b);
             return self;
         }
-
-        public static EcsSession Inject<A, B, C, D>(this EcsSession self, A dataA, B dataB, C dataC, D dataD)
+        public static EcsSystems.Builder Inject<A, B, C, D>(this EcsSystems.Builder self, A a, B b, C c, D d)
         {
-            self.Inject(dataA).Inject(dataB).Inject(dataC).Inject(dataD);
+            self.Inject(a).Inject(b).Inject(c).Inject(d);
             return self;
         }
-
-        public static EcsSession Inject<A, B, C, D, E>(this EcsSession self,
-            A dataA, B dataB, C dataC, D dataD, E dataE)
+        public static EcsSystems.Builder Inject<A, B, C, D, E>(this EcsSystems.Builder self, A a, B b, C c, D d, E e)
         {
-            self.Inject(dataA).Inject(dataB).Inject(dataC).Inject(dataD).Inject(dataE);
+            self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e);
+            return self;
+        }
+        public static EcsSystems.Builder Inject<A, B, C, D, E, F>(this EcsSystems.Builder self, A a, B b, C c, D d, E e, F f)
+        {
+            self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f);
             return self;
         }
     }

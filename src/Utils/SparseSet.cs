@@ -80,7 +80,7 @@ namespace DCFApixels.DragonECS
             if (_count >= _dense.Length)
                 Array.Resize(ref _dense, _dense.Length << 1);
 
-            if (value > _sparse.Length)
+            if (value >= _sparse.Length)
             {
                 int neadedSpace = _sparse.Length;
                 while (value >= neadedSpace)

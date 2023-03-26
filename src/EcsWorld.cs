@@ -21,9 +21,11 @@ namespace DCFApixels.DragonECS
 
         #region Methods
         public EcsPool<T> GetPool<T>() where T : struct;
-        public EcsFilter GetFilter<TInc>() where TInc : struct, IInc;
+        public EcsFilter Filter<TInc>() where TInc : struct, IInc;
         public EcsFilter GetFilter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc;
         public ent NewEntity();
+        public bool EntityIsAlive(int entityID, short gen);
+        public ent GetEntity(int entityID);
         public void DelEntity(int entityID);
         public void Destroy();
 
@@ -64,7 +66,7 @@ namespace DCFApixels.DragonECS
         private EcsGroup _entities;
 
         private short[] _gens;
-        private short[] _componentCounts;
+        //private short[] _componentCounts; //TODO
 
         private IEcsPool[] _pools;
         private EcsNullPool _nullPool;
@@ -86,7 +88,8 @@ namespace DCFApixels.DragonECS
             _entityDispenser = new IntDispenser();
             _nullPool = new EcsNullPool(this);
             _pools = new IEcsPool[512];
-            Array.Fill(_pools, _nullPool);
+            FillArray(_pools, _nullPool);
+            //Array.Fill(_pools, _nullPool); //TODO Fix it
             _gens = new short[512];
             _filters = new EcsFilter[64];
             _entities = new EcsGroup(this, 512);
@@ -104,7 +107,8 @@ namespace DCFApixels.DragonECS
             {
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, ComponentType.Capacity);
-                Array.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
+                FillArray(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
+                //Array.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length); //TODO Fix it
 
                 Array.Resize(ref _filtersByIncludedComponents, ComponentType.Capacity);
                 Array.Resize(ref _filtersByExcludedComponents, ComponentType.Capacity);
@@ -121,7 +125,7 @@ namespace DCFApixels.DragonECS
 
         #region GetFilter
 
-        public EcsFilter GetFilter<TInc>() where TInc : struct, IInc => GetFilter<TInc, Exc>();
+        public EcsFilter Filter<TInc>() where TInc : struct, IInc => GetFilter<TInc, Exc>();
         public EcsFilter GetFilter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc
         {
             var mask = EcsMaskMap<TArchetype>.GetMask<TInc, Exc>();
@@ -277,18 +281,31 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region NewEntity/DelEntity
+        #region Entity
         public ent NewEntity()
         {
-            int entid = _entityDispenser.GetFree();
-            _entities.Add(entid);
-            if (_gens.Length < entid) Array.Resize(ref _gens, _gens.Length << 1);
-            return new ent(entid, _gens[entid]++, id);
+            int entityID = _entityDispenser.GetFree();
+            _entities.Add(entityID);
+            if (_gens.Length <= entityID) 
+                Array.Resize(ref _gens, _gens.Length << 1);
+            return new ent(entityID, _gens[entityID]++, id);
+        }
+        public ent GetEntity(int entityID)
+        {
+            if (_entities.Contains(entityID) == false)
+                return ent.NULL;
+
+            return new ent(entityID, _gens[entityID], id);
         }
         public void DelEntity(int entityID)
         {
             _entityDispenser.Release(entityID);
             _entities.Remove(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool EntityIsAlive(int entityID, short gen)
+        {
+            return _entities.Contains(entityID) && _gens[entityID] == gen;
         }
         #endregion
 
@@ -327,6 +344,22 @@ namespace DCFApixels.DragonECS
                     Array.Resize(ref ComponentType.types, ComponentType.types.Length << 1);
                 }
                 ComponentType.types[uniqueID] = typeof(T);
+            }
+        }
+
+        private void FillArray<T>(T[] array, T value, int startIndex = 0, int length = -1)
+        {
+            if (length < 0)
+            {
+                length = array.Length;
+            }
+            else
+            {
+                length = startIndex + length;
+            }
+            for (int i = startIndex; i < length; i++)
+            {
+                array[i] = value;
             }
         }
         #endregion

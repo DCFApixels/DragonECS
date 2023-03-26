@@ -31,7 +31,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constrcutors
-        public EcsGroup(IEcsWorld world,  int entitiesCapacity, int delayedOpsCapacity = 128)
+        public EcsGroup(IEcsWorld world,  int entitiesCapacity, int delayedOpsCapacity = 32)
         {
             _source = world;
             _entities = new SparseSet(entitiesCapacity, entitiesCapacity);
@@ -65,6 +65,11 @@ namespace DCFApixels.DragonECS
             delayedOd.Entity = entityID;
             delayedOd.Added = isAdd;
         }
+        #endregion
+
+        #region Contains
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Contains(int entityID) => _entities.Contains(entityID);
         #endregion
 
         #region AddGroup/RemoveGroup
@@ -124,44 +129,28 @@ namespace DCFApixels.DragonECS
             private readonly EcsGroup _source;
             private readonly SparseSet _entities;
             private int _index;
-            private Entity _currentEntity;
 
             public Enumerator(EcsGroup group)
             {
                 _source = group;
                 _entities = group._entities;
                 _index = -1;
-                _currentEntity = new Entity(group.World, -1);
             }
 
-            public Entity Current
+            public ent Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get
-                {
-                    _currentEntity.id = _entities[_index];
-                    return _currentEntity;
-                }
+                get { return _source.World.GetEntity(_entities[_index]); }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                return ++_index < _entities.Count;
-            }
+            public bool MoveNext() => ++_index < _entities.Count;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose()
-            {
-                _source.Unlock();
-            }
+            public void Dispose() => _source.Unlock();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Reset()
-            {
-                _index = -1;
-                _currentEntity.id = -1;
-            }
+            public void Reset() => _index = -1;
         }
 
         private struct DelayedOp
