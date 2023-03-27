@@ -90,7 +90,6 @@ namespace DCFApixels.DragonECS
         public class Builder
         {
             private const int KEYS_CAPACITY = 4;
-            private readonly HashSet<object> _declaredBlockKeys;
             private readonly List<object> _blockExecutionOrder;
             private readonly Dictionary<object, List<IEcsSystem>> _systems;
             private readonly object _basicBlocKey;
@@ -98,8 +97,7 @@ namespace DCFApixels.DragonECS
             private bool _isOnlyBasicBlock;
             public Builder()
             {
-                _basicBlocKey = new object();
-                _declaredBlockKeys = new HashSet<object>(KEYS_CAPACITY);
+                _basicBlocKey = "Basic";
                 _blockExecutionOrder = new List<object>(KEYS_CAPACITY);
                 _systems = new Dictionary<object, List<IEcsSystem>>(KEYS_CAPACITY);
                 _isBasicBlockDeclared = false;
@@ -113,6 +111,7 @@ namespace DCFApixels.DragonECS
                 if (!_systems.TryGetValue(blockKey, out list))
                 {
                     list = new List<IEcsSystem>();
+                    list.Add(new SystemsBlockMarkerSystem(blockKey.ToString()));
                     _systems.Add(blockKey, list);
                 }
                 list.Add(system);
