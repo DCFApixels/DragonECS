@@ -27,6 +27,12 @@ namespace DCFApixels.DragonECS
         }
     }
 
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    sealed class MyAttribute : Attribute
+    {   
+       
+    }
+
     public interface IEcsSystem { }
     public interface IEcsRunner
     {
@@ -211,14 +217,18 @@ namespace DCFApixels.DragonECS
         public IList Targets => _targetsSealed;
         public object Filter => _filter;
         public bool IsHasFilter => _isHasFilter;
+
         private EcsRunner<TInterface> Set(TInterface[] targets, bool isHasFilter, object filter)
         {
             this.targets = targets;
             _targetsSealed = new ReadOnlyCollection<TInterface>(targets);
             _filter = filter;
             _isHasFilter = isHasFilter;
+            OnSetup();
             return this;
         }
+
+        protected virtual void OnSetup() { }
 
         internal void Rebuild(IEnumerable<IEcsSystem> targets)
         {
