@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
@@ -11,13 +11,16 @@ namespace DCFApixels.DragonECS
         public static void Set(DebugService service) => DebugService.Set(service);
 
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(object v) => DebugService.Instance.Print(v);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(string tag, object v)
         {
 #if !DISABLE_ECS_DEBUG
             DebugService.Instance.Print(tag, v);
 #endif
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int RegisterMark(string name)
         {
 #if !DISABLE_ECS_DEBUG
@@ -26,18 +29,21 @@ namespace DCFApixels.DragonECS
             return 0;
 #endif
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void DeleteMark(string name)
         {
 #if !DISABLE_ECS_DEBUG
             DebugService.Instance.DeleteMark(name);
 #endif
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ProfileMarkBegin(int id)
         {
 #if !DISABLE_ECS_DEBUG
             DebugService.Instance.ProfileMarkBegin(id);
 #endif
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double ProfileMarkEnd(int id)
         {
 #if !DISABLE_ECS_DEBUG
@@ -70,17 +76,15 @@ namespace DCFApixels.DragonECS
             _instance = service;
             OnServiceChanged(_instance);
         }
-            
 
         public static Action<DebugService> OnServiceChanged = delegate { };
-
 
         private IntDispenser _idDispenser = new IntDispenser(0);
         private Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Print(object v) => Print(null, v);
         public abstract void Print(string tag, object v);
-
 
         public int RegisterMark(string name)
         {
@@ -107,8 +111,6 @@ namespace DCFApixels.DragonECS
 
         public abstract void ProfileMarkBegin(int id);
         public abstract double ProfileMarkEnd(int id);
-
-       // public abstract IEnumerable<>
     }
 
     public sealed class DefaultDebugService : DebugService
