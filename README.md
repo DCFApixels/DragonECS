@@ -1,4 +1,9 @@
-# DragonECS - C# Entity Component System фреймворк
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/99481254/228303719-9b176bec-98e3-46b3-8d5a-fedd546cd854.png">
+</p>
+
+# DragonECS - C# Entity Component System Framework
 
 > **ВАЖНО!** Проект в стадии разработки. README так же сейчас сущесвуте в виде наброска
 
