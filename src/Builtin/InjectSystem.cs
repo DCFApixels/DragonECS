@@ -1,5 +1,55 @@
-﻿namespace DCFApixels.DragonECS
+﻿using System.Collections.Generic;
+using DCFApixels.DragonECS.Internal;
+using System.Linq;
+
+namespace DCFApixels.DragonECS
 {
+
+    namespace Internal
+    {
+        internal class InjectController 
+        {
+            private EcsSystems _source;
+            private InjectSystemBase[] _injectSystems;
+            private int _injectCount;
+
+            public InjectController(EcsSystems source)
+            {
+                _injectCount = 0;
+                _source = source;
+                _injectSystems = _source.AllSystems.OfType<InjectSystemBase>().ToArray();
+            }
+
+            public bool OnInject()
+            {
+                _injectCount++;
+                return IsInjectionEnd;
+            }
+
+            public bool IsInjectionEnd => _injectSystems.Length <= _injectCount;
+
+            public void Destroy()
+            {
+                _source = null;
+                _injectSystems = null;
+            }
+        }
+    }
+
+
+    public interface IEcsInject : IEcsSystem
+    {
+        public void Inject(object obj);
+    }
+    [DebugColor(DebugColor.Gray)]
+    public sealed class InjectRunner : EcsRunner<IEcsInject>, IEcsInject
+    {
+        void IEcsInject.Inject(object obj)
+        {
+            foreach (var item in targets) item.Inject(obj);
+        }
+    }
+
     public interface IEcsInject<T> : IEcsSystem
     {
         public void Inject(T obj);
@@ -9,17 +59,49 @@
     {
         void IEcsInject<T>.Inject(T obj)
         {
-            foreach (var item in targets)
-            {
-                item.Inject(obj);
-            }
+            foreach (var item in targets) item.Inject(obj);
+        }
+    }
+
+    public interface IEcsInjectCallbacks : IEcsSystem
+    {
+        public void OnInjectionBefore();
+        public void OnInjectionAfter();
+    }
+    [DebugColor(DebugColor.Gray)]
+    public sealed class InjectCallbacksRunner : EcsRunner<IEcsInjectCallbacks>, IEcsInjectCallbacks
+    {
+        public void OnInjectionAfter()
+        {
+            foreach (var item in targets) item.OnInjectionAfter();
+        }
+        public void OnInjectionBefore()
+        {
+            foreach (var item in targets) item.OnInjectionBefore();
+        }
+    }
+
+    public class InjectSystemBase
+    {
+        private static int _injectSystemID = EcsDebug.RegisterMark("InjectSystem");
+
+        protected static void ProfileMarkerBegin()
+        {
+            EcsDebug.ProfileMarkBegin(_injectSystemID);
+        }
+        protected static void ProfileMarkerEnd()
+        {
+            EcsDebug.ProfileMarkEnd(_injectSystemID);
         }
     }
 
     [DebugColor(DebugColor.Gray)]
-    public class InjectSystem<T> : IEcsPreInitSystem
+    public class InjectSystem<T> : InjectSystemBase, IEcsPreInitSystem, IEcsInject<InjectController>, IEcsInjectCallbacks
     {
         private T _injectedData;
+
+        private InjectController _injectController;
+        void IEcsInject<InjectController>.Inject(InjectController obj) => _injectController = obj;
 
         public InjectSystem(T injectedData)
         {
@@ -28,8 +110,35 @@
 
         public void PreInit(EcsSystems systems)
         {
-            var injector = systems.GetRunner<IEcsInject<T>>();
-            injector.Inject(_injectedData);
+            if(_injectController == null)
+            {
+                ProfileMarkerBegin();
+
+                _injectController = new InjectController(systems);
+                var injectMapRunner = systems.GetRunner<IEcsInject<InjectController>>();
+                systems.GetRunner<IEcsInjectCallbacks>().OnInjectionBefore();
+                injectMapRunner.Inject(_injectController);
+            }
+
+            var injectRunnerGeneric = systems.GetRunner<IEcsInject<T>>();
+            var injectRunner = systems.GetRunner<IEcsInject>();
+            injectRunnerGeneric.Inject(_injectedData);
+            injectRunner.Inject(_injectedData);
+
+            if (_injectController.OnInject())
+            {
+                _injectController.Destroy();
+                var injectCallbacksRunner = systems.GetRunner<IEcsInjectCallbacks>();
+                injectCallbacksRunner.OnInjectionAfter();
+                ProfileMarkerEnd();
+            }
+        }
+
+        public void OnInjectionBefore() { }
+
+        public void OnInjectionAfter()
+        {
+            _injectController = null;
         }
     }
 
