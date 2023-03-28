@@ -14,6 +14,7 @@ namespace DCFApixels.DragonECS
         private ReadOnlyCollection<IEcsSystem> _allSystemsSealed;
         private ReadOnlyDictionary<Type, IEcsRunner> _allRunnersSealed;
 
+        private bool _isInit;
         private bool _isDestoryed;
 
         #region Properties
@@ -31,12 +32,8 @@ namespace DCFApixels.DragonECS
             _allSystemsSealed = new ReadOnlyCollection<IEcsSystem>(_allSystems);
             _allRunnersSealed = new ReadOnlyDictionary<Type, IEcsRunner>(_runners);
 
+            _isInit = false;
             _isDestoryed = false;
-
-            GetRunner<IEcsPreInitSystem>().PreInit(this);
-            GetRunner<IEcsInitSystem>().Init(this);
-
-            _runRunnerCache = GetRunner<IEcsRunSystem>();
         }
         #endregion
 
@@ -53,11 +50,26 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region LifeCycle
+        public void Init()
+        {
+            if(_isInit == true)
+            {
+                EcsDebug.Print("[Warning]", $"This {nameof(EcsSystems)} has already been initialized");
+                return;
+            }
+            _isInit = true;
+
+            GetRunner<IEcsPreInitSystem>().PreInit(this);
+            GetRunner<IEcsInitSystem>().Init(this);
+
+            _runRunnerCache = GetRunner<IEcsRunSystem>();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run()
         {
 #if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+            CheckBeforeInitForMethod(nameof(Run));
             CheckAfterDestroyForMethod(nameof(Run));
 #endif
             _runRunnerCache.Run(this);
@@ -65,8 +77,13 @@ namespace DCFApixels.DragonECS
         public void Destroy()
         {
 #if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
-            CheckAfterDestroyForMethod(nameof(Destroy));
+            CheckBeforeInitForMethod(nameof(Run));
 #endif
+            if (_isDestoryed == true)
+            {
+                EcsDebug.Print("[Warning]", $"This {nameof(EcsSystems)} has already been destroyed");
+                return;
+            }
             _isDestoryed = true;
             GetRunner<IEcsDestroySystem>().Destroy(this);
         }
@@ -74,10 +91,20 @@ namespace DCFApixels.DragonECS
 
         #region StateChecks
 #if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+        private void CheckBeforeInitForMethod(string methodName)
+        {
+            if (!_isInit)
+                throw new MethodAccessException($"It is forbidden to call {methodName}, before initialization {nameof(EcsSystems)}");
+        }
+        private void CheckAfterInitForMethod(string methodName)
+        {
+            if (_isInit)
+                throw new MethodAccessException($"It is forbidden to call {methodName}, after initialization {nameof(EcsSystems)}");
+        }
         private void CheckAfterDestroyForMethod(string methodName)
         {
             if (_isDestoryed)
-                throw new MethodAccessException($"It is forbidden to call method {methodName}, after destroying {nameof(EcsSystems)}");
+                throw new MethodAccessException($"It is forbidden to call {methodName}, after destroying {nameof(EcsSystems)}");
         }
 #endif
         #endregion
@@ -191,5 +218,12 @@ namespace DCFApixels.DragonECS
             }
             return self;
         }
+        public static EcsSystems BuildAndInit(this EcsSystems.Builder self)
+        {
+            EcsSystems result = self.Build();
+            result.Init();
+            return result;
+        }
+
     }
 }
