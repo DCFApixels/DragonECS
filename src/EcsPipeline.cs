@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsSystems
+    public sealed class EcsPipeline
     {
         private IEcsSystem[] _allSystems;
         private Dictionary<Type, IEcsRunner> _runners;
@@ -24,7 +24,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        private EcsSystems(IEcsSystem[] systems)
+        private EcsPipeline(IEcsSystem[] systems)
         {
             _allSystems = systems;
             _runners = new Dictionary<Type, IEcsRunner>();
@@ -47,6 +47,11 @@ namespace DCFApixels.DragonECS
             _runners.Add(type, result);
             return (T)result;
         }
+
+        internal void OnRunnerDestroy(IEcsRunner runner)
+        {
+            _runners.Remove(runner.Interface);
+        }
         #endregion
 
         #region LifeCycle
@@ -54,7 +59,7 @@ namespace DCFApixels.DragonECS
         {
             if(_isInit == true)
             {
-                EcsDebug.Print("[Warning]", $"This {nameof(EcsSystems)} has already been initialized");
+                EcsDebug.Print("[Warning]", $"This {nameof(EcsPipeline)} has already been initialized");
                 return;
             }
             _isInit = true;
@@ -81,7 +86,7 @@ namespace DCFApixels.DragonECS
 #endif
             if (_isDestoryed == true)
             {
-                EcsDebug.Print("[Warning]", $"This {nameof(EcsSystems)} has already been destroyed");
+                EcsDebug.Print("[Warning]", $"This {nameof(EcsPipeline)} has already been destroyed");
                 return;
             }
             _isDestoryed = true;
@@ -94,17 +99,17 @@ namespace DCFApixels.DragonECS
         private void CheckBeforeInitForMethod(string methodName)
         {
             if (!_isInit)
-                throw new MethodAccessException($"It is forbidden to call {methodName}, before initialization {nameof(EcsSystems)}");
+                throw new MethodAccessException($"It is forbidden to call {methodName}, before initialization {nameof(EcsPipeline)}");
         }
         private void CheckAfterInitForMethod(string methodName)
         {
             if (_isInit)
-                throw new MethodAccessException($"It is forbidden to call {methodName}, after initialization {nameof(EcsSystems)}");
+                throw new MethodAccessException($"It is forbidden to call {methodName}, after initialization {nameof(EcsPipeline)}");
         }
         private void CheckAfterDestroyForMethod(string methodName)
         {
             if (_isDestoryed)
-                throw new MethodAccessException($"It is forbidden to call {methodName}, after destroying {nameof(EcsSystems)}");
+                throw new MethodAccessException($"It is forbidden to call {methodName}, after destroying {nameof(EcsPipeline)}");
         }
 #endif
         #endregion
@@ -117,6 +122,7 @@ namespace DCFApixels.DragonECS
         public class Builder
         {
             private const int KEYS_CAPACITY = 4;
+            private HashSet<Type> _uniqueTypes;
             private readonly List<object> _blockExecutionOrder;
             private readonly Dictionary<object, List<IEcsSystem>> _systems;
             private readonly object _basicBlocKey;
@@ -125,6 +131,7 @@ namespace DCFApixels.DragonECS
             public Builder()
             {
                 _basicBlocKey = "Basic";
+                _uniqueTypes = new HashSet<Type>();
                 _blockExecutionOrder = new List<object>(KEYS_CAPACITY);
                 _systems = new Dictionary<object, List<IEcsSystem>>(KEYS_CAPACITY);
                 _isBasicBlockDeclared = false;
@@ -132,6 +139,17 @@ namespace DCFApixels.DragonECS
             }
 
             public Builder Add(IEcsSystem system, object blockKey = null)
+            {
+                AddInternal(system, blockKey, false);
+                return this;
+            }
+            public Builder AddUnique(IEcsSystem system, object blockKey = null)
+            {
+                AddInternal(system, blockKey, true);
+                return this;
+            }
+
+            private void AddInternal(IEcsSystem system, object blockKey, bool isUnique)
             {
                 if (blockKey == null) blockKey = _basicBlocKey;
                 List<IEcsSystem> list;
@@ -141,8 +159,9 @@ namespace DCFApixels.DragonECS
                     list.Add(new SystemsBlockMarkerSystem(blockKey.ToString()));
                     _systems.Add(blockKey, list);
                 }
+                if ((_uniqueTypes.Add(system.GetType()) == false && isUnique))
+                    return;
                 list.Add(system);
-                return this;
             }
 
             public Builder Add(IEcsModule module)
@@ -167,11 +186,11 @@ namespace DCFApixels.DragonECS
                 return this;
             }
 
-            public EcsSystems Build()
+            public EcsPipeline Build()
             {
                 if (_isOnlyBasicBlock)
                 {
-                    return new EcsSystems(_systems[_basicBlocKey].ToArray());
+                    return new EcsPipeline(_systems[_basicBlocKey].ToArray());
                 }
 
                 if(_isBasicBlockDeclared == false)
@@ -196,7 +215,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
 
-                return new EcsSystems(result.ToArray());
+                return new EcsPipeline(result.ToArray());
             }
         }
         #endregion
@@ -204,16 +223,17 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsModule
     {
-        public void ImportSystems(EcsSystems.Builder builder);
+        public void ImportSystems(EcsPipeline.Builder builder);
     }
 
-    public static class EcsSystemsExt
+    #region Extensions
+    public static class EcsSystemsExtensions
     {
-        public static bool IsNullOrDestroyed(this EcsSystems self)
+        public static bool IsNullOrDestroyed(this EcsPipeline self)
         {
             return self == null || self.IsDestoryed;
         }
-        public static EcsSystems.Builder Add(this EcsSystems.Builder self, IEnumerable<IEcsSystem> range, object blockKey = null)
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsSystem> range, object blockKey = null)
         {
             foreach (var item in range)
             {
@@ -221,12 +241,21 @@ namespace DCFApixels.DragonECS
             }
             return self;
         }
-        public static EcsSystems BuildAndInit(this EcsSystems.Builder self)
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEnumerable<IEcsSystem> range, object blockKey = null)
         {
-            EcsSystems result = self.Build();
+            foreach (var item in range)
+            {
+                self.AddUnique(item, blockKey);
+            }
+            return self;
+        }
+        public static EcsPipeline BuildAndInit(this EcsPipeline.Builder self)
+        {
+            EcsPipeline result = self.Build();
             result.Init();
             return result;
         }
 
     }
+    #endregion
 }

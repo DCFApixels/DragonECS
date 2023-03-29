@@ -24,10 +24,15 @@ namespace DCFApixels.DragonECS
     public interface IEcsSystem { }
     public interface IEcsRunner
     {
-        public EcsSystems Source { get; }
+        public EcsPipeline Source { get; }
+        public Type Interface { get; }
         public IList Targets { get; }
         public object Filter { get; }
         public bool IsHasFilter { get; }
+        public bool IsDestroyed { get; }
+        public bool IsEmpty { get; }
+
+        public void Destroy();
     }
 
     internal static class EcsRunnerActivator
@@ -120,6 +125,10 @@ namespace DCFApixels.DragonECS
         }
     }
 
+    public static class EcsRunner
+    {
+        public static void Destroy(object runner) => ((IEcsRunner)runner).Destroy();
+    }
     public abstract class EcsRunner<TInterface> : IEcsSystem, IEcsRunner
         where TInterface : IEcsSystem
     {
@@ -183,7 +192,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Instantiate
-        private static TInterface Instantiate(EcsSystems source, TInterface[] targets, bool isHasFilter, object filter)
+        private static TInterface Instantiate(EcsPipeline source, TInterface[] targets, bool isHasFilter, object filter)
         {
             if (_subclass == null)
                 EcsRunnerActivator.InitFor<TInterface>();
@@ -191,30 +200,34 @@ namespace DCFApixels.DragonECS
             var instance = (EcsRunner<TInterface>)Activator.CreateInstance(_subclass);
             return (TInterface)(IEcsSystem)instance.Set(source, targets, isHasFilter, filter);
         }
-        public static TInterface Instantiate(EcsSystems source)
+        public static TInterface Instantiate(EcsPipeline source)
         {
             return Instantiate(source, FilterSystems(source.AllSystems), false, null);
         }
-        public static TInterface Instantiate(EcsSystems source, object filter)
+        public static TInterface Instantiate(EcsPipeline source, object filter)
         {
             return Instantiate(source, FilterSystems(source.AllSystems, filter), true, filter);
         }
         #endregion
 
-        private EcsSystems _source;
+        private EcsPipeline _source;
         protected TInterface[] targets;
         private ReadOnlyCollection<TInterface> _targetsSealed;
         private object _filter;
         private bool _isHasFilter;
+        private bool _isDestroyed;
 
         #region Properties
-        public EcsSystems Source => _source;
+        public EcsPipeline Source => _source;
+        public Type Interface => typeof(TInterface);
         public IList Targets => _targetsSealed;
         public object Filter => _filter;
         public bool IsHasFilter => _isHasFilter;
+        public bool IsDestroyed => _isDestroyed;
+        public bool IsEmpty => targets == null || targets.Length <= 0;
         #endregion
 
-        private EcsRunner<TInterface> Set(EcsSystems source, TInterface[] targets, bool isHasFilter, object filter)
+        private EcsRunner<TInterface> Set(EcsPipeline source, TInterface[] targets, bool isHasFilter, object filter)
         {
             _source = source;
             this.targets = targets;
@@ -225,8 +238,6 @@ namespace DCFApixels.DragonECS
             return this;
         }
 
-        protected virtual void OnSetup() { }
-
         internal void Rebuild()
         {
             if(_isHasFilter)
@@ -234,6 +245,20 @@ namespace DCFApixels.DragonECS
             else
                 Set(_source, FilterSystems(_source.AllSystems, _filter), _isHasFilter, _filter);
         }
+
+        public void Destroy()
+        {
+            _isDestroyed = true;
+            _source.OnRunnerDestroy(this);
+            _source = null;
+            targets = null;
+            _targetsSealed = null;
+            _filter = null;
+            OnDestroy();
+        }
+
+        protected virtual void OnSetup() { }
+        protected virtual void OnDestroy() { }
     }
 
     #region Extensions

@@ -2,19 +2,19 @@
 {
     public interface IEcsPreInitSystem : IEcsSystem
     {
-        public void PreInit(EcsSystems systems);
+        public void PreInit(EcsPipeline pipeline);
     }
     public interface IEcsInitSystem : IEcsSystem
     {
-        public void Init(EcsSystems systems);
+        public void Init(EcsPipeline pipeline);
     }
     public interface IEcsRunSystem : IEcsSystem
     {
-        public void Run(EcsSystems systems);
+        public void Run(EcsPipeline pipeline);
     }
     public interface IEcsDestroySystem : IEcsSystem
     {
-        public void Destroy(EcsSystems systems);
+        public void Destroy(EcsPipeline pipeline);
     }
 
     public interface IEcsBaseSystem : IEcsInitSystem, IEcsRunSystem, IEcsDestroySystem { }
@@ -24,18 +24,18 @@
 #if DEBUG
         private int[] _targetIds;
 #endif
-        public void PreInit(EcsSystems systems)
+        public void PreInit(EcsPipeline pipeline)
         {
 #if DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
                 int id = _targetIds[i];
                 EcsDebug.ProfileMarkBegin(id);
-                targets[i].PreInit(systems);
+                targets[i].PreInit(pipeline);
                 EcsDebug.ProfileMarkEnd(id);
             }
 #else
-            foreach (var item in targets) item.PreInit(systems);
+            foreach (var item in targets) item.PreInit(pipeline);
 #endif
         }
 
@@ -55,18 +55,18 @@
 #if DEBUG
         private int[] _targetIds;
 #endif
-        public void Init(EcsSystems systems)
+        public void Init(EcsPipeline pipeline)
         {
 #if DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
                 int id = _targetIds[i];
                 EcsDebug.ProfileMarkBegin(id);
-                targets[i].Init(systems);
+                targets[i].Init(pipeline);
                 EcsDebug.ProfileMarkEnd(id);
             }
 #else
-            foreach (var item in targets) item.Init(systems);
+            foreach (var item in targets) item.Init(pipeline);
 #endif
         }
 
@@ -86,18 +86,18 @@
 #if DEBUG
         private int[] _targetIds;
 #endif
-        public void Run(EcsSystems systems)
+        public void Run(EcsPipeline pipeline)
         {
 #if DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
                 int id = _targetIds[i];
                 EcsDebug.ProfileMarkBegin(id);
-                targets[i].Run(systems);
+                targets[i].Run(pipeline);
                 EcsDebug.ProfileMarkEnd(id);
             }
 #else
-            foreach (var item in targets) item.Run(systems);
+            foreach (var item in targets) item.Run(pipeline);
 #endif
         }
 
@@ -117,18 +117,18 @@
 #if DEBUG
         private int[] _targetIds;
 #endif
-        public void Destroy(EcsSystems systems)
+        public void Destroy(EcsPipeline pipeline)
         {
 #if DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
                 int id = _targetIds[i];
                 EcsDebug.ProfileMarkBegin(id);
-                targets[i].Destroy(systems);
+                targets[i].Destroy(pipeline);
                 EcsDebug.ProfileMarkEnd(id);
             }
 #else
-            foreach (var item in targets) item.Destroy(systems);
+            foreach (var item in targets) item.Destroy(pipeline);
 #endif
         }
 

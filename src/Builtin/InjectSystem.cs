@@ -7,11 +7,11 @@ namespace DCFApixels.DragonECS
     {
         internal class PreInitInjectController 
         {
-            private EcsSystems _source;
+            private EcsPipeline _source;
             private InjectSystemBase[] _injectSystems;
             private int _injectCount;
 
-            public PreInitInjectController(EcsSystems source)
+            public PreInitInjectController(EcsPipeline source)
             {
                 _injectCount = 0;
                 _source = source;
@@ -102,25 +102,26 @@ namespace DCFApixels.DragonECS
             _injectedData = injectedData;
         }
 
-        public void PreInit(EcsSystems systems)
+        public void PreInit(EcsPipeline pipeline)
         {
 
             if (_injectController == null)
             {
-                _injectController = new PreInitInjectController(systems);
-                var injectMapRunner = systems.GetRunner<IEcsInject<PreInitInjectController>>();
-                systems.GetRunner<IEcsPreInitInjectCallbacks>().OnPreInitInjectionBefore();
+                _injectController = new PreInitInjectController(pipeline);
+                var injectMapRunner = pipeline.GetRunner<IEcsInject<PreInitInjectController>>();
+                pipeline.GetRunner<IEcsPreInitInjectCallbacks>().OnPreInitInjectionBefore();
                 injectMapRunner.Inject(_injectController);
             }
 
-            var injectRunnerGeneric = systems.GetRunner<IEcsInject<T>>();
+            var injectRunnerGeneric = pipeline.GetRunner<IEcsInject<T>>();
             injectRunnerGeneric.Inject(_injectedData);
 
             if (_injectController.OnInject())
             {
                 _injectController.Destroy();
-                var injectCallbacksRunner = systems.GetRunner<IEcsPreInitInjectCallbacks>();
+                var injectCallbacksRunner = pipeline.GetRunner<IEcsPreInitInjectCallbacks>();
                 injectCallbacksRunner.OnPreInitInjectionAfter();
+                EcsRunner.Destroy(injectCallbacksRunner);
             }
         }
 
@@ -134,27 +135,27 @@ namespace DCFApixels.DragonECS
 
     public static class InjectSystemExstensions
     {
-        public static EcsSystems.Builder Inject<T>(this EcsSystems.Builder self, T data)
+        public static EcsPipeline.Builder Inject<T>(this EcsPipeline.Builder self, T data)
         {
             self.Add(new InjectSystem<T>(data));
             return self;
         }
-        public static EcsSystems.Builder Inject<A, B>(this EcsSystems.Builder self, A a, B b)
+        public static EcsPipeline.Builder Inject<A, B>(this EcsPipeline.Builder self, A a, B b)
         {
             self.Inject(a).Inject(b);
             return self;
         }
-        public static EcsSystems.Builder Inject<A, B, C, D>(this EcsSystems.Builder self, A a, B b, C c, D d)
+        public static EcsPipeline.Builder Inject<A, B, C, D>(this EcsPipeline.Builder self, A a, B b, C c, D d)
         {
             self.Inject(a).Inject(b).Inject(c).Inject(d);
             return self;
         }
-        public static EcsSystems.Builder Inject<A, B, C, D, E>(this EcsSystems.Builder self, A a, B b, C c, D d, E e)
+        public static EcsPipeline.Builder Inject<A, B, C, D, E>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e)
         {
             self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e);
             return self;
         }
-        public static EcsSystems.Builder Inject<A, B, C, D, E, F>(this EcsSystems.Builder self, A a, B b, C c, D d, E e, F f)
+        public static EcsPipeline.Builder Inject<A, B, C, D, E, F>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e, F f)
         {
             self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f);
             return self;
