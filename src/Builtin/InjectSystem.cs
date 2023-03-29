@@ -1,19 +1,17 @@
-﻿using System.Collections.Generic;
-using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Internal;
 using System.Linq;
 
 namespace DCFApixels.DragonECS
 {
-
     namespace Internal
     {
-        internal class InjectController 
+        internal class PreInitInjectController 
         {
             private EcsSystems _source;
             private InjectSystemBase[] _injectSystems;
             private int _injectCount;
 
-            public InjectController(EcsSystems source)
+            public PreInitInjectController(EcsSystems source)
             {
                 _injectCount = 0;
                 _source = source;
@@ -36,17 +34,16 @@ namespace DCFApixels.DragonECS
         }
     }
 
-
-    public interface IEcsInject : IEcsSystem
+    public interface IEcsPreInject : IEcsSystem
     {
-        public void Inject(object obj);
+        public void PreInject(object obj);
     }
-    [DebugColor(DebugColor.Gray)]
-    public sealed class InjectRunner : EcsRunner<IEcsInject>, IEcsInject
+    [DebugHide, DebugColor(DebugColor.Gray)]
+    public sealed class PreInjectRunner : EcsRunner<IEcsPreInject>, IEcsPreInject
     {
-        void IEcsInject.Inject(object obj)
+        void IEcsPreInject.PreInject(object obj)
         {
-            foreach (var item in targets) item.Inject(obj);
+            foreach (var item in targets) item.PreInject(obj);
         }
     }
 
@@ -54,54 +51,51 @@ namespace DCFApixels.DragonECS
     {
         public void Inject(T obj);
     }
-    [DebugColor(DebugColor.Gray)]
+
+    [DebugHide,  DebugColor(DebugColor.Gray)]
     public sealed class InjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
     {
+        private IEcsPreInject _preInjectchache;
         void IEcsInject<T>.Inject(T obj)
         {
+            _preInjectchache.PreInject(obj);
             foreach (var item in targets) item.Inject(obj);
         }
+
+        protected override void OnSetup()
+        {
+            _preInjectchache = Source.GetRunner<IEcsPreInject>();
+        }
     }
 
-    public interface IEcsInjectCallbacks : IEcsSystem
+    public interface IEcsPreInitInjectCallbacks : IEcsSystem
     {
-        public void OnInjectionBefore();
-        public void OnInjectionAfter();
+        public void OnPreInitInjectionBefore();
+        public void OnPreInitInjectionAfter();
     }
-    [DebugColor(DebugColor.Gray)]
-    public sealed class InjectCallbacksRunner : EcsRunner<IEcsInjectCallbacks>, IEcsInjectCallbacks
+
+    [DebugHide, DebugColor(DebugColor.Gray)]
+    public sealed class InjectCallbacksRunner : EcsRunner<IEcsPreInitInjectCallbacks>, IEcsPreInitInjectCallbacks
     {
-        public void OnInjectionAfter()
+        public void OnPreInitInjectionAfter()
         {
-            foreach (var item in targets) item.OnInjectionAfter();
+            foreach (var item in targets) item.OnPreInitInjectionAfter();
         }
-        public void OnInjectionBefore()
+        public void OnPreInitInjectionBefore()
         {
-            foreach (var item in targets) item.OnInjectionBefore();
-        }
-    }
-
-    public class InjectSystemBase
-    {
-        private static int _injectSystemID = EcsDebug.RegisterMark("InjectSystem");
-
-        protected static void ProfileMarkerBegin()
-        {
-            EcsDebug.ProfileMarkBegin(_injectSystemID);
-        }
-        protected static void ProfileMarkerEnd()
-        {
-            EcsDebug.ProfileMarkEnd(_injectSystemID);
+            foreach (var item in targets) item.OnPreInitInjectionBefore();
         }
     }
 
-    [DebugColor(DebugColor.Gray)]
-    public class InjectSystem<T> : InjectSystemBase, IEcsPreInitSystem, IEcsInject<InjectController>, IEcsInjectCallbacks
+    public class InjectSystemBase { }
+
+    [DebugHide, DebugColor(DebugColor.Gray)]
+    public class InjectSystem<T> : InjectSystemBase, IEcsPreInitSystem, IEcsInject<PreInitInjectController>, IEcsPreInitInjectCallbacks
     {
         private T _injectedData;
 
-        private InjectController _injectController;
-        void IEcsInject<InjectController>.Inject(InjectController obj) => _injectController = obj;
+        private PreInitInjectController _injectController;
+        void IEcsInject<PreInitInjectController>.Inject(PreInitInjectController obj) => _injectController = obj;
 
         public InjectSystem(T injectedData)
         {
@@ -110,33 +104,29 @@ namespace DCFApixels.DragonECS
 
         public void PreInit(EcsSystems systems)
         {
-            if(_injectController == null)
-            {
-                ProfileMarkerBegin();
 
-                _injectController = new InjectController(systems);
-                var injectMapRunner = systems.GetRunner<IEcsInject<InjectController>>();
-                systems.GetRunner<IEcsInjectCallbacks>().OnInjectionBefore();
+            if (_injectController == null)
+            {
+                _injectController = new PreInitInjectController(systems);
+                var injectMapRunner = systems.GetRunner<IEcsInject<PreInitInjectController>>();
+                systems.GetRunner<IEcsPreInitInjectCallbacks>().OnPreInitInjectionBefore();
                 injectMapRunner.Inject(_injectController);
             }
 
             var injectRunnerGeneric = systems.GetRunner<IEcsInject<T>>();
-            var injectRunner = systems.GetRunner<IEcsInject>();
             injectRunnerGeneric.Inject(_injectedData);
-            injectRunner.Inject(_injectedData);
 
             if (_injectController.OnInject())
             {
                 _injectController.Destroy();
-                var injectCallbacksRunner = systems.GetRunner<IEcsInjectCallbacks>();
-                injectCallbacksRunner.OnInjectionAfter();
-                ProfileMarkerEnd();
+                var injectCallbacksRunner = systems.GetRunner<IEcsPreInitInjectCallbacks>();
+                injectCallbacksRunner.OnPreInitInjectionAfter();
             }
         }
 
-        public void OnInjectionBefore() { }
+        public void OnPreInitInjectionBefore() { }
 
-        public void OnInjectionAfter()
+        public void OnPreInitInjectionAfter()
         {
             _injectController = null;
         }
