@@ -27,15 +27,10 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    sealed class MyAttribute : Attribute
-    {   
-       
-    }
-
     public interface IEcsSystem { }
     public interface IEcsRunner
     {
+        public EcsSystems Source { get; }
         public IList Targets { get; }
         public object Filter { get; }
         public bool IsHasFilter { get; }
@@ -83,7 +78,8 @@ namespace DCFApixels.DragonECS
             _runnerHandlerTypes = new Dictionary<Guid, Type>();
             foreach (var item in runnerHandlerTypes)
             {
-                Type interfaceType = item.GetInterfaces().Where(o => o != typeof(IEcsRunner) && o != typeof(IEcsSystem)).First(); //TODO оптимизировать это место
+                //Type interfaceType = item.GetInterfaces().Where(o => o != typeof(IEcsRunner) && o != typeof(IEcsSystem)).First(); //TODO оптимизировать это место
+                Type interfaceType = item.BaseType.GenericTypeArguments[0]; 
                 _runnerHandlerTypes.Add(interfaceType.GUID, item);
             }
 
@@ -95,13 +91,24 @@ namespace DCFApixels.DragonECS
 
         private static Exception CheckRunnerValide(Type type) //TODO доработать проверку валидности реалиазации ранера
         {
-            if (type.ReflectedType != null)
-                return new Exception($"{type.FullName}.ReflectedType must be Null, but equal to {type.ReflectedType.FullName}");
+            Type baseType = type.BaseType;
+            Type baseTypeArgument = baseType.GenericTypeArguments[0];
 
-            //var interfaces = type.GetInterfaces(); 
-            //if (interfaces.Length != 1 || interfaces[0].GUID != typeof())
-            //{
-            //}
+            if (type.ReflectedType != null)
+            {
+                return new Exception($"{type.FullName}.ReflectedType must be Null, but equal to {type.ReflectedType.FullName}.");
+            }
+            if (!baseTypeArgument.IsInterface)
+            {
+                return new Exception($"Argument T of class EcsRunner<T>, can only be an inetrface.The {baseTypeArgument.FullName} type is not an interface.");
+            }
+
+            var interfaces = type.GetInterfaces();
+
+            if (!interfaces.Any(o => o == baseTypeArgument))
+            {
+                return new Exception($"Runner {type.FullName} does not implement interface {baseTypeArgument.FullName}.");
+            }
 
             return null;
         }
