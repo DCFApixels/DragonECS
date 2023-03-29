@@ -351,15 +351,13 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-
-
-
-
-    public static class IEcsWorldExt
+    #region Extensions
+    public static class IEcsWorldExtensions
     {
         public static void DelEntity(this IEcsWorld self, ent entity)
         {
             self.DelEntity(entity.id);
         }
     }
+    #endregion 
 }

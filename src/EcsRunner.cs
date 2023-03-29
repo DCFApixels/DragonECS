@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq.Expressions;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -19,12 +18,7 @@ namespace DCFApixels.DragonECS
             this.interfaceType = interfaceType;
             this.filter = filter;
         }
-
-        public EcsRunnerFilterAttribute(object filter)
-        {
-            interfaceType = null;
-            this.filter = filter;
-        }
+        public EcsRunnerFilterAttribute(object filter) : this(null, filter) { }
     }
 
     public interface IEcsSystem { }
@@ -36,31 +30,19 @@ namespace DCFApixels.DragonECS
         public bool IsHasFilter { get; }
     }
 
-
-    public static class IEcsProcessorExtensions
-    {
-        public static bool IsRunner(this IEcsSystem self)
-        {
-            return self is IEcsRunner;
-        }
-    }
-
     internal static class EcsRunnerActivator
     {
         private static Dictionary<Guid, Type> _runnerHandlerTypes; //interface guid/Runner handler type pairs;
 
         static EcsRunnerActivator()
         {
-            List<Exception> exceptions = new List<Exception>();
-
+            List<Exception> delayedExceptions = new List<Exception>();
             Type runnerBaseType = typeof(EcsRunner<>);
-
             List<Type> runnerHandlerTypes = new List<Type>();
 
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
-                runnerHandlerTypes.AddRange(
-                    assembly.GetTypes()
+                runnerHandlerTypes.AddRange(assembly.GetTypes()
                     .Where(type => type.BaseType != null && type.BaseType.IsGenericType && runnerBaseType == type.BaseType.GetGenericTypeDefinition()));
             }
 
@@ -71,21 +53,21 @@ namespace DCFApixels.DragonECS
                 if (e != null)
                 {
                     runnerHandlerTypes.RemoveAt(i--);
-                    exceptions.Add(e);
+                    delayedExceptions.Add(e);
                 }
             }
 #endif
             _runnerHandlerTypes = new Dictionary<Guid, Type>();
             foreach (var item in runnerHandlerTypes)
             {
-                //Type interfaceType = item.GetInterfaces().Where(o => o != typeof(IEcsRunner) && o != typeof(IEcsSystem)).First(); //TODO оптимизировать это место
                 Type interfaceType = item.BaseType.GenericTypeArguments[0]; 
                 _runnerHandlerTypes.Add(interfaceType.GUID, item);
             }
 
-            if (exceptions.Count > 0)
+            if (delayedExceptions.Count > 0)
             {
-                foreach (var item in exceptions) throw item;
+                foreach (var item in delayedExceptions) EcsDebug.Print(EcsConsts.DEBUG_ERROR_TAG, item.Message);
+                throw delayedExceptions[0];
             }
         }
 
@@ -96,18 +78,18 @@ namespace DCFApixels.DragonECS
 
             if (type.ReflectedType != null)
             {
-                return new Exception($"{type.FullName}.ReflectedType must be Null, but equal to {type.ReflectedType.FullName}.");
+                return new EcsRunnerImplementationException($"{type.FullName}.ReflectedType must be Null, but equal to {type.ReflectedType.FullName}.");
             }
             if (!baseTypeArgument.IsInterface)
             {
-                return new Exception($"Argument T of class EcsRunner<T>, can only be an inetrface.The {baseTypeArgument.FullName} type is not an interface.");
+                return new EcsRunnerImplementationException($"Argument T of class EcsRunner<T>, can only be an inetrface.The {baseTypeArgument.FullName} type is not an interface.");
             }
 
             var interfaces = type.GetInterfaces();
 
             if (!interfaces.Any(o => o == baseTypeArgument))
             {
-                return new Exception($"Runner {type.FullName} does not implement interface {baseTypeArgument.FullName}.");
+                return new EcsRunnerImplementationException($"Runner {type.FullName} does not implement interface {baseTypeArgument.FullName}.");
             }
 
             return null;
@@ -148,7 +130,7 @@ namespace DCFApixels.DragonECS
 #if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
             if (_subclass != null)
             {
-                throw new ArgumentException($"The Runner<{typeof(TInterface).FullName}> can only have one subclass");
+                throw new EcsRunnerImplementationException($"The Runner<{typeof(TInterface).FullName}> can have only one implementing subclass");
             }
 
             Type interfaceType = typeof(TInterface);
@@ -225,10 +207,12 @@ namespace DCFApixels.DragonECS
         private object _filter;
         private bool _isHasFilter;
 
+        #region Properties
         public EcsSystems Source => _source;
         public IList Targets => _targetsSealed;
         public object Filter => _filter;
         public bool IsHasFilter => _isHasFilter;
+        #endregion
 
         private EcsRunner<TInterface> Set(EcsSystems source, TInterface[] targets, bool isHasFilter, object filter)
         {
@@ -251,4 +235,14 @@ namespace DCFApixels.DragonECS
                 Set(_source, FilterSystems(_source.AllSystems, _filter), _isHasFilter, _filter);
         }
     }
+
+    #region Extensions
+    public static class IEcsSystemExtensions
+    {
+        public static bool IsRunner(this IEcsSystem self)
+        {
+            return self is IEcsRunner;
+        }
+    }
+    #endregion
 }
