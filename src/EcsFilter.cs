@@ -371,7 +371,7 @@ namespace DCFApixels.DragonECS
 
                 Type targetType = typeof(Activator<,>).MakeGenericType(typeof(TWorldArchetype), sortedIncType, sortedExcType);
 
-                if(targetType != thisType)
+                if (targetType != thisType)
                 {
                     instance = (EcsMask)targetType.GetField(nameof(instance), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).GetValue(null);
                     return;
@@ -448,6 +448,11 @@ namespace DCFApixels.DragonECS
         {
             _entities.Remove(entityID);
         }
+        #endregion
+
+        #region GetEnumerator
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsGroup.Enumerator GetEnumerator() => _entities.GetEnumerator();
         #endregion
     }
     #endregion
