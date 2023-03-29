@@ -43,6 +43,12 @@ namespace DCFApixels.DragonECS
             id = (short)_worldIdDispenser.GetFree();
             Worlds[id] = (IEcsWorld)this;
         }
+
+        protected void Realeze()    
+        {
+            Worlds[id] = null;  
+            _worldIdDispenser.Release(id);
+        }
     }
 
     public abstract class EcsWorld<TArchetype> : EcsWorld, IEcsWorld 
@@ -110,7 +116,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetFilter
-
         public EcsFilter Filter<TInc>() where TInc : struct, IInc => Filter<TInc, Exc>();
         public EcsFilter Filter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc
         {
@@ -298,7 +303,15 @@ namespace DCFApixels.DragonECS
         #region Destroy
         public void Destroy()
         {
-
+            _entityDispenser = null;
+            _entities = null;
+            _gens = null;
+            _pools = null;
+            _nullPool = null;
+            _filtersByIncludedComponents = null;
+            _filtersByExcludedComponents = null;
+            _filters = null;
+            Realeze();
         }
         #endregion
 
