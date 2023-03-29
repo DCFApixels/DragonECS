@@ -7,7 +7,7 @@ namespace DCFApixels.DragonECS
     #region Incs/Excs base
     public interface IMaskCondition
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype;
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>;
     }
     #endregion
 
@@ -15,11 +15,11 @@ namespace DCFApixels.DragonECS
     public interface IInc : IMaskCondition { }
     public struct Inc : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype => Array.Empty<int>();
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype> => Array.Empty<int>();
     }
     public struct Inc<T0> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -29,7 +29,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -40,7 +40,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1, T2> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -52,7 +52,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1, T2, T3> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -65,7 +65,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1, T2, T3, T4> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -79,7 +79,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1, T2, T3, T4, T5> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -94,7 +94,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1, T2, T3, T4, T5, T6> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -110,7 +110,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -127,7 +127,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -145,7 +145,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -164,7 +164,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -184,7 +184,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Inc<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : IInc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -209,11 +209,11 @@ namespace DCFApixels.DragonECS
     public interface IExc : IMaskCondition { }
     public struct Exc : IExc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype => Array.Empty<int>();
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype> => Array.Empty<int>();
     }
     public struct Exc<T0> : IExc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -223,7 +223,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Exc<T0, T1> : IExc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -234,7 +234,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Exc<T0, T1, T2> : IExc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -246,7 +246,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Exc<T0, T1, T2, T3> : IExc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -259,7 +259,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Exc<T0, T1, T2, T3, T4> : IExc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -273,7 +273,7 @@ namespace DCFApixels.DragonECS
     }
     public struct Exc<T0, T1, T2, T3, T4, T5> : IExc
     {
-        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : IWorldArchetype
+        public int[] GetComponentsIDs<TWorldArchetype>() where TWorldArchetype : EcsWorld<TWorldArchetype>
         {
             return new int[]
             {
@@ -316,7 +316,7 @@ namespace DCFApixels.DragonECS
     }
 
     public static class EcsMaskMap<TWorldArchetype>
-        where TWorldArchetype : IWorldArchetype
+        where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
         private static int _count;
         private static int _capacity;

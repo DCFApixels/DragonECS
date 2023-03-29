@@ -1,15 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IWorldArchetype { }
-    public struct DefaultWorld : IWorldArchetype { }
-
     public interface IEcsWorld
     {
         #region Properties
@@ -37,14 +31,6 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    public static class IEcsWorldExt
-    {
-        public static void DelEntity(this IEcsWorld self, ent entity)
-        {
-            self.DelEntity(entity.id);
-        }
-    }
-
     public abstract class EcsWorld
     {
         internal static IEcsWorld[] Worlds = new IEcsWorld[8];
@@ -59,8 +45,8 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public sealed class EcsWorld<TArchetype> : EcsWorld, IEcsWorld
-        where TArchetype : IWorldArchetype
+    public abstract class EcsWorld<TArchetype> : EcsWorld, IEcsWorld 
+        where TArchetype : EcsWorld<TArchetype>
     {
         private IntDispenser _entityDispenser;
         private EcsGroup _entities;
@@ -363,5 +349,17 @@ namespace DCFApixels.DragonECS
             }
         }
         #endregion
+    }
+
+
+
+
+
+    public static class IEcsWorldExt
+    {
+        public static void DelEntity(this IEcsWorld self, ent entity)
+        {
+            self.DelEntity(entity.id);
+        }
     }
 }
