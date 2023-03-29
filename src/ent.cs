@@ -87,43 +87,58 @@ namespace DCFApixels.DragonECS
 
     public static partial class entExtensions
     {
+        private static EcsProfilerMarker _IsAliveMarker = new EcsProfilerMarker("ent.IsAlive");
+        private static EcsProfilerMarker _IsNullMarker = new EcsProfilerMarker("ent.IsNull");
+        private static EcsProfilerMarker _ReadMarker = new EcsProfilerMarker("ent.Read");
+        private static EcsProfilerMarker _WriteMarker = new EcsProfilerMarker("ent.Write");
+        private static EcsProfilerMarker _HasMarker = new EcsProfilerMarker("ent.Has");
+        private static EcsProfilerMarker _DelMarker = new EcsProfilerMarker("ent.Del");
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAlive(this ref ent self)
         {
-            bool result = EcsWorld.Worlds[self.world].EntityIsAlive(self.id, self.gen);
-            if (!result) self = ent.NULL;
-            return result;
+            using (_IsAliveMarker.Auto())
+            {
+                bool result = EcsWorld.Worlds[self.world].EntityIsAlive(self.id, self.gen);
+                if (!result) self = ent.NULL;
+                return result;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNull(this in ent self)
         {
-            return self == ent.NULL;
+            using (_IsNullMarker.Auto())
+                return self == ent.NULL;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref readonly T Read<T>(this in ent self)
             where T : struct
         {
-            return ref EcsWorld.Worlds[self.world].GetPool<T>().Read(self.id);
+            using (_ReadMarker.Auto())
+                return ref EcsWorld.Worlds[self.world].GetPool<T>().Read(self.id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T Write<T>(this in ent self)
             where T : struct
         {
-            return ref EcsWorld.Worlds[self.world].GetPool<T>().Write(self.id);
+            using (_WriteMarker.Auto())
+                return ref EcsWorld.Worlds[self.world].GetPool<T>().Write(self.id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Has<T>(this in ent self)
             where T : struct
         {
-            return EcsWorld.Worlds[self.world].GetPool<T>().Has(self.id);
+            using (_HasMarker.Auto())
+                return EcsWorld.Worlds[self.world].GetPool<T>().Has(self.id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Del<T>(this in ent self)
             where T : struct
         {
-            EcsWorld.Worlds[self.world].GetPool<T>().Del(self.id);
+            using (_DelMarker.Auto())
+                EcsWorld.Worlds[self.world].GetPool<T>().Del(self.id);
         }
     }
 }

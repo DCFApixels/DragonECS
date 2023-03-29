@@ -9,6 +9,7 @@ namespace DCFApixels.DragonECS
     {
         public readonly int id;
         public EcsProfilerMarker(int id) => this.id = id;
+        public EcsProfilerMarker(string name) => id = EcsDebug.RegisterMark(name);
         public void Begin() => EcsDebug.ProfileMarkBegin(id);
         public void End() => EcsDebug.ProfileMarkEnd(id);
         public AutoScope Auto() => new AutoScope(id);
