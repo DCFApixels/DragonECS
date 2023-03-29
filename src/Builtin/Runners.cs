@@ -1,6 +1,4 @@
-﻿using DCFApixels.DragonECS.Profile;
-
-namespace DCFApixels.DragonECS
+﻿namespace DCFApixels.DragonECS
 {
 
     public interface IEcsPreInitSystem : IEcsSystem
@@ -25,7 +23,7 @@ namespace DCFApixels.DragonECS
     public sealed class EcsPreInitRunner : EcsRunner<IEcsPreInitSystem>, IEcsPreInitSystem
     {
 #if DEBUG
-        private ProfilerMarker[] _markers;
+        private EcsProfilerMarker[] _markers;
 #endif
         public void PreInit(EcsPipeline pipeline)
         {
@@ -43,10 +41,10 @@ namespace DCFApixels.DragonECS
 #if DEBUG
         protected override void OnSetup()
         {
-            _markers = new ProfilerMarker[targets.Length];
+            _markers = new EcsProfilerMarker[targets.Length];
             for (int i = 0; i < targets.Length; i++)
             {
-                _markers[i] = new ProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(PreInit)}"));
+                _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(PreInit)}"));
             }
         }
 #endif
@@ -54,7 +52,7 @@ namespace DCFApixels.DragonECS
     public sealed class EcsInitRunner : EcsRunner<IEcsInitSystem>, IEcsInitSystem
     {
 #if DEBUG
-        private ProfilerMarker[] _markers;
+        private EcsProfilerMarker[] _markers;
 #endif
         public void Init(EcsPipeline pipeline)
         {
@@ -72,10 +70,10 @@ namespace DCFApixels.DragonECS
 #if DEBUG
         protected override void OnSetup()
         {
-            _markers = new ProfilerMarker[targets.Length];
+            _markers = new EcsProfilerMarker[targets.Length];
             for (int i = 0; i < targets.Length; i++)
             {
-                _markers[i] = new ProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Init)}"));
+                _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Init)}"));
             }
         }
 #endif
@@ -83,7 +81,7 @@ namespace DCFApixels.DragonECS
     public sealed class EcsRunRunner : EcsRunner<IEcsRunSystem>, IEcsRunSystem
     {
 #if DEBUG
-        private ProfilerMarker[] _markers;
+        private EcsProfilerMarker[] _markers;
 #endif
         public void Run(EcsPipeline pipeline)
         {
@@ -102,10 +100,10 @@ namespace DCFApixels.DragonECS
 #if DEBUG
         protected override void OnSetup()
         {
-            _markers = new ProfilerMarker[targets.Length];
+            _markers = new EcsProfilerMarker[targets.Length];
             for (int i = 0; i < targets.Length; i++)
             {
-                _markers[i] = new ProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Run)}"));
+                _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Run)}"));
             }
         }
 #endif
@@ -113,7 +111,7 @@ namespace DCFApixels.DragonECS
     public sealed class EcsDestroyRunner : EcsRunner<IEcsDestroySystem>, IEcsDestroySystem
     {
 #if DEBUG
-        private ProfilerMarker[] _markers;
+        private EcsProfilerMarker[] _markers;
 #endif
         public void Destroy(EcsPipeline pipeline)
         {
@@ -131,10 +129,10 @@ namespace DCFApixels.DragonECS
 #if DEBUG
         protected override void OnSetup()
         {
-            _markers = new ProfilerMarker[targets.Length];
+            _markers = new EcsProfilerMarker[targets.Length];
             for (int i = 0; i < targets.Length; i++)
             {
-                _markers[i] = new ProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Destroy)}"));
+                _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Destroy)}"));
             }
         }
 #endif
