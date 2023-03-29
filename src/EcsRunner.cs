@@ -61,10 +61,13 @@ namespace DCFApixels.DragonECS
             Type runnerBaseType = typeof(EcsRunner<>);
 
             List<Type> runnerHandlerTypes = new List<Type>();
-            runnerHandlerTypes = Assembly.GetAssembly(runnerBaseType)
-                .GetTypes()
-                .Where(type => type.BaseType != null && type.BaseType.IsGenericType && runnerBaseType == type.BaseType.GetGenericTypeDefinition())
-                .ToList();
+
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                runnerHandlerTypes.AddRange(
+                    assembly.GetTypes()
+                    .Where(type => type.BaseType != null && type.BaseType.IsGenericType && runnerBaseType == type.BaseType.GetGenericTypeDefinition()));
+            }
 
 #if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
             for (int i = 0; i < runnerHandlerTypes.Count; i++)

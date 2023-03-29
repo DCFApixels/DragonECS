@@ -190,7 +190,10 @@ namespace DCFApixels.DragonECS
                 }
                 foreach (var item in _blockExecutionOrder)
                 {
-                    result.AddRange(_systems[item]);
+                    if(_systems.TryGetValue(item, out var list))
+                    {
+                        result.AddRange(list);
+                    }
                 }
 
                 return new EcsSystems(result.ToArray());
