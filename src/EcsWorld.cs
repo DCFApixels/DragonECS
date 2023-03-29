@@ -16,7 +16,7 @@ namespace DCFApixels.DragonECS
         #region Methods
         public EcsPool<T> GetPool<T>() where T : struct;
         public EcsFilter Filter<TInc>() where TInc : struct, IInc;
-        public EcsFilter GetFilter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc;
+        public EcsFilter Filter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc;
         public ent NewEntity();
         public bool EntityIsAlive(int entityID, short gen);
         public ent GetEntity(int entityID);
@@ -111,10 +111,10 @@ namespace DCFApixels.DragonECS
 
         #region GetFilter
 
-        public EcsFilter Filter<TInc>() where TInc : struct, IInc => GetFilter<TInc, Exc>();
-        public EcsFilter GetFilter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc
+        public EcsFilter Filter<TInc>() where TInc : struct, IInc => Filter<TInc, Exc>();
+        public EcsFilter Filter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc
         {
-            var mask = EcsMaskMap<TArchetype>.GetMask<TInc, Exc>();
+            var mask = EcsMaskMap<TArchetype>.GetMask<TInc, TExc>();
 
             if (_filters.Length <= EcsMaskMap<TArchetype>.Capacity)
             {
