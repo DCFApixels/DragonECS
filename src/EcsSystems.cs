@@ -43,7 +43,7 @@ namespace DCFApixels.DragonECS
             Type type = typeof(T);
             if (_runners.TryGetValue(type, out IEcsRunner result))
                 return (T)result;
-            result = (IEcsRunner)EcsRunner<T>.Instantiate(_allSystems);
+            result = (IEcsRunner)EcsRunner<T>.Instantiate(this);
             _runners.Add(type, result);
             return (T)result;
         }

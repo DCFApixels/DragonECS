@@ -191,35 +191,38 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Instantiate
-        private static TInterface Instantiate(TInterface[] targets, bool isHasFilter, object filter)
+        private static TInterface Instantiate(EcsSystems source, TInterface[] targets, bool isHasFilter, object filter)
         {
             if (_subclass == null)
                 EcsRunnerActivator.InitFor<TInterface>();
 
             var instance = (EcsRunner<TInterface>)Activator.CreateInstance(_subclass);
-            return (TInterface)(IEcsSystem)instance.Set(targets, isHasFilter, filter);
+            return (TInterface)(IEcsSystem)instance.Set(source, targets, isHasFilter, filter);
         }
-        public static TInterface Instantiate(IEnumerable<IEcsSystem> targets)
+        public static TInterface Instantiate(EcsSystems source)
         {
-            return Instantiate(FilterSystems(targets), false, null);
+            return Instantiate(source, FilterSystems(source.AllSystems), false, null);
         }
-        public static TInterface Instantiate(IEnumerable<IEcsSystem> targets, object filter)
+        public static TInterface Instantiate(EcsSystems source, object filter)
         {
-            return Instantiate(FilterSystems(targets, filter), true, filter);
+            return Instantiate(source, FilterSystems(source.AllSystems, filter), true, filter);
         }
         #endregion
 
+        private EcsSystems _source;
         protected TInterface[] targets;
         private ReadOnlyCollection<TInterface> _targetsSealed;
         private object _filter;
         private bool _isHasFilter;
 
+        public EcsSystems Source => _source;
         public IList Targets => _targetsSealed;
         public object Filter => _filter;
         public bool IsHasFilter => _isHasFilter;
 
-        private EcsRunner<TInterface> Set(TInterface[] targets, bool isHasFilter, object filter)
+        private EcsRunner<TInterface> Set(EcsSystems source, TInterface[] targets, bool isHasFilter, object filter)
         {
+            _source = source;
             this.targets = targets;
             _targetsSealed = new ReadOnlyCollection<TInterface>(targets);
             _filter = filter;
@@ -230,12 +233,12 @@ namespace DCFApixels.DragonECS
 
         protected virtual void OnSetup() { }
 
-        internal void Rebuild(IEnumerable<IEcsSystem> targets)
+        internal void Rebuild()
         {
             if(_isHasFilter)
-                Set(FilterSystems(targets), _isHasFilter, _filter);
+                Set(_source, FilterSystems(_source.AllSystems), _isHasFilter, _filter);
             else
-                Set(FilterSystems(targets, _filter), _isHasFilter, _filter);
+                Set(_source, FilterSystems(_source.AllSystems, _filter), _isHasFilter, _filter);
         }
     }
 }
