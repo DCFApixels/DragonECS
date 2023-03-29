@@ -1,5 +1,8 @@
-﻿namespace DCFApixels.DragonECS
+﻿using DCFApixels.DragonECS.Profile;
+
+namespace DCFApixels.DragonECS
 {
+
     public interface IEcsPreInitSystem : IEcsSystem
     {
         public void PreInit(EcsPipeline pipeline);
@@ -22,17 +25,15 @@
     public sealed class EcsPreInitRunner : EcsRunner<IEcsPreInitSystem>, IEcsPreInitSystem
     {
 #if DEBUG
-        private int[] _targetIds;
+        private ProfilerMarker[] _markers;
 #endif
         public void PreInit(EcsPipeline pipeline)
         {
 #if DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
-                int id = _targetIds[i];
-                EcsDebug.ProfileMarkBegin(id);
-                targets[i].PreInit(pipeline);
-                EcsDebug.ProfileMarkEnd(id);
+                using (_markers[i].Auto())
+                    targets[i].PreInit(pipeline);
             }
 #else
             foreach (var item in targets) item.PreInit(pipeline);
@@ -42,10 +43,10 @@
 #if DEBUG
         protected override void OnSetup()
         {
-            _targetIds = new int[targets.Length];
+            _markers = new ProfilerMarker[targets.Length];
             for (int i = 0; i < targets.Length; i++)
             {
-                _targetIds[i] = EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(PreInit)}");
+                _markers[i] = new ProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(PreInit)}"));
             }
         }
 #endif
@@ -53,17 +54,15 @@
     public sealed class EcsInitRunner : EcsRunner<IEcsInitSystem>, IEcsInitSystem
     {
 #if DEBUG
-        private int[] _targetIds;
+        private ProfilerMarker[] _markers;
 #endif
         public void Init(EcsPipeline pipeline)
         {
 #if DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
-                int id = _targetIds[i];
-                EcsDebug.ProfileMarkBegin(id);
-                targets[i].Init(pipeline);
-                EcsDebug.ProfileMarkEnd(id);
+                using (_markers[i].Auto())
+                    targets[i].Init(pipeline);
             }
 #else
             foreach (var item in targets) item.Init(pipeline);
@@ -73,10 +72,10 @@
 #if DEBUG
         protected override void OnSetup()
         {
-            _targetIds = new int[targets.Length];
+            _markers = new ProfilerMarker[targets.Length];
             for (int i = 0; i < targets.Length; i++)
             {
-                _targetIds[i] = EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Init)}");
+                _markers[i] = new ProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Init)}"));
             }
         }
 #endif
@@ -84,17 +83,16 @@
     public sealed class EcsRunRunner : EcsRunner<IEcsRunSystem>, IEcsRunSystem
     {
 #if DEBUG
-        private int[] _targetIds;
+        private ProfilerMarker[] _markers;
 #endif
         public void Run(EcsPipeline pipeline)
         {
 #if DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
-                int id = _targetIds[i];
-                EcsDebug.ProfileMarkBegin(id);
-                targets[i].Run(pipeline);
-                EcsDebug.ProfileMarkEnd(id);
+                using (_markers[i].Auto())
+                    targets[i].Run(pipeline);
+
             }
 #else
             foreach (var item in targets) item.Run(pipeline);
@@ -104,10 +102,10 @@
 #if DEBUG
         protected override void OnSetup()
         {
-            _targetIds = new int[targets.Length];
+            _markers = new ProfilerMarker[targets.Length];
             for (int i = 0; i < targets.Length; i++)
             {
-                _targetIds[i] = EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Run)}");
+                _markers[i] = new ProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Run)}"));
             }
         }
 #endif
@@ -115,17 +113,15 @@
     public sealed class EcsDestroyRunner : EcsRunner<IEcsDestroySystem>, IEcsDestroySystem
     {
 #if DEBUG
-        private int[] _targetIds;
+        private ProfilerMarker[] _markers;
 #endif
         public void Destroy(EcsPipeline pipeline)
         {
 #if DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
-                int id = _targetIds[i];
-                EcsDebug.ProfileMarkBegin(id);
-                targets[i].Destroy(pipeline);
-                EcsDebug.ProfileMarkEnd(id);
+                using (_markers[i].Auto())
+                    targets[i].Destroy(pipeline);
             }
 #else
             foreach (var item in targets) item.Destroy(pipeline);
@@ -135,10 +131,10 @@
 #if DEBUG
         protected override void OnSetup()
         {
-            _targetIds = new int[targets.Length];
+            _markers = new ProfilerMarker[targets.Length];
             for (int i = 0; i < targets.Length; i++)
             {
-                _targetIds[i] = EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Destroy)}");
+                _markers[i] = new ProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Destroy)}"));
             }
         }
 #endif

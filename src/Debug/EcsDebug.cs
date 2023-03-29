@@ -5,6 +5,31 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    namespace Profile
+    {
+        public readonly struct ProfilerMarker
+        {
+            public readonly int id;
+            public ProfilerMarker(int id) => this.id = id;
+            public void Begin() => EcsDebug.ProfileMarkBegin(id);
+            public void End() => EcsDebug.ProfileMarkEnd(id);
+            public AutoScope Auto() => new AutoScope(id);
+
+            public readonly struct AutoScope : IDisposable
+            {
+                private readonly int id;
+                public AutoScope(int id)
+                {
+                    this.id = id;
+                    EcsDebug.ProfileMarkBegin(id);
+                }
+                public void Dispose()
+                {
+                    EcsDebug.ProfileMarkEnd(id);
+                }
+            }
+        }
+    }
     public static class EcsDebug
     {
         public static void Set<T>() where T : DebugService, new() => DebugService.Set<T>();
@@ -52,8 +77,8 @@ namespace DCFApixels.DragonECS
             return 0;
 #endif
         }
-
     }
+
     public abstract class DebugService
     {
         private static DebugService _instance;
