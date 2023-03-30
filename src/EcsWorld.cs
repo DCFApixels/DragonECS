@@ -77,7 +77,7 @@ namespace DCFApixels.DragonECS
         #region Constructors
         public EcsWorld()
         {
-            _entityDispenser = new IntDispenser();
+            _entityDispenser = new IntDispenser(1);
             _nullPool = new EcsNullPool(this);
             _pools = new IEcsPool[512];
             FillArray(_pools, _nullPool);

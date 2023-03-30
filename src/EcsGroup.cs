@@ -1,83 +1,138 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using delayedOp = System.Int32;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsReadonlyGroup 
+    public interface IEcsReadonlyGroup
     {
-        public IEcsWorld World { get; }
-        public int Count { get; }
-        public EcsGroup.Enumerator GetEnumerator();
+        int Count { get; }
+        bool Contains(int entityID);
+        EcsGroup.Enumerator GetEnumerator();
     }
     public interface IEcsGroup : IEcsReadonlyGroup
     {
-        public void Add(int entityID);
-        public void Remove(int entityID);
+        void Add(int entityID);
+        void Remove(int entityID);
     }
 
-    public class EcsGroup : IEcsGroup 
-    {
-        private IEcsWorld _source;
-        private SparseSet _entities;
+    // не может содержать значение 0
+    // _delayedOps это int[] для отложенных операций, хранятся отложенные операции в виде int значения, если старший бит = 0 то это опреация добавленияб если = 1 то это операция вычитания
 
-        private DelayedOp[] _delayedOps;
+    // this collection can only store numbers greater than 0
+    public class EcsGroup : IEcsGroup  
+    {
+        public const int DEALAYED_ADD = 0;
+        public const int DEALAYED_REMOVE = int.MinValue;
+
+        private IEcsWorld _source;
+
+        private int[] _dense;
+        private int[] _sparse;
+
+        private int _count;
+
+        private delayedOp[] _delayedOps;
         private int _delayedOpsCount;
 
         private int _lockCount;
 
         #region Properties
         public IEcsWorld World => _source;
-        public int Count => _entities.Count;
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _count;
+        }
         #endregion
 
         #region Constrcutors
-        public EcsGroup(IEcsWorld world,  int entitiesCapacity, int delayedOpsCapacity = 32)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsGroup(IEcsWorld source, int denseCapacity = 64, int sparseCapacity = 256, int delayedOpsCapacity = 128)
         {
-            _source = world;
-            _entities = new SparseSet(entitiesCapacity, entitiesCapacity);
-            _delayedOps = new DelayedOp[delayedOpsCapacity];
+            _source = source;
+            _dense = new int[denseCapacity];
+            _sparse = new int[sparseCapacity];
+
+            _delayedOps = new delayedOp[delayedOpsCapacity];
+
             _lockCount = 0;
-        }
-        #endregion
+            _delayedOpsCount = 0;
 
-        #region Add/Remove
-        public void Add(int entityID)
-        {
-            if (_lockCount > 0)
-                AddDelayedOp(entityID, true);
-            _entities.Add(entityID);
-        }
-
-        public void Remove(int entityID)
-        {
-            if (_lockCount > 0)
-                AddDelayedOp(entityID, false);
-            _entities.Remove(entityID);
-        }
-
-        private void AddDelayedOp(int entityID, bool isAdd)
-        {
-            if (_delayedOpsCount >= _delayedOps.Length)
-            {
-                Array.Resize(ref _delayedOps, _delayedOps.Length << 1);
-            }
-            ref DelayedOp delayedOd = ref _delayedOps[_delayedOpsCount++];
-            delayedOd.Entity = entityID;
-            delayedOd.Added = isAdd;
+            _count = 0;
         }
         #endregion
 
         #region Contains
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(int entityID) => _entities.Contains(entityID);
+        public bool Contains(int entityID)
+        {
+            return /*entityID > 0 && */ entityID < _sparse.Length && _sparse[entityID] > 0;
+        }
         #endregion
+
+        #region add/remove
+        public void Add(int entityID)
+        {
+            if (_lockCount > 0) 
+            {
+                AddDelayedOp(entityID, DEALAYED_ADD);
+                return;
+            }
+
+            if (Contains(entityID)) 
+                return;
+
+            if(++_count >= _dense.Length) 
+                Array.Resize(ref _dense, _dense.Length << 1);
+
+            if (entityID > _sparse.Length)
+            {
+                int neadedSpace = _sparse.Length;
+                while (entityID >= neadedSpace) 
+                    neadedSpace <<= 1;
+                Array.Resize(ref _sparse, neadedSpace);
+            }
+
+            _dense[_count] = entityID;
+            _sparse[entityID] = _count;
+        }
+
+        public void Remove(int entityID)
+        {
+            if (_lockCount > 0)
+            {
+                AddDelayedOp(entityID, DEALAYED_REMOVE);
+                return;
+            }
+
+            if (!Contains(entityID)) 
+                return;
+
+            _dense[_sparse[entityID]] = _dense[_count];
+            _sparse[_dense[_count--]] = _sparse[entityID];
+            _sparse[entityID] = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AddDelayedOp(int entityID, int isAddBitFlag)
+        {
+            if (_delayedOpsCount >= _delayedOps.Length)
+            {
+                Array.Resize(ref _delayedOps, _delayedOps.Length << 1);
+            }
+            _delayedOps[_delayedOpsCount++] = entityID | isAddBitFlag; // delayedOp = entityID add isAddBitFlag
+        }
+        #endregion
+
+        //TODO добавить автосоритровку при каждом GetEnumerator
 
         #region AddGroup/RemoveGroup
         public void AddGroup(IEcsReadonlyGroup group)
         {
             foreach (var item in group)
             {
-                _entities.TryAdd(item.id);
+                Add(item.id);
             }
         }
 
@@ -85,37 +140,38 @@ namespace DCFApixels.DragonECS
         {
             foreach (var item in group)
             {
-                _entities.TryRemove(item.id);
+                Remove(item.id);
             }
         }
         #endregion
 
         #region GetEnumerator
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Unlock()
         {
-#if DEBUG
+#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
             if (_lockCount <= 0)
             {
-                throw new Exception($"Invalid lock-unlock balance for {nameof(EcsFilter)}.");
+                throw new Exception($"Invalid lock-unlock balance for {nameof(EcsGroup)}.");
             }
 #endif
             if (--_lockCount <= 0)
             {
                 for (int i = 0; i < _delayedOpsCount; i++)
                 {
-                    ref DelayedOp op = ref _delayedOps[i];
-                    if (op.Added)
+                    delayedOp op = _delayedOps[i];
+                    if (op >= 0) //delayedOp.IsAdded
                     {
-                        Add(op.Entity);
+                        Add(op & int.MaxValue); //delayedOp.Entity
                     }
                     else
                     {
-                        Remove(op.Entity);
+                        Remove(op & int.MaxValue); //delayedOp.Entity
                     }
                 }
-                _delayedOpsCount = 0;
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator()
         {
             _lockCount++;
@@ -124,39 +180,48 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Utils
-        public ref struct Enumerator
+        public struct Enumerator : IDisposable
         {
             private readonly EcsGroup _source;
-            private readonly SparseSet _entities;
-            private int _index;
+            private int _pointer;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator(EcsGroup group)
             {
                 _source = group;
-                _entities = group._entities;
-                _index = -1;
+                _pointer = 0;
             }
+
+            private static EcsProfilerMarker _marker = new EcsProfilerMarker("EcsGroup.Enumerator.Current");
 
             public ent Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get { return _source.World.GetEntity(_entities[_index]); }
+                get
+                {
+                    using (_marker.Auto())
+                        return _source.World.GetEntity(_source._dense[_pointer]);
+                    // return _source._dense[_pointer];
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() => ++_index < _entities.Count;
+            public bool MoveNext()
+            {
+                return ++_pointer <= _source.Count;
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose() => _source.Unlock();
+            public void Dispose()
+            {
+                _source.Unlock();
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Reset() => _index = -1;
-        }
-
-        private struct DelayedOp
-        {
-            public bool Added;
-            public int Entity;
+            public void Reset()
+            {
+                _pointer = -1;
+            }
         }
         #endregion
     }
