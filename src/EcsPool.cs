@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System;
 using System.Reflection;
 using System.Linq;
+using UnityEngine;
 
 namespace DCFApixels.DragonECS
 {
@@ -47,6 +48,8 @@ namespace DCFApixels.DragonECS
         private readonly SparseSet _sparseSet;
         private T[] _denseItems;
 
+        private IEcsComponentReset<T> _componentResetHandler;
+
         #region Properites
         public IEcsWorld World => _source;
         public int ID => _id;
@@ -60,6 +63,8 @@ namespace DCFApixels.DragonECS
             _sparseSet = new SparseSet(capacity, capacity);
 
             _denseItems =new T[capacity];
+
+            _componentResetHandler = ComponentResetHandler.New<T>();
         }
         #endregion
 
@@ -72,18 +77,14 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Write(int entity)
         {
-            if (_sparseSet.Contains(entity))
-            {
-                return ref _denseItems[_sparseSet.IndexOf(entity)];
-            }
-            else
+            if (!_sparseSet.Contains(entity))
             {
                 _sparseSet.Add(entity);
                 _sparseSet.Normalize(ref _denseItems);
                 _source.OnEntityComponentAdded(entity, _id);
-                int indexof = _sparseSet.IndexOf(entity);
-                return ref _denseItems[indexof];
+                _componentResetHandler.Reset(ref _denseItems[_sparseSet.IndexOf(entity)]);
             }
+            return ref _denseItems[_sparseSet.IndexOf(entity)];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -113,5 +114,31 @@ namespace DCFApixels.DragonECS
         }
         public override int GetHashCode() => _source.GetHashCode() + ID;
         #endregion
+    }
+
+    internal static class ComponentResetHandler
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static IEcsComponentReset<T> New<T>()
+        {
+            Type targetType = typeof(T);
+            if (targetType.GetInterfaces().Contains(typeof(IEcsComponentReset<>).MakeGenericType(targetType)))
+            {
+                return (IEcsComponentReset<T>)Activator.CreateInstance(typeof(ComponentResetHandler<>).MakeGenericType(targetType));
+            }
+            return (IEcsComponentReset<T>)Activator.CreateInstance(typeof(ComponentResetDummy<>).MakeGenericType(targetType));
+        }
+    }
+    internal sealed class ComponentResetDummy<T> : IEcsComponentReset<T>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Reset(ref T component) => component = default;
+    }
+    internal sealed class ComponentResetHandler<T> : IEcsComponentReset<T>
+        where T : IEcsComponentReset<T>
+    {
+        private T _fakeInstnace = default;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Reset(ref T component) => _fakeInstnace.Reset(ref component);
     }
 }
