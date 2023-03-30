@@ -10,8 +10,11 @@ namespace DCFApixels.DragonECS
         public readonly int id;
         public EcsProfilerMarker(int id) => this.id = id;
         public EcsProfilerMarker(string name) => id = EcsDebug.RegisterMark(name);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Begin() => EcsDebug.ProfileMarkBegin(id);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void End() => EcsDebug.ProfileMarkEnd(id);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AutoScope Auto() => new AutoScope(id);
 
         public readonly struct AutoScope : IDisposable

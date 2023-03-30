@@ -64,9 +64,15 @@ namespace DCFApixels.DragonECS
             }
             _isInit = true;
 
-            GetRunner<IEcsInject<EcsPipeline>>().Inject(this);
-            GetRunner<IEcsPreInitSystem>().PreInit(this);
-            GetRunner<IEcsInitSystem>().Init(this);
+            var ecsPipelineInjectRunner = GetRunner<IEcsInject<EcsPipeline>>();
+            ecsPipelineInjectRunner.Inject(this);
+            EcsRunner.Destroy(ecsPipelineInjectRunner);
+            var preInitRunner = GetRunner<IEcsPreInitSystem>();
+            preInitRunner.PreInit(this);
+            EcsRunner.Destroy(preInitRunner);
+            var initRunner = GetRunner<IEcsInitSystem>();
+            initRunner.Init(this);
+            EcsRunner.Destroy(initRunner);
 
             _runRunnerCache = GetRunner<IEcsRunSystem>();
         }
