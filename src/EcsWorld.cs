@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -11,6 +12,12 @@ namespace DCFApixels.DragonECS
         public bool IsEmpty { get; }
         public Type ArchetypeType { get; }
         public int ID { get; }
+        #endregion
+
+
+        #region GetterMethods
+        public ReadOnlySpan<IEcsPool> GetAllPools();
+
         #endregion
 
         #region Methods
@@ -67,6 +74,11 @@ namespace DCFApixels.DragonECS
         private List<EcsFilter>[] _filtersByExcludedComponents;
 
         private EcsFilter[] _filters;
+
+        #region GetterMethods
+        public ReadOnlySpan<IEcsPool> GetAllPools() => new ReadOnlySpan<IEcsPool>(_pools);
+
+        #endregion
 
         #region Properties
         public bool IsEmpty => _entities.Count < 0;

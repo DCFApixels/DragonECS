@@ -7,7 +7,7 @@ namespace DCFApixels.DragonECS
         #region Properties
         public IEcsWorld World { get; }
         public EcsMask Mask { get; }
-        public IEcsReadonlyGroup Entities { get; }
+        public EcsReadonlyGroup Entities { get; }
         public int EntitiesCount { get; }
         #endregion
     }
@@ -29,10 +29,10 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _mask;
         }
-        public IEcsReadonlyGroup Entities
+        public EcsReadonlyGroup Entities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _entities;
+            get => _entities.Readonly;
         }
         public int EntitiesCount
         {

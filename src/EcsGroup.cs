@@ -1,26 +1,33 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using delayedOp = System.Int32;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsReadonlyGroup
+    [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
+    public readonly ref struct EcsReadonlyGroup
     {
-        int Count { get; }
-        bool Contains(int entityID);
-        EcsGroup.Enumerator GetEnumerator();
-    }
-    public interface IEcsGroup : IEcsReadonlyGroup
-    {
-        void Add(int entityID);
-        void Remove(int entityID);
+        private readonly EcsGroup _source;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsReadonlyGroup(EcsGroup source) => _source = source;
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _source.Count;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Contains(int entityID) => _source.Contains(entityID);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsGroup.Enumerator GetEnumerator() => _source.GetEnumerator();
     }
 
     // не может содержать значение 0
     // _delayedOps это int[] для отложенных операций, хранятся отложенные операции в виде int значения, если старший бит = 0 то это опреация добавленияб если = 1 то это операция вычитания
 
     // this collection can only store numbers greater than 0
-    public class EcsGroup : IEcsGroup  
+    public class EcsGroup  
     {
         public const int DEALAYED_ADD = 0;
         public const int DEALAYED_REMOVE = int.MinValue;
@@ -43,6 +50,11 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _count;
+        }
+        public EcsReadonlyGroup Readonly
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => new EcsReadonlyGroup(this);
         }
         #endregion
 
@@ -86,7 +98,7 @@ namespace DCFApixels.DragonECS
             if(++_count >= _dense.Length) 
                 Array.Resize(ref _dense, _dense.Length << 1);
 
-            if (entityID > _sparse.Length)
+            if (entityID >= _sparse.Length)
             {
                 int neadedSpace = _sparse.Length;
                 while (entityID >= neadedSpace) 
@@ -128,20 +140,21 @@ namespace DCFApixels.DragonECS
         //TODO добавить автосоритровку при каждом GetEnumerator
 
         #region AddGroup/RemoveGroup
-        public void AddGroup(IEcsReadonlyGroup group)
+        public void AddGroup(EcsReadonlyGroup group)
         {
-            foreach (var item in group)
-            {
-                Add(item.id);
-            }
+            foreach (var item in group) Add(item.id);
         }
-
-        public void RemoveGroup(IEcsReadonlyGroup group)
+        public void RemoveGroup(EcsReadonlyGroup group)
         {
-            foreach (var item in group)
-            {
-                Remove(item.id);
-            }
+            foreach (var item in group) Remove(item.id);
+        }
+        public void AddGroup(EcsGroup group)
+        {
+            foreach (var item in group) Add(item.id);
+        }
+        public void RemoveGroup(EcsGroup group)
+        {
+            foreach (var item in group) Remove(item.id);
         }
         #endregion
 
@@ -179,7 +192,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Utils
+        #region Enumerator
         public struct Enumerator : IDisposable
         {
             private readonly EcsGroup _source;

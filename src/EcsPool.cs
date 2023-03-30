@@ -6,7 +6,11 @@ namespace DCFApixels.DragonECS
 {
     public interface IEcsPool
     {
+        public int EntitiesCount { get; }
+        public int Capacity { get; }
+
         public IEcsWorld World { get; }
+        public Type DataType { get; }
         public int ID { get; }
         public bool Has(int index);
         public void Write(int index);
@@ -30,7 +34,12 @@ namespace DCFApixels.DragonECS
         }
 
         public IEcsWorld World => _source;
+        public Type DataType => typeof(void);
         public int ID => -1;
+
+        public int EntitiesCount => 0;
+        public int Capacity => 1;
+
         public void Del(int index) { }
         public bool Has(int index) => false;
         public void Write(int index) { }
@@ -47,7 +56,11 @@ namespace DCFApixels.DragonECS
         private IEcsComponentReset<T> _componentResetHandler;
 
         #region Properites
+        public int EntitiesCount => _sparseSet.Count;
+        public int Capacity => _sparseSet.CapacityDense;
+
         public IEcsWorld World => _source;
+        public Type DataType => typeof(T);
         public int ID => _id;
         #endregion
 
@@ -112,6 +125,7 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    #region ComponentResetHandler
     internal static class ComponentResetHandler
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -137,4 +151,5 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reset(ref T component) => _fakeInstnace.Reset(ref component);
     }
+    #endregion
 }
