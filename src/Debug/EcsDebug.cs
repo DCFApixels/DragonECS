@@ -71,12 +71,10 @@ namespace DCFApixels.DragonECS
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double ProfileMarkEnd(int id)
+        public static void ProfileMarkEnd(int id)
         {
 #if !DISABLE_ECS_DEBUG
-            return DebugService.Instance.ProfileMarkEnd(id);
-#else
-            return 0;
+            DebugService.Instance.ProfileMarkEnd(id);
 #endif
         }
     }
@@ -137,17 +135,19 @@ namespace DCFApixels.DragonECS
         protected abstract void OnDelMark(int id);
 
         public abstract void ProfileMarkBegin(int id);
-        public abstract double ProfileMarkEnd(int id);
+        public abstract void ProfileMarkEnd(int id);
     }
 
     public sealed class DefaultDebugService : DebugService
     {
         private Stopwatch[] _stopwatchs;
+        private string[] _stopwatchsNames;
 
         public DefaultDebugService()
         {
 #if !DISABLE_ECS_DEBUG
             _stopwatchs = new Stopwatch[64];
+            _stopwatchsNames= new Stopwatch[64];
 #endif
         }
 
@@ -161,12 +161,12 @@ namespace DCFApixels.DragonECS
             _stopwatchs[id].Start();
         }
 
-        public override double ProfileMarkEnd(int id)
+        public override void ProfileMarkEnd(int id)
         {
             _stopwatchs[id].Stop();
             var time = _stopwatchs[id].Elapsed;
             _stopwatchs[id].Reset();
-            return time.TotalSeconds;
+            Print(_stopwatchsNames[id] + " s:" + time.TotalSeconds);
         }
 
         protected override void OnDelMark(int id)
@@ -176,8 +176,13 @@ namespace DCFApixels.DragonECS
 
         protected override void OnNewMark(int id, string name)
         {
-            if (id >= _stopwatchs.Length) Array.Resize(ref _stopwatchs, _stopwatchs.Length << 1);
+            if (id >= _stopwatchs.Length)
+            {
+                Array.Resize(ref _stopwatchs, _stopwatchs.Length << 1);
+                Array.Resize(ref _stopwatchsNames, _stopwatchsNames.Length << 1);
+            }
             _stopwatchs[id] = new Stopwatch();
+            _stopwatchsNames[id] = name;
         }
     }
 }
