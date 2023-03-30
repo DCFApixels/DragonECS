@@ -64,6 +64,7 @@ namespace DCFApixels.DragonECS
             }
             _isInit = true;
 
+            GetRunner<IEcsInject<EcsPipeline>>().Inject(this);
             GetRunner<IEcsPreInitSystem>().PreInit(this);
             GetRunner<IEcsInitSystem>().Init(this);
 
