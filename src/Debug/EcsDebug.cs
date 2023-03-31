@@ -147,7 +147,7 @@ namespace DCFApixels.DragonECS
         {
 #if !DISABLE_ECS_DEBUG
             _stopwatchs = new Stopwatch[64];
-            _stopwatchsNames= new Stopwatch[64];
+            _stopwatchsNames= new string[64];
 #endif
         }
 
