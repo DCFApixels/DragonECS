@@ -14,9 +14,9 @@ namespace DCFApixels.DragonECS
         public IEcsWorld World { get; }
         public Type DataType { get; }
         public int ID { get; }
-        public bool Has(int index);
-        public void Write(int index);
-        public void Del(int index);
+        public bool Has(int entityID);
+        public void Write(int entityID);
+        public void Del(int entityID);
 
         internal void OnWorldResize(int newSize);
     }
@@ -50,13 +50,13 @@ namespace DCFApixels.DragonECS
 
         void IEcsPool.OnWorldResize(int newSize) { }
     }
-    
+
     public class EcsPool<T> : IEcsPool<T>
         where T : struct
     {
         private readonly int _id;
         private readonly IEcsWorld _source;
-      //  private readonly EcsGroup _entities;
+        //  private readonly EcsGroup _entities;
 
         private int[] _mapping;// index = entity / value = itemIndex;/ value = 0 = no entity
         private T[] _items; //dense
@@ -86,7 +86,7 @@ namespace DCFApixels.DragonECS
             _mapping = new int[source.EntitesCapacity];
             _recycledItems = new int[128];
             _recycledItemsCount = 0;
-            _items =new T[capacity];
+            _items = new T[capacity];
             _itemsCount = 0;
 
             _componentResetHandler = ComponentResetHandler.New<T>();
@@ -102,8 +102,8 @@ namespace DCFApixels.DragonECS
         private ProfilerMarker _delMark = new ProfilerMarker("EcsPoo.Del");
         public ref T Write(int entityID)
         {
-            //using (_writeMark.Auto())
-            //{
+            //  using (_writeMark.Auto())
+            // {
             ref int itemIndex = ref _mapping[entityID];
             if (itemIndex <= 0) //если 0 то надо добавить
             {
@@ -115,7 +115,7 @@ namespace DCFApixels.DragonECS
                 else
                 {
                     itemIndex = _itemsCount++;
-                    if (itemIndex >= _items.Length) 
+                    if (itemIndex >= _items.Length)
                         Array.Resize(ref _items, _items.Length << 1);
                 }
                 _mapping[entityID] = itemIndex;
@@ -131,35 +131,34 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID)
         {
-            //using (_readMark.Auto())
-                return ref _items[_mapping[entityID]];
+            // using (_readMark.Auto())
+            return ref _items[_mapping[entityID]];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
         {
-            //using (_hasMark.Auto())
-                return _mapping[entityID] > 0;
+            // using (_hasMark.Auto())
+            return _mapping[entityID] > 0;
         }
         public void Del(int entityID)
         {
             //using (_delMark.Auto())
-            //{
-            if(_recycledItemsCount >= _recycledItems.Length)
+            // {
+            if (_recycledItemsCount >= _recycledItems.Length)
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
             _recycledItems[_recycledItemsCount++] = _mapping[entityID];
             _mapping[entityID] = 0;
             _itemsCount--;
-            //_entities.UncheckedRemove(entityID);
             _source.OnEntityComponentRemoved(entityID, _id);
             _poolRunnres.del.OnComponentDel<T>(entityID);
-            //}
-        }
+            // }
+        } 
         #endregion
 
         #region IEcsPool
-        void IEcsPool.Write(int index)
+        void IEcsPool.Write(int entityID)
         {
-            Write(index);
+            Write(entityID);
         }
         #endregion
 

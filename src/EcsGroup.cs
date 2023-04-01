@@ -37,7 +37,7 @@ namespace DCFApixels.DragonECS
     // _delayedOps это int[] для отложенных операций, хранятся отложенные операции в виде int значения, если старший бит = 0 то это опреация добавленияб если = 1 то это операция вычитания
 
     // this collection can only store numbers greater than 0
-    public class EcsGroup  
+    public class EcsGroup
     {
         public const int DEALAYED_ADD = 0;
         public const int DEALAYED_REMOVE = int.MinValue;
@@ -198,21 +198,22 @@ namespace DCFApixels.DragonECS
 
         #region AddGroup/RemoveGroup
         public void AddGroup(EcsReadonlyGroup group)
-        {
-            foreach (var item in group) UncheckedAdd(item.id);
-        }
+        { foreach (var item in group) Add(item.id); }
         public void RemoveGroup(EcsReadonlyGroup group)
-        {
-            foreach (var item in group) UncheckedRemove(item.id);
-        }
+        { foreach (var item in group) Remove(item.id); }
         public void AddGroup(EcsGroup group)
-        {
-            foreach (var item in group) UncheckedAdd(item.id);
-        }
+        { foreach (var item in group) Add(item.id); }
         public void RemoveGroup(EcsGroup group)
-        {
-            foreach (var item in group) UncheckedRemove(item.id);
-        }
+        { foreach (var item in group) Remove(item.id); }
+
+        public void UncheckedAddGroup(EcsReadonlyGroup group)
+        { foreach (var item in group) AddInternal(item.id); }
+        public void UncheckedRemoveGroup(EcsReadonlyGroup group)
+        { foreach (var item in group) RemoveInternal(item.id); }
+        public void UncheckedAddGroup(EcsGroup group)
+        { foreach (var item in group) AddInternal(item.id); }
+        public void UncheckedRemoveGroup(EcsGroup group)
+        { foreach (var item in group) RemoveInternal(item.id); }
         #endregion
 
         #region GetEnumerator
@@ -231,13 +232,9 @@ namespace DCFApixels.DragonECS
                 {
                     delayedOp op = _delayedOps[i];
                     if (op >= 0) //delayedOp.IsAdded
-                    {
                         UncheckedAdd(op & int.MaxValue); //delayedOp.Entity
-                    }
                     else
-                    {
                         UncheckedRemove(op & int.MaxValue); //delayedOp.Entity
-                    }
                 }
             }
         }
@@ -253,31 +250,29 @@ namespace DCFApixels.DragonECS
         public struct Enumerator : IDisposable
         {
             private readonly EcsGroup _source;
+            private readonly int[] _dense;
+            private readonly int _count;
             private int _pointer;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator(EcsGroup group)
             {
                 _source = group;
+                _dense = group._dense;
+                _count = group.Count;
                 _pointer = 0;
             }
-
-            private static EcsProfilerMarker _marker = new EcsProfilerMarker("EcsGroup.Enumerator.Current");
 
             public ent Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get
-                {
-                    using (_marker.Auto())
-                        return _source.World.GetEntity(_source._dense[_pointer]);
-                }
+                get => _source.World.GetEntity(_dense[_pointer]);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                return ++_pointer <= _source.Count;
+                return ++_pointer <= _count && _count < _dense.Length; //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -287,10 +282,7 @@ namespace DCFApixels.DragonECS
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Reset()
-            {
-                _pointer = -1;
-            }
+            public void Reset() { }
         }
         #endregion
     }
