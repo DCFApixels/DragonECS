@@ -36,6 +36,10 @@ namespace DCFApixels.DragonECS
         public ent GetEntity(int entityID);
         public void Destroy();
 
+        public bool IsMaskCompatible<TInc>(int entity) where TInc : struct, IInc;
+        public bool IsMaskCompatible<TInc, TExc>(int entity) where TInc : struct, IInc where TExc : struct, IExc;
+
+
         public bool IsMaskCompatible(EcsMask mask, int entity);
         public bool IsMaskCompatibleWithout(EcsMask mask, int entity, int otherPoolID);
 
@@ -228,6 +232,17 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IsMaskCompatible/IsMaskCompatibleWithout
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsMaskCompatible<TInc>(int entityID) where TInc : struct, IInc
+        {
+            return IsMaskCompatible(EcsMaskMap<TArchetype>.GetMask<TInc, Exc>(), entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsMaskCompatible<TInc, TExc>(int entityID) where TInc : struct, IInc where TExc : struct, IExc
+        {
+            return IsMaskCompatible(EcsMaskMap<TArchetype>.GetMask<TInc, TExc>(), entityID);
+        }
+
         public bool IsMaskCompatible(EcsMask mask, int entity)
         {
 #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
