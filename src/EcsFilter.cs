@@ -15,7 +15,7 @@ namespace DCFApixels.DragonECS
     public class EcsFilter : IEcsFilter
     {
         private readonly IEcsWorld _source;
-        private readonly EcsGroup _entities;
+        internal readonly EcsGroup entities;
         private readonly EcsMask _mask;
 
         #region Properties
@@ -32,12 +32,12 @@ namespace DCFApixels.DragonECS
         public EcsReadonlyGroup Entities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _entities.Readonly;
+            get => entities.Readonly;
         }
         public int EntitiesCount
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _entities.Count;
+            get => entities.Count;
         }
         #endregion
 
@@ -46,7 +46,7 @@ namespace DCFApixels.DragonECS
         {
             _source = source;
             _mask = mask;
-            _entities = new EcsGroup(source, capasity);
+            entities = new EcsGroup(source, capasity);
         }
         #endregion
 
@@ -54,19 +54,19 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Add(int entityID)
         {
-            _entities.Add(entityID);
+            entities.UncheckedAdd(entityID);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Remove(int entityID)
         {
-            _entities.Remove(entityID);
+            entities.UncheckedRemove(entityID);
         }
         #endregion
 
         #region GetEnumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsGroup.Enumerator GetEnumerator() => _entities.GetEnumerator();
+        public EcsGroup.Enumerator GetEnumerator() => entities.GetEnumerator();
         #endregion
     }
 }

@@ -17,6 +17,16 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _source.Count;
         }
+        public int CapacityDense
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _source.CapacityDense;
+        }
+        public int CapacitySparce
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _source.CapacitySparce;
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(int entityID) => _source.Contains(entityID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,6 +61,16 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _count;
         }
+        public int CapacityDense
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _dense.Length;
+        }
+        public int CapacitySparce
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _sparse.Length;
+        }
         public EcsReadonlyGroup Readonly
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -60,11 +80,29 @@ namespace DCFApixels.DragonECS
 
         #region Constrcutors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsGroup(IEcsWorld source, int denseCapacity = 64, int sparseCapacity = 256, int delayedOpsCapacity = 128)
+        internal EcsGroup(IEcsWorld source, int denseCapacity, int sparceCapacity, int delayedOpsCapacity)
         {
             _source = source;
+            source.RegisterGroup(this);
             _dense = new int[denseCapacity];
-            _sparse = new int[sparseCapacity];
+            _sparse = new int[sparceCapacity];
+
+            _delayedOps = new delayedOp[delayedOpsCapacity];
+
+            _lockCount = 0;
+            _delayedOpsCount = 0;
+
+            _count = 0;
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsGroup(IEcsWorld source, int denseCapacity = 64, int delayedOpsCapacity = 128)
+        {
+            _source = source;
+            source.RegisterGroup(this);
+            _dense = new int[denseCapacity];
+            _sparse = new int[source.Entities.CapacitySparce];
 
             _delayedOps = new delayedOp[delayedOpsCapacity];
 
@@ -79,52 +117,63 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(int entityID)
         {
-            return /*entityID > 0 && */ entityID < _sparse.Length && _sparse[entityID] > 0;
+            //TODO добавить проверку на больше 0 в #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#endif
+            return /*entityID > 0 && entityID < _sparse.Length && */ _sparse[entityID] > 0;
+        }
+        #endregion
+
+        #region IndexOf
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int IndexOf(int entityID)
+        {
+            return _sparse[entityID];
         }
         #endregion
 
         #region add/remove
+        public void UncheckedAdd(int entityID) => AddInternal(entityID);
         public void Add(int entityID)
         {
-            if (_lockCount > 0) 
+            if (Contains(entityID)) return;
+            Add(entityID);
+        }
+        private void AddInternal(int entityID)
+        {
+            if (_lockCount > 0)
             {
                 AddDelayedOp(entityID, DEALAYED_ADD);
                 return;
             }
 
-            if (Contains(entityID)) 
-                return;
-
-            if(++_count >= _dense.Length) 
+            if (++_count >= _dense.Length)
                 Array.Resize(ref _dense, _dense.Length << 1);
-
-            if (entityID >= _sparse.Length)
-            {
-                int neadedSpace = _sparse.Length;
-                while (entityID >= neadedSpace) 
-                    neadedSpace <<= 1;
-                Array.Resize(ref _sparse, neadedSpace);
-            }
 
             _dense[_count] = entityID;
             _sparse[entityID] = _count;
         }
 
+        public void UncheckedRemove(int entityID) => RemoveInternal(entityID);
         public void Remove(int entityID)
+        {
+            if (!Contains(entityID)) return;
+            RemoveInternal(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RemoveInternal(int entityID)
         {
             if (_lockCount > 0)
             {
                 AddDelayedOp(entityID, DEALAYED_REMOVE);
                 return;
             }
-
-            if (!Contains(entityID)) 
-                return;
-
             _dense[_sparse[entityID]] = _dense[_count];
             _sparse[_dense[_count--]] = _sparse[entityID];
             _sparse[entityID] = 0;
         }
+
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AddDelayedOp(int entityID, int isAddBitFlag)
@@ -137,24 +186,32 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        //TODO добавить автосоритровку при каждом GetEnumerator
+        internal void OnWorldResize(int newSize)
+        {
+            Array.Resize(ref _sparse, newSize);
+        }
+
+        //TODO добавить метод Sort
+
+        //TODO добавить автосоритровку при каждом GetEnumerator и проверить будет ли прирост производительности или ее падение.
+        //Суть в том что так возможно можно будет более плотно подавать данные в проц
 
         #region AddGroup/RemoveGroup
         public void AddGroup(EcsReadonlyGroup group)
         {
-            foreach (var item in group) Add(item.id);
+            foreach (var item in group) UncheckedAdd(item.id);
         }
         public void RemoveGroup(EcsReadonlyGroup group)
         {
-            foreach (var item in group) Remove(item.id);
+            foreach (var item in group) UncheckedRemove(item.id);
         }
         public void AddGroup(EcsGroup group)
         {
-            foreach (var item in group) Add(item.id);
+            foreach (var item in group) UncheckedAdd(item.id);
         }
         public void RemoveGroup(EcsGroup group)
         {
-            foreach (var item in group) Remove(item.id);
+            foreach (var item in group) UncheckedRemove(item.id);
         }
         #endregion
 
@@ -162,7 +219,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Unlock()
         {
-#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (_lockCount <= 0)
             {
                 throw new Exception($"Invalid lock-unlock balance for {nameof(EcsGroup)}.");
@@ -175,11 +232,11 @@ namespace DCFApixels.DragonECS
                     delayedOp op = _delayedOps[i];
                     if (op >= 0) //delayedOp.IsAdded
                     {
-                        Add(op & int.MaxValue); //delayedOp.Entity
+                        UncheckedAdd(op & int.MaxValue); //delayedOp.Entity
                     }
                     else
                     {
-                        Remove(op & int.MaxValue); //delayedOp.Entity
+                        UncheckedRemove(op & int.MaxValue); //delayedOp.Entity
                     }
                 }
             }
@@ -214,7 +271,6 @@ namespace DCFApixels.DragonECS
                 {
                     using (_marker.Auto())
                         return _source.World.GetEntity(_source._dense[_pointer]);
-                    // return _source._dense[_pointer];
                 }
             }
 
@@ -237,5 +293,20 @@ namespace DCFApixels.DragonECS
             }
         }
         #endregion
+    }
+
+
+    public static class EcsGroupExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Normalize<T>(this EcsGroup self, ref T[] array)
+        {
+            if (array.Length < self.CapacityDense) Array.Resize(ref array, self.CapacityDense);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Normalize<T>(this EcsReadonlyGroup self, ref T[] array)
+        {
+            if (array.Length < self.CapacityDense) Array.Resize(ref array, self.CapacityDense);
+        }
     }
 }

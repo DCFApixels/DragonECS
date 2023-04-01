@@ -97,18 +97,18 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAlive(this ref ent self)
         {
-            using (_IsAliveMarker.Auto())
-            {
+            //using (_IsAliveMarker.Auto())
+            //{
                 bool result = EcsWorld.Worlds[self.world].EntityIsAlive(self.id, self.gen);
                 if (!result) self = ent.NULL;
                 return result;
-            }
+            //}
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNull(this in ent self)
         {
-            using (_IsNullMarker.Auto())
+            //using (_IsNullMarker.Auto())
                 return self == ent.NULL;
         }
 
@@ -116,28 +116,28 @@ namespace DCFApixels.DragonECS
         public static ref readonly T Read<T>(this in ent self)
             where T : struct
         {
-            using (_ReadMarker.Auto())
+            //using (_ReadMarker.Auto())
                 return ref EcsWorld.Worlds[self.world].GetPool<T>().Read(self.id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T Write<T>(this in ent self)
             where T : struct
         {
-            using (_WriteMarker.Auto())
+            //using (_WriteMarker.Auto())
                 return ref EcsWorld.Worlds[self.world].GetPool<T>().Write(self.id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Has<T>(this in ent self)
             where T : struct
         {
-            using (_HasMarker.Auto())
+            //using (_HasMarker.Auto())
                 return EcsWorld.Worlds[self.world].GetPool<T>().Has(self.id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Del<T>(this in ent self)
             where T : struct
         {
-            using (_DelMarker.Auto())
+            //using (_DelMarker.Auto())
                 EcsWorld.Worlds[self.world].GetPool<T>().Del(self.id);
         }
     }

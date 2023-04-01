@@ -7,6 +7,21 @@ namespace DCFApixels.DragonECS
 {
     public sealed class EcsPipeline
     {
+        private static EcsPipeline _empty;
+        public static EcsPipeline Empty
+        {
+            get
+            {
+                if(_empty == null)
+                {
+                    _empty = new EcsPipeline(Array.Empty<IEcsSystem>());
+                    _empty.Init();
+                    _empty._isEmptyDummy = true;
+                }
+                return _empty;
+            }
+        }
+
         private IEcsSystem[] _allSystems;
         private Dictionary<Type, IEcsRunner> _runners;
         private IEcsRunSystem _runRunnerCache;
@@ -16,10 +31,12 @@ namespace DCFApixels.DragonECS
 
         private bool _isInit;
         private bool _isDestoryed;
+        private bool _isEmptyDummy;
 
         #region Properties
         public ReadOnlyCollection<IEcsSystem> AllSystems => _allSystemsSealed;
         public ReadOnlyDictionary<Type, IEcsRunner> AllRunners => _allRunnersSealed;
+        public bool IsInit => _isInit;
         public bool IsDestoryed => _isDestoryed;
         #endregion
 
@@ -33,6 +50,7 @@ namespace DCFApixels.DragonECS
             _allRunnersSealed = new ReadOnlyDictionary<Type, IEcsRunner>(_runners);
 
             _isInit = false;
+            _isEmptyDummy = false;
             _isDestoryed = false;
         }
         #endregion
@@ -57,7 +75,10 @@ namespace DCFApixels.DragonECS
         #region LifeCycle
         public void Init()
         {
-            if(_isInit == true)
+            if (_isEmptyDummy)
+                return;
+
+            if (_isInit == true)
             {
                 EcsDebug.Print("[Warning]", $"This {nameof(EcsPipeline)} has already been initialized");
                 return;
@@ -80,7 +101,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run()
         {
-#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             CheckBeforeInitForMethod(nameof(Run));
             CheckAfterDestroyForMethod(nameof(Run));
 #endif
@@ -88,7 +109,10 @@ namespace DCFApixels.DragonECS
         }
         public void Destroy()
         {
-#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (_isEmptyDummy)
+                return;
+
+#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             CheckBeforeInitForMethod(nameof(Run));
 #endif
             if (_isDestoryed == true)
@@ -102,7 +126,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region StateChecks
-#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
         private void CheckBeforeInitForMethod(string methodName)
         {
             if (!_isInit)

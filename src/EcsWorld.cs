@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Xml;
 
 namespace DCFApixels.DragonECS
 {
@@ -12,8 +14,11 @@ namespace DCFApixels.DragonECS
         public bool IsEmpty { get; }
         public Type ArchetypeType { get; }
         public int ID { get; }
+        public EcsPipeline Pipeline { get; }
+        public int EntitesCount { get; }
+        public int EntitesCapacity { get; }
+        public EcsReadonlyGroup Entities { get; }
         #endregion
-
 
         #region GetterMethods
         public ReadOnlySpan<IEcsPool> GetAllPools();
@@ -22,12 +27,13 @@ namespace DCFApixels.DragonECS
 
         #region Methods
         public EcsPool<T> GetPool<T>() where T : struct;
+        public EcsPool<T> UncheckedGetPool<T>() where T : struct;
         public EcsFilter Filter<TInc>() where TInc : struct, IInc;
         public EcsFilter Filter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc;
         public ent NewEntity();
+        public void DelEntity(ent entity);
         public bool EntityIsAlive(int entityID, short gen);
         public ent GetEntity(int entityID);
-        public void DelEntity(int entityID);
         public void Destroy();
 
         public bool IsMaskCompatible(EcsMask mask, int entity);
@@ -35,6 +41,10 @@ namespace DCFApixels.DragonECS
 
         internal void OnEntityComponentAdded(int entityID, int changedPoolID);
         internal void OnEntityComponentRemoved(int entityID, int changedPoolID);
+
+        public int GetComponentID<T>();
+
+        internal void RegisterGroup(EcsGroup group);
         #endregion
     }
 
@@ -48,6 +58,8 @@ namespace DCFApixels.DragonECS
         public EcsWorld()
         {
             id = (short)_worldIdDispenser.GetFree();
+            if(id >= Worlds.Length)
+                Array.Resize(ref Worlds, Worlds.Length << 1);
             Worlds[id] = (IEcsWorld)this;
         }
 
@@ -75,8 +87,19 @@ namespace DCFApixels.DragonECS
 
         private EcsFilter[] _filters;
 
+        private EcsPipeline _pipeline;
+
+        private List<EcsGroup> _groups;
+
+        #region RunnersCache
+        private PoolRunnres _poolRunnres;
+        private IEcsEntityCreate _entityCreate;
+        private IEcsEntityDestroy _entityDestry;
+        #endregion
+
         #region GetterMethods
         public ReadOnlySpan<IEcsPool> GetAllPools() => new ReadOnlySpan<IEcsPool>(_pools);
+        public int GetComponentID<T>() => ComponentType<T>.uniqueID;
 
         #endregion
 
@@ -84,21 +107,38 @@ namespace DCFApixels.DragonECS
         public bool IsEmpty => _entities.Count < 0;
         public Type ArchetypeType => typeof(TArchetype);
         public int ID => id;
+        public EcsPipeline Pipeline => _pipeline;
+
+        public int EntitesCount => _entities.Count;
+        public int EntitesCapacity => _entities.CapacityDense;
+        public EcsReadonlyGroup Entities => _entities.Readonly;
         #endregion
 
         #region Constructors
-        public EcsWorld()
+        public EcsWorld(EcsPipeline pipline = null)
         {
+            _pipeline = pipline ?? EcsPipeline.Empty;
+            if (!_pipeline.IsInit) pipline.Init();
             _entityDispenser = new IntDispenser(1);
             _nullPool = new EcsNullPool(this);
             _pools = new IEcsPool[512];
             FillArray(_pools, _nullPool);
-            //Array.Fill(_pools, _nullPool); //TODO Fix it
+
             _gens = new short[512];
             _filters = new EcsFilter[64];
-            _entities = new EcsGroup(this, 512);
+            _groups = new List<EcsGroup>(128);
+
+            _entities = new EcsGroup(this, 512, 512, 0);
+
             _filtersByIncludedComponents = new List<EcsFilter>[16];
             _filtersByExcludedComponents = new List<EcsFilter>[16];
+
+            _poolRunnres = new PoolRunnres(_pipeline);
+            _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
+            _entityDestry = _pipeline.GetRunner<IEcsEntityDestroy>();
+            _pipeline.GetRunner<IEcsInject<TArchetype>>().Inject((TArchetype)this);
+            _pipeline.GetRunner<IEcsInject<IEcsWorld>>().Inject(this);
+            _pipeline.GetRunner<IEcsWorldCreate>().OnWorldCreate(this);
         }
         #endregion
 
@@ -120,14 +160,17 @@ namespace DCFApixels.DragonECS
 
             if (_pools[uniqueID] == _nullPool)
             {
-                _pools[uniqueID] = new EcsPool<T>(this, ComponentType<T>.uniqueID, 512);
+                _pools[uniqueID] = new EcsPool<T>(this, ComponentType<T>.uniqueID, 512, _poolRunnres);
             }
             return (EcsPool<T>)_pools[uniqueID];
         }
-      
+        public EcsPool<T> UncheckedGetPool<T>() where T : struct
+        {
+            return (EcsPool<T>)_pools[ComponentType<T>.uniqueID];
+        }
         #endregion
 
-        #region GetFilter
+            #region GetFilter
         public EcsFilter Filter<TInc>() where TInc : struct, IInc => Filter<TInc, Exc>();
         public EcsFilter Filter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc
         {
@@ -181,7 +224,6 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-
             return filter;
         }
         #endregion
@@ -189,7 +231,7 @@ namespace DCFApixels.DragonECS
         #region IsMaskCompatible/IsMaskCompatibleWithout
         public bool IsMaskCompatible(EcsMask mask, int entity)
         {
-#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TArchetype))
                 throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TArchetype)");
 #endif
@@ -208,7 +250,7 @@ namespace DCFApixels.DragonECS
 
         public bool IsMaskCompatibleWithout(EcsMask mask, int entity, int otherComponentID)
         {
-#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TArchetype))
                 throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TArchetype)");
 #endif
@@ -220,8 +262,8 @@ namespace DCFApixels.DragonECS
             }
             for (int i = 0, iMax = mask.ExcCount; i < iMax; i++)
             {
-                int poolID = mask.Exc[i];
-                if (poolID != otherComponentID && _pools[poolID].Has(entity))
+                int componentID = mask.Exc[i];
+                if (componentID != otherComponentID && _pools[componentID].Has(entity))
                     return false;
             }
             return true;
@@ -234,53 +276,59 @@ namespace DCFApixels.DragonECS
             var includeList = _filtersByIncludedComponents[componentID];
             var excludeList = _filtersByExcludedComponents[componentID];
 
-            if (includeList != null)
-            {
-                foreach (var filter in includeList)
-                {
-                    if (IsMaskCompatible(filter.Mask, entityID))
-                    {
-                        filter.Add(entityID);
-                    }
-                }
-            }
-            if (excludeList != null)
-            {
-                foreach (var filter in excludeList)
-                {
-                    if (IsMaskCompatibleWithout(filter.Mask, entityID, componentID))
-                    {
-                        filter.Remove(entityID);
-                    }
-                }
-            }
+            //if (includeList != null)
+            //{
+            //    foreach (var filter in includeList)
+            //    {
+            //        if (IsMaskCompatible(filter.Mask, entityID))
+            //        {
+            //            filter.Add(entityID);
+            //        }
+            //    }
+            //}
+            //if (excludeList != null)
+            //{
+            //    foreach (var filter in excludeList)
+            //    {
+            //        if (IsMaskCompatibleWithout(filter.Mask, entityID, componentID))
+            //        {
+            //            filter.Remove(entityID);
+            //        }
+            //    }
+            //}
+
+            if (includeList != null) foreach (var filter in includeList) filter.entities.Add(entityID);
+            if (excludeList != null) foreach (var filter in excludeList) filter.entities.Remove(entityID);
         }
 
-        void IEcsWorld.OnEntityComponentRemoved(int entityID, int changedPoolID)
+        void IEcsWorld.OnEntityComponentRemoved(int entityID, int componentID)
         {
-            var includeList = _filtersByIncludedComponents[changedPoolID];
-            var excludeList = _filtersByExcludedComponents[changedPoolID];
+            var includeList = _filtersByIncludedComponents[componentID];
+            var excludeList = _filtersByExcludedComponents[componentID];
 
-            if (includeList != null)
-            {
-                foreach (var filter in includeList)
-                {
-                    if (IsMaskCompatible(filter.Mask, entityID))
-                    {
-                        filter.Remove(entityID);
-                    }
-                }
-            }
-            if (excludeList != null)
-            {
-                foreach (var filter in excludeList)
-                {
-                    if (IsMaskCompatibleWithout(filter.Mask, entityID, changedPoolID))
-                    {
-                        filter.Add(entityID);
-                    }
-                }
-            }
+            //if (includeList != null)
+            //{
+            //    foreach (var filter in includeList)
+            //    {
+            //        if (IsMaskCompatible(filter.Mask, entityID))
+            //        {
+            //            filter.Remove(entityID);
+            //        }
+            //    }
+            //}
+            //if (excludeList != null)
+            //{
+            //    foreach (var filter in excludeList)
+            //    {
+            //        if (IsMaskCompatibleWithout(filter.Mask, entityID, componentID))
+            //        {
+            //            filter.Add(entityID);
+            //        }
+            //    }
+            //}
+
+            if (includeList != null) foreach (var filter in includeList) filter.entities.Remove(entityID);
+            if (excludeList != null) foreach (var filter in excludeList) filter.entities.Add(entityID);
         }
         #endregion
 
@@ -288,22 +336,36 @@ namespace DCFApixels.DragonECS
         public ent NewEntity()
         {
             int entityID = _entityDispenser.GetFree();
-            _entities.Add(entityID);
-            if (_gens.Length <= entityID) 
+            _entities.UncheckedAdd(entityID);
+            if (_gens.Length <= entityID)
+            {
                 Array.Resize(ref _gens, _gens.Length << 1);
-            return new ent(entityID, _gens[entityID]++, id);
+                _entities.OnWorldResize(_gens.Length);
+                foreach (var item in _groups)
+                {
+                    item.OnWorldResize(_gens.Length);
+                }
+                foreach (var item in _pools)
+                {
+                    item.OnWorldResize(_gens.Length);
+                }
+            }
+
+            ent entity = new ent(entityID, _gens[entityID]++, id);
+            _entityCreate.OnEntityCreate(entity);
+            return entity;
         }
+        public void DelEntity(ent entity)
+        {
+            _entityDispenser.Release(entity.id);
+            _entities.UncheckedRemove(entity.id);
+            _entityDestry.OnEntityDestroy(entity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ent GetEntity(int entityID)
         {
-            if (_entities.Contains(entityID) == false)
-                return ent.NULL;
-
             return new ent(entityID, _gens[entityID], id);
-        }
-        public void DelEntity(int entityID)
-        {
-            _entityDispenser.Release(entityID);
-            _entities.Remove(entityID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool EntityIsAlive(int entityID, short gen)
@@ -325,6 +387,11 @@ namespace DCFApixels.DragonECS
             _filters = null;
             Realeze();
         }
+        public void DestryWithPipeline()
+        {
+            Destroy();
+            _pipeline.Destroy();
+        }
         #endregion
 
         #region Utils
@@ -344,7 +411,7 @@ namespace DCFApixels.DragonECS
             static ComponentType()
             {
                 uniqueID = ComponentType.increment++;
-#if DEBUG || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
                 if (ComponentType.increment + 1 > ushort.MaxValue)
                 {
                     throw new EcsFrameworkException($"No more room for new component for this {typeof(TArchetype).FullName} IWorldArchetype");
@@ -374,15 +441,27 @@ namespace DCFApixels.DragonECS
             }
         }
         #endregion
-    }
 
-    #region Extensions
-    public static class IEcsWorldExtensions
-    {
-        public static void DelEntity(this IEcsWorld self, ent entity)
+        #region Other
+        void IEcsWorld.RegisterGroup(EcsGroup group)
         {
-            self.DelEntity(entity.id);
+            _groups.Add(group);
+        }
+        #endregion
+    }
+    
+    [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 24)]
+    internal readonly struct PoolRunnres
+    {
+        public readonly IEcsComponentAdd add;
+        public readonly IEcsComponentWrite write;
+        public readonly IEcsComponentDel del;
+
+        public PoolRunnres(EcsPipeline pipeline)
+        {
+            add = pipeline.GetRunner<IEcsComponentAdd>();
+            write = pipeline.GetRunner<IEcsComponentWrite>();
+            del = pipeline.GetRunner<IEcsComponentDel>();
         }
     }
-    #endregion 
 }

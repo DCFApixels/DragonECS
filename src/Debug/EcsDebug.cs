@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AutoScope Auto() => new AutoScope(id);
 
-        public readonly struct AutoScope : IDisposable
+        public readonly ref struct AutoScope
         {
             private readonly int id;
             public AutoScope(int id)
@@ -43,14 +43,14 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(string tag, object v)
         {
-#if !DISABLE_ECS_DEBUG
+#if !DISABLE_DRAGONECS_DEBUG
             DebugService.Instance.Print(tag, v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int RegisterMark(string name)
         {
-#if !DISABLE_ECS_DEBUG
+#if !DISABLE_DRAGONECS_DEBUG
             return DebugService.Instance.RegisterMark(name);
 #else
             return 0;
@@ -59,21 +59,21 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void DeleteMark(string name)
         {
-#if !DISABLE_ECS_DEBUG
+#if !DISABLE_DRAGONECS_DEBUG
             DebugService.Instance.DeleteMark(name);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ProfileMarkBegin(int id)
         {
-#if !DISABLE_ECS_DEBUG
+#if !DISABLE_DRAGONECS_DEBUG
             DebugService.Instance.ProfileMarkBegin(id);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ProfileMarkEnd(int id)
         {
-#if !DISABLE_ECS_DEBUG
+#if !DISABLE_DRAGONECS_DEBUG
             DebugService.Instance.ProfileMarkEnd(id);
 #endif
         }
@@ -145,7 +145,7 @@ namespace DCFApixels.DragonECS
 
         public DefaultDebugService()
         {
-#if !DISABLE_ECS_DEBUG
+#if !DISABLE_DRAGONECS_DEBUG
             _stopwatchs = new Stopwatch[64];
             _stopwatchsNames= new string[64];
 #endif
