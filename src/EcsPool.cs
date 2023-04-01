@@ -56,7 +56,6 @@ namespace DCFApixels.DragonECS
     {
         private readonly int _id;
         private readonly IEcsWorld _source;
-        //  private readonly EcsGroup _entities;
 
         private int[] _mapping;// index = entity / value = itemIndex;/ value = 0 = no entity
         private T[] _items; //dense

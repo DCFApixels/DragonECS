@@ -10,8 +10,12 @@ namespace DCFApixels.DragonECS
     {
         private readonly EcsGroup _source;
 
+        #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup(EcsGroup source) => _source = source;
+        #endregion
+
+        #region Properties
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -27,10 +31,14 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _source.CapacitySparce;
         }
+        #endregion
+
+        #region Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(int entityID) => _source.Contains(entityID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup.Enumerator GetEnumerator() => _source.GetEnumerator();
+        #endregion
     }
 
     // не может содержать значение 0
@@ -173,8 +181,6 @@ namespace DCFApixels.DragonECS
             _sparse[_dense[_count--]] = _sparse[entityID];
             _sparse[entityID] = 0;
         }
-
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AddDelayedOp(int entityID, int isAddBitFlag)
