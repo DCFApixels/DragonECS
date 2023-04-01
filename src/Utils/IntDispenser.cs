@@ -10,6 +10,7 @@ namespace DCFApixels.DragonECS
 
         #region Properties
         public int LastInt => _increment;
+        public int FreeConut => _freeInts.Count;
         #endregion
 
         #region Constructor

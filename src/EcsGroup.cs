@@ -102,7 +102,7 @@ namespace DCFApixels.DragonECS
             _source = source;
             source.RegisterGroup(this);
             _dense = new int[denseCapacity];
-            _sparse = new int[source.Entities.CapacitySparce];
+            _sparse = new int[source.EntitesCapacity];
 
             _delayedOps = new delayedOp[delayedOpsCapacity];
 
@@ -137,9 +137,10 @@ namespace DCFApixels.DragonECS
         public void Add(int entityID)
         {
             if (Contains(entityID)) return;
-            Add(entityID);
+            AddInternal(entityID);
         }
-        private void AddInternal(int entityID)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void AddInternal(int entityID)
         {
             if (_lockCount > 0)
             {
@@ -161,7 +162,7 @@ namespace DCFApixels.DragonECS
             RemoveInternal(entityID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RemoveInternal(int entityID)
+        internal void RemoveInternal(int entityID)
         {
             if (_lockCount > 0)
             {

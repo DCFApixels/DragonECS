@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Xml;
+using static UnityEditor.Progress;
 
 namespace DCFApixels.DragonECS
 {
@@ -17,7 +18,6 @@ namespace DCFApixels.DragonECS
         public EcsPipeline Pipeline { get; }
         public int EntitesCount { get; }
         public int EntitesCapacity { get; }
-        public EcsReadonlyGroup Entities { get; }
         #endregion
 
         #region GetterMethods
@@ -74,9 +74,10 @@ namespace DCFApixels.DragonECS
         where TArchetype : EcsWorld<TArchetype>
     {
         private IntDispenser _entityDispenser;
-        private EcsGroup _entities;
+        private int[] _denseEntities;
+        private int _entitiesCount;
+        private short[] _gens; //старший бит указывает на то жива ли сущьность.
 
-        private short[] _gens;
         //private short[] _componentCounts; //TODO
 
         private IEcsPool[] _pools;
@@ -104,14 +105,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Properties
-        public bool IsEmpty => _entities.Count < 0;
+        public bool IsEmpty => _entitiesCount < 0;
         public Type ArchetypeType => typeof(TArchetype);
         public int ID => id;
         public EcsPipeline Pipeline => _pipeline;
 
-        public int EntitesCount => _entities.Count;
-        public int EntitesCapacity => _entities.CapacityDense;
-        public EcsReadonlyGroup Entities => _entities.Readonly;
+        public int EntitesCount => _entitiesCount;
+        public int EntitesCapacity => _denseEntities.Length;
         #endregion
 
         #region Constructors
@@ -128,7 +128,7 @@ namespace DCFApixels.DragonECS
             _filters = new EcsFilter[64];
             _groups = new List<EcsGroup>(128);
 
-            _entities = new EcsGroup(this, 512, 512, 0);
+            _denseEntities = new int[512];
 
             _filtersByIncludedComponents = new List<EcsFilter>[16];
             _filtersByExcludedComponents = new List<EcsFilter>[16];
@@ -170,7 +170,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-            #region GetFilter
+        #region GetFilter
         public EcsFilter Filter<TInc>() where TInc : struct, IInc => Filter<TInc, Exc>();
         public EcsFilter Filter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc
         {
@@ -216,12 +216,11 @@ namespace DCFApixels.DragonECS
                 list.Add(filter);
             }
             // scan exist entities for compatibility with new filter.
-            foreach (var item in _entities)
+            for (int i = 0; i < _entitiesCount && _entitiesCount <= _denseEntities.Length; i++)
             {
-                if (IsMaskCompatible(mask, item.id))
-                {
-                    filter.Add(item.id);
-                }
+                int entity = _denseEntities[i];
+                if (IsMaskCompatible(mask, entity))
+                    filter.Add(entity);
             }
 
             return filter;
@@ -271,34 +270,36 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region EntityChangedReact
+
         void IEcsWorld.OnEntityComponentAdded(int entityID, int componentID)
         {
             var includeList = _filtersByIncludedComponents[componentID];
             var excludeList = _filtersByExcludedComponents[componentID];
 
-            //if (includeList != null)
-            //{
-            //    foreach (var filter in includeList)
-            //    {
-            //        if (IsMaskCompatible(filter.Mask, entityID))
-            //        {
-            //            filter.Add(entityID);
-            //        }
-            //    }
-            //}
-            //if (excludeList != null)
-            //{
-            //    foreach (var filter in excludeList)
-            //    {
-            //        if (IsMaskCompatibleWithout(filter.Mask, entityID, componentID))
-            //        {
-            //            filter.Remove(entityID);
-            //        }
-            //    }
-            //}
+            if (includeList != null)
+            {
+                foreach (var filter in includeList)
+                {
+                    if (IsMaskCompatible(filter.Mask, entityID))
+                    {
+                        filter.entities.UncheckedAdd(entityID);
+                    }
+                }
+            }
+            if (excludeList != null)
+            {
+                foreach (var filter in excludeList)
+                {
+                    if (IsMaskCompatibleWithout(filter.Mask, entityID, componentID))
+                    {
+                        filter.entities.UncheckedRemove(entityID);
+                    }
+                }
+            }
+            //TODO провести стресс тест для варианта выши и закоментированного ниже
 
-            if (includeList != null) foreach (var filter in includeList) filter.entities.Add(entityID);
-            if (excludeList != null) foreach (var filter in excludeList) filter.entities.Remove(entityID);
+            // if (includeList != null) foreach (var filter in includeList) filter.entities.Add(entityID);
+            // if (excludeList != null) foreach (var filter in excludeList) filter.entities.Remove(entityID);
         }
 
         void IEcsWorld.OnEntityComponentRemoved(int entityID, int componentID)
@@ -306,29 +307,30 @@ namespace DCFApixels.DragonECS
             var includeList = _filtersByIncludedComponents[componentID];
             var excludeList = _filtersByExcludedComponents[componentID];
 
-            //if (includeList != null)
-            //{
-            //    foreach (var filter in includeList)
-            //    {
-            //        if (IsMaskCompatible(filter.Mask, entityID))
-            //        {
-            //            filter.Remove(entityID);
-            //        }
-            //    }
-            //}
-            //if (excludeList != null)
-            //{
-            //    foreach (var filter in excludeList)
-            //    {
-            //        if (IsMaskCompatibleWithout(filter.Mask, entityID, componentID))
-            //        {
-            //            filter.Add(entityID);
-            //        }
-            //    }
-            //}
+            if (includeList != null)
+            {
+                foreach (var filter in includeList)
+                {
+                    if (IsMaskCompatible(filter.Mask, entityID))
+                    {
+                        filter.entities.UncheckedRemove(entityID);
+                    }
+                }
+            }
+            if (excludeList != null)
+            {
+                foreach (var filter in excludeList)
+                {
+                    if (IsMaskCompatibleWithout(filter.Mask, entityID, componentID))
+                    {
+                        filter.entities.UncheckedAdd(entityID);
+                    }
+                }
+            }
+            //TODO провести стресс тест для варианта выши и закоментированного ниже
 
-            if (includeList != null) foreach (var filter in includeList) filter.entities.Remove(entityID);
-            if (excludeList != null) foreach (var filter in excludeList) filter.entities.Add(entityID);
+            // if (includeList != null) foreach (var filter in includeList) filter.entities.Remove(entityID);
+            // if (excludeList != null) foreach (var filter in excludeList) filter.entities.Add(entityID);
         }
         #endregion
 
@@ -336,21 +338,19 @@ namespace DCFApixels.DragonECS
         public ent NewEntity()
         {
             int entityID = _entityDispenser.GetFree();
-            _entities.UncheckedAdd(entityID);
+            if (_entityDispenser.LastInt >= _denseEntities.Length)
+                Array.Resize(ref _denseEntities, _denseEntities.Length << 1);
+            _denseEntities[_entitiesCount++] = entityID;
+
             if (_gens.Length <= entityID)
             {
                 Array.Resize(ref _gens, _gens.Length << 1);
-                _entities.OnWorldResize(_gens.Length);
                 foreach (var item in _groups)
-                {
                     item.OnWorldResize(_gens.Length);
-                }
                 foreach (var item in _pools)
-                {
                     item.OnWorldResize(_gens.Length);
-                }
             }
-
+            _gens[entityID] |= short.MinValue;
             ent entity = new ent(entityID, _gens[entityID]++, id);
             _entityCreate.OnEntityCreate(entity);
             return entity;
@@ -358,7 +358,8 @@ namespace DCFApixels.DragonECS
         public void DelEntity(ent entity)
         {
             _entityDispenser.Release(entity.id);
-            _entities.UncheckedRemove(entity.id);
+            _gens[entity.id] |= short.MinValue;
+            _entitiesCount--;
             _entityDestry.OnEntityDestroy(entity);
         }
 
@@ -370,7 +371,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool EntityIsAlive(int entityID, short gen)
         {
-            return _entities.Contains(entityID) && _gens[entityID] == gen;
+            return _gens[entityID] == gen;
         }
         #endregion
 
@@ -378,7 +379,7 @@ namespace DCFApixels.DragonECS
         public void Destroy()
         {
             _entityDispenser = null;
-            _entities = null;
+            _denseEntities = null;
             _gens = null;
             _pools = null;
             _nullPool = null;
