@@ -2,17 +2,7 @@
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsFilter
-    {
-        #region Properties
-        public IEcsWorld World { get; }
-        public EcsMask Mask { get; }
-        public EcsReadonlyGroup Entities { get; }
-        public int EntitiesCount { get; }
-        #endregion
-    }
-
-    public class EcsFilter : IEcsFilter
+    public class EcsFilter
     {
         private readonly IEcsWorld _source;
         internal readonly EcsGroup entities;
