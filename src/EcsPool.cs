@@ -88,7 +88,7 @@ namespace DCFApixels.DragonECS
             _items = new T[capacity];
             _itemsCount = 0;
 
-            _componentResetHandler = ComponentResetHandler.New<T>();
+            _componentResetHandler = IEcsComponentReset<T>.Handler;
             _poolRunnres = poolRunnres;
         }
         #endregion
