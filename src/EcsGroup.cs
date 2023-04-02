@@ -88,23 +88,6 @@ namespace DCFApixels.DragonECS
 
         #region Constrcutors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal EcsGroup(IEcsWorld source, int denseCapacity, int sparceCapacity, int delayedOpsCapacity)
-        {
-            _source = source;
-            source.RegisterGroup(this);
-            _dense = new int[denseCapacity];
-            _sparse = new int[sparceCapacity];
-
-            _delayedOps = new delayedOp[delayedOpsCapacity];
-
-            _lockCount = 0;
-            _delayedOpsCount = 0;
-
-            _count = 0;
-        }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup(IEcsWorld source, int denseCapacity = 64, int delayedOpsCapacity = 128)
         {
             _source = source;
