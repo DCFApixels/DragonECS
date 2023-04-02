@@ -25,6 +25,7 @@ namespace DCFApixels.DragonECS
         #region Methods
         public EcsPool<T> GetPool<T>() where T : struct;
         public EcsPool<T> UncheckedGetPool<T>() where T : struct;
+        public EcsFilter Entities<TComponent>() where TComponent : struct;
         public EcsFilter Filter<TInc>() where TInc : struct, IInc;
         public EcsFilter Filter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc;
         public ent NewEntity();
@@ -172,6 +173,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetFilter
+        public EcsFilter Entities<TComponent>() where TComponent : struct => Filter<Inc<TComponent>, Exc>();
         public EcsFilter Filter<TInc>() where TInc : struct, IInc => Filter<TInc, Exc>();
         public EcsFilter Filter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc
         {
