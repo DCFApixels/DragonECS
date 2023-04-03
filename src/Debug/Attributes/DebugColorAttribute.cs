@@ -27,7 +27,7 @@ namespace DCFApixels.DragonECS
 
 
         [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 4)]
-        private readonly struct ColorRecord
+        private readonly struct ColorRecord // Union
         {
             [FieldOffset(0)]
             public readonly int full;
@@ -65,7 +65,7 @@ namespace DCFApixels.DragonECS
         /// <summary> Cyan. RGB is (0, 255, 255)</summary>
         Cyan = (000 << 24) + (255 << 16) + (255 << 8),
         /// <summary> Magenta. RGB is (255, 0, 255)</summary>
-        Magenta = (255 << 24) + (000 << 16) + (000 << 8),
+        Magenta = (255 << 24) + (000 << 16) + (255 << 8),
 
         /// <summary> Yellow. RGB is (255, 127, 0)</summary>
         Orange = (255 << 24) + (127 << 16) + (000 << 8),
