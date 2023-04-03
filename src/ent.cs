@@ -134,6 +134,8 @@ namespace DCFApixels.DragonECS
                 return EcsWorld.Worlds[self.world].GetPool<T>().Has(self.id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool NotHas<T>(this in ent self) where T : struct => !Has<T>(in self);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Del<T>(this in ent self)
             where T : struct
         {
