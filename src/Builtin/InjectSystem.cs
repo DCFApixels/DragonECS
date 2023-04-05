@@ -24,7 +24,7 @@ namespace DCFApixels.DragonECS
                 return IsInjectionEnd;
             }
 
-            public bool IsInjectionEnd => _injectSystems.Length <= _injectCount;
+            public bool IsInjectionEnd => _injectCount >= _injectSystems.Length;
 
             public void Destroy()
             {
