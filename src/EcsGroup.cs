@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using delayedOp = System.Int32;
@@ -188,6 +189,20 @@ namespace DCFApixels.DragonECS
         //TODO добавить автосоритровку при каждом GetEnumerator и проверить будет ли прирост производительности или ее падение.
         //Суть в том что так возможно можно будет более плотно подавать данные в проц
 
+        public void Sort()
+        {
+            int increment = 1;
+            for (int i = 0; i < _dense.Length; i++)
+            {
+                if (_sparse[i] > 0)
+                {
+                    _sparse[i] = increment;
+                    _dense[increment++] = i;
+                }
+            }
+        }
+
+
         #region AddGroup/RemoveGroup
         public void AddGroup(EcsReadonlyGroup group)
         { foreach (var item in group) Add(item.id); }
@@ -233,6 +248,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator()
         {
+            Sort();
             _lockCount++;
             return new Enumerator(this);
         }

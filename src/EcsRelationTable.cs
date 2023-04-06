@@ -8,7 +8,7 @@ namespace DCFApixels.DragonECS
   /*  public interface IEcsRealationTable : IEcsReadonlyTable
     {
         public EcsFilter Relations<TComponent>() where TComponent : struct;
-
+  rr
     }
     public sealed class EcsRelationTable<TArchetype> : IEcsRealationTable
          where TArchetype : EcsRelationTableArchetypeBase

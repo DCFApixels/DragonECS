@@ -22,12 +22,12 @@
 
     public sealed class EcsPreInitRunner : EcsRunner<IEcsPreInitSystem>, IEcsPreInitSystem
     {
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
         private EcsProfilerMarker[] _markers;
 #endif
         public void PreInit(EcsPipeline pipeline)
         {
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
                 using (_markers[i].Auto())
@@ -38,7 +38,7 @@
 #endif
         }
 
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
         protected override void OnSetup()
         {
             _markers = new EcsProfilerMarker[targets.Length];
@@ -51,12 +51,12 @@
     }
     public sealed class EcsInitRunner : EcsRunner<IEcsInitSystem>, IEcsInitSystem
     {
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
         private EcsProfilerMarker[] _markers;
 #endif
         public void Init(EcsPipeline pipeline)
         {
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
                 using (_markers[i].Auto())
@@ -67,7 +67,7 @@
 #endif
         }
 
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
         protected override void OnSetup()
         {
             _markers = new EcsProfilerMarker[targets.Length];
@@ -80,12 +80,12 @@
     }
     public sealed class EcsRunRunner : EcsRunner<IEcsRunSystem>, IEcsRunSystem
     {
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
         private EcsProfilerMarker[] _markers;
 #endif
         public void Run(EcsPipeline pipeline)
         {
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
                 using (_markers[i].Auto())
@@ -97,7 +97,7 @@
 #endif
         }
 
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
         protected override void OnSetup()
         {
             _markers = new EcsProfilerMarker[targets.Length];
@@ -110,12 +110,12 @@
     }
     public sealed class EcsDestroyRunner : EcsRunner<IEcsDestroySystem>, IEcsDestroySystem
     {
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
         private EcsProfilerMarker[] _markers;
 #endif
         public void Destroy(EcsPipeline pipeline)
         {
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
             for (int i = 0; i < targets.Length; i++)
             {
                 using (_markers[i].Auto())
@@ -126,7 +126,7 @@
 #endif
         }
 
-#if DEBUG && !DISABLE_DRAGONECS_DEBUG
+#if DEBUG && !DISABLE_DEBUG
         protected override void OnSetup()
         {
             _markers = new EcsProfilerMarker[targets.Length];
