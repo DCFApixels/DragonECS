@@ -12,7 +12,7 @@ namespace DCFApixels.DragonECS
         public short Gen { get; }
         public short World { get; }
     }
-    // id - 32 bits
+    // uniqueID - 32 bits
     // gen - 16 bits
     // world - 16 bits
     [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
@@ -71,7 +71,7 @@ namespace DCFApixels.DragonECS
 
         #region ToString
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override string ToString() => $"ent(id:{id} gen:{gen} world:{world})";
+        public override string ToString() => $"ent(uniqueID:{id} gen:{gen} world:{world})";
         #endregion
 
         #region operators

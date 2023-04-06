@@ -20,9 +20,6 @@ namespace DCFApixels.DragonECS
         public EcsPool<T> GetPool<T>() where T : struct;
         public EcsPool<T> UncheckedGetPool<T>() where T : struct;
 
-        public EcsFilter Filter<TInc>() where TInc : struct, IInc;
-        public EcsFilter Filter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc;
-
         public bool IsMaskCompatible<TInc>(int entity) where TInc : struct, IInc;
         public bool IsMaskCompatible<TInc, TExc>(int entity) where TInc : struct, IInc where TExc : struct, IExc;
         public bool IsMaskCompatible(EcsMask mask, int entity);

@@ -10,8 +10,8 @@ namespace DCFApixels.DragonECS
         public EcsFilter Relations<TComponent>() where TComponent : struct;
   rr
     }
-    public sealed class EcsRelationTable<TArchetype> : IEcsRealationTable
-         where TArchetype : EcsRelationTableArchetypeBase
+    public sealed class EcsRelationTable<TWorldArchetype> : IEcsRealationTable
+         where TWorldArchetype : EcsRelationTableArchetypeBase
     {
         public readonly IEcsWorld leftWorld;
         public readonly IEcsWorld rightWorld;
@@ -26,7 +26,7 @@ namespace DCFApixels.DragonECS
         private EcsNullPool _nullPool;
 
         #region Properties
-        public Type ArchetypeType => typeof(TArchetype);
+        public Type ArchetypeType => typeof(TWorldArchetype);
         public int EntitesCount => _relationsCount;
         public int EntitesCapacity => _relations.Length;
         #endregion
