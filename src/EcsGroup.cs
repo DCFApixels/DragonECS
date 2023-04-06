@@ -5,6 +5,8 @@ using delayedOp = System.Int32;
 
 namespace DCFApixels.DragonECS
 {
+
+
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
     public readonly ref struct EcsReadonlyGroup
     {
@@ -242,7 +244,7 @@ namespace DCFApixels.DragonECS
             private readonly EcsGroup _source;
             private readonly int[] _dense;
             private readonly int _count;
-            private int _pointer;
+            private int _index;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator(EcsGroup group)
@@ -250,26 +252,22 @@ namespace DCFApixels.DragonECS
                 _source = group;
                 _dense = group._dense;
                 _count = group.Count;
-                _pointer = 0;
+                _index = 0;
             }
-
             public ent Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _source.World.GetEntity(_dense[_pointer]);
+                get => _source.World.GetEntity(_dense[_index]);
             }
-
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                return ++_pointer <= _count && _count < _dense.Length; //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
+                // <= потму что отсчет начинается с индекса 1
+                return ++_index <= _count && _count < _dense.Length; //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose()
-            {
-                _source.Unlock();
-            }
+            public void Dispose() => _source.Unlock();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset() { }

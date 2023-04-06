@@ -16,14 +16,21 @@ namespace DCFApixels.DragonECS.TODO
 
 
 
-    // left entity id - 32 bits
-    // right entity id - 32 bits
-    [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 8)]
-    public struct rel
+    [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
+    public readonly ref partial struct rel
     {
-        [FieldOffset(0)]
-        public int l;
-        [FieldOffset(1)]
-        public int r;
+        public readonly int id;
+        public readonly short leftWorld;
+        public readonly short rightWorld;
+
+        #region Constructors
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public rel(int id, short leftWorld, short rightWorld)
+        {
+            this.id = id;
+            this.leftWorld = leftWorld;
+            this.rightWorld = rightWorld;
+        }
+        #endregion
     }
 }

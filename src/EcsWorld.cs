@@ -1,52 +1,29 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Internal;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsWorld
+    public interface IEcsWorld : IEcsReadonlyTable
     {
         #region Properties
         //private float _timeScale;//TODO реализовать собсвенныйтайм склей для разных миров
-        public bool IsEmpty { get; }
-        public Type ArchetypeType { get; }
         public int ID { get; }
         public EcsPipeline Pipeline { get; }
         public int EntitesCount { get; }
         public int EntitesCapacity { get; }
         #endregion
 
-        #region GetterMethods
-        public ReadOnlySpan<IEcsPool> GetAllPools();
-
-        #endregion
-
-        #region Methods
-        public EcsPool<T> GetPool<T>() where T : struct;
-        public EcsPool<T> UncheckedGetPool<T>() where T : struct;
+        #region Entities
         public EcsFilter Entities<TComponent>() where TComponent : struct;
-        public EcsFilter Filter<TInc>() where TInc : struct, IInc;
-        public EcsFilter Filter<TInc, TExc>() where TInc : struct, IInc where TExc : struct, IExc;
+
         public ent NewEntity();
         public void DelEntity(ent entity);
         public bool EntityIsAlive(int entityID, short gen);
         public ent GetEntity(int entityID);
         public void Destroy();
-
-        public bool IsMaskCompatible<TInc>(int entity) where TInc : struct, IInc;
-        public bool IsMaskCompatible<TInc, TExc>(int entity) where TInc : struct, IInc where TExc : struct, IExc;
-
-
-        public bool IsMaskCompatible(EcsMask mask, int entity);
-        public bool IsMaskCompatibleWithout(EcsMask mask, int entity, int otherPoolID);
-
-        internal void OnEntityComponentAdded(int entityID, int changedPoolID);
-        internal void OnEntityComponentRemoved(int entityID, int changedPoolID);
-
-        public int GetComponentID<T>();
-
-        internal void RegisterGroup(EcsGroup group);
         #endregion
     }
 
@@ -57,12 +34,19 @@ namespace DCFApixels.DragonECS
 
         public readonly short id;
 
-        public EcsWorld()
+        protected EcsWorld(bool isIndexed)
         {
-            id = (short)_worldIdDispenser.GetFree();
-            if(id >= Worlds.Length)
-                Array.Resize(ref Worlds, Worlds.Length << 1);
-            Worlds[id] = (IEcsWorld)this;
+            if(isIndexed == true)
+            {
+                id = (short)_worldIdDispenser.GetFree();
+                if (id >= Worlds.Length)
+                    Array.Resize(ref Worlds, Worlds.Length << 1);
+                Worlds[id] = (IEcsWorld)this;
+            }
+            else
+            {
+                id = -1;
+            }
         }
 
         protected void Realeze()    
@@ -106,8 +90,12 @@ namespace DCFApixels.DragonECS
 
         #endregion
 
+        #region Internal Properties
+        int IEcsReadonlyTable.Count => _entitiesCount;
+        int IEcsReadonlyTable.Capacity => _denseEntities.Length;
+        #endregion
+
         #region Properties
-        public bool IsEmpty => _entitiesCount < 0;
         public Type ArchetypeType => typeof(TArchetype);
         public int ID => id;
         public EcsPipeline Pipeline => _pipeline;
@@ -117,12 +105,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        public EcsWorld(EcsPipeline pipline = null)
+        public EcsWorld(EcsPipeline pipline = null) : base(true)
         {
             _pipeline = pipline ?? EcsPipeline.Empty;
             if (!_pipeline.IsInit) pipline.Init();
             _entityDispenser = new IntDispenser(1);
-            _nullPool = new EcsNullPool(this);
+            _nullPool = EcsNullPool.instance;
             _pools = new IEcsPool[512];
             FillArray(_pools, _nullPool);
 
@@ -154,7 +142,6 @@ namespace DCFApixels.DragonECS
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, ComponentType.Capacity);
                 FillArray(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
-                //Array.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length); //TODO Fix it
 
                 Array.Resize(ref _filtersByIncludedComponents, ComponentType.Capacity);
                 Array.Resize(ref _filtersByExcludedComponents, ComponentType.Capacity);
@@ -285,7 +272,7 @@ namespace DCFApixels.DragonECS
 
         #region EntityChangedReact
 
-        void IEcsWorld.OnEntityComponentAdded(int entityID, int componentID)
+        void IEcsReadonlyTable.OnEntityComponentAdded(int entityID, int componentID)
         {
             var includeList = _filtersByIncludedComponents[componentID];
             var excludeList = _filtersByExcludedComponents[componentID];
@@ -316,7 +303,7 @@ namespace DCFApixels.DragonECS
             // if (excludeList != null) foreach (var filter in excludeList) filter.entities.Remove(entityID);
         }
 
-        void IEcsWorld.OnEntityComponentRemoved(int entityID, int componentID)
+        void IEcsReadonlyTable.OnEntityComponentRemoved(int entityID, int componentID)
         {
             var includeList = _filtersByIncludedComponents[componentID];
             var excludeList = _filtersByExcludedComponents[componentID];
@@ -458,7 +445,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
-        void IEcsWorld.RegisterGroup(EcsGroup group)
+        void IEcsReadonlyTable.RegisterGroup(EcsGroup group)
         {
             _groups.Add(group);
         }
