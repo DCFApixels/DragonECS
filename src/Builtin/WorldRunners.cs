@@ -38,23 +38,23 @@
 
     public interface IEcsEntityCreate : IEcsSystem
     {
-        public void OnEntityCreate(ent entity);
+        public void OnEntityCreate(EcsEntity entity);
     }
     public interface IEcsEntityDestroy : IEcsSystem
     {
-        public void OnEntityDestroy(ent entity);
+        public void OnEntityDestroy(EcsEntity entity);
     }
     public interface IEcsEntityLifecycle : IEcsEntityCreate, IEcsEntityDestroy { }
     public sealed class EcsEntityCreateRunner : EcsRunner<IEcsEntityCreate>, IEcsEntityCreate
     {
-        public void OnEntityCreate(ent entity)
+        public void OnEntityCreate(EcsEntity entity)
         {
             foreach (var item in targets) item.OnEntityCreate(entity);
         }
     }
     public sealed class EcsEntityDestroyRunner : EcsRunner<IEcsEntityDestroy>, IEcsEntityDestroy
     {
-        public void OnEntityDestroy(ent entity)
+        public void OnEntityDestroy(EcsEntity entity)
         {
             foreach (var item in targets) item.OnEntityDestroy(entity);
         }

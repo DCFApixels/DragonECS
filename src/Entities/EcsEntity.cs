@@ -1,28 +1,18 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEntityRecord : ITabelRecord
-    {
-        public bool IsSpecific { get; }
-        internal long Full { get; }
-        public short Gen { get; }
-        public short World { get; }
-    }
-    // uniqueID - 32 bits
-    // gen - 16 bits
-    // world - 16 bits
-    [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
-    public readonly partial struct ent : 
-        IEquatable<long>, 
-        IEquatable<ent>,
-        IEntityRecord
-    {
-        public static readonly ent NULL = default;
 
+    /// <summary>Permanent relation entity identifier</summary>
+    [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
+    public readonly partial struct EcsEntity : IEquatable<long>, IEquatable<EcsEntity>
+    {
+        public static readonly EcsEntity NULL = default;
+        // uniqueID - 32 bits
+        // gen - 16 bits
+        // world - 16 bits
         [FieldOffset(0)]
         internal readonly long full; //Union
         [FieldOffset(3)]
@@ -32,69 +22,64 @@ namespace DCFApixels.DragonECS
         [FieldOffset(0)]
         public readonly short world;
 
-        #region IEntityRecord
-        bool IEntityRecord.IsSpecific => false;
-        long IEntityRecord.Full => full;
-        int ITabelRecord.Id => id;
-        short IEntityRecord.Gen => gen;
-        short IEntityRecord.World => world;
-        #endregion
+        public ent Ent
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => new ent(id);
+        }
 
         #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ent(int id, short gen, short world) : this()
+        public EcsEntity(int id, short gen, short world) : this()
         {
             this.id = id;
             this.gen = gen;
             this.world = world;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ent(long full) : this()
+        internal EcsEntity(long full) : this()
         {
             this.full = full;
         }
         #endregion
 
-        #region GetHashCode
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() => unchecked((int)(full)) ^ (int)(full >> 32);
-        #endregion
-
         #region Equals
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool Equals(object obj) => obj is ent other && full == other.full;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(ent other) => full == other.full;
+        public bool Equals(EcsEntity other) => full == other.full;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(long other) => full == other;
         #endregion
 
-        #region ToString
+        #region Object
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override string ToString() => $"ent(uniqueID:{id} gen:{gen} world:{world})";
+        public override int GetHashCode() => unchecked((int)full) ^ (int)(full >> 32);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override string ToString() => $"Entity(id:{id} gen:{gen} world:{world})";
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override bool Equals(object obj) => obj is EcsEntity other && full == other.full;
         #endregion
 
         #region operators
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(in ent a, in ent b) => a.full == b.full;
+        public static bool operator ==(in EcsEntity a, in EcsEntity b) => a.full == b.full;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(in ent a, in ent b) => a.full != b.full;
+        public static bool operator !=(in EcsEntity a, in EcsEntity b) => a.full != b.full;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator long(in ent a) => a.full;
+        public static explicit operator long(in EcsEntity a) => a.full;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator int(in ent a) => a.id;
+        public static explicit operator ent(in EcsEntity a) => a.Ent;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator ent(in long a) => new ent(a);
+        public static explicit operator EcsEntity(in long a) => new EcsEntity(a);
         #endregion
     }
 
-    public readonly partial struct ent
+    public readonly partial struct EcsEntity
     {
-        private static EcsProfilerMarker _IsNullMarker = new EcsProfilerMarker("ent.IsNull");
-        private static EcsProfilerMarker _ReadMarker = new EcsProfilerMarker("ent.Read");
-        private static EcsProfilerMarker _WriteMarker = new EcsProfilerMarker("ent.Write");
-        private static EcsProfilerMarker _HasMarker = new EcsProfilerMarker("ent.Has");
-        private static EcsProfilerMarker _DelMarker = new EcsProfilerMarker("ent.Del");
+        private static EcsProfilerMarker _IsNullMarker = new EcsProfilerMarker("EcsEntity.IsNull");
+        private static EcsProfilerMarker _ReadMarker = new EcsProfilerMarker("EcsEntity.Read");
+        private static EcsProfilerMarker _WriteMarker = new EcsProfilerMarker("EcsEntity.Write");
+        private static EcsProfilerMarker _HasMarker = new EcsProfilerMarker("EcsEntity.Has");
+        private static EcsProfilerMarker _DelMarker = new EcsProfilerMarker("EcsEntity.Del");
 
         public bool IsNull
         {
@@ -140,15 +125,15 @@ namespace DCFApixels.DragonECS
 
     public static partial class entExtensions
     {
-        private static EcsProfilerMarker _IsAliveMarker = new EcsProfilerMarker("ent.IsAlive");
+        private static EcsProfilerMarker _IsAliveMarker = new EcsProfilerMarker("EcsEntity.IsAlive");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsAlive(this ref ent self)
+        public static bool IsAlive(this ref EcsEntity self)
         {
             //using (_IsAliveMarker.Auto())
             //{
                 bool result = EcsWorld.Worlds[self.world].EntityIsAlive(self.id, self.gen);
-                if (!result) self = ent.NULL;
+                if (!result) self = EcsEntity.NULL;
                 return result;
             //}
         }

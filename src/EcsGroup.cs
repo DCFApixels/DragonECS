@@ -5,8 +5,6 @@ using delayedOp = System.Int32;
 
 namespace DCFApixels.DragonECS
 {
-
-
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
     public readonly ref struct EcsReadonlyGroup
     {
@@ -232,9 +230,9 @@ namespace DCFApixels.DragonECS
                 {
                     delayedOp op = _delayedOps[i];
                     if (op >= 0) //delayedOp.IsAdded
-                        UncheckedAdd(op & int.MaxValue); //delayedOp.Entity
+                        UncheckedAdd(op & int.MaxValue); //delayedOp.EcsEntity
                     else
-                        UncheckedRemove(op & int.MaxValue); //delayedOp.Entity
+                        UncheckedRemove(op & int.MaxValue); //delayedOp.EcsEntity
                 }
             }
         }
@@ -266,7 +264,7 @@ namespace DCFApixels.DragonECS
             public ent Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _source.World.GetEntity(_dense[_index]);
+                get => new ent(_dense[_index]);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index <= _count && _count<_dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны

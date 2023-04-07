@@ -8,10 +8,10 @@ namespace DCFApixels.DragonECS
     public interface IEcsQueryMember<TComponent>
             where TComponent : struct
     {
-        public ref TComponent Write(int entityID);
-        public ref readonly TComponent Read(int entityID);
-        public bool Has(int entityID);
-        public void Del(int entityID);
+        public ref TComponent Write(ent entityID);
+        public ref readonly TComponent Read(ent entityID);
+        public bool Has(ent entityID);
+        public void Del(ent entityID);
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 8)]
@@ -22,21 +22,13 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal inc(EcsPool<TComponent> pool) => _pool = pool;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TComponent Write(ent entity) => ref _pool.Write(entity.id);
+        public ref TComponent Write(ent entityID) => ref _pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TComponent Write(int entityID) => ref _pool.Write(entityID);
+        public ref readonly TComponent Read(ent entityID) => ref _pool.Read(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly TComponent Read(ent entity) => ref _pool.Read(entity.id);
+        public bool Has(ent entityID) => _pool.Has(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly TComponent Read(int entityID) => ref _pool.Read(entityID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(ent entity) => _pool.Has(entity.id);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(int entityID) => _pool.Has(entityID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Del(ent entity) => _pool.Del(entity.id);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Del(int entityID) => _pool.Del(entityID);
+        public void Del(ent entityID) => _pool.Del(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString() => $"{(_pool == null ? "NULL" : _pool.World.ArchetypeType.Name)}inc<{typeof(TComponent).Name}>";
 
@@ -52,21 +44,13 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal exc(EcsPool<TComponent> pool) => _pool = pool;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TComponent Write(ent entity) => ref _pool.Write(entity.id);
+        public ref TComponent Write(ent entityID) => ref _pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TComponent Write(int entityID) => ref _pool.Write(entityID);
+        public ref readonly TComponent Read(ent entityID) => ref _pool.Read(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly TComponent Read(ent entity) => ref _pool.Read(entity.id);
+        public bool Has(ent entityID) => _pool.Has(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly TComponent Read(int entityID) => ref _pool.Read(entityID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(ent entity) => _pool.Has(entity.id);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(int entityID) => _pool.Has(entityID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Del(ent entity) => _pool.Del(entity.id);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Del(int entityID) => _pool.Del(entityID);
+        public void Del(ent entityID) => _pool.Del(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString() => $"{(_pool == null ? "NULL" : _pool.World.ArchetypeType.Name)}exc<{typeof(TComponent).Name}>";
 
@@ -82,21 +66,13 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal opt(EcsPool<TComponent> pool) => _pool = pool;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TComponent Write(ent entity) => ref _pool.Write(entity.id);
+        public ref TComponent Write(ent entityID) => ref _pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TComponent Write(int entityID) => ref _pool.Write(entityID);
+        public ref readonly TComponent Read(ent entityID) => ref _pool.Read(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly TComponent Read(ent entity) => ref _pool.Read(entity.id);
+        public bool Has(ent entityID) => _pool.Has(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly TComponent Read(int entityID) => ref _pool.Read(entityID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(ent entity) => _pool.Has(entity.id);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(int entityID) => _pool.Has(entityID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Del(ent entity) => _pool.Del(entity.id);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Del(int entityID) => _pool.Del(entityID);
+        public void Del(ent entityID) => _pool.Del(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString() => $"{(_pool == null ? "NULL" : _pool.World.ArchetypeType.Name)}opt<{typeof(TComponent).Name}>";
 

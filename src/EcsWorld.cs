@@ -18,10 +18,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entities
-        public ent NewEntity();
-        public void DelEntity(ent entity);
+        public EcsEntity NewEntity();
+        public void DelEntity(EcsEntity entity);
         public bool EntityIsAlive(int entityID, short gen);
-        public ent GetEntity(int entityID);
+        public EcsEntity GetEntity(int entityID);
         public void Destroy();
         #endregion
     }
@@ -344,7 +344,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entity
-        public ent NewEntity()
+        public EcsEntity NewEntity()
         {
             int entityID = _entityDispenser.GetFree();
             if (_entityDispenser.LastInt >= _denseEntities.Length)
@@ -360,11 +360,11 @@ namespace DCFApixels.DragonECS
                     item.OnWorldResize(_gens.Length);
             }
             _gens[entityID] |= short.MinValue;
-            ent entity = new ent(entityID, _gens[entityID]++, id);
+            EcsEntity entity = new EcsEntity(entityID, _gens[entityID]++, id);
             _entityCreate.OnEntityCreate(entity);
             return entity;
         }
-        public void DelEntity(ent entity)
+        public void DelEntity(EcsEntity entity)
         {
             _entityDispenser.Release(entity.id);
             _gens[entity.id] |= short.MinValue;
@@ -373,9 +373,9 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ent GetEntity(int entityID)
+        public EcsEntity GetEntity(int entityID)
         {
-            return new ent(entityID, _gens[entityID], id);
+            return new EcsEntity(entityID, _gens[entityID], id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool EntityIsAlive(int entityID, short gen)
