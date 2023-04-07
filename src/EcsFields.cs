@@ -33,7 +33,7 @@ namespace DCFApixels.DragonECS
         public override string ToString() => $"{(_pool == null ? "NULL" : _pool.World.ArchetypeType.Name)}inc<{typeof(TComponent).Name}>";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator inc<TComponent>(EcsEntityArchetypeBuilder buider) => buider.Include<TComponent>();
+        public static implicit operator inc<TComponent>(EcsQueryBuilder buider) => buider.Include<TComponent>();
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 8)]
@@ -55,7 +55,7 @@ namespace DCFApixels.DragonECS
         public override string ToString() => $"{(_pool == null ? "NULL" : _pool.World.ArchetypeType.Name)}exc<{typeof(TComponent).Name}>";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator exc<TComponent>(EcsEntityArchetypeBuilder buider) => buider.Exclude<TComponent>();
+        public static implicit operator exc<TComponent>(EcsQueryBuilder buider) => buider.Exclude<TComponent>();
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 8)]
@@ -77,6 +77,6 @@ namespace DCFApixels.DragonECS
         public override string ToString() => $"{(_pool == null ? "NULL" : _pool.World.ArchetypeType.Name)}opt<{typeof(TComponent).Name}>";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator opt<TComponent>(EcsEntityArchetypeBuilder buider) => buider.Optional<TComponent>();
+        public static implicit operator opt<TComponent>(EcsQueryBuilder buider) => buider.Optional<TComponent>();
     }
 }

@@ -8,18 +8,18 @@ using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract class EcsEntityArchetypeBuilder
+    public abstract class EcsQueryBuilder
     {
         public abstract inc<TComponent> Include<TComponent>() where TComponent : struct;
         public abstract exc<TComponent> Exclude<TComponent>() where TComponent : struct;
         public abstract opt<TComponent> Optional<TComponent>() where TComponent : struct;
     }
-    public interface IEcsEntityArchetype
+    public interface IEcsQuery
     {
         internal void AddEntity(int entityID);
         internal void RemoveEntity(int entityID);
     }
-    public class EcsEntityArchetype<TWorldArchetype> : IEcsEntityArchetype
+    public class EcsQuery<TWorldArchetype> : IEcsQuery
         where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
         private int _id;
@@ -32,7 +32,7 @@ namespace DCFApixels.DragonECS
             get => group.Readonly;
         }
 
-        public EcsEntityArchetype(Builder b)
+        public EcsQuery(Builder b)
         {
         }
 
@@ -40,12 +40,12 @@ namespace DCFApixels.DragonECS
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IEcsEntityArchetype.AddEntity(int entityID) => group.Add(entityID);
+        void IEcsQuery.AddEntity(int entityID) => group.Add(entityID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IEcsEntityArchetype.RemoveEntity(int entityID) => group.Remove(entityID);
+        void IEcsQuery.RemoveEntity(int entityID) => group.Remove(entityID);
 
         #region Builder
-        public sealed class Builder : EcsEntityArchetypeBuilder
+        public sealed class Builder : EcsQueryBuilder
         {
             private IEcsWorld _world;
             private List<int> _inc;
@@ -74,11 +74,11 @@ namespace DCFApixels.DragonECS
                 return new opt<TComponent>(_world.GetPool<TComponent>());
             }
 
-            internal void End(out EcsEntityArhetypeMask mask)
+            internal void End(out EcsQueryMask mask)
             {
                 _inc.Sort();
                 _exc.Sort();
-                mask = new EcsEntityArhetypeMask(_world.ArchetypeType, _inc.ToArray(), _exc.ToArray());
+                mask = new EcsQueryMask(_world.ArchetypeType, _inc.ToArray(), _exc.ToArray());
                 _world = null;
                 _inc.Clear();
                 _inc = null;
@@ -89,7 +89,7 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    public class EcsEntityArhetypeMask
+    public class EcsQueryMask
     {
         internal readonly Type WorldArchetypeType;
         internal readonly int[] Inc;
@@ -97,7 +97,7 @@ namespace DCFApixels.DragonECS
 
         public int IncCount => Inc.Length;
         public int ExcCount => Exc.Length;
-        public EcsEntityArhetypeMask(Type worldArchetypeType, int[] inc, int[] exc)
+        public EcsQueryMask(Type worldArchetypeType, int[] inc, int[] exc)
         {
             WorldArchetypeType = worldArchetypeType;
             Inc = inc;

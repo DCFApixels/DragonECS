@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entities
-        public TArhetype Entities<TArhetype>(out TArhetype entities) where TArhetype : IEcsEntityArchetype;
+        public TArhetype Entities<TArhetype>(out TArhetype entities) where TArhetype : IEcsQuery;
 
         public ent NewEntity();
         public void DelEntity(ent entity);
@@ -72,7 +72,7 @@ namespace DCFApixels.DragonECS
         private List<EcsGroup>[] _filtersByIncludedComponents;
         private List<EcsGroup>[] _filtersByExcludedComponents;
 
-        private IEcsEntityArchetype[] _archetypes;
+        private IEcsQuery[] _archetypes;
 
         private EcsPipeline _pipeline;
 
@@ -115,7 +115,7 @@ namespace DCFApixels.DragonECS
             FillArray(_pools, _nullPool);
 
             _gens = new short[512];
-            _archetypes = new EcsEntityArchetype<TWorldArchetype>[EntityArhetype.capacity];
+            _archetypes = new EcsQuery<TWorldArchetype>[EntityArhetype.capacity];
             _groups = new List<EcsGroup>(128);
 
             _denseEntities = new int[512];
@@ -160,7 +160,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entities
-        public TEntityArhetype Entities<TEntityArhetype>(out TEntityArhetype entities) where TEntityArhetype : IEcsEntityArchetype
+        public TEntityArhetype Entities<TEntityArhetype>(out TEntityArhetype entities) where TEntityArhetype : IEcsQuery
         {
             int uniqueID = EntityArhetype<TEntityArhetype>.uniqueID;
             if (_archetypes.Length < EntityArhetype.capacity)
@@ -168,13 +168,13 @@ namespace DCFApixels.DragonECS
 
             if (_archetypes[uniqueID] == null)
             {
-                EcsEntityArchetype<TWorldArchetype>.Builder builder = new EcsEntityArchetype<TWorldArchetype>.Builder(this);
+                EcsQuery<TWorldArchetype>.Builder builder = new EcsQuery<TWorldArchetype>.Builder(this);
                 _archetypes[uniqueID] = (TEntityArhetype)Activator.CreateInstance(typeof(TEntityArhetype), builder);
-                builder.End(out EcsEntityArhetypeMask mask);
+                builder.End(out EcsQueryMask mask);
 
                 var filter = new EcsGroup(this);
 
-                ((EcsEntityArchetype<TWorldArchetype>)_archetypes[uniqueID]).group = filter;
+                ((EcsQuery<TWorldArchetype>)_archetypes[uniqueID]).group = filter;
 
                 for (int i = 0; i < mask.IncCount; i++)
                 {
