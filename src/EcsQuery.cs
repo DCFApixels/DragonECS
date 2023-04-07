@@ -10,12 +10,6 @@ using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract class EcsQueryBuilder
-    {
-        public abstract inc<TComponent> Include<TComponent>() where TComponent : struct;
-        public abstract exc<TComponent> Exclude<TComponent>() where TComponent : struct;
-        public abstract opt<TComponent> Optional<TComponent>() where TComponent : struct;
-    }
     public interface IEcsQuery
     {
         internal void AddEntity(int entityID);
@@ -115,7 +109,6 @@ namespace DCFApixels.DragonECS
                 _exc.Sort();
                 mask = new EcsQueryMask(_world.ArchetypeType, _inc.ToArray(), _exc.ToArray());
 
-
                 _world = null;
                 _inc.Clear();
                 _inc = null;
@@ -128,12 +121,6 @@ namespace DCFApixels.DragonECS
 
     public class EcsQueryMask : EcsMaskBase
     {
-    //    internal readonly Type WorldArchetypeType;
-    //    internal readonly int[] Inc;
-    //    internal readonly int[] Exc;
-    //
-    //    public int IncCount => Inc.Length;
-    //    public int ExcCount => Exc.Length;
         public EcsQueryMask(Type worldArchetypeType, int[] inc, int[] exc)
         {
             WorldArchetypeType = worldArchetypeType;
@@ -141,5 +128,10 @@ namespace DCFApixels.DragonECS
             Exc = exc;
         }
     }
-
+    public abstract class EcsQueryBuilder
+    {
+        public abstract inc<TComponent> Include<TComponent>() where TComponent : struct;
+        public abstract exc<TComponent> Exclude<TComponent>() where TComponent : struct;
+        public abstract opt<TComponent> Optional<TComponent>() where TComponent : struct;
+    }
 }
