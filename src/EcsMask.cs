@@ -294,17 +294,6 @@ namespace DCFApixels.DragonECS
         internal Type WorldArchetypeType;
         internal int[] Inc;
         internal int[] Exc;
-
-        internal int IncCount
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Inc.Length;
-        }
-        internal int ExcCount
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Exc.Length;
-        }
     }
 
 

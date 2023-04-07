@@ -173,10 +173,7 @@ namespace DCFApixels.DragonECS
                 var mask = _queries[uniqueID].Mask;
                 var filter = (EcsQueryBase)_queries[uniqueID];
 
-                ((EcsQuery<TWorldArchetype>)_queries[uniqueID]).group = new EcsGroup(this);
-                ((EcsQuery<TWorldArchetype>)_queries[uniqueID]).mask = mask;
-
-                for (int i = 0; i < mask.IncCount; i++)
+                for (int i = 0; i < mask.Inc.Length; i++)
                 {
                     int componentID = mask.Inc[i];
                     var list = _filtersByIncludedComponents[componentID];
@@ -188,7 +185,7 @@ namespace DCFApixels.DragonECS
                     list.Add(filter);
                 }
 
-                for (int i = 0; i < mask.ExcCount; i++)
+                for (int i = 0; i < mask.Exc.Length; i++)
                 {
                     int componentID = mask.Exc[i];
                     var list = _filtersByExcludedComponents[componentID];
@@ -230,12 +227,12 @@ namespace DCFApixels.DragonECS
             if (mask.WorldArchetypeType != typeof(TWorldArchetype))
                 throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TWorldArchetype)");
 #endif
-            for (int i = 0, iMax = mask.IncCount; i < iMax; i++)
+            for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
             {
                 if (!_pools[mask.Inc[i]].Has(entity))
                     return false;
             }
-            for (int i = 0, iMax = mask.ExcCount; i < iMax; i++)
+            for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
             {
                 if (_pools[mask.Exc[i]].Has(entity))
                     return false;
@@ -249,13 +246,13 @@ namespace DCFApixels.DragonECS
             if (mask.WorldArchetypeType != typeof(TWorldArchetype))
                 throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TWorldArchetype)");
 #endif
-            for (int i = 0, iMax = mask.IncCount; i < iMax; i++)
+            for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
             {
                 int componentID = mask.Inc[i];
                 if (componentID == otherComponentID || !_pools[componentID].Has(entity))
                     return false;
             }
-            for (int i = 0, iMax = mask.ExcCount; i < iMax; i++)
+            for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
             {
                 int componentID = mask.Exc[i];
                 if (componentID != otherComponentID && _pools[componentID].Has(entity))
