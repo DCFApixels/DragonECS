@@ -65,7 +65,6 @@ namespace DCFApixels.DragonECS
         private short[] _gens; //старший бит указывает на то жива ли сущьность.
 
         //private short[] _componentCounts; //TODO
-
         private IEcsPool[] _pools;
         private EcsNullPool _nullPool;
 
@@ -154,10 +153,7 @@ namespace DCFApixels.DragonECS
             }
             return (EcsPool<T>)_pools[uniqueID];
         }
-        public EcsPool<T> UncheckedGetPool<T>() where T : struct
-        {
-            return (EcsPool<T>)_pools[ComponentType<T>.uniqueID];
-        }
+        //public EcsPool<T> UncheckedGetPool<T>() where T : struct => (EcsPool<T>)_pools[ComponentType<T>.uniqueID];
         #endregion
 
         #region Entities
