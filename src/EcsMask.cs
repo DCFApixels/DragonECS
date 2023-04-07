@@ -289,7 +289,7 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region EcsMask
-    public class EcsMaskBase
+    public class EcsComponentMask
     {
         internal Type WorldArchetypeType;
         internal int[] Inc;
@@ -308,7 +308,7 @@ namespace DCFApixels.DragonECS
     }
 
 
-    public sealed class EcsMask : EcsMaskBase
+    public sealed class EcsMask : EcsComponentMask
     {
        // internal readonly Type WorldArchetypeType;
         internal readonly int UniqueID;

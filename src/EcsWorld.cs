@@ -203,26 +203,12 @@ namespace DCFApixels.DragonECS
                 for (int i = 0; i < _entitiesCount && _entitiesCount <= _denseEntities.Length; i++)
                 {
                     int entity = _denseEntities[i];
-                    if (IsMaskCompatible(mask.Inc, mask.Exc, entity))
+                    if (IsMaskCompatible(mask, entity))
                         filter.AddEntity(entity);
                 }
             }
             entities = (TQuery)_queries[uniqueID];
             return entities;
-        }
-        private bool IsMaskCompatible(int[] inc, int[] exc, int entity)
-        {
-            for (int i = 0, iMax = inc.Length; i < iMax; i++)
-            {
-                if (!_pools[inc[i]].Has(entity))
-                    return false;
-            }
-            for (int i = 0, iMax = exc.Length; i < iMax; i++)
-            {
-                if (_pools[exc[i]].Has(entity))
-                    return false;
-            }
-            return true;
         }
         #endregion
 
@@ -238,7 +224,7 @@ namespace DCFApixels.DragonECS
             return IsMaskCompatible(EcsMaskMap<TWorldArchetype>.GetMask<TInc, TExc>(), entityID);
         }
 
-        public bool IsMaskCompatible(EcsMaskBase mask, int entity)
+        public bool IsMaskCompatible(EcsComponentMask mask, int entity)
         {
 #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TWorldArchetype))
@@ -257,7 +243,7 @@ namespace DCFApixels.DragonECS
             return true;
         }
 
-        public bool IsMaskCompatibleWithout(EcsMaskBase mask, int entity, int otherComponentID)
+        public bool IsMaskCompatibleWithout(EcsComponentMask mask, int entity, int otherComponentID)
         {
 #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TWorldArchetype))

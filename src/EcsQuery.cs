@@ -1,12 +1,7 @@
-﻿using DCFApixels.DragonECS;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace DCFApixels.DragonECS
 {
@@ -45,12 +40,9 @@ namespace DCFApixels.DragonECS
             get => group.Readonly;
         }
 
-
         public EcsGroup.Enumerator GetEnumerator() => group.GetEnumerator();
 
-
         protected virtual void Init(Builder b) { }
-
 
         #region Builder
         public sealed class Builder : EcsQueryBuilder
@@ -88,6 +80,7 @@ namespace DCFApixels.DragonECS
                 _exc = new List<int>(4);
             }
 
+            #region Init query member methods
             public override inc<TComponent> Include<TComponent>() where TComponent : struct
             {
                 _inc.Add(_world.GetComponentID<TComponent>());
@@ -102,6 +95,7 @@ namespace DCFApixels.DragonECS
             {
                 return new opt<TComponent>(_world.GetPool<TComponent>());
             }
+            #endregion
 
             private void End(out EcsQueryMask mask)
             {
@@ -119,7 +113,7 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    public class EcsQueryMask : EcsMaskBase
+    public class EcsQueryMask : EcsComponentMask
     {
         public EcsQueryMask(Type worldArchetypeType, int[] inc, int[] exc)
         {

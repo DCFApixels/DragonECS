@@ -22,8 +22,8 @@ namespace DCFApixels.DragonECS
 
         public bool IsMaskCompatible<TInc>(int entity) where TInc : struct, IInc;
         public bool IsMaskCompatible<TInc, TExc>(int entity) where TInc : struct, IInc where TExc : struct, IExc;
-        public bool IsMaskCompatible(EcsMaskBase mask, int entity);
-        public bool IsMaskCompatibleWithout(EcsMaskBase mask, int entity, int otherPoolID);
+        public bool IsMaskCompatible(EcsComponentMask mask, int entity);
+        public bool IsMaskCompatibleWithout(EcsComponentMask mask, int entity, int otherPoolID);
         #endregion
 
         #region Properties
