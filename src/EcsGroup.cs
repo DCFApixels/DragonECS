@@ -248,7 +248,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator()
         {
-            Sort();
+           // Sort();
             _lockCount++;
             return new Enumerator(this);
         }

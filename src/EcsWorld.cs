@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS
     public abstract class EcsWorld
     {
         internal static IEcsWorld[] Worlds = new IEcsWorld[8];
-        private static IntDispenser _worldIdDispenser = new IntDispenser(1);
+        private static IntDispenser _worldIdDispenser = new IntDispenser(0);
 
         public readonly short id;
 
@@ -69,14 +69,15 @@ namespace DCFApixels.DragonECS
         private IEcsPool[] _pools;
         private EcsNullPool _nullPool;
 
-        private List<EcsGroup>[] _filtersByIncludedComponents;
-        private List<EcsGroup>[] _filtersByExcludedComponents;
+        private List<EcsQueryBase>[] _filtersByIncludedComponents;
+        private List<EcsQueryBase>[] _filtersByExcludedComponents;
 
         private IEcsQuery[] _archetypes;
 
         private EcsPipeline _pipeline;
 
         private List<EcsGroup> _groups;
+
 
         #region RunnersCache
         private PoolRunnres _poolRunnres;
@@ -109,7 +110,7 @@ namespace DCFApixels.DragonECS
         {
             _pipeline = pipline ?? EcsPipeline.Empty;
             if (!_pipeline.IsInit) pipline.Init();
-            _entityDispenser = new IntDispenser(1);
+            _entityDispenser = new IntDispenser(0);
             _nullPool = EcsNullPool.instance;
             _pools = new IEcsPool[512];
             FillArray(_pools, _nullPool);
@@ -120,8 +121,8 @@ namespace DCFApixels.DragonECS
 
             _denseEntities = new int[512];
 
-            _filtersByIncludedComponents = new List<EcsGroup>[16];
-            _filtersByExcludedComponents = new List<EcsGroup>[16];
+            _filtersByIncludedComponents = new List<EcsQueryBase>[16];
+            _filtersByExcludedComponents = new List<EcsQueryBase>[16];
 
             _poolRunnres = new PoolRunnres(_pipeline);
             _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
@@ -172,9 +173,10 @@ namespace DCFApixels.DragonECS
                 _archetypes[uniqueID] = (TEntityArhetype)Activator.CreateInstance(typeof(TEntityArhetype), builder);
                 builder.End(out EcsQueryMask mask);
 
-                var filter = new EcsGroup(this);
+                var filter = (EcsQueryBase)_archetypes[uniqueID];
 
-                ((EcsQuery<TWorldArchetype>)_archetypes[uniqueID]).group = filter;
+                ((EcsQuery<TWorldArchetype>)_archetypes[uniqueID]).group = new EcsGroup(this);
+                ((EcsQuery<TWorldArchetype>)_archetypes[uniqueID]).mask = mask;
 
                 for (int i = 0; i < mask.IncCount; i++)
                 {
@@ -182,7 +184,7 @@ namespace DCFApixels.DragonECS
                     var list = _filtersByIncludedComponents[componentID];
                     if (list == null)
                     {
-                        list = new List<EcsGroup>(8);
+                        list = new List<EcsQueryBase>(8);
                         _filtersByIncludedComponents[componentID] = list;
                     }
                     list.Add(filter);
@@ -194,7 +196,7 @@ namespace DCFApixels.DragonECS
                     var list = _filtersByExcludedComponents[componentID];
                     if (list == null)
                     {
-                        list = new List<EcsGroup>(8);
+                        list = new List<EcsQueryBase>(8);
                         _filtersByExcludedComponents[componentID] = list;
                     }
                     list.Add(filter);
@@ -204,7 +206,7 @@ namespace DCFApixels.DragonECS
                 {
                     int entity = _denseEntities[i];
                     if (IsMaskCompatible(mask.Inc, mask.Exc, entity))
-                        filter.Add(entity);
+                        filter.AddEntity(entity);
                 }
             }
             entities = (TEntityArhetype)_archetypes[uniqueID];
@@ -238,7 +240,7 @@ namespace DCFApixels.DragonECS
             return IsMaskCompatible(EcsMaskMap<TWorldArchetype>.GetMask<TInc, TExc>(), entityID);
         }
 
-        public bool IsMaskCompatible(EcsMask mask, int entity)
+        public bool IsMaskCompatible(EcsMaskBase mask, int entity)
         {
 #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TWorldArchetype))
@@ -257,7 +259,7 @@ namespace DCFApixels.DragonECS
             return true;
         }
 
-        public bool IsMaskCompatibleWithout(EcsMask mask, int entity, int otherComponentID)
+        public bool IsMaskCompatibleWithout(EcsMaskBase mask, int entity, int otherComponentID)
         {
 #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TWorldArchetype))
@@ -286,30 +288,30 @@ namespace DCFApixels.DragonECS
             var includeList = _filtersByIncludedComponents[componentID];
             var excludeList = _filtersByExcludedComponents[componentID];
 
-        //    if (includeList != null)
-        //    {
-        //        foreach (var filter in includeList)
-        //        {
-        //            if (IsMaskCompatible(filter.Mask, entityID))
-        //            {
-        //                filter.entities.UncheckedAdd(entityID);
-        //            }
-        //        }
-        //    }
-        //    if (excludeList != null)
-        //    {
-        //        foreach (var filter in excludeList)
-        //        {
-        //            if (IsMaskCompatibleWithout(filter.Mask, entityID, componentID))
-        //            {
-        //                filter.entities.UncheckedRemove(entityID);
-        //            }
-        //        }
-        //    }
+            if (includeList != null)
+            {
+                foreach (var filter in includeList)
+                {
+                    if (IsMaskCompatible(filter.mask, entityID))
+                    {
+                        filter.AddEntity(entityID);
+                    }
+                }
+            }
+            if (excludeList != null)
+            {
+                foreach (var filter in excludeList)
+                {
+                    if (IsMaskCompatibleWithout(filter.mask, entityID, componentID))
+                    {
+                        filter.RemoveEntity(entityID);
+                    }
+                }
+            }
             //TODO провести стресс тест для варианта выши и закоментированного ниже
 
-             if (includeList != null) foreach (var filter in includeList) filter.Add(entityID);
-             if (excludeList != null) foreach (var filter in excludeList) filter.Remove(entityID);
+        //     if (includeList != null) foreach (var filter in includeList) filter.Add(entityID);
+        //     if (excludeList != null) foreach (var filter in excludeList) filter.Remove(entityID);
         }
 
         void IEcsReadonlyTable.OnEntityComponentRemoved(int entityID, int componentID)
@@ -317,30 +319,30 @@ namespace DCFApixels.DragonECS
             var includeList = _filtersByIncludedComponents[componentID];
             var excludeList = _filtersByExcludedComponents[componentID];
 
-        //    if (includeList != null)
-        //    {
-        //        foreach (var filter in includeList)
-        //        {
-        //            if (IsMaskCompatible(filter.Mask, entityID))
-        //            {
-        //                filter.entities.UncheckedRemove(entityID);
-        //            }
-        //        }
-        //    }
-        //    if (excludeList != null)
-        //    {
-        //        foreach (var filter in excludeList)
-        //        {
-        //            if (IsMaskCompatibleWithout(filter.Mask, entityID, componentID))
-        //            {
-        //                filter.entities.UncheckedAdd(entityID);
-        //            }
-        //        }
-        //    }
+            if (includeList != null)
+            {
+                foreach (var filter in includeList)
+                {
+                    if (IsMaskCompatible(filter.mask, entityID))
+                    {
+                        filter.RemoveEntity(entityID);
+                    }
+                }
+            }
+            if (excludeList != null)
+            {
+                foreach (var filter in excludeList)
+                {
+                    if (IsMaskCompatibleWithout(filter.mask, entityID, componentID))
+                    {
+                        filter.AddEntity(entityID);
+                    }
+                }
+            }
             //TODO провести стресс тест для варианта выши и закоментированного ниже
 
-             if (includeList != null) foreach (var filter in includeList) filter.Remove(entityID);
-             if (excludeList != null) foreach (var filter in excludeList) filter.Add(entityID);
+        //     if (includeList != null) foreach (var filter in includeList) filter.Remove(entityID);
+        //     if (excludeList != null) foreach (var filter in excludeList) filter.Add(entityID);
         }
         #endregion
 

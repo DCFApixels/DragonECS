@@ -289,12 +289,11 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region EcsMask
-    public sealed class EcsMask
+    public class EcsMaskBase
     {
-        internal readonly Type WorldArchetypeType;
-        internal readonly int UniqueID;
-        internal readonly int[] Inc;
-        internal readonly int[] Exc;
+        internal Type WorldArchetypeType;
+        internal int[] Inc;
+        internal int[] Exc;
 
         internal int IncCount
         {
@@ -306,6 +305,26 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Exc.Length;
         }
+    }
+
+
+    public sealed class EcsMask : EcsMaskBase
+    {
+       // internal readonly Type WorldArchetypeType;
+        internal readonly int UniqueID;
+        //internal readonly int[] Inc;
+        //internal readonly int[] Exc;
+
+        //internal int IncCount
+        //{
+        //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //    get => Inc.Length;
+        //}
+        //internal int ExcCount
+        //{
+        //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //    get => Exc.Length;
+        //}
         internal EcsMask(Type worldArchetypeType, int uniqueID, int[] inc, int[] exc)
         {
             WorldArchetypeType = worldArchetypeType;

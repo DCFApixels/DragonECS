@@ -19,11 +19,25 @@ namespace DCFApixels.DragonECS
         internal void AddEntity(int entityID);
         internal void RemoveEntity(int entityID);
     }
-    public class EcsQuery<TWorldArchetype> : IEcsQuery
+    public abstract class EcsQueryBase : IEcsQuery
+    {
+        internal EcsGroup group;
+        internal EcsQueryMask mask;
+
+
+        public void AddEntity(int entityID) => group.Add(entityID);
+        public void RemoveEntity(int entityID) => group.Remove(entityID);
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IEcsQuery.AddEntity(int entityID) => group.Add(entityID);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IEcsQuery.RemoveEntity(int entityID) => group.Remove(entityID);
+    }
+    public abstract class EcsQuery<TWorldArchetype> : EcsQueryBase
         where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
         private int _id;
-        internal EcsGroup group;
 
         public int ID => _id;
         public EcsReadonlyGroup entities
@@ -39,10 +53,6 @@ namespace DCFApixels.DragonECS
         public EcsGroup.Enumerator GetEnumerator() => group.GetEnumerator();
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IEcsQuery.AddEntity(int entityID) => group.Add(entityID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IEcsQuery.RemoveEntity(int entityID) => group.Remove(entityID);
 
         #region Builder
         public sealed class Builder : EcsQueryBuilder
@@ -89,14 +99,14 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    public class EcsQueryMask
+    public class EcsQueryMask : EcsMaskBase
     {
-        internal readonly Type WorldArchetypeType;
-        internal readonly int[] Inc;
-        internal readonly int[] Exc;
-
-        public int IncCount => Inc.Length;
-        public int ExcCount => Exc.Length;
+    //    internal readonly Type WorldArchetypeType;
+    //    internal readonly int[] Inc;
+    //    internal readonly int[] Exc;
+    //
+    //    public int IncCount => Inc.Length;
+    //    public int ExcCount => Exc.Length;
         public EcsQueryMask(Type worldArchetypeType, int[] inc, int[] exc)
         {
             WorldArchetypeType = worldArchetypeType;

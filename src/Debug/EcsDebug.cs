@@ -104,7 +104,7 @@ namespace DCFApixels.DragonECS
 
         public static Action<DebugService> OnServiceChanged = delegate { };
 
-        private IntDispenser _idDispenser = new IntDispenser(0);
+        private IntDispenser _idDispenser = new IntDispenser(-1);
         private Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
