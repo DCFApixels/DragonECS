@@ -5,27 +5,14 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsQuery
-    {
-        internal void AddEntity(int entityID);
-        internal void RemoveEntity(int entityID);
-        public EcsQueryMask Mask { get; }
-    }
-    public abstract class EcsQueryBase : IEcsQuery
+    public abstract class EcsQueryBase
     {
         internal EcsGroup group;
         internal EcsQueryMask mask;
-
-        public EcsQueryMask Mask => mask;
-
-        public void AddEntity(int entityID) => group.Add(entityID);
-        public void RemoveEntity(int entityID) => group.Remove(entityID);
-
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IEcsQuery.AddEntity(int entityID) => group.Add(entityID);
+        internal void AddEntity(int entityID) => group.Add(entityID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IEcsQuery.RemoveEntity(int entityID) => group.Remove(entityID);
+        internal void RemoveEntity(int entityID) => group.Remove(entityID);
     }
 
     public abstract class EcsQuery<TWorldArchetype> : EcsQueryBase
@@ -51,7 +38,7 @@ namespace DCFApixels.DragonECS
             private List<int> _inc;
             private List<int> _exc;
 
-            internal static TQuery Build<TQuery>(IEcsWorld world) where TQuery : IEcsQuery
+            internal static TQuery Build<TQuery>(IEcsWorld world) where TQuery : EcsQueryBase
             {
                 Builder builder = new Builder(world);
 

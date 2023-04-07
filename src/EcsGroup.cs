@@ -269,21 +269,12 @@ namespace DCFApixels.DragonECS
                 get => _source.World.GetEntity(_dense[_index]);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                // <= потму что отсчет начинается с индекса 1
-                return ++_index <= _count && _count < _dense.Length; //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
-            }
-
+            public bool MoveNext() => ++_index <= _count && _count<_dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose()
-            {
-                _source.Unlock();
-            }
+            public void Dispose() => _source.Unlock();
         }
         #endregion
     }
-
 
     public static class EcsGroupExtensions
     {

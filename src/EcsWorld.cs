@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Transactions;
 
 namespace DCFApixels.DragonECS
 {
@@ -17,8 +18,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entities
-        public TQuery Query<TQuery>(out TQuery entities) where TQuery : IEcsQuery;
-
         public ent NewEntity();
         public void DelEntity(ent entity);
         public bool EntityIsAlive(int entityID, short gen);
@@ -71,12 +70,33 @@ namespace DCFApixels.DragonECS
         private List<EcsQueryBase>[] _filtersByIncludedComponents;
         private List<EcsQueryBase>[] _filtersByExcludedComponents;
 
-        private IEcsQuery[] _queries;
+        private EcsQueryBase[] _queries;
 
         private EcsPipeline _pipeline;
 
         private List<EcsGroup> _groups;
 
+        public IEcsRealationTable[] _relationTables;
+
+        #region RelationTables
+        public IEcsRealationTable GetRelationTalbe<TWorldArhetype>(TWorldArhetype targetWorld)
+            where TWorldArhetype : EcsWorld<TWorldArhetype>
+        {
+            int targetID = targetWorld.ID;
+            if (targetID <= 0)
+                throw new ArgumentException("targetWorld.ID <= 0");
+
+            if(_relationTables.Length <= targetID)
+                Array.Resize(ref _relationTables, targetID + 8);
+
+            if (_relationTables[targetID] == null)
+            {
+             //   _relationTables[targetID]= new EcsRelationTable
+            }
+
+            throw new NotImplementedException();
+        }
+        #endregion
 
         #region RunnersCache
         private PoolRunnres _poolRunnres;
@@ -112,10 +132,10 @@ namespace DCFApixels.DragonECS
             _entityDispenser = new IntDispenser(0);
             _nullPool = EcsNullPool.instance;
             _pools = new IEcsPool[512];
-            FillArray(_pools, _nullPool);
+            ArrayUtility.Fill(_pools, _nullPool);
 
             _gens = new short[512];
-            _queries = new EcsQuery<TWorldArchetype>[EntityArhetype.capacity];
+            _queries = new EcsQuery<TWorldArchetype>[QueryType.capacity];
             _groups = new List<EcsGroup>(128);
 
             _denseEntities = new int[512];
@@ -141,7 +161,7 @@ namespace DCFApixels.DragonECS
             {
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, ComponentType.Capacity);
-                FillArray(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
+                ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
 
                 Array.Resize(ref _filtersByIncludedComponents, ComponentType.Capacity);
                 Array.Resize(ref _filtersByExcludedComponents, ComponentType.Capacity);
@@ -156,18 +176,18 @@ namespace DCFApixels.DragonECS
         //public EcsPool<T> UncheckedGetPool<T>() where T : struct => (EcsPool<T>)_pools[ComponentType<T>.uniqueID];
         #endregion
 
-        #region Entities
-        public TQuery Query<TQuery>(out TQuery entities) where TQuery : IEcsQuery
+        #region Query
+        public TQuery Query<TQuery>(out TQuery query) where TQuery : EcsQueryBase
         {
-            int uniqueID = EntityArhetype<TQuery>.uniqueID;
-            if (_queries.Length < EntityArhetype.capacity)
-                Array.Resize(ref _queries, EntityArhetype.capacity);
+            int uniqueID = QueryType<TQuery>.uniqueID;
+            if (_queries.Length < QueryType.capacity)
+                Array.Resize(ref _queries, QueryType.capacity);
 
             if (_queries[uniqueID] == null)
             {
                 _queries[uniqueID] = EcsQuery<TWorldArchetype>.Builder.Build<TQuery>(this);
-                var mask = _queries[uniqueID].Mask;
-                var filter = (EcsQueryBase)_queries[uniqueID];
+                var mask = _queries[uniqueID].mask;
+                var filter = _queries[uniqueID];
 
                 for (int i = 0; i < mask.Inc.Length; i++)
                 {
@@ -200,8 +220,8 @@ namespace DCFApixels.DragonECS
                         filter.AddEntity(entity);
                 }
             }
-            entities = (TQuery)_queries[uniqueID];
-            return entities;
+            query = (TQuery)_queries[uniqueID];
+            return query;
         }
         #endregion
 
@@ -217,20 +237,20 @@ namespace DCFApixels.DragonECS
             return IsMaskCompatible(EcsMaskMap<TWorldArchetype>.GetMask<TInc, TExc>(), entityID);
         }
 
-        public bool IsMaskCompatible(EcsComponentMask mask, int entity)
+        public bool IsMaskCompatible(EcsComponentMask mask, int entityID)
         {
 #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TWorldArchetype))
-                throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TWorldArchetype)");
+                throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TTableArhetype)");
 #endif
             for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
             {
-                if (!_pools[mask.Inc[i]].Has(entity))
+                if (!_pools[mask.Inc[i]].Has(entityID))
                     return false;
             }
             for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
             {
-                if (_pools[mask.Exc[i]].Has(entity))
+                if (_pools[mask.Exc[i]].Has(entityID))
                     return false;
             }
             return true;
@@ -240,7 +260,7 @@ namespace DCFApixels.DragonECS
         {
 #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (mask.WorldArchetypeType != typeof(TWorldArchetype))
-                throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TWorldArchetype)");
+                throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TTableArhetype)");
 #endif
             for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
             {
@@ -392,19 +412,19 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Utils
-        internal static class EntityArhetype
+        internal static class QueryType
         {
             public static int increment = 0;
             public static int capacity = 128;
         }
-        internal static class EntityArhetype<TArhetype>
+        internal static class QueryType<TQuery>
         {
             public static int uniqueID;
-            static EntityArhetype()
+            static QueryType()
             {
-                uniqueID = EntityArhetype.increment++;
-                if (EntityArhetype.increment > EntityArhetype.capacity)
-                    EntityArhetype.capacity <<= 1;
+                uniqueID = QueryType.increment++;
+                if (QueryType.increment > QueryType.capacity)
+                    QueryType.capacity <<= 1;
             }
         }
         internal static class ComponentType
@@ -434,22 +454,6 @@ namespace DCFApixels.DragonECS
                     Array.Resize(ref ComponentType.types, ComponentType.types.Length << 1);
                 }
                 ComponentType.types[uniqueID] = typeof(T);
-            }
-        }
-
-        private void FillArray<T>(T[] array, T value, int startIndex = 0, int length = -1)
-        {
-            if (length < 0)
-            {
-                length = array.Length;
-            }
-            else
-            {
-                length = startIndex + length;
-            }
-            for (int i = startIndex; i < length; i++)
-            {
-                array[i] = value;
             }
         }
         #endregion
