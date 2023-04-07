@@ -1,7 +1,9 @@
 ﻿using DCFApixels.DragonECS;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -18,12 +20,14 @@ namespace DCFApixels.DragonECS
     {
         internal void AddEntity(int entityID);
         internal void RemoveEntity(int entityID);
+        public EcsQueryMask Mask { get; }
     }
     public abstract class EcsQueryBase : IEcsQuery
     {
         internal EcsGroup group;
         internal EcsQueryMask mask;
 
+        public EcsQueryMask Mask => mask;
 
         public void AddEntity(int entityID) => group.Add(entityID);
         public void RemoveEntity(int entityID) => group.Remove(entityID);
@@ -34,6 +38,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IEcsQuery.RemoveEntity(int entityID) => group.Remove(entityID);
     }
+
     public abstract class EcsQuery<TWorldArchetype> : EcsQueryBase
         where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
@@ -46,12 +51,11 @@ namespace DCFApixels.DragonECS
             get => group.Readonly;
         }
 
-        public EcsQuery(Builder b)
-        {
-        }
 
         public EcsGroup.Enumerator GetEnumerator() => group.GetEnumerator();
 
+
+        protected virtual void Init(Builder b) { }
 
 
         #region Builder
@@ -61,8 +65,29 @@ namespace DCFApixels.DragonECS
             private List<int> _inc;
             private List<int> _exc;
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal Builder(IEcsWorld world)
+            internal static TQuery Build<TQuery>(IEcsWorld world) where TQuery : IEcsQuery
+            {
+                Builder builder = new Builder(world);
+
+                Type queryType = typeof(TQuery);
+                ConstructorInfo constructorInfo = queryType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
+                EcsQuery<TWorldArchetype> newQuery;
+                if (constructorInfo != null)
+                {
+                    newQuery = (EcsQuery<TWorldArchetype>)constructorInfo.Invoke(new object[] { builder });
+                }
+                else
+                {
+                    newQuery = (EcsQuery<TWorldArchetype>)Activator.CreateInstance(typeof(TQuery));
+                    newQuery.Init(builder);
+                }
+
+                builder.End(out newQuery.mask);
+                newQuery.group = new EcsGroup(world);
+                return (TQuery)(object)newQuery;
+            }
+
+            private Builder(IEcsWorld world)
             {
                 _world = world;
                 _inc = new List<int>(8);
@@ -84,11 +109,13 @@ namespace DCFApixels.DragonECS
                 return new opt<TComponent>(_world.GetPool<TComponent>());
             }
 
-            internal void End(out EcsQueryMask mask)
+            private void End(out EcsQueryMask mask)
             {
                 _inc.Sort();
                 _exc.Sort();
                 mask = new EcsQueryMask(_world.ArchetypeType, _inc.ToArray(), _exc.ToArray());
+
+
                 _world = null;
                 _inc.Clear();
                 _inc = null;

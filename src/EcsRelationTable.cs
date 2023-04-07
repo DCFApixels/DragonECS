@@ -80,7 +80,7 @@ namespace DCFApixels.DragonECS
             throw new NotImplementedException();
         }
 
-        public EcsFilter Entities<TComponent>() where TComponent : struct
+        public EcsFilter Query<TComponent>() where TComponent : struct
         {
             throw new NotImplementedException();
         }

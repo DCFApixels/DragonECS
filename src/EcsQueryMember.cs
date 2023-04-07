@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsFiled<TComponent>
+    public interface IEcsQueryMember<TComponent>
             where TComponent : struct
     {
         public ref TComponent Write(int entityID);
@@ -15,7 +15,7 @@ namespace DCFApixels.DragonECS
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 8)]
-    public readonly struct inc<TComponent> : IEcsFiled<TComponent>
+    public readonly struct inc<TComponent> : IEcsQueryMember<TComponent>
         where TComponent : struct
     {
         private readonly EcsPool<TComponent> _pool;
@@ -37,7 +37,7 @@ namespace DCFApixels.DragonECS
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 8)]
-    public readonly struct exc<TComponent> : IEcsFiled<TComponent>
+    public readonly struct exc<TComponent> : IEcsQueryMember<TComponent>
         where TComponent : struct
     {
         private readonly EcsPool<TComponent> _pool;
@@ -59,7 +59,7 @@ namespace DCFApixels.DragonECS
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 8)]
-    public readonly struct opt<TComponent> : IEcsFiled<TComponent>
+    public readonly struct opt<TComponent> : IEcsQueryMember<TComponent>
         where TComponent : struct
     {
         private readonly EcsPool<TComponent> _pool;

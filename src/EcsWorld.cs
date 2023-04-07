@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entities
-        public TArhetype Entities<TArhetype>(out TArhetype entities) where TArhetype : IEcsQuery;
+        public TQuery Query<TQuery>(out TQuery entities) where TQuery : IEcsQuery;
 
         public ent NewEntity();
         public void DelEntity(ent entity);
@@ -72,7 +72,7 @@ namespace DCFApixels.DragonECS
         private List<EcsQueryBase>[] _filtersByIncludedComponents;
         private List<EcsQueryBase>[] _filtersByExcludedComponents;
 
-        private IEcsQuery[] _archetypes;
+        private IEcsQuery[] _queries;
 
         private EcsPipeline _pipeline;
 
@@ -116,7 +116,7 @@ namespace DCFApixels.DragonECS
             FillArray(_pools, _nullPool);
 
             _gens = new short[512];
-            _archetypes = new EcsQuery<TWorldArchetype>[EntityArhetype.capacity];
+            _queries = new EcsQuery<TWorldArchetype>[EntityArhetype.capacity];
             _groups = new List<EcsGroup>(128);
 
             _denseEntities = new int[512];
@@ -161,22 +161,20 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entities
-        public TEntityArhetype Entities<TEntityArhetype>(out TEntityArhetype entities) where TEntityArhetype : IEcsQuery
+        public TQuery Query<TQuery>(out TQuery entities) where TQuery : IEcsQuery
         {
-            int uniqueID = EntityArhetype<TEntityArhetype>.uniqueID;
-            if (_archetypes.Length < EntityArhetype.capacity)
-                Array.Resize(ref _archetypes, EntityArhetype.capacity);
+            int uniqueID = EntityArhetype<TQuery>.uniqueID;
+            if (_queries.Length < EntityArhetype.capacity)
+                Array.Resize(ref _queries, EntityArhetype.capacity);
 
-            if (_archetypes[uniqueID] == null)
+            if (_queries[uniqueID] == null)
             {
-                EcsQuery<TWorldArchetype>.Builder builder = new EcsQuery<TWorldArchetype>.Builder(this);
-                _archetypes[uniqueID] = (TEntityArhetype)Activator.CreateInstance(typeof(TEntityArhetype), builder);
-                builder.End(out EcsQueryMask mask);
+                _queries[uniqueID] = EcsQuery<TWorldArchetype>.Builder.Build<TQuery>(this);
+                var mask = _queries[uniqueID].Mask;
+                var filter = (EcsQueryBase)_queries[uniqueID];
 
-                var filter = (EcsQueryBase)_archetypes[uniqueID];
-
-                ((EcsQuery<TWorldArchetype>)_archetypes[uniqueID]).group = new EcsGroup(this);
-                ((EcsQuery<TWorldArchetype>)_archetypes[uniqueID]).mask = mask;
+                ((EcsQuery<TWorldArchetype>)_queries[uniqueID]).group = new EcsGroup(this);
+                ((EcsQuery<TWorldArchetype>)_queries[uniqueID]).mask = mask;
 
                 for (int i = 0; i < mask.IncCount; i++)
                 {
@@ -209,7 +207,7 @@ namespace DCFApixels.DragonECS
                         filter.AddEntity(entity);
                 }
             }
-            entities = (TEntityArhetype)_archetypes[uniqueID];
+            entities = (TQuery)_queries[uniqueID];
             return entities;
         }
         private bool IsMaskCompatible(int[] inc, int[] exc, int entity)
@@ -397,7 +395,7 @@ namespace DCFApixels.DragonECS
             _nullPool = null;
             _filtersByIncludedComponents = null;
             _filtersByExcludedComponents = null;
-            _archetypes = null;
+            _queries = null;
             Realeze();
         }
         public void DestryWithPipeline()
