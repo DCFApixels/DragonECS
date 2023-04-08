@@ -28,7 +28,7 @@
         public void PreInit(EcsPipeline pipeline)
         {
 #if DEBUG && !DISABLE_DEBUG
-            for (int i = 0; i < targets.Length; i++)
+            for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
             {
                 using (_markers[i].Auto())
                     targets[i].PreInit(pipeline);
@@ -57,7 +57,7 @@
         public void Init(EcsPipeline pipeline)
         {
 #if DEBUG && !DISABLE_DEBUG
-            for (int i = 0; i < targets.Length; i++)
+            for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
             {
                 using (_markers[i].Auto())
                     targets[i].Init(pipeline);
@@ -86,7 +86,7 @@
         public void Run(EcsPipeline pipeline)
         {
 #if DEBUG && !DISABLE_DEBUG
-            for (int i = 0; i < targets.Length; i++)
+            for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
             {
                 using (_markers[i].Auto())
                     targets[i].Run(pipeline);
@@ -116,7 +116,7 @@
         public void Destroy(EcsPipeline pipeline)
         {
 #if DEBUG && !DISABLE_DEBUG
-            for (int i = 0; i < targets.Length; i++)
+            for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
             {
                 using (_markers[i].Auto())
                     targets[i].Destroy(pipeline);

@@ -8,6 +8,7 @@ namespace DCFApixels.DragonECS
     public interface IEcsQueryMember<TComponent>
             where TComponent : struct
     {
+        public ref TComponent Add(ent entityID);
         public ref TComponent Write(ent entityID);
         public ref readonly TComponent Read(ent entityID);
         public bool Has(ent entityID);
@@ -21,6 +22,8 @@ namespace DCFApixels.DragonECS
         private readonly EcsPool<TComponent> _pool;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal inc(EcsPool<TComponent> pool) => _pool = pool;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref TComponent Add(ent entityID) => ref _pool.Add(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TComponent Write(ent entityID) => ref _pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -44,6 +47,8 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal exc(EcsPool<TComponent> pool) => _pool = pool;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref TComponent Add(ent entityID) => ref _pool.Add(entityID.id);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TComponent Write(ent entityID) => ref _pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly TComponent Read(ent entityID) => ref _pool.Read(entityID.id);
@@ -65,6 +70,8 @@ namespace DCFApixels.DragonECS
         private readonly EcsPool<TComponent> _pool;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal opt(EcsPool<TComponent> pool) => _pool = pool;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref TComponent Add(ent entityID) => ref _pool.Add(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TComponent Write(ent entityID) => ref _pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -2,33 +2,53 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Unity.Profiling;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCFApixels.DragonECS
 {
     public abstract class EcsQueryBase
     {
-        internal EcsGroup group;
+        internal EcsGroup groupFilter;
         internal EcsQueryMask mask;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void AddEntity(int entityID) => group.Add(entityID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void RemoveEntity(int entityID) => group.Remove(entityID);
+        public IEcsWorld World => groupFilter.World;
     }
 
     public abstract class EcsQuery<TWorldArchetype> : EcsQueryBase
         where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
         private int _id;
-
         public int ID => _id;
-        public EcsReadonlyGroup entities
+        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.GetEnumerator");
+
+        public EcsGroup.Enumerator GetEnumerator()
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => group.Readonly;
+            using (_getEnumerator.Auto())
+            {
+                groupFilter.Clear();
+                var pools = World.GetAllPools();
+
+                if (mask.Inc.Length > 0)
+                {
+                    groupFilter.CopyFrom(pools[mask.Inc[0]].entities);
+                    for (int i = 1; i < mask.Inc.Length; i++)
+                    {
+                        groupFilter.AndWith(pools[mask.Inc[i]].entities);
+                    }
+                }
+                else
+                {
+                    groupFilter.CopyFrom(World.Entities);
+                }
+                for (int i = 0; i < mask.Exc.Length; i++)
+                {
+                    groupFilter.RemoveGroup(pools[mask.Exc[i]].entities);
+                }
+                groupFilter.Sort();
+                return groupFilter.GetEnumerator();
+            }
         }
-
-        public EcsGroup.Enumerator GetEnumerator() => group.GetEnumerator();
-
         protected virtual void Init(Builder b) { }
 
         #region Builder
@@ -56,7 +76,7 @@ namespace DCFApixels.DragonECS
                 }
 
                 builder.End(out newQuery.mask);
-                newQuery.group = new EcsGroup(world);
+                newQuery.groupFilter = new EcsGroup(world);
                 return (TQuery)(object)newQuery;
             }
 

@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS
 
         #region Methods
         public EcsPool<T> GetPool<T>() where T : struct;
-        public ReadOnlySpan<IEcsPool> GetAllPools();
+        public ReadOnlySpan<EcsPool> GetAllPools();
         public TQuery Query<TQuery>(out TQuery query) where TQuery : EcsQueryBase;
 
         public int GetComponentID<T>();
@@ -24,8 +24,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Internal Methods
-        internal void OnEntityComponentAdded(int entityID, int componentID);
-        internal void OnEntityComponentRemoved(int entityID, int componentID);
         internal void RegisterGroup(EcsGroup group);
         #endregion
     }

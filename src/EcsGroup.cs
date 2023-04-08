@@ -11,13 +11,17 @@ namespace DCFApixels.DragonECS
     {
         private readonly EcsGroup _source;
 
-
         #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup(EcsGroup source) => _source = source;
         #endregion
 
         #region Properties
+        public IEcsWorld World
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _source.World;
+        }
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,6 +65,7 @@ namespace DCFApixels.DragonECS
         {
             _source.World.ReleaseGroup(_source);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal EcsGroup GetGroupInternal() => _source;
 
         #endregion
@@ -72,8 +77,8 @@ namespace DCFApixels.DragonECS
     // this collection can only store numbers greater than 0
     public class EcsGroup
     {
-        public const int DEALAYED_ADD = 0;
-        public const int DEALAYED_REMOVE = int.MinValue;
+        private const int DEALAYED_ADD = 0;
+        private const int DEALAYED_REMOVE = int.MinValue;
 
         private IEcsWorld _source;
 
@@ -226,6 +231,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void OnWorldResize(int newSize)
         {
             Array.Resize(ref _sparse, newSize);
@@ -243,12 +249,22 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear() => _count = 0;
 
         public void CopyFrom(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (group.World != _source) throw new ArgumentException("group.World != World");
+            if (group.World != _source) throw new ArgumentException("groupFilter.World != World");
+#endif
+            Clear();
+            foreach (var item in group)
+                AggressiveAdd(item.id);
+        }
+        public void CopyFrom(EcsReadonlyGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (group.World != _source) throw new ArgumentException("groupFilter.World != World");
 #endif
             Clear();
             foreach (var item in group)
@@ -260,7 +276,17 @@ namespace DCFApixels.DragonECS
         public void AddGroup(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (_source != group.World) throw new ArgumentException("World != group.World");
+            if (_source != group.World) throw new ArgumentException("World != groupFilter.World");
+#endif
+            foreach (var item in group)
+                if (!Contains(item.id))
+                    AggressiveAdd(item.id);
+        }
+        /// <summary>as Union sets</summary>
+        public void AddGroup(EcsReadonlyGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (_source != group.World) throw new ArgumentException("World != groupFilter.World");
 #endif
             foreach (var item in group)
                 if (!Contains(item.id))
@@ -270,7 +296,17 @@ namespace DCFApixels.DragonECS
         public void RemoveGroup(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (_source != group.World) throw new ArgumentException("World != group.World");
+            if (_source != group.World) throw new ArgumentException("World != groupFilter.World");
+#endif
+            foreach (var item in group)
+                if (Contains(item.id))
+                    AggressiveRemove(item.id);
+        }
+        /// <summary>as Except sets</summary>
+        public void RemoveGroup(EcsReadonlyGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (_source != group.World) throw new ArgumentException("World != groupFilter.World");
 #endif
             foreach (var item in group)
                 if (Contains(item.id))
@@ -280,17 +316,39 @@ namespace DCFApixels.DragonECS
         public void AndWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (World != group.World) throw new ArgumentException("World != group.World");
+            if (World != group.World) throw new ArgumentException("World != groupFilter.World");
 #endif
             foreach (var item in this)
-                if (group.Contains(item.id))
+                if (!group.Contains(item.id))
+                    AggressiveRemove(item.id);
+        }
+        /// <summary>as Intersect sets</summary>
+        public void AndWith(EcsReadonlyGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (World != group.World) throw new ArgumentException("World != groupFilter.World");
+#endif
+            foreach (var item in this)
+                if (!group.Contains(item.id))
                     AggressiveRemove(item.id);
         }
         /// <summary>as Symmetric Except sets</summary>
         public void XorWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (_source != group.World) throw new ArgumentException("World != group.World");
+            if (_source != group.World) throw new ArgumentException("World != groupFilter.World");
+#endif
+            foreach (var item in group)
+                if (Contains(item.id))
+                    AggressiveRemove(item.id);
+                else
+                    AggressiveAdd(item.id);
+        }
+        /// <summary>as Symmetric Except sets</summary>
+        public void XorWith(EcsReadonlyGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (_source != group.World) throw new ArgumentException("World != groupFilter.World");
 #endif
             foreach (var item in group)
                 if (Contains(item.id))
@@ -316,9 +374,9 @@ namespace DCFApixels.DragonECS
                 {
                     delayedOp op = _delayedOps[i];
                     if (op >= 0) //delayedOp.IsAdded
-                        UncheckedAdd(op & int.MaxValue); //delayedOp.EcsEntity
+                        AggressiveAdd(op & int.MaxValue); //delayedOp.EcsEntity
                     else
-                        UncheckedRemove(op & int.MaxValue); //delayedOp.EcsEntity
+                        AggressiveRemove(op & int.MaxValue); //delayedOp.EcsEntity
                 }
             }
         }
@@ -332,7 +390,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Enumerator
-        public ref struct Enumerator
+        public struct Enumerator : IDisposable
         {
             private readonly EcsGroup _source;
             private readonly int[] _dense;
@@ -359,7 +417,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region OObject
+        #region Object
         public override string ToString()
         {
             return string.Join(", ", _dense.AsSpan(1, _count).ToArray());

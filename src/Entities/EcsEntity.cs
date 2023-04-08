@@ -97,6 +97,12 @@ namespace DCFApixels.DragonECS
             //using (_ReadMarker.Auto())
             return ref EcsWorld.Worlds[world].GetPool<T>().Read(id);
         }
+
+        public ref T Add<T>()
+            where T : struct
+        {
+            return ref EcsWorld.Worlds[world].GetPool<T>().Add(id);
+        }
         public ref T Write<T>()
             where T : struct
         {

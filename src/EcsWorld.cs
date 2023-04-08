@@ -14,6 +14,7 @@ namespace DCFApixels.DragonECS
         public EcsPipeline Pipeline { get; }
         public int EntitesCount { get; }
         public int EntitesCapacity { get; }
+        public EcsReadonlyGroup Entities => default;
         #endregion
 
         #region Entities
@@ -67,12 +68,11 @@ namespace DCFApixels.DragonECS
         private int _entitiesCount;
         private short[] _gens; //старший бит указывает на то жива ли сущьность.
 
-        //private short[] _componentCounts; //TODO
-        private IEcsPool[] _pools;
-        private EcsNullPool _nullPool;
+        private EcsGroup _allEntites;
 
-        private List<EcsQueryBase>[] _filtersByIncludedComponents;
-        private List<EcsQueryBase>[] _filtersByExcludedComponents;
+        //private short[] _componentCounts; //TODO
+        private EcsPool[] _pools;
+        private EcsNullPool _nullPool;
 
         private EcsQueryBase[] _queries;
 
@@ -109,7 +109,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetterMethods
-        public ReadOnlySpan<IEcsPool> GetAllPools() => new ReadOnlySpan<IEcsPool>(_pools);
+        public ReadOnlySpan<EcsPool> GetAllPools() => new ReadOnlySpan<EcsPool>(_pools);
         public int GetComponentID<T>() => ComponentType<T>.uniqueID;
 
         #endregion
@@ -126,6 +126,7 @@ namespace DCFApixels.DragonECS
 
         public int EntitesCount => _entitiesCount;
         public int EntitesCapacity => _denseEntities.Length;
+        public EcsReadonlyGroup Entities => _allEntites.Readonly;
         #endregion
 
         #region Constructors
@@ -135,7 +136,7 @@ namespace DCFApixels.DragonECS
             if (!_pipeline.IsInit) pipline.Init();
             _entityDispenser = new IntDispenser(0);
             _nullPool = EcsNullPool.instance;
-            _pools = new IEcsPool[512];
+            _pools = new EcsPool[512];
             ArrayUtility.Fill(_pools, _nullPool);
 
             _gens = new short[512];
@@ -144,15 +145,14 @@ namespace DCFApixels.DragonECS
 
             _denseEntities = new int[512];
 
-            _filtersByIncludedComponents = new List<EcsQueryBase>[16];
-            _filtersByExcludedComponents = new List<EcsQueryBase>[16];
-
             _poolRunnres = new PoolRunnres(_pipeline);
             _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
             _entityDestry = _pipeline.GetRunner<IEcsEntityDestroy>();
             _pipeline.GetRunner<IEcsInject<TWorldArchetype>>().Inject((TWorldArchetype)this);
             _pipeline.GetRunner<IEcsInject<IEcsWorld>>().Inject(this);
             _pipeline.GetRunner<IEcsWorldCreate>().OnWorldCreate(this);
+
+            _allEntites = new EcsGroup(this);
         }
         #endregion
 
@@ -166,9 +166,6 @@ namespace DCFApixels.DragonECS
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, ComponentType.Capacity);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
-
-                Array.Resize(ref _filtersByIncludedComponents, ComponentType.Capacity);
-                Array.Resize(ref _filtersByExcludedComponents, ComponentType.Capacity);
             }
 
             if (_pools[uniqueID] == _nullPool)
@@ -190,39 +187,6 @@ namespace DCFApixels.DragonECS
             if (_queries[uniqueID] == null)
             {
                 _queries[uniqueID] = EcsQuery<TWorldArchetype>.Builder.Build<TQuery>(this);
-                var mask = _queries[uniqueID].mask;
-                var filter = _queries[uniqueID];
-
-                for (int i = 0; i < mask.Inc.Length; i++)
-                {
-                    int componentID = mask.Inc[i];
-                    var list = _filtersByIncludedComponents[componentID];
-                    if (list == null)
-                    {
-                        list = new List<EcsQueryBase>(8);
-                        _filtersByIncludedComponents[componentID] = list;
-                    }
-                    list.Add(filter);
-                }
-
-                for (int i = 0; i < mask.Exc.Length; i++)
-                {
-                    int componentID = mask.Exc[i];
-                    var list = _filtersByExcludedComponents[componentID];
-                    if (list == null)
-                    {
-                        list = new List<EcsQueryBase>(8);
-                        _filtersByExcludedComponents[componentID] = list;
-                    }
-                    list.Add(filter);
-                }
-                // scan exist entities for compatibility with new filter.
-                for (int i = 0; i < _entitiesCount && _entitiesCount <= _denseEntities.Length; i++)
-                {
-                    int entity = _denseEntities[i];
-                    if (IsMaskCompatible(mask, entity))
-                        filter.AddEntity(entity);
-                }
             }
             query = (TQuery)_queries[uniqueID];
             return query;
@@ -282,71 +246,6 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region EntityChangedReact
-
-        void IEcsReadonlyTable.OnEntityComponentAdded(int entityID, int componentID)
-        {
-            var includeList = _filtersByIncludedComponents[componentID];
-            var excludeList = _filtersByExcludedComponents[componentID];
-
-            if (includeList != null)
-            {
-                foreach (var filter in includeList)
-                {
-                    if (IsMaskCompatible(filter.mask, entityID))
-                    {
-                        filter.AddEntity(entityID);
-                    }
-                }
-            }
-            if (excludeList != null)
-            {
-                foreach (var filter in excludeList)
-                {
-                    if (IsMaskCompatibleWithout(filter.mask, entityID, componentID))
-                    {
-                        filter.RemoveEntity(entityID);
-                    }
-                }
-            }
-            //TODO провести стресс тест для варианта выши и закоментированного ниже
-
-        //     if (includeList != null) foreach (var filter in includeList) filter.Add(entityID);
-        //     if (excludeList != null) foreach (var filter in excludeList) filter.Remove(entityID);
-        }
-
-        void IEcsReadonlyTable.OnEntityComponentRemoved(int entityID, int componentID)
-        {
-            var includeList = _filtersByIncludedComponents[componentID];
-            var excludeList = _filtersByExcludedComponents[componentID];
-
-            if (includeList != null)
-            {
-                foreach (var filter in includeList)
-                {
-                    if (IsMaskCompatible(filter.mask, entityID))
-                    {
-                        filter.RemoveEntity(entityID);
-                    }
-                }
-            }
-            if (excludeList != null)
-            {
-                foreach (var filter in excludeList)
-                {
-                    if (IsMaskCompatibleWithout(filter.mask, entityID, componentID))
-                    {
-                        filter.AddEntity(entityID);
-                    }
-                }
-            }
-            //TODO провести стресс тест для варианта выши и закоментированного ниже
-
-        //     if (includeList != null) foreach (var filter in includeList) filter.Remove(entityID);
-        //     if (excludeList != null) foreach (var filter in excludeList) filter.Add(entityID);
-        }
-        #endregion
-
         #region Entity
         public EcsEntity NewEntity()
         {
@@ -366,10 +265,12 @@ namespace DCFApixels.DragonECS
             _gens[entityID] |= short.MinValue;
             EcsEntity entity = new EcsEntity(entityID, _gens[entityID]++, id);
             _entityCreate.OnEntityCreate(entity);
+            _allEntites.Add(entityID);
             return entity;
         }
         public void DelEntity(EcsEntity entity)
         {
+            _allEntites.Remove(entity.id);
             _entityDispenser.Release(entity.id);
             _gens[entity.id] |= short.MinValue;
             _entitiesCount--;
@@ -396,8 +297,6 @@ namespace DCFApixels.DragonECS
             _gens = null;
             _pools = null;
             _nullPool = null;
-            _filtersByIncludedComponents = null;
-            _filtersByExcludedComponents = null;
             _queries = null;
             Realeze();
         }
@@ -476,7 +375,7 @@ namespace DCFApixels.DragonECS
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (group.World != this)
-                throw new ArgumentException("group.World != this");
+                throw new ArgumentException("groupFilter.World != this");
 #endif
             group.Clear();
             _pool.Push(group);

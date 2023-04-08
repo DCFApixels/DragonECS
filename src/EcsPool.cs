@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Unity.Profiling;
+using UnityEngine;
 
 namespace DCFApixels.DragonECS
 {
@@ -9,6 +10,7 @@ namespace DCFApixels.DragonECS
         public Type ComponentType { get; }
         public int ComponentID { get; }
         public IEcsWorld World { get; }
+        public EcsReadonlyGroup Entities { get; }
         public int Count { get; }
         public int Capacity { get; }
         public bool Has(int entityID);
@@ -23,7 +25,7 @@ namespace DCFApixels.DragonECS
     }
 
     public struct NullComponent { }
-    public sealed class EcsNullPool : IEcsPool<NullComponent>
+    public sealed class EcsNullPool : EcsPool, IEcsPool<NullComponent>
     {
         public static EcsNullPool instance => new EcsNullPool(null);
         private readonly IEcsWorld _source;
@@ -32,17 +34,24 @@ namespace DCFApixels.DragonECS
         public Type ComponentType => typeof(NullComponent);
         public int ComponentID => -1;
         public IEcsWorld World => _source;
+        public EcsReadonlyGroup Entities => default;
         public int Count => 0;
         public int Capacity => 1;
         public void Del(int index) { }
-        public bool Has(int index) => false;
+        public override bool Has(int index) => false;
         void IEcsPool.Write(int entityID) { }
         public ref readonly NullComponent Read(int entity) => ref fakeComponent;
         public ref NullComponent Write(int entity) => ref fakeComponent;
         void IEcsPool.OnWorldResize(int newSize) { }
+        internal override void OnWorldResize(int newSize) { }
     }
-
-    public sealed class EcsPool<T> : IEcsPool<T>
+    public abstract class EcsPool
+    {
+        internal EcsGroup entities;
+        public abstract bool Has(int entityID);
+        internal abstract void OnWorldResize(int newSize);
+    }
+    public sealed class EcsPool<T> : EcsPool, IEcsPool<T>
         where T : struct
     {
         private readonly int _componentID;
@@ -55,10 +64,9 @@ namespace DCFApixels.DragonECS
         private int _recycledItemsCount;
 
         private IEcsComponentReset<T> _componentResetHandler;
-
         private PoolRunnres _poolRunnres;
-
         #region Properites
+        public EcsReadonlyGroup Entities => entities.Readonly;
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
         public IEcsWorld World => _source;
@@ -69,6 +77,7 @@ namespace DCFApixels.DragonECS
         #region Constructors
         internal EcsPool(IEcsWorld source, int id, int capacity, PoolRunnres poolRunnres)
         {
+            entities = new EcsGroup(source);
             _source = source;
             _componentID = id;
 
@@ -84,62 +93,69 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Write/Read/Has/Del
+        private ProfilerMarker _addMark = new ProfilerMarker("EcsPoo.Add");
         private ProfilerMarker _writeMark = new ProfilerMarker("EcsPoo.Write");
         private ProfilerMarker _readMark = new ProfilerMarker("EcsPoo.Read");
         private ProfilerMarker _hasMark = new ProfilerMarker("EcsPoo.Has");
         private ProfilerMarker _delMark = new ProfilerMarker("EcsPoo.Del");
+        public ref T Add(int entityID)
+        {
+            using (_addMark.Auto())
+            {
+                ref int itemIndex = ref _mapping[entityID];
+                if (itemIndex <= 0)
+                {
+                    entities.Add(entityID);
+                    if (_recycledItemsCount > 0)
+                    {
+                        itemIndex = _recycledItems[--_recycledItemsCount];
+                        _itemsCount++;
+                    }
+                    else
+                    {
+                        itemIndex = ++_itemsCount;
+                        if (itemIndex >= _items.Length)
+                            Array.Resize(ref _items, _items.Length << 1);
+                    }
+
+                    _mapping[entityID] = itemIndex;
+                    _componentResetHandler.Reset(ref _items[itemIndex]);
+                    _poolRunnres.add.OnComponentAdd<T>(entityID);
+                }
+                _poolRunnres.write.OnComponentWrite<T>(entityID);
+                return ref _items[itemIndex];
+            }
+        }
         public ref T Write(int entityID)
         {
-            //  using (_writeMark.Auto())
-            // {
-            ref int itemIndex = ref _mapping[entityID];
-            if (itemIndex <= 0) //если 0 то надо добавить
-            {
-                if (_recycledItemsCount > 0)
-                {
-                    itemIndex = _recycledItems[--_recycledItemsCount];
-                    _itemsCount++;
-                }
-                else
-                {
-                    itemIndex = _itemsCount++;
-                    if (itemIndex >= _items.Length)
-                        Array.Resize(ref _items, _items.Length << 1);
-                }
-                _mapping[entityID] = itemIndex;
-                _componentResetHandler.Reset(ref _items[itemIndex]);
-                _source.OnEntityComponentAdded(entityID, _componentID);
-                _poolRunnres.add.OnComponentAdd<T>(entityID);
-            }
-
-            _poolRunnres.write.OnComponentWrite<T>(entityID);
-            return ref _items[itemIndex];
-            // }
+              using (_writeMark.Auto())
+                return ref _items[_mapping[entityID]];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID)
         {
-            // using (_readMark.Auto())
+             using (_readMark.Auto())
             return ref _items[_mapping[entityID]];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(int entityID)
+        public sealed override bool Has(int entityID)
         {
-            // using (_hasMark.Auto())
+             using (_hasMark.Auto())
             return _mapping[entityID] > 0;
         }
         public void Del(int entityID)
         {
-            //using (_delMark.Auto())
-            // {
+            using (_delMark.Auto())
+             {
+            entities.Remove(entityID);
+
             if (_recycledItemsCount >= _recycledItems.Length)
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
             _recycledItems[_recycledItemsCount++] = _mapping[entityID];
             _mapping[entityID] = 0;
             _itemsCount--;
-            _source.OnEntityComponentRemoved(entityID, _componentID);
             _poolRunnres.del.OnComponentDel<T>(entityID);
-            // }
+             }
         } 
         #endregion
 
@@ -156,7 +172,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Internal
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IEcsPool.OnWorldResize(int newSize)
+        {
+            Array.Resize(ref _mapping, newSize);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal sealed override void OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);
         }

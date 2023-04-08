@@ -6,7 +6,7 @@ namespace DCFApixels.DragonECS
 #pragma warning disable CS0660, CS0661
     /// <summary>Single frame entity identifier</summary>
     [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 4)]
-    public readonly ref partial struct ent
+    public readonly ref struct ent
     {
         internal readonly int id;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
