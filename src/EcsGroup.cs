@@ -246,7 +246,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Enumerator
-        public struct Enumerator : IDisposable
+        public ref struct Enumerator
         {
             private readonly EcsGroup _source;
             private readonly int[] _dense;
