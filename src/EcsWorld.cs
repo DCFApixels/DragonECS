@@ -23,6 +23,11 @@ namespace DCFApixels.DragonECS
         public EcsEntity GetEntity(int entityID);
         public void Destroy();
         #endregion
+
+        #region Group
+        internal EcsGroup GetGroupFromPool();
+        internal void ReleaseGroup(EcsGroup group);
+        #endregion
     }
 
     public abstract class EcsWorld
@@ -456,8 +461,29 @@ namespace DCFApixels.DragonECS
             }
         }
         #endregion
+
+        #region GroupsPool
+        private Stack<EcsGroup> _pool = new Stack<EcsGroup>(64);
+        EcsGroup IEcsWorld.GetGroupFromPool()
+        {
+            if (_pool.Count <= 0)
+            {
+                return new EcsGroup(this);
+            }
+            return _pool.Pop();
+        }
+        void IEcsWorld.ReleaseGroup(EcsGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (group.World != this)
+                throw new ArgumentException("group.World != this");
+#endif
+            group.Clear();
+            _pool.Push(group);
+        }
+        #endregion
     }
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 24)]
     internal readonly struct PoolRunnres
     {
