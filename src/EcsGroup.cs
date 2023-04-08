@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using static UnityEngine.Networking.UnityWebRequest;
 using delayedOp = System.Int32;
 
 namespace DCFApixels.DragonECS
@@ -9,6 +10,7 @@ namespace DCFApixels.DragonECS
     public readonly ref struct EcsReadonlyGroup
     {
         private readonly EcsGroup _source;
+
 
         #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -43,6 +45,24 @@ namespace DCFApixels.DragonECS
         {
             return new EcsGroup(_source);
         }
+        #endregion
+
+        #region Object
+        public override string ToString()
+        {
+            if (_source != null)
+                return _source.ToString();
+            return "NULL";
+        }
+        #endregion
+
+        #region Internal
+        internal void Release()
+        {
+            _source.World.ReleaseGroup(_source);
+        }
+        internal EcsGroup GetGroupInternal() => _source;
+
         #endregion
     }
 
@@ -206,26 +226,6 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region AddGroup/RemoveGroup
-        public void AddGroup(EcsReadonlyGroup group)
-        { foreach (var item in group) Add(item.id); }
-        public void RemoveGroup(EcsReadonlyGroup group)
-        { foreach (var item in group) Remove(item.id); }
-        public void AddGroup(EcsGroup group)
-        { foreach (var item in group) Add(item.id); }
-        public void RemoveGroup(EcsGroup group)
-        { foreach (var item in group) Remove(item.id); }
-
-        public void UncheckedAddGroup(EcsReadonlyGroup group)
-        { foreach (var item in group) AddInternal(item.id); }
-        public void UncheckedRemoveGroup(EcsReadonlyGroup group)
-        { foreach (var item in group) RemoveInternal(item.id); }
-        public void UncheckedAddGroup(EcsGroup group)
-        { foreach (var item in group) AddInternal(item.id); }
-        public void UncheckedRemoveGroup(EcsGroup group)
-        { foreach (var item in group) RemoveInternal(item.id); }
-        #endregion
-
         internal void OnWorldResize(int newSize)
         {
             Array.Resize(ref _sparse, newSize);
@@ -245,55 +245,58 @@ namespace DCFApixels.DragonECS
         }
         public void Clear() => _count = 0;
 
-        #region Set operations
-        public static EcsReadonlyGroup And(EcsGroup a, EcsGroup b)
+        public void CopyFrom(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (a.World != b.World) throw new ArgumentException("a.World != b.World");
+            if (group.World != _source) throw new ArgumentException("group.World != World");
 #endif
-            EcsGroup result = a.World.GetGroupFromPool();
-            foreach (var item in a)
-                if(b.Contains(item.id))
-                    result.AggressiveAdd(item.id);
+            Clear();
+            foreach (var item in group)
+                AggressiveAdd(item.id);
+        }
 
-            return result.Readonly;
-        }
-        public static EcsReadonlyGroup Union(EcsGroup a, EcsGroup b)
+        #region Set operations
+        /// <summary>as Union sets</summary>
+        public void AddGroup(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (a.World != b.World) throw new ArgumentException("a.World != b.World");
+            if (_source != group.World) throw new ArgumentException("World != group.World");
 #endif
-            EcsGroup result = a.World.GetGroupFromPool();
-            foreach (var item in a)
-                result.AggressiveAdd(item.id);
-            foreach (var item in b)
-                result.Add(item.id);
-            return result.Readonly;
+            foreach (var item in group)
+                if (!Contains(item.id))
+                    AggressiveAdd(item.id);
         }
-        public static EcsReadonlyGroup Xor(EcsGroup a, EcsGroup b)
+        /// <summary>as Except sets</summary>
+        public void RemoveGroup(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (a.World != b.World) throw new ArgumentException("a.World != b.World");
+            if (_source != group.World) throw new ArgumentException("World != group.World");
 #endif
-            EcsGroup result = a.World.GetGroupFromPool();
-            foreach (var item in a)
-                if (!b.Contains(item.id))
-                    result.AggressiveAdd(item.id);
-            foreach (var item in b)
-                if (!a.Contains(item.id))
-                    result.AggressiveAdd(item.id);
-            return result.Readonly;
+            foreach (var item in group)
+                if (Contains(item.id))
+                    AggressiveRemove(item.id);
         }
-        public static EcsReadonlyGroup Remove(EcsGroup a, EcsGroup b)
+        /// <summary>as Intersect sets</summary>
+        public void AndWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (a.World != b.World) throw new ArgumentException("a.World != b.World");
+            if (World != group.World) throw new ArgumentException("World != group.World");
 #endif
-            EcsGroup result = a.World.GetGroupFromPool();
-            foreach (var item in a)
-                if (!b.Contains(item.id))
-                    result.AggressiveAdd(item.id);
-            return result.Readonly;
+            foreach (var item in this)
+                if (group.Contains(item.id))
+                    AggressiveRemove(item.id);
+        }
+        /// <summary>as Symmetric Except sets</summary>
+        public void XorWith(EcsGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (_source != group.World) throw new ArgumentException("World != group.World");
+#endif
+            foreach (var item in group)
+                if (Contains(item.id))
+                    AggressiveRemove(item.id);
+                else
+                    AggressiveAdd(item.id);
         }
         #endregion
 
@@ -353,6 +356,13 @@ namespace DCFApixels.DragonECS
             public bool MoveNext() => ++_index <= _count && _count<_dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose() => _source.Unlock();
+        }
+        #endregion
+
+        #region OObject
+        public override string ToString()
+        {
+            return string.Join(", ", _dense.AsSpan(1, _count).ToArray());
         }
         #endregion
     }
