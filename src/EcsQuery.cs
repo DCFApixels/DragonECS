@@ -18,35 +18,48 @@ namespace DCFApixels.DragonECS
     public abstract class EcsQuery<TWorldArchetype> : EcsQueryBase
         where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
-        private int _id;
-        public int ID => _id;
         private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.GetEnumerator");
 
         public EcsGroup.Enumerator GetEnumerator()
         {
             using (_getEnumerator.Auto())
             {
-                groupFilter.Clear();
-                var pools = World.GetAllPools();
-
-                if (mask.Inc.Length > 0)
+                // groupFilter.Clear();
+                 var pools = World.GetAllPools();
+                //
+                // if (mask.Inc.Length > 0)
+                // {
+                //     groupFilter.CopyFrom(pools[mask.Inc[0]].entities);
+                //     for (int i = 1; i < mask.Inc.Length; i++)
+                //     {
+                //         groupFilter.AndWith(pools[mask.Inc[i]].entities);
+                //     }
+                // }
+                // else
+                // {
+                //     groupFilter.CopyFrom(World.Entities);
+                // }
+                // for (int i = 0; i < mask.Exc.Length; i++)
+                // {
+                //     groupFilter.RemoveGroup(pools[mask.Exc[i]].entities);
+                // }
+                //
+                // groupFilter.Sort();
+                // return groupFilter.GetEnumerator();
+                //
+                EcsReadonlyGroup sum = World.Entities;
+                for (int i = 0; i < mask.Inc.Length; i++)
                 {
-                    groupFilter.CopyFrom(pools[mask.Inc[0]].entities);
-                    for (int i = 1; i < mask.Inc.Length; i++)
-                    {
-                        groupFilter.AndWith(pools[mask.Inc[i]].entities);
-                    }
-                }
-                else
-                {
-                    groupFilter.CopyFrom(World.Entities);
+                    sum = EcsGroup.And(sum.GetGroupInternal(), pools[mask.Inc[i]].entities);
+                   // Debug.Log("inc " + sum.ToString());
                 }
                 for (int i = 0; i < mask.Exc.Length; i++)
                 {
-                    groupFilter.RemoveGroup(pools[mask.Exc[i]].entities);
+                    sum = EcsGroup.Remove(sum.GetGroupInternal(), pools[mask.Exc[i]].entities);
+                   // Debug.Log("exc " + sum.ToString());
                 }
-                groupFilter.Sort();
-                return groupFilter.GetEnumerator();
+                //sum.GetGroupInternal().Sort();
+                return sum.GetEnumerator();
             }
         }
         protected virtual void Init(Builder b) { }

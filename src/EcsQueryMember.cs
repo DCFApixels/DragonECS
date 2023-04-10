@@ -10,7 +10,7 @@ namespace DCFApixels.DragonECS
     {
         public ref TComponent Add(ent entityID);
         public ref TComponent Write(ent entityID);
-        public ref readonly TComponent Read(ent entityID);
+        public ref TComponent Read(ent entityID);
         public bool Has(ent entityID);
         public void Del(ent entityID);
     }
@@ -27,7 +27,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TComponent Write(ent entityID) => ref _pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly TComponent Read(ent entityID) => ref _pool.Read(entityID.id);
+        public ref TComponent Read(ent entityID) => ref _pool.Read(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(ent entityID) => _pool.Has(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,7 +51,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TComponent Write(ent entityID) => ref _pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly TComponent Read(ent entityID) => ref _pool.Read(entityID.id);
+        public ref TComponent Read(ent entityID) => ref _pool.Read(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(ent entityID) => _pool.Has(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -75,7 +75,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TComponent Write(ent entityID) => ref _pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly TComponent Read(ent entityID) => ref _pool.Read(entityID.id);
+        public ref TComponent Read(ent entityID) => ref _pool.Read(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(ent entityID) => _pool.Has(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

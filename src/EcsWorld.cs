@@ -82,6 +82,8 @@ namespace DCFApixels.DragonECS
 
         public IEcsRealationTable[] _relationTables;
 
+        private readonly int _worldArchetypeID = ComponentIndexer.GetWorldId<TWorldArchetype>();
+
         #region RelationTables
         public IEcsRealationTable GetRelationTalbe<TWorldArhetype>(TWorldArhetype targetWorld)
             where TWorldArhetype : EcsWorld<TWorldArhetype>
@@ -110,7 +112,7 @@ namespace DCFApixels.DragonECS
 
         #region GetterMethods
         public ReadOnlySpan<EcsPool> GetAllPools() => new ReadOnlySpan<EcsPool>(_pools);
-        public int GetComponentID<T>() => ComponentType<T>.uniqueID;
+        public int GetComponentID<T>() => ComponentIndexer.GetComponentId<T>(_worldArchetypeID);////ComponentType<T>.uniqueID;
 
         #endregion
 
@@ -159,18 +161,19 @@ namespace DCFApixels.DragonECS
         #region GetPool
         public EcsPool<T> GetPool<T>() where T : struct
         {
-            int uniqueID = ComponentType<T>.uniqueID;
+            //int uniqueID = ComponentType<T>.uniqueID;
+            int uniqueID = ComponentIndexer.GetComponentId<T>(_worldArchetypeID);
 
             if (uniqueID >= _pools.Length)
             {
                 int oldCapacity = _pools.Length;
-                Array.Resize(ref _pools, ComponentType.Capacity);
+                Array.Resize(ref _pools, _pools.Length << 1);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
             }
 
             if (_pools[uniqueID] == _nullPool)
             {
-                _pools[uniqueID] = new EcsPool<T>(this, ComponentType<T>.uniqueID, 512, _poolRunnres);
+                _pools[uniqueID] = new EcsPool<T>(this, uniqueID, 512, _poolRunnres);
             }
             return (EcsPool<T>)_pools[uniqueID];
         }
@@ -330,7 +333,7 @@ namespace DCFApixels.DragonECS
                     QueryType.capacity <<= 1;
             }
         }
-        internal static class ComponentType
+    /*    internal static class ComponentType
         {
             internal static int increment = 1;
             internal static int Capacity
@@ -358,7 +361,7 @@ namespace DCFApixels.DragonECS
                 }
                 ComponentType.types[uniqueID] = typeof(T);
             }
-        }
+        }*/
         #endregion
 
         #region GroupsPool
@@ -395,6 +398,58 @@ namespace DCFApixels.DragonECS
             add = pipeline.GetRunner<IEcsComponentAdd>();
             write = pipeline.GetRunner<IEcsComponentWrite>();
             del = pipeline.GetRunner<IEcsComponentDel>();
+        }
+    }
+
+
+
+    public static class ComponentIndexer
+    {
+        private static List<Resizer> resizer = new List<Resizer>();
+        private static int tokenCount = 0;
+        private static int[] componentCounts = new int[0];
+        private static class World<TWorldArchetype>
+        {
+            public static int id = GetToken();
+        }
+        private static int GetToken()
+        {
+            tokenCount++;
+            Array.Resize(ref componentCounts, tokenCount);
+            foreach (var item in resizer)
+                item.Resize(tokenCount);
+            return tokenCount - 1;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetWorldId<TWorldArchetype>() => World<TWorldArchetype>.id;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetComponentId<TComponent>(int worldID) => Component<TComponent>.Get(worldID);
+        private abstract class Resizer
+        {
+            public abstract void Resize(int size);
+        }
+        private sealed class Resizer<T> : Resizer
+        {
+            public override void Resize(int size) => Array.Resize(ref Component<T>.ids, size);
+        }
+        private static class Component<TComponent>
+        {
+            public static int[] ids;
+            static Component()
+            {
+                ids = new int[tokenCount];
+                for (int i = 0; i < ids.Length; i++)
+                    ids[i] = -1;
+                resizer.Add(new Resizer<TComponent>());
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static int Get(int token)
+            {
+                ref int id = ref ids[token];
+                if (id < 0)
+                    id = componentCounts[token]++;
+                return id;
+            }
         }
     }
 }

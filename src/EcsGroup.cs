@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Unity.Profiling;
 using static UnityEngine.Networking.UnityWebRequest;
 using delayedOp = System.Int32;
 
@@ -75,7 +76,7 @@ namespace DCFApixels.DragonECS
     // _delayedOps это int[] для отложенных операций, хранятся отложенные операции в виде int значения, если старший бит = 0 то это опреация добавленияб если = 1 то это операция вычитания
 
     // this collection can only store numbers greater than 0
-    public class EcsGroup
+    public unsafe class EcsGroup
     {
         private const int DEALAYED_ADD = 0;
         private const int DEALAYED_REMOVE = int.MinValue;
@@ -155,10 +156,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(int entityID)
         {
-            //TODO добавить проверку на больше 0 в #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-#endif
-            return /*entityID > 0 && entityID < _sparse.Length && */ _sparse[entityID] > 0;
+            return  _sparse[entityID] > 0;
         }
         #endregion
 
@@ -180,11 +178,11 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AddInternal(int entityID)
         {
-            if (_lockCount > 0)
-            {
-                AddDelayedOp(entityID, DEALAYED_ADD);
-                return;
-            }
+            //if (_lockCount > 0)
+            //{
+            //    AddDelayedOp(entityID, DEALAYED_ADD);
+            //    return;
+            //}
             AggressiveAdd(entityID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -205,11 +203,11 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RemoveInternal(int entityID)
         {
-            if (_lockCount > 0)
-            {
-                AddDelayedOp(entityID, DEALAYED_REMOVE);
-                return;
-            }
+            //if (_lockCount > 0)
+            //{
+            //    AddDelayedOp(entityID, DEALAYED_REMOVE);
+            //    return;
+            //}
             AggressiveRemove(entityID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -298,8 +296,8 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (_source != group.World) throw new ArgumentException("World != groupFilter.World");
 #endif
-            foreach (var item in group)
-                if (Contains(item.id))
+            foreach (var item in this)
+                if (group.Contains(item.id))
                     AggressiveRemove(item.id);
         }
         /// <summary>as Except sets</summary>
@@ -358,6 +356,35 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region Static Set operations
+        /// <summary>as Except sets</summary>
+        public static EcsReadonlyGroup Remove(EcsGroup a, EcsGroup b)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (a._source != b._source) throw new ArgumentException("a.World != b.World");
+#endif
+            EcsGroup result = a._source.GetGroupFromPool();
+            foreach (var item in a)
+                if (!b.Contains(item.id))
+                    result.AggressiveAdd(item.id);
+            a._source.ReleaseGroup(a);
+            return result.Readonly;
+        }
+        /// <summary>as Intersect sets</summary>
+        public static EcsReadonlyGroup And(EcsGroup a, EcsGroup b)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (a._source != b._source) throw new ArgumentException("a.World != b.World");
+#endif
+            EcsGroup result = a._source.GetGroupFromPool();
+            foreach (var item in a)
+                if (b.Contains(item.id))
+                    result.AggressiveAdd(item.id);
+            a._source.ReleaseGroup(a);
+            return result.Readonly;
+        }
+        #endregion
+
         #region GetEnumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Unlock()
@@ -380,27 +407,28 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
+        private ProfilerMarker _getEnumeratorReturn = new ProfilerMarker("EcsGroup.GetEnumerator");
+
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator()
         {
-            Sort();
-            _lockCount++;
+            // _lockCount++;
             return new Enumerator(this);
         }
         #endregion
 
         #region Enumerator
-        public struct Enumerator : IDisposable
+        public ref struct Enumerator// : IDisposable
         {
-            private readonly EcsGroup _source;
+           // private readonly EcsGroup _source;
             private readonly int[] _dense;
             private readonly int _count;
             private int _index;
-
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator(EcsGroup group)
             {
-                _source = group;
+               // _source = group;
                 _dense = group._dense;
                 _count = group.Count;
                 _index = 0;
@@ -408,12 +436,12 @@ namespace DCFApixels.DragonECS
             public ent Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => new ent(_dense[_index]);
+                get => (ent)_dense[_index];
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index <= _count && _count<_dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose() => _source.Unlock();
+            //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+            //public void Dispose() => _source.Unlock();
         }
         #endregion
 
