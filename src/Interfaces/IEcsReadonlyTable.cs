@@ -20,7 +20,6 @@ namespace DCFApixels.DragonECS
         public int GetComponentID<T>();
         public bool IsMaskCompatible<TInc, TExc>(int entityID) where TInc : struct, IInc where TExc : struct, IExc;
         public bool IsMaskCompatible(EcsComponentMask mask, int entityID);
-        public bool IsMaskCompatibleWithout(EcsComponentMask mask, int entity, int componentID);
         #endregion
 
         #region Internal Methods

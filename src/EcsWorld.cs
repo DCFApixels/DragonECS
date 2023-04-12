@@ -226,27 +226,6 @@ namespace DCFApixels.DragonECS
             }
             return true;
         }
-
-        public bool IsMaskCompatibleWithout(EcsComponentMask mask, int entity, int otherComponentID)
-        {
-#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (mask.WorldArchetypeType != typeof(TWorldArchetype))
-                throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TTableArhetype)");
-#endif
-            for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
-            {
-                int componentID = mask.Inc[i];
-                if (componentID == otherComponentID || !_pools[componentID].Has(entity))
-                    return false;
-            }
-            for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
-            {
-                int componentID = mask.Exc[i];
-                if (componentID != otherComponentID && _pools[componentID].Has(entity))
-                    return false;
-            }
-            return true;
-        }
         #endregion
 
         #region Entity
