@@ -8,16 +8,12 @@ using UnityEngine.UI;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract class EcsQueryBase
+    public abstract class EcsQuery
     {
         internal EcsGroup groupFilter;
         internal EcsQueryMask mask;
         public IEcsWorld World => groupFilter.World;
-    }
 
-    public abstract class EcsQuery<TWorldArchetype> : EcsQueryBase
-        where TWorldArchetype : EcsWorld<TWorldArchetype>
-    {
         private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.GetEnumerator");
 
         public EcsGroup.Enumerator GetEnumerator()
@@ -71,20 +67,20 @@ namespace DCFApixels.DragonECS
             private List<int> _inc;
             private List<int> _exc;
 
-            internal static TQuery Build<TQuery>(IEcsWorld world) where TQuery : EcsQueryBase
+            internal static TQuery Build<TQuery>(IEcsWorld world) where TQuery : EcsQuery
             {
                 Builder builder = new Builder(world);
 
                 Type queryType = typeof(TQuery);
                 ConstructorInfo constructorInfo = queryType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
-                EcsQuery<TWorldArchetype> newQuery;
+                EcsQuery newQuery;
                 if (constructorInfo != null)
                 {
-                    newQuery = (EcsQuery<TWorldArchetype>)constructorInfo.Invoke(new object[] { builder });
+                    newQuery = (EcsQuery)constructorInfo.Invoke(new object[] { builder });
                 }
                 else
                 {
-                    newQuery = (EcsQuery<TWorldArchetype>)Activator.CreateInstance(typeof(TQuery));
+                    newQuery = (EcsQuery)Activator.CreateInstance(typeof(TQuery));
                     newQuery.Init(builder);
                 }
 

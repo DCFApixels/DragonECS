@@ -15,7 +15,7 @@ namespace DCFApixels.DragonECS
         #region Methods
         public EcsPool<T> GetPool<T>() where T : struct;
         public ReadOnlySpan<EcsPool> GetAllPools();
-        public TQuery Query<TQuery>(out TQuery query) where TQuery : EcsQueryBase;
+        public TQuery Query<TQuery>(out TQuery query) where TQuery : EcsQuery;
 
         public int GetComponentID<T>();
         public bool IsMaskCompatible<TInc, TExc>(int entityID) where TInc : struct, IInc where TExc : struct, IExc;

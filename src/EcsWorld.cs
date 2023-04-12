@@ -74,7 +74,7 @@ namespace DCFApixels.DragonECS
         private EcsPool[] _pools;
         private EcsNullPool _nullPool;
 
-        private EcsQueryBase[] _queries;
+        private EcsQuery[] _queries;
 
         private EcsPipeline _pipeline;
 
@@ -142,7 +142,7 @@ namespace DCFApixels.DragonECS
             ArrayUtility.Fill(_pools, _nullPool);
 
             _gens = new short[512];
-            _queries = new EcsQuery<TWorldArchetype>[QueryType.capacity];
+            _queries = new EcsQuery[QueryType.capacity];
             _groups = new List<EcsGroup>(128);
 
             _denseEntities = new int[512];
@@ -181,7 +181,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Query
-        public TQuery Query<TQuery>(out TQuery query) where TQuery : EcsQueryBase
+        public TQuery Query<TQuery>(out TQuery query) where TQuery : EcsQuery
         {
             int uniqueID = QueryType<TQuery>.uniqueID;
             if (_queries.Length < QueryType.capacity)
@@ -189,7 +189,7 @@ namespace DCFApixels.DragonECS
 
             if (_queries[uniqueID] == null)
             {
-                _queries[uniqueID] = EcsQuery<TWorldArchetype>.Builder.Build<TQuery>(this);
+                _queries[uniqueID] = EcsQuery.Builder.Build<TQuery>(this);
             }
             query = (TQuery)_queries[uniqueID];
             return query;

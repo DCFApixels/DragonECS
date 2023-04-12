@@ -17,10 +17,10 @@ namespace DCFApixels.DragonECS
 
         private int _entitiesCount;
 
-        private List<EcsQueryBase>[] _filtersByIncludedComponents;
-        private List<EcsQueryBase>[] _filtersByExcludedComponents;
+        private List<EcsQuery>[] _filtersByIncludedComponents;
+        private List<EcsQuery>[] _filtersByExcludedComponents;
 
-        private EcsQueryBase[] _queries;
+        private EcsQuery[] _queries;
 
         private List<EcsGroup> _groups;
 
