@@ -33,7 +33,7 @@ namespace DCFApixels.DragonECS
 
     public abstract class EcsWorld
     {
-        internal static IEcsWorld[] Worlds = new IEcsWorld[8];
+        public static IEcsWorld[] Worlds = new IEcsWorld[8];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
 
         public readonly short id;
@@ -196,18 +196,12 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region IsMaskCompatible/IsMaskCompatibleWithout
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsMaskCompatible<TInc>(int entityID) where TInc : struct, IInc
-        {
-            return IsMaskCompatible(EcsMaskMap<TWorldArchetype>.GetMask<TInc, Exc>(), entityID);
-        }
+        #region IsMaskCompatible
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsMaskCompatible<TInc, TExc>(int entityID) where TInc : struct, IInc where TExc : struct, IExc
         {
             return IsMaskCompatible(EcsMaskMap<TWorldArchetype>.GetMask<TInc, TExc>(), entityID);
         }
-
         public bool IsMaskCompatible(EcsComponentMask mask, int entityID)
         {
 #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
@@ -348,9 +342,7 @@ namespace DCFApixels.DragonECS
         EcsGroup IEcsWorld.GetGroupFromPool()
         {
             if (_pool.Count <= 0)
-            {
                 return new EcsGroup(this);
-            }
             return _pool.Pop();
         }
         void IEcsWorld.ReleaseGroup(EcsGroup group)

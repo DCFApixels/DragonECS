@@ -16,46 +16,37 @@ namespace DCFApixels.DragonECS
 
         private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.GetEnumerator");
 
+
         public EcsGroup.Enumerator GetEnumerator()
         {
             using (_getEnumerator.Auto())
             {
-                // groupFilter.Clear();
-                 var pools = World.GetAllPools();
-                //
-                // if (mask.Inc.Length > 0)
-                // {
-                //     groupFilter.CopyFrom(pools[mask.Inc[0]].entities);
-                //     for (int i = 1; i < mask.Inc.Length; i++)
-                //     {
-                //         groupFilter.AndWith(pools[mask.Inc[i]].entities);
-                //     }
-                // }
-                // else
-                // {
-                //     groupFilter.CopyFrom(World.Entities);
-                // }
-                // for (int i = 0; i < mask.Exc.Length; i++)
-                // {
-                //     groupFilter.RemoveGroup(pools[mask.Exc[i]].entities);
-                // }
-                //
-                // groupFilter.Sort();
-                // return groupFilter.GetEnumerator();
-                //
-                EcsReadonlyGroup sum = World.Entities;
-                for (int i = 0; i < mask.Inc.Length; i++)
+                var pools = World.GetAllPools();
+
+                EcsReadonlyGroup all = World.Entities;
+                groupFilter.Clear();
+                foreach (var e in all)
                 {
-                    sum = EcsGroup.And(sum.GetGroupInternal(), pools[mask.Inc[i]].entities);
-                   // Debug.Log("inc " + sum.ToString());
+                    int entityID = e.id;
+
+                    for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
+                    {
+                        if (!pools[mask.Inc[i]].Has(entityID))
+                        {
+                            continue;
+                        }
+                    }
+                    for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
+                    {
+                        if (pools[mask.Exc[i]].Has(entityID))
+                        {
+                            continue;
+                        }
+                    }
+                    groupFilter.AggressiveAdd(entityID);
                 }
-                for (int i = 0; i < mask.Exc.Length; i++)
-                {
-                    sum = EcsGroup.Remove(sum.GetGroupInternal(), pools[mask.Exc[i]].entities);
-                   // Debug.Log("exc " + sum.ToString());
-                }
-                //sum.GetGroupInternal().Sort();
-                return sum.GetEnumerator();
+                groupFilter.Sort();
+                return groupFilter.GetEnumerator();
             }
         }
         protected virtual void Init(Builder b) { }
@@ -85,7 +76,8 @@ namespace DCFApixels.DragonECS
                 }
 
                 builder.End(out newQuery.mask);
-                newQuery.groupFilter = new EcsGroup(world);
+                // newQuery.groupFilter = new EcsGroup(world);
+                newQuery.groupFilter = EcsGroup.New(world);
                 return (TQuery)(object)newQuery;
             }
 
@@ -96,7 +88,6 @@ namespace DCFApixels.DragonECS
                 _exc = new List<int>(4);
             }
 
-            #region Init query member methods
             public override inc<TComponent> Include<TComponent>() where TComponent : struct
             {
                 _inc.Add(_world.GetComponentID<TComponent>());
@@ -111,18 +102,14 @@ namespace DCFApixels.DragonECS
             {
                 return new opt<TComponent>(_world.GetPool<TComponent>());
             }
-            #endregion
 
             private void End(out EcsQueryMask mask)
             {
                 _inc.Sort();
                 _exc.Sort();
                 mask = new EcsQueryMask(_world.ArchetypeType, _inc.ToArray(), _exc.ToArray());
-
                 _world = null;
-                _inc.Clear();
                 _inc = null;
-                _exc.Clear();
                 _exc = null;
             }
         }

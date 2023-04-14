@@ -10,7 +10,6 @@ namespace DCFApixels.DragonECS
         public Type ComponentType { get; }
         public int ComponentID { get; }
         public IEcsWorld World { get; }
-        public EcsReadonlyGroup Entities { get; }
         public int Count { get; }
         public int Capacity { get; }
         public bool Has(int entityID);
@@ -34,7 +33,6 @@ namespace DCFApixels.DragonECS
         public Type ComponentType => typeof(NullComponent);
         public int ComponentID => -1;
         public IEcsWorld World => _source;
-        public EcsReadonlyGroup Entities => default;
         public int Count => 0;
         public int Capacity => 1;
         public void Del(int index) { }
@@ -47,7 +45,6 @@ namespace DCFApixels.DragonECS
     }
     public abstract class EcsPool
     {
-        internal EcsGroup entities;
         public abstract bool Has(int entityID);
         internal abstract void OnWorldResize(int newSize);
     }
@@ -66,7 +63,6 @@ namespace DCFApixels.DragonECS
         private IEcsComponentReset<T> _componentResetHandler;
         private PoolRunnres _poolRunnres;
         #region Properites
-        public EcsReadonlyGroup Entities => entities.Readonly;
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
         public IEcsWorld World => _source;
@@ -77,7 +73,6 @@ namespace DCFApixels.DragonECS
         #region Constructors
         internal EcsPool(IEcsWorld source, int id, int capacity, PoolRunnres poolRunnres)
         {
-            entities = new EcsGroup(source);
             _source = source;
             _componentID = id;
 
@@ -105,7 +100,6 @@ namespace DCFApixels.DragonECS
                 ref int itemIndex = ref _mapping[entityID];
                 if (itemIndex <= 0)
                 {
-                    entities.Add(entityID);
                     if (_recycledItemsCount > 0)
                     {
                         itemIndex = _recycledItems[--_recycledItemsCount];
@@ -147,8 +141,6 @@ namespace DCFApixels.DragonECS
         {
           //  using (_delMark.Auto())
           //   {
-            entities.Remove(entityID);
-
             if (_recycledItemsCount >= _recycledItems.Length)
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
             _recycledItems[_recycledItemsCount++] = _mapping[entityID];
@@ -168,7 +160,7 @@ namespace DCFApixels.DragonECS
 
         #region Object
         public override bool Equals(object obj) => base.Equals(obj);
-        public override int GetHashCode() => _source.GetHashCode() + ~ComponentID;
+        public override int GetHashCode() => _source.GetHashCode() ^ ~ComponentID;
         #endregion
 
         #region Internal
