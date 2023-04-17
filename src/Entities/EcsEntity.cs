@@ -4,8 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
-
-    /// <summary>Permanent relation entity identifier</summary>
+    /// <summary>Strong identifier/Permanent entity identifier</summary>
     [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
     public readonly partial struct EcsEntity : IEquatable<long>, IEquatable<EcsEntity>
     {

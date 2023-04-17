@@ -1,21 +1,25 @@
 using System;
 using System.Runtime.CompilerServices;
 using Unity.Profiling;
-using UnityEngine;
 
 namespace DCFApixels.DragonECS
 {
     public interface IEcsPool
     {
+        #region Properties
         public Type ComponentType { get; }
         public int ComponentID { get; }
         public IEcsWorld World { get; }
         public int Count { get; }
         public int Capacity { get; }
+        #endregion
+
+        #region Methods
         public bool Has(int entityID);
         public void Write(int entityID);
         public void Del(int entityID);
         internal void OnWorldResize(int newSize);
+        #endregion
     }
     public interface IEcsPool<T> : IEcsPool where T : struct
     {
@@ -28,13 +32,18 @@ namespace DCFApixels.DragonECS
     {
         public static EcsNullPool instance => new EcsNullPool(null);
         private IEcsWorld _source;
-        private EcsNullPool(IEcsWorld source) => _source = source;
         private NullComponent fakeComponent;
+        private EcsNullPool(IEcsWorld source) => _source = source;
+
+        #region Properties
         public Type ComponentType => typeof(NullComponent);
         public int ComponentID => -1;
         public IEcsWorld World => _source;
         public int Count => 0;
         public int Capacity => 1;
+        #endregion
+
+        #region Methods
         public void Del(int index) { }
         public override bool Has(int index) => false;
         void IEcsPool.Write(int entityID) { }
@@ -42,6 +51,7 @@ namespace DCFApixels.DragonECS
         public ref NullComponent Write(int entity) => ref fakeComponent;
         void IEcsPool.OnWorldResize(int newSize) { }
         internal override void OnWorldResize(int newSize) { }
+        #endregion
     }
     public abstract class EcsPool
     {
@@ -62,6 +72,7 @@ namespace DCFApixels.DragonECS
 
         private IEcsComponentReset<T> _componentResetHandler;
         private PoolRunnres _poolRunnres;
+
         #region Properites
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
@@ -115,11 +126,12 @@ namespace DCFApixels.DragonECS
                     _mapping[entityID] = itemIndex;
                     _componentResetHandler.Reset(ref _items[itemIndex]);
                     _poolRunnres.add.OnComponentAdd<T>(entityID);
-                }
+            }
                 _poolRunnres.write.OnComponentWrite<T>(entityID);
                 return ref _items[itemIndex];
            // }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Write(int entityID)
         {
            //   using (_writeMark.Auto())
@@ -134,7 +146,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public sealed override bool Has(int entityID)
         {
-           //  using (_hasMark.Auto())
+            //  using (_hasMark.Auto())
             return _mapping[entityID] > 0;
         }
         public void Del(int entityID)

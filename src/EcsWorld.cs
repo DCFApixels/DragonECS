@@ -38,9 +38,9 @@ namespace DCFApixels.DragonECS
 
         public readonly short id;
 
-        protected EcsWorld(bool isIndexed)
+        protected EcsWorld(bool isIndexable)
         {
-            if(isIndexed == true)
+            if(isIndexable == true)
             {
                 id = (short)_worldIdDispenser.GetFree();
                 if (id >= Worlds.Length)
@@ -74,11 +74,11 @@ namespace DCFApixels.DragonECS
         private EcsPool[] _pools;
         private EcsNullPool _nullPool;
 
-        private EcsQuery[] _queries;
+        private EcsQueryBase[] _queries;
 
         private EcsPipeline _pipeline;
 
-        private List<EcsGroup> _groups;
+        private List<WeakReference<EcsGroup>> _groups;
 
         public IEcsRealationTable[] _relationTables;
 
@@ -132,7 +132,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        public EcsWorld(EcsPipeline pipline = null) : base(true)
+        public EcsWorld(EcsPipeline pipline = null) : this(pipline, true) { }
+        internal EcsWorld(EcsPipeline pipline, bool isIndexable) : base(isIndexable)
         {
             _pipeline = pipline ?? EcsPipeline.Empty;
             if (!_pipeline.IsInit) pipline.Init();
@@ -143,7 +144,7 @@ namespace DCFApixels.DragonECS
 
             _gens = new short[512];
             _queries = new EcsQuery[QueryType.capacity];
-            _groups = new List<EcsGroup>(128);
+            _groups = new List<WeakReference<EcsGroup>>();
 
             _denseEntities = new int[512];
 
@@ -153,8 +154,8 @@ namespace DCFApixels.DragonECS
             _pipeline.GetRunner<IEcsInject<TWorldArchetype>>().Inject((TWorldArchetype)this);
             _pipeline.GetRunner<IEcsInject<IEcsWorld>>().Inject(this);
             _pipeline.GetRunner<IEcsWorldCreate>().OnWorldCreate(this);
-
-            _allEntites = new EcsGroup(this);
+            
+            _allEntites = GetGroupFromPool();
         }
         #endregion
 
@@ -181,17 +182,15 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Query
-        public TQuery Query<TQuery>(out TQuery query) where TQuery : EcsQuery
+        public TQuery Query<TQuery>(out TQuery query) where TQuery : EcsQueryBase
         {
             int uniqueID = QueryType<TQuery>.uniqueID;
             if (_queries.Length < QueryType.capacity)
                 Array.Resize(ref _queries, QueryType.capacity);
-
             if (_queries[uniqueID] == null)
-            {
-                _queries[uniqueID] = EcsQuery.Builder.Build<TQuery>(this);
-            }
+                _queries[uniqueID] = EcsQueryBase.Builder.Build<TQuery>(this);
             query = (TQuery)_queries[uniqueID];
+            query.Execute();
             return query;
         }
         #endregion
@@ -233,8 +232,19 @@ namespace DCFApixels.DragonECS
             if (_gens.Length <= entityID)
             {
                 Array.Resize(ref _gens, _gens.Length << 1);
-                foreach (var item in _groups)
-                    item.OnWorldResize(_gens.Length);
+                for (int i = 0; i < _groups.Count; i++)
+                {
+                    if (_groups[i].TryGetTarget(out EcsGroup group))
+                    {
+                        group.OnWorldResize(_gens.Length);
+                    }
+                    else
+                    {
+                        int last = _groups.Count - 1;
+                        _groups[i--] = _groups[last];
+                        _groups.RemoveAt(last);
+                    }
+                }
                 foreach (var item in _pools)
                     item.OnWorldResize(_gens.Length);
             }
@@ -286,7 +296,7 @@ namespace DCFApixels.DragonECS
         #region Other
         void IEcsReadonlyTable.RegisterGroup(EcsGroup group)
         {
-            _groups.Add(group);
+            _groups.Add(new WeakReference<EcsGroup>(group));
         }
         #endregion
 
@@ -339,7 +349,8 @@ namespace DCFApixels.DragonECS
 
         #region GroupsPool
         private Stack<EcsGroup> _pool = new Stack<EcsGroup>(64);
-        EcsGroup IEcsWorld.GetGroupFromPool()
+        EcsGroup IEcsWorld.GetGroupFromPool() => GetGroupFromPool();
+        internal EcsGroup GetGroupFromPool()
         {
             if (_pool.Count <= 0)
                 return new EcsGroup(this);

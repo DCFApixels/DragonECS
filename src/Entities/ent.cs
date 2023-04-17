@@ -4,8 +4,8 @@ using UnityEngine.Rendering;
 
 namespace DCFApixels.DragonECS
 {
-#pragma warning disable CS0660, CS0661
-    /// <summary>Single frame entity identifier</summary>
+#pragma warning disable CS0660, CS0661, IDE1006
+    /// <summary>Weak identifier/Single frame entity identifier</summary>
     [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 4)]
     public readonly ref struct ent
     {
@@ -25,5 +25,8 @@ namespace DCFApixels.DragonECS
         public static bool operator !=(Null? _, ent b) => b.id != 0;
 
         public struct Null { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsEntity ToStrong(IEcsWorld world) => world.GetEntity(id);
     }
 }

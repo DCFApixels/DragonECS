@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Profiling;
+using UnityEngine;
 using delayedOp = System.Int32;
 
 namespace DCFApixels.DragonECS
@@ -10,7 +11,6 @@ namespace DCFApixels.DragonECS
     public readonly ref struct EcsReadonlyGroup
     {
         private readonly EcsGroup _source;
-
         #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup(EcsGroup source) => _source = source;
@@ -49,11 +49,8 @@ namespace DCFApixels.DragonECS
         public bool Contains(int entityID) => _source.Contains(entityID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup.Enumerator GetEnumerator() => _source.GetEnumerator();
-
-        /// <summary>Equivalent of the EcsGroup.Clone() method</summary>
-        /// <returns>An editable clone of this EcsReadnolyGroup</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsGroup Extract() => _source.Clone();
+        public EcsGroup Clone() => _source.Clone();
         #endregion
 
         #region Object
@@ -80,23 +77,10 @@ namespace DCFApixels.DragonECS
         public static bool operator !=(EcsReadonlyGroup a, EcsReadonlyGroup b) => !a.Equals(b);
         public static bool operator !=(EcsReadonlyGroup a, EcsGroup b) => !a.Equals(b);
         #endregion
-
-        #region Dispose/Release
-        public void Dispose()
-        {
-            _source.Dispose();
-        }
-        public void Release()
-        {
-            _source.World.ReleaseGroup(_source);
-        }
-        #endregion
     }
 
-    // не может содержать значение 0
+    // индексация начинается с 1
     // _delayedOps это int[] для отложенных операций, хранятся отложенные операции в виде int значения, если старший бит = 0 то это опреация добавленияб если = 1 то это операция вычитания
-
-    // this collection can only store numbers greater than 0
     public unsafe class EcsGroup : IDisposable, IEquatable<EcsGroup>
     {
         private const int DEALAYED_ADD = 0;
@@ -145,7 +129,8 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Constrcutors
+        #region Constrcutors/Finalizer
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsGroup New(IEcsWorld world)
         {
             return world.GetGroupFromPool();
@@ -163,6 +148,14 @@ namespace DCFApixels.DragonECS
             _lockCount = 0;
             _delayedOpsCount = 0;
             _count = 0;
+        }
+
+        //защита от криворукости
+        //перед сборкой мусора снова создает сильную ссылку и возвращает в пул
+        //TODO переделат ьиил удалить, так как сборщик мусора просыпается только после 12к и более экземпляров, только тогда и вызывается финализатор, слишком жирно
+        ~EcsGroup()
+        {
+            Release();
         }
         #endregion
 
@@ -256,12 +249,10 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-
         public void Clear()
         {
             _count = 0;
-            for (int i = 0; i < _dense.Length; i++)
-                _dense[i] = 0;
+            //массив _dense нет смысла очищать, испольщуется только область от 1 до _count
             for (int i = 0; i < _sparse.Length; i++)
                 _sparse[i] = 0;
         }
@@ -275,7 +266,8 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (group.World != _source) throw new ArgumentException("groupFilter.World != World");
 #endif
-            Clear();
+            if(_count > 0)
+                Clear();
             foreach (var item in group)
                 AggressiveAdd(item.id);
         }
@@ -428,14 +420,14 @@ namespace DCFApixels.DragonECS
         #region Enumerator
         public ref struct Enumerator// : IDisposable
         {
-           // private readonly EcsGroup _source;
+           // private readonly EcsGroup source;
             private readonly int[] _dense;
             private readonly int _count;
             private int _index;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator(EcsGroup group)
             {
-               // _source = group;
+               // source = group;
                 _dense = group._dense;
                 _count = group.Count;
                 _index = 0;
@@ -448,7 +440,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index <= _count && _count<_dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
             //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-            //public void Dispose() => _source.Unlock();
+            //public void Dispose() => source.Unlock();
         }
         #endregion
 

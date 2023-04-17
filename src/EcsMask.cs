@@ -357,27 +357,27 @@ namespace DCFApixels.DragonECS
         {
             static Activator()
             {
-            //    var inc = new TInc().GetComponentsIDs<TWorldArchetype>();
-            //    var exc = new TExc().GetComponentsIDs<TWorldArchetype>();
-            //    Array.Sort(inc);
-            //    Array.Sort(exc);
+            //    var inc_ = new TInc().GetComponentsIDs<TWorldArchetype>();
+            //    var exc_ = new TExc().GetComponentsIDs<TWorldArchetype>();
+            //    Array.Sort(inc_);
+            //    Array.Sort(exc_);
             //
             //    Type thisType = typeof(Activator<TInc, TExc>);
             //
             //    Type sortedIncType = typeof(TInc);
             //    if (sortedIncType.IsGenericType)
             //    {
-            //        Type[] sortedInc = new Type[inc.Length];
+            //        Type[] sortedInc = new Type[inc_.Length];
             //        for (int i = 0; i < sortedInc.Length; i++)
-            //            sortedInc[i] =  EcsWorld<TWorldArchetype>.ComponentType.types[inc[i]];
+            //            sortedInc[i] =  EcsWorld<TWorldArchetype>.ComponentType.types[inc_[i]];
             //        sortedIncType = sortedIncType.GetGenericTypeDefinition().MakeGenericType(sortedInc);
             //    }
             //    Type sortedExcType = typeof(TExc);
             //    if (sortedExcType.IsGenericType)
             //    {
-            //        Type[] sortedExc = new Type[exc.Length];
+            //        Type[] sortedExc = new Type[exc_.Length];
             //        for (int i = 0; i < sortedExc.Length; i++)
-            //            sortedExc[i] = EcsWorld<TWorldArchetype>.ComponentType.types[exc[i]];
+            //            sortedExc[i] = EcsWorld<TWorldArchetype>.ComponentType.types[exc_[i]];
             //        sortedExcType = sortedExcType.GetGenericTypeDefinition().MakeGenericType(sortedExc);
             //    }
             //
@@ -393,7 +393,7 @@ namespace DCFApixels.DragonECS
             //    if (_count >= _capacity)
             //        _capacity <<= 1;
             //
-            //    instance = new EcsMask(typeof(TWorldArchetype), id, inc, exc);
+            //    instance = new EcsMask(typeof(TWorldArchetype), id, inc_, exc_);
             }
 
             public readonly static EcsMask instance;
