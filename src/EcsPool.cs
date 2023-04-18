@@ -87,7 +87,7 @@ namespace DCFApixels.DragonECS
             _source = source;
             _componentID = id;
 
-            _mapping = new int[source.EntitesCapacity];
+            _mapping = new int[source.Capacity];
             _recycledItems = new int[128];
             _recycledItemsCount = 0;
             _items = new T[capacity];

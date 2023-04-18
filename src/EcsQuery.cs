@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS
 
         #region Builder
         protected virtual void Init(Builder b) { }
-        protected abstract void OnBuilt();
+        protected abstract void OnBuildAfter();
         public abstract void Execute();
         public sealed class Builder : EcsQueryBuilderBase
         {
@@ -46,7 +46,7 @@ namespace DCFApixels.DragonECS
                 newQuery.groupFilter = EcsGroup.New(world);
                 newQuery.source = world;
                 builder.End(out newQuery.mask);
-                newQuery.OnBuilt();
+                newQuery.OnBuildAfter();
                 return (TQuery)(object)newQuery;
             }
 
@@ -80,12 +80,12 @@ namespace DCFApixels.DragonECS
 
     public abstract class EcsJoinQuery : EcsQueryBase
     {
-        private EcsPool<Attach> attachPool;
+        private EcsPool<Edge> attachPool;
 
         private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.Execute");
-        protected sealed override void OnBuilt()
+        protected sealed override void OnBuildAfter()
         {
-            attachPool = World.GetPool<Attach>();
+            attachPool = World.GetPool<Edge>();
         }
         public sealed override void Execute()
         {
@@ -103,7 +103,7 @@ namespace DCFApixels.DragonECS
     public abstract class EcsQuery : EcsQueryBase
     {
         private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.Execute");
-        protected sealed override void OnBuilt() { }
+        protected sealed override void OnBuildAfter() { }
         public sealed override void Execute()
         {
             using (_getEnumerator.Auto())

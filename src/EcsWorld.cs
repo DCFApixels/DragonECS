@@ -6,14 +6,11 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsWorld : IEcsReadonlyTable
+    public interface IEcsWorld : IEcsTable
     {
         #region Properties
-        //private float _timeScale;//TODO реализовать собсвенныйтайм склей для разных миров
-        public int ID { get; }
+        public int UniqueID { get; }
         public EcsPipeline Pipeline { get; }
-        public int EntitesCount { get; }
-        public int EntitesCapacity { get; }
         public EcsReadonlyGroup Entities => default;
         #endregion
 
@@ -21,7 +18,7 @@ namespace DCFApixels.DragonECS
         public EcsEntity NewEntity();
         public void DelEntity(EcsEntity entity);
         public bool EntityIsAlive(int entityID, short gen);
-        public EcsEntity GetEntity(int entityID);
+        public EcsEntity GetEcsEntity(int entityID);
         public void Destroy();
         #endregion
 
@@ -36,41 +33,35 @@ namespace DCFApixels.DragonECS
         public static IEcsWorld[] Worlds = new IEcsWorld[8];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
 
-        public readonly short id;
+        public readonly short uniqueID;
 
-        protected EcsWorld(bool isIndexable)
+        protected EcsWorld()
         {
-            if(isIndexable == true)
-            {
-                id = (short)_worldIdDispenser.GetFree();
-                if (id >= Worlds.Length)
-                    Array.Resize(ref Worlds, Worlds.Length << 1);
-                Worlds[id] = (IEcsWorld)this;
-            }
-            else
-            {
-                id = -1;
-            }
+            uniqueID = (short)_worldIdDispenser.GetFree();
+            if (uniqueID >= Worlds.Length)
+                Array.Resize(ref Worlds, Worlds.Length << 1);
+            Worlds[uniqueID] = (IEcsWorld)this;
         }
 
         protected void Realeze()    
         {
-            Worlds[id] = null;  
-            _worldIdDispenser.Release(id);
+            Worlds[uniqueID] = null;  
+            _worldIdDispenser.Release(uniqueID);
         }
     }
 
     public abstract class EcsWorld<TWorldArchetype> : EcsWorld, IEcsWorld 
         where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
+        private readonly int _worldArchetypeID = ComponentIndexer.GetWorldId<TWorldArchetype>();
+
         private IntDispenser _entityDispenser;
-        private int[] _denseEntities;
         private int _entitiesCount;
+        private int _entitesCapacity;
         private short[] _gens; //старший бит указывает на то жива ли сущьность.
-
         private EcsGroup _allEntites;
-
         //private short[] _componentCounts; //TODO
+
         private EcsPool[] _pools;
         private EcsNullPool _nullPool;
 
@@ -79,36 +70,11 @@ namespace DCFApixels.DragonECS
         private EcsPipeline _pipeline;
 
         private List<WeakReference<EcsGroup>> _groups;
+        private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
 
-        public IEcsRealationTable[] _relationTables;
-
-        private readonly int _worldArchetypeID = ComponentIndexer.GetWorldId<TWorldArchetype>();
-
-        #region RelationTables
-        public IEcsRealationTable GetRelationTalbe<TWorldArhetype>(TWorldArhetype targetWorld)
-            where TWorldArhetype : EcsWorld<TWorldArhetype>
-        {
-            int targetID = targetWorld.ID;
-            if (targetID <= 0)
-                throw new ArgumentException("targetWorld.ID <= 0");
-
-            if(_relationTables.Length <= targetID)
-                Array.Resize(ref _relationTables, targetID + 8);
-
-            if (_relationTables[targetID] == null)
-            {
-             //   _relationTables[targetID]= new EcsRelationTable
-            }
-
-            throw new NotImplementedException();
-        }
-        #endregion
-
-        #region RunnersCache
         private PoolRunnres _poolRunnres;
         private IEcsEntityCreate _entityCreate;
         private IEcsEntityDestroy _entityDestry;
-        #endregion
 
         #region GetterMethods
         public ReadOnlySpan<EcsPool> GetAllPools() => new ReadOnlySpan<EcsPool>(_pools);
@@ -116,25 +82,18 @@ namespace DCFApixels.DragonECS
 
         #endregion
 
-        #region Internal Properties
-        int IEcsReadonlyTable.Count => _entitiesCount;
-        int IEcsReadonlyTable.Capacity => _denseEntities.Length;
-        #endregion
-
         #region Properties
         public Type ArchetypeType => typeof(TWorldArchetype);
-        public int ID => id;
+        public int UniqueID => uniqueID;
+        public int Count => _entitiesCount;
+        public int Capacity => _entitesCapacity; //_denseEntities.Length;
         public EcsPipeline Pipeline => _pipeline;
-
-        public int EntitesCount => _entitiesCount;
-        public int EntitesCapacity => _denseEntities.Length;
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
         #endregion
 
         #region Constructors
-        public EcsWorld(EcsPipeline pipline = null) : this(pipline, true) { }
-        internal EcsWorld(EcsPipeline pipline, bool isIndexable) : base(isIndexable)
-        {
+        public EcsWorld(EcsPipeline pipline = null)
+        { 
             _pipeline = pipline ?? EcsPipeline.Empty;
             if (!_pipeline.IsInit) pipline.Init();
             _entityDispenser = new IntDispenser(0);
@@ -143,10 +102,10 @@ namespace DCFApixels.DragonECS
             ArrayUtility.Fill(_pools, _nullPool);
 
             _gens = new short[512];
+            _entitesCapacity = _gens.Length;
+
             _queries = new EcsQuery[QueryType.capacity];
             _groups = new List<WeakReference<EcsGroup>>();
-
-            _denseEntities = new int[512];
 
             _poolRunnres = new PoolRunnres(_pipeline);
             _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
@@ -162,7 +121,6 @@ namespace DCFApixels.DragonECS
         #region GetPool
         public EcsPool<T> GetPool<T>() where T : struct
         {
-            //int uniqueID = ComponentType<T>.uniqueID;
             int uniqueID = ComponentIndexer.GetComponentId<T>(_worldArchetypeID);
 
             if (uniqueID >= _pools.Length)
@@ -178,7 +136,6 @@ namespace DCFApixels.DragonECS
             }
             return (EcsPool<T>)_pools[uniqueID];
         }
-        //public EcsPool<T> UncheckedGetPool<T>() where T : struct => (EcsPool<T>)_pools[ComponentType<T>.uniqueID];
         #endregion
 
         #region Query
@@ -225,13 +182,12 @@ namespace DCFApixels.DragonECS
         public EcsEntity NewEntity()
         {
             int entityID = _entityDispenser.GetFree();
-            if (_entityDispenser.LastInt >= _denseEntities.Length)
-                Array.Resize(ref _denseEntities, _denseEntities.Length << 1);
-            _denseEntities[_entitiesCount++] = entityID;
+            _entitiesCount++;
 
             if (_gens.Length <= entityID)
             {
                 Array.Resize(ref _gens, _gens.Length << 1);
+                _entitesCapacity = _gens.Length;
                 for (int i = 0; i < _groups.Count; i++)
                 {
                     if (_groups[i].TryGetTarget(out EcsGroup group))
@@ -249,7 +205,7 @@ namespace DCFApixels.DragonECS
                     item.OnWorldResize(_gens.Length);
             }
             _gens[entityID] |= short.MinValue;
-            EcsEntity entity = new EcsEntity(entityID, _gens[entityID]++, id);
+            EcsEntity entity = new EcsEntity(entityID, _gens[entityID]++, uniqueID);
             _entityCreate.OnEntityCreate(entity);
             _allEntites.Add(entityID);
             return entity;
@@ -264,9 +220,9 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsEntity GetEntity(int entityID)
+        public EcsEntity GetEcsEntity(int entityID)
         {
-            return new EcsEntity(entityID, _gens[entityID], id);
+            return new EcsEntity(entityID, _gens[entityID], uniqueID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool EntityIsAlive(int entityID, short gen)
@@ -279,7 +235,7 @@ namespace DCFApixels.DragonECS
         public void Destroy()
         {
             _entityDispenser = null;
-            _denseEntities = null;
+            //_denseEntities = null;
             _gens = null;
             _pools = null;
             _nullPool = null;
@@ -293,10 +249,26 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Other
-        void IEcsReadonlyTable.RegisterGroup(EcsGroup group)
+        #region Groups
+        void IEcsTable.RegisterGroup(EcsGroup group)
         {
             _groups.Add(new WeakReference<EcsGroup>(group));
+        }
+        EcsGroup IEcsWorld.GetGroupFromPool() => GetGroupFromPool();
+        internal EcsGroup GetGroupFromPool()
+        {
+            if (_groupsPool.Count <= 0)
+                return new EcsGroup(this);
+            return _groupsPool.Pop();
+        }
+        void IEcsWorld.ReleaseGroup(EcsGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (group.World != this)
+                throw new ArgumentException("groupFilter.World != this");
+#endif
+            group.Clear();
+            _groupsPool.Push(group);
         }
         #endregion
 
@@ -316,58 +288,10 @@ namespace DCFApixels.DragonECS
                     QueryType.capacity <<= 1;
             }
         }
-    /*    internal static class ComponentType
-        {
-            internal static int increment = 1;
-            internal static int Capacity
-            {
-                get => types.Length;
-            }
-            internal static Type[] types = new Type[64];
-        }
-        internal static class ComponentType<T>
-        {
-            internal static int uniqueID;
-
-            static ComponentType()
-            {
-                uniqueID = ComponentType.increment++;
-#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-                if (ComponentType.increment + 1 > ushort.MaxValue)
-                {
-                    throw new EcsFrameworkException($"No more room for new component for this {typeof(TWorldArchetype).FullName} IWorldArchetype");
-                }
-#endif
-                if (uniqueID >= ComponentType.types.Length)
-                {
-                    Array.Resize(ref ComponentType.types, ComponentType.types.Length << 1);
-                }
-                ComponentType.types[uniqueID] = typeof(T);
-            }
-        }*/
-        #endregion
-
-        #region GroupsPool
-        private Stack<EcsGroup> _pool = new Stack<EcsGroup>(64);
-        EcsGroup IEcsWorld.GetGroupFromPool() => GetGroupFromPool();
-        internal EcsGroup GetGroupFromPool()
-        {
-            if (_pool.Count <= 0)
-                return new EcsGroup(this);
-            return _pool.Pop();
-        }
-        void IEcsWorld.ReleaseGroup(EcsGroup group)
-        {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (group.World != this)
-                throw new ArgumentException("groupFilter.World != this");
-#endif
-            group.Clear();
-            _pool.Push(group);
-        }
         #endregion
     }
 
+    #region Utils
     [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 24)]
     internal readonly struct PoolRunnres
     {
@@ -382,9 +306,6 @@ namespace DCFApixels.DragonECS
             del = pipeline.GetRunner<IEcsComponentDel>();
         }
     }
-
-
-
     public static class ComponentIndexer
     {
         private static List<Resizer> resizer = new List<Resizer>();
@@ -434,4 +355,5 @@ namespace DCFApixels.DragonECS
             }
         }
     }
+    #endregion
 }

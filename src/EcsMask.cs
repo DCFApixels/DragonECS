@@ -389,11 +389,11 @@ namespace DCFApixels.DragonECS
             //        return;
             //    }
             //
-            //    var id = _count++;
+            //    var uniqueID = _count++;
             //    if (_count >= _capacity)
             //        _capacity <<= 1;
             //
-            //    instance = new EcsMask(typeof(TWorldArchetype), id, inc_, exc_);
+            //    instance = new EcsMask(typeof(TWorldArchetype), uniqueID, inc_, exc_);
             }
 
             public readonly static EcsMask instance;

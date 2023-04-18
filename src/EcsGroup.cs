@@ -141,7 +141,7 @@ namespace DCFApixels.DragonECS
             _source = world;
             _source.RegisterGroup(this);
             _dense = new int[denseCapacity];
-            _sparse = new int[world.EntitesCapacity];
+            _sparse = new int[world.Capacity];
 
             _delayedOps = new delayedOp[delayedOpsCapacity];
 
@@ -435,7 +435,7 @@ namespace DCFApixels.DragonECS
             public ent Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => (ent)_dense[_index];
+                get => new ent(_dense[_index]);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index <= _count && _count<_dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны

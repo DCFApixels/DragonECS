@@ -4,14 +4,14 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
+    // uniqueID - 32 bits
+    // gen - 16 bits
+    // world - 16 bits
     /// <summary>Strong identifier/Permanent entity identifier</summary>
     [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
     public readonly partial struct EcsEntity : IEquatable<long>, IEquatable<EcsEntity>
     {
         public static readonly EcsEntity NULL = default;
-        // uniqueID - 32 bits
-        // gen - 16 bits
-        // world - 16 bits
         [FieldOffset(0)]
         internal readonly long full; //Union
         [FieldOffset(3)]
@@ -21,11 +21,8 @@ namespace DCFApixels.DragonECS
         [FieldOffset(0)]
         public readonly short world;
 
-        public ent Ent
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => new ent(id);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ent ToEnt() => EcsWorld.Worlds[world].EntityIsAlive(id, gen) ? new ent(id) : default;
 
         #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -53,7 +50,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() => unchecked((int)full) ^ (int)(full >> 32);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override string ToString() => $"Entity(id:{id} gen:{gen} world:{world})";
+        public override string ToString() => $"Entity(uniqueID:{id} gen:{gen} world:{world})";
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj) => obj is EcsEntity other && full == other.full;
         #endregion
@@ -66,7 +63,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator long(in EcsEntity a) => a.full;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator ent(in EcsEntity a) => a.Ent;
+        public static explicit operator ent(in EcsEntity a) => a.ToEnt();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator EcsEntity(in long a) => new EcsEntity(a);
         #endregion

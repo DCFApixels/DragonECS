@@ -91,9 +91,9 @@ namespace DCFApixels.DragonECS
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //     internal inc_readonly_(EcsPool<TComponent> pool) => this.pool = pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public ref TComponent Read(ent entityID) => ref pool.Read(entityID.id);
+   //     public ref TComponent Read(ent entityID) => ref pool.Read(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public bool Has(ent entityID) => pool.Has(entityID.id);
+   //     public bool Has(ent entityID) => pool.Has(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //
    //     public static implicit operator inc_readonly_<TComponent>(EcsQueryBuilderBase buider) => buider.Include<TComponent>();
@@ -108,9 +108,9 @@ namespace DCFApixels.DragonECS
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //     internal exc_readonly_(EcsPool<TComponent> pool) => this.pool = pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public ref TComponent Read(ent entityID) => ref pool.Read(entityID.id);
+   //     public ref TComponent Read(ent entityID) => ref pool.Read(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public bool Has(ent entityID) => pool.Has(entityID.id);
+   //     public bool Has(ent entityID) => pool.Has(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //
    //     public static implicit operator exc_readonly_<TComponent>(EcsQueryBuilderBase buider) => buider.Exclude<TComponent>();
@@ -125,9 +125,9 @@ namespace DCFApixels.DragonECS
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //     internal opt_readonly_(EcsPool<TComponent> pool) => this.pool = pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public ref TComponent Read(ent entityID) => ref pool.Read(entityID.id);
+   //     public ref TComponent Read(ent entityID) => ref pool.Read(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public bool Has(ent entityID) => pool.Has(entityID.id);
+   //     public bool Has(ent entityID) => pool.Has(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //
    //     public static implicit operator opt_readonly_<TComponent>(EcsQueryBuilderBase buider) => buider.Optional<TComponent>();
@@ -137,24 +137,24 @@ namespace DCFApixels.DragonECS
    //
    // #region join
    // [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 8)]
-   // public readonly struct attach : IEcsQueryField<Attach>
+   // public readonly struct attach : IEcsQueryField<Edge>
    // {
-   //     internal readonly EcsPool<Attach> pool;
+   //     internal readonly EcsPool<Edge> pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     internal attach(EcsPool<Attach> pool) => this.pool = pool;
+   //     internal attach(EcsPool<Edge> pool) => this.pool = pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public ref Attach Add(ent entityID) => ref pool.Add(entityID.id);
+   //     public ref Edge Add(ent entityID) => ref pool.Add(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public ref Attach Write(ent entityID) => ref pool.Write(entityID.id);
+   //     public ref Edge Write(ent entityID) => ref pool.Write(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public ref Attach Read(ent entityID) => ref pool.Read(entityID.id);
+   //     public ref Edge Read(ent entityID) => ref pool.Read(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public bool Has(ent entityID) => pool.Has(entityID.id);
+   //     public bool Has(ent entityID) => pool.Has(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public void Del(ent entityID) => pool.Del(entityID.id);
+   //     public void Del(ent entityID) => pool.Del(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public static implicit operator attach(EcsQueryBuilderBase buider) => buider.Include<Attach>();
-   //     public static implicit operator attach(inc_<Attach> o) => new attach(o.pool);
+   //     public static implicit operator attach(EcsQueryBuilderBase buider) => buider.Include<Edge>();
+   //     public static implicit operator attach(inc_<Edge> o) => new attach(o.pool);
    // }
    // #endregion
 }

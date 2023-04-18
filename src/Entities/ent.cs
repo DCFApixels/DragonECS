@@ -13,7 +13,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal ent(int id) => this.id = id;
 
-        public static explicit operator ent(int id) => new ent(id);
+        //public static explicit operator ent(int uniqueID) => new ent(uniqueID);
         public static explicit operator int(ent entityID) => entityID.id;
 
         public static bool operator ==(ent a, ent b) => a.id == b.id;
@@ -27,6 +27,6 @@ namespace DCFApixels.DragonECS
         public struct Null { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsEntity ToStrong(IEcsWorld world) => world.GetEntity(id);
+        public EcsEntity ToStrong(IEcsWorld world) => world.GetEcsEntity(id);
     }
 }

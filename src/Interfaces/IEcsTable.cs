@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsReadonlyTable
+    public interface IEcsTable
     {
         #region Properties
         /// <summary>Table Archetype</summary>
@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS
     public static class IEcsReadonlyTableExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsMaskCompatible<TInc>(this IEcsReadonlyTable self, int entityID) where TInc : struct, IInc
+        public static bool IsMaskCompatible<TInc>(this IEcsTable self, int entityID) where TInc : struct, IInc
         {
             return self.IsMaskCompatible<TInc, Exc>(entityID);
         }
