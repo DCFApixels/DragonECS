@@ -51,7 +51,6 @@ namespace DCFApixels.DragonECS
         private List<WeakReference<EcsGroup>> _groups;
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
 
-        private PoolRunners _poolRunners;
         private IEcsEntityCreate _entityCreate;
         private IEcsEntityDestroy _entityDestry;
 
@@ -97,7 +96,6 @@ namespace DCFApixels.DragonECS
 
             _queries = new EcsQuery[128];
 
-            _poolRunners = new PoolRunners(_pipeline);
             _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
             _entityDestry = _pipeline.GetRunner<IEcsEntityDestroy>();
             _pipeline.GetRunner<IEcsInject<EcsWorld>>().Inject(this);
@@ -123,7 +121,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetPool
-        public EcsPool<TComponent> GetPool<TComponent>() where TComponent : struct
+        public IEcsPool<TComponent> GetOrCreatePool<TComponent>(Func<EcsWorld, IEcsPool> builder) where TComponent : struct
         {
             int uniqueID = WorldMetaStorage.GetComponentId<TComponent>(_worldArchetypeID);
 
@@ -135,9 +133,9 @@ namespace DCFApixels.DragonECS
             }
 
             if (_pools[uniqueID] == _nullPool)
-                _pools[uniqueID] = new EcsPool<TComponent>(this, 512, _poolRunners);
+                _pools[uniqueID] = builder(this);
 
-            return (EcsPool<TComponent>)_pools[uniqueID];
+            return (IEcsPool<TComponent>)_pools[uniqueID];
         }
         #endregion
 

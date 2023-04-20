@@ -91,37 +91,37 @@ namespace DCFApixels.DragonECS
             where T : struct
         {
             //using (_ReadMarker.Auto())
-            return ref EcsWorld.Worlds[world].GetPool<T>().Read(id);
+            return ref EcsWorld.Worlds[world].GetOrCreatePool<T>().Read(id);
         }
 
         public ref T Add<T>()
             where T : struct
         {
-            return ref EcsWorld.Worlds[world].GetPool<T>().Add(id);
+            return ref EcsWorld.Worlds[world].GetOrCreatePool<T>().Add(id);
         }
         public ref T Write<T>()
             where T : struct
         {
             //using (_WriteMarker.Auto())
-            return ref EcsWorld.Worlds[world].GetPool<T>().Write(id);
+            return ref EcsWorld.Worlds[world].GetOrCreatePool<T>().Write(id);
         }
         public bool Has<T>()
             where T : struct
         {
             //using (_HasMarker.Auto())
-            return EcsWorld.Worlds[world].GetPool<T>().Has(id);
+            return EcsWorld.Worlds[world].GetOrCreatePool<T>().Has(id);
         }
         public bool NotHas<T>()
             where T : struct
         {
             //using (_HasMarker.Auto())
-            return EcsWorld.Worlds[world].GetPool<T>().Has(id);
+            return EcsWorld.Worlds[world].GetOrCreatePool<T>().Has(id);
         }
         public void Del<T>()
             where T : struct
         {
             //using (_DelMarker.Auto())
-            EcsWorld.Worlds[world].GetPool<T>().Del(id);
+            EcsWorld.Worlds[world].GetOrCreatePool<T>().Del(id);
         }
     } 
 

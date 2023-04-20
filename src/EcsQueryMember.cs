@@ -6,7 +6,7 @@ namespace DCFApixels.DragonECS
     public interface IEcsQueryMember { }
     public interface IEcsQueryReadonlyField<TComponent> : IEcsQueryMember
     {
-        public ref TComponent Read(ent entityID);
+        public ref readonly TComponent Read(ent entityID);
         public bool Has(ent entityID);
     }
     public interface IEcsQueryField<TComponent> : IEcsQueryReadonlyField<TComponent>
@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TComponent Write(ent entityID) => ref pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TComponent Read(ent entityID) => ref pool.Read(entityID.id);
+        public ref readonly TComponent Read(ent entityID) => ref pool.Read(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(ent entityID) => pool.Has(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,7 +51,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TComponent Write(ent entityID) => ref pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TComponent Read(ent entityID) => ref pool.Read(entityID.id);
+        public ref readonly TComponent Read(ent entityID) => ref pool.Read(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(ent entityID) => pool.Has(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -72,7 +72,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TComponent Write(ent entityID) => ref pool.Write(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TComponent Read(ent entityID) => ref pool.Read(entityID.id);
+        public ref readonly TComponent Read(ent entityID) => ref pool.Read(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(ent entityID) => pool.Has(entityID.id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -53,16 +53,16 @@ namespace DCFApixels.DragonECS
             public override inc_<TComponent> Include<TComponent>() where TComponent : struct
             {
                 _inc.Add(_world.GetComponentID<TComponent>());
-                return new inc_<TComponent>(_world.GetPool<TComponent>());
+                return new inc_<TComponent>(_world.GetOrCreatePool<TComponent>());
             }
             public override exc_<TComponent> Exclude<TComponent>() where TComponent : struct
             {
                 _exc.Add(_world.GetComponentID<TComponent>());
-                return new exc_<TComponent>(_world.GetPool<TComponent>());
+                return new exc_<TComponent>(_world.GetOrCreatePool<TComponent>());
             }
             public override opt_<TComponent> Optional<TComponent>() where TComponent : struct
             {
-                return new opt_<TComponent>(_world.GetPool<TComponent>());
+                return new opt_<TComponent>(_world.GetOrCreatePool<TComponent>());
             }
 
             private void End(out EcsQueryMask mask)
@@ -93,7 +93,7 @@ namespace DCFApixels.DragonECS
         private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsGraphQuery.Execute");
         protected sealed override void OnBuildAfter()
         {
-            attachPool = World.GetPool<Edge>();
+            attachPool = World.GetOrCreatePool<Edge>();
         }
         public sealed override void Execute()
         {

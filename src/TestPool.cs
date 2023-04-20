@@ -40,53 +40,48 @@ namespace DCFApixels.DragonECS.Test
     }
 
     public interface IPool { }
-    public class Pool1<TComponent> : IEcsPool<TComponent>
+    public class Pool1<TComponent> : EcsPoolBase<TComponent>
         where TComponent : struct
     {
-        public Type ComponentType => throw new NotImplementedException();
+        public override Type ComponentType => throw new NotImplementedException();
 
-        public EcsWorld World => throw new NotImplementedException();
+        public override EcsWorld World => throw new NotImplementedException();
 
-        public int Count => throw new NotImplementedException();
+        public override int Count => throw new NotImplementedException();
 
-        public int Capacity => throw new NotImplementedException();
+        public override int Capacity => throw new NotImplementedException();
 
-        public ref TComponent Add(int entityID)
+        public override ref TComponent Add(int entityID)
         {
             throw new NotImplementedException();
         }
 
-        public void Del(int entityID)
+        public override void Del(int entityID)
         {
             throw new NotImplementedException();
         }
 
-        public bool Has(int entityID)
+        public override bool Has(int entityID)
         {
             throw new NotImplementedException();
         }
 
-        public ref TComponent Read(int entityID)
+        public override ref readonly TComponent Read(int entityID)
         {
             throw new NotImplementedException();
         }
 
-        public ref TComponent Write(int entityID)
+        public override ref TComponent Write(int entityID)
         {
             throw new NotImplementedException();
         }
 
-        void IEcsPool.Add(int entityID)
+        protected override void OnDestroy()
         {
             throw new NotImplementedException();
         }
 
-        void IEcsPool.OnWorldResize(int newSize)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IEcsPool.Write(int entityID, object data)
+        protected override void OnWorldResize(int newSize)
         {
             throw new NotImplementedException();
         }
