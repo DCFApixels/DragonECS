@@ -70,7 +70,7 @@ namespace DCFApixels.DragonECS
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
         #endregion
 
-        #region Constructors
+        #region Constructors/Destroy
         public EcsWorld(EcsPipeline pipline)
         {
             uniqueID = (short)_worldIdDispenser.GetFree();
@@ -103,10 +103,22 @@ namespace DCFApixels.DragonECS
             _pipeline.GetRunner<IEcsInject<EcsWorld>>().Inject(this);
             _pipeline.GetRunner<IEcsWorldCreate>().OnWorldCreate(this);
         }
-        protected void Realeze()
+        public void Destroy()
         {
+            _entityDispenser = null;
+            //_denseEntities = null;
+            _gens = null;
+            _pools = null;
+            _nullPool = null;
+            _queries = null;
+
             Worlds[uniqueID] = null;
             _worldIdDispenser.Release(uniqueID);
+        }
+        public void DestryWithPipeline()
+        {
+            Destroy();
+            _pipeline.Destroy();
         }
         #endregion
 
@@ -228,24 +240,6 @@ namespace DCFApixels.DragonECS
         public bool EntityIsAlive(int entityID, short gen)
         {
             return _gens[entityID] == gen;
-        }
-        #endregion
-
-        #region Destroy
-        public void Destroy()
-        {
-            _entityDispenser = null;
-            //_denseEntities = null;
-            _gens = null;
-            _pools = null;
-            _nullPool = null;
-            _queries = null;
-            Realeze();
-        }
-        public void DestryWithPipeline()
-        {
-            Destroy();
-            _pipeline.Destroy();
         }
         #endregion
 
