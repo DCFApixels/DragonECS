@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using UnityEditor.Search;
 
 namespace DCFApixels.DragonECS
 {
@@ -43,14 +42,18 @@ namespace DCFApixels.DragonECS
     public abstract class EcsWorld<TWorldArchetype> : EcsWorld, IEcsWorld 
         where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
+        private const int DEL_ENT_BUFFER_SIZE_OFFSET = 2;
         private readonly int _worldArchetypeID = ComponentIndexer.GetWorldId<TWorldArchetype>();
 
         private IntDispenser _entityDispenser;
         private int _entitiesCount;
         private int _entitesCapacity;
         private short[] _gens; //старший бит указывает на то жива ли сущьность.
-        private EcsGroup _allEntites;
         //private short[] _componentCounts; //TODO
+        private EcsGroup _allEntites;
+
+        private int[] _delEntBuffer; //буфер удаления нужен для того чтобы запускать некоторые процесыы связанные с удалением сущьности не по одному при каждом удалении, а пачкой
+        private int _delEntBufferCount;
 
         private EcsPool[] _pools;
         private EcsNullPool _nullPool;
@@ -93,6 +96,8 @@ namespace DCFApixels.DragonECS
 
             _gens = new short[512];
             _entitesCapacity = _gens.Length;
+            _delEntBufferCount = 0;
+            _delEntBuffer = new int[_gens.Length >> DEL_ENT_BUFFER_SIZE_OFFSET];
 
             _groups = new List<WeakReference<EcsGroup>>();
             _allEntites = GetGroupFromPool();
@@ -128,17 +133,9 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Query
+        #region Queries
         public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQueryBase
         {
-            //int uniqueID = QueryType<TQuery>.uniqueID;
-            //if (_queries.Length < QueryType.capacity)
-            //    Array.Resize(ref _queries, QueryType.capacity);
-            //if (_queries[uniqueID] == null)
-            //    _queries[uniqueID] = EcsQueryBase.Builder.Build<TQuery>(this);
-            //query = (TQuery)_queries[uniqueID];
-            //query.Where();
-            //return query;
             query = Select<TQuery>();
             query.Execute();
             return query;
@@ -215,10 +212,20 @@ namespace DCFApixels.DragonECS
         public void DelEntity(EcsEntity entity)
         {
             _allEntites.Remove(entity.id);
-            _entityDispenser.Release(entity.id);
+            _delEntBuffer[_delEntBufferCount++] = entity.id;
             _gens[entity.id] |= short.MinValue;
             _entitiesCount--;
             _entityDestry.OnEntityDestroy(entity);
+
+            if(_delEntBufferCount >= _delEntBuffer.Length)
+                ReleaseDelEntBuffer();
+        }
+
+        private void ReleaseDelEntBuffer()//TODO проверить что буфер удаления работает нормально
+        {
+            for (int i = 0; i < _delEntBufferCount; i++)
+                _entityDispenser.Release(_delEntBuffer[i]);
+            _delEntBufferCount = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

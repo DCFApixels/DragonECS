@@ -9,12 +9,12 @@ namespace DCFApixels.DragonECS
     [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 4)]
     public readonly ref struct ent
     {
+        [MarshalAs(UnmanagedType.I4)]
         internal readonly int id;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal ent(int id) => this.id = id;
 
-        //public static explicit operator ent(int uniqueID) => new ent(uniqueID);
-        public static explicit operator int(ent entityID) => entityID.id;
+        public static implicit operator int(ent entityID) => entityID.id;
 
         public static bool operator ==(ent a, ent b) => a.id == b.id;
         public static bool operator !=(ent a, ent b) => a.id != b.id;
@@ -27,6 +27,6 @@ namespace DCFApixels.DragonECS
         public struct Null { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsEntity ToStrong(IEcsWorld world) => world.GetEcsEntity(id);
+        public EcsEntity ToStrongID(IEcsWorld world) => world.GetEcsEntity(id);
     }
 }
