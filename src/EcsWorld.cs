@@ -1,8 +1,8 @@
-﻿using DCFApixels.DragonECS.Internal;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using UnityEditor.Search;
 
 namespace DCFApixels.DragonECS
 {
@@ -11,7 +11,6 @@ namespace DCFApixels.DragonECS
         #region Properties
         public int UniqueID { get; }
         public EcsPipeline Pipeline { get; }
-        public EcsReadonlyGroup Entities => default;
         #endregion
 
         #region Entities
@@ -19,12 +18,6 @@ namespace DCFApixels.DragonECS
         public void DelEntity(EcsEntity entity);
         public bool EntityIsAlive(int entityID, short gen);
         public EcsEntity GetEcsEntity(int entityID);
-        public void Destroy();
-        #endregion
-
-        #region Group
-        internal EcsGroup GetGroupFromPool();
-        internal void ReleaseGroup(EcsGroup group);
         #endregion
     }
 
@@ -32,9 +25,7 @@ namespace DCFApixels.DragonECS
     {
         public static IEcsWorld[] Worlds = new IEcsWorld[8];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
-
         public readonly short uniqueID;
-
         protected EcsWorld()
         {
             uniqueID = (short)_worldIdDispenser.GetFree();
@@ -42,7 +33,6 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref Worlds, Worlds.Length << 1);
             Worlds[uniqueID] = (IEcsWorld)this;
         }
-
         protected void Realeze()    
         {
             Worlds[uniqueID] = null;  
@@ -92,7 +82,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        public EcsWorld(EcsPipeline pipline = null)
+        public EcsWorld(EcsPipeline pipline)
         { 
             _pipeline = pipline ?? EcsPipeline.Empty;
             if (!_pipeline.IsInit) pipline.Init();
@@ -104,8 +94,10 @@ namespace DCFApixels.DragonECS
             _gens = new short[512];
             _entitesCapacity = _gens.Length;
 
-            _queries = new EcsQuery[QueryType.capacity];
             _groups = new List<WeakReference<EcsGroup>>();
+            _allEntites = GetGroupFromPool();
+
+            _queries = new EcsQuery[QueryType.capacity];
 
             _poolRunnres = new PoolRunnres(_pipeline);
             _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
@@ -113,8 +105,6 @@ namespace DCFApixels.DragonECS
             _pipeline.GetRunner<IEcsInject<TWorldArchetype>>().Inject((TWorldArchetype)this);
             _pipeline.GetRunner<IEcsInject<IEcsWorld>>().Inject(this);
             _pipeline.GetRunner<IEcsWorldCreate>().OnWorldCreate(this);
-            
-            _allEntites = GetGroupFromPool();
         }
         #endregion
 
@@ -139,16 +129,28 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Query
-        public TQuery Query<TQuery>(out TQuery query) where TQuery : EcsQueryBase
+        public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQueryBase
+        {
+            //int uniqueID = QueryType<TQuery>.uniqueID;
+            //if (_queries.Length < QueryType.capacity)
+            //    Array.Resize(ref _queries, QueryType.capacity);
+            //if (_queries[uniqueID] == null)
+            //    _queries[uniqueID] = EcsQueryBase.Builder.Build<TQuery>(this);
+            //query = (TQuery)_queries[uniqueID];
+            //query.Where();
+            //return query;
+            query = Select<TQuery>();
+            query.Execute();
+            return query;
+        }
+        public TQuery Select<TQuery>() where TQuery : EcsQueryBase
         {
             int uniqueID = QueryType<TQuery>.uniqueID;
             if (_queries.Length < QueryType.capacity)
                 Array.Resize(ref _queries, QueryType.capacity);
             if (_queries[uniqueID] == null)
                 _queries[uniqueID] = EcsQueryBase.Builder.Build<TQuery>(this);
-            query = (TQuery)_queries[uniqueID];
-            query.Execute();
-            return query;
+            return (TQuery)_queries[uniqueID];
         }
         #endregion
 
@@ -254,14 +256,14 @@ namespace DCFApixels.DragonECS
         {
             _groups.Add(new WeakReference<EcsGroup>(group));
         }
-        EcsGroup IEcsWorld.GetGroupFromPool() => GetGroupFromPool();
+        EcsGroup IEcsTable.GetGroupFromPool() => GetGroupFromPool();
         internal EcsGroup GetGroupFromPool()
         {
             if (_groupsPool.Count <= 0)
                 return new EcsGroup(this);
             return _groupsPool.Pop();
         }
-        void IEcsWorld.ReleaseGroup(EcsGroup group)
+        void IEcsTable.ReleaseGroup(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (group.World != this)

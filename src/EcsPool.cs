@@ -129,12 +129,13 @@ namespace DCFApixels.DragonECS
             }
                 _poolRunnres.write.OnComponentWrite<T>(entityID);
                 return ref _items[itemIndex];
-           // }
+            // }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Write(int entityID)
         {
            //   using (_writeMark.Auto())
+                _poolRunnres.write.OnComponentWrite<T>(entityID);
                 return ref _items[_mapping[entityID]];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

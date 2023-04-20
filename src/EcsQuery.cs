@@ -82,7 +82,7 @@ namespace DCFApixels.DragonECS
     {
         private EcsPool<Edge> attachPool;
 
-        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.Execute");
+        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.Where");
         protected sealed override void OnBuildAfter()
         {
             attachPool = World.GetPool<Edge>();
@@ -102,7 +102,7 @@ namespace DCFApixels.DragonECS
 
     public abstract class EcsQuery : EcsQueryBase
     {
-        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.Execute");
+        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.Where");
         protected sealed override void OnBuildAfter() { }
         public sealed override void Execute()
         {

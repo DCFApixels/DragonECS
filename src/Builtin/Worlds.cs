@@ -11,8 +11,8 @@
     {
         public EcsDefaultWrold(EcsPipeline pipeline = null) : base(pipeline) { }
     }
-    public sealed class EcsEventWrold : EcsWorld<EcsDefaultWrold>
+    public sealed class EcsEventWrold : EcsEdgeWorld<EcsEventWrold>
     {
-        public EcsEventWrold(EcsPipeline pipeline = null) : base(pipeline) { }
+        public EcsEventWrold(IEcsWorld firstTarget, IEcsWorld secondTarget, EcsPipeline pipeline = null) : base(firstTarget, secondTarget, pipeline) { }
     }
 }
