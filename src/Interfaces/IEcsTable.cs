@@ -20,7 +20,6 @@ namespace DCFApixels.DragonECS
         public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQueryBase;
         public TQuery Select<TQuery>() where TQuery : EcsQueryBase;
 
-        public bool IsMaskCompatible<TInc, TExc>(int entityID) where TInc : struct, IInc where TExc : struct, IExc;
         public bool IsMaskCompatible(EcsComponentMask mask, int entityID);
 
         public void Destroy();
@@ -31,13 +30,5 @@ namespace DCFApixels.DragonECS
         internal EcsGroup GetGroupFromPool();
         internal void ReleaseGroup(EcsGroup group);
         #endregion
-    }
-
-    public static class IEcsReadonlyTableExtensions
-    {
-        public static bool IsMaskCompatible<TInc>(this IEcsTable self, int entityID) where TInc : struct, IInc
-        {
-            return self.IsMaskCompatible<TInc, Exc>(entityID);
-        }
     }
 }

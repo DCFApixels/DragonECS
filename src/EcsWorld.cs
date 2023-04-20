@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using static DCFApixels.DragonECS.WorldMetaStorage;
 
 namespace DCFApixels.DragonECS
 {
@@ -155,11 +154,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IsMaskCompatible
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsMaskCompatible<TInc, TExc>(int entityID) where TInc : struct, IInc where TExc : struct, IExc
-        {
-            return IsMaskCompatible(EcsMaskMap<TWorldArchetype>.GetMask<TInc, TExc>(), entityID);
-        }
         public bool IsMaskCompatible(EcsComponentMask mask, int entityID)
         {
 #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
