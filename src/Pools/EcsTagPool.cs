@@ -73,11 +73,11 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    public interface ITagComponent { }
-    public static class ITagComponentExt
+    public interface IEcsTagComponent { }
+    public static class EcsTagPoolExt
     {
         public static EcsTagPool<TTagComponent> GetPool<TTagComponent>(this EcsWorld self)
-            where TTagComponent : struct, ITagComponent
+            where TTagComponent : struct, IEcsTagComponent
         {
             return self.GetPool<TTagComponent, EcsTagPool<TTagComponent>>();
         } 

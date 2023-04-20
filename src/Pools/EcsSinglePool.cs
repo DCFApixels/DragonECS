@@ -94,12 +94,12 @@ namespace DCFApixels.DragonECS
     }
 
     public interface ISingleComponent { }
-    public static class ISingleComponentExt
+    public static class EcsSinglePoolExt
     {
-        public static EcsTagPool<TSingleComponent> GetPool<TSingleComponent>(this EcsWorld self)
+        public static EcsSinglePool<TSingleComponent> GetPool<TSingleComponent>(this EcsWorld self)
             where TSingleComponent : struct, ISingleComponent
         {
-            return self.GetPool<TSingleComponent, EcsTagPool<TSingleComponent>>();
+            return self.GetPool<TSingleComponent, EcsSinglePool<TSingleComponent>>();
         } 
     }
 }

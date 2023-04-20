@@ -100,7 +100,7 @@ namespace DCFApixels.DragonECS
     }
 
     public interface INotNullComponent { }
-    public static class INotNullComponentExt
+    public static class EcsNotNullPoolExt
     {
         public static EcsNotNullPool<TComponent> GetPool<TComponent>(this EcsWorld self)
             where TComponent : struct, INotNullComponent

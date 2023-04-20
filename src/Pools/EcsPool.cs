@@ -163,11 +163,11 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    public interface IComponent { }
-    public static class IComponentExt
+    public interface IEcsComponent { }
+    public static class EcsPoolExt
     {
         public static EcsPool<TComponent> GetPool<TComponent>(this EcsWorld self)
-            where TComponent : struct, IComparable
+            where TComponent : struct, IEcsComponent
         {
             return self.GetPool<TComponent, EcsPool<TComponent>>();
         } 
