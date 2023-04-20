@@ -7,10 +7,10 @@ namespace DCFApixels.DragonECS
 {
     public abstract class EcsQueryBase
     {
-        internal IEcsWorld source;
+        internal EcsWorld source;
         internal EcsGroup groupFilter;
         internal EcsQueryMask mask;
-        public IEcsWorld World => source;
+        public EcsWorld World => source;
 
         #region Builder
         protected virtual void Init(Builder b) { }
@@ -18,17 +18,17 @@ namespace DCFApixels.DragonECS
         public abstract void Execute();
         public sealed class Builder : EcsQueryBuilderBase
         {
-            private IEcsWorld _world;
+            private EcsWorld _world;
             private List<int> _inc;
             private List<int> _exc;
 
-            private Builder(IEcsWorld world)
+            private Builder(EcsWorld world)
             {
                 _world = world;
                 _inc = new List<int>(8);
                 _exc = new List<int>(4);
             }
-            internal static TQuery Build<TQuery>(IEcsWorld world) where TQuery : EcsQueryBase
+            internal static TQuery Build<TQuery>(EcsWorld world) where TQuery : EcsQueryBase
             {
                 Builder builder = new Builder(world);
                 Type queryType = typeof(TQuery);

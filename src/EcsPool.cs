@@ -8,7 +8,7 @@ namespace DCFApixels.DragonECS
     {
         #region Properties
         public Type ComponentType { get; }
-        public IEcsWorld World { get; }
+        public EcsWorld World { get; }
         public int Count { get; }
         public int Capacity { get; }
         #endregion
@@ -34,14 +34,14 @@ namespace DCFApixels.DragonECS
     public sealed class EcsNullPool : IEcsPool<NullComponent>
     {
         public static EcsNullPool instance => new EcsNullPool(null);
-        private IEcsWorld _source;
+        private EcsWorld _source;
         private NullComponent fakeComponent;
-        private EcsNullPool(IEcsWorld source) => _source = source;
+        private EcsNullPool(EcsWorld source) => _source = source;
 
         #region Properties
         public Type ComponentType => typeof(NullComponent);
         public int ComponentID => -1;
-        public IEcsWorld World => _source;
+        public EcsWorld World => _source;
         public int Count => 0;
         public int Capacity => 1;
         #endregion
@@ -61,12 +61,12 @@ namespace DCFApixels.DragonECS
     public sealed class EcsPool<T> : IEcsPool<T>
         where T : struct
     {
-        public static EcsPool<T> Builder(IEcsWorld source)
+        public static EcsPool<T> Builder(EcsWorld source)
         {
             return new EcsPool<T>(source, 512, default);
         }
 
-        private readonly IEcsWorld _source;
+        private readonly EcsWorld _source;
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
@@ -80,12 +80,12 @@ namespace DCFApixels.DragonECS
         #region Properites
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
-        public IEcsWorld World => _source;
+        public EcsWorld World => _source;
         public Type ComponentType => typeof(T);
         #endregion
 
         #region Constructors
-        internal EcsPool(IEcsWorld source, int capacity, PoolRunners poolRunnres)
+        internal EcsPool(EcsWorld source, int capacity, PoolRunners poolRunnres)
         {
             _source = source;
 

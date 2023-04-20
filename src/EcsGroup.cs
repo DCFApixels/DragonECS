@@ -86,7 +86,7 @@ namespace DCFApixels.DragonECS
         private const int DEALAYED_ADD = 0;
         private const int DEALAYED_REMOVE = int.MinValue;
 
-        private IEcsWorld _source;
+        private EcsWorld _source;
 
         private int[] _dense;
         private int[] _sparse;
@@ -101,7 +101,7 @@ namespace DCFApixels.DragonECS
         private bool _isReleazed = true; 
 
         #region Properties
-        public IEcsWorld World => _source;
+        public EcsWorld World => _source;
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -131,12 +131,12 @@ namespace DCFApixels.DragonECS
 
         #region Constrcutors/Finalizer
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsGroup New(IEcsWorld world)
+        public static EcsGroup New(EcsWorld world)
         {
             return world.GetGroupFromPool();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal EcsGroup(IEcsWorld world, int denseCapacity = 64, int delayedOpsCapacity = 128)
+        internal EcsGroup(EcsWorld world, int denseCapacity = 64, int delayedOpsCapacity = 128)
         {
             _source = world;
             _source.RegisterGroup(this);

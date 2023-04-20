@@ -27,6 +27,6 @@ namespace DCFApixels.DragonECS
         public struct Null { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsEntity ToStrongID(IEcsWorld world) => world.GetEcsEntity(id);
+        public EcsEntity ToStrongID(EcsWorld world) => world.GetEcsEntity(id);
     }
 }

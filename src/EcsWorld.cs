@@ -20,30 +20,14 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    public abstract class EcsWorld
+    public abstract class EcsWorld : IEcsWorld
     {
-        public static IEcsWorld[] Worlds = new IEcsWorld[8];
+        public static EcsWorld[] Worlds = new EcsWorld[8];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
         public readonly short uniqueID;
-        protected EcsWorld()
-        {
-            uniqueID = (short)_worldIdDispenser.GetFree();
-            if (uniqueID >= Worlds.Length)
-                Array.Resize(ref Worlds, Worlds.Length << 1);
-            Worlds[uniqueID] = (IEcsWorld)this;
-        }
-        protected void Realeze()    
-        {
-            Worlds[uniqueID] = null;  
-            _worldIdDispenser.Release(uniqueID);
-        }
-    }
-    
-    public abstract class EcsWorld<TWorldArchetype> : EcsWorld, IEcsWorld 
-        where TWorldArchetype : EcsWorld<TWorldArchetype>
-    {
+
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 2;
-        private readonly int _worldArchetypeID = WorldMetaStorage.GetWorldId<TWorldArchetype>();
+        private int _worldArchetypeID;
 
         private IntDispenser _entityDispenser;
         private int _entitiesCount;
@@ -78,7 +62,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Properties
-        public Type Archetype => typeof(TWorldArchetype);
+        public abstract Type Archetype { get; }
         public int UniqueID => uniqueID;
         public int Count => _entitiesCount;
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
@@ -88,7 +72,14 @@ namespace DCFApixels.DragonECS
 
         #region Constructors
         public EcsWorld(EcsPipeline pipline)
-        { 
+        {
+            uniqueID = (short)_worldIdDispenser.GetFree();
+            if (uniqueID >= Worlds.Length)
+                Array.Resize(ref Worlds, Worlds.Length << 1);
+            Worlds[uniqueID] = this;
+
+            _worldArchetypeID = WorldMetaStorage.GetWorldId(Archetype);
+
             _pipeline = pipline ?? EcsPipeline.Empty;
             if (!_pipeline.IsInit) pipline.Init();
             _entityDispenser = new IntDispenser(0);
@@ -109,8 +100,13 @@ namespace DCFApixels.DragonECS
             _poolRunners = new PoolRunners(_pipeline);
             _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
             _entityDestry = _pipeline.GetRunner<IEcsEntityDestroy>();
-            _pipeline.GetRunner<IEcsInject<IEcsWorld>>().Inject(this);
+            _pipeline.GetRunner<IEcsInject<EcsWorld>>().Inject(this);
             _pipeline.GetRunner<IEcsWorldCreate>().OnWorldCreate(this);
+        }
+        protected void Realeze()
+        {
+            Worlds[uniqueID] = null;
+            _worldIdDispenser.Release(uniqueID);
         }
         #endregion
 
@@ -212,7 +208,7 @@ namespace DCFApixels.DragonECS
             _entitiesCount--;
             _entityDestry.OnEntityDestroy(entity);
 
-            if(_delEntBufferCount >= _delEntBuffer.Length)
+            if (_delEntBufferCount >= _delEntBuffer.Length)
                 ReleaseDelEntBuffer();
         }
 
@@ -254,7 +250,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Groups
-        void IEcsTable.RegisterGroup(EcsGroup group)
+        void IEcsTable.RegisterGroup(EcsGroup group) => RegisterGroup(group);
+        internal void RegisterGroup(EcsGroup group)
         {
             _groups.Add(new WeakReference<EcsGroup>(group));
         }
@@ -265,7 +262,8 @@ namespace DCFApixels.DragonECS
                 return new EcsGroup(this);
             return _groupsPool.Pop();
         }
-        void IEcsTable.ReleaseGroup(EcsGroup group)
+        void IEcsTable.ReleaseGroup(EcsGroup group) => ReleaseGroup(group);
+        internal void ReleaseGroup(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (group.World != this)
@@ -275,6 +273,13 @@ namespace DCFApixels.DragonECS
             _groupsPool.Push(group);
         }
         #endregion
+    }
+
+    public abstract class EcsWorld<TWorldArchetype> : EcsWorld
+        where TWorldArchetype : EcsWorld<TWorldArchetype>
+    {
+        public override Type Archetype => typeof(TWorldArchetype);
+        public EcsWorld(EcsPipeline pipline) : base(pipline) { }
     }
 
     #region Utils

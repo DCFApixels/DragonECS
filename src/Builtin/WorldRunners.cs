@@ -63,23 +63,23 @@
 
     public interface IEcsWorldCreate : IEcsSystem
     {
-        public void OnWorldCreate(IEcsWorld world);
+        public void OnWorldCreate(EcsWorld world);
     }
     public interface IEcsWorldDestroy : IEcsSystem
     {
-        public void OnWorldDestroy(IEcsWorld world);
+        public void OnWorldDestroy(EcsWorld world);
     }
     public interface IEcsWorldLifecycle : IEcsWorldCreate, IEcsWorldDestroy { }
     public sealed class EcsWorldCreateRunner : EcsRunner<IEcsWorldCreate>, IEcsWorldCreate
     {
-        public void OnWorldCreate(IEcsWorld world)
+        public void OnWorldCreate(EcsWorld world)
         {
             foreach (var item in targets) item.OnWorldCreate(world);
         }
     }
     public sealed class EcsWorldDestryRunner : EcsRunner<IEcsWorldDestroy>, IEcsWorldDestroy
     {
-        public void OnWorldDestroy(IEcsWorld world)
+        public void OnWorldDestroy(EcsWorld world)
         {
             foreach (var item in targets) item.OnWorldDestroy(world);
         }

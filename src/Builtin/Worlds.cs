@@ -13,6 +13,6 @@
     }
     public sealed class EcsEventWrold : EcsEdgeWorld<EcsEventWrold>
     {
-        public EcsEventWrold(IEcsWorld firstTarget, IEcsWorld secondTarget, EcsPipeline pipeline = null) : base(firstTarget, secondTarget, pipeline) { }
+        public EcsEventWrold(EcsWorld firstTarget, EcsWorld secondTarget, EcsPipeline pipeline = null) : base(firstTarget, secondTarget, pipeline) { }
     }
 }

@@ -45,7 +45,7 @@ namespace DCFApixels.DragonECS.Test
     {
         public Type ComponentType => throw new NotImplementedException();
 
-        public IEcsWorld World => throw new NotImplementedException();
+        public EcsWorld World => throw new NotImplementedException();
 
         public int Count => throw new NotImplementedException();
 
@@ -86,7 +86,7 @@ namespace DCFApixels.DragonECS.Test
             throw new NotImplementedException();
         }
 
-        void IEcsPool.Write(int entityID)
+        void IEcsPool.Write(int entityID, object data)
         {
             throw new NotImplementedException();
         }
