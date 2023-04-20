@@ -41,7 +41,7 @@ namespace DCFApixels.DragonECS
         private int[] _delEntBuffer;
         private int _delEntBufferCount;
 
-        private IEcsPool[] _pools;
+        private EcsPoolBase[] _pools;
         private EcsNullPool _nullPool;
 
         private EcsQueryBase[] _queries;
@@ -55,7 +55,7 @@ namespace DCFApixels.DragonECS
         private IEcsEntityDestroy _entityDestry;
 
         #region GetterMethods
-        public ReadOnlySpan<IEcsPool> GetAllPools() => new ReadOnlySpan<IEcsPool>(_pools);
+        public ReadOnlySpan<EcsPoolBase> GetAllPools() => new ReadOnlySpan<EcsPoolBase>(_pools);
         public int GetComponentID<T>() => WorldMetaStorage.GetComponentId<T>(_worldArchetypeID);////ComponentType<TWorldArchetype>.uniqueID;
 
         #endregion
@@ -83,7 +83,7 @@ namespace DCFApixels.DragonECS
             if (!_pipeline.IsInit) pipline.Init();
             _entityDispenser = new IntDispenser(0);
             _nullPool = EcsNullPool.instance;
-            _pools = new IEcsPool[512];
+            _pools = new EcsPoolBase[512];
             ArrayUtility.Fill(_pools, _nullPool);
 
             _gens = new short[512];
@@ -121,7 +121,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetPool
-        public IEcsPool<TComponent> GetOrCreatePool<TComponent>(Func<EcsWorld, IEcsPool> builder) where TComponent : struct
+        public TPool GetPool<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase, new()
         {
             int uniqueID = WorldMetaStorage.GetComponentId<TComponent>(_worldArchetypeID);
 
@@ -133,9 +133,15 @@ namespace DCFApixels.DragonECS
             }
 
             if (_pools[uniqueID] == _nullPool)
-                _pools[uniqueID] = builder(this);
+            {
+                var pool = new TPool();
+                _pools[uniqueID] = pool;
+                pool.InvokeInit(this);
 
-            return (IEcsPool<TComponent>)_pools[uniqueID];
+                //EcsDebug.Print(pool.GetType().FullName);
+            }
+
+            return (TPool)_pools[uniqueID];
         }
         #endregion
 
@@ -202,7 +208,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 foreach (var item in _pools)
-                    item.OnWorldResize(_gens.Length);
+                    item.InvokeOnWorldResize(_gens.Length);
             }
             _gens[entityID] |= short.MinValue;
             EcsEntity entity = new EcsEntity(entityID, _gens[entityID]++, uniqueID);

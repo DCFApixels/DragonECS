@@ -22,7 +22,8 @@ namespace DCFApixels.DragonECS
         public readonly short world;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ent ToEnt() => EcsWorld.Worlds[world].EntityIsAlive(id, gen) ? new ent(id) : default;
+        //public ent ToEnt() => EcsWorld.Worlds[world].EntityIsAlive(id, gen) ? new ent(id) : default;
+        public ent ToEnt() => new ent(id);
 
         #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -72,10 +73,6 @@ namespace DCFApixels.DragonECS
     public readonly partial struct EcsEntity
     {
         private static EcsProfilerMarker _IsNullMarker = new EcsProfilerMarker("EcsEntity.IsNull");
-        private static EcsProfilerMarker _ReadMarker = new EcsProfilerMarker("EcsEntity.Read");
-        private static EcsProfilerMarker _WriteMarker = new EcsProfilerMarker("EcsEntity.Write");
-        private static EcsProfilerMarker _HasMarker = new EcsProfilerMarker("EcsEntity.Has");
-        private static EcsProfilerMarker _DelMarker = new EcsProfilerMarker("EcsEntity.Del");
 
         public bool IsNull
         {
@@ -85,43 +82,6 @@ namespace DCFApixels.DragonECS
                 //using (_IsNullMarker.Auto())
                 return this == NULL;
             }
-        }
-
-        public ref readonly T Read<T>()
-            where T : struct
-        {
-            //using (_ReadMarker.Auto())
-            return ref EcsWorld.Worlds[world].GetOrCreatePool<T>().Read(id);
-        }
-
-        public ref T Add<T>()
-            where T : struct
-        {
-            return ref EcsWorld.Worlds[world].GetOrCreatePool<T>().Add(id);
-        }
-        public ref T Write<T>()
-            where T : struct
-        {
-            //using (_WriteMarker.Auto())
-            return ref EcsWorld.Worlds[world].GetOrCreatePool<T>().Write(id);
-        }
-        public bool Has<T>()
-            where T : struct
-        {
-            //using (_HasMarker.Auto())
-            return EcsWorld.Worlds[world].GetOrCreatePool<T>().Has(id);
-        }
-        public bool NotHas<T>()
-            where T : struct
-        {
-            //using (_HasMarker.Auto())
-            return EcsWorld.Worlds[world].GetOrCreatePool<T>().Has(id);
-        }
-        public void Del<T>()
-            where T : struct
-        {
-            //using (_DelMarker.Auto())
-            EcsWorld.Worlds[world].GetOrCreatePool<T>().Del(id);
         }
     } 
 

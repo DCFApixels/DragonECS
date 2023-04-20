@@ -15,8 +15,8 @@ namespace DCFApixels.DragonECS
 
         #region Methods
         public int GetComponentID<T>();
-        public IEcsPool<TComponent> GetOrCreatePool<TComponent>(Func<EcsWorld, IEcsPool> builder) where TComponent : struct;
-        public ReadOnlySpan<IEcsPool> GetAllPools();
+        public TPool GetPool<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase, new();
+        public ReadOnlySpan<EcsPoolBase> GetAllPools();
         public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQueryBase;
         public TQuery Select<TQuery>() where TQuery : EcsQueryBase;
 
