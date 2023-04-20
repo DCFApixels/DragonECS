@@ -84,54 +84,54 @@ namespace DCFApixels.DragonECS
 
    // #region select_readonly
    // [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 8)]
-   // public readonly struct inc_readonly_<TComponent> : IEcsQueryReadonlyField<TComponent>
-   //     where TComponent : struct
+   // public readonly struct inc_readonly_<T> : IEcsQueryReadonlyField<T>
+   //     where T : struct
    // {
-   //     internal readonly EcsPool<TComponent> pool;
+   //     internal readonly EcsPool<T> pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     internal inc_readonly_(EcsPool<TComponent> pool) => this.pool = pool;
+   //     internal inc_readonly_(EcsPool<T> pool) => this.pool = pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public ref TComponent Read(ent entityID) => ref pool.Read(entityID.uniqueID);
+   //     public ref T Read(ent entityID) => ref pool.Read(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //     public bool Has(ent entityID) => pool.Has(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //
-   //     public static implicit operator inc_readonly_<TComponent>(EcsQueryBuilderBase buider) => buider.Include<TComponent>();
-   //     public static implicit operator inc_readonly_<TComponent>(inc_<TComponent> o) => new inc_readonly_<TComponent>(o.pool);
+   //     public static implicit operator inc_readonly_<T>(EcsQueryBuilderBase buider) => buider.Include<T>();
+   //     public static implicit operator inc_readonly_<T>(inc_<T> o) => new inc_readonly_<T>(o.pool);
    // }
    //
    // [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 8)]
-   // public readonly struct exc_readonly_<TComponent> : IEcsQueryReadonlyField<TComponent>
-   //     where TComponent : struct
+   // public readonly struct exc_readonly_<T> : IEcsQueryReadonlyField<T>
+   //     where T : struct
    // {
-   //     internal readonly EcsPool<TComponent> pool;
+   //     internal readonly EcsPool<T> pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     internal exc_readonly_(EcsPool<TComponent> pool) => this.pool = pool;
+   //     internal exc_readonly_(EcsPool<T> pool) => this.pool = pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public ref TComponent Read(ent entityID) => ref pool.Read(entityID.uniqueID);
+   //     public ref T Read(ent entityID) => ref pool.Read(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //     public bool Has(ent entityID) => pool.Has(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //
-   //     public static implicit operator exc_readonly_<TComponent>(EcsQueryBuilderBase buider) => buider.Exclude<TComponent>();
-   //     public static implicit operator exc_readonly_<TComponent>(exc_<TComponent> o) => new exc_readonly_<TComponent>(o.pool);
+   //     public static implicit operator exc_readonly_<T>(EcsQueryBuilderBase buider) => buider.Exclude<T>();
+   //     public static implicit operator exc_readonly_<T>(exc_<T> o) => new exc_readonly_<T>(o.pool);
    // }
    //
    // [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 8)]
-   // public readonly struct opt_readonly_<TComponent> : IEcsQueryReadonlyField<TComponent>
-   //     where TComponent : struct
+   // public readonly struct opt_readonly_<T> : IEcsQueryReadonlyField<T>
+   //     where T : struct
    // {
-   //     internal readonly EcsPool<TComponent> pool;
+   //     internal readonly EcsPool<T> pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     internal opt_readonly_(EcsPool<TComponent> pool) => this.pool = pool;
+   //     internal opt_readonly_(EcsPool<T> pool) => this.pool = pool;
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-   //     public ref TComponent Read(ent entityID) => ref pool.Read(entityID.uniqueID);
+   //     public ref T Read(ent entityID) => ref pool.Read(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //     public bool Has(ent entityID) => pool.Has(entityID.uniqueID);
    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
    //
-   //     public static implicit operator opt_readonly_<TComponent>(EcsQueryBuilderBase buider) => buider.Optional<TComponent>();
-   //     public static implicit operator opt_readonly_<TComponent>(opt_<TComponent> o) => new opt_readonly_<TComponent>(o.pool);
+   //     public static implicit operator opt_readonly_<T>(EcsQueryBuilderBase buider) => buider.Optional<T>();
+   //     public static implicit operator opt_readonly_<T>(opt_<T> o) => new opt_readonly_<T>(o.pool);
    // }
    // #endregion
    //

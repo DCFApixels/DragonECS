@@ -77,12 +77,20 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
+    public abstract class EcsHierarchyQuery : EcsQueryBase
+    {
+        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsHierarchyQuery.Execute");
 
-    public abstract class EcsJoinQuery : EcsQueryBase
+        protected override void OnBuildAfter() { }
+        public override void Execute()
+        {
+        }
+    }
+    public abstract class EcsGraphQuery : EcsQueryBase
     {
         private EcsPool<Edge> attachPool;
 
-        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.Where");
+        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsGraphQuery.Execute");
         protected sealed override void OnBuildAfter()
         {
             attachPool = World.GetPool<Edge>();
@@ -102,7 +110,7 @@ namespace DCFApixels.DragonECS
 
     public abstract class EcsQuery : EcsQueryBase
     {
-        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.Where");
+        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.Execute");
         protected sealed override void OnBuildAfter() { }
         public sealed override void Execute()
         {

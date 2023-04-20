@@ -16,7 +16,7 @@ namespace DCFApixels.DragonECS
         #region Methods
         public int GetComponentID<T>();
         public EcsPool<T> GetPool<T>() where T : struct;
-        public ReadOnlySpan<EcsPool> GetAllPools();
+        public ReadOnlySpan<IEcsPool> GetAllPools();
         public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQueryBase;
         public TQuery Select<TQuery>() where TQuery : EcsQueryBase;
 

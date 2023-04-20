@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using static DCFApixels.DragonECS.WorldMetaStorage;
 
 namespace DCFApixels.DragonECS
 {
@@ -43,7 +44,7 @@ namespace DCFApixels.DragonECS
         where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 2;
-        private readonly int _worldArchetypeID = ComponentIndexer.GetWorldId<TWorldArchetype>();
+        private readonly int _worldArchetypeID = WorldMetaStorage.GetWorldId<TWorldArchetype>();
 
         private IntDispenser _entityDispenser;
         private int _entitiesCount;
@@ -52,10 +53,12 @@ namespace DCFApixels.DragonECS
         //private short[] _componentCounts; //TODO
         private EcsGroup _allEntites;
 
-        private int[] _delEntBuffer; //буфер удаления нужен для того чтобы запускать некоторые процесыы связанные с удалением сущьности не по одному при каждом удалении, а пачкой
+        //буфер удаления откладывает освобождение андишников сущьностей.
+        //Нужен для того чтобы запускать некоторые процесыы связанные с удалением сущьности не по одному при каждом удалении, а пачкой
+        private int[] _delEntBuffer;
         private int _delEntBufferCount;
 
-        private EcsPool[] _pools;
+        private IEcsPool[] _pools;
         private EcsNullPool _nullPool;
 
         private EcsQueryBase[] _queries;
@@ -65,13 +68,13 @@ namespace DCFApixels.DragonECS
         private List<WeakReference<EcsGroup>> _groups;
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
 
-        private PoolRunnres _poolRunnres;
+        private PoolRunners _poolRunners;
         private IEcsEntityCreate _entityCreate;
         private IEcsEntityDestroy _entityDestry;
 
         #region GetterMethods
-        public ReadOnlySpan<EcsPool> GetAllPools() => new ReadOnlySpan<EcsPool>(_pools);
-        public int GetComponentID<T>() => ComponentIndexer.GetComponentId<T>(_worldArchetypeID);////ComponentType<T>.uniqueID;
+        public ReadOnlySpan<IEcsPool> GetAllPools() => new ReadOnlySpan<IEcsPool>(_pools);
+        public int GetComponentID<T>() => WorldMetaStorage.GetComponentId<T>(_worldArchetypeID);////ComponentType<T>.uniqueID;
 
         #endregion
 
@@ -91,7 +94,7 @@ namespace DCFApixels.DragonECS
             if (!_pipeline.IsInit) pipline.Init();
             _entityDispenser = new IntDispenser(0);
             _nullPool = EcsNullPool.instance;
-            _pools = new EcsPool[512];
+            _pools = new IEcsPool[512];
             ArrayUtility.Fill(_pools, _nullPool);
 
             _gens = new short[512];
@@ -102,9 +105,9 @@ namespace DCFApixels.DragonECS
             _groups = new List<WeakReference<EcsGroup>>();
             _allEntites = GetGroupFromPool();
 
-            _queries = new EcsQuery[QueryType.capacity];
+            _queries = new EcsQuery[128];
 
-            _poolRunnres = new PoolRunnres(_pipeline);
+            _poolRunners = new PoolRunners(_pipeline);
             _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
             _entityDestry = _pipeline.GetRunner<IEcsEntityDestroy>();
             _pipeline.GetRunner<IEcsInject<TWorldArchetype>>().Inject((TWorldArchetype)this);
@@ -114,9 +117,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetPool
-        public EcsPool<T> GetPool<T>() where T : struct
+        public EcsPool<TComponent> GetPool<TComponent>() 
+            where TComponent : struct
         {
-            int uniqueID = ComponentIndexer.GetComponentId<T>(_worldArchetypeID);
+            int uniqueID = WorldMetaStorage.GetComponentId<TComponent>(_worldArchetypeID);
 
             if (uniqueID >= _pools.Length)
             {
@@ -126,10 +130,9 @@ namespace DCFApixels.DragonECS
             }
 
             if (_pools[uniqueID] == _nullPool)
-            {
-                _pools[uniqueID] = new EcsPool<T>(this, uniqueID, 512, _poolRunnres);
-            }
-            return (EcsPool<T>)_pools[uniqueID];
+                _pools[uniqueID] = new EcsPool<TComponent>(this, 512, _poolRunners);
+
+            return (EcsPool<TComponent>)_pools[uniqueID];
         }
         #endregion
 
@@ -142,9 +145,9 @@ namespace DCFApixels.DragonECS
         }
         public TQuery Select<TQuery>() where TQuery : EcsQueryBase
         {
-            int uniqueID = QueryType<TQuery>.uniqueID;
-            if (_queries.Length < QueryType.capacity)
-                Array.Resize(ref _queries, QueryType.capacity);
+            int uniqueID = WorldMetaStorage.GetQueryId<TQuery>(_worldArchetypeID);
+            if (uniqueID >= _queries.Length)
+                Array.Resize(ref _queries, _queries.Length << 1);
             if (_queries[uniqueID] == null)
                 _queries[uniqueID] = EcsQueryBase.Builder.Build<TQuery>(this);
             return (TQuery)_queries[uniqueID];
@@ -274,53 +277,37 @@ namespace DCFApixels.DragonECS
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (group.World != this)
-                throw new ArgumentException("groupFilter.World != this");
+                throw new ArgumentException("groupFilter.WorldIndex != this");
 #endif
             group.Clear();
             _groupsPool.Push(group);
-        }
-        #endregion
-
-        #region Utils
-        internal static class QueryType
-        {
-            public static int increment = 0;
-            public static int capacity = 128;
-        }
-        internal static class QueryType<TQuery>
-        {
-            public static int uniqueID;
-            static QueryType()
-            {
-                uniqueID = QueryType.increment++;
-                if (QueryType.increment > QueryType.capacity)
-                    QueryType.capacity <<= 1;
-            }
         }
         #endregion
     }
 
     #region Utils
     [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 24)]
-    internal readonly struct PoolRunnres
+    internal readonly struct PoolRunners
     {
         public readonly IEcsComponentAdd add;
         public readonly IEcsComponentWrite write;
         public readonly IEcsComponentDel del;
 
-        public PoolRunnres(EcsPipeline pipeline)
+        public PoolRunners(EcsPipeline pipeline)
         {
             add = pipeline.GetRunner<IEcsComponentAdd>();
             write = pipeline.GetRunner<IEcsComponentWrite>();
             del = pipeline.GetRunner<IEcsComponentDel>();
         }
     }
-    public static class ComponentIndexer
+    public static class WorldMetaStorage
     {
         private static List<Resizer> resizer = new List<Resizer>();
         private static int tokenCount = 0;
         private static int[] componentCounts = new int[0];
-        private static class World<TWorldArchetype>
+        private static int[] queryCounts = new int[0];
+
+        private static class WorldIndex<TWorldArchetype>
         {
             public static int id = GetToken();
         }
@@ -328,23 +315,30 @@ namespace DCFApixels.DragonECS
         {
             tokenCount++;
             Array.Resize(ref componentCounts, tokenCount);
+            Array.Resize(ref queryCounts, tokenCount);
             foreach (var item in resizer)
                 item.Resize(tokenCount);
             return tokenCount - 1;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetWorldId<TWorldArchetype>() => World<TWorldArchetype>.id;
+        public static int GetWorldId<TWorldArchetype>() => WorldIndex<TWorldArchetype>.id;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetComponentId<TComponent>(int worldID) => Component<TComponent>.Get(worldID);
+        public static int GetComponentId<T>(int worldID) => Component<T>.Get(worldID);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetQueryId<T>(int worldID) => Query<T>.Get(worldID);
         private abstract class Resizer
         {
             public abstract void Resize(int size);
         }
         private sealed class Resizer<T> : Resizer
         {
-            public override void Resize(int size) => Array.Resize(ref Component<T>.ids, size);
+            public override void Resize(int size)
+            {
+                Array.Resize(ref Component<T>.ids, size);
+                Array.Resize(ref Query<T>.ids, size);
+            }
         }
-        private static class Component<TComponent>
+        private static class Component<T>
         {
             public static int[] ids;
             static Component()
@@ -352,7 +346,7 @@ namespace DCFApixels.DragonECS
                 ids = new int[tokenCount];
                 for (int i = 0; i < ids.Length; i++)
                     ids[i] = -1;
-                resizer.Add(new Resizer<TComponent>());
+                resizer.Add(new Resizer<T>());
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static int Get(int token)
@@ -360,6 +354,25 @@ namespace DCFApixels.DragonECS
                 ref int id = ref ids[token];
                 if (id < 0)
                     id = componentCounts[token]++;
+                return id;
+            }
+        }
+        private static class Query<T>
+        {
+            public static int[] ids;
+            static Query()
+            {
+                ids = new int[tokenCount];
+                for (int i = 0; i < ids.Length; i++)
+                    ids[i] = -1;
+                resizer.Add(new Resizer<T>());
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static int Get(int token)
+            {
+                ref int id = ref ids[token];
+                if (id < 0)
+                    id = queryCounts[token]++;
                 return id;
             }
         }

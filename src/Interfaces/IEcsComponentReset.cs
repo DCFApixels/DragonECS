@@ -1,34 +1,33 @@
-﻿using System.Runtime.CompilerServices;
-using System;
+﻿using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
     public interface IEcsComponentReset<T>
     {
         public void Reset(ref T component);
-
-
-        private static IEcsComponentReset<T> _handler;
-        public static IEcsComponentReset<T> Handler
+    }
+    public static class EcsComponentResetHandler<T>
+    {
+        public static readonly IEcsComponentReset<T> instance;
+        public static readonly bool isHasHandler;
+        static EcsComponentResetHandler()
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
+            Type targetType = typeof(T);
+            if (targetType.GetInterfaces().Contains(typeof(IEcsComponentReset<>).MakeGenericType(targetType)))
             {
-                if(_handler == null)
-                {
-                    Type targetType = typeof(T);
-                    if (targetType.GetInterfaces().Contains(typeof(IEcsComponentReset<>).MakeGenericType(targetType)))
-                        _handler = (IEcsComponentReset<T>)Activator.CreateInstance(typeof(ComponentResetHandler<>).MakeGenericType(targetType));
-                    else
-                        _handler = new ComponentResetDummy<T>();
-                }
-                return _handler;
+                instance = (IEcsComponentReset<T>)Activator.CreateInstance(typeof(ComponentResetHandler<>).MakeGenericType(targetType));
+                isHasHandler = true;
+            }
+            else
+            {
+                instance = new ComponentResetDummyHandler<T>();
+                isHasHandler = false;
             }
         }
     }
-
-    internal sealed class ComponentResetDummy<T> : IEcsComponentReset<T>
+    internal sealed class ComponentResetDummyHandler<T> : IEcsComponentReset<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reset(ref T component) => component = default;

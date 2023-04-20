@@ -23,7 +23,7 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -33,8 +33,8 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -44,9 +44,9 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -56,10 +56,10 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -69,11 +69,11 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T4>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T4>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -83,12 +83,12 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T4>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T5>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T4>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T5>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -98,13 +98,13 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T4>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T5>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T6>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T4>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T5>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T6>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -114,14 +114,14 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T4>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T5>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T6>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T7>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T4>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T5>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T6>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T7>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -131,15 +131,15 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T4>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T5>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T6>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T7>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T8>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T4>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T5>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T6>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T7>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T8>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -149,16 +149,16 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T4>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T5>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T6>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T7>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T8>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T9>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T4>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T5>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T6>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T7>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T8>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T9>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -168,17 +168,17 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T4>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T5>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T6>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T7>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T8>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T9>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T10>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T4>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T5>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T6>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T7>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T8>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T9>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T10>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -188,18 +188,18 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T4>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T5>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T6>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T7>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T8>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T9>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T10>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T11>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T4>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T5>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T6>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T7>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T8>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T9>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T10>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T11>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -217,7 +217,7 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -227,8 +227,8 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -238,9 +238,9 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -250,10 +250,10 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -263,11 +263,11 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T4>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T4>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
@@ -277,47 +277,23 @@ namespace DCFApixels.DragonECS
         {
             return new int[]
             {
-                ComponentIndexer.GetComponentId<T0>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T1>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T2>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T3>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T4>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
-                ComponentIndexer.GetComponentId<T5>(ComponentIndexer.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T0>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T1>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T2>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T3>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T4>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
+                WorldMetaStorage.GetComponentId<T5>(WorldMetaStorage.GetWorldId<TWorldArchetype>()),
             };
         }
     }
     #endregion
 
     #region EcsMask
-    public class EcsComponentMask
-    {
-        internal Type WorldArchetypeType;
-        internal int[] Inc;
-        internal int[] Exc;
-        public override string ToString()
-        {
-            return $"Inc({string.Join(", ", Inc)}) Exc({string.Join(", ", Exc)})";
-        }
-    }
 
 
     public sealed class EcsMask : EcsComponentMask
     {
-       // internal readonly Type WorldArchetypeType;
         internal readonly int UniqueID;
-        //internal readonly int[] Inc;
-        //internal readonly int[] Exc;
-
-        //internal int IncCount
-        //{
-        //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //    get => Inc.Length;
-        //}
-        //internal int ExcCount
-        //{
-        //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //    get => Exc.Length;
-        //}
         internal EcsMask(Type worldArchetypeType, int uniqueID, int[] inc, int[] exc)
         {
             WorldArchetypeType = worldArchetypeType;
@@ -357,43 +333,43 @@ namespace DCFApixels.DragonECS
         {
             static Activator()
             {
-            //    var inc_ = new TInc().GetComponentsIDs<TWorldArchetype>();
-            //    var exc_ = new TExc().GetComponentsIDs<TWorldArchetype>();
-            //    Array.Sort(inc_);
-            //    Array.Sort(exc_);
-            //
-            //    Type thisType = typeof(Activator<TInc, TExc>);
-            //
-            //    Type sortedIncType = typeof(TInc);
-            //    if (sortedIncType.IsGenericType)
-            //    {
-            //        Type[] sortedInc = new Type[inc_.Length];
-            //        for (int i = 0; i < sortedInc.Length; i++)
-            //            sortedInc[i] =  EcsWorld<TWorldArchetype>.ComponentType.types[inc_[i]];
-            //        sortedIncType = sortedIncType.GetGenericTypeDefinition().MakeGenericType(sortedInc);
-            //    }
-            //    Type sortedExcType = typeof(TExc);
-            //    if (sortedExcType.IsGenericType)
-            //    {
-            //        Type[] sortedExc = new Type[exc_.Length];
-            //        for (int i = 0; i < sortedExc.Length; i++)
-            //            sortedExc[i] = EcsWorld<TWorldArchetype>.ComponentType.types[exc_[i]];
-            //        sortedExcType = sortedExcType.GetGenericTypeDefinition().MakeGenericType(sortedExc);
-            //    }
-            //
-            //    Type targetType = typeof(Activator<,>).MakeGenericType(typeof(TWorldArchetype), sortedIncType, sortedExcType);
-            //
-            //    if (targetType != thisType)
-            //    {
-            //        instance = (EcsMask)targetType.GetField(nameof(instance), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).GetValue(null);
-            //        return;
-            //    }
-            //
-            //    var uniqueID = _count++;
-            //    if (_count >= _capacity)
-            //        _capacity <<= 1;
-            //
-            //    instance = new EcsMask(typeof(TWorldArchetype), uniqueID, inc_, exc_);
+                var inc_ = new TInc().GetComponentsIDs<TWorldArchetype>();
+                var exc_ = new TExc().GetComponentsIDs<TWorldArchetype>();
+                Array.Sort(inc_);
+                Array.Sort(exc_);
+            
+                Type thisType = typeof(Activator<TInc, TExc>);
+            
+                Type sortedIncType = typeof(TInc);
+                if (sortedIncType.IsGenericType)
+                {
+                    Type[] sortedInc = new Type[inc_.Length];
+                    for (int i = 0; i < sortedInc.Length; i++)
+                        sortedInc[i] =  EcsWorld<TWorldArchetype>.ComponentType.types[inc_[i]];
+                    sortedIncType = sortedIncType.GetGenericTypeDefinition().MakeGenericType(sortedInc);
+                }
+                Type sortedExcType = typeof(TExc);
+                if (sortedExcType.IsGenericType)
+                {
+                    Type[] sortedExc = new Type[exc_.Length];
+                    for (int i = 0; i < sortedExc.Length; i++)
+                        sortedExc[i] = EcsWorld<TWorldArchetype>.ComponentType.types[exc_[i]];
+                    sortedExcType = sortedExcType.GetGenericTypeDefinition().MakeGenericType(sortedExc);
+                }
+            
+                Type targetType = typeof(Activator<,>).MakeGenericType(typeof(TWorldArchetype), sortedIncType, sortedExcType);
+            
+                if (targetType != thisType)
+                {
+                    instance = (EcsMask)targetType.GetField(nameof(instance), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).GetValue(null);
+                    return;
+                }
+            
+                var uniqueID = _count++;
+                if (_count >= _capacity)
+                    _capacity <<= 1;
+            
+                instance = new EcsMask(typeof(TWorldArchetype), uniqueID, inc_, exc_);
             }
 
             public readonly static EcsMask instance;

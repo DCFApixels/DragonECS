@@ -264,7 +264,7 @@ namespace DCFApixels.DragonECS
         public void CopyFrom(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (group.World != _source) throw new ArgumentException("groupFilter.World != World");
+            if (group.World != _source) throw new ArgumentException("groupFilter.WorldIndex != WorldIndex");
 #endif
             if(_count > 0)
                 Clear();
@@ -287,7 +287,7 @@ namespace DCFApixels.DragonECS
         public void UnionWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (_source != group.World) throw new ArgumentException("World != groupFilter.World");
+            if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in group)
                 if (!Contains(item.id))
@@ -301,7 +301,7 @@ namespace DCFApixels.DragonECS
         public void ExceptWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (_source != group.World) throw new ArgumentException("World != groupFilter.World");
+            if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in this)
                 if (group.Contains(item.id))
@@ -315,7 +315,7 @@ namespace DCFApixels.DragonECS
         public void AndWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (World != group.World) throw new ArgumentException("World != groupFilter.World");
+            if (World != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in this)
                 if (!group.Contains(item.id))
@@ -329,7 +329,7 @@ namespace DCFApixels.DragonECS
         public void XorWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (_source != group.World) throw new ArgumentException("World != groupFilter.World");
+            if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in group)
                 if (Contains(item.id))
@@ -345,7 +345,7 @@ namespace DCFApixels.DragonECS
         public static EcsGroup Except(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (a._source != b._source) throw new ArgumentException("a.World != b.World");
+            if (a._source != b._source) throw new ArgumentException("a.WorldIndex != b.WorldIndex");
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
@@ -359,7 +359,7 @@ namespace DCFApixels.DragonECS
         public static EcsGroup And(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (a._source != b._source) throw new ArgumentException("a.World != b.World");
+            if (a._source != b._source) throw new ArgumentException("a.WorldIndex != b.WorldIndex");
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
@@ -373,7 +373,7 @@ namespace DCFApixels.DragonECS
         public static EcsGroup Union(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (a._source != b._source) throw new ArgumentException("a.World != b.World");
+            if (a._source != b._source) throw new ArgumentException("a.WorldIndex != b.WorldIndex");
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
