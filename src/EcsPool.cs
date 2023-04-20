@@ -15,7 +15,7 @@ namespace DCFApixels.DragonECS
 
         #region Methods
         public void Add(int entityID);
-        public void Write(int entityID);
+        public void Write(int entityID, object data);
         public bool Has(int entityID);
         public void Del(int entityID);
         #endregion
@@ -27,10 +27,9 @@ namespace DCFApixels.DragonECS
     public interface IEcsPool<T> : IEcsPool where T : struct
     {
         public new ref T Add(int entityID);
-        public ref T Read(int entityID);
-        public new ref T Write(int entityID);
-    }
+        public ref T Write(int entityID);
 
+    }
     public struct NullComponent { }
     public sealed class EcsNullPool : IEcsPool<NullComponent>
     {
@@ -53,7 +52,7 @@ namespace DCFApixels.DragonECS
         public ref NullComponent Read(int entity) => ref fakeComponent;
         public ref NullComponent Write(int entity) => ref fakeComponent;
         public void Del(int index) { }
-        void IEcsPool.Write(int entityID) { }
+        void IEcsPool.Write(int entityID, object data) { }
         void IEcsPool.Add(int entityID) { }
         void IEcsPool.OnWorldResize(int newSize) { }
         #endregion
@@ -169,9 +168,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IEcsPool
-        void IEcsPool.Write(int entityID)
+        void IEcsPool.Write(int entityID, object data)
         {
-            Write(entityID);
+            Write(entityID) = (T)data;
         }
         void IEcsPool.Add(int entityID)
         {

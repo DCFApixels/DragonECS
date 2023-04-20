@@ -69,7 +69,7 @@ namespace DCFApixels.DragonECS
             {
                 _inc.Sort();
                 _exc.Sort();
-                mask = new EcsQueryMask(_world.ArchetypeType, _inc.ToArray(), _exc.ToArray());
+                mask = new EcsQueryMask(_world.Archetype, _inc.ToArray(), _exc.ToArray());
                 _world = null;
                 _inc = null;
                 _exc = null;
@@ -148,7 +148,7 @@ namespace DCFApixels.DragonECS
     {
         public EcsQueryMask(Type worldArchetypeType, int[] inc, int[] exc)
         {
-            WorldArchetypeType = worldArchetypeType;
+            WorldArchetype = worldArchetypeType;
             Inc = inc;
             Exc = exc;
         }

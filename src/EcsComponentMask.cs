@@ -4,7 +4,7 @@ namespace DCFApixels.DragonECS
 {
     public class EcsComponentMask
     {
-        internal Type WorldArchetypeType;
+        internal Type WorldArchetype;
         internal int[] Inc;
         internal int[] Exc;
         public override string ToString()

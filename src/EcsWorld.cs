@@ -38,7 +38,7 @@ namespace DCFApixels.DragonECS
             _worldIdDispenser.Release(uniqueID);
         }
     }
-
+    
     public abstract class EcsWorld<TWorldArchetype> : EcsWorld, IEcsWorld 
         where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
@@ -73,12 +73,12 @@ namespace DCFApixels.DragonECS
 
         #region GetterMethods
         public ReadOnlySpan<IEcsPool> GetAllPools() => new ReadOnlySpan<IEcsPool>(_pools);
-        public int GetComponentID<T>() => WorldMetaStorage.GetComponentId<T>(_worldArchetypeID);////ComponentType<T>.uniqueID;
+        public int GetComponentID<T>() => WorldMetaStorage.GetComponentId<T>(_worldArchetypeID);////ComponentType<TWorldArchetype>.uniqueID;
 
         #endregion
 
         #region Properties
-        public Type ArchetypeType => typeof(TWorldArchetype);
+        public Type Archetype => typeof(TWorldArchetype);
         public int UniqueID => uniqueID;
         public int Count => _entitiesCount;
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
@@ -109,15 +109,13 @@ namespace DCFApixels.DragonECS
             _poolRunners = new PoolRunners(_pipeline);
             _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
             _entityDestry = _pipeline.GetRunner<IEcsEntityDestroy>();
-            _pipeline.GetRunner<IEcsInject<TWorldArchetype>>().Inject((TWorldArchetype)this);
             _pipeline.GetRunner<IEcsInject<IEcsWorld>>().Inject(this);
             _pipeline.GetRunner<IEcsWorldCreate>().OnWorldCreate(this);
         }
         #endregion
 
         #region GetPool
-        public EcsPool<TComponent> GetPool<TComponent>() 
-            where TComponent : struct
+        public EcsPool<TComponent> GetPool<TComponent>() where TComponent : struct
         {
             int uniqueID = WorldMetaStorage.GetComponentId<TComponent>(_worldArchetypeID);
 
@@ -157,7 +155,7 @@ namespace DCFApixels.DragonECS
         public bool IsMaskCompatible(EcsComponentMask mask, int entityID)
         {
 #if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (mask.WorldArchetypeType != typeof(TWorldArchetype))
+            if (mask.WorldArchetype != Archetype)
                 throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TTableArhetype)");
 #endif
             for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
@@ -301,9 +299,11 @@ namespace DCFApixels.DragonECS
         private static int[] componentCounts = new int[0];
         private static int[] queryCounts = new int[0];
 
+        private static Dictionary<Type, int> _worldIds = new Dictionary<Type, int>();
+
         private static class WorldIndex<TWorldArchetype>
         {
-            public static int id = GetToken();
+            public static int id = GetWorldId(typeof(TWorldArchetype));
         }
         private static int GetToken()
         {
@@ -313,6 +313,16 @@ namespace DCFApixels.DragonECS
             foreach (var item in resizer)
                 item.Resize(tokenCount);
             return tokenCount - 1;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetWorldId(Type archetype)
+        {
+            if(_worldIds.TryGetValue(archetype, out int id) == false)
+            {
+                id = GetToken();
+                _worldIds.Add(archetype, id);
+            }
+            return id;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetWorldId<TWorldArchetype>() => WorldIndex<TWorldArchetype>.id;

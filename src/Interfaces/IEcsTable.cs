@@ -7,7 +7,7 @@ namespace DCFApixels.DragonECS
     {
         #region Properties
         /// <summary>Table Archetype</summary>
-        public Type ArchetypeType { get; }
+        public Type Archetype { get; }
         public int Count { get; }
         public int Capacity { get; }
         public EcsReadonlyGroup Entities => default;
