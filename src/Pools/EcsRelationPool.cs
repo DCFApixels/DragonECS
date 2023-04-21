@@ -31,12 +31,11 @@ namespace DCFApixels.DragonECS
         protected override void Init(EcsWorld world)
         {
             _source = world;
+            _poolRunners = new PoolRunners(world.Pipeline);
 
             _entityFlags = new bool[world.Capacity];
             _items = new T[world.Capacity];
             _count = 0;
-
-            _poolRunners = new PoolRunners(world.Pipeline);
         }
         #endregion
 
@@ -125,10 +124,22 @@ namespace DCFApixels.DragonECS
     }
     public static class EcsRelationPoolExt
     {
-        public static EcsRelationPool<TRelationComponent> GetPool<TRelationComponent>(this EcsWorld self)
-            where TRelationComponent : struct, IEcsRelationComponent
+        public static EcsRelationPool<TRelationComponent> GetPool<TRelationComponent>(this EcsWorld self) where TRelationComponent : struct, IEcsRelationComponent
         {
             return self.GetPool<TRelationComponent, EcsRelationPool<TRelationComponent>>();
-        } 
+        }
+
+        public static EcsRelationPool<TRelationComponent> Include<TRelationComponent>(this EcsQueryBuilderBase self) where TRelationComponent : struct, IEcsRelationComponent
+        {
+            return self.Include<TRelationComponent, EcsRelationPool<TRelationComponent>>();
+        }
+        public static EcsRelationPool<TRelationComponent> Exclude<TRelationComponent>(this EcsQueryBuilderBase self) where TRelationComponent : struct, IEcsRelationComponent
+        {
+            return self.Exclude<TRelationComponent, EcsRelationPool<TRelationComponent>>();
+        }
+        public static EcsRelationPool<TRelationComponent> Optional<TRelationComponent>(this EcsQueryBuilderBase self) where TRelationComponent : struct, IEcsRelationComponent
+        {
+            return self.Optional<TRelationComponent, EcsRelationPool<TRelationComponent>>();
+        }
     }
 }

@@ -146,7 +146,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Queries
-        public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQueryBase
+        public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQuery
         {
             query = Select<TQuery>();
             query.Execute();

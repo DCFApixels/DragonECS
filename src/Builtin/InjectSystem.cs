@@ -52,7 +52,7 @@ namespace DCFApixels.DragonECS
         public void Inject(T obj);
     }
 
-    [DebugHide,  DebugColor(DebugColor.Gray)]
+    [DebugHide, DebugColor(DebugColor.Gray)]
     public sealed class InjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
     {
         private IEcsPreInject _preInjectchache;

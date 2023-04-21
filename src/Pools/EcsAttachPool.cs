@@ -30,12 +30,11 @@ namespace DCFApixels.DragonECS
         protected override void Init(EcsWorld world)
         {
             _source = world;
+            _poolRunners = new PoolRunners(world.Pipeline);
 
             _entityFlags = new bool[world.Capacity];
             _items = new T[world.Capacity];
             _count = 0;
-
-            _poolRunners = new PoolRunners(world.Pipeline);
         }
         #endregion
 
@@ -118,10 +117,22 @@ namespace DCFApixels.DragonECS
     }
     public static class EcsAttachComponentPoolExt
     {
-        public static EcsAttachPool<TAttachComponent> GetPool<TAttachComponent>(this EcsWorld self)
-            where TAttachComponent : struct, IEcsAttachComponent
+        public static EcsAttachPool<TAttachComponent> GetPool<TAttachComponent>(this EcsWorld self) where TAttachComponent : struct, IEcsAttachComponent
         {
             return self.GetPool<TAttachComponent, EcsAttachPool<TAttachComponent>>();
-        } 
+        }
+
+        public static EcsAttachPool<TAttachComponent> Include<TAttachComponent>(this EcsQueryBuilderBase self) where TAttachComponent : struct, IEcsAttachComponent
+        {
+            return self.Include<TAttachComponent, EcsAttachPool<TAttachComponent>>();
+        }
+        public static EcsAttachPool<TAttachComponent> Exclude<TAttachComponent>(this EcsQueryBuilderBase self) where TAttachComponent : struct, IEcsAttachComponent
+        {
+            return self.Exclude<TAttachComponent, EcsAttachPool<TAttachComponent>>();
+        }
+        public static EcsAttachPool<TAttachComponent> Optional<TAttachComponent>(this EcsQueryBuilderBase self) where TAttachComponent : struct, IEcsAttachComponent
+        {
+            return self.Optional<TAttachComponent, EcsAttachPool<TAttachComponent>>();
+        }
     }
 }

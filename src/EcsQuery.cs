@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS
 
         #region Builder
         protected virtual void Init(Builder b) { }
-        protected abstract void OnBuildAfter();
+        protected abstract void OnBuild(Builder b);
         public abstract void Execute();
         public sealed class Builder : EcsQueryBuilderBase
         {
@@ -45,8 +45,8 @@ namespace DCFApixels.DragonECS
                 }
                 newQuery.groupFilter = EcsGroup.New(world);
                 newQuery.source = world;
+                newQuery.OnBuild(builder);
                 builder.End(out newQuery.mask);
-                newQuery.OnBuildAfter();
                 return (TQuery)(object)newQuery;
             }
 
@@ -77,61 +77,16 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
-    public abstract class EcsJoinAttachQuery : EcsQueryBase
-    {
-       // private EcsPool<Edge> attachPool;
-
-        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsJoinAttachQuery.Execute");
-        protected sealed override void OnBuildAfter()
-        {
-            throw new NotImplementedException();
-           // attachPool = World.GetPool<Edge>();
-        }
-        public sealed override void Execute()
-        {
-            using (_getEnumerator.Auto())
-            {
-                throw new NotImplementedException();
-            }
-        }
-        public EcsGroup.Enumerator GetEnumerator()
-        {
-            return groupFilter.GetEnumerator();
-        } 
-    }
-    public abstract class EcsJoinRelationQuery : EcsQueryBase
-    {
-        // private EcsPool<Edge> attachPool;
-
-        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsJoinAttachQuery.Execute");
-        protected sealed override void OnBuildAfter()
-        {
-            throw new NotImplementedException();
-            // attachPool = World.GetPool<Edge>();
-        }
-        public sealed override void Execute()
-        {
-            using (_getEnumerator.Auto())
-            {
-                throw new NotImplementedException();
-            }
-        }
-        public EcsGroup.Enumerator GetEnumerator()
-        {
-            return groupFilter.GetEnumerator();
-        }
-    }
 
     public abstract class EcsQuery : EcsQueryBase
     {
-        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsQuery.Execute");
-        protected sealed override void OnBuildAfter() { }
+        private ProfilerMarker _execute = new ProfilerMarker("EcsQuery.Execute");
+        protected sealed override void OnBuild(Builder b) { }
         public sealed override void Execute()
         {
-            using (_getEnumerator.Auto())
+            using (_execute.Auto())
             {
                 var pools = World.GetAllPools();
-
                 EcsReadonlyGroup all = World.Entities;
                 groupFilter.Clear();
                 foreach (var e in all)
@@ -140,14 +95,15 @@ namespace DCFApixels.DragonECS
                     for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
                     {
                         if (!pools[mask.Inc[i]].Has(entityID))
-                            continue;
+                            goto next;
                     }
                     for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
                     {
                         if (pools[mask.Exc[i]].Has(entityID))
-                            continue;
+                            goto next;
                     }
                     groupFilter.AggressiveAdd(entityID);
+                    next: continue;
                 }
                 groupFilter.Sort();
             }

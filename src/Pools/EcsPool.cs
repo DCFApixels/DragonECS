@@ -112,7 +112,7 @@ namespace DCFApixels.DragonECS
                         Array.Resize(ref _items, _items.Length << 1);
                 }
 
-                _mapping[entityID] = itemIndex;
+                //_mapping[entityID] = itemIndex; TODO проверить что это лишнее дейсвие
                 _poolRunners.add.OnComponentAdd<T>(entityID);
             }
             _poolRunners.write.OnComponentWrite<T>(entityID);
@@ -166,10 +166,22 @@ namespace DCFApixels.DragonECS
     public interface IEcsComponent { }
     public static class EcsPoolExt
     {
-        public static EcsPool<TComponent> GetPool<TComponent>(this EcsWorld self)
-            where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> GetPool<TComponent>(this EcsWorld self) where TComponent : struct, IEcsComponent
         {
             return self.GetPool<TComponent, EcsPool<TComponent>>();
-        } 
+        }
+
+        public static EcsPool<TComponent> Include<TComponent>(this EcsQueryBuilderBase self) where TComponent : struct, IEcsComponent
+        {
+            return self.Include<TComponent, EcsPool<TComponent>>();
+        }
+        public static EcsPool<TComponent> Exclude<TComponent>(this EcsQueryBuilderBase self) where TComponent : struct, IEcsComponent
+        {
+            return self.Exclude<TComponent, EcsPool<TComponent>>();
+        }
+        public static EcsPool<TComponent> Optional<TComponent>(this EcsQueryBuilderBase self) where TComponent : struct, IEcsComponent
+        {
+            return self.Optional<TComponent, EcsPool<TComponent>>();
+        }
     }
 }

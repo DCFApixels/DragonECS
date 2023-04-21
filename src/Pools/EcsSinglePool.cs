@@ -100,6 +100,19 @@ namespace DCFApixels.DragonECS
             where TSingleComponent : struct, IEcsSingleComponent
         {
             return self.GetPool<TSingleComponent, EcsSinglePool<TSingleComponent>>();
-        } 
+        }
+
+        public static EcsSinglePool<TSingleComponent> Include<TSingleComponent>(this EcsQueryBuilderBase self) where TSingleComponent : struct, IEcsSingleComponent
+        {
+            return self.Include<TSingleComponent, EcsSinglePool<TSingleComponent>>();
+        }
+        public static EcsSinglePool<TSingleComponent> Exclude<TSingleComponent>(this EcsQueryBuilderBase self) where TSingleComponent : struct, IEcsSingleComponent
+        {
+            return self.Exclude<TSingleComponent, EcsSinglePool<TSingleComponent>>();
+        }
+        public static EcsSinglePool<TSingleComponent> Optional<TSingleComponent>(this EcsQueryBuilderBase self) where TSingleComponent : struct, IEcsSingleComponent
+        {
+            return self.Optional<TSingleComponent, EcsSinglePool<TSingleComponent>>();
+        }
     }
 }

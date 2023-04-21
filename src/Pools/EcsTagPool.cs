@@ -77,10 +77,22 @@ namespace DCFApixels.DragonECS
     public interface IEcsTagComponent { }
     public static class EcsTagPoolExt
     {
-        public static EcsTagPool<TTagComponent> GetPool<TTagComponent>(this EcsWorld self)
-            where TTagComponent : struct, IEcsTagComponent
+        public static EcsTagPool<TTagComponent> GetPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.GetPool<TTagComponent, EcsTagPool<TTagComponent>>();
-        } 
+        }
+
+        public static EcsTagPool<TTagComponent> Include<TTagComponent>(this EcsQueryBuilderBase self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.Include<TTagComponent, EcsTagPool<TTagComponent>>();
+        }
+        public static EcsTagPool<TTagComponent> Exclude<TTagComponent>(this EcsQueryBuilderBase self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.Exclude<TTagComponent, EcsTagPool<TTagComponent>>();
+        }
+        public static EcsTagPool<TTagComponent> Optional<TTagComponent>(this EcsQueryBuilderBase self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.Optional<TTagComponent, EcsTagPool<TTagComponent>>();
+        }
     }
 }

@@ -74,10 +74,22 @@ namespace DCFApixels.DragonECS
     public interface INotNullComponent { }
     public static class EcsNotNullPoolExt
     {
-        public static EcsNotNullPool<TNotNullComponent> GetPool<TNotNullComponent>(this EcsWorld self)
-            where TNotNullComponent : struct, INotNullComponent
+        public static EcsNotNullPool<TNotNullComponent> GetPool<TNotNullComponent>(this EcsWorld self) where TNotNullComponent : struct, INotNullComponent
         {
             return self.GetPool<TNotNullComponent, EcsNotNullPool<TNotNullComponent>>();
-        } 
+        }
+
+        public static EcsNotNullPool<TNotNullComponent> Include<TNotNullComponent>(this EcsQueryBuilderBase self) where TNotNullComponent : struct, INotNullComponent
+        {
+            return self.Include<TNotNullComponent, EcsNotNullPool<TNotNullComponent>>();
+        }
+        public static EcsNotNullPool<TNotNullComponent> Exclude<TNotNullComponent>(this EcsQueryBuilderBase self) where TNotNullComponent : struct, INotNullComponent
+        {
+            return self.Exclude<TNotNullComponent, EcsNotNullPool<TNotNullComponent>>();
+        }
+        public static EcsNotNullPool<TNotNullComponent> Optional<TNotNullComponent>(this EcsQueryBuilderBase self) where TNotNullComponent : struct, INotNullComponent
+        {
+            return self.Optional<TNotNullComponent, EcsNotNullPool<TNotNullComponent>>();
+        }
     }
 }
