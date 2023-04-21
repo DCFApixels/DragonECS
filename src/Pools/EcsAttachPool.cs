@@ -4,24 +4,24 @@ using Unity.Profiling;
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsSinglePool<T> : EcsPoolBase
-         where T : struct, IEcsSingleComponent
+    public sealed class EcsAttachPool<T> : EcsPoolBase
+        where T : struct, IEcsAttachComponent
     {
         private EcsWorld _source;
 
-        private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
-        //private T[] _items; //dense
-        //private int _count;
-        //private int[] _recycledItems;
-        //private int _recycledItemsCount;
-
+        private bool[] _entityFlags;// index = entityID / value = entityFlag;/ value = 0 = no entityID
+        private T[] _items; //sparse
         private int _count;
-        private T _component;
 
         private PoolRunners _poolRunners;
 
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+        private int _sanitizeTargetWorld = -1;
+#endif
+
         #region Properites
         public int Count => _count;
+        public int Capacity => _items.Length;
         public sealed override EcsWorld World => _source;
         public sealed override Type ComponentType => typeof(T);
         #endregion
@@ -30,8 +30,11 @@ namespace DCFApixels.DragonECS
         protected override void Init(EcsWorld world)
         {
             _source = world;
-            _mapping = new int[world.Capacity];
+
+            _entityFlags = new bool[world.Capacity];
+            _items = new T[world.Capacity];
             _count = 0;
+
             _poolRunners = new PoolRunners(world.Pipeline);
         }
         #endregion
@@ -42,42 +45,57 @@ namespace DCFApixels.DragonECS
         private ProfilerMarker _readMark = new ProfilerMarker("EcsPoo.Read");
         private ProfilerMarker _hasMark = new ProfilerMarker("EcsPoo.Has");
         private ProfilerMarker _delMark = new ProfilerMarker("EcsPoo.Del");
-        public ref T Add(int entityID)
+        public void Add(int entityID, EcsEntity target)
         {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (_sanitizeTargetWorld >= 0 && target.world != _sanitizeTargetWorld)
+            {
+                throw new EcsRelationsException();
+            }
+#endif
             // using (_addMark.Auto())
             //  {
-            if (_mapping[entityID] <= 0)
+            ref bool entityFlag = ref _entityFlags[entityID];
+            if (entityFlag == false)
             {
-                _mapping[entityID] = ++_count;
+                entityFlag = true;
+                _count++;
                 _poolRunners.add.OnComponentAdd<T>(entityID);
             }
-            return ref _component;
+            _poolRunners.write.OnComponentWrite<T>(entityID);
+            _items[entityID].Target = target;
             // }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Write(int entityID)
+        public void Set(int entityID, EcsEntity target)
         {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (_sanitizeTargetWorld >= 0 && target.world != _sanitizeTargetWorld)
+            {
+                throw new EcsRelationsException();
+            }
+#endif
             //   using (_writeMark.Auto())
             _poolRunners.write.OnComponentWrite<T>(entityID);
-            return ref _component;
+            _items[entityID].Target = target;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID)
         {
             //  using (_readMark.Auto())
-            return ref _component;
+            return ref _items[entityID];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public sealed override bool Has(int entityID)
         {
             //  using (_hasMark.Auto())
-            return _mapping[entityID] > 0;
+            return _entityFlags[entityID];
         }
         public void Del(int entityID)
         {
             //  using (_delMark.Auto())
             //   {
-            _mapping[entityID] = 0;
+            _entityFlags[entityID] = false;
             _count--;
             _poolRunners.del.OnComponentDel<T>(entityID);
             //   }
@@ -87,19 +105,23 @@ namespace DCFApixels.DragonECS
         #region WorldCallbacks
         protected override void OnWorldResize(int newSize)
         {
-            Array.Resize(ref _mapping, newSize);
+            Array.Resize(ref _entityFlags, newSize);
+            Array.Resize(ref _items, newSize);
         }
         protected override void OnDestroy() { }
         #endregion
     }
 
-    public interface IEcsSingleComponent { }
-    public static class EcsSinglePoolExt
+    public interface IEcsAttachComponent
     {
-        public static EcsSinglePool<TSingleComponent> GetPool<TSingleComponent>(this EcsWorld self)
-            where TSingleComponent : struct, IEcsSingleComponent
+        public EcsEntity Target { get; set; }
+    }
+    public static class EcsAttachComponentPoolExt
+    {
+        public static EcsAttachPool<TAttachComponent> GetPool<TAttachComponent>(this EcsWorld self)
+            where TAttachComponent : struct, IEcsAttachComponent
         {
-            return self.GetPool<TSingleComponent, EcsSinglePool<TSingleComponent>>();
+            return self.GetPool<TAttachComponent, EcsAttachPool<TAttachComponent>>();
         } 
     }
 }

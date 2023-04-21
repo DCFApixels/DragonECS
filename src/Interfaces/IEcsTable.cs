@@ -17,8 +17,9 @@ namespace DCFApixels.DragonECS
         public int GetComponentID<T>();
         public TPool GetPool<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase, new();
         public ReadOnlySpan<EcsPoolBase> GetAllPools();
-        public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQueryBase;
         public TQuery Select<TQuery>() where TQuery : EcsQueryBase;
+        public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQuery;
+        public TQuery Join<TQuery>(out TQuery query) where TQuery : EcsJoinAttachQuery;
 
         public bool IsMaskCompatible(EcsComponentMask mask, int entityID);
 

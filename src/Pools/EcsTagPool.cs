@@ -5,11 +5,11 @@ using Unity.Profiling;
 namespace DCFApixels.DragonECS
 {
     public sealed class EcsTagPool<T> : EcsPoolBase
-        where T : struct
+        where T : struct, IEcsTagComponent
     {
         private EcsWorld _source;
 
-        private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
+        private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private int _count;
 
         private PoolRunners _poolRunners;
@@ -25,7 +25,7 @@ namespace DCFApixels.DragonECS
         {
             _source = world;
 
-            _mapping = new int[world.Capacity];
+            _mapping = new bool[world.Capacity];
             _count = 0;
 
             _poolRunners = new PoolRunners(world.Pipeline);
@@ -40,9 +40,10 @@ namespace DCFApixels.DragonECS
         {
             // using (_addMark.Auto())
             //  {
-            if (_mapping[entityID] <= 0)
+            if (_mapping[entityID] == false)
             {
-                _mapping[entityID] = ++_count;
+                _count++;
+                _mapping[entityID] = true;
                 _poolRunners.add.OnComponentAdd<T>(entityID);
             }
             // }
@@ -51,13 +52,13 @@ namespace DCFApixels.DragonECS
         public sealed override bool Has(int entityID)
         {
             //  using (_hasMark.Auto())
-            return _mapping[entityID] > 0;
+            return _mapping[entityID];
         }
         public void Del(int entityID)
         {
             //  using (_delMark.Auto())
             //   {
-            _mapping[entityID] = 0;
+            _mapping[entityID] = false;
             _count--;
             _poolRunners.del.OnComponentDel<T>(entityID);
             //   }

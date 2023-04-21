@@ -50,7 +50,7 @@ namespace DCFApixels.DragonECS
     }
 
     public sealed class EcsPool<T> : EcsPoolBase
-        where T : struct
+        where T : struct, IEcsComponent
     {
         private EcsWorld _source;
 

@@ -50,19 +50,19 @@ namespace DCFApixels.DragonECS
                 return (TQuery)(object)newQuery;
             }
 
-            public override inc_<TComponent> Include<TComponent>() where TComponent : struct
+            public sealed override TPool Include<TComponent, TPool>()
             {
                 _inc.Add(_world.GetComponentID<TComponent>());
-                return new inc_<TComponent>(_world.GetPool<TComponent, EcsPool<TComponent>>());
+                return _world.GetPool<TComponent, TPool>();
             }
-            public override exc_<TComponent> Exclude<TComponent>() where TComponent : struct
+            public sealed override TPool Exclude<TComponent, TPool>()
             {
                 _exc.Add(_world.GetComponentID<TComponent>());
-                return new exc_<TComponent>(_world.GetPool<TComponent, EcsPool<TComponent>>());
+                return _world.GetPool<TComponent, TPool>();
             }
-            public override opt_<TComponent> Optional<TComponent>() where TComponent : struct
+            public sealed override TPool Optional<TComponent, TPool>()
             {
-                return new opt_<TComponent>(_world.GetPool<TComponent, EcsPool<TComponent>>());
+                return _world.GetPool<TComponent, TPool>();
             }
 
             private void End(out EcsQueryMask mask)
@@ -77,20 +77,11 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
-    public abstract class EcsHierarchyQuery : EcsQueryBase
+    public abstract class EcsJoinAttachQuery : EcsQueryBase
     {
-        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsHierarchyQuery.Execute");
+       // private EcsPool<Edge> attachPool;
 
-        protected override void OnBuildAfter() { }
-        public override void Execute()
-        {
-        }
-    }
-    public abstract class EcsGraphQuery : EcsQueryBase
-    {
-        private EcsPool<Edge> attachPool;
-
-        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsGraphQuery.Execute");
+        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsJoinAttachQuery.Execute");
         protected sealed override void OnBuildAfter()
         {
             throw new NotImplementedException();
@@ -107,6 +98,28 @@ namespace DCFApixels.DragonECS
         {
             return groupFilter.GetEnumerator();
         } 
+    }
+    public abstract class EcsJoinRelationQuery : EcsQueryBase
+    {
+        // private EcsPool<Edge> attachPool;
+
+        private ProfilerMarker _getEnumerator = new ProfilerMarker("EcsJoinAttachQuery.Execute");
+        protected sealed override void OnBuildAfter()
+        {
+            throw new NotImplementedException();
+            // attachPool = World.GetPool<Edge>();
+        }
+        public sealed override void Execute()
+        {
+            using (_getEnumerator.Auto())
+            {
+                throw new NotImplementedException();
+            }
+        }
+        public EcsGroup.Enumerator GetEnumerator()
+        {
+            return groupFilter.GetEnumerator();
+        }
     }
 
     public abstract class EcsQuery : EcsQueryBase
@@ -156,8 +169,8 @@ namespace DCFApixels.DragonECS
     }
     public abstract class EcsQueryBuilderBase
     {
-        public abstract inc_<TComponent> Include<TComponent>() where TComponent : struct;
-        public abstract exc_<TComponent> Exclude<TComponent>() where TComponent : struct;
-        public abstract opt_<TComponent> Optional<TComponent>() where TComponent : struct;
+        public abstract TPool Include<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase, new();
+        public abstract TPool Exclude<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase, new();
+        public abstract TPool Optional<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase, new();
     }
 }
