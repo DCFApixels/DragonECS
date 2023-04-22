@@ -33,6 +33,8 @@ namespace DCFApixels.DragonECS
             _source = world;
             _poolRunners = new PoolRunners(world.Pipeline);
 
+            _entities = EcsGroup.New(world);
+
             _entityFlags = new bool[world.Capacity];
             _items = new T[world.Capacity];
             _count = 0;

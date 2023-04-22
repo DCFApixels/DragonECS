@@ -94,7 +94,7 @@ namespace DCFApixels.DragonECS
             _groups = new List<WeakReference<EcsGroup>>();
             _allEntites = GetGroupFromPool();
 
-            _queries = new EcsQuery[128];
+            _queries = new EcsQueryBase[128];
 
             _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
             _entityDestry = _pipeline.GetRunner<IEcsEntityDestroy>();
@@ -241,7 +241,7 @@ namespace DCFApixels.DragonECS
             return new EcsEntity(entityID, _gens[entityID], uniqueID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool EntityIsAlive(int entityID, short gen)
+        public bool EntityIsAlive(int entityID, short gen) //TODO пофиксить EntityIsAlive
         {
             return _gens[entityID] == gen;
         }

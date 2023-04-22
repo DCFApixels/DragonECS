@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Unity.Profiling;
@@ -22,7 +23,16 @@ namespace DCFApixels.DragonECS
         public EcsAttachPool<TAttachComponent> Attach => _targetPool;
 
 
-        private int[] _mapping = Array.Empty<int>();
+        private int _targetWorldCapacity = -1;
+        private int _targetPoolCapacity = -1;
+
+        private int[] _mapping;
+        private int[] _counts;
+        private int[] _entites;
+        private EntityLinkedList _linkedBasket;
+
+        private bool _isJoinExecuted = false;
+        public bool IsJoinExecuted => _isJoinExecuted;
         //private LinkedList<int> 
 
 
@@ -36,30 +46,74 @@ namespace DCFApixels.DragonECS
         {
             ExecuteWhere(_targetPool.Entites, groupFilter);
         }
+        private ProfilerMarker _execute = new ProfilerMarker("Query.ExecuteJoin");
 
         public sealed override void ExecuteJoin()
         {
-            ExecuteWhere(_targetPool.Entites, groupFilter);
-            if (_isInitTargetWorlds == false) InitTargetWorlds();
+            _execute.Begin();
+            if (_isInitTargetWorlds == false)
+            {
+                InitTargetWorlds();
+                if (_isInitTargetWorlds == false)
+                    return;
+            }
 
-            if (source.Capacity != _mapping.Length)
-                _mapping = new int[World.Capacity];
+            //Подготовка массивов
+            if (_targetWorldCapacity < _targetWorld.Capacity)
+            {
+                _mapping = new int[_targetWorldCapacity];
+                _counts = new int[_targetWorldCapacity];
+                _targetWorldCapacity = _targetWorld.Capacity;
+            }
             else
-                ArrayUtility.Fill(_mapping, 0);
+            {
+                ArrayUtility.Fill(_counts, 0);
+            }
+            ArrayUtility.Fill(_mapping, -1);
 
+            if (_targetPoolCapacity < _targetPool.Capacity)
+            {
+                _entites = new int[_targetPoolCapacity];
+                _linkedBasket.Resize(_targetPoolCapacity);
+                _targetPoolCapacity = _targetPool.Capacity;
+            }
+            else
+            {
+                ArrayUtility.Fill(_entites, 0);
+            }
+            _linkedBasket.Clear();
+            //Конец подготовки массивов
+
+            ExecuteWhere();
             foreach (var e in groupFilter)
             {
-                int entityID = e.id;
+                int attachID = e.id;
+                EcsEntity attachTarget = _targetPool.Read(attachID).Target;
+                // if (!attachTarget.IsAlive)//TODO пофиксить IsAlive
+                //{
+                //    _targetPool.Del(attachID);
+                //    continue;
+                //}
+                int attachTargetID = attachTarget.id;
 
+                ref int nodeIndex = ref _mapping[attachTargetID]; 
+                if(nodeIndex< 0)
+                    nodeIndex = _linkedBasket.Add(attachID);
+                else
+                    _linkedBasket.Insert(nodeIndex, attachID);
+                _counts[attachTargetID]++;
             }
-        }
 
+            _isJoinExecuted = true;
+            _execute.End();
+        }
+        public EntityLinkedList.EnumerableSpan GetNodes(int entityID) => _linkedBasket.Span(_mapping[entityID], _counts[entityID]);
         private void InitTargetWorlds()
         {
-            foreach (var e in groupFilter)
+            foreach (var e in _targetPool.Entites)
             {
                 ref readonly var rel = ref _targetPool.Read(e);
-                if (rel.Target.IsNotNull)
+                //if (rel.Target.IsNotNull)
                     _targetWorld = EcsWorld.Worlds[rel.Target.world];
 
                 if (_targetWorld != null)
@@ -68,15 +122,21 @@ namespace DCFApixels.DragonECS
                     break;
                 }
             }
+
+            if (_isInitTargetWorlds)
+            {
+                _targetWorldCapacity = _targetWorld.Capacity;
+                _mapping = new int[_targetWorldCapacity];
+                _counts = new int[_targetWorldCapacity];
+
+                _targetPoolCapacity = _targetPool.Capacity;
+                _entites = new int[_targetPoolCapacity];
+                _linkedBasket = new EntityLinkedList(_targetPoolCapacity);
+            }
         }
         public EcsGroup.Enumerator GetEnumerator()
         {
             return groupFilter.GetEnumerator();
-        }
-
-        public NodesEnumrable GetNodes(int entityID)
-        {
-            throw new NotImplementedException();
         }
     }
     public abstract class EcsJoinRelationQuery<TRelationComponent> : EcsJoinQueryBase

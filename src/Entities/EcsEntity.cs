@@ -25,6 +25,8 @@ namespace DCFApixels.DragonECS
         //public ent ToEnt() => EcsWorld.Worlds[world].EntityIsAlive(id, gen) ? new ent(id) : default;
         public ent ToEnt() => new ent(id);
 
+        public bool IsAlive => EcsWorld.Worlds[world].EntityIsAlive(id, gen);
+
         #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsEntity(int id, short gen, short world) : this()
@@ -98,15 +100,15 @@ namespace DCFApixels.DragonECS
     {
         private static EcsProfilerMarker _IsAliveMarker = new EcsProfilerMarker("EcsEntity.IsAlive");
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsAlive(this ref EcsEntity self)
-        {
-            //using (_IsAliveMarker.Auto())
-            //{
-                bool result = EcsWorld.Worlds[self.world].EntityIsAlive(self.id, self.gen);
-                if (!result) self = EcsEntity.NULL;
-                return result;
-            //}
-        }
+      //  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+      //  public static bool IsAlive(this ref EcsEntity self)
+      //  {
+      //      //using (_IsAliveMarker.Auto())
+      //      //{
+      //          bool result = EcsWorld.Worlds[self.world].EntityIsAlive(self.id, self.gen);
+      //          if (!result) self = EcsEntity.NULL;
+      //          return result;
+      //      //}
+      //  }
     }
 }
