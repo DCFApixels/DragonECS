@@ -1,4 +1,7 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Unity.Profiling;
 
@@ -25,6 +28,15 @@ namespace DCFApixels.DragonECS
         internal void InvokeOnDestroy() => OnDestroy();
         #endregion
     }
+    public abstract class EcsPoolBase<T> : EcsPoolBase, IEnumerable<T>
+    {
+        public sealed override Type ComponentType => typeof(T);
+        //–елазиаци€ интерфейса IEnumerator не работает, нужно только чтобы IntelliSense предлагала названи€ на основе T. Ќе нашел другого способа
+        #region IEnumerable 
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => throw new NotImplementedException();
+        IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
+        #endregion
+    }
 
     public struct NullComponent { }
     public sealed class EcsNullPool : EcsPoolBase
@@ -48,10 +60,11 @@ namespace DCFApixels.DragonECS
         protected override void OnDestroy() { }
         #endregion
     }
-
-    public sealed class EcsPool<T> : EcsPoolBase
+    public sealed class EcsPool<T> : EcsPoolBase<T>
         where T : struct, IEcsComponent
     {
+        public static string name = typeof(T).Name; 
+
         private EcsWorld _source;
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
@@ -67,7 +80,6 @@ namespace DCFApixels.DragonECS
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
         public sealed override EcsWorld World => _source;
-        public sealed override Type ComponentType => typeof(T);
         #endregion
 
         #region Init
@@ -160,6 +172,7 @@ namespace DCFApixels.DragonECS
             Array.Resize(ref _mapping, newSize);
         }
         protected override void OnDestroy() { }
+
         #endregion
     }
 

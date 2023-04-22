@@ -1,59 +1,82 @@
-﻿using System;
+﻿using Mono.CompilerServices.SymbolWriter;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Unity.Profiling;
+using UnityEngine;
+using UnityEngine.Jobs;
 
 namespace DCFApixels.DragonECS
 {
     public abstract class EcsJoinQueryBase : EcsQueryBase
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void ExecuteWhere()
-        {
-            var pools = World.GetAllPools();
-            EcsReadonlyGroup all = World.Entities;
-            groupFilter.Clear();
-            foreach (var e in all)
-            {
-                int entityID = e.id;
-                for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
-                {
-                    if (!pools[mask.Inc[i]].Has(entityID))
-                        goto next;
-                }
-                for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
-                {
-                    if (pools[mask.Exc[i]].Has(entityID))
-                        goto next;
-                }
-                groupFilter.AggressiveAdd(entityID);
-                next: continue;
-            }
-            groupFilter.Sort();
-        }
+        public abstract void ExecuteJoin();
     }
     public abstract class EcsJoinAttachQuery<TAttachComponent> : EcsJoinQueryBase
         where TAttachComponent : struct, IEcsAttachComponent
     {
         private EcsWorld _targetWorld;
         private EcsAttachPool<TAttachComponent> _targetPool;
+        public EcsAttachPool<TAttachComponent> Attach => _targetPool;
 
-        private ProfilerMarker _execute = new ProfilerMarker("EcsJoinAttachQuery.Execute");
+
+        private int[] _mapping = Array.Empty<int>();
+        //private LinkedList<int> 
+
+
+        private bool _isInitTargetWorlds = false;
+
         protected sealed override void OnBuild(Builder b)
         {
             _targetPool = b.Include<TAttachComponent>();
         }
-        public sealed override void Execute()
+        public sealed override void ExecuteWhere()
         {
-            using (_execute.Auto())
+            ExecuteWhere(_targetPool.Entites, groupFilter);
+        }
+
+        public sealed override void ExecuteJoin()
+        {
+            ExecuteWhere(_targetPool.Entites, groupFilter);
+            if (_isInitTargetWorlds == false) InitTargetWorlds();
+
+            if (source.Capacity != _mapping.Length)
+                _mapping = new int[World.Capacity];
+            else
+                ArrayUtility.Fill(_mapping, 0);
+
+            foreach (var e in groupFilter)
             {
-                ExecuteWhere();
+                int entityID = e.id;
+
+            }
+        }
+
+        private void InitTargetWorlds()
+        {
+            foreach (var e in groupFilter)
+            {
+                ref readonly var rel = ref _targetPool.Read(e);
+                if (rel.Target.IsNotNull)
+                    _targetWorld = EcsWorld.Worlds[rel.Target.world];
+
+                if (_targetWorld != null)
+                {
+                    _isInitTargetWorlds = true;
+                    break;
+                }
             }
         }
         public EcsGroup.Enumerator GetEnumerator()
         {
             return groupFilter.GetEnumerator();
+        }
+
+        public NodesEnumrable GetNodes(int entityID)
+        {
+            throw new NotImplementedException();
         }
     }
     public abstract class EcsJoinRelationQuery<TRelationComponent> : EcsJoinQueryBase
@@ -62,22 +85,77 @@ namespace DCFApixels.DragonECS
         private EcsWorld _firstWorld;
         private EcsWorld _secondWorld;
         private EcsRelationPool<TRelationComponent> _targetPool;
+        public EcsRelationPool<TRelationComponent> Relation => _targetPool;
 
-        private ProfilerMarker _execute = new ProfilerMarker("EcsJoinRelationQuery.Execute");
+        private bool _isInitTargetWorlds = false;
+
+
         protected sealed override void OnBuild(Builder b)
         {
-            _targetPool = source.GetPool<TRelationComponent>();
+            _targetPool = b.Include<TRelationComponent>();
         }
-        public sealed override void Execute()
+        public sealed override void ExecuteWhere()
         {
-            using (_execute.Auto())
+            ExecuteWhere(_targetPool.Entites, groupFilter);
+        }
+        public sealed override void ExecuteJoin()
+        {
+            if (_isInitTargetWorlds == false) InitTargetWorlds();
+        }
+
+        private void InitTargetWorlds()
+        {
+            foreach (var e in groupFilter)
             {
-                ExecuteWhere();
+                ref readonly var rel = ref _targetPool.Read(e);
+                if (rel.First.IsNotNull)
+                    _firstWorld = EcsWorld.Worlds[rel.First.world];
+                if (rel.Second.IsNotNull)
+                    _secondWorld = EcsWorld.Worlds[rel.Second.world];
+                if (_firstWorld != null && _secondWorld != null)
+                {
+                    _isInitTargetWorlds = true;
+                    break;
+                }
             }
         }
         public EcsGroup.Enumerator GetEnumerator()
         {
             return groupFilter.GetEnumerator();
         }
+
+        public NodesEnumrable GetNodes(int entityID)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public readonly ref struct NodesEnumrable
+    {
+        private readonly int[] _nodes;
+        private readonly int _start;
+        private readonly int _count;
+        public NodesEnumrable(int[] nodes, int start, int count)
+        {
+            _nodes = nodes;
+            _start = start;
+            _count = count;
+        }
+        public NodesEnumerator GetEnumerator() => new NodesEnumerator(_nodes, _start, _count);
+    }
+    public ref struct NodesEnumerator
+    {
+        private readonly int[] _nodes;
+        private readonly int _end;
+        private int _index;
+        public NodesEnumerator(int[] nodes, int start, int count)
+        {
+            _nodes = nodes;
+            int end = start + count;
+            _end = end < _nodes.Length ? end : _nodes.Length;
+            _index = start;
+        }
+        public ent Current => new ent(_nodes[_index]);
+        public bool MoveNext() => ++_index <= _end;
     }
 }

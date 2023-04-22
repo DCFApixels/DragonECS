@@ -1,10 +1,11 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Unity.Profiling;
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsRelationPool<T> : EcsPoolBase
+    public sealed class EcsRelationPool<T> : EcsPoolBase<T>
         where T : struct, IEcsRelationComponent
     {
         private EcsWorld _source;
@@ -12,19 +13,20 @@ namespace DCFApixels.DragonECS
         private bool[] _entityFlags;// index = entityID / value = entityFlag;/ value = 0 = no entityID
         private T[] _items; //sparse
         private int _count;
-
         private PoolRunners _poolRunners;
 
+        private EcsGroup _entities;
+        public EcsReadonlyGroup Entites => _entities.Readonly;
+
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-        private int _sanitizeFirstWorld = -1;
-        private int _sanitizeSecondWorld = -1;
+        private short _sanitizeFirstWorld = -1;
+        private short _sanitizeSecondWorld = -1;
 #endif
 
         #region Properites
         public int Count => _count;
         public int Capacity => _items.Length;
         public sealed override EcsWorld World => _source;
-        public sealed override Type ComponentType => typeof(T);
         #endregion
 
         #region Init
@@ -51,7 +53,7 @@ namespace DCFApixels.DragonECS
             if((_sanitizeFirstWorld >= 0 && first.world != _sanitizeFirstWorld) &&
                 (_sanitizeSecondWorld >= 0 && second.world != _sanitizeSecondWorld))
             {
-                throw new EcsRelationsException();
+                throw new EcsRelationException();
             }
 #endif
             // using (_addMark.Auto())
@@ -61,6 +63,7 @@ namespace DCFApixels.DragonECS
             {
                 entityFlag = true;
                 _count++;
+                _entities.Add(entityID);
                 _poolRunners.add.OnComponentAdd<T>(entityID);
             }
             _poolRunners.write.OnComponentWrite<T>(entityID);
@@ -74,8 +77,10 @@ namespace DCFApixels.DragonECS
             if ((_sanitizeFirstWorld >= 0 && first.world != _sanitizeFirstWorld) &&
                 (_sanitizeSecondWorld >= 0 && second.world != _sanitizeSecondWorld))
             {
-                throw new EcsRelationsException();
+                throw new EcsRelationException();
             }
+            _sanitizeFirstWorld = first.world;
+            _sanitizeSecondWorld = second.world;
 #endif
             //   using (_writeMark.Auto())
             //{
@@ -99,6 +104,7 @@ namespace DCFApixels.DragonECS
         {
             //  using (_delMark.Auto())
             //   {
+            _entities.Remove(entityID);
             _entityFlags[entityID] = false;
             _count--;
             _poolRunners.del.OnComponentDel<T>(entityID);
@@ -120,7 +126,14 @@ namespace DCFApixels.DragonECS
     {
         public EcsEntity First { get; set; }
         public EcsEntity Second { get; set; }
-        public void Set(EcsEntity first, EcsEntity second);
+    }
+    public static class IEcsRelationComponentExt
+    {
+        public static void Set<T>(this ref T self, EcsEntity first, EcsEntity second) where T : struct, IEcsRelationComponent
+        {
+            self.First = first;
+            self.Second = second;
+        }
     }
     public static class EcsRelationPoolExt
     {

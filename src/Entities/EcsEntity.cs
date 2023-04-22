@@ -83,6 +83,15 @@ namespace DCFApixels.DragonECS
                 return this == NULL;
             }
         }
+        public bool IsNotNull
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                //using (_IsNullMarker.Auto())
+                return this != NULL;
+            }
+        }
     } 
 
     public static partial class entExtensions

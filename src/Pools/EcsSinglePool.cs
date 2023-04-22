@@ -4,7 +4,7 @@ using Unity.Profiling;
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsSinglePool<T> : EcsPoolBase
+    public sealed class EcsSinglePool<T> : EcsPoolBase<T>
          where T : struct, IEcsSingleComponent
     {
         private EcsWorld _source;
@@ -23,7 +23,6 @@ namespace DCFApixels.DragonECS
         #region Properites
         public int Count => _count;
         public sealed override EcsWorld World => _source;
-        public sealed override Type ComponentType => typeof(T);
         #endregion
 
         #region Init

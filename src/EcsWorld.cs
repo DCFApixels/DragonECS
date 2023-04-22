@@ -121,7 +121,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetPool
-        public TPool GetPool<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase, new()
+        public TPool GetPool<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase<TComponent>, new()
         {
             int uniqueID = WorldMetaStorage.GetComponentId<TComponent>(_worldArchetypeID);
 
@@ -149,7 +149,7 @@ namespace DCFApixels.DragonECS
         public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQuery
         {
             query = Select<TQuery>();
-            query.Execute();
+            query.ExecuteWhere();
             return query;
         }
         public TQuery Select<TQuery>() where TQuery : EcsQueryBase

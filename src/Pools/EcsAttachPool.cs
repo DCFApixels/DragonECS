@@ -4,7 +4,7 @@ using Unity.Profiling;
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsAttachPool<T> : EcsPoolBase
+    public sealed class EcsAttachPool<T> : EcsPoolBase<T>
         where T : struct, IEcsAttachComponent
     {
         private EcsWorld _source;
@@ -12,18 +12,19 @@ namespace DCFApixels.DragonECS
         private bool[] _entityFlags;// index = entityID / value = entityFlag;/ value = 0 = no entityID
         private T[] _items; //sparse
         private int _count;
-
         private PoolRunners _poolRunners;
 
+        private EcsGroup _entities;
+        public EcsReadonlyGroup Entites => _entities.Readonly;
+
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-        private int _sanitizeTargetWorld = -1;
+        private short _sanitizeTargetWorld = -1;
 #endif
 
         #region Properites
         public int Count => _count;
         public int Capacity => _items.Length;
         public sealed override EcsWorld World => _source;
-        public sealed override Type ComponentType => typeof(T);
         #endregion
 
         #region Init
@@ -49,8 +50,9 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (_sanitizeTargetWorld >= 0 && target.world != _sanitizeTargetWorld)
             {
-                throw new EcsRelationsException();
+                throw new EcsRelationException();
             }
+            _sanitizeTargetWorld = target.world;
 #endif
             // using (_addMark.Auto())
             //  {
@@ -59,6 +61,7 @@ namespace DCFApixels.DragonECS
             {
                 entityFlag = true;
                 _count++;
+                _entities.Add(entityID);
                 _poolRunners.add.OnComponentAdd<T>(entityID);
             }
             _poolRunners.write.OnComponentWrite<T>(entityID);
@@ -71,8 +74,9 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (_sanitizeTargetWorld >= 0 && target.world != _sanitizeTargetWorld)
             {
-                throw new EcsRelationsException();
+                throw new EcsRelationException();
             }
+            _sanitizeTargetWorld = target.world;
 #endif
             //   using (_writeMark.Auto())
             _poolRunners.write.OnComponentWrite<T>(entityID);
@@ -94,6 +98,7 @@ namespace DCFApixels.DragonECS
         {
             //  using (_delMark.Auto())
             //   {
+            _entities.Remove(entityID);
             _entityFlags[entityID] = false;
             _count--;
             _poolRunners.del.OnComponentDel<T>(entityID);

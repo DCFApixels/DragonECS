@@ -15,12 +15,14 @@ namespace DCFApixels.DragonECS
         #region Builder
         protected virtual void Init(Builder b) { }
         protected abstract void OnBuild(Builder b);
-        public abstract void Execute();
+        public abstract void ExecuteWhere();
         public sealed class Builder : EcsQueryBuilderBase
         {
             private EcsWorld _world;
             private List<int> _inc;
             private List<int> _exc;
+
+            public EcsWorld World => _world;
 
             private Builder(EcsWorld world)
             {
@@ -76,36 +78,45 @@ namespace DCFApixels.DragonECS
             }
         }
         #endregion
+
+        protected void ExecuteWhere(EcsReadonlyGroup group, EcsGroup result)
+        {
+            var pools = World.GetAllPools();
+            result.Clear();
+            foreach (var e in group)
+            {
+                int entityID = e.id;
+                for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
+                {
+                    if (!pools[mask.Inc[i]].Has(entityID))
+                        goto next;
+                }
+                for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
+                {
+                    if (pools[mask.Exc[i]].Has(entityID))
+                        goto next;
+                }
+                result.AggressiveAdd(entityID);
+                next: continue;
+            }
+            result.Sort();
+        }
+        protected void ExecuteWhereAndSort(EcsReadonlyGroup group, EcsGroup result)
+        {
+            ExecuteWhere(group, result);
+            result.Sort();
+        }
     }
 
     public abstract class EcsQuery : EcsQueryBase
     {
-        private ProfilerMarker _execute = new ProfilerMarker("EcsQuery.Execute");
+        private ProfilerMarker _execute = new ProfilerMarker("EcsQuery.ExecuteWhere");
         protected sealed override void OnBuild(Builder b) { }
-        public sealed override void Execute()
+        public sealed override void ExecuteWhere()
         {
             using (_execute.Auto())
             {
-                var pools = World.GetAllPools();
-                EcsReadonlyGroup all = World.Entities;
-                groupFilter.Clear();
-                foreach (var e in all)
-                {
-                    int entityID = e.id;
-                    for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
-                    {
-                        if (!pools[mask.Inc[i]].Has(entityID))
-                            goto next;
-                    }
-                    for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
-                    {
-                        if (pools[mask.Exc[i]].Has(entityID))
-                            goto next;
-                    }
-                    groupFilter.AggressiveAdd(entityID);
-                    next: continue;
-                }
-                groupFilter.Sort();
+                ExecuteWhereAndSort(World.Entities, groupFilter);
             }
         }
         public EcsGroup.Enumerator GetEnumerator()
@@ -125,8 +136,8 @@ namespace DCFApixels.DragonECS
     }
     public abstract class EcsQueryBuilderBase
     {
-        public abstract TPool Include<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase, new();
-        public abstract TPool Exclude<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase, new();
-        public abstract TPool Optional<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase, new();
+        public abstract TPool Include<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase<TComponent>, new();
+        public abstract TPool Exclude<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase<TComponent>, new();
+        public abstract TPool Optional<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase<TComponent>, new();
     }
 }
