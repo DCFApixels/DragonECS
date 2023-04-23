@@ -429,7 +429,7 @@ namespace DCFApixels.DragonECS
             {
                // source = group;
                 _dense = group._dense;
-                _count = group.Count;
+                _count = group._count;
                 _index = 0;
             }
             public int Current

@@ -10,7 +10,11 @@ namespace DCFApixels.DragonECS
         internal EcsWorld source;
         internal EcsGroup groupFilter;
         internal EcsQueryMask mask;
+
+        #region Properties
+        internal EcsQueryMask Mask => mask;
         public EcsWorld World => source;
+        #endregion
 
         #region Builder
         protected virtual void Init(Builder b) { }
@@ -81,7 +85,7 @@ namespace DCFApixels.DragonECS
 
         protected void ExecuteWhere(EcsReadonlyGroup group, EcsGroup result)
         {
-            var pools = World.GetAllPools();
+            var pools = World.Pools;
             result.Clear();
             foreach (var e in group)
             {
@@ -98,7 +102,6 @@ namespace DCFApixels.DragonECS
                 result.AggressiveAdd(e);
                 next: continue;
             }
-            result.Sort();
         }
         protected void ExecuteWhereAndSort(EcsReadonlyGroup group, EcsGroup result)
         {

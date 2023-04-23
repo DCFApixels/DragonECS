@@ -5,7 +5,7 @@ namespace DCFApixels.DragonECS
 {
     internal sealed class IntDispenser
     {
-        private readonly ConcurrentStack<int> _freeInts;
+        private readonly ConcurrentQueue<int> _freeInts;
         private int _increment;
 
         #region Properties
@@ -16,12 +16,12 @@ namespace DCFApixels.DragonECS
         #region Constructor
         public IntDispenser()
         {
-            _freeInts = new ConcurrentStack<int>();
+            _freeInts = new ConcurrentQueue<int>();
             _increment = 0;
         }
         public IntDispenser(int startIncrement)
         {
-            _freeInts = new ConcurrentStack<int>();
+            _freeInts = new ConcurrentQueue<int>();
             _increment = startIncrement;
         }
         #endregion
@@ -29,7 +29,7 @@ namespace DCFApixels.DragonECS
         #region GetFree/Release
         public int GetFree()
         {
-            if (!_freeInts.TryPop(out int result))
+            if (!_freeInts.TryDequeue(out int result))
             {
                 result = Interlocked.Increment(ref _increment);
             }
@@ -38,7 +38,7 @@ namespace DCFApixels.DragonECS
 
         public void Release(int released)
         {
-            _freeInts.Push(released);
+            _freeInts.Enqueue(released);
         }
         #endregion
     }

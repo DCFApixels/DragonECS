@@ -11,7 +11,6 @@ namespace DCFApixels.DragonECS
     {
         private EcsWorld _targetWorld;
         private EcsAttachPool<TAttachComponent> _targetPool;
-        public EcsAttachPool<TAttachComponent> Attach => _targetPool;
 
 
         private int _targetWorldCapacity = -1;
@@ -22,9 +21,16 @@ namespace DCFApixels.DragonECS
         private EntityLinkedList _linkedBasket;
 
         private bool _isJoinExecuted = false;
-        public bool IsJoinExecuted => _isJoinExecuted;
 
         private bool _isInitTargetWorlds = false;
+
+        private ProfilerMarker _execute = new ProfilerMarker("Query.ExecuteJoin");
+
+        #region Properties
+        public EcsWorld AttachWorld => _targetWorld;
+        public EcsAttachPool<TAttachComponent> Attach => _targetPool;
+        public bool IsJoinExecuted => _isJoinExecuted;
+        #endregion
 
         protected sealed override void OnBuild(Builder b)
         {
@@ -32,9 +38,9 @@ namespace DCFApixels.DragonECS
         }
         public sealed override void ExecuteWhere()
         {
-            ExecuteWhere(_targetPool.Entites, groupFilter);
+            //ExecuteWhere(_targetPool.Entities, groupFilter);
+            ExecuteWhere(World.Entities, groupFilter);
         }
-        private ProfilerMarker _execute = new ProfilerMarker("Query.ExecuteJoin");
 
         public sealed override void ExecuteJoin()
         {
@@ -70,11 +76,11 @@ namespace DCFApixels.DragonECS
             foreach (var attachID in groupFilter)
             {
                 EcsEntity attachTarget = _targetPool.Read(attachID).Target;
-                // if (!attachTarget.IsAlive)//TODO пофиксить IsAlive
-                //{
-                //    _targetPool.Del(attachID);
-                //    continue;
-                //}
+                if (!attachTarget.IsAlive)//TODO пофиксить IsAlive
+                {
+                    //_targetPool.Del(attachID);
+                    continue;
+                }
                 int attachTargetID = attachTarget.id;
 
                 ref int nodeIndex = ref _mapping[attachTargetID]; 
@@ -88,10 +94,9 @@ namespace DCFApixels.DragonECS
             _isJoinExecuted = true;
             _execute.End();
         }
-        public EntityLinkedList.EnumerableSpan GetNodes(int entityID) => _linkedBasket.Span(_mapping[entityID], _counts[entityID]);
         private void InitTargetWorlds()
         {
-            foreach (var e in _targetPool.Entites)
+            foreach (var e in _targetPool.Entities)
             {
                 ref readonly var rel = ref _targetPool.Read(e);
                 //if (rel.Target.IsNotNull)
@@ -119,6 +124,7 @@ namespace DCFApixels.DragonECS
         {
             return groupFilter.GetEnumerator();
         }
+        public EntityLinkedList.EnumerableSpan GetNodes(int entityID) => _linkedBasket.Span(_mapping[entityID], _counts[entityID]);
     }
     public abstract class EcsJoinRelationQuery<TRelationComponent> : EcsJoinQueryBase
         where TRelationComponent : struct, IEcsRelationComponent
@@ -126,10 +132,14 @@ namespace DCFApixels.DragonECS
         private EcsWorld _firstWorld;
         private EcsWorld _secondWorld;
         private EcsRelationPool<TRelationComponent> _targetPool;
-        public EcsRelationPool<TRelationComponent> Relation => _targetPool;
-
         private bool _isInitTargetWorlds = false;
 
+        #region Properties
+        public EcsWorld RelationFirstWorld => _firstWorld;
+        public EcsWorld RelationSecondWorld => _secondWorld;
+        public EcsRelationPool<TRelationComponent> Relation => _targetPool;
+        public bool IsMonoWorldRelation => _firstWorld == _secondWorld;
+        #endregion
 
         protected sealed override void OnBuild(Builder b)
         {

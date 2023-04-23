@@ -72,6 +72,14 @@ namespace DCFApixels.DragonECS
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
         #endregion
 
+        #region Internal Properties
+        internal EcsPoolBase[] Pools
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _pools;
+        }
+        #endregion
+
         #region Constructors/Destroy
         public EcsWorld(EcsPipeline pipline)
         {
@@ -219,7 +227,7 @@ namespace DCFApixels.DragonECS
             }
             _gens[entityID] &= GEN_BITS;
             EcsEntity entity = new EcsEntity(entityID, ++_gens[entityID], uniqueID);
-            UnityEngine.Debug.Log($"{entityID}  {_gens[entityID]} {uniqueID}");
+          //  UnityEngine.Debug.Log($"{entityID}  {_gens[entityID]} {uniqueID}");
             _entityCreate.OnEntityCreate(entity);
             _allEntites.Add(entityID);
             return entity;
