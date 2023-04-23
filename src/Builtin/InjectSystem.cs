@@ -11,22 +11,18 @@ namespace DCFApixels.DragonECS
             private EcsPipeline _source;
             private InjectSystemBase[] _injectSystems;
             private int _injectCount;
-
             public PreInitInjectController(EcsPipeline source)
             {
                 _injectCount = 0;
                 _source = source;
                 _injectSystems = _source.AllSystems.OfType<InjectSystemBase>().ToArray();
             }
-
             public bool OnInject()
             {
                 _injectCount++;
                 return IsInjectionEnd;
             }
-
             public bool IsInjectionEnd => _injectCount >= _injectSystems.Length;
-
             public void Destroy()
             {
                 _source = null;
@@ -68,7 +64,6 @@ namespace DCFApixels.DragonECS
                 _preInjectchache.PreInject(obj);
                 foreach (var item in targets) item.Inject(obj);
             }
-
             protected override void OnSetup()
             {
                 _preInjectchache = Source.GetRunner<IEcsPreInject>();

@@ -2,7 +2,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Profiling;
-using UnityEngine;
 using delayedOp = System.Int32;
 
 namespace DCFApixels.DragonECS
@@ -11,6 +10,7 @@ namespace DCFApixels.DragonECS
     public readonly ref struct EcsReadonlyGroup
     {
         private readonly EcsGroup _source;
+
         #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup(EcsGroup source) => _source = source;

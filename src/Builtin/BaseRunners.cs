@@ -18,7 +18,6 @@ namespace DCFApixels.DragonECS
     {
         public void Destroy(EcsPipeline pipeline);
     }
-
     public interface IEcsBaseSystem : IEcsInitSystem, IEcsRunSystem, IEcsDestroySystem { }
 
     namespace Internal
@@ -32,10 +31,10 @@ namespace DCFApixels.DragonECS
             public void PreInit(EcsPipeline pipeline)
             {
 #if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
+                for (int i = 0; i < Targets.Length && Targets.Length <= _markers.Length; i++)
                 {
                     using (_markers[i].Auto())
-                        targets[i].PreInit(pipeline);
+                        Targets[i].PreInit(pipeline);
                 }
 #else
             foreach (var item in targets) item.PreInit(pipeline);
@@ -45,10 +44,10 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
-                _markers = new EcsProfilerMarker[targets.Length];
-                for (int i = 0; i < targets.Length; i++)
+                _markers = new EcsProfilerMarker[Targets.Length];
+                for (int i = 0; i < Targets.Length; i++)
                 {
-                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(PreInit)}"));
+                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{Targets[i].GetType().Name}.{nameof(PreInit)}"));
                 }
             }
 #endif
@@ -62,10 +61,10 @@ namespace DCFApixels.DragonECS
             public void Init(EcsPipeline pipeline)
             {
 #if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
+                for (int i = 0; i < Targets.Length && Targets.Length <= _markers.Length; i++)
                 {
                     using (_markers[i].Auto())
-                        targets[i].Init(pipeline);
+                        Targets[i].Init(pipeline);
                 }
 #else
             foreach (var item in targets) item.Init(pipeline);
@@ -75,10 +74,10 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
-                _markers = new EcsProfilerMarker[targets.Length];
-                for (int i = 0; i < targets.Length; i++)
+                _markers = new EcsProfilerMarker[Targets.Length];
+                for (int i = 0; i < Targets.Length; i++)
                 {
-                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Init)}"));
+                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{Targets[i].GetType().Name}.{nameof(Init)}"));
                 }
             }
 #endif
@@ -92,10 +91,10 @@ namespace DCFApixels.DragonECS
             public void Run(EcsPipeline pipeline)
             {
 #if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
+                for (int i = 0; i < Targets.Length && Targets.Length <= _markers.Length; i++)
                 {
                     using (_markers[i].Auto())
-                        targets[i].Run(pipeline);
+                        Targets[i].Run(pipeline);
 
                 }
 #else
@@ -106,10 +105,10 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
-                _markers = new EcsProfilerMarker[targets.Length];
-                for (int i = 0; i < targets.Length; i++)
+                _markers = new EcsProfilerMarker[Targets.Length];
+                for (int i = 0; i < Targets.Length; i++)
                 {
-                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Run)}"));
+                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{Targets[i].GetType().Name}.{nameof(Run)}"));
                 }
             }
 #endif
@@ -123,10 +122,10 @@ namespace DCFApixels.DragonECS
             public void Destroy(EcsPipeline pipeline)
             {
 #if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
+                for (int i = 0; i < Targets.Length && Targets.Length <= _markers.Length; i++)
                 {
                     using (_markers[i].Auto())
-                        targets[i].Destroy(pipeline);
+                        Targets[i].Destroy(pipeline);
                 }
 #else
             foreach (var item in targets) item.Destroy(pipeline);
@@ -136,10 +135,10 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
-                _markers = new EcsProfilerMarker[targets.Length];
-                for (int i = 0; i < targets.Length; i++)
+                _markers = new EcsProfilerMarker[Targets.Length];
+                for (int i = 0; i < Targets.Length; i++)
                 {
-                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Destroy)}"));
+                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{Targets[i].GetType().Name}.{nameof(Destroy)}"));
                 }
             }
 #endif
