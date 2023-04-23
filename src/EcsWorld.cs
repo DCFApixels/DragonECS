@@ -5,22 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsWorld : IEcsTable
-    {
-        #region Properties
-        public int UniqueID { get; }
-        public EcsPipeline Pipeline { get; }
-        #endregion
-
-        #region Entities
-        public EcsEntity NewEntity();
-        public void DelEntity(EcsEntity entity);
-        public bool EntityIsAlive(int entityID, short gen);
-        public EcsEntity GetEcsEntity(int entityID);
-        #endregion
-    }
-
-    public abstract class EcsWorld : IEcsWorld
+    public abstract class EcsWorld
     {
         private const short GEN_BITS = 0x7fff;
         private const short DEATH_GEN_BIT = short.MinValue;
@@ -265,19 +250,16 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Groups
-        void IEcsTable.RegisterGroup(EcsGroup group) => RegisterGroup(group);
         internal void RegisterGroup(EcsGroup group)
         {
             _groups.Add(new WeakReference<EcsGroup>(group));
         }
-        EcsGroup IEcsTable.GetGroupFromPool() => GetGroupFromPool();
         internal EcsGroup GetGroupFromPool()
         {
             if (_groupsPool.Count <= 0)
                 return new EcsGroup(this);
             return _groupsPool.Pop();
         }
-        void IEcsTable.ReleaseGroup(EcsGroup group) => ReleaseGroup(group);
         internal void ReleaseGroup(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS

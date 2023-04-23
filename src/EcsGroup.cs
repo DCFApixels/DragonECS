@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Properties
-        public IEcsWorld World
+        public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _source.World;

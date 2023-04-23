@@ -12,7 +12,6 @@ namespace DCFApixels.DragonECS
         private EcsWorld _targetWorld;
         private EcsAttachPool<TAttachComponent> _targetPool;
 
-
         private int _targetWorldCapacity = -1;
         private int _targetPoolCapacity = -1;
 
@@ -45,6 +44,8 @@ namespace DCFApixels.DragonECS
         public sealed override void ExecuteJoin()
         {
             _execute.Begin();
+
+            _isJoinExecuted = false;
             if (_isInitTargetWorlds == false)
             {
                 InitTargetWorlds();
