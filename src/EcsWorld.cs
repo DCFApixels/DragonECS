@@ -22,6 +22,9 @@ namespace DCFApixels.DragonECS
 
     public abstract class EcsWorld : IEcsWorld
     {
+        private const short GEN_BITS = 0x7fff;
+        private const short DEATH_GEN_BIT = short.MinValue;
+
         public static EcsWorld[] Worlds = new EcsWorld[8];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
         public readonly short uniqueID;
@@ -72,6 +75,8 @@ namespace DCFApixels.DragonECS
         #region Constructors/Destroy
         public EcsWorld(EcsPipeline pipline)
         {
+            _entitesCapacity = 512;
+
             uniqueID = (short)_worldIdDispenser.GetFree();
             if (uniqueID >= Worlds.Length)
                 Array.Resize(ref Worlds, Worlds.Length << 1);
@@ -86,10 +91,10 @@ namespace DCFApixels.DragonECS
             _pools = new EcsPoolBase[512];
             ArrayUtility.Fill(_pools, _nullPool);
 
-            _gens = new short[512];
-            _entitesCapacity = _gens.Length;
+            _gens = new short[_entitesCapacity];
+            ArrayUtility.Fill(_gens, DEATH_GEN_BIT);
             _delEntBufferCount = 0;
-            _delEntBuffer = new int[_gens.Length >> DEL_ENT_BUFFER_SIZE_OFFSET];
+            _delEntBuffer = new int[_entitesCapacity >> DEL_ENT_BUFFER_SIZE_OFFSET];
 
             _groups = new List<WeakReference<EcsGroup>>();
             _allEntites = GetGroupFromPool();
@@ -193,7 +198,9 @@ namespace DCFApixels.DragonECS
             if (_gens.Length <= entityID)
             {
                 Array.Resize(ref _gens, _gens.Length << 1);
+                ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitesCapacity);
                 _entitesCapacity = _gens.Length;
+
                 for (int i = 0; i < _groups.Count; i++)
                 {
                     if (_groups[i].TryGetTarget(out EcsGroup group))
@@ -210,8 +217,9 @@ namespace DCFApixels.DragonECS
                 foreach (var item in _pools)
                     item.InvokeOnWorldResize(_gens.Length);
             }
-            _gens[entityID] |= short.MinValue;
-            EcsEntity entity = new EcsEntity(entityID, _gens[entityID]++, uniqueID);
+            _gens[entityID] &= GEN_BITS;
+            EcsEntity entity = new EcsEntity(entityID, ++_gens[entityID], uniqueID);
+            UnityEngine.Debug.Log($"{entityID}  {_gens[entityID]} {uniqueID}");
             _entityCreate.OnEntityCreate(entity);
             _allEntites.Add(entityID);
             return entity;
@@ -220,7 +228,7 @@ namespace DCFApixels.DragonECS
         {
             _allEntites.Remove(entity.id);
             _delEntBuffer[_delEntBufferCount++] = entity.id;
-            _gens[entity.id] |= short.MinValue;
+            _gens[entity.id] |= DEATH_GEN_BIT;
             _entitiesCount--;
             _entityDestry.OnEntityDestroy(entity);
 

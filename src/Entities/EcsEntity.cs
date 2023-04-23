@@ -8,17 +8,17 @@ namespace DCFApixels.DragonECS
     // gen - 16 bits
     // world - 16 bits
     /// <summary>Strong identifier/Permanent entity identifier</summary>
-    [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
+    [StructLayout(LayoutKind.Explicit, Pack =2, Size = 8)]
     public readonly partial struct EcsEntity : IEquatable<long>, IEquatable<EcsEntity>
     {
         public static readonly EcsEntity NULL = default;
         [FieldOffset(0)]
         internal readonly long full; //Union
-        [FieldOffset(3)]
-        public readonly int id;
-        [FieldOffset(1)]
-        public readonly short gen;
         [FieldOffset(0)]
+        public readonly int id;
+        [FieldOffset(4)]
+        public readonly short gen;
+        [FieldOffset(6)]
         public readonly short world;
 
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
