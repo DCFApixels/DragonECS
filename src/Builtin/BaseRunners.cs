@@ -1,6 +1,7 @@
-﻿namespace DCFApixels.DragonECS
-{
+﻿using DCFApixels.DragonECS.RunnersCore;
 
+namespace DCFApixels.DragonECS
+{
     public interface IEcsPreInitSystem : IEcsSystem
     {
         public void PreInit(EcsPipeline pipeline);

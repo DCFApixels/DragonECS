@@ -1,4 +1,6 @@
-﻿namespace DCFApixels.DragonECS
+﻿using DCFApixels.DragonECS.RunnersCore;
+
+namespace DCFApixels.DragonECS
 {
     public interface IEcsComponentAdd : IEcsSystem
     {
