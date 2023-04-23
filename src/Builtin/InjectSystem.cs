@@ -39,52 +39,52 @@ namespace DCFApixels.DragonECS
     {
         public void PreInject(object obj);
     }
-    [DebugHide, DebugColor(DebugColor.Gray)]
-    public sealed class PreInjectRunner : EcsRunner<IEcsPreInject>, IEcsPreInject
-    {
-        void IEcsPreInject.PreInject(object obj)
-        {
-            foreach (var item in targets) item.PreInject(obj);
-        }
-    }
-
     public interface IEcsInject<T> : IEcsSystem
     {
         public void Inject(T obj);
     }
-
-    [DebugHide, DebugColor(DebugColor.Gray)]
-    public sealed class InjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
-    {
-        private IEcsPreInject _preInjectchache;
-        void IEcsInject<T>.Inject(T obj)
-        {
-            _preInjectchache.PreInject(obj);
-            foreach (var item in targets) item.Inject(obj);
-        }
-
-        protected override void OnSetup()
-        {
-            _preInjectchache = Source.GetRunner<IEcsPreInject>();
-        }
-    }
-
     public interface IEcsPreInitInjectCallbacks : IEcsSystem
     {
         public void OnPreInitInjectionBefore();
         public void OnPreInitInjectionAfter();
     }
 
-    [DebugHide, DebugColor(DebugColor.Gray)]
-    public sealed class InjectCallbacksRunner : EcsRunner<IEcsPreInitInjectCallbacks>, IEcsPreInitInjectCallbacks
+    namespace Internal
     {
-        public void OnPreInitInjectionAfter()
+        [DebugHide, DebugColor(DebugColor.Gray)]
+        public sealed class PreInjectRunner : EcsRunner<IEcsPreInject>, IEcsPreInject
         {
-            foreach (var item in targets) item.OnPreInitInjectionAfter();
+            void IEcsPreInject.PreInject(object obj)
+            {
+                foreach (var item in targets) item.PreInject(obj);
+            }
         }
-        public void OnPreInitInjectionBefore()
+        [DebugHide, DebugColor(DebugColor.Gray)]
+        public sealed class InjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
         {
-            foreach (var item in targets) item.OnPreInitInjectionBefore();
+            private IEcsPreInject _preInjectchache;
+            void IEcsInject<T>.Inject(T obj)
+            {
+                _preInjectchache.PreInject(obj);
+                foreach (var item in targets) item.Inject(obj);
+            }
+
+            protected override void OnSetup()
+            {
+                _preInjectchache = Source.GetRunner<IEcsPreInject>();
+            }
+        }
+        [DebugHide, DebugColor(DebugColor.Gray)]
+        public sealed class InjectCallbacksRunner : EcsRunner<IEcsPreInitInjectCallbacks>, IEcsPreInitInjectCallbacks
+        {
+            public void OnPreInitInjectionAfter()
+            {
+                foreach (var item in targets) item.OnPreInitInjectionAfter();
+            }
+            public void OnPreInitInjectionBefore()
+            {
+                foreach (var item in targets) item.OnPreInitInjectionBefore();
+            }
         }
     }
 
