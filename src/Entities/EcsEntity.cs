@@ -21,9 +21,8 @@ namespace DCFApixels.DragonECS
         [FieldOffset(0)]
         public readonly short world;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         //public ent ToEnt() => EcsWorld.Worlds[world].EntityIsAlive(id, gen) ? new ent(id) : default;
-        public ent ToEnt() => new ent(id);
 
         public bool IsAlive => EcsWorld.Worlds[world].EntityIsAlive(id, gen);
 
@@ -65,8 +64,8 @@ namespace DCFApixels.DragonECS
         public static bool operator !=(in EcsEntity a, in EcsEntity b) => a.full != b.full;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator long(in EcsEntity a) => a.full;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator ent(in EcsEntity a) => a.ToEnt();
+       //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+       //public static explicit operator ent(in EcsEntity a) => a.ToEnt();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator EcsEntity(in long a) => new EcsEntity(a);
         #endregion

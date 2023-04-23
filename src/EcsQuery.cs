@@ -85,18 +85,17 @@ namespace DCFApixels.DragonECS
             result.Clear();
             foreach (var e in group)
             {
-                int entityID = e.id;
                 for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
                 {
-                    if (!pools[mask.Inc[i]].Has(entityID))
+                    if (!pools[mask.Inc[i]].Has(e))
                         goto next;
                 }
                 for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
                 {
-                    if (pools[mask.Exc[i]].Has(entityID))
+                    if (pools[mask.Exc[i]].Has(e))
                         goto next;
                 }
-                result.AggressiveAdd(entityID);
+                result.AggressiveAdd(e);
                 next: continue;
             }
             result.Sort();

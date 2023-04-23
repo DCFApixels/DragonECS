@@ -269,7 +269,7 @@ namespace DCFApixels.DragonECS
             if(_count > 0)
                 Clear();
             foreach (var item in group)
-                AggressiveAdd(item.id);
+                AggressiveAdd(item);
         }
         public EcsGroup Clone()
         {
@@ -290,8 +290,8 @@ namespace DCFApixels.DragonECS
             if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in group)
-                if (!Contains(item.id))
-                    AggressiveAdd(item.id);
+                if (!Contains(item))
+                    AggressiveAdd(item);
         }
 
         /// <summary>as Except sets</summary>
@@ -304,8 +304,8 @@ namespace DCFApixels.DragonECS
             if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in this)
-                if (group.Contains(item.id))
-                    AggressiveRemove(item.id);
+                if (group.Contains(item))
+                    AggressiveRemove(item);
         }
 
         /// <summary>as Intersect sets</summary>
@@ -318,8 +318,8 @@ namespace DCFApixels.DragonECS
             if (World != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in this)
-                if (!group.Contains(item.id))
-                    AggressiveRemove(item.id);
+                if (!group.Contains(item))
+                    AggressiveRemove(item);
         }
 
         /// <summary>as Symmetric Except sets</summary>
@@ -332,10 +332,10 @@ namespace DCFApixels.DragonECS
             if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in group)
-                if (Contains(item.id))
-                    AggressiveRemove(item.id);
+                if (Contains(item))
+                    AggressiveRemove(item);
                 else
-                    AggressiveAdd(item.id);
+                    AggressiveAdd(item);
         }
         #endregion
 
@@ -349,8 +349,8 @@ namespace DCFApixels.DragonECS
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
-                if (!b.Contains(item.id))
-                    result.AggressiveAdd(item.id);
+                if (!b.Contains(item))
+                    result.AggressiveAdd(item);
             a._source.ReleaseGroup(a);
             return result;
         }
@@ -363,8 +363,8 @@ namespace DCFApixels.DragonECS
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
-                if (b.Contains(item.id))
-                    result.AggressiveAdd(item.id);
+                if (b.Contains(item))
+                    result.AggressiveAdd(item);
             a._source.ReleaseGroup(a);
             return result;
         }
@@ -377,9 +377,9 @@ namespace DCFApixels.DragonECS
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
-                result.AggressiveAdd(item.id);
+                result.AggressiveAdd(item);
             foreach (var item in a)
-                result.Add(item.id);
+                result.Add(item);
             return result;
         }
         #endregion
@@ -432,10 +432,10 @@ namespace DCFApixels.DragonECS
                 _count = group.Count;
                 _index = 0;
             }
-            public ent Current
+            public int Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => new ent(_dense[_index]);
+                get => _dense[_index];
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index <= _count && _count<_dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
@@ -456,7 +456,7 @@ namespace DCFApixels.DragonECS
             if (other.Count != Count)
                 return false;
             foreach (var item in other)
-                if (!Contains(item.id))
+                if (!Contains(item))
                     return false;
             return true;
         }
@@ -464,7 +464,7 @@ namespace DCFApixels.DragonECS
         {
             int hash = 0;
             foreach (var item in this)
-                hash ^= 1 << (item.id % 32); //реализация от балды, так как не нужен, но фишка в том что хеш не учитывает порядок сущьностей, что явлется правильным поведением.
+                hash ^= 1 << (item % 32); //реализация от балды, так как не нужен, но фишка в том что хеш не учитывает порядок сущьностей, что явлется правильным поведением.
             return hash;
         }
         #endregion
