@@ -28,7 +28,7 @@ namespace DCFApixels.DragonECS
 
         private int[] _mapping;
         private int[] _counts;
-        private int[] _entites;
+        //private int[] _entites;
         private EntityLinkedList _linkedBasket;
 
         private bool _isJoinExecuted = false;
@@ -124,7 +124,7 @@ namespace DCFApixels.DragonECS
                 _counts = new int[_targetWorldCapacity];
 
                 _targetPoolCapacity = _targetPool.Capacity;
-                _entites = new int[_targetPoolCapacity];
+                //_entites = new int[_targetPoolCapacity];
                 _linkedBasket = new EntityLinkedList(_targetPoolCapacity);
             }
         }
