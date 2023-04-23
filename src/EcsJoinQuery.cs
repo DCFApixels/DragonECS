@@ -68,18 +68,12 @@ namespace DCFApixels.DragonECS
             else
             {
                 ArrayUtility.Fill(_counts, 0);
+                ArrayUtility.Fill(_mapping, 0);
             }
-            ArrayUtility.Fill(_mapping, -1);
-
             if (_targetPoolCapacity < _targetPool.Capacity)
             {
-                _entites = new int[_targetPoolCapacity];
                 _linkedBasket.Resize(_targetPoolCapacity);
                 _targetPoolCapacity = _targetPool.Capacity;
-            }
-            else
-            {
-                ArrayUtility.Fill(_entites, 0);
             }
             _linkedBasket.Clear();
             //Конец подготовки массивов
@@ -97,7 +91,7 @@ namespace DCFApixels.DragonECS
                 int attachTargetID = attachTarget.id;
 
                 ref int nodeIndex = ref _mapping[attachTargetID]; 
-                if(nodeIndex< 0)
+                if(nodeIndex <= 0)
                     nodeIndex = _linkedBasket.Add(attachID);
                 else
                     _linkedBasket.Insert(nodeIndex, attachID);

@@ -1,18 +1,11 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEditor;
 
 namespace DCFApixels.DragonECS
 {
     public class EntityLinkedList
     {
-        public const int First = 0;
+        public const int Enter = 0;
 
         private Node[] _nodes;
         private int _count;
@@ -41,8 +34,8 @@ namespace DCFApixels.DragonECS
         {
             //ArrayUtility.Fill(_nodes, Node.Empty);
             for (int i = 0; i < _nodes.Length; i++)
-                _nodes[i].next = -1;
-            _lastNodeIndex = First;
+                _nodes[i].next = 0;
+            _lastNodeIndex = Enter;
             _count = 0;
         }
 
@@ -87,21 +80,18 @@ namespace DCFApixels.DragonECS
             private readonly Node[] _nodes;
             private int _index;
             private int _next;
-
             public Enumerator(Node[] nodes)
             {
                 _nodes = nodes;
                 _index = -1;
-                _next = First;
+                _next = Enter;
             }
-
             public int Current => _nodes[_index].entityID;
-
             public bool MoveNext()
             {
                 _index = _next;
                 _next = _nodes[_next].next;
-                return _index >= 0;
+                return _index > 0;
             }
         }
 
@@ -110,14 +100,12 @@ namespace DCFApixels.DragonECS
             private readonly EntityLinkedList _source;
             private readonly int _startNodeIndex;
             private readonly int _count;
-
             public EnumerableSpan(EntityLinkedList source, int startNodeIndex, int count)
             {
                 _source = source;
                 _startNodeIndex = startNodeIndex;
                 _count = count;
             }
-
             public SpanEnumerator GetEnumerator() => new SpanEnumerator(_source._nodes, _startNodeIndex, _count);
         }
         public struct SpanEnumerator
@@ -126,7 +114,6 @@ namespace DCFApixels.DragonECS
             private int _index;
             private int _count;
             private int _next;
-
             public SpanEnumerator(Node[] nodes, int startIndex, int count)
             {
                 _nodes = nodes;
@@ -134,16 +121,12 @@ namespace DCFApixels.DragonECS
                 _count = count;
                 _next = startIndex;
             }
-
             public int Current => _nodes[_index].entityID;
-
             public bool MoveNext()
             {
-                if (_count <= 0)
-                    return false;
                 _index = _next;
                 _next = _nodes[_next].next;
-                return _index >= 0 && _count-- > 0;
+                return _index > 0 && _count-- > 0;
             }
         }
         #endregion
