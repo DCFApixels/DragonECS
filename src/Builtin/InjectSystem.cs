@@ -161,5 +161,15 @@ namespace DCFApixels.DragonECS
             self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f);
             return self;
         }
+        public static EcsPipeline.Builder Inject<A, B, C, D, E, F, G>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e, F f, G g)
+        {
+            self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f).Inject(g);
+            return self;
+        }
+        public static EcsPipeline.Builder Inject<A, B, C, D, E, F, G>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e, F f, G g, H h)
+        {
+            self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f).Inject(g).Inject(h);
+            return self;
+        }
     }
 }
