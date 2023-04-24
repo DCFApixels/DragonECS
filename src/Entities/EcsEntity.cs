@@ -8,7 +8,7 @@ namespace DCFApixels.DragonECS
     // gen - 16 bits
     // world - 16 bits
     /// <summary>Strong identifier/Permanent entity identifier</summary>
-    [StructLayout(LayoutKind.Explicit, Pack =2, Size = 8)]
+    [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
     public readonly partial struct EcsEntity : IEquatable<long>, IEquatable<EcsEntity>
     {
         public static readonly EcsEntity NULL = default;
@@ -22,9 +22,9 @@ namespace DCFApixels.DragonECS
         public readonly short world;
 
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public ent ToEnt() => EcsWorld.Worlds[world].EntityIsAlive(id, gen) ? new ent(id) : default;
+        //public ent ToEnt() => EcsWorld.Worlds[world].IsAlive(id, gen) ? new ent(id) : default;
 
-        public bool IsAlive => EcsWorld.Worlds[world].EntityIsAlive(id, gen);
+        public bool IsAlive => EcsWorld.Worlds[world].IsAlive(id, gen);
 
         #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -104,7 +104,7 @@ namespace DCFApixels.DragonECS
       //  {
       //      //using (_IsAliveMarker.Auto())
       //      //{
-      //          bool result = EcsWorld.Worlds[self.world].EntityIsAlive(self.id, self.gen);
+      //          bool result = EcsWorld.Worlds[self.world].IsAlive(self.id, self.gen);
       //          if (!result) self = EcsEntity.NULL;
       //          return result;
       //      //}

@@ -9,12 +9,12 @@ namespace DCFApixels.DragonECS
     {
         private const short GEN_BITS = 0x7fff;
         private const short DEATH_GEN_BIT = short.MinValue;
+        private const int DEL_ENT_BUFFER_SIZE_OFFSET = 2;
 
         public static EcsWorld[] Worlds = new EcsWorld[8];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
         public readonly short uniqueID;
 
-        private const int DEL_ENT_BUFFER_SIZE_OFFSET = 2;
         private int _worldArchetypeID;
 
         private IntDispenser _entityDispenser;
@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS
         private int[] _delEntBuffer;
         private int _delEntBufferCount;
 
-        private EcsPoolBase[] _pools;
+        internal EcsPoolBase[] pools;
         private EcsNullPool _nullPool;
 
         private EcsQueryBase[] _queries;
@@ -43,12 +43,6 @@ namespace DCFApixels.DragonECS
         private IEcsEntityCreate _entityCreate;
         private IEcsEntityDestroy _entityDestry;
 
-        #region GetterMethods
-        public ReadOnlySpan<EcsPoolBase> GetAllPools() => new ReadOnlySpan<EcsPoolBase>(_pools);
-        public int GetComponentID<T>() => WorldMetaStorage.GetComponentId<T>(_worldArchetypeID);////ComponentType<TWorldArchetype>.uniqueID;
-
-        #endregion
-
         #region Properties
         public abstract Type Archetype { get; }
         public int UniqueID => uniqueID;
@@ -56,14 +50,7 @@ namespace DCFApixels.DragonECS
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
         public EcsPipeline Pipeline => _pipeline;
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
-        #endregion
-
-        #region Internal Properties
-        internal EcsPoolBase[] Pools
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _pools;
-        }
+        public ReadOnlySpan<EcsPoolBase> AllPools => pools;
         #endregion
 
         #region Constructors/Destroy
@@ -82,8 +69,8 @@ namespace DCFApixels.DragonECS
             if (!_pipeline.IsInit) pipline.Init();
             _entityDispenser = new IntDispenser(0);
             _nullPool = EcsNullPool.instance;
-            _pools = new EcsPoolBase[512];
-            ArrayUtility.Fill(_pools, _nullPool);
+            pools = new EcsPoolBase[512];
+            ArrayUtility.Fill(pools, _nullPool);
 
             _gens = new short[_entitesCapacity];
             ArrayUtility.Fill(_gens, DEATH_GEN_BIT);
@@ -105,7 +92,7 @@ namespace DCFApixels.DragonECS
             _entityDispenser = null;
             //_denseEntities = null;
             _gens = null;
-            _pools = null;
+            pools = null;
             _nullPool = null;
             _queries = null;
 
@@ -119,38 +106,37 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region GetComponentID
+        public int GetComponentID<T>() => WorldMetaStorage.GetComponentId<T>(_worldArchetypeID);////ComponentType<TWorldArchetype>.uniqueID;
+
+        #endregion
+
         #region GetPool
         public TPool GetPool<TComponent, TPool>() where TComponent : struct where TPool : EcsPoolBase<TComponent>, new()
         {
             int uniqueID = WorldMetaStorage.GetComponentId<TComponent>(_worldArchetypeID);
 
-            if (uniqueID >= _pools.Length)
+            if (uniqueID >= pools.Length)
             {
-                int oldCapacity = _pools.Length;
-                Array.Resize(ref _pools, _pools.Length << 1);
-                ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
+                int oldCapacity = pools.Length;
+                Array.Resize(ref pools, pools.Length << 1);
+                ArrayUtility.Fill(pools, _nullPool, oldCapacity, oldCapacity - pools.Length);
             }
 
-            if (_pools[uniqueID] == _nullPool)
+            if (pools[uniqueID] == _nullPool)
             {
                 var pool = new TPool();
-                _pools[uniqueID] = pool;
+                pools[uniqueID] = pool;
                 pool.InvokeInit(this);
 
                 //EcsDebug.Print(pool.GetType().FullName);
             }
 
-            return (TPool)_pools[uniqueID];
+            return (TPool)pools[uniqueID];
         }
         #endregion
 
         #region Queries
-        public TQuery Where<TQuery>(out TQuery query) where TQuery : EcsQuery
-        {
-            query = Select<TQuery>();
-            query.ExecuteWhere();
-            return query;
-        }
         public TQuery Select<TQuery>() where TQuery : EcsQueryBase
         {
             int uniqueID = WorldMetaStorage.GetQueryId<TQuery>(_worldArchetypeID);
@@ -159,6 +145,28 @@ namespace DCFApixels.DragonECS
             if (_queries[uniqueID] == null)
                 _queries[uniqueID] = EcsQueryBase.Builder.Build<TQuery>(this);
             return (TQuery)_queries[uniqueID];
+        }
+        public WhereResult Where<TQuery>(out TQuery query) where TQuery : EcsQueryBase
+        {
+            query = Select<TQuery>();
+            return query.Where();
+        }
+        public WhereResult Where<TQuery>() where TQuery : EcsQueryBase
+        {
+            return Select<TQuery>().Where();
+        }
+
+        public TQuery Join<TQuery>(WhereResult targetWorldWhereQuery, out TQuery query) where TQuery : EcsJoinAttachQueryBase
+        {
+            query = Select<TQuery>();
+            query.Join(targetWorldWhereQuery);
+            return query;
+        }
+        public TQuery Join<TQuery>(WhereResult targetWorldWhereQuery) where TQuery : EcsJoinAttachQueryBase
+        {
+            TQuery query = Select<TQuery>();
+            query.Join(targetWorldWhereQuery);
+            return query;
         }
         #endregion
 
@@ -171,12 +179,12 @@ namespace DCFApixels.DragonECS
 #endif
             for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
             {
-                if (!_pools[mask.Inc[i]].Has(entityID))
+                if (!pools[mask.Inc[i]].Has(entityID))
                     return false;
             }
             for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
             {
-                if (_pools[mask.Exc[i]].Has(entityID))
+                if (pools[mask.Exc[i]].Has(entityID))
                     return false;
             }
             return true;
@@ -208,12 +216,11 @@ namespace DCFApixels.DragonECS
                         _groups.RemoveAt(last);
                     }
                 }
-                foreach (var item in _pools)
+                foreach (var item in pools)
                     item.InvokeOnWorldResize(_gens.Length);
             }
             _gens[entityID] &= GEN_BITS;
             EcsEntity entity = new EcsEntity(entityID, ++_gens[entityID], uniqueID);
-          //  UnityEngine.Debug.Log($"{entityID}  {_gens[entityID]} {uniqueID}");
             _entityCreate.OnEntityCreate(entity);
             _allEntites.Add(entityID);
             return entity;
@@ -227,25 +234,19 @@ namespace DCFApixels.DragonECS
             _entityDestry.OnEntityDestroy(entity);
 
             if (_delEntBufferCount >= _delEntBuffer.Length)
-                ReleaseDelEntBuffer();
+                ReleaseDelEntityBuffer();
         }
-
-        private void ReleaseDelEntBuffer()//TODO проверить что буфер удаления работает нормально
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsEntity GetEcsEntity(int entityID) => new EcsEntity(entityID, _gens[entityID], uniqueID); //TODO придумать получше имя метода
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsAlive(int entityID, short gen) => _gens[entityID] == gen;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsUsed(int entityID) => (_gens[entityID] | DEATH_GEN_BIT) == 0;
+        public void ReleaseDelEntityBuffer()
         {
             for (int i = 0; i < _delEntBufferCount; i++)
                 _entityDispenser.Release(_delEntBuffer[i]);
             _delEntBufferCount = 0;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsEntity GetEcsEntity(int entityID)
-        {
-            return new EcsEntity(entityID, _gens[entityID], uniqueID);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool EntityIsAlive(int entityID, short gen) //TODO пофиксить EntityIsAlive
-        {
-            return _gens[entityID] == gen;
         }
         #endregion
 

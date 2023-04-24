@@ -21,6 +21,11 @@ namespace DCFApixels.DragonECS
         private PoolRunners _poolRunners;
 
         #region Properites
+        public ref T Instance
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref _component;
+        }
         public int Count => _count;
         public sealed override EcsWorld World => _source;
         #endregion
@@ -53,6 +58,7 @@ namespace DCFApixels.DragonECS
             return ref _component;
             // }
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Write(int entityID)
         {
@@ -91,7 +97,7 @@ namespace DCFApixels.DragonECS
         protected override void OnDestroy() { }
         #endregion
     }
-
+    /// <summary> Singleton component </summary>
     public interface IEcsSingleComponent { }
     public static class EcsSinglePoolExt
     {

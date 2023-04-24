@@ -46,7 +46,7 @@ namespace DCFApixels.DragonECS
 
         #region Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(int entityID) => _source.Contains(entityID);
+        public bool Contains(int entityID) => _source.Has(entityID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup.Enumerator GetEnumerator() => _source.GetEnumerator();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -152,16 +152,17 @@ namespace DCFApixels.DragonECS
 
         //защита от криворукости
         //перед сборкой мусора снова создает сильную ссылку и возвращает в пул
-        //TODO переделат ьиил удалить, так как сборщик мусора просыпается только после 12к и более экземпляров, только тогда и вызывается финализатор, слишком жирно
+        //TODO переделат или удалить, так как сборщик мусора просыпается только после 12к и более экземпляров, только тогда и вызывается финализатор, слишком жирно
         ~EcsGroup()
         {
             Release();
         }
         #endregion
 
-        #region Contains
+        #region Has
+        //TODO переименовать в Has
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(int entityID)
+        public bool Has(int entityID)
         {
             return _sparse[entityID] > 0;
         }
@@ -179,7 +180,7 @@ namespace DCFApixels.DragonECS
         public void UncheckedAdd(int entityID) => AddInternal(entityID);
         public void Add(int entityID)
         {
-            if (Contains(entityID)) return;
+            if (Has(entityID)) return;
             AddInternal(entityID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -204,7 +205,7 @@ namespace DCFApixels.DragonECS
         public void UncheckedRemove(int entityID) => RemoveInternal(entityID);
         public void Remove(int entityID)
         {
-            if (!Contains(entityID)) return;
+            if (!Has(entityID)) return;
             RemoveInternal(entityID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -233,6 +234,15 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref _delayedOps, _delayedOps.Length << 1);
             }
             _delayedOps[_delayedOpsCount++] = entityID | isAddBitFlag; // delayedOp = entityID add isAddBitFlag
+        }
+
+        public void RemoveUnusedEntityIDs()
+        {
+            foreach (var e in this)
+            {
+                if (!_source.IsUsed(e))
+                    AggressiveRemove(e);
+            }
         }
         #endregion
 
@@ -290,7 +300,7 @@ namespace DCFApixels.DragonECS
             if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in group)
-                if (!Contains(item))
+                if (!Has(item))
                     AggressiveAdd(item);
         }
 
@@ -304,7 +314,7 @@ namespace DCFApixels.DragonECS
             if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in this)
-                if (group.Contains(item))
+                if (group.Has(item))
                     AggressiveRemove(item);
         }
 
@@ -318,7 +328,7 @@ namespace DCFApixels.DragonECS
             if (World != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in this)
-                if (!group.Contains(item))
+                if (!group.Has(item))
                     AggressiveRemove(item);
         }
 
@@ -332,7 +342,7 @@ namespace DCFApixels.DragonECS
             if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
 #endif
             foreach (var item in group)
-                if (Contains(item))
+                if (Has(item))
                     AggressiveRemove(item);
                 else
                     AggressiveAdd(item);
@@ -349,7 +359,7 @@ namespace DCFApixels.DragonECS
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
-                if (!b.Contains(item))
+                if (!b.Has(item))
                     result.AggressiveAdd(item);
             a._source.ReleaseGroup(a);
             return result;
@@ -363,7 +373,7 @@ namespace DCFApixels.DragonECS
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
-                if (b.Contains(item))
+                if (b.Has(item))
                     result.AggressiveAdd(item);
             a._source.ReleaseGroup(a);
             return result;
@@ -456,7 +466,7 @@ namespace DCFApixels.DragonECS
             if (other.Count != Count)
                 return false;
             foreach (var item in other)
-                if (!Contains(item))
+                if (!Has(item))
                     return false;
             return true;
         }

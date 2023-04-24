@@ -39,10 +39,8 @@ namespace DCFApixels.DragonECS
             _count = 0;
         }
 
-        public void Set(int nodeIndex, int entityID)
-        {
-            _nodes[nodeIndex].entityID = entityID;
-        }
+        public void Set(int nodeIndex, int entityID) => _nodes[nodeIndex].entityID = entityID;
+        public int Get(int nodeIndex) => _nodes[nodeIndex].entityID;
 
         /// <summary> Insert after</summary>
         /// <returns> new node index</returns>

@@ -15,7 +15,14 @@ namespace DCFApixels.DragonECS
         private PoolRunners _poolRunners;
 
         private EcsGroup _entities;
-        public EcsReadonlyGroup Entities => _entities.Readonly;
+        public EcsReadonlyGroup Entities
+        {
+            get
+            {
+                _entities.RemoveUnusedEntityIDs();
+                return _entities.Readonly;
+            }
+        }
 
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
         private short _sanitizeTargetWorld = -1;
