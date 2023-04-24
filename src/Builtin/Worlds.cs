@@ -15,4 +15,8 @@
     {
         public EcsEventWorld(EcsPipeline pipeline = null) : base(pipeline) { }
     }
+    public sealed class EcsUIWorld : EcsWorld<EcsUIWorld>
+    {
+        public EcsUIWorld(EcsPipeline pipeline = null) : base(pipeline) { }
+    }
 }
