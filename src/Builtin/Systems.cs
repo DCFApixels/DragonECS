@@ -29,6 +29,7 @@ namespace DCFApixels.DragonECS
         }
     }
 
+    [DebugHide, DebugColor(DebugColor.Grey)]
     public class DeleteOneFrameComponentSystem<TWorld, TComponent> : IEcsRunSystem, IEcsInject<TWorld>
         where TWorld : EcsWorld<TWorld>
         where TComponent : struct, IEcsComponent
