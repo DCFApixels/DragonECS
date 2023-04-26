@@ -463,6 +463,8 @@ namespace DCFApixels.DragonECS
         public bool Equals(EcsReadonlyGroup other) => Equals(other.GetGroupInternal());
         public bool Equals(EcsGroup other)
         {
+            if (ReferenceEquals(other, null))
+                return false;
             if (other.Count != Count)
                 return false;
             foreach (var item in other)
@@ -480,10 +482,17 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region operators
-        public static bool operator ==(EcsGroup a, EcsGroup b) => a.Equals(b);
-        public static bool operator ==(EcsGroup a, EcsReadonlyGroup b) => a.Equals(b);
-        public static bool operator !=(EcsGroup a, EcsGroup b) => !a.Equals(b);
-        public static bool operator !=(EcsGroup a, EcsReadonlyGroup b) => !a.Equals(b);
+        private static bool StaticEquals(EcsGroup a, EcsReadonlyGroup b) => StaticEquals(a, b.GetGroupInternal());
+        private static bool StaticEquals(EcsGroup a, EcsGroup b)
+        {
+            if (ReferenceEquals(a, null))
+                return false;
+            return a.Equals(b);
+        }
+        public static bool operator ==(EcsGroup a, EcsGroup b) => StaticEquals(a, b);
+        public static bool operator ==(EcsGroup a, EcsReadonlyGroup b) => StaticEquals(a, b);
+        public static bool operator !=(EcsGroup a, EcsGroup b) => !StaticEquals(a, b);
+        public static bool operator !=(EcsGroup a, EcsReadonlyGroup b) => !StaticEquals(a, b);
         #endregion
 
         #region OnWorldResize

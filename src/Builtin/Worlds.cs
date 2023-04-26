@@ -9,14 +9,17 @@
 
     public sealed class EcsDefaultWorld : EcsWorld<EcsDefaultWorld>
     {
-        public EcsDefaultWorld(EcsPipeline pipeline = null) : base(pipeline) { }
+        public EcsDefaultWorld() : base(null) { }
+        public EcsDefaultWorld(EcsPipeline pipeline) : base(pipeline) { }
     }
     public sealed class EcsEventWorld : EcsWorld<EcsEventWorld>
     {
-        public EcsEventWorld(EcsPipeline pipeline = null) : base(pipeline) { }
+        public EcsEventWorld() : base(null) { }
+        public EcsEventWorld(EcsPipeline pipeline) : base(pipeline) { }
     }
     public sealed class EcsUIWorld : EcsWorld<EcsUIWorld>
     {
-        public EcsUIWorld(EcsPipeline pipeline = null) : base(pipeline) { }
+        public EcsUIWorld() : base(null) { }
+        public EcsUIWorld(EcsPipeline pipeline) : base(pipeline) { }
     }
 }

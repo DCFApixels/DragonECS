@@ -50,7 +50,7 @@ namespace DCFApixels.DragonECS
     }
     public interface IEcsEntityDestroy : IEcsSystem
     {
-        public void OnEntityDestroy(EcsEntity entity);
+        public void OnEntityDestroy(int entityID);
     }
     public interface IEcsEntityLifecycle : IEcsEntityCreate, IEcsEntityDestroy { }
 
@@ -67,9 +67,9 @@ namespace DCFApixels.DragonECS
         [DebugColor(DebugColor.Orange)]
         public sealed class EcsEntityDestroyRunner : EcsRunner<IEcsEntityDestroy>, IEcsEntityDestroy
         {
-            public void OnEntityDestroy(EcsEntity entity)
+            public void OnEntityDestroy(int entityID)
             {
-                foreach (var item in targets) item.OnEntityDestroy(entity);
+                foreach (var item in targets) item.OnEntityDestroy(entityID);
             }
         }
     }

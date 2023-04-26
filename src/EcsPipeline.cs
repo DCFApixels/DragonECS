@@ -157,17 +157,20 @@ namespace DCFApixels.DragonECS
             private HashSet<Type> _uniqueTypes;
             private readonly List<object> _blockExecutionOrder;
             private readonly Dictionary<object, List<IEcsSystem>> _systems;
-            private readonly object _basicBlocKey;
+            private readonly string _basicBlocKey;
             private bool _isBasicBlockDeclared;
             private bool _isOnlyBasicBlock;
             public Builder()
             {
-                _basicBlocKey = "Basic";
+                _basicBlocKey = EcsConsts.BASIC_SYSTEMS_BLOCK;
                 _uniqueTypes = new HashSet<Type>();
                 _blockExecutionOrder = new List<object>(KEYS_CAPACITY);
                 _systems = new Dictionary<object, List<IEcsSystem>>(KEYS_CAPACITY);
                 _isBasicBlockDeclared = false;
                 _isOnlyBasicBlock = true;
+
+                SystemsBlock(EcsConsts.PRE_BEGIN_SYSTEMS_BLOCK);
+                SystemsBlock(EcsConsts.BEGIN_SYSTEMS_BLOCK);
             }
 
             public Builder Add(IEcsSystem system, object blockKey = null)
@@ -196,7 +199,7 @@ namespace DCFApixels.DragonECS
                 list.Add(system);
             }
 
-            public Builder Add(IEcsModule module)
+            public Builder AddModule(IEcsModule module)
             {
                 module.ImportSystems(this);
                 return this;
@@ -208,13 +211,27 @@ namespace DCFApixels.DragonECS
                 _blockExecutionOrder.Add(_basicBlocKey);
                 return this;
             }
-            public Builder SystemsBlock(object blockKey)
+            public Builder SystemsBlock(string blockKey)
             {
-                if (blockKey == null)
+                if (blockKey == null || blockKey == _basicBlocKey)
                     return BasicSystemsBlock();
 
                 _isOnlyBasicBlock = false;
                 _blockExecutionOrder.Add(blockKey);
+                return this;
+            }
+            public Builder InsertSystemsBlock(string blockKey, string beforeBlockKey)
+            {
+                if (blockKey == null || blockKey == _basicBlocKey)
+                {
+                    _isBasicBlockDeclared = true;
+                    blockKey = _basicBlocKey;
+                }
+
+                _isOnlyBasicBlock = false;
+                int index = _blockExecutionOrder.IndexOf(beforeBlockKey);
+                index = index < 0 ? _blockExecutionOrder.Count - 1 : index;
+                _blockExecutionOrder.Insert(index, blockKey);
                 return this;
             }
 
@@ -226,7 +243,10 @@ namespace DCFApixels.DragonECS
                 }
 
                 if(_isBasicBlockDeclared == false)
-                    _blockExecutionOrder.Insert(0, _basicBlocKey);
+                    _blockExecutionOrder.Insert(_blockExecutionOrder.IndexOf(EcsConsts.BEGIN_SYSTEMS_BLOCK) + 1, _basicBlocKey);//вставить после BEGIN_SYSTEMS_BLOCK
+                SystemsBlock(EcsConsts.END_SYSTEMS_BLOCK);
+                SystemsBlock(EcsConsts.POST_END_SYSTEMS_BLOCK);
+                Add(new DeleteEmptyEntitesSsytem(), EcsConsts.POST_END_SYSTEMS_BLOCK);
 
                 List<IEcsSystem> result = new List<IEcsSystem>(32);
 
@@ -255,12 +275,16 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsModule
     {
-        public void ImportSystems(EcsPipeline.Builder builder);
+        public void ImportSystems(EcsPipeline.Builder b);
     }
 
     #region Extensions
-    public static class EcsSystemsExtensions
+    public static class EcsPipelineExtensions
     {
+        public static void GetRunner<T>(this EcsPipeline self, out T runner) where T : IEcsSystem
+        {
+            runner = self.GetRunner<T>();
+        }
         public static bool IsNullOrDestroyed(this EcsPipeline self)
         {
             return self == null || self.IsDestoryed;

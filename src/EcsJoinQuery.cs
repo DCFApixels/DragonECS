@@ -174,6 +174,10 @@ namespace DCFApixels.DragonECS
             }
         }
 
+    //TODO 
+    // реализовать возможность получить список всех связей между двумя сущьностями одной напрваленности, и сделать метод для получения одной такой связи
+    //
+
         public void Join(WhereResult firstWorldWhereQuery, WhereResult secondWorldWhereQuery)
         {
             _executeJoin.Begin();

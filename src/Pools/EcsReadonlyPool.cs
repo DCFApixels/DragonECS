@@ -11,8 +11,6 @@ namespace DCFApixels.DragonECS
     {
         public static string name = typeof(T).Name;
 
-        private EcsWorld _source;
-
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
         private int _itemsCount;
@@ -25,14 +23,12 @@ namespace DCFApixels.DragonECS
         #region Properites
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
-        public sealed override EcsWorld World => _source;
         #endregion
 
         #region Init
         protected override void Init(EcsWorld world)
         {
             const int capacity = 512;
-            _source = world;
 
             _mapping = new int[world.Capacity];
             _recycledItems = new int[128];

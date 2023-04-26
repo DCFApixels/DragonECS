@@ -138,38 +138,35 @@ namespace DCFApixels.DragonECS
     {
         public static EcsPipeline.Builder Inject<T>(this EcsPipeline.Builder self, T data)
         {
-            self.Add(new InjectSystem<T>(data));
-            return self;
+            return self.Add(new InjectSystem<T>(data));
         }
         public static EcsPipeline.Builder Inject<A, B>(this EcsPipeline.Builder self, A a, B b)
         {
-            self.Inject(a).Inject(b);
-            return self;
+            return self.Inject(a).Inject(b);
+        }
+        public static EcsPipeline.Builder Inject<A, B, C>(this EcsPipeline.Builder self, A a, B b, C c)
+        {
+            return self.Inject(a).Inject(b).Inject(c);
         }
         public static EcsPipeline.Builder Inject<A, B, C, D>(this EcsPipeline.Builder self, A a, B b, C c, D d)
         {
-            self.Inject(a).Inject(b).Inject(c).Inject(d);
-            return self;
+            return self.Inject(a).Inject(b).Inject(c).Inject(d);
         }
         public static EcsPipeline.Builder Inject<A, B, C, D, E>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e)
         {
-            self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e);
-            return self;
+            return self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e);
         }
         public static EcsPipeline.Builder Inject<A, B, C, D, E, F>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e, F f)
         {
-            self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f);
-            return self;
+            return self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f);
         }
         public static EcsPipeline.Builder Inject<A, B, C, D, E, F, G>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e, F f, G g)
         {
-            self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f).Inject(g);
-            return self;
+            return self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f).Inject(g);
         }
         public static EcsPipeline.Builder Inject<A, B, C, D, E, F, G, H>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e, F f, G g, H h)
         {
-            self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f).Inject(g).Inject(h);
-            return self;
+            return self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f).Inject(g).Inject(h);
         }
     }
 }

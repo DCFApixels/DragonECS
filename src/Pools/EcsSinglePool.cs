@@ -7,13 +7,7 @@ namespace DCFApixels.DragonECS
     public sealed class EcsSinglePool<T> : EcsPoolBase<T>
          where T : struct, IEcsSingleComponent
     {
-        private EcsWorld _source;
-
-        private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
-        //private T[] _items; //dense
-        //private int _count;
-        //private int[] _recycledItems;
-        //private int _recycledItemsCount;
+        private int[] _mapping;
 
         private int _count;
         private T _component;
@@ -27,13 +21,11 @@ namespace DCFApixels.DragonECS
             get => ref _component;
         }
         public int Count => _count;
-        public sealed override EcsWorld World => _source;
         #endregion
 
         #region Init
         protected override void Init(EcsWorld world)
         {
-            _source = world;
             _mapping = new int[world.Capacity];
             _count = 0;
             _poolRunners = new PoolRunners(world.Pipeline);
@@ -53,6 +45,7 @@ namespace DCFApixels.DragonECS
             if (_mapping[entityID] <= 0)
             {
                 _mapping[entityID] = ++_count;
+                IncrementEntityComponentCount(entityID);
                 _poolRunners.add.OnComponentAdd<T>(entityID);
             }
             return ref _component;
@@ -84,6 +77,7 @@ namespace DCFApixels.DragonECS
             //   {
             _mapping[entityID] = 0;
             _count--;
+            DecrementEntityComponentCount(entityID);
             _poolRunners.del.OnComponentDel<T>(entityID);
             //   }
         }

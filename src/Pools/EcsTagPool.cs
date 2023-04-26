@@ -7,8 +7,6 @@ namespace DCFApixels.DragonECS
     public sealed class EcsTagPool<T> : EcsPoolBase<T>
         where T : struct, IEcsTagComponent
     {
-        private EcsWorld _source;
-
         private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private int _count;
 
@@ -16,14 +14,11 @@ namespace DCFApixels.DragonECS
 
         #region Properites
         public int Count => _count;
-        public sealed override EcsWorld World => _source;
         #endregion
 
         #region Init
         protected override void Init(EcsWorld world)
         {
-            _source = world;
-
             _mapping = new bool[world.Capacity];
             _count = 0;
 
@@ -43,6 +38,7 @@ namespace DCFApixels.DragonECS
             {
                 _count++;
                 _mapping[entityID] = true;
+                IncrementEntityComponentCount(entityID);
                 _poolRunners.add.OnComponentAdd<T>(entityID);
             }
             // }
@@ -59,6 +55,7 @@ namespace DCFApixels.DragonECS
             //   {
             _mapping[entityID] = false;
             _count--;
+            DecrementEntityComponentCount(entityID);
             _poolRunners.del.OnComponentDel<T>(entityID);
             //   }
         }

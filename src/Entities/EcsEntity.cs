@@ -93,6 +93,8 @@ namespace DCFApixels.DragonECS
                 return this != NULL;
             }
         }
+
+        public EcsWorld GetWorld() => EcsWorld.Worlds[world];
     } 
 
     public static partial class entExtensions

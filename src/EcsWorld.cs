@@ -21,7 +21,7 @@ namespace DCFApixels.DragonECS
         private int _entitiesCount;
         private int _entitesCapacity;
         private short[] _gens; //старший бит указывает на то жива ли сущьность.
-        //private short[] _componentCounts; //TODO
+        private short[] _componentCounts;
         private EcsGroup _allEntites;
 
         //буфер удаления откладывает освобождение андишников сущьностей.
@@ -73,6 +73,8 @@ namespace DCFApixels.DragonECS
             ArrayUtility.Fill(pools, _nullPool);
 
             _gens = new short[_entitesCapacity];
+            _componentCounts = new short[_entitesCapacity];
+
             ArrayUtility.Fill(_gens, DEATH_GEN_BIT);
             _delEntBufferCount = 0;
             _delEntBuffer = new int[_entitesCapacity >> DEL_ENT_BUFFER_SIZE_OFFSET];
@@ -127,6 +129,7 @@ namespace DCFApixels.DragonECS
             {
                 var pool = new TPool();
                 pools[uniqueID] = pool;
+                pool.PreInitInternal(this, uniqueID);
                 pool.InvokeInit(this);
 
                 //EcsDebug.Print(pool.GetType().FullName);
@@ -200,6 +203,7 @@ namespace DCFApixels.DragonECS
             if (_gens.Length <= entityID)
             {
                 Array.Resize(ref _gens, _gens.Length << 1);
+                Array.Resize(ref _componentCounts, _gens.Length);
                 ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitesCapacity);
                 _entitesCapacity = _gens.Length;
 
@@ -225,13 +229,14 @@ namespace DCFApixels.DragonECS
             _allEntites.Add(entityID);
             return entity;
         }
-        public void DelEntity(EcsEntity entity)
+
+        public void DelEntity(int entityID)
         {
-            _allEntites.Remove(entity.id);
-            _delEntBuffer[_delEntBufferCount++] = entity.id;
-            _gens[entity.id] |= DEATH_GEN_BIT;
+            _allEntites.Remove(entityID);
+            _delEntBuffer[_delEntBufferCount++] = entityID;
+            _gens[entityID] |= DEATH_GEN_BIT;
             _entitiesCount--;
-            _entityDestry.OnEntityDestroy(entity);
+            _entityDestry.OnEntityDestroy(entityID);
 
             if (_delEntBufferCount >= _delEntBuffer.Length)
                 ReleaseDelEntityBuffer();
@@ -247,6 +252,35 @@ namespace DCFApixels.DragonECS
             for (int i = 0; i < _delEntBufferCount; i++)
                 _entityDispenser.Release(_delEntBuffer[i]);
             _delEntBufferCount = 0;
+        }
+        public short GetGen(int entityID) => _gens[entityID];
+        public short GetComponentCount(int entityID) => _componentCounts[entityID];
+        public void DeleteEmptyEntites()
+        {
+            foreach (var e in _allEntites)
+            {
+                if (_componentCounts[e] <= 0)
+                    DelEntity(e);
+            }
+        }
+
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void IncrementEntityComponentCount(int entityID)
+        {
+            _componentCounts[entityID]++;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void DecrementEntityComponentCount(int entityID)
+        {
+            var count = --_componentCounts[entityID];
+            if(count == 0)
+                DelEntity(entityID);
+
+#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (count < 0) throw new EcsFrameworkException("нарушен баланс инкремента.декремента компонентов");
+#endif
         }
         #endregion
 

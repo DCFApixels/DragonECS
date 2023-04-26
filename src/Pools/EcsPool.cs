@@ -6,65 +6,10 @@ using Unity.Profiling;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract class EcsPoolBase
-    {
-        #region Properties
-        public abstract Type ComponentType { get; }
-        public abstract EcsWorld World { get; }
-        #endregion
-
-        #region Methods
-        public abstract bool Has(int entityID);
-
-        protected abstract void Init(EcsWorld world);
-        protected abstract void OnWorldResize(int newSize);
-        protected abstract void OnDestroy();
-        #endregion
-
-        #region Internal
-        internal void InvokeInit(EcsWorld world) => Init(world);
-        internal void InvokeOnWorldResize(int newSize) => OnWorldResize(newSize);
-        internal void InvokeOnDestroy() => OnDestroy();
-        #endregion
-    }
-    public abstract class EcsPoolBase<T> : EcsPoolBase, IEnumerable<T>
-    {
-        public sealed override Type ComponentType => typeof(T);
-        //–елазиаци€ интерфейса IEnumerator не работает, нужно только чтобы IntelliSense предлагала названи€ на основе T. Ќе нашел другого способа
-        #region IEnumerable 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => throw new NotImplementedException();
-        IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
-        #endregion
-    }
-
-    public struct NullComponent { }
-    public sealed class EcsNullPool : EcsPoolBase
-    {
-        public static EcsNullPool instance => new EcsNullPool(null);
-        private EcsWorld _source;
-        private EcsNullPool(EcsWorld source) => _source = source;
-
-        #region Properties
-        public sealed override Type ComponentType => typeof(NullComponent);
-        public sealed override EcsWorld World => _source;
-        #endregion
-
-        #region Methods
-        public sealed override bool Has(int index) => false;
-        #endregion
-
-        #region Callbacks
-        protected override void Init(EcsWorld world) { }
-        protected override void OnWorldResize(int newSize) { }
-        protected override void OnDestroy() { }
-        #endregion
-    }
     public sealed class EcsPool<T> : EcsPoolBase<T>
         where T : struct, IEcsComponent
     {
         public static string name = typeof(T).Name; 
-
-        private EcsWorld _source;
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
@@ -78,14 +23,12 @@ namespace DCFApixels.DragonECS
         #region Properites
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
-        public sealed override EcsWorld World => _source;
         #endregion
 
         #region Init
         protected override void Init(EcsWorld world)
         {
             const int capacity = 512;
-            _source = world;
 
             _mapping = new int[world.Capacity];
             _recycledItems = new int[128];
@@ -124,6 +67,7 @@ namespace DCFApixels.DragonECS
                 }
 
                 //_mapping[entityID] = itemIndex; TODO проверить что это лишнее дейсвие
+                IncrementEntityComponentCount(entityID);
                 _poolRunners.add.OnComponentAdd<T>(entityID);
             }
             _poolRunners.write.OnComponentWrite<T>(entityID);
@@ -153,6 +97,7 @@ namespace DCFApixels.DragonECS
         {
             //  using (_delMark.Auto())
             //   {
+
             ref int itemIndex = ref _mapping[entityID];
             _componentResetHandler.Reset(ref _items[itemIndex]);
             if (_recycledItemsCount >= _recycledItems.Length)
@@ -160,6 +105,7 @@ namespace DCFApixels.DragonECS
             _recycledItems[_recycledItemsCount++] = itemIndex;
             itemIndex = 0;
             _itemsCount--;
+            DecrementEntityComponentCount(entityID);
             _poolRunners.del.OnComponentDel<T>(entityID);
             //   }
         }

@@ -4,11 +4,10 @@ using Unity.Profiling;
 
 namespace DCFApixels.DragonECS
 {
+    //не влияет на счетчик компонентов на сущности
     public sealed class EcsAttachPool<T> : EcsPoolBase<T>
         where T : struct, IEcsAttachComponent
     {
-        private EcsWorld _source;
-
         private bool[] _entityFlags;// index = entityID / value = entityFlag;/ value = 0 = no entityID
         private T[] _items; //sparse
         private int _count;
@@ -31,13 +30,11 @@ namespace DCFApixels.DragonECS
         #region Properites
         public int Count => _count;
         public int Capacity => _items.Length;
-        public sealed override EcsWorld World => _source;
         #endregion
 
         #region Init
         protected override void Init(EcsWorld world)
         {
-            _source = world;
             _poolRunners = new PoolRunners(world.Pipeline);
 
             _entities = EcsGroup.New(world);
