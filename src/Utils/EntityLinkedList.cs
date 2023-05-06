@@ -46,10 +46,10 @@ namespace DCFApixels.DragonECS
         /// <returns> new node index</returns>
         public int Insert(int nodeIndex, int entityID)
         {
-            _nodes[_count].Set(entityID, _nodes[nodeIndex].next);
+            _nodes[++_count].Set(entityID, _nodes[nodeIndex].next);
             _nodes[nodeIndex].next = _count;
             _lastNodeIndex = _count;
-            return _count++;
+            return _count;
         }
 
         public int Add(int entityID) => Insert(_lastNodeIndex, entityID);

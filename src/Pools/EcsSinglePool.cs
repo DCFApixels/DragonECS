@@ -1,12 +1,17 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Unity.Profiling;
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsSinglePool<T> : EcsPoolBase<T>
+    using static EcsPoolThrowHalper;
+    public sealed class EcsSinglePool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IntelliSense hack
          where T : struct, IEcsSingleComponent
     {
+        private EcsWorld _source;
+        private int _id;
+
         private int[] _mapping;
 
         private int _count;
@@ -21,77 +26,112 @@ namespace DCFApixels.DragonECS
             get => ref _component;
         }
         public int Count => _count;
+        int IEcsPool.Capacity => -1;
+        public int ComponentID => _id;
+        public Type ComponentType => typeof(T);
+        public EcsWorld World => _source;
         #endregion
 
         #region Init
-        protected override void Init(EcsWorld world)
+        void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
         {
+            _source = world;
+            _id = componentID;
+
             _mapping = new int[world.Capacity];
             _count = 0;
             _poolRunners = new PoolRunners(world.Pipeline);
         }
         #endregion
 
-        #region Write/Read/Has/Del
-        private ProfilerMarker _addMark = new ProfilerMarker("EcsPoo.Add");
-        private ProfilerMarker _writeMark = new ProfilerMarker("EcsPoo.Write");
-        private ProfilerMarker _readMark = new ProfilerMarker("EcsPoo.Read");
-        private ProfilerMarker _hasMark = new ProfilerMarker("EcsPoo.Has");
-        private ProfilerMarker _delMark = new ProfilerMarker("EcsPoo.Del");
+        #region Methods
         public ref T Add(int entityID)
         {
-            // using (_addMark.Auto())
-            //  {
-            if (_mapping[entityID] <= 0)
-            {
-                _mapping[entityID] = ++_count;
-                IncrementEntityComponentCount(entityID);
-                _poolRunners.add.OnComponentAdd<T>(entityID);
-            }
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (Has(entityID)) ThrowAlreadyHasComponent<T>(entityID);
+#endif
+            _mapping[entityID] = ++_count;
+            this.IncrementEntityComponentCount(entityID);
+            _poolRunners.add.OnComponentAdd<T>(entityID);
             return ref _component;
-            // }
         }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Write(int entityID)
         {
-            //   using (_writeMark.Auto())
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
             _poolRunners.write.OnComponentWrite<T>(entityID);
             return ref _component;
         }
+        public ref T TryAddOrWrite(int entityID)
+        {
+            if (!Has(entityID))
+                return ref Add(entityID);
+            return ref Write(entityID);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID)
         {
-            //  using (_readMark.Auto())
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
             return ref _component;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public sealed override bool Has(int entityID)
+        public bool Has(int entityID)
         {
-            //  using (_hasMark.Auto())
             return _mapping[entityID] > 0;
         }
         public void Del(int entityID)
         {
-            //  using (_delMark.Auto())
-            //   {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
             _mapping[entityID] = 0;
             _count--;
-            DecrementEntityComponentCount(entityID);
+            this.DecrementEntityComponentCount(entityID);
             _poolRunners.del.OnComponentDel<T>(entityID);
-            //   }
+        }
+        public void TryDel(int entityID)
+        {
+            if (Has(entityID)) Del(entityID);
+        }
+        public void Copy(int fromEntityID, int toEntityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+#endif
+            TryAddOrWrite(toEntityID);
         }
         #endregion
 
-        #region WorldCallbacks
-        protected override void OnWorldResize(int newSize)
+        #region Callbacks
+        void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);
         }
-        protected override void OnDestroy() { }
+        void IEcsPoolImplementation.OnWorldDestroy() { }
+        void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
+        {
+            foreach (var entityID in buffer)
+                TryDel(entityID);
+        }
+        #endregion
+
+        #region Other
+        void IEcsPool.AddRaw(int entityID, object dataRaw) => Instance = (T)dataRaw;
+        object IEcsPool.GetRaw(int entityID) => Instance;
+        void IEcsPool.SetRaw(int entityID, object dataRaw) => Instance = (T)dataRaw;
+        #endregion
+
+        #region IEnumerator - IntelliSense hack
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => throw new NotImplementedException();
+        IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
         #endregion
     }
-    /// <summary> Singleton component </summary>
+    /// <summary>Singleton component</summary>
     public interface IEcsSingleComponent { }
     public static class EcsSinglePoolExt
     {
@@ -101,15 +141,15 @@ namespace DCFApixels.DragonECS
             return self.GetPool<TSingleComponent, EcsSinglePool<TSingleComponent>>();
         }
 
-        public static EcsSinglePool<TSingleComponent> Include<TSingleComponent>(this EcsQueryBuilderBase self) where TSingleComponent : struct, IEcsSingleComponent
+        public static EcsSinglePool<TSingleComponent> Include<TSingleComponent>(this EcsSubjectBuilderBase self) where TSingleComponent : struct, IEcsSingleComponent
         {
             return self.Include<TSingleComponent, EcsSinglePool<TSingleComponent>>();
         }
-        public static EcsSinglePool<TSingleComponent> Exclude<TSingleComponent>(this EcsQueryBuilderBase self) where TSingleComponent : struct, IEcsSingleComponent
+        public static EcsSinglePool<TSingleComponent> Exclude<TSingleComponent>(this EcsSubjectBuilderBase self) where TSingleComponent : struct, IEcsSingleComponent
         {
             return self.Exclude<TSingleComponent, EcsSinglePool<TSingleComponent>>();
         }
-        public static EcsSinglePool<TSingleComponent> Optional<TSingleComponent>(this EcsQueryBuilderBase self) where TSingleComponent : struct, IEcsSingleComponent
+        public static EcsSinglePool<TSingleComponent> Optional<TSingleComponent>(this EcsSubjectBuilderBase self) where TSingleComponent : struct, IEcsSingleComponent
         {
             return self.Optional<TSingleComponent, EcsSinglePool<TSingleComponent>>();
         }

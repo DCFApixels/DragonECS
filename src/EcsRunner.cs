@@ -1,5 +1,4 @@
-﻿using DCFApixels.DragonECS.RunnersCore;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,6 +8,9 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    using RunnersCore;
+    using System.ComponentModel;
+
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     sealed class EcsRunnerFilterAttribute : Attribute
     {
@@ -26,6 +28,7 @@ namespace DCFApixels.DragonECS
 
     namespace RunnersCore
     {
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public interface IEcsRunner
         {
             public EcsPipeline Source { get; }
@@ -55,7 +58,7 @@ namespace DCFApixels.DragonECS
                         .Where(type => type.BaseType != null && type.BaseType.IsGenericType && runnerBaseType == type.BaseType.GetGenericTypeDefinition()));
                 }
 
-#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             for (int i = 0; i < runnerHandlerTypes.Count; i++)
             {
                 var e = CheckRunnerValide(runnerHandlerTypes[i]);
@@ -128,6 +131,7 @@ namespace DCFApixels.DragonECS
                 EcsRunner<TInterface>.Register(runnerType);
             }
         }
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public abstract class EcsRunner<TInterface> : IEcsSystem, IEcsRunner
             where TInterface : IEcsSystem
         {
@@ -135,7 +139,7 @@ namespace DCFApixels.DragonECS
             private static Type _subclass;
             internal static void Register(Type subclass)
             {
-#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (_subclass != null)
             {
                 throw new EcsRunnerImplementationException($"The Runner<{typeof(TInterface).FullName}> can have only one implementing subclass");

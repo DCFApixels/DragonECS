@@ -6,6 +6,10 @@ using delayedOp = System.Int32;
 
 namespace DCFApixels.DragonECS
 {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+    using static EcsGroup.ThrowHalper;
+#endif
+
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
     public readonly ref struct EcsReadonlyGroup
     {
@@ -17,6 +21,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Properties
+        public bool IsNull => _source == null;
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -42,15 +47,24 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _source.IsReleazed;
         }
+        public int this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _source[index];
+        }
         #endregion
 
         #region Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(int entityID) => _source.Has(entityID);
+        public bool Has(int entityID) => _source.Has(entityID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup.Enumerator GetEnumerator() => _source.GetEnumerator();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone() => _source.Clone();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int First() => _source.First();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Last() => _source.Last();
         #endregion
 
         #region Object
@@ -98,7 +112,7 @@ namespace DCFApixels.DragonECS
 
         private int _lockCount;
 
-        private bool _isReleazed = true; 
+        private bool _isReleazed = true;
 
         #region Properties
         public EcsWorld World => _source;
@@ -126,6 +140,17 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _isReleazed;
+        }
+        public int this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+                if (index < 0 || index >= Count) ThrowArgumentOutOfRange();
+#endif
+                return _dense[index];
+            }
         }
         #endregion
 
@@ -196,6 +221,9 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AggressiveAdd(int entityID)
         {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (Has(entityID)) ThrowAlreadyContains(entityID);
+#endif
             if (++_count >= _dense.Length)
                 Array.Resize(ref _dense, _dense.Length << 1);
             _dense[_count] = entityID;
@@ -221,6 +249,9 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AggressiveRemove(int entityID)
         {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowDoesNotContain(entityID);
+#endif
             _dense[_sparse[entityID]] = _dense[_count];
             _sparse[_dense[_count--]] = _sparse[entityID];
             _sparse[entityID] = 0;
@@ -247,18 +278,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Sort/Clear
-        public void Sort()
-        {
-            int increment = 1;
-            for (int i = 0; i < _dense.Length; i++)
-            {
-                if (_sparse[i] > 0)
-                {
-                    _sparse[i] = increment;
-                    _dense[increment++] = i;
-                }
-            }
-        }
+        //public void Sort() { } //TODO прошлай реализация сортировки не удачная, так как в dense могут храниться занчения больше чем dense.Length
         public void Clear()
         {
             _count = 0;
@@ -398,7 +418,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Unlock()
         {
-#if (DEBUG && !DISABLE_DRAGONECS_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (_lockCount <= 0)
             {
                 throw new Exception($"Invalid lock-unlock balance for {nameof(EcsGroup)}.");
@@ -481,6 +501,14 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region OtherMethods
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int First() => this[0];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Last() => this[_count - 1];
+
+        #endregion
+
         #region operators
         private static bool StaticEquals(EcsGroup a, EcsReadonlyGroup b) => StaticEquals(a, b.GetGroupInternal());
         private static bool StaticEquals(EcsGroup a, EcsGroup b)
@@ -513,6 +541,20 @@ namespace DCFApixels.DragonECS
             _isReleazed = true;
             _source.ReleaseGroup(this);
         }
+        #endregion
+
+        #region ThrowHalper
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+        internal static class ThrowHalper
+        {
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public static void ThrowAlreadyContains(int entityID) => throw new EcsFrameworkException($"This group already contains entity {entityID}.");
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public static void ThrowArgumentOutOfRange() => throw new ArgumentOutOfRangeException($"index is less than 0 or is equal to or greater than Count.");
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public static void ThrowDoesNotContain(int entityID) => throw new EcsFrameworkException($"This group does not contain entity {entityID}.");
+        }
+#endif
         #endregion
     }
 

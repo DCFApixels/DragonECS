@@ -2,7 +2,7 @@
 
 namespace DCFApixels.DragonECS
 {
-    [DebugColor(DebugColor.Black)]
+    [DebugHide, DebugColor(DebugColor.Black)]
     public class SystemsBlockMarkerSystem : IEcsSystem
     {
         public readonly string name;
@@ -13,7 +13,7 @@ namespace DCFApixels.DragonECS
         }
     }
     [DebugHide, DebugColor(DebugColor.Grey)]
-    public class DeleteEmptyEntitesSsytem : IEcsRunSystem, IEcsPreInject
+    public class DeleteEmptyEntitesSystem : IEcsRunProcess, IEcsPreInject
     {
         private List<EcsWorld> _worlds = new List<EcsWorld>();
         public void PreInject(object obj)
@@ -30,42 +30,45 @@ namespace DCFApixels.DragonECS
     }
 
     [DebugHide, DebugColor(DebugColor.Grey)]
-    public class DeleteOneFrameComponentSystem<TWorld, TComponent> : IEcsRunSystem, IEcsInject<TWorld>
+    public class DeleteOneFrameComponentSystem<TWorld, TComponent> : IEcsRunProcess, IEcsInject<TWorld>
         where TWorld : EcsWorld<TWorld>
         where TComponent : struct, IEcsComponent
     {
         private TWorld _world;
         public void Inject(TWorld obj) => _world = obj;
 
-        private sealed class Query : EcsQuery
+        private sealed class Subject : EcsSubject
         {
             public EcsPool<TComponent> pool;
-            public Query(Builder b)
+            public Subject(Builder b)
             {
                 pool = b.Include<TComponent>();
             }
         }
         public void Run(EcsPipeline pipeline)
         {
-            foreach (var e in _world.Where(out Query q))
-                q.pool.Del(e);
+            foreach (var e in _world.Where(out Subject s))
+                s.pool.Del(e);
         }
     }
 
     public static class DeleteOneFrameComponentSystemExt
     {
+        private const string AUTO_DEL_LAYER = nameof(AUTO_DEL_LAYER);
         public static EcsPipeline.Builder AutoDel<TWorld, TComponent>(this EcsPipeline.Builder b)
             where TWorld : EcsWorld<TWorld>
             where TComponent : struct, IEcsComponent
         {
-            b.Add(new DeleteOneFrameComponentSystem<TWorld, TComponent>());
+            b.Layers.Insert(EcsConsts.POST_END_LAYER, AUTO_DEL_LAYER);
+            b.AddUnique(new DeleteOneFrameComponentSystem<TWorld, TComponent>(), AUTO_DEL_LAYER);
             return b;
         }
         /// <summary> for EcsDefaultWorld </summary>
         public static EcsPipeline.Builder AutoDel<TComponent>(this EcsPipeline.Builder b)
             where TComponent : struct, IEcsComponent
         {
-            b.Add(new DeleteOneFrameComponentSystem<EcsDefaultWorld, TComponent>());
+            b.Layers.Insert(EcsConsts.POST_END_LAYER, AUTO_DEL_LAYER);
+            b.AddUnique(new DeleteOneFrameComponentSystem<EcsDefaultWorld, TComponent>(), AUTO_DEL_LAYER);
             return b;
         }
     }

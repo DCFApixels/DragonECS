@@ -46,7 +46,7 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsEntityCreate : IEcsSystem
     {
-        public void OnEntityCreate(EcsEntity entity);
+        public void OnEntityCreate(int entityID);
     }
     public interface IEcsEntityDestroy : IEcsSystem
     {
@@ -59,9 +59,9 @@ namespace DCFApixels.DragonECS
         [DebugColor(DebugColor.Orange)]
         public sealed class EcsEntityCreateRunner : EcsRunner<IEcsEntityCreate>, IEcsEntityCreate
         {
-            public void OnEntityCreate(EcsEntity entity)
+            public void OnEntityCreate(int entityID)
             {
-                foreach (var item in targets) item.OnEntityCreate(entity);
+                foreach (var item in targets) item.OnEntityCreate(entityID);
             }
         }
         [DebugColor(DebugColor.Orange)]

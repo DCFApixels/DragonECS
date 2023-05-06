@@ -3,7 +3,7 @@
 namespace DCFApixels.DragonECS
 {
     [Serializable]
-    public class EcsRelationException : Exception
+    public class EcsRelationException : EcsFrameworkException
     {
         public EcsRelationException() { }
         public EcsRelationException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }

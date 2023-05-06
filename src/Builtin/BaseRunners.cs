@@ -2,28 +2,28 @@
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsPreInitSystem : IEcsSystem
+    public interface IEcsPreInitProcess : IEcsSystem
     {
         public void PreInit(EcsPipeline pipeline);
     }
-    public interface IEcsInitSystem : IEcsSystem
+    public interface IEcsInitProcess : IEcsSystem
     {
         public void Init(EcsPipeline pipeline);
     }
-    public interface IEcsRunSystem : IEcsSystem
+    public interface IEcsRunProcess : IEcsSystem
     {
         public void Run(EcsPipeline pipeline);
     }
-    public interface IEcsDestroySystem : IEcsSystem
+    public interface IEcsDestroyProcess : IEcsSystem
     {
         public void Destroy(EcsPipeline pipeline);
     }
-    public interface IEcsBaseSystem : IEcsInitSystem, IEcsRunSystem, IEcsDestroySystem { }
+    public interface IEcsBaseSystem : IEcsInitProcess, IEcsRunProcess, IEcsDestroyProcess { }
 
     namespace Internal
     {
         [DebugColor(DebugColor.Orange)]
-        public sealed class EcsPreInitRunner : EcsRunner<IEcsPreInitSystem>, IEcsPreInitSystem
+        public sealed class EcsPreInitProcessRunner : EcsRunner<IEcsPreInitProcess>, IEcsPreInitProcess
         {
 #if DEBUG && !DISABLE_DEBUG
             private EcsProfilerMarker[] _markers;
@@ -53,7 +53,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
         [DebugColor(DebugColor.Orange)]
-        public sealed class EcsInitRunner : EcsRunner<IEcsInitSystem>, IEcsInitSystem
+        public sealed class EcsInitProcessRunner : EcsRunner<IEcsInitProcess>, IEcsInitProcess
         {
 #if DEBUG && !DISABLE_DEBUG
             private EcsProfilerMarker[] _markers;
@@ -83,7 +83,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
         [DebugColor(DebugColor.Orange)]
-        public sealed class EcsRunRunner : EcsRunner<IEcsRunSystem>, IEcsRunSystem
+        public sealed class EcsRunProcessRunner : EcsRunner<IEcsRunProcess>, IEcsRunProcess
         {
 #if DEBUG && !DISABLE_DEBUG
             private EcsProfilerMarker[] _markers;
@@ -114,7 +114,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
         [DebugColor(DebugColor.Orange)]
-        public sealed class EcsDestroyRunner : EcsRunner<IEcsDestroySystem>, IEcsDestroySystem
+        public sealed class EcsDestroyProcessRunner : EcsRunner<IEcsDestroyProcess>, IEcsDestroyProcess
         {
 #if DEBUG && !DISABLE_DEBUG
             private EcsProfilerMarker[] _markers;
