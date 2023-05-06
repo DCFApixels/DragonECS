@@ -3,7 +3,7 @@
 namespace DCFApixels.DragonECS
 {
     [Serializable]
-    public class EcsRunnerImplementationException : Exception
+    public class EcsRunnerImplementationException : EcsFrameworkException
     {
         public EcsRunnerImplementationException() { }
         public EcsRunnerImplementationException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }

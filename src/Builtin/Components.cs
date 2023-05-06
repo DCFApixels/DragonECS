@@ -1,17 +1,51 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
     public struct Parent : IEcsAttachComponent
     {
-        public EcsEntity entity;
+        public entlong entity;
 
-        public EcsEntity Target
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public entlong Target
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => entity;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => entity = value;
+        }
+    }
+
+    public static class ParentUtility
+    {
+       // public static int GetRootOrSelf(this HierarchySubject s, int entityID) => s.parents.GetRootOrSelf(entityID);
+        public static int GetRootOrSelf(this EcsAttachPool<Parent> parents, int entityID)
+        {
+            while (parents.Has(entityID) && parents.Read(entityID).entity.TryGetID(out int child))
+                entityID = child;
+            return entityID;
+        }
+       // public static bool IsRoot(this HierarchySubject s, int entityID) => s.parents.IsRoot(entityID);
+        public static bool IsRoot(this EcsAttachPool<Parent> parents, int entityID)
+        {
+            return !(parents.Has(entityID) && parents.Read(entityID).entity.IsAlive);
+        }
+
+       // public static bool TryGetRoot(this HierarchySubject s, int entityID, out int rootEntityID) => TryGetRoot(s.parents, entityID, out rootEntityID);
+        public static bool TryGetRoot(this EcsAttachPool<Parent> parents, EcsSubject conditionSubject, int entityID, out int rootEntityID)
+        {
+            rootEntityID = entityID;
+            while (parents.Has(rootEntityID) && parents.Read(rootEntityID).entity.TryGetID(out int child) && conditionSubject.IsMatches(child))
+                rootEntityID = child;
+            return rootEntityID != entityID;
+        }
+        public static bool TryGetRoot(this EcsAttachPool<Parent> parents, int entityID, out int rootEntityID)
+        {
+            rootEntityID = entityID;
+            while (parents.Has(rootEntityID) && parents.Read(rootEntityID).entity.TryGetID(out int child))
+                rootEntityID = child;
+            return rootEntityID != entityID;
         }
     }
 }

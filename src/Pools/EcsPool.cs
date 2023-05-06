@@ -2,14 +2,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Unity.Profiling;
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsPool<T> : EcsPoolBase<T>
+    using static EcsPoolThrowHalper;
+    /// <summary>Pool for IEcsComponent components</summary>
+    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IntelliSense hack
         where T : struct, IEcsComponent
     {
-        public static string name = typeof(T).Name; 
+        private EcsWorld _source;
+        private int _id;
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
@@ -18,16 +20,23 @@ namespace DCFApixels.DragonECS
         private int _recycledItemsCount;
 
         private IEcsComponentReset<T> _componentResetHandler;
+        private IEcsComponentCopy<T> _componentCopyHandler;
         private PoolRunners _poolRunners;
 
         #region Properites
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
+        public int ComponentID => _id;
+        public Type ComponentType => typeof(T);
+        public EcsWorld World => _source;
         #endregion
 
         #region Init
-        protected override void Init(EcsWorld world)
+        void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
         {
+            _source = world;
+            _id = componentID; 
+
             const int capacity = 512;
 
             _mapping = new int[world.Capacity];
@@ -37,20 +46,58 @@ namespace DCFApixels.DragonECS
             _itemsCount = 0;
 
             _componentResetHandler = EcsComponentResetHandler<T>.instance;
+            _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
             _poolRunners = new PoolRunners(world.Pipeline);
         }
         #endregion
 
-        #region Write/Read/Has/Del
-        private ProfilerMarker _addMark = new ProfilerMarker("EcsPoo.Add");
-        private ProfilerMarker _writeMark = new ProfilerMarker("EcsPoo.Write");
-        private ProfilerMarker _readMark = new ProfilerMarker("EcsPoo.Read");
-        private ProfilerMarker _hasMark = new ProfilerMarker("EcsPoo.Has");
-        private ProfilerMarker _delMark = new ProfilerMarker("EcsPoo.Del");
+        #region Methods
         public ref T Add(int entityID)
         {
             // using (_addMark.Auto())
             //  {
+            ref int itemIndex = ref _mapping[entityID];
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (itemIndex > 0) ThrowAlreadyHasComponent<T>(entityID);
+#endif
+            if (_recycledItemsCount > 0)
+            {
+                itemIndex = _recycledItems[--_recycledItemsCount];
+                _itemsCount++;
+            }
+            else
+            {
+                itemIndex = ++_itemsCount;
+                if (itemIndex >= _items.Length)
+                    Array.Resize(ref _items, _items.Length << 1);
+            }
+            this.IncrementEntityComponentCount(entityID);
+            _poolRunners.add.OnComponentAdd<T>(entityID);
+            _poolRunners.write.OnComponentWrite<T>(entityID);
+            return ref _items[itemIndex];
+            // }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T Write(int entityID)
+        {
+            //   using (_writeMark.Auto())
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
+            _poolRunners.write.OnComponentWrite<T>(entityID);
+            return ref _items[_mapping[entityID]];
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly T Read(int entityID)
+        {
+            //  using (_readMark.Auto())
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
+            return ref _items[_mapping[entityID]];
+        }
+        public ref T TryAddOrWrite(int entityID)
+        {
             ref int itemIndex = ref _mapping[entityID];
             if (itemIndex <= 0)
             {
@@ -65,62 +112,75 @@ namespace DCFApixels.DragonECS
                     if (itemIndex >= _items.Length)
                         Array.Resize(ref _items, _items.Length << 1);
                 }
-
-                //_mapping[entityID] = itemIndex; TODO проверить что это лишнее дейсвие
-                IncrementEntityComponentCount(entityID);
+                this.IncrementEntityComponentCount(entityID);
                 _poolRunners.add.OnComponentAdd<T>(entityID);
             }
             _poolRunners.write.OnComponentWrite<T>(entityID);
             return ref _items[itemIndex];
-            // }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Write(int entityID)
+        public bool Has(int entityID)
         {
-            //   using (_writeMark.Auto())
-            _poolRunners.write.OnComponentWrite<T>(entityID);
-            return ref _items[_mapping[entityID]];
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T Read(int entityID)
-        {
-            //  using (_readMark.Auto())
-            return ref _items[_mapping[entityID]];
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public sealed override bool Has(int entityID)
-        {
-            //  using (_hasMark.Auto())
             return _mapping[entityID] > 0;
         }
         public void Del(int entityID)
         {
-            //  using (_delMark.Auto())
-            //   {
-
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
             ref int itemIndex = ref _mapping[entityID];
             _componentResetHandler.Reset(ref _items[itemIndex]);
             if (_recycledItemsCount >= _recycledItems.Length)
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
             _recycledItems[_recycledItemsCount++] = itemIndex;
-            itemIndex = 0;
+            _mapping[entityID] = 0;
             _itemsCount--;
-            DecrementEntityComponentCount(entityID);
+            this.DecrementEntityComponentCount(entityID);
             _poolRunners.del.OnComponentDel<T>(entityID);
-            //   }
+        }
+        public void TryDel(int entityID)
+        {
+            if (Has(entityID)) Del(entityID);
+        }
+        public void Copy(int fromEntityID, int toEntityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+#endif
+            if (Has(toEntityID))
+                _componentCopyHandler.Copy(ref Write(fromEntityID), ref Write(toEntityID));
+            else
+                _componentCopyHandler.Copy(ref Write(fromEntityID), ref Add(toEntityID));
         }
         #endregion
 
-        #region WorldCallbacks
-        protected override void OnWorldResize(int newSize)
+        #region Callbacks
+        void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);
         }
-        protected override void OnDestroy() { }
+        void IEcsPoolImplementation.OnWorldDestroy() { }
+        void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
+        {
+            foreach (var entityID in buffer)
+                TryDel(entityID);
+        }
+        #endregion
 
+        #region Other
+        void IEcsPool.AddRaw(int entityID, object dataRaw) => Add(entityID) = (T)dataRaw;
+        object IEcsPool.GetRaw(int entityID) => Read(entityID);
+        void IEcsPool.SetRaw(int entityID, object dataRaw) => Write(entityID) = (T)dataRaw;
+        ref readonly T IEcsPool<T>.Read(int entityID) => ref Read(entityID);
+        ref T IEcsPool<T>.Write(int entityID) => ref Write(entityID);
+        #endregion
+
+        #region IEnumerator - IntelliSense hack
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => throw new NotImplementedException();
+        IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
         #endregion
     }
-
+    /// <summary>Standard component</summary>
     public interface IEcsComponent { }
     public static class EcsPoolExt
     {
@@ -129,15 +189,15 @@ namespace DCFApixels.DragonECS
             return self.GetPool<TComponent, EcsPool<TComponent>>();
         }
 
-        public static EcsPool<TComponent> Include<TComponent>(this EcsQueryBuilderBase self) where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> Include<TComponent>(this EcsSubjectBuilderBase self) where TComponent : struct, IEcsComponent
         {
             return self.Include<TComponent, EcsPool<TComponent>>();
         }
-        public static EcsPool<TComponent> Exclude<TComponent>(this EcsQueryBuilderBase self) where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> Exclude<TComponent>(this EcsSubjectBuilderBase self) where TComponent : struct, IEcsComponent
         {
             return self.Exclude<TComponent, EcsPool<TComponent>>();
         }
-        public static EcsPool<TComponent> Optional<TComponent>(this EcsQueryBuilderBase self) where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> Optional<TComponent>(this EcsSubjectBuilderBase self) where TComponent : struct, IEcsComponent
         {
             return self.Optional<TComponent, EcsPool<TComponent>>();
         }

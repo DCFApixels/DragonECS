@@ -44,7 +44,7 @@ namespace DCFApixels.DragonECS
     {
         public void Inject(T obj);
     }
-    public interface IEcsPreInitInjectCallbacks : IEcsSystem
+    public interface IEcsPreInitInjectProcess : IEcsSystem
     {
         public void OnPreInitInjectionBefore();
         public void OnPreInitInjectionAfter();
@@ -53,7 +53,7 @@ namespace DCFApixels.DragonECS
     namespace Internal
     {
         [DebugHide, DebugColor(DebugColor.Gray)]
-        public sealed class PreInjectRunner : EcsRunner<IEcsPreInject>, IEcsPreInject
+        public sealed class EcsPreInjectRunner : EcsRunner<IEcsPreInject>, IEcsPreInject
         {
             void IEcsPreInject.PreInject(object obj)
             {
@@ -61,7 +61,7 @@ namespace DCFApixels.DragonECS
             }
         }
         [DebugHide, DebugColor(DebugColor.Gray)]
-        public sealed class InjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
+        public sealed class EcsInjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
         {
             private IEcsPreInject _preInjectchache;
             void IEcsInject<T>.Inject(T obj)
@@ -75,7 +75,7 @@ namespace DCFApixels.DragonECS
             }
         }
         [DebugHide, DebugColor(DebugColor.Gray)]
-        public sealed class InjectCallbacksRunner : EcsRunner<IEcsPreInitInjectCallbacks>, IEcsPreInitInjectCallbacks
+        public sealed class EcsPreInitInjectProcessRunner : EcsRunner<IEcsPreInitInjectProcess>, IEcsPreInitInjectProcess
         {
             public void OnPreInitInjectionAfter()
             {
@@ -91,7 +91,7 @@ namespace DCFApixels.DragonECS
     public class InjectSystemBase { }
 
     [DebugHide, DebugColor(DebugColor.Gray)]
-    public class InjectSystem<T> : InjectSystemBase, IEcsPreInitSystem, IEcsInject<PreInitInjectController>, IEcsPreInitInjectCallbacks
+    public class InjectSystem<T> : InjectSystemBase, IEcsPreInitProcess, IEcsInject<PreInitInjectController>, IEcsPreInitInjectProcess
     {
         private T _injectedData;
 
@@ -105,12 +105,14 @@ namespace DCFApixels.DragonECS
 
         public void PreInit(EcsPipeline pipeline)
         {
+            if (_injectedData == null)
+                return;
 
             if (_injectController == null)
             {
                 _injectController = new PreInitInjectController(pipeline);
                 var injectMapRunner = pipeline.GetRunner<IEcsInject<PreInitInjectController>>();
-                pipeline.GetRunner<IEcsPreInitInjectCallbacks>().OnPreInitInjectionBefore();
+                pipeline.GetRunner<IEcsPreInitInjectProcess>().OnPreInitInjectionBefore();
                 injectMapRunner.Inject(_injectController);
             }
 
@@ -120,7 +122,7 @@ namespace DCFApixels.DragonECS
             if (_injectController.OnInject())
             {
                 _injectController.Destroy();
-                var injectCallbacksRunner = pipeline.GetRunner<IEcsPreInitInjectCallbacks>();
+                var injectCallbacksRunner = pipeline.GetRunner<IEcsPreInitInjectProcess>();
                 injectCallbacksRunner.OnPreInitInjectionAfter();
                 EcsRunner.Destroy(injectCallbacksRunner);
             }

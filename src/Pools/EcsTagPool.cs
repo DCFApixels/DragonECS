@@ -1,24 +1,38 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Unity.Profiling;
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsTagPool<T> : EcsPoolBase<T>
+    using static EcsPoolThrowHalper;
+    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IntelliSense hack
         where T : struct, IEcsTagComponent
     {
+        private EcsWorld _source;
+        private int _id;
+
         private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private int _count;
 
         private PoolRunners _poolRunners;
 
+        private T _fakeComponent;
+
         #region Properites
         public int Count => _count;
+        int IEcsPool.Capacity => -1;
+        public int ComponentID => _id;
+        public Type ComponentType => typeof(T);
+        public EcsWorld World => _source;
         #endregion
 
         #region Init
-        protected override void Init(EcsWorld world)
+        void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
         {
+            _source = world;
+            _id = componentID;
+
             _mapping = new bool[world.Capacity];
             _count = 0;
 
@@ -26,50 +40,125 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Add/Has/Del
-        private ProfilerMarker _addMark = new ProfilerMarker("EcsPoo.Add");
-        private ProfilerMarker _hasMark = new ProfilerMarker("EcsPoo.Has");
-        private ProfilerMarker _delMark = new ProfilerMarker("EcsPoo.Del");
+        #region Method
         public void Add(int entityID)
         {
-            // using (_addMark.Auto())
-            //  {
-            if (_mapping[entityID] == false)
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (Has(entityID)) ThrowAlreadyHasComponent<T>(entityID);
+#endif
+            _count++;
+            _mapping[entityID] = true;
+            this.IncrementEntityComponentCount(entityID);
+            _poolRunners.add.OnComponentAdd<T>(entityID);
+        }
+        public void TryAdd(int entityID)
+        {
+            if (!_mapping[entityID])
             {
                 _count++;
                 _mapping[entityID] = true;
-                IncrementEntityComponentCount(entityID);
+                this.IncrementEntityComponentCount(entityID);
                 _poolRunners.add.OnComponentAdd<T>(entityID);
             }
-            // }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public sealed override bool Has(int entityID)
+        public bool Has(int entityID)
         {
-            //  using (_hasMark.Auto())
             return _mapping[entityID];
         }
         public void Del(int entityID)
         {
-            //  using (_delMark.Auto())
-            //   {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
             _mapping[entityID] = false;
             _count--;
-            DecrementEntityComponentCount(entityID);
+            this.DecrementEntityComponentCount(entityID);
             _poolRunners.del.OnComponentDel<T>(entityID);
-            //   }
+        }
+        public void TryDel(int entityID)
+        {
+            if (Has(entityID)) Del(entityID);
+        }
+        public void Copy(int fromEntityID, int toEntityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+#endif
+            TryAdd(toEntityID);
+        }
+        public void Set(int entityID, bool isHas)
+        {
+            if (isHas)
+            {
+                if (!Has(entityID))
+                    Add(entityID);
+            }
+            else
+            {
+                if (Has(entityID))
+                    Del(entityID);
+            }
         }
         #endregion
 
-        #region WorldCallbacks
-        protected override void OnWorldResize(int newSize)
+        #region Callbacks
+        void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);
         }
-        protected override void OnDestroy() { }
+        void IEcsPoolImplementation.OnWorldDestroy() { }
+
+        void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
+        {
+            foreach (var entityID in buffer)
+                TryDel(entityID);
+        }
+        #endregion
+
+        #region Other
+        ref T IEcsPool<T>.Add(int entityID)
+        {
+            Add(entityID);
+            return ref _fakeComponent;
+        }
+        ref readonly T IEcsPool<T>.Read(int entityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
+            return ref _fakeComponent;
+        }
+        ref T IEcsPool<T>.Write(int entityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
+            return ref _fakeComponent;
+        }
+        void IEcsPool.AddRaw(int entityID, object dataRaw) => Add(entityID);
+        object IEcsPool.GetRaw(int entityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
+            return _fakeComponent;
+        }
+        void IEcsPool.SetRaw(int entityID, object dataRaw)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+#endif
+        }
+        #endregion
+
+        #region IEnumerator - IntelliSense hack
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => throw new NotImplementedException();
+        IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
         #endregion
     }
 
+    /// <summary>Component without data</summary>
     public interface IEcsTagComponent { }
     public static class EcsTagPoolExt
     {
@@ -78,15 +167,15 @@ namespace DCFApixels.DragonECS
             return self.GetPool<TTagComponent, EcsTagPool<TTagComponent>>();
         }
 
-        public static EcsTagPool<TTagComponent> Include<TTagComponent>(this EcsQueryBuilderBase self) where TTagComponent : struct, IEcsTagComponent
+        public static EcsTagPool<TTagComponent> Include<TTagComponent>(this EcsSubjectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.Include<TTagComponent, EcsTagPool<TTagComponent>>();
         }
-        public static EcsTagPool<TTagComponent> Exclude<TTagComponent>(this EcsQueryBuilderBase self) where TTagComponent : struct, IEcsTagComponent
+        public static EcsTagPool<TTagComponent> Exclude<TTagComponent>(this EcsSubjectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.Exclude<TTagComponent, EcsTagPool<TTagComponent>>();
         }
-        public static EcsTagPool<TTagComponent> Optional<TTagComponent>(this EcsQueryBuilderBase self) where TTagComponent : struct, IEcsTagComponent
+        public static EcsTagPool<TTagComponent> Optional<TTagComponent>(this EcsSubjectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.Optional<TTagComponent, EcsTagPool<TTagComponent>>();
         }
