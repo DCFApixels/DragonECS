@@ -38,6 +38,7 @@ namespace DCFApixels.DragonECS
             _count = 0;
 
             _componentResetHandler = EcsComponentResetHandler<T>.instance;
+            _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
             _poolRunners = new PoolRunners(world.Pipeline);
         }
         #endregion
@@ -62,6 +63,10 @@ namespace DCFApixels.DragonECS
         public void Copy(int fromEntityID, int toEntityID)
         {
             _componentCopyHandler.Copy(ref Write(fromEntityID), ref Write(toEntityID));
+        }
+        public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        {
+            _componentCopyHandler.Copy(ref Write(fromEntityID), ref toWorld.GetPool<T>().Write(toEntityID));
         }
         #endregion
 

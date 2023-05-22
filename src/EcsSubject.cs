@@ -73,7 +73,7 @@ namespace DCFApixels.DragonECS
             }
             public sealed override TPool Exclude<TComponent, TPool>()
             {
-
+                ExcludeImplicit<TComponent>();
                 return _world.GetPool<TComponent, TPool>();
             }
             public sealed override TPool Optional<TComponent, TPool>()

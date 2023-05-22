@@ -44,7 +44,7 @@ namespace DCFApixels.DragonECS
 
         internal static class EcsRunnerActivator
         {
-            private static Dictionary<Guid, Type> _runnerHandlerTypes; //interface guid/Runner handler type pairs;
+            private static Dictionary<Type, Type> _runnerHandlerTypes; //interface base type/Runner handler type pairs;
 
             static EcsRunnerActivator()
             {
@@ -69,11 +69,12 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
-                _runnerHandlerTypes = new Dictionary<Guid, Type>();
+                _runnerHandlerTypes = new Dictionary<Type, Type>();
                 foreach (var item in runnerHandlerTypes)
                 {
                     Type interfaceType = item.BaseType.GenericTypeArguments[0];
-                    _runnerHandlerTypes.Add(interfaceType.GUID, item);
+//                    if(!_runnerHandlerTypes.ContainsKey(interfaceType.GUID))//TODO это кажется костыль, изначально все работало без этого ифа
+                        _runnerHandlerTypes.Add(interfaceType.IsGenericType ? interfaceType.GetGenericTypeDefinition() : interfaceType, item);
                 }
 
                 if (delayedExceptions.Count > 0)
@@ -112,14 +113,8 @@ namespace DCFApixels.DragonECS
             internal static void InitFor<TInterface>() where TInterface : IEcsSystem
             {
                 Type interfaceType = typeof(TInterface);
-                Type nonGenericInterfaceType = interfaceType;
-                if (nonGenericInterfaceType.IsGenericType)
-                {
-                    nonGenericInterfaceType = nonGenericInterfaceType.GetGenericTypeDefinition();
-                }
-                Guid interfaceGuid = nonGenericInterfaceType.GUID;
 
-                if (!_runnerHandlerTypes.TryGetValue(interfaceGuid, out Type runnerType))
+                if (!_runnerHandlerTypes.TryGetValue(interfaceType.IsGenericType ? interfaceType.GetGenericTypeDefinition() : interfaceType, out Type runnerType))
                 {
                     throw new Exception();
                 }

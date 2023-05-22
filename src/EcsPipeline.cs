@@ -184,6 +184,13 @@ namespace DCFApixels.DragonECS
                 AddInternal(system, layerName, true);
                 return this;
             }
+            public Builder Remove<TSystem>()
+            {
+                _uniqueTypes.Remove(typeof(TSystem));
+                foreach (var list in _systems.Values)
+                    list.RemoveAll(o => o is TSystem);
+                return this;
+            }
             private void AddInternal(IEcsSystem system, string layerName, bool isUnique)
             {
                 if (layerName == null) layerName = _basicLayer;

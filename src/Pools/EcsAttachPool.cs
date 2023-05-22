@@ -132,6 +132,16 @@ namespace DCFApixels.DragonECS
             else
                 Add(toEntityID, Read(fromEntityID).Target);
         }
+        public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+#endif
+            if (Has(toEntityID))
+                toWorld.GetPool<T>().Set(toEntityID, Read(fromEntityID).Target);
+            else
+                toWorld.GetPool<T>().Add(toEntityID, Read(fromEntityID).Target);
+        }
         #endregion
 
         #region WorldCallbacks

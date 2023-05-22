@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Internal;
+using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -21,6 +22,7 @@ namespace DCFApixels.DragonECS
         object GetRaw(int entityID);
         void SetRaw(int entityID, object dataRaw);
         void Copy(int fromEntityID, int toEntityID);
+        void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID);
         #endregion
     }
     public interface IEcsPool<T>
@@ -76,7 +78,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNullOrDummy(this IEcsPool self)
         {
-            return self == null || self is Internal.EcsNullPool;
+            return self == null || self == EcsNullPool.instance;
         }
     }
 
@@ -89,11 +91,11 @@ namespace DCFApixels.DragonECS
             public static EcsNullPool instance => new EcsNullPool();
 
             #region Properties
-            int IEcsPool.ComponentID => throw new NotImplementedException();
+            int IEcsPool.ComponentID => -1;
             Type IEcsPool.ComponentType => typeof(NullComponent);
             EcsWorld IEcsPool.World => throw new NotImplementedException();
-            public int Count => 0;
-            public int Capacity => 0;
+            public int Count => -1;
+            public int Capacity => -1;
             #endregion
 
             #region Methods
@@ -103,6 +105,7 @@ namespace DCFApixels.DragonECS
             object IEcsPool.GetRaw(int entityID) => throw new NotImplementedException();
             void IEcsPool.SetRaw(int entity, object dataRaw) => throw new NotImplementedException();
             void IEcsPool.Copy(int fromEntityID, int toEntityID) => throw new NotImplementedException();
+            void IEcsPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID) => throw new NotImplementedException();
             ref NullComponent IEcsPool<NullComponent>.Add(int entityID) => throw new NotImplementedException();
             ref readonly NullComponent IEcsPool<NullComponent>.Read(int entityID) => throw new NotImplementedException();
             ref NullComponent IEcsPool<NullComponent>.Write(int entityID) => throw new NotImplementedException();

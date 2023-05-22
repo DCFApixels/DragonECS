@@ -39,6 +39,7 @@ namespace DCFApixels.DragonECS
 
         internal IEcsPoolImplementation[] pools;
         private EcsNullPool _nullPool;
+        private int _poolsCount = 0;
 
         private EcsSubject[] _subjects;
         private EcsQueryExecutor[] _executors;
@@ -58,7 +59,8 @@ namespace DCFApixels.DragonECS
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
         public EcsPipeline Pipeline => _pipeline;
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
-        public ReadOnlySpan<IEcsPoolImplementation> AllPools => pools;
+        public ReadOnlySpan<IEcsPoolImplementation> AllPools => pools;// new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
+        public int PoolsCount => _poolsCount;
         #endregion
 
         #region Constructors/Destroy
@@ -151,7 +153,7 @@ namespace DCFApixels.DragonECS
                 var pool = new TPool();
                 pools[uniqueID] = pool;
                 pool.OnInit(this, uniqueID);
-
+                _poolsCount++;
                 //EcsDebug.Print(pool.GetType().FullName);
             }
 
@@ -289,7 +291,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entity
-        public int NewEntity()
+        public int NewEmptyEntity()
         {
             int entityID = _entityDispenser.GetFree();
             _entitiesCount++;
@@ -316,15 +318,16 @@ namespace DCFApixels.DragonECS
                 }
                 foreach (var item in pools)
                     item.OnWorldResize(_gens.Length);
+
             }
             _gens[entityID] &= GEN_BITS;
             _entityCreate.OnEntityCreate(entityID);
             _allEntites.Add(entityID);
             return entityID;
         }
-        public entlong NewEntityLong()
+        public entlong NewEmptyEntityLong()
         {
-            int e = NewEntity();
+            int e = NewEmptyEntity();
             return GetEntityLong(e);
         }
 
@@ -355,13 +358,37 @@ namespace DCFApixels.DragonECS
             _delEntBufferCount = 0;
         }
         public short GetGen(int entityID) => _gens[entityID];
-        public short GetComponentCount(int entityID) => _componentCounts[entityID];
+        public short GetComponentsCount(int entityID) => _componentCounts[entityID];
         public void DeleteEmptyEntites()
         {
             foreach (var e in _allEntites)
             {
                 if (_componentCounts[e] <= 0)
                     DelEntity(e);
+            }
+        }
+
+        public void CopyEntity(int fromEntityID, int toEntityID)
+        {
+            foreach (var pool in pools)
+            {
+                if(pool.Has(fromEntityID))
+                    pool.Copy(fromEntityID, toEntityID);
+            }
+        }
+        public int CloneEntity(int fromEntityID)
+        {
+            int newEntity = NewEmptyEntity();
+            CopyEntity(fromEntityID, newEntity);
+            return newEntity;
+        }
+        public void CloneEntity(int fromEntityID, int toEntityID)
+        {
+            CopyEntity(fromEntityID, toEntityID);
+            foreach (var pool in pools)
+            {
+                if (!pool.Has(fromEntityID)&& pool.Has(toEntityID))
+                        pool.Del(toEntityID);
             }
         }
 
@@ -374,7 +401,7 @@ namespace DCFApixels.DragonECS
         internal void DecrementEntityComponentCount(int entityID)
         {
             var count = --_componentCounts[entityID];
-            if(count == 0)
+            if(count == 0 && _allEntites.Has(entityID))
                 DelEntity(entityID);
 
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
@@ -406,39 +433,55 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Debug
-      //  public int GetComponents(int entity, ref object[] list)
-      //  {
-      //      var entityOffset = GetRawEntityOffset(entity);
-      //      var itemsCount = _entities[entityOffset + RawEntityOffsets.ComponentsCount];
-      //      if (itemsCount == 0) { return 0; }
-      //      if (list == null || list.Length < itemsCount)
-      //      {
-      //          list = new object[_pools.Length];
-      //      }
-      //      var dataOffset = entityOffset + RawEntityOffsets.Components;
-      //      for (var i = 0; i < itemsCount; i++)
-      //      {
-      //          list[i] = _pools[_entities[dataOffset + i]].GetRaw(entity);
-      //      }
-      //      return itemsCount;
-      //  }
-      //
-      //  public int GetComponentTypes(int entity, ref Type[] list)
-      //  {
-      //      var entityOffset = GetRawEntityOffset(entity);
-      //      var itemsCount = _entities[entityOffset + RawEntityOffsets.ComponentsCount];
-      //      if (itemsCount == 0) { return 0; }
-      //      if (list == null || list.Length < itemsCount)
-      //      {
-      //          list = new Type[_pools.Length];
-      //      }
-      //      var dataOffset = entityOffset + RawEntityOffsets.Components;
-      //      for (var i = 0; i < itemsCount; i++)
-      //      {
-      //          list[i] = _pools[_entities[dataOffset + i]].GetComponentType();
-      //      }
-      //      return itemsCount;
-      //  }
+        public void GetComponents(int entityID, List<object> list)
+        {
+            list.Clear();
+            var itemsCount = GetComponentsCount(entityID);
+            if (itemsCount == 0) 
+                return;
+
+            for (var i = 0; i < pools.Length; i++)
+            {
+                if (pools[i].Has(entityID))
+                list.Add(pools[i].GetRaw(entityID));
+                if (list.Count >= itemsCount)
+                    break;
+            }
+        }
+
+        //  public int GetComponents(int entity, ref object[] list)
+        //  {
+        //      var entityOffset = GetRawEntityOffset(entity);
+        //      var itemsCount = _entities[entityOffset + RawEntityOffsets.ComponentsCount];
+        //      if (itemsCount == 0) { return 0; }
+        //      if (list == null || list.Length < itemsCount)
+        //      {
+        //          list = new object[_pools.Length];
+        //      }
+        //      var dataOffset = entityOffset + RawEntityOffsets.Components;
+        //      for (var i = 0; i < itemsCount; i++)
+        //      {
+        //          list[i] = _pools[_entities[dataOffset + i]].GetRaw(entity);
+        //      }
+        //      return itemsCount;
+        //  }
+        
+        //  public int GetComponentTypes(int entity, ref Type[] list)
+        //  {
+        //      var entityOffset = GetRawEntityOffset(entity);
+        //      var itemsCount = _entities[entityOffset + RawEntityOffsets.ComponentsCount];
+        //      if (itemsCount == 0) { return 0; }
+        //      if (list == null || list.Length < itemsCount)
+        //      {
+        //          list = new Type[_pools.Length];
+        //      }
+        //      var dataOffset = entityOffset + RawEntityOffsets.Components;
+        //      for (var i = 0; i < itemsCount; i++)
+        //      {
+        //          list[i] = _pools[_entities[dataOffset + i]].GetComponentType();
+        //      }
+        //      return itemsCount;
+        //  }
         #endregion
     }
 
@@ -577,4 +620,13 @@ namespace DCFApixels.DragonECS
         }
     }
     #endregion
+
+   // #region Callbacks Interface //TODO
+   // public interface IWorldCallbacks
+   // {
+   //     void OnWorldResize(int newSize);
+   //     void OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer);
+   //     void OnWorldDestroy();
+   // }
+   // #endregion
 }

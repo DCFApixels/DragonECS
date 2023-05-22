@@ -147,10 +147,14 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
 #endif
-            if (Has(toEntityID))
-                _componentCopyHandler.Copy(ref Write(fromEntityID), ref Write(toEntityID));
-            else
-                _componentCopyHandler.Copy(ref Write(fromEntityID), ref Add(toEntityID));
+            _componentCopyHandler.Copy(ref Write(fromEntityID), ref TryAddOrWrite(toEntityID));
+        }
+        public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+#endif
+            _componentCopyHandler.Copy(ref Write(fromEntityID), ref toWorld.GetPool<T>().TryAddOrWrite(toEntityID));
         }
         #endregion
 

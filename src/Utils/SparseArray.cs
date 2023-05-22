@@ -1,42 +1,49 @@
-﻿using System;
+﻿//SparseArray. Analogous to Dictionary<int, T>, but faster.
+//Benchmark result of indexer.get speed test with 300 elements:
+//[Dictinary: 5.786us] [SparseArray: 2.047us].
+using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace DCFApixels
+namespace DCFApixels.DragonECS
 {
     public class SparseArray<TValue>
     {
-        public const int MIN_CAPACITY = 16;
+        public const int MIN_CAPACITY_BITS_OFFSET = 4;
+        public const int MIN_CAPACITY = 1 << MIN_CAPACITY_BITS_OFFSET;
         private const int EMPTY = -1;
 
         private int[] _buckets = Array.Empty<int>();
         private Entry[] _entries = Array.Empty<Entry>();
+        private int[] _dense;
 
         private int _count;
 
         private int _freeList;
         private int _freeCount;
 
+        private int _modBitMask;
+
         #region Properties
-        public TValue this[int key]
+        public ref TValue this[int key]
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _entries[FindEntry(key)].value;
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set => Insert(key, value);
+            get => ref _entries[FindEntry(key)].value;
+            //set => Insert(key, value);
         }
 
         public int Count => _count;
         #endregion
 
         #region Constructors
-        public SparseArray(int capacity = MIN_CAPACITY)
+        public SparseArray(int minCapacity = MIN_CAPACITY)
         {
-            _buckets = new int[capacity];
-            for (int i = 0; i < capacity; i++)
+            minCapacity = NormalizeCapacity(minCapacity);
+            _buckets = new int[minCapacity];
+            for (int i = 0; i < minCapacity; i++)
                 _buckets[i] = EMPTY;
-            _entries = new Entry[capacity];
+            _entries = new Entry[minCapacity];
+            _modBitMask = (minCapacity - 1) & 0x7FFFFFFF;
         }
         #endregion
 
@@ -53,19 +60,16 @@ namespace DCFApixels
         #endregion
 
         #region Find/Insert/Remove
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int FindEntry(int key)
         {
-            key &= 0x7FFFFFFF;
-            for (int i = _buckets[key % _buckets.Length]; i >= 0; i = _entries[i].next)
-            {
+            for (int i = _buckets[key & _modBitMask]; i >= 0; i = _entries[i].next)
                 if (_entries[i].hashKey == key) return i;
-            }
             return -1;
         }
         private void Insert(int key, TValue value)
         {
-            key &= 0x7FFFFFFF;
-            int targetBucket = key % _buckets.Length;
+            int targetBucket = key & _modBitMask;
 
             for (int i = _buckets[targetBucket]; i >= 0; i = _entries[i].next)
             {
@@ -88,10 +92,9 @@ namespace DCFApixels
                 if (_count == _entries.Length)
                 {
                     Resize();
-                    targetBucket = key % _buckets.Length;
+                    targetBucket = key & _modBitMask;
                 }
-                index = _count;
-                _count++;
+                index = _count++;
             }
 
             _entries[index].next = _buckets[targetBucket];
@@ -101,8 +104,7 @@ namespace DCFApixels
         }
         public bool Remove(int key)
         {
-            key &= 0x7FFFFFFF;
-            int bucket = key % _buckets.Length;
+            int bucket = key & _modBitMask;
             int last = -1;
             for (int i = _buckets[bucket]; i >= 0; last = i, i = _entries[i].next)
             {
@@ -168,6 +170,7 @@ namespace DCFApixels
         private void Resize()
         {
             int newSize = _buckets.Length << 1;
+            _modBitMask = (newSize - 1) & 0x7FFFFFFF;
 
             Contract.Assert(newSize >= _entries.Length);
             int[] newBuckets = new int[newSize];
@@ -188,14 +191,67 @@ namespace DCFApixels
             _buckets = newBuckets;
             _entries = newEntries;
         }
+
+        private int NormalizeCapacity(int capacity)
+        {
+            int result = MIN_CAPACITY;
+            while (result < capacity) result <<= 1;
+            return result;
+        }
         #endregion
+
+
+        //#region Enumerator
+        // public Enumerator GetEnumerator() => new Enumerator(this);
+        // public struct Enumerator
+        // {
+        //     private SparseArray<TValue> _source;
+        //     private int index;
+        //     private int curretnItmeIndex;
+        //
+        //     public ref readonly TValue Current
+        //     {
+        //         get
+        //         {
+        //             return ref _source._entries[curretnItmeIndex].value;
+        //         }
+        //     }
+        //
+        //     public Enumerator(SparseArray<TValue> source)
+        //     {
+        //         _source = source;
+        //         index = 0;
+        //         curretnItmeIndex = 0;
+        //     }
+        //
+        //     public bool MoveNext()
+        //     {
+        //         // Use unsigned comparison since we set index to dictionary.count+1 when the enumeration ends.
+        //         // dictionary.count+1 could be negative if dictionary.count is Int32.MaxValue
+        //         while ((uint)index < (uint)_source.count)
+        //         {
+        //             if (dictionary.entries[index].hashCode >= 0)
+        //             {
+        //                 current = new KeyValuePair<TKey, TValue>(dictionary.entries[index].key, dictionary.entries[index].value);
+        //                 index++;
+        //                 return true;
+        //             }
+        //             index++;
+        //         }
+        //
+        //         index = dictionary.count + 1;
+        //         current = new KeyValuePair<TKey, TValue>();
+        //         return false;
+        //     }
+        // }
+        // #endregion
 
         #region Utils
         [StructLayout(LayoutKind.Sequential, Pack = 4)]
         private struct Entry
         {
             public int next;        // Index of next entry, -1 if last
-            public int hashKey;        
+            public int hashKey;
             public TValue value;
         }
         #endregion

@@ -67,6 +67,11 @@ namespace DCFApixels.DragonECS
 #endif
             return group.GetEnumerator();
         }
+
+        public override string ToString()
+        {
+            return group.ToString();
+        }
     }
     #endregion
 }

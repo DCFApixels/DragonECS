@@ -87,6 +87,13 @@ namespace DCFApixels.DragonECS
 #endif
             TryAdd(toEntityID);
         }
+        public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+#endif
+            toWorld.GetPool<T>().TryAdd(toEntityID);
+        }
         public void Set(int entityID, bool isHas)
         {
             if (isHas)
@@ -99,6 +106,13 @@ namespace DCFApixels.DragonECS
                 if (Has(entityID))
                     Del(entityID);
             }
+        }
+        public void Toggle(int entityID)
+        {
+            if (Has(entityID))
+                Del(entityID);
+            else
+                Add(entityID);
         }
         #endregion
 
