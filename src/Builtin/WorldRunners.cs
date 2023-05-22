@@ -4,15 +4,15 @@ namespace DCFApixels.DragonECS
 {
     public interface IEcsComponentAdd : IEcsSystem
     {
-        public void OnComponentAdd<T>(int entityID);
+        void OnComponentAdd<T>(int entityID);
     }
     public interface IEcsComponentWrite : IEcsSystem
     {
-        public void OnComponentWrite<T>(int entityID);
+        void OnComponentWrite<T>(int entityID);
     }
     public interface IEcsComponentDel : IEcsSystem
     {
-        public void OnComponentDel<T>(int entityID);
+        void OnComponentDel<T>(int entityID);
     }
     public interface IEcsComponentLifecycle : IEcsComponentAdd, IEcsComponentWrite, IEcsComponentDel { }
 
@@ -46,11 +46,11 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsEntityCreate : IEcsSystem
     {
-        public void OnEntityCreate(int entityID);
+        void OnEntityCreate(int entityID);
     }
     public interface IEcsEntityDestroy : IEcsSystem
     {
-        public void OnEntityDestroy(int entityID);
+        void OnEntityDestroy(int entityID);
     }
     public interface IEcsEntityLifecycle : IEcsEntityCreate, IEcsEntityDestroy { }
 
@@ -76,11 +76,11 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsWorldCreate : IEcsSystem
     {
-        public void OnWorldCreate(EcsWorld world);
+        void OnWorldCreate(EcsWorld world);
     }
     public interface IEcsWorldDestroy : IEcsSystem
     {
-        public void OnWorldDestroy(EcsWorld world);
+        void OnWorldDestroy(EcsWorld world);
     }
     public interface IEcsWorldLifecycle : IEcsWorldCreate, IEcsWorldDestroy { }
 

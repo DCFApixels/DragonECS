@@ -19,12 +19,10 @@ namespace DCFApixels.DragonECS
         {
             color = new ColorRecord(r, g, b);
         }
-
         public DebugColorAttribute(DebugColor color)
         {
             this.color = new ColorRecord((int)color);
         }
-
 
         [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 4)]
         private readonly struct ColorRecord // Union

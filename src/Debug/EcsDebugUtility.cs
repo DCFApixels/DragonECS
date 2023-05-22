@@ -26,7 +26,7 @@ namespace DCFApixels.DragonECS
             }
             friendlyName += ">";
             return friendlyName;
-#else
+#else //optimization for release build
             return type.Name;
 #endif
         }
