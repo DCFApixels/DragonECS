@@ -21,7 +21,8 @@ namespace DCFApixels.DragonECS
 
         private IEcsComponentReset<T> _componentResetHandler;
         private IEcsComponentCopy<T> _componentCopyHandler;
-        private PoolRunners _poolRunners;
+
+        private List<IEcsPoolEventListener> _listeners;
 
         #region Properites
         public int Count => _itemsCount;
@@ -45,9 +46,10 @@ namespace DCFApixels.DragonECS
             _items = new T[capacity];
             _itemsCount = 0;
 
+            _listeners = new List<IEcsPoolEventListener>();
+
             _componentResetHandler = EcsComponentResetHandler<T>.instance;
             _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
-            _poolRunners = new PoolRunners(world.Pipeline);
         }
         #endregion
 
@@ -72,8 +74,7 @@ namespace DCFApixels.DragonECS
                     Array.Resize(ref _items, _items.Length << 1);
             }
             this.IncrementEntityComponentCount(entityID);
-            _poolRunners.add.OnComponentAdd<T>(entityID);
-            _poolRunners.write.OnComponentWrite<T>(entityID);
+            _listeners.InvokeOnAddAndWrite(entityID);
             return ref _items[itemIndex];
             // }
         }
@@ -84,7 +85,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
-            _poolRunners.write.OnComponentWrite<T>(entityID);
+            _listeners.InvokeOnWrite(entityID);
             return ref _items[_mapping[entityID]];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -113,9 +114,9 @@ namespace DCFApixels.DragonECS
                         Array.Resize(ref _items, _items.Length << 1);
                 }
                 this.IncrementEntityComponentCount(entityID);
-                _poolRunners.add.OnComponentAdd<T>(entityID);
+                _listeners.InvokeOnAdd(entityID);
             }
-            _poolRunners.write.OnComponentWrite<T>(entityID);
+            _listeners.InvokeOnWrite(entityID);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -136,7 +137,7 @@ namespace DCFApixels.DragonECS
             _mapping[entityID] = 0;
             _itemsCount--;
             this.DecrementEntityComponentCount(entityID);
-            _poolRunners.del.OnComponentDel<T>(entityID);
+            _listeners.InvokeOnDel(entityID);
         }
         public void TryDel(int entityID)
         {
@@ -177,6 +178,19 @@ namespace DCFApixels.DragonECS
         void IEcsPool.SetRaw(int entityID, object dataRaw) => Write(entityID) = (T)dataRaw;
         ref readonly T IEcsPool<T>.Read(int entityID) => ref Read(entityID);
         ref T IEcsPool<T>.Write(int entityID) => ref Write(entityID);
+        #endregion
+
+        #region Listeners
+        public void AddListener(IEcsPoolEventListener listener)
+        {
+            if(listener == null) { throw new ArgumentNullException("listener is null"); }
+            _listeners.Add(listener);
+        }
+        public void RemoveListener(IEcsPoolEventListener listener)
+        {
+            if(listener == null) { throw new ArgumentNullException("listener is null"); }
+            _listeners.Remove(listener);
+        }
         #endregion
 
         #region IEnumerator - IntelliSense hack

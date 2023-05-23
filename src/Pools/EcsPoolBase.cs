@@ -1,5 +1,6 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -24,6 +25,20 @@ namespace DCFApixels.DragonECS
         void Copy(int fromEntityID, int toEntityID);
         void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID);
         #endregion
+
+        #region Add/Remove Listeners
+        void AddListener(IEcsPoolEventListener listener);
+        void RemoveListener(IEcsPoolEventListener listener);
+        #endregion
+    }
+    public interface IEcsPoolEventListener
+    {
+        /// <summary>Called after adding an entity to the pool, but before changing values.</summary>
+        void OnAdd(int entityID);
+        /// <summary>Is called when EcsPool.Write or EcsPool.Add is called, but before changing values.</summary>
+        void OnWrite(int entityID);
+        /// <summary>Called after deleting an entity from the pool</summary>
+        void OnDel(int entityID);
     }
     public interface IEcsPool<T>
     {
@@ -43,6 +58,7 @@ namespace DCFApixels.DragonECS
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
     /// <typeparam name="T">Component type</typeparam>
     public interface IEcsPoolImplementation<T> : IEcsPool<T>, IEcsPoolImplementation { }
+
     public static class EcsPoolThrowHalper
     {
         public static void ThrowAlreadyHasComponent<T>(int entityID)
@@ -116,6 +132,11 @@ namespace DCFApixels.DragonECS
             void IEcsPoolImplementation.OnWorldDestroy() { }
             void IEcsPoolImplementation.OnWorldResize(int newSize) { }
             void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer) { }
+            #endregion
+
+            #region Listeners
+            public void AddListener(IEcsPoolEventListener listener) { }
+            public void RemoveListener(IEcsPoolEventListener listener) { }
             #endregion
         }
     }
@@ -192,6 +213,36 @@ namespace DCFApixels.DragonECS
         private T _fakeInstnace = default;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Copy(ref T from, ref T to) => _fakeInstnace.Copy(ref from, ref to);
+    }
+    #endregion
+
+    #region Extensions
+    public static class PoolEventListExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnAdd(this List<IEcsPoolEventListener> self, int entityID)
+        {
+            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnAdd(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnAddAndWrite(this List<IEcsPoolEventListener> self, int entityID)
+        {
+            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            {
+                self[i].OnAdd(entityID);
+                self[i].OnWrite(entityID);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnWrite(this List<IEcsPoolEventListener> self, int entityID)
+        {
+            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnWrite(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnDel(this List<IEcsPoolEventListener> self, int entityID)
+        {
+            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnDel(entityID);
+        }
     }
     #endregion
 }

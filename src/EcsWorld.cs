@@ -9,7 +9,7 @@ namespace DCFApixels.DragonECS
 
     internal sealed class EcsNullWorld : EcsWorld<EcsNullWorld>
     {
-        public EcsNullWorld() : base(null, false) { }
+        public EcsNullWorld() : base(false) { }
     }
 
     public abstract class EcsWorld
@@ -44,20 +44,16 @@ namespace DCFApixels.DragonECS
         private EcsSubject[] _subjects;
         private EcsQueryExecutor[] _executors;
 
-        private EcsPipeline _pipeline;
-
         private List<WeakReference<EcsGroup>> _groups;
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
 
-        private IEcsEntityCreate _entityCreate;
-        private IEcsEntityDestroy _entityDestry;
+        private List<IEcsWorldEventListener> _listeners;
 
         #region Properties
         public abstract Type Archetype { get; }
         public int UniqueID => uniqueID;
         public int Count => _entitiesCount;
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
-        public EcsPipeline Pipeline => _pipeline;
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
         public ReadOnlySpan<IEcsPoolImplementation> AllPools => pools;// new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
         public int PoolsCount => _poolsCount;
@@ -69,10 +65,12 @@ namespace DCFApixels.DragonECS
             EcsNullWorld nullWorld = new EcsNullWorld();
             Worlds[0] = nullWorld;
         }
-        public EcsWorld(EcsPipeline pipline) : this(pipline, true) { }
-        internal EcsWorld(EcsPipeline pipline, bool isIndexable)
+        public EcsWorld() : this(true) { }
+        internal EcsWorld(bool isIndexable)
         {
             _entitesCapacity = 512;
+
+            _listeners = new List<IEcsWorldEventListener>();
 
             if (isIndexable)
             {
@@ -84,8 +82,6 @@ namespace DCFApixels.DragonECS
 
             _worldTypeID = WorldMetaStorage.GetWorldId(Archetype);
 
-            _pipeline = pipline ?? EcsPipeline.Empty;
-            if (!_pipeline.IsInit) pipline.Init();
             _entityDispenser = new IntDispenser(0);
             _nullPool = EcsNullPool.instance;
             pools = new IEcsPoolImplementation[512];
@@ -103,13 +99,7 @@ namespace DCFApixels.DragonECS
 
             _subjects = new EcsSubject[128];
             _executors = new EcsQueryExecutor[128];
-
-            _entityCreate = _pipeline.GetRunner<IEcsEntityCreate>();
-            _entityDestry = _pipeline.GetRunner<IEcsEntityDestroy>();
-            _pipeline.GetRunner<IEcsInject<EcsWorld>>().Inject(this);
-            _pipeline.GetRunner<IEcsWorldCreate>().OnWorldCreate(this);
         }
-
 
         public void Destroy()
         {
@@ -127,7 +117,6 @@ namespace DCFApixels.DragonECS
         public void DestryWithPipeline()
         {
             Destroy();
-            _pipeline.Destroy();
         }
         #endregion
 
@@ -319,10 +308,11 @@ namespace DCFApixels.DragonECS
                 foreach (var item in pools)
                     item.OnWorldResize(_gens.Length);
 
+                _listeners.InvokeOnWorldResize(_gens.Length);
             }
             _gens[entityID] &= GEN_BITS;
-            _entityCreate.OnEntityCreate(entityID);
             _allEntites.Add(entityID);
+            _listeners.InvokeOnNewEntity(entityID);
             return entityID;
         }
         public entlong NewEmptyEntityLong()
@@ -337,7 +327,7 @@ namespace DCFApixels.DragonECS
             _delEntBuffer[_delEntBufferCount++] = entityID;
             _gens[entityID] |= DEATH_GEN_BIT;
             _entitiesCount--;
-            _entityDestry.OnEntityDestroy(entityID);
+            _listeners.InvokeOnDelEntity(entityID);
 
             if (_delEntBufferCount >= _delEntBuffer.Length)
                 ReleaseDelEntityBuffer();
@@ -353,6 +343,7 @@ namespace DCFApixels.DragonECS
             ReadOnlySpan<int> buffser = new ReadOnlySpan<int>(_delEntBuffer, 0, _delEntBufferCount);
             foreach (var pool in pools)
                 pool.OnReleaseDelEntityBuffer(buffser);
+            _listeners.InvokeOnReleaseDelEntityBuffer(buffser);
             for (int i = 0; i < _delEntBufferCount; i++)
                 _entityDispenser.Release(_delEntBuffer[i]);
             _delEntBufferCount = 0;
@@ -489,8 +480,8 @@ namespace DCFApixels.DragonECS
         where TWorldArchetype : EcsWorld<TWorldArchetype>
     {
         public override Type Archetype => typeof(TWorldArchetype);
-        public EcsWorld(EcsPipeline pipline) : base(pipline) { }
-        internal EcsWorld(EcsPipeline pipline, bool isIndexable) : base(pipline, isIndexable) { }
+        public EcsWorld() : base() { }
+        internal EcsWorld(bool isIndexable) : base(isIndexable) { }
     }
 
     #region Utils
@@ -621,12 +612,45 @@ namespace DCFApixels.DragonECS
     }
     #endregion
 
-   // #region Callbacks Interface //TODO
-   // public interface IWorldCallbacks
-   // {
-   //     void OnWorldResize(int newSize);
-   //     void OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer);
-   //     void OnWorldDestroy();
-   // }
-   // #endregion
+    #region Callbacks Interface //TODO
+    public interface IEcsWorldEventListener
+    {
+        void OnWorldResize(int newSize);
+        void OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer);
+        void OnWorldDestroy();
+        void OnNewEntity(int entityID);
+        void OnDelEntity(int entityID);
+    }
+    #endregion
+
+    #region Extensions
+    public static class WorldEventListExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnWorldResize(this List<IEcsWorldEventListener> self, int newSize)
+        {
+            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnWorldResize(newSize);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnReleaseDelEntityBuffer(this List<IEcsWorldEventListener> self, ReadOnlySpan<int> buffer)
+        {
+            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnReleaseDelEntityBuffer(buffer);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnWorldDestroy(this List<IEcsWorldEventListener> self)
+        {
+            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnWorldDestroy();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnNewEntity(this List<IEcsWorldEventListener> self, int entityID)
+        {
+            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnNewEntity(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnDelEntity(this List<IEcsWorldEventListener> self, int entityID)
+        {
+            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnDelEntity(entityID);
+        }
+    }
+    #endregion
 }

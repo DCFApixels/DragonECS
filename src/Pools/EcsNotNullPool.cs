@@ -18,7 +18,8 @@ namespace DCFApixels.DragonECS
 
         private IEcsComponentReset<T> _componentResetHandler;
         private IEcsComponentCopy<T> _componentCopyHandler;
-        private PoolRunners _poolRunners;
+
+        private List<IEcsPoolEventListener> _listeners;
 
         #region Properites
         public int Count => _count;
@@ -37,9 +38,10 @@ namespace DCFApixels.DragonECS
             _items = new T[world.Capacity];
             _count = 0;
 
+            _listeners = new List<IEcsPoolEventListener>();
+
             _componentResetHandler = EcsComponentResetHandler<T>.instance;
             _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
-            _poolRunners = new PoolRunners(world.Pipeline);
         }
         #endregion
 
@@ -47,7 +49,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Write(int entityID)
         {
-            _poolRunners.write.OnComponentWrite<T>(entityID);
+            _listeners.InvokeOnWrite(entityID);
             return ref _items[entityID];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -91,6 +93,19 @@ namespace DCFApixels.DragonECS
         void IEcsPool.AddRaw(int entityID, object dataRaw) => Write(entityID) = (T)dataRaw;
         object IEcsPool.GetRaw(int entityID) => Write(entityID);
         void IEcsPool.SetRaw(int entityID, object dataRaw) => Write(entityID) = (T)dataRaw;
+        #endregion
+
+        #region Listeners
+        public void AddListener(IEcsPoolEventListener listener)
+        {
+            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            _listeners.Add(listener);
+        }
+        public void RemoveListener(IEcsPoolEventListener listener)
+        {
+            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            _listeners.Remove(listener);
+        }
         #endregion
 
         #region IEnumerator - IntelliSense hack
