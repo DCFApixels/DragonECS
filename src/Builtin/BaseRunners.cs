@@ -4,19 +4,19 @@ namespace DCFApixels.DragonECS
 {
     public interface IEcsPreInitProcess : IEcsSystem
     {
-        public void PreInit(EcsPipeline pipeline);
+        void PreInit(EcsPipeline pipeline);
     }
     public interface IEcsInitProcess : IEcsSystem
     {
-        public void Init(EcsPipeline pipeline);
+        void Init(EcsPipeline pipeline);
     }
     public interface IEcsRunProcess : IEcsSystem
     {
-        public void Run(EcsPipeline pipeline);
+        void Run(EcsPipeline pipeline);
     }
     public interface IEcsDestroyProcess : IEcsSystem
     {
-        public void Destroy(EcsPipeline pipeline);
+        void Destroy(EcsPipeline pipeline);
     }
     public interface IEcsBaseSystem : IEcsInitProcess, IEcsRunProcess, IEcsDestroyProcess { }
 

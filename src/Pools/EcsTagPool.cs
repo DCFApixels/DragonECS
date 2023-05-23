@@ -15,7 +15,7 @@ namespace DCFApixels.DragonECS
         private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private int _count;
 
-        private PoolRunners _poolRunners;
+        private List<IEcsPoolEventListener> _listeners;
 
         private T _fakeComponent;
 
@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS
             _mapping = new bool[world.Capacity];
             _count = 0;
 
-            _poolRunners = new PoolRunners(world.Pipeline);
+            _listeners = new List<IEcsPoolEventListener>();
         }
         #endregion
 
@@ -49,7 +49,7 @@ namespace DCFApixels.DragonECS
             _count++;
             _mapping[entityID] = true;
             this.IncrementEntityComponentCount(entityID);
-            _poolRunners.add.OnComponentAdd<T>(entityID);
+            _listeners.InvokeOnAdd(entityID);
         }
         public void TryAdd(int entityID)
         {
@@ -58,7 +58,7 @@ namespace DCFApixels.DragonECS
                 _count++;
                 _mapping[entityID] = true;
                 this.IncrementEntityComponentCount(entityID);
-                _poolRunners.add.OnComponentAdd<T>(entityID);
+                _listeners.InvokeOnAdd(entityID);
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -74,7 +74,7 @@ namespace DCFApixels.DragonECS
             _mapping[entityID] = false;
             _count--;
             this.DecrementEntityComponentCount(entityID);
-            _poolRunners.del.OnComponentDel<T>(entityID);
+            _listeners.InvokeOnDel(entityID);
         }
         public void TryDel(int entityID)
         {
@@ -86,6 +86,13 @@ namespace DCFApixels.DragonECS
             if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
 #endif
             TryAdd(toEntityID);
+        }
+        public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+#endif
+            toWorld.GetPool<T>().TryAdd(toEntityID);
         }
         public void Set(int entityID, bool isHas)
         {
@@ -99,6 +106,13 @@ namespace DCFApixels.DragonECS
                 if (Has(entityID))
                     Del(entityID);
             }
+        }
+        public void Toggle(int entityID)
+        {
+            if (Has(entityID))
+                Del(entityID);
+            else
+                Add(entityID);
         }
         #endregion
 
@@ -149,6 +163,19 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
+        }
+        #endregion
+
+        #region Listeners
+        public void AddListener(IEcsPoolEventListener listener)
+        {
+            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            _listeners.Add(listener);
+        }
+        public void RemoveListener(IEcsPoolEventListener listener)
+        {
+            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            _listeners.Remove(listener);
         }
         #endregion
 

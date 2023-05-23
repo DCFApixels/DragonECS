@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
         private int _count;
         private T _component;
 
-        private PoolRunners _poolRunners;
+        private List<IEcsPoolEventListener> _listeners;
 
         #region Properites
         public ref T Instance
@@ -40,7 +40,7 @@ namespace DCFApixels.DragonECS
 
             _mapping = new int[world.Capacity];
             _count = 0;
-            _poolRunners = new PoolRunners(world.Pipeline);
+            _listeners = new List<IEcsPoolEventListener>();
         }
         #endregion
 
@@ -52,7 +52,7 @@ namespace DCFApixels.DragonECS
 #endif
             _mapping[entityID] = ++_count;
             this.IncrementEntityComponentCount(entityID);
-            _poolRunners.add.OnComponentAdd<T>(entityID);
+            _listeners.InvokeOnAddAndWrite(entityID);
             return ref _component;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,7 +61,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
-            _poolRunners.write.OnComponentWrite<T>(entityID);
+            _listeners.InvokeOnWrite(entityID);
             return ref _component;
         }
         public ref T TryAddOrWrite(int entityID)
@@ -92,7 +92,7 @@ namespace DCFApixels.DragonECS
             _mapping[entityID] = 0;
             _count--;
             this.DecrementEntityComponentCount(entityID);
-            _poolRunners.del.OnComponentDel<T>(entityID);
+            _listeners.InvokeOnDel(entityID);
         }
         public void TryDel(int entityID)
         {
@@ -104,6 +104,13 @@ namespace DCFApixels.DragonECS
             if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
 #endif
             TryAddOrWrite(toEntityID);
+        }
+        public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+#endif
+            toWorld.GetPool<T>().TryAddOrWrite(toEntityID);
         }
         #endregion
 
@@ -124,6 +131,19 @@ namespace DCFApixels.DragonECS
         void IEcsPool.AddRaw(int entityID, object dataRaw) => Instance = (T)dataRaw;
         object IEcsPool.GetRaw(int entityID) => Instance;
         void IEcsPool.SetRaw(int entityID, object dataRaw) => Instance = (T)dataRaw;
+        #endregion
+
+        #region Listeners
+        public void AddListener(IEcsPoolEventListener listener)
+        {
+            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            _listeners.Add(listener);
+        }
+        public void RemoveListener(IEcsPoolEventListener listener)
+        {
+            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            _listeners.Remove(listener);
+        }
         #endregion
 
         #region IEnumerator - IntelliSense hack

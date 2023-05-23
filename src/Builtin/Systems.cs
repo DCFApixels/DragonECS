@@ -6,12 +6,9 @@ namespace DCFApixels.DragonECS
     public class SystemsBlockMarkerSystem : IEcsSystem
     {
         public readonly string name;
-
-        public SystemsBlockMarkerSystem(string name)
-        {
-            this.name = name;
-        }
+        public SystemsBlockMarkerSystem(string name) { this.name = name; }
     }
+
     [DebugHide, DebugColor(DebugColor.Grey)]
     public class DeleteEmptyEntitesSystem : IEcsRunProcess, IEcsPreInject
     {
@@ -21,7 +18,6 @@ namespace DCFApixels.DragonECS
             if (obj is EcsWorld world)
                 _worlds.Add(world);
         }
-
         public void Run(EcsPipeline pipeline)
         {
             foreach (var world in _worlds)
@@ -36,7 +32,6 @@ namespace DCFApixels.DragonECS
     {
         private TWorld _world;
         public void Inject(TWorld obj) => _world = obj;
-
         private sealed class Subject : EcsSubject
         {
             public EcsPool<TComponent> pool;
@@ -63,7 +58,7 @@ namespace DCFApixels.DragonECS
             b.AddUnique(new DeleteOneFrameComponentSystem<TWorld, TComponent>(), AUTO_DEL_LAYER);
             return b;
         }
-        /// <summary> for EcsDefaultWorld </summary>
+        /// <summary>for EcsDefaultWorld</summary>
         public static EcsPipeline.Builder AutoDel<TComponent>(this EcsPipeline.Builder b)
             where TComponent : struct, IEcsComponent
         {

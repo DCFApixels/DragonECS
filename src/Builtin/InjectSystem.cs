@@ -38,16 +38,16 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsPreInject : IEcsSystem
     {
-        public void PreInject(object obj);
+        void PreInject(object obj);
     }
     public interface IEcsInject<T> : IEcsSystem
     {
-        public void Inject(T obj);
+        void Inject(T obj);
     }
     public interface IEcsPreInitInjectProcess : IEcsSystem
     {
-        public void OnPreInitInjectionBefore();
-        public void OnPreInitInjectionAfter();
+        void OnPreInitInjectionBefore();
+        void OnPreInitInjectionAfter();
     }
 
     namespace Internal
@@ -127,9 +127,7 @@ namespace DCFApixels.DragonECS
                 EcsRunner.Destroy(injectCallbacksRunner);
             }
         }
-
         public void OnPreInitInjectionBefore() { }
-
         public void OnPreInitInjectionAfter()
         {
             _injectController = null;

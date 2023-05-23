@@ -17,7 +17,8 @@ namespace DCFApixels.DragonECS
         private bool[] _entityFlags;// index = entityID / value = entityFlag;/ value = 0 = no entityID
         private T[] _items; //sparse
         private int _count;
-        private PoolRunners _poolRunners;
+
+        private List<IEcsPoolEventListener> _listeners;
 
         private EcsGroup _entities;
         public EcsReadonlyGroup Entities
@@ -47,7 +48,7 @@ namespace DCFApixels.DragonECS
             _source = world;
             _id = componentID;
 
-            _poolRunners = new PoolRunners(world.Pipeline);
+            _listeners = new List<IEcsPoolEventListener>();
 
             _entities = EcsGroup.New(world);
 
@@ -71,9 +72,9 @@ namespace DCFApixels.DragonECS
                 entityFlag = true;
                 _count++;
                 _entities.Add(entityID);
-                _poolRunners.add.OnComponentAdd<T>(entityID);
+                foreach (var item in _listeners) item.OnAdd(entityID);
             }
-            _poolRunners.write.OnComponentWrite<T>(entityID);
+            foreach (var item in _listeners) item.OnWrite(entityID);
             _items[entityID].Target = target;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -84,7 +85,7 @@ namespace DCFApixels.DragonECS
             if (_sanitizeTargetWorld >= 0 && target.world != _sanitizeTargetWorld) ThrowWorldDifferent<T>(entityID);
             _sanitizeTargetWorld = target.world;
 #endif
-            _poolRunners.write.OnComponentWrite<T>(entityID);
+            _listeners.InvokeOnWrite(entityID);
             _items[entityID].Target = target;
         }
         public void AddOrSet(int entityID, entlong target)
@@ -115,7 +116,7 @@ namespace DCFApixels.DragonECS
             _entities.Remove(entityID);
             _entityFlags[entityID] = false;
             _count--;
-            _poolRunners.del.OnComponentDel<T>(entityID);
+            _listeners.InvokeOnDel(entityID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TryDel(int entityID)
@@ -131,6 +132,16 @@ namespace DCFApixels.DragonECS
                 Set(toEntityID, Read(fromEntityID).Target);
             else
                 Add(toEntityID, Read(fromEntityID).Target);
+        }
+        public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+#endif
+            if (Has(toEntityID))
+                toWorld.GetPool<T>().Set(toEntityID, Read(fromEntityID).Target);
+            else
+                toWorld.GetPool<T>().Add(toEntityID, Read(fromEntityID).Target);
         }
         #endregion
 
@@ -165,6 +176,19 @@ namespace DCFApixels.DragonECS
         void IEcsPool.AddRaw(int entityID, object dataRaw) => ((IEcsPool<T>)this).Add(entityID) = (T)dataRaw;
         object IEcsPool.GetRaw(int entityID) => Read(entityID);
         void IEcsPool.SetRaw(int entityID, object dataRaw) => ((IEcsPool<T>)this).Write(entityID) = (T)dataRaw;
+        #endregion
+
+        #region Listeners
+        public void AddListener(IEcsPoolEventListener listener)
+        {
+            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            _listeners.Add(listener);
+        }
+        public void RemoveListener(IEcsPoolEventListener listener)
+        {
+            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            _listeners.Remove(listener);
+        }
         #endregion
 
         #region IEnumerator - IntelliSense hack
