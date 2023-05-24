@@ -1,6 +1,6 @@
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/99481254/228309579-729cc600-af83-41e2-8474-96fb96859ae6.png">
+<img height="400" src="https://github.com/DCFApixels/DragonECS/assets/99481254/e9aff796-c9af-411e-af25-1185373b96ed.png">
 </p>
 
 # DragonECS - C# Entity Component System Framework
