@@ -1,4 +1,5 @@
-﻿using System;
+﻿#pragma warning disable IDE1006
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -6,9 +7,7 @@ using System.Runtime.InteropServices;
 namespace DCFApixels.DragonECS
 {
     using static entlong.ThrowHalper;
-    // uniqueID - 32 bits
-    // gen - 16 bits
-    // world - 16 bits
+    // [        id 32        |  gen 16  | world 16 ]
     /// <summary>Strong identifier/Permanent entity identifier</summary>
     [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
     public readonly struct entlong : IEquatable<long>, IEquatable<entlong>
@@ -33,12 +32,6 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => this == NULL;
-        }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool IsNotNull
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => this != NULL;
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -135,7 +128,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() => unchecked((int)full) ^ (int)(full >> 32);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override string ToString() => $"entity(id:{id} g:{gen} w:{world} {(IsAlive ? "alive" : "not alive")})";
+        public override string ToString() => $"entity(id:{id} g:{gen} w:{world} {(IsNull ? "null" : IsAlive ? "alive" : "not alive")})";
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj) => obj is entlong other && full == other.full;
         #endregion
@@ -159,9 +152,9 @@ namespace DCFApixels.DragonECS
             public static void ThrowIsNotAlive(entlong entity)
             {
                 if (entity.IsNull)
-                    throw new EcsFrameworkException("The entity identifier is null.");
+                    throw new EcsFrameworkException($"The {entity} is null.");
                 else
-                    throw new EcsFrameworkException("The entity is not alive.");
+                    throw new EcsFrameworkException($"The {entity} is not alive.");
             }
         }
         #endregion

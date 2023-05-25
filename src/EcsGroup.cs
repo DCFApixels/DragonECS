@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+using static DCFApixels.DragonECS.EcsGroup.ThrowHalper;
+#endif
 
 namespace DCFApixels.DragonECS
 {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-    using static EcsGroup.ThrowHalper;
-#endif
-
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
     public readonly ref struct EcsReadonlyGroup
     {
