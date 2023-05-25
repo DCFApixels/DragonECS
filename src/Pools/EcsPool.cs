@@ -7,7 +7,7 @@ namespace DCFApixels.DragonECS
 {
     using static EcsPoolThrowHalper;
     /// <summary>Pool for IEcsComponent components</summary>
-    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IntelliSense hack
+    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
     {
         private EcsWorld _source;

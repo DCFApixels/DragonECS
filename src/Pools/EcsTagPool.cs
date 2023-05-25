@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 namespace DCFApixels.DragonECS
 {
     using static EcsPoolThrowHalper;
-    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IntelliSense hack
+    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {
         private EcsWorld _source;

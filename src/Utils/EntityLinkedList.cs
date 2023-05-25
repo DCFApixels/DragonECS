@@ -5,7 +5,7 @@ namespace DCFApixels.DragonECS
 {
     public class EntityLinkedList
     {
-        public const int Enter = 0;
+        private const int ENTER = 0;
 
         private Node[] _nodes;
         private int _count;
@@ -35,7 +35,7 @@ namespace DCFApixels.DragonECS
             //ArrayUtility.Fill(_nodes, Node.Empty);
             for (int i = 0; i < _nodes.Length; i++)
                 _nodes[i].next = 0;
-            _lastNodeIndex = Enter;
+            _lastNodeIndex = ENTER;
             _count = 0;
         }
 
@@ -82,7 +82,7 @@ namespace DCFApixels.DragonECS
             {
                 _nodes = nodes;
                 _index = -1;
-                _next = Enter;
+                _next = ENTER;
             }
             public int Current => _nodes[_index].entityID;
             public bool MoveNext()
