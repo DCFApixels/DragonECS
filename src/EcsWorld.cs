@@ -1,17 +1,11 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Utils;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
-    using Internal;
-
-    internal sealed class EcsNullWorld : EcsWorld<EcsNullWorld>
-    {
-        public EcsNullWorld() : base(false) { }
-    }
-
     public abstract class EcsWorld
     {
         private const short GEN_BITS = 0x7fff;
@@ -20,6 +14,7 @@ namespace DCFApixels.DragonECS
 
         public static EcsWorld[] Worlds = new EcsWorld[8];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
+
         public readonly short uniqueID;
 
         private int _worldTypeID;
@@ -27,17 +22,17 @@ namespace DCFApixels.DragonECS
         private IntDispenser _entityDispenser;
         private int _entitiesCount;
         private int _entitesCapacity;
-        private short[] _gens; //старший бит указывает на то жива ли сущьность.
+        private short[] _gens; //старший бит указывает на то жива ли сущность
         private short[] _componentCounts;
         private EcsGroup _allEntites;
 
-        //буфер удаления откладывает освобождение андишников сущьностей.
-        //Нужен для того чтобы запускать некоторые процесыы связанные с удалением сущьности не по одному при каждом удалении, а пачкой
+        //буфер удаления откладывает освобождение андишников сущностей.
+        //Нужен для того чтобы запускать некоторые процесыы связанные с удалением сущности не по одному при каждом удалении, а пачкой
         //В теории такой подход частично улучшает ситуацию с переполнением поколений
         private int[] _delEntBuffer;
         private int _delEntBufferCount;
 
-        internal IEcsPoolImplementation[] pools;
+        internal IEcsPoolImplementation[] _pools;
         private EcsNullPool _nullPool;
         private int _poolsCount = 0;
 
@@ -55,7 +50,7 @@ namespace DCFApixels.DragonECS
         public int Count => _entitiesCount;
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
-        public ReadOnlySpan<IEcsPoolImplementation> AllPools => pools;// new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
+        public ReadOnlySpan<IEcsPoolImplementation> AllPools => _pools;// new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
         public int PoolsCount => _poolsCount;
         #endregion
 
@@ -84,8 +79,8 @@ namespace DCFApixels.DragonECS
 
             _entityDispenser = new IntDispenser(0);
             _nullPool = EcsNullPool.instance;
-            pools = new IEcsPoolImplementation[512];
-            ArrayUtility.Fill(pools, _nullPool);
+            _pools = new IEcsPoolImplementation[512];
+            ArrayUtility.Fill(_pools, _nullPool);
 
             _gens = new short[_entitesCapacity];
             _componentCounts = new short[_entitesCapacity];
@@ -106,7 +101,7 @@ namespace DCFApixels.DragonECS
             _entityDispenser = null;
             //_denseEntities = null;
             _gens = null;
-            pools = null;
+            _pools = null;
             _nullPool = null;
             _subjects = null;
             _executors = null;
@@ -130,27 +125,27 @@ namespace DCFApixels.DragonECS
         {
             int uniqueID = WorldMetaStorage.GetComponentId<TComponent>(_worldTypeID);
 
-            if (uniqueID >= pools.Length)
+            if (uniqueID >= _pools.Length)
             {
-                int oldCapacity = pools.Length;
-                Array.Resize(ref pools, pools.Length << 1);
-                ArrayUtility.Fill(pools, _nullPool, oldCapacity, oldCapacity - pools.Length);
+                int oldCapacity = _pools.Length;
+                Array.Resize(ref _pools, _pools.Length << 1);
+                ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
             }
 
-            if (pools[uniqueID] == _nullPool)
+            if (_pools[uniqueID] == _nullPool)
             {
                 var pool = new TPool();
-                pools[uniqueID] = pool;
+                _pools[uniqueID] = pool;
                 pool.OnInit(this, uniqueID);
                 _poolsCount++;
                 //EcsDebug.Print(pool.GetType().FullName);
             }
 
-            return (TPool)pools[uniqueID];
+            return (TPool)_pools[uniqueID];
         }
         #endregion
 
-        #region Queries
+        #region Subjects
         public TSubject GetSubject<TSubject>() where TSubject : EcsSubject
         {
             int uniqueID = WorldMetaStorage.GetSubjectId<TSubject>(_worldTypeID);
@@ -160,119 +155,60 @@ namespace DCFApixels.DragonECS
                 _subjects[uniqueID] = EcsSubject.Builder.Build<TSubject>(this);
             return (TSubject)_subjects[uniqueID];
         }
-        #region Iterate
-        public EcsSubjectIterator<TSubject> IterateFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject) where TSubject : EcsSubject
-        {
-
-            subject = GetSubject<TSubject>();
-            return subject.GetIteratorFor(sourceGroup);
-        }
-        public EcsSubjectIterator<TSubject> IterateFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
-        {
-            return GetSubject<TSubject>().GetIteratorFor(sourceGroup);
-        }
-        public EcsSubjectIterator<TSubject> Iterate<TSubject>(out TSubject subject) where TSubject : EcsSubject
-        {
-            subject = GetSubject<TSubject>();
-            return subject.GetIterator();
-        }
-        public EcsSubjectIterator<TSubject> Iterate<TSubject>() where TSubject : EcsSubject
-        {
-            return GetSubject<TSubject>().GetIterator();
-        }
         #endregion
 
-        #region Where
-        private EcsWhereExecutor<TSubject> GetWhereExecutor<TSubject>() where TSubject : EcsSubject
+        #region Queries
+        public TExecutor GetExecutor<TExecutor>(Func<EcsWorld, TExecutor> builder) where TExecutor: EcsQueryExecutor
         {
-            int id = WorldMetaStorage.GetExecutorId<EcsWhereExecutor<TSubject>>(_worldTypeID);
+            int id = WorldMetaStorage.GetExecutorId<TExecutor>(_worldTypeID);
             if (id >= _executors.Length)
                 Array.Resize(ref _executors, _executors.Length << 1);
             if (_executors[id] == null)
-                _executors[id] = new EcsWhereExecutor<TSubject>(GetSubject<TSubject>());
-            return (EcsWhereExecutor<TSubject>)_executors[id];
+                _executors[id] = builder(this);
+            return (TExecutor)_executors[id];
+        }
+
+        private EcsWhereExecutor<TSubject> EcsWhereExecutorBuilder<TSubject>(EcsWorld world) where TSubject : EcsSubject
+        {
+            return new EcsWhereExecutor<TSubject>(world.GetSubject<TSubject>());
         }
         public EcsWhereResult<TSubject> WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject) where TSubject : EcsSubject
         {
-            var executor = GetWhereExecutor<TSubject>();
+            var executor = GetExecutor(EcsWhereExecutorBuilder<TSubject>);
             subject = executor.Subject;
             return executor.ExecuteFor(sourceGroup);
         }
         public EcsWhereResult<TSubject> WhereFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
         {
-            return GetWhereExecutor<TSubject>().ExecuteFor(sourceGroup);
+            return GetExecutor(EcsWhereExecutorBuilder<TSubject>).ExecuteFor(sourceGroup);
         }
         public EcsWhereResult<TSubject> Where<TSubject>(out TSubject subject) where TSubject : EcsSubject
         {
-            var executor = GetWhereExecutor<TSubject>();
+            var executor = GetExecutor(EcsWhereExecutorBuilder<TSubject>);
             subject = executor.Subject;
             return executor.Execute();
         }
         public EcsWhereResult<TSubject> Where<TSubject>() where TSubject : EcsSubject
         {
-            return GetWhereExecutor<TSubject>().Execute();
+            return GetExecutor(EcsWhereExecutorBuilder<TSubject>).Execute();
         }
         #endregion
 
-        #region Join
-        private EcsJoinAttachExecutor<TSubject, TAttachComponent> GetJoinAttachExecutor<TSubject, TAttachComponent>()
-            where TSubject : EcsSubject
-            where TAttachComponent : struct, IEcsAttachComponent
+        #region IsMatchesMask
+        public bool IsMatchesMask(EcsMask mask, int entityID)
         {
-            int id = WorldMetaStorage.GetExecutorId<EcsJoinAttachExecutor<TSubject, TAttachComponent>>(_worldTypeID);
-            if (id >= _executors.Length)
-                Array.Resize(ref _executors, _executors.Length << 1);
-            if (_executors[id] == null)
-                _executors[id] = new EcsJoinAttachExecutor<TSubject, TAttachComponent>(GetSubject<TSubject>());
-            return (EcsJoinAttachExecutor<TSubject, TAttachComponent>)_executors[id];
-        }
-        public EcsJoinAttachResult<TSubject, TAttachComponent> JoinFor<TSubject, TAttachComponent>(EcsReadonlyGroup sourceGroup, out TSubject subject)
-            where TSubject : EcsSubject
-            where TAttachComponent : struct, IEcsAttachComponent
-        {
-            var executor = GetJoinAttachExecutor<TSubject, TAttachComponent>();
-            subject = executor.Subject;
-            return executor.ExecuteFor(sourceGroup);
-        }
-        public EcsJoinAttachResult<TSubject, TAttachComponent> JoinFor<TSubject, TAttachComponent>(EcsReadonlyGroup sourceGroup)
-            where TSubject : EcsSubject
-            where TAttachComponent : struct, IEcsAttachComponent
-        {
-            return GetJoinAttachExecutor<TSubject, TAttachComponent>().ExecuteFor(sourceGroup);
-        }
-        public EcsJoinAttachResult<TSubject, TAttachComponent> Join<TSubject, TAttachComponent>(out TSubject subject)
-            where TSubject : EcsSubject
-            where TAttachComponent : struct, IEcsAttachComponent
-        {
-            var executor = GetJoinAttachExecutor<TSubject, TAttachComponent>();
-            subject = executor.Subject;
-            return executor.Execute();
-        }
-        public EcsJoinAttachResult<TSubject, TAttachComponent> Join<TSubject, TAttachComponent>()
-            where TSubject : EcsSubject
-            where TAttachComponent : struct, IEcsAttachComponent
-        {
-            return GetJoinAttachExecutor<TSubject, TAttachComponent>().Execute();
-        }
-        #endregion
-
-        #endregion
-
-        #region IsMaskCompatible
-        public bool IsMaskCompatible(EcsMask mask, int entityID)
-        {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (mask.WorldType != Archetype)
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+            if (mask._worldType != Archetype)
                 throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TTableArhetype)");
 #endif
-            for (int i = 0, iMax = mask.Inc.Length; i < iMax; i++)
+            for (int i = 0, iMax = mask._inc.Length; i < iMax; i++)
             {
-                if (!pools[mask.Inc[i]].Has(entityID))
+                if (!_pools[mask._inc[i]].Has(entityID))
                     return false;
             }
-            for (int i = 0, iMax = mask.Exc.Length; i < iMax; i++)
+            for (int i = 0, iMax = mask._exc.Length; i < iMax; i++)
             {
-                if (pools[mask.Exc[i]].Has(entityID))
+                if (_pools[mask._exc[i]].Has(entityID))
                     return false;
             }
             return true;
@@ -305,7 +241,7 @@ namespace DCFApixels.DragonECS
                         _groups.RemoveAt(last);
                     }
                 }
-                foreach (var item in pools)
+                foreach (var item in _pools)
                     item.OnWorldResize(_gens.Length);
 
                 _listeners.InvokeOnWorldResize(_gens.Length);
@@ -341,30 +277,30 @@ namespace DCFApixels.DragonECS
         public void ReleaseDelEntityBuffer()
         {
             ReadOnlySpan<int> buffser = new ReadOnlySpan<int>(_delEntBuffer, 0, _delEntBufferCount);
-            foreach (var pool in pools)
+            foreach (var pool in _pools)
                 pool.OnReleaseDelEntityBuffer(buffser);
             _listeners.InvokeOnReleaseDelEntityBuffer(buffser);
             for (int i = 0; i < _delEntBufferCount; i++)
                 _entityDispenser.Release(_delEntBuffer[i]);
             _delEntBufferCount = 0;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetGen(int entityID) => _gens[entityID];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetComponentsCount(int entityID) => _componentCounts[entityID];
         public void DeleteEmptyEntites()
         {
             foreach (var e in _allEntites)
             {
-                if (_componentCounts[e] <= 0)
-                    DelEntity(e);
+                if (_componentCounts[e] <= 0) DelEntity(e);
             }
         }
 
         public void CopyEntity(int fromEntityID, int toEntityID)
         {
-            foreach (var pool in pools)
+            foreach (var pool in _pools)
             {
-                if(pool.Has(fromEntityID))
-                    pool.Copy(fromEntityID, toEntityID);
+                if(pool.Has(fromEntityID)) pool.Copy(fromEntityID, toEntityID);
             }
         }
         public int CloneEntity(int fromEntityID)
@@ -376,7 +312,7 @@ namespace DCFApixels.DragonECS
         public void CloneEntity(int fromEntityID, int toEntityID)
         {
             CopyEntity(fromEntityID, toEntityID);
-            foreach (var pool in pools)
+            foreach (var pool in _pools)
             {
                 if (!pool.Has(fromEntityID)&& pool.Has(toEntityID))
                         pool.Del(toEntityID);
@@ -384,19 +320,14 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void IncrementEntityComponentCount(int entityID)
-        {
-            _componentCounts[entityID]++;
-        }
+        internal void IncrementEntityComponentCount(int entityID) => _componentCounts[entityID]++;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DecrementEntityComponentCount(int entityID)
         {
             var count = --_componentCounts[entityID];
-            if(count == 0 && _allEntites.Has(entityID))
-                DelEntity(entityID);
-
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (count < 0) throw new EcsFrameworkException("нарушен баланс инкремента.декремента компонентов");
+            if(count == 0 && _allEntites.Has(entityID)) DelEntity(entityID);
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+            if (count < 0) throw new EcsFrameworkException("нарушен баланс инкремента/декремента компонентов");
 #endif
         }
         #endregion
@@ -408,13 +339,12 @@ namespace DCFApixels.DragonECS
         }
         internal EcsGroup GetGroupFromPool()
         {
-            if (_groupsPool.Count <= 0)
-                return new EcsGroup(this);
+            if (_groupsPool.Count <= 0) return new EcsGroup(this);
             return _groupsPool.Pop();
         }
         internal void ReleaseGroup(EcsGroup group)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (group.World != this)
                 throw new ArgumentException("groupFilter.WorldIndex != this");
 #endif
@@ -431,10 +361,10 @@ namespace DCFApixels.DragonECS
             if (itemsCount == 0) 
                 return;
 
-            for (var i = 0; i < pools.Length; i++)
+            for (var i = 0; i < _pools.Length; i++)
             {
-                if (pools[i].Has(entityID))
-                list.Add(pools[i].GetRaw(entityID));
+                if (_pools[i].Has(entityID))
+                list.Add(_pools[i].GetRaw(entityID));
                 if (list.Count >= itemsCount)
                     break;
             }
@@ -485,41 +415,25 @@ namespace DCFApixels.DragonECS
     }
 
     #region Utils
-    [StructLayout(LayoutKind.Sequential, Pack = 8, Size = 24)]
-    internal readonly struct PoolRunners
-    {
-        public readonly IEcsComponentAdd add;
-        public readonly IEcsComponentWrite write;
-        public readonly IEcsComponentDel del;
-
-        public PoolRunners(EcsPipeline pipeline)
-        {
-            add = pipeline.GetRunner<IEcsComponentAdd>();
-            write = pipeline.GetRunner<IEcsComponentWrite>();
-            del = pipeline.GetRunner<IEcsComponentDel>();
-        }
-    }
     public static class WorldMetaStorage
     {
-        private static List<Resizer> resizer = new List<Resizer>();
-        private static int tokenCount = 0;
-        private static int[] componentCounts = new int[0];
-        private static int[] queryCounts = new int[0];
-
+        private static List<Resizer> _resizer = new List<Resizer>();
+        private static int _tokenCount = 0;
+        private static int[] _componentCounts = new int[0];
+        private static int[] _subjectsCounts = new int[0];
         private static Dictionary<Type, int> _worldIds = new Dictionary<Type, int>();
-
         private static class WorldIndex<TWorldArchetype>
         {
             public static int id = GetWorldId(typeof(TWorldArchetype));
         }
         private static int GetToken()
         {
-            tokenCount++;
-            Array.Resize(ref componentCounts, tokenCount);
-            Array.Resize(ref queryCounts, tokenCount);
-            foreach (var item in resizer)
-                item.Resize(tokenCount);
-            return tokenCount - 1;
+            _tokenCount++;
+            Array.Resize(ref _componentCounts, _tokenCount);
+            Array.Resize(ref _subjectsCounts, _tokenCount);
+            foreach (var item in _resizer)
+                item.Resize(_tokenCount);
+            return _tokenCount - 1;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetWorldId(Type archetype)
@@ -557,17 +471,17 @@ namespace DCFApixels.DragonECS
             public static int[] ids;
             static Component()
             {
-                ids = new int[tokenCount];
+                ids = new int[_tokenCount];
                 for (int i = 0; i < ids.Length; i++)
                     ids[i] = -1;
-                resizer.Add(new Resizer<T>());
+                _resizer.Add(new Resizer<T>());
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static int Get(int token)
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = componentCounts[token]++;
+                    id = _componentCounts[token]++;
                 return id;
             }
         }
@@ -576,17 +490,17 @@ namespace DCFApixels.DragonECS
             public static int[] ids;
             static Subject()
             {
-                ids = new int[tokenCount];
+                ids = new int[_tokenCount];
                 for (int i = 0; i < ids.Length; i++)
                     ids[i] = -1;
-                resizer.Add(new Resizer<T>());
+                _resizer.Add(new Resizer<T>());
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static int Get(int token)
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = queryCounts[token]++;
+                    id = _subjectsCounts[token]++;
                 return id;
             }
         }
@@ -595,24 +509,24 @@ namespace DCFApixels.DragonECS
             public static int[] ids;
             static Executor()
             {
-                ids = new int[tokenCount];
+                ids = new int[_tokenCount];
                 for (int i = 0; i < ids.Length; i++)
                     ids[i] = -1;
-                resizer.Add(new Resizer<T>());
+                _resizer.Add(new Resizer<T>());
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static int Get(int token)
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = queryCounts[token]++;
+                    id = _subjectsCounts[token]++;
                 return id;
             }
         }
     }
     #endregion
 
-    #region Callbacks Interface //TODO
+    #region Callbacks Interface
     public interface IEcsWorldEventListener
     {
         void OnWorldResize(int newSize);
@@ -621,10 +535,7 @@ namespace DCFApixels.DragonECS
         void OnNewEntity(int entityID);
         void OnDelEntity(int entityID);
     }
-    #endregion
-
-    #region Extensions
-    public static class WorldEventListExtensions
+    internal static class WorldEventListExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnWorldResize(this List<IEcsWorldEventListener> self, int newSize)

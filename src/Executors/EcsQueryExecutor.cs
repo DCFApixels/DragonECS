@@ -2,6 +2,7 @@
 {
     public abstract class EcsQueryExecutor
     {
-        internal abstract void Destroy();
+        internal void Destroy() => OnDestroy();
+        protected abstract void OnDestroy();
     }
 }

@@ -30,14 +30,14 @@ namespace DCFApixels.DragonECS
         {
             using (_executeWhere.Auto())
             {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
 #endif
                 _subject.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
                 return new EcsWhereResult<TSubject>(this, _filteredGroup.Readonly);
             }
         }
-        internal sealed override void Destroy()
+        protected sealed override void OnDestroy()
         {
             _filteredGroup.Release();
         }
@@ -62,7 +62,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsGroup.Enumerator GetEnumerator()
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsRelevant) throw new System.InvalidOperationException();//TODO составить текст исключения. 
 #endif
             return group.GetEnumerator();

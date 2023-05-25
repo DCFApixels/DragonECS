@@ -7,7 +7,7 @@ namespace DCFApixels.DragonECS
 {
     using static EcsPoolThrowHalper;
     /// <summary>Pool for IEcsComponent components</summary>
-    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IntelliSense hack
+    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
     {
         private EcsWorld _source;
@@ -59,7 +59,7 @@ namespace DCFApixels.DragonECS
             // using (_addMark.Auto())
             //  {
             ref int itemIndex = ref _mapping[entityID];
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (itemIndex > 0) ThrowAlreadyHasComponent<T>(entityID);
 #endif
             if (_recycledItemsCount > 0)
@@ -82,7 +82,7 @@ namespace DCFApixels.DragonECS
         public ref T Write(int entityID)
         {
             //   using (_writeMark.Auto())
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
             _listeners.InvokeOnWrite(entityID);
@@ -92,7 +92,7 @@ namespace DCFApixels.DragonECS
         public ref readonly T Read(int entityID)
         {
             //  using (_readMark.Auto())
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
             return ref _items[_mapping[entityID]];
@@ -126,7 +126,7 @@ namespace DCFApixels.DragonECS
         }
         public void Del(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
             ref int itemIndex = ref _mapping[entityID];
@@ -145,14 +145,14 @@ namespace DCFApixels.DragonECS
         }
         public void Copy(int fromEntityID, int toEntityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
 #endif
             _componentCopyHandler.Copy(ref Write(fromEntityID), ref TryAddOrWrite(toEntityID));
         }
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
 #endif
             _componentCopyHandler.Copy(ref Write(fromEntityID), ref toWorld.GetPool<T>().TryAddOrWrite(toEntityID));

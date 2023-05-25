@@ -13,7 +13,6 @@ namespace DCFApixels.DragonECS
         internal EcsWorld source;
         [EditorBrowsable(EditorBrowsableState.Always)]
         internal EcsMask mask;
-
         private bool _isInit;
 
         #region Properties
@@ -26,7 +25,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
-        public bool IsMatches(int entityID) => source.IsMaskCompatible(mask, entityID);
+        public bool IsMatches(int entityID) => source.IsMatchesMask(mask, entityID);
         #endregion
 
         #region Builder
@@ -84,7 +83,7 @@ namespace DCFApixels.DragonECS
             public void IncludeImplicit<TComponent>()
             {
                 int id = _world.GetComponentID<TComponent>();
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
                 if (_inc.Contains(id) || _exc.Contains(id)) throw new EcsFrameworkException($"{typeof(TComponent).Name} already in constraints list.");
 #endif
                 _inc.Add(_world.GetComponentID<TComponent>());
@@ -92,7 +91,7 @@ namespace DCFApixels.DragonECS
             public void ExcludeImplicit<TComponent>()
             {
                 int id = _world.GetComponentID<TComponent>();
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
                 if (_inc.Contains(id) || _exc.Contains(id)) throw new EcsFrameworkException($"{typeof(TComponent).Name} already in constraints list.");
 #endif
                 _exc.Add(_world.GetComponentID<TComponent>());
@@ -111,6 +110,7 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    #region Extensions
     public static class EcsSubjectExtensions
     {
         public static EcsSubjectIterator<TSubject> GetIterator<TSubject>(this TSubject self) where TSubject : EcsSubject
@@ -122,6 +122,7 @@ namespace DCFApixels.DragonECS
             return new EcsSubjectIterator<TSubject>(self, sourceGroup);
         }
     }
+    #endregion
 
     #region BuilderBase
     public abstract class EcsSubjectBuilderBase
@@ -135,20 +136,18 @@ namespace DCFApixels.DragonECS
     #region Mask
     public sealed class EcsMask
     {
-        internal readonly Type WorldType;
-        internal readonly int[] Inc;
-        internal readonly int[] Exc;
-
+        internal readonly Type _worldType;
+        internal readonly int[] _inc;
+        internal readonly int[] _exc;
         public EcsMask(Type worldType, int[] inc, int[] exc)
         {
-            WorldType = worldType;
-            Inc = inc;
-            Exc = exc;
+            _worldType = worldType;
+            _inc = inc;
+            _exc = exc;
         }
-
         public override string ToString()
         {
-            return $"Inc({string.Join(", ", Inc)}) Exc({string.Join(", ", Exc)})";
+            return $"Inc({string.Join(", ", _inc)}) Exc({string.Join(", ", _exc)})";
         }
     }
     #endregion
@@ -181,7 +180,7 @@ namespace DCFApixels.DragonECS
             group.Clear();
             var enumerator = GetEnumerator();
             while (enumerator.MoveNext())
-                group.AggressiveAdd(enumerator.Current);
+                group.AddInternal(enumerator.Current);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator() => new Enumerator(sourceGroup, s);
@@ -207,9 +206,9 @@ namespace DCFApixels.DragonECS
             public Enumerator(EcsReadonlyGroup sourceGroup, EcsSubject subject)
             {
                 _sourceGroup = sourceGroup.GetEnumerator();
-                _inc = subject.mask.Inc;
-                _exc = subject.mask.Exc;
-                _pools = subject.World.pools;
+                _inc = subject.mask._inc;
+                _exc = subject.mask._exc;
+                _pools = subject.World._pools;
             }
             public int Current
             {

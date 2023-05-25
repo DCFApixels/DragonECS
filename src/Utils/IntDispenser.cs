@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading;
 
-namespace DCFApixels.DragonECS
+namespace DCFApixels.DragonECS.Utils
 {
     internal sealed class IntDispenser
     {

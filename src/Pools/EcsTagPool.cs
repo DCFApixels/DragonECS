@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 namespace DCFApixels.DragonECS
 {
     using static EcsPoolThrowHalper;
-    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IntelliSense hack
+    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {
         private EcsWorld _source;
@@ -43,7 +43,7 @@ namespace DCFApixels.DragonECS
         #region Method
         public void Add(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (Has(entityID)) ThrowAlreadyHasComponent<T>(entityID);
 #endif
             _count++;
@@ -68,7 +68,7 @@ namespace DCFApixels.DragonECS
         }
         public void Del(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
             _mapping[entityID] = false;
@@ -82,14 +82,14 @@ namespace DCFApixels.DragonECS
         }
         public void Copy(int fromEntityID, int toEntityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
 #endif
             TryAdd(toEntityID);
         }
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
 #endif
             toWorld.GetPool<T>().TryAdd(toEntityID);
@@ -138,14 +138,14 @@ namespace DCFApixels.DragonECS
         }
         ref readonly T IEcsPool<T>.Read(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
             return ref _fakeComponent;
         }
         ref T IEcsPool<T>.Write(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
             return ref _fakeComponent;
@@ -153,14 +153,14 @@ namespace DCFApixels.DragonECS
         void IEcsPool.AddRaw(int entityID, object dataRaw) => Add(entityID);
         object IEcsPool.GetRaw(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
             return _fakeComponent;
         }
         void IEcsPool.SetRaw(int entityID, object dataRaw)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
         }
