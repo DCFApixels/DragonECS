@@ -37,7 +37,7 @@ namespace DCFApixels.DragonECS
                 return new EcsWhereResult<TSubject>(this, _filteredGroup.Readonly);
             }
         }
-        internal sealed override void Destroy()
+        protected sealed override void OnDestroy()
         {
             _filteredGroup.Release();
         }

@@ -1,6 +1,6 @@
 ﻿namespace DCFApixels.DragonECS
 {
-    public static class Extensions
+    public static class IntExtensions
     {
         public static entlong ToEntityLong(this int self, EcsWorld world)
         {

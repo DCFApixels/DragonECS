@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace DCFApixels.DragonECS
+namespace DCFApixels.DragonECS.Utils
 {
     public class SparseSet : IEnumerable<int>, ICollection<int>, IReadOnlyCollection<int>
     {

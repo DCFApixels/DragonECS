@@ -1,7 +1,8 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Utils;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using DCFApixels.DragonECS.Internal;
 
 namespace DCFApixels.DragonECS
 {
@@ -144,7 +145,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Queries
+        #region Subjects
         public TSubject GetSubject<TSubject>() where TSubject : EcsSubject
         {
             int uniqueID = WorldMetaStorage.GetSubjectId<TSubject>(_worldTypeID);
@@ -154,102 +155,43 @@ namespace DCFApixels.DragonECS
                 _subjects[uniqueID] = EcsSubject.Builder.Build<TSubject>(this);
             return (TSubject)_subjects[uniqueID];
         }
-        #region Iterate
-        public EcsSubjectIterator<TSubject> IterateFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject) where TSubject : EcsSubject
-        {
-
-            subject = GetSubject<TSubject>();
-            return subject.GetIteratorFor(sourceGroup);
-        }
-        public EcsSubjectIterator<TSubject> IterateFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
-        {
-            return GetSubject<TSubject>().GetIteratorFor(sourceGroup);
-        }
-        public EcsSubjectIterator<TSubject> Iterate<TSubject>(out TSubject subject) where TSubject : EcsSubject
-        {
-            subject = GetSubject<TSubject>();
-            return subject.GetIterator();
-        }
-        public EcsSubjectIterator<TSubject> Iterate<TSubject>() where TSubject : EcsSubject
-        {
-            return GetSubject<TSubject>().GetIterator();
-        }
         #endregion
 
-        #region Where
-        private EcsWhereExecutor<TSubject> GetWhereExecutor<TSubject>() where TSubject : EcsSubject
+        #region Queries
+        public TExecutor GetExecutor<TExecutor>(Func<EcsWorld, TExecutor> builder) where TExecutor: EcsQueryExecutor
         {
-            int id = WorldMetaStorage.GetExecutorId<EcsWhereExecutor<TSubject>>(_worldTypeID);
+            int id = WorldMetaStorage.GetExecutorId<TExecutor>(_worldTypeID);
             if (id >= _executors.Length)
                 Array.Resize(ref _executors, _executors.Length << 1);
             if (_executors[id] == null)
-                _executors[id] = new EcsWhereExecutor<TSubject>(GetSubject<TSubject>());
-            return (EcsWhereExecutor<TSubject>)_executors[id];
+                _executors[id] = builder(this);
+            return (TExecutor)_executors[id];
+        }
+
+        private EcsWhereExecutor<TSubject> EcsWhereExecutorBuilder<TSubject>(EcsWorld world) where TSubject : EcsSubject
+        {
+            return new EcsWhereExecutor<TSubject>(world.GetSubject<TSubject>());
         }
         public EcsWhereResult<TSubject> WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject) where TSubject : EcsSubject
         {
-            var executor = GetWhereExecutor<TSubject>();
+            var executor = GetExecutor(EcsWhereExecutorBuilder<TSubject>);
             subject = executor.Subject;
             return executor.ExecuteFor(sourceGroup);
         }
         public EcsWhereResult<TSubject> WhereFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
         {
-            return GetWhereExecutor<TSubject>().ExecuteFor(sourceGroup);
+            return GetExecutor(EcsWhereExecutorBuilder<TSubject>).ExecuteFor(sourceGroup);
         }
         public EcsWhereResult<TSubject> Where<TSubject>(out TSubject subject) where TSubject : EcsSubject
         {
-            var executor = GetWhereExecutor<TSubject>();
+            var executor = GetExecutor(EcsWhereExecutorBuilder<TSubject>);
             subject = executor.Subject;
             return executor.Execute();
         }
         public EcsWhereResult<TSubject> Where<TSubject>() where TSubject : EcsSubject
         {
-            return GetWhereExecutor<TSubject>().Execute();
+            return GetExecutor(EcsWhereExecutorBuilder<TSubject>).Execute();
         }
-        #endregion
-
-        #region Join
-        private EcsJoinAttachExecutor<TSubject, TAttachComponent> GetJoinAttachExecutor<TSubject, TAttachComponent>()
-            where TSubject : EcsSubject
-            where TAttachComponent : struct, IEcsAttachComponent
-        {
-            int id = WorldMetaStorage.GetExecutorId<EcsJoinAttachExecutor<TSubject, TAttachComponent>>(_worldTypeID);
-            if (id >= _executors.Length)
-                Array.Resize(ref _executors, _executors.Length << 1);
-            if (_executors[id] == null)
-                _executors[id] = new EcsJoinAttachExecutor<TSubject, TAttachComponent>(GetSubject<TSubject>());
-            return (EcsJoinAttachExecutor<TSubject, TAttachComponent>)_executors[id];
-        }
-        public EcsJoinAttachResult<TSubject, TAttachComponent> JoinFor<TSubject, TAttachComponent>(EcsReadonlyGroup sourceGroup, out TSubject subject)
-            where TSubject : EcsSubject
-            where TAttachComponent : struct, IEcsAttachComponent
-        {
-            var executor = GetJoinAttachExecutor<TSubject, TAttachComponent>();
-            subject = executor.Subject;
-            return executor.ExecuteFor(sourceGroup);
-        }
-        public EcsJoinAttachResult<TSubject, TAttachComponent> JoinFor<TSubject, TAttachComponent>(EcsReadonlyGroup sourceGroup)
-            where TSubject : EcsSubject
-            where TAttachComponent : struct, IEcsAttachComponent
-        {
-            return GetJoinAttachExecutor<TSubject, TAttachComponent>().ExecuteFor(sourceGroup);
-        }
-        public EcsJoinAttachResult<TSubject, TAttachComponent> Join<TSubject, TAttachComponent>(out TSubject subject)
-            where TSubject : EcsSubject
-            where TAttachComponent : struct, IEcsAttachComponent
-        {
-            var executor = GetJoinAttachExecutor<TSubject, TAttachComponent>();
-            subject = executor.Subject;
-            return executor.Execute();
-        }
-        public EcsJoinAttachResult<TSubject, TAttachComponent> Join<TSubject, TAttachComponent>()
-            where TSubject : EcsSubject
-            where TAttachComponent : struct, IEcsAttachComponent
-        {
-            return GetJoinAttachExecutor<TSubject, TAttachComponent>().Execute();
-        }
-        #endregion
-
         #endregion
 
         #region IsMatchesMask
