@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Unity.Profiling;
-using delayedOp = System.Int32;
 
 namespace DCFApixels.DragonECS
 {
@@ -45,7 +43,7 @@ namespace DCFApixels.DragonECS
         public bool IsReleazed
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _source.IsReleazed;
+            get => _source.IsReleased;
         }
         public int this[int index]
         {
@@ -93,26 +91,13 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    // индексация начинается с 1
-    // _delayedOps это int[] для отложенных операций, хранятся отложенные операции в виде int значения, если старший бит = 0 то это опреация добавленияб если = 1 то это операция вычитания
     public unsafe class EcsGroup : IDisposable, IEquatable<EcsGroup>
     {
-        private const int DEALAYED_ADD = 0;
-        private const int DEALAYED_REMOVE = int.MinValue;
-
         private EcsWorld _source;
-
         private int[] _dense;
         private int[] _sparse;
-
         private int _count;
-
-        private delayedOp[] _delayedOps;
-        private int _delayedOpsCount;
-
-        private int _lockCount;
-
-        private bool _isReleazed = true;
+        private bool _isReleased = true;
 
         #region Properties
         public EcsWorld World => _source;
@@ -136,10 +121,10 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => new EcsReadonlyGroup(this);
         }
-        public bool IsReleazed
+        public bool IsReleased
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _isReleazed;
+            get => _isReleased;
         }
         public int this[int index]
         {
@@ -161,26 +146,14 @@ namespace DCFApixels.DragonECS
             return world.GetGroupFromPool();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal EcsGroup(EcsWorld world, int denseCapacity = 64, int delayedOpsCapacity = 128)
+        internal EcsGroup(EcsWorld world, int denseCapacity = 64)
         {
             _source = world;
             _source.RegisterGroup(this);
             _dense = new int[denseCapacity];
             _sparse = new int[world.Capacity];
 
-            _delayedOps = new delayedOp[delayedOpsCapacity];
-
-            _lockCount = 0;
-            _delayedOpsCount = 0;
             _count = 0;
-        }
-
-        //защита от криворукости
-        //перед сборкой мусора снова создает сильную ссылку и возвращает в пул
-        //TODO переделат или удалить, так как сборщик мусора просыпается только после 12к и более экземпляров, только тогда и вызывается финализатор, слишком жирно
-        ~EcsGroup()
-        {
-            Release();
         }
         #endregion
 
@@ -211,16 +184,6 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AddInternal(int entityID)
         {
-            //if (_lockCount > 0)
-            //{
-            //    AddDelayedOp(entityID, DEALAYED_ADD);
-            //    return;
-            //}
-            AggressiveAdd(entityID);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void AggressiveAdd(int entityID)
-        {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (Has(entityID)) ThrowAlreadyContains(entityID);
 #endif
@@ -239,16 +202,6 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RemoveInternal(int entityID)
         {
-            //if (_lockCount > 0)
-            //{
-            //    AddDelayedOp(entityID, DEALAYED_REMOVE);
-            //    return;
-            //}
-            AggressiveRemove(entityID);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void AggressiveRemove(int entityID)
-        {
 #if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
             if (!Has(entityID)) ThrowDoesNotContain(entityID);
 #endif
@@ -257,22 +210,12 @@ namespace DCFApixels.DragonECS
             _sparse[entityID] = 0;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AddDelayedOp(int entityID, int isAddBitFlag)
-        {
-            if (_delayedOpsCount >= _delayedOps.Length)
-            {
-                Array.Resize(ref _delayedOps, _delayedOps.Length << 1);
-            }
-            _delayedOps[_delayedOpsCount++] = entityID | isAddBitFlag; // delayedOp = entityID add isAddBitFlag
-        }
-
         public void RemoveUnusedEntityIDs()
         {
             foreach (var e in this)
             {
                 if (!_source.IsUsed(e))
-                    AggressiveRemove(e);
+                    RemoveInternal(e);
             }
         }
         #endregion
@@ -299,7 +242,7 @@ namespace DCFApixels.DragonECS
             if(_count > 0)
                 Clear();
             foreach (var item in group)
-                AggressiveAdd(item);
+                AddInternal(item);
         }
         public EcsGroup Clone()
         {
@@ -321,7 +264,7 @@ namespace DCFApixels.DragonECS
 #endif
             foreach (var item in group)
                 if (!Has(item))
-                    AggressiveAdd(item);
+                    AddInternal(item);
         }
 
         /// <summary>as Except sets</summary>
@@ -335,7 +278,7 @@ namespace DCFApixels.DragonECS
 #endif
             foreach (var item in this)
                 if (group.Has(item))
-                    AggressiveRemove(item);
+                    RemoveInternal(item);
         }
 
         /// <summary>as Intersect sets</summary>
@@ -349,7 +292,7 @@ namespace DCFApixels.DragonECS
 #endif
             foreach (var item in this)
                 if (!group.Has(item))
-                    AggressiveRemove(item);
+                    RemoveInternal(item);
         }
 
         /// <summary>as Symmetric Except sets</summary>
@@ -363,9 +306,9 @@ namespace DCFApixels.DragonECS
 #endif
             foreach (var item in group)
                 if (Has(item))
-                    AggressiveRemove(item);
+                    RemoveInternal(item);
                 else
-                    AggressiveAdd(item);
+                    AddInternal(item);
         }
         #endregion
 
@@ -380,7 +323,7 @@ namespace DCFApixels.DragonECS
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
                 if (!b.Has(item))
-                    result.AggressiveAdd(item);
+                    result.AddInternal(item);
             a._source.ReleaseGroup(a);
             return result;
         }
@@ -394,7 +337,7 @@ namespace DCFApixels.DragonECS
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
                 if (b.Has(item))
-                    result.AggressiveAdd(item);
+                    result.AddInternal(item);
             a._source.ReleaseGroup(a);
             return result;
         }
@@ -407,7 +350,7 @@ namespace DCFApixels.DragonECS
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
-                result.AggressiveAdd(item);
+                result.AddInternal(item);
             foreach (var item in a)
                 result.Add(item);
             return result;
@@ -416,33 +359,8 @@ namespace DCFApixels.DragonECS
 
         #region GetEnumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Unlock()
-        {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
-            if (_lockCount <= 0)
-            {
-                throw new Exception($"Invalid lock-unlock balance for {nameof(EcsGroup)}.");
-            }
-#endif
-            if (--_lockCount <= 0)
-            {
-                for (int i = 0; i < _delayedOpsCount; i++)
-                {
-                    delayedOp op = _delayedOps[i];
-                    if (op >= 0) //delayedOp.IsAdded
-                        AggressiveAdd(op & int.MaxValue); //delayedOp.EcsEntity
-                    else
-                        AggressiveRemove(op & int.MaxValue); //delayedOp.EcsEntity
-                }
-            }
-        }
-        private ProfilerMarker _getEnumeratorReturn = new ProfilerMarker("EcsGroup.GetEnumerator");
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator()
         {
-            // _lockCount++;
             return new Enumerator(this);
         }
         #endregion
@@ -538,7 +456,7 @@ namespace DCFApixels.DragonECS
         }
         public void Release()
         {
-            _isReleazed = true;
+            _isReleased = true;
             _source.ReleaseGroup(this);
         }
         #endregion
@@ -558,6 +476,7 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    #region Extensions
     public static class EcsGroupExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -571,4 +490,5 @@ namespace DCFApixels.DragonECS
             if (array.Length < self.CapacityDense) Array.Resize(ref array, self.CapacityDense);
         }
     }
+    #endregion
 }

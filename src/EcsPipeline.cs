@@ -10,21 +10,6 @@ namespace DCFApixels.DragonECS
 {
     public sealed class EcsPipeline
     {
-        private static EcsPipeline _empty;
-        public static EcsPipeline Empty
-        {
-            get
-            {
-                if(_empty == null)
-                {
-                    _empty = new EcsPipeline(Array.Empty<IEcsSystem>());
-                    _empty.Init();
-                    _empty._isEmptyDummy = true;
-                }
-                return _empty;
-            }
-        }
-
         private IEcsSystem[] _allSystems;
         private Dictionary<Type, IEcsRunner> _runners;
         private IEcsRunProcess _runRunnerCache;
@@ -350,30 +335,21 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsModule
     {
-        public void ImportSystems(EcsPipeline.Builder b);
+        void ImportSystems(EcsPipeline.Builder b);
     }
 
     #region Extensions
     public static class EcsPipelineExtensions
     {
-        public static bool IsNullOrDestroyed(this EcsPipeline self)
-        {
-            return self == null || self.IsDestoryed;
-        }
+        public static bool IsNullOrDestroyed(this EcsPipeline self) => self == null || self.IsDestoryed;
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsSystem> range, string layerName = null)
         {
-            foreach (var item in range)
-            {
-                self.Add(item, layerName);
-            }
+            foreach (var item in range) self.Add(item, layerName);
             return self;
         }
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEnumerable<IEcsSystem> range, string layerName = null)
         {
-            foreach (var item in range)
-            {
-                self.AddUnique(item, layerName);
-            }
+            foreach (var item in range) self.AddUnique(item, layerName);
             return self;
         }
         public static EcsPipeline BuildAndInit(this EcsPipeline.Builder self)
@@ -382,7 +358,6 @@ namespace DCFApixels.DragonECS
             result.Init();
             return result;
         }
-
     }
     #endregion
 }
