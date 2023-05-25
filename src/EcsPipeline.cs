@@ -1,4 +1,5 @@
-﻿using DCFApixels.DragonECS.RunnersCore;
+﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -144,7 +145,6 @@ namespace DCFApixels.DragonECS
             private HashSet<Type> _uniqueTypes;
             private readonly Dictionary<string, List<IEcsSystem>> _systems;
             private readonly string _basicLayer;
-
             public readonly LayerList Layers;
             public Builder()
             {
@@ -182,10 +182,7 @@ namespace DCFApixels.DragonECS
                 List<IEcsSystem> list;
                 if (!_systems.TryGetValue(layerName, out list))
                 {
-                    list = new List<IEcsSystem>
-                    {
-                        new SystemsBlockMarkerSystem(layerName.ToString())
-                    };
+                    list = new List<IEcsSystem> { new SystemsBlockMarkerSystem(layerName.ToString()) };
                     _systems.Add(layerName, list);
                 }
                 if ((_uniqueTypes.Add(system.GetType()) == false && isUnique))
@@ -204,8 +201,6 @@ namespace DCFApixels.DragonECS
 
             public EcsPipeline Build()
             {
-                //EcsDebug.Print(string.Join(", ", Layers));
-
                 Add(new DeleteEmptyEntitesSystem(), EcsConsts.POST_END_LAYER);
 
                 List<IEcsSystem> result = new List<IEcsSystem>(32);
