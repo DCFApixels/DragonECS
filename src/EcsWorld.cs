@@ -255,7 +255,7 @@ namespace DCFApixels.DragonECS
         #region IsMatchesMask
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (mask._worldType != Archetype)
                 throw new EcsFrameworkException("mask.WorldArchetypeType != typeof(TTableArhetype)");
 #endif
@@ -384,7 +384,7 @@ namespace DCFApixels.DragonECS
         {
             var count = --_componentCounts[entityID];
             if(count == 0 && _allEntites.Has(entityID)) DelEntity(entityID);
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (count < 0) throw new EcsFrameworkException("нарушен баланс инкремента/декремента компонентов");
 #endif
         }
@@ -402,7 +402,7 @@ namespace DCFApixels.DragonECS
         }
         internal void ReleaseGroup(EcsGroup group)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (group.World != this)
                 throw new ArgumentException("groupFilter.WorldIndex != this");
 #endif

@@ -57,7 +57,7 @@ namespace DCFApixels.DragonECS
                         .Where(type => type.BaseType != null && type.BaseType.IsGenericType && runnerBaseType == type.BaseType.GetGenericTypeDefinition()));
                 }
 
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
                 for (int i = 0; i < runnerHandlerTypes.Count; i++)
                 {
                     var e = CheckRunnerValide(runnerHandlerTypes[i]);
@@ -130,7 +130,7 @@ namespace DCFApixels.DragonECS
             private static Type _subclass;
             internal static void Register(Type subclass)
             {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
                 if (_subclass != null)
                 {
                     throw new EcsRunnerImplementationException($"The Runner<{typeof(TInterface).FullName}> can have only one implementing subclass");

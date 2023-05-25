@@ -47,12 +47,12 @@ namespace DCFApixels.DragonECS
         {
             var world = _subject.World;
             _executeJoin.Begin();
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (sourceGroup.IsNull) throw new ArgumentNullException();//TODO составить текст исключения. 
 #endif
             if (!_isInitTargetWorld)
                 InitTargetWorlds(sourceGroup.World);
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             else
                 if (_targetWorld != sourceGroup.World) throw new ArgumentException();//TODO составить текст исключения. это проверка на то что пользователь использует правильный мир
 #endif
@@ -160,35 +160,35 @@ namespace DCFApixels.DragonECS
 
         public bool Has(int attachedEnttiyID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsRelevant) throw new InvalidOperationException();//TODO составить текст исключения. 
 #endif
             return _executer.Has(attachedEnttiyID);
         }
         public EntityLinkedList.EnumerableSpan GetNodes(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsRelevant) throw new InvalidOperationException();//TODO составить текст исключения. 
 #endif
             return _executer.GetNodes(entityID);
         }
         public int GetNode(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsRelevant) throw new InvalidOperationException();//TODO составить текст исключения. 
 #endif
             return _executer.GetNode(entityID);
         }
         public int GetNodesCount(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsRelevant) throw new InvalidOperationException();//TODO составить текст исключения. 
 #endif
             return _executer.GetNodesCount(entityID);
         }
         public bool HasNode(int entityID, int attachedEntityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsRelevant) throw new InvalidOperationException();//TODO составить текст исключения. 
 #endif
             return _executer.HasNode(entityID, attachedEntityID);

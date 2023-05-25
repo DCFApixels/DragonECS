@@ -83,7 +83,7 @@ namespace DCFApixels.DragonECS
             public void IncludeImplicit<TComponent>()
             {
                 int id = _world.GetComponentID<TComponent>();
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
                 if (_inc.Contains(id) || _exc.Contains(id)) throw new EcsFrameworkException($"{typeof(TComponent).Name} already in constraints list.");
 #endif
                 _inc.Add(_world.GetComponentID<TComponent>());
@@ -91,7 +91,7 @@ namespace DCFApixels.DragonECS
             public void ExcludeImplicit<TComponent>()
             {
                 int id = _world.GetComponentID<TComponent>();
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
                 if (_inc.Contains(id) || _exc.Contains(id)) throw new EcsFrameworkException($"{typeof(TComponent).Name} already in constraints list.");
 #endif
                 _exc.Add(_world.GetComponentID<TComponent>());

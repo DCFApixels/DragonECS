@@ -90,7 +90,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run()
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             CheckBeforeInitForMethod(nameof(Run));
             CheckAfterDestroyForMethod(nameof(Run));
 #endif
@@ -101,7 +101,7 @@ namespace DCFApixels.DragonECS
             if (_isEmptyDummy)
                 return;
 
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             CheckBeforeInitForMethod(nameof(Run));
 #endif
             if (_isDestoryed == true)
@@ -115,7 +115,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region StateChecks
-#if (DEBUG && !DISABLE_DEBUG) || !DRAGONECS_NO_SANITIZE_CHECKS
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
         private void CheckBeforeInitForMethod(string methodName)
         {
             if (!_isInit)
