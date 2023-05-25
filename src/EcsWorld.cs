@@ -1,16 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using DCFApixels.DragonECS.Internal;
 
 namespace DCFApixels.DragonECS
 {
-    using Internal;
-
-    internal sealed class EcsNullWorld : EcsWorld<EcsNullWorld>
-    {
-        public EcsNullWorld() : base(false) { }
-    }
-
     public abstract class EcsWorld
     {
         private const short GEN_BITS = 0x7fff;
@@ -19,6 +13,7 @@ namespace DCFApixels.DragonECS
 
         public static EcsWorld[] Worlds = new EcsWorld[8];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
+
         public readonly short uniqueID;
 
         private int _worldTypeID;
@@ -598,9 +593,6 @@ namespace DCFApixels.DragonECS
         void OnNewEntity(int entityID);
         void OnDelEntity(int entityID);
     }
-    #endregion
-
-    #region Extensions
     internal static class WorldEventListExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

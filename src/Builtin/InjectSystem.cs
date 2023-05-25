@@ -5,37 +5,8 @@ using System.Linq;
 namespace DCFApixels.DragonECS
 {
     //TODO развить идею инжектов
-    //1) добавить расширенный метод инжекта, с 2 джинерик-аргументами, первый базовый тип и второй инжектируемый тип.
-    //напримере это будет работать так Inject<object, Foo> делает инжект объекта типа Foo для систем с IEcsInject<object> или с IEcsInject<Foo>
-    //2) добавить контейнер, который автоматически создается, собирает в себя все пре-инжекты и авто-инжектится во все системы.
+    //добавить контейнер, который автоматически создается, собирает в себя все пре-инжекты и авто-инжектится во все системы.
     //но это спорная идея
-    namespace Internal
-    {
-        internal class PreInitInjectController 
-        {
-            private EcsPipeline _source;
-            private InjectSystemBase[] _injectSystems;
-            private int _injectCount;
-            public PreInitInjectController(EcsPipeline source)
-            {
-                _injectCount = 0;
-                _source = source;
-                _injectSystems = _source.AllSystems.OfType<InjectSystemBase>().ToArray();
-            }
-            public bool OnInject()
-            {
-                _injectCount++;
-                return IsInjectionEnd;
-            }
-            public bool IsInjectionEnd => _injectCount >= _injectSystems.Length;
-            public void Destroy()
-            {
-                _source = null;
-                _injectSystems = null;
-            }
-        }
-    }
-
     public interface IEcsPreInject : IEcsSystem
     {
         void PreInject(object obj);
@@ -52,6 +23,29 @@ namespace DCFApixels.DragonECS
 
     namespace Internal
     {
+        internal class PreInitInjectController
+        {
+            private EcsPipeline _source;
+            private InjectSystemBase[] _injectSystems;
+            private int _injectCount;
+            public bool IsInjectionEnd => _injectCount >= _injectSystems.Length;
+            public PreInitInjectController(EcsPipeline source)
+            {
+                _injectCount = 0;
+                _source = source;
+                _injectSystems = _source.AllSystems.OfType<InjectSystemBase>().ToArray();
+            }
+            public bool OnInject()
+            {
+                _injectCount++;
+                return IsInjectionEnd;
+            }
+            public void Destroy()
+            {
+                _source = null;
+                _injectSystems = null;
+            }
+        }
         [DebugHide, DebugColor(DebugColor.Gray)]
         public sealed class EcsPreInjectRunner : EcsRunner<IEcsPreInject>, IEcsPreInject
         {
@@ -86,55 +80,43 @@ namespace DCFApixels.DragonECS
                 foreach (var item in targets) item.OnPreInitInjectionBefore();
             }
         }
-    }
-
-    public class InjectSystemBase { }
-
-    [DebugHide, DebugColor(DebugColor.Gray)]
-    public class InjectSystem<T> : InjectSystemBase, IEcsPreInitProcess, IEcsInject<PreInitInjectController>, IEcsPreInitInjectProcess
-    {
-        private T _injectedData;
-
-        private PreInitInjectController _injectController;
-        void IEcsInject<PreInitInjectController>.Inject(PreInitInjectController obj) => _injectController = obj;
-
-        public InjectSystem(T injectedData)
+        public class InjectSystemBase { }
+        [DebugHide, DebugColor(DebugColor.Gray)]
+        public class InjectSystem<T> : InjectSystemBase, IEcsPreInitProcess, IEcsInject<PreInitInjectController>, IEcsPreInitInjectProcess
         {
-            _injectedData = injectedData;
-        }
-
-        public void PreInit(EcsPipeline pipeline)
-        {
-            if (_injectedData == null)
-                return;
-
-            if (_injectController == null)
+            private T _injectedData;
+            private PreInitInjectController _injectController;
+            void IEcsInject<PreInitInjectController>.Inject(PreInitInjectController obj) => _injectController = obj;
+            public InjectSystem(T injectedData)
             {
-                _injectController = new PreInitInjectController(pipeline);
-                var injectMapRunner = pipeline.GetRunner<IEcsInject<PreInitInjectController>>();
-                pipeline.GetRunner<IEcsPreInitInjectProcess>().OnPreInitInjectionBefore();
-                injectMapRunner.Inject(_injectController);
+                _injectedData = injectedData;
             }
-
-            var injectRunnerGeneric = pipeline.GetRunner<IEcsInject<T>>();
-            injectRunnerGeneric.Inject(_injectedData);
-
-            if (_injectController.OnInject())
+            public void PreInit(EcsPipeline pipeline)
             {
-                _injectController.Destroy();
-                var injectCallbacksRunner = pipeline.GetRunner<IEcsPreInitInjectProcess>();
-                injectCallbacksRunner.OnPreInitInjectionAfter();
-                EcsRunner.Destroy(injectCallbacksRunner);
+                if (_injectedData == null) return;
+                if (_injectController == null)
+                {
+                    _injectController = new PreInitInjectController(pipeline);
+                    var injectMapRunner = pipeline.GetRunner<IEcsInject<PreInitInjectController>>();
+                    pipeline.GetRunner<IEcsPreInitInjectProcess>().OnPreInitInjectionBefore();
+                    injectMapRunner.Inject(_injectController);
+                }
+                var injectRunnerGeneric = pipeline.GetRunner<IEcsInject<T>>();
+                injectRunnerGeneric.Inject(_injectedData);
+                if (_injectController.OnInject())
+                {
+                    _injectController.Destroy();
+                    var injectCallbacksRunner = pipeline.GetRunner<IEcsPreInitInjectProcess>();
+                    injectCallbacksRunner.OnPreInitInjectionAfter();
+                    EcsRunner.Destroy(injectCallbacksRunner);
+                }
             }
-        }
-        public void OnPreInitInjectionBefore() { }
-        public void OnPreInitInjectionAfter()
-        {
-            _injectController = null;
+            public void OnPreInitInjectionBefore() { }
+            public void OnPreInitInjectionAfter() => _injectController = null;
         }
     }
 
-    public static class InjectSystemExstensions
+    public static class InjectSystemExtensions
     {
         public static EcsPipeline.Builder Inject<T>(this EcsPipeline.Builder self, T data)
         {

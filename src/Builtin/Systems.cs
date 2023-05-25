@@ -1,53 +1,51 @@
 ﻿using System.Collections.Generic;
+using DCFApixels.DragonECS.Internal;
 
 namespace DCFApixels.DragonECS
 {
-    [DebugHide, DebugColor(DebugColor.Black)]
-    public class SystemsBlockMarkerSystem : IEcsSystem
+    namespace Internal
     {
-        public readonly string name;
-        public SystemsBlockMarkerSystem(string name) { this.name = name; }
-    }
-
-    [DebugHide, DebugColor(DebugColor.Grey)]
-    public class DeleteEmptyEntitesSystem : IEcsRunProcess, IEcsPreInject
-    {
-        private List<EcsWorld> _worlds = new List<EcsWorld>();
-        public void PreInject(object obj)
+        [DebugHide, DebugColor(DebugColor.Black)]
+        public class SystemsBlockMarkerSystem : IEcsSystem
         {
-            if (obj is EcsWorld world)
-                _worlds.Add(world);
+            public readonly string name;
+            public SystemsBlockMarkerSystem(string name) => this.name = name;
         }
-        public void Run(EcsPipeline pipeline)
+        [DebugHide, DebugColor(DebugColor.Grey)]
+        public class DeleteEmptyEntitesSystem : IEcsRunProcess, IEcsPreInject
         {
-            foreach (var world in _worlds)
-                world.DeleteEmptyEntites();
-        }
-    }
-
-    [DebugHide, DebugColor(DebugColor.Grey)]
-    public class DeleteOneFrameComponentSystem<TWorld, TComponent> : IEcsRunProcess, IEcsInject<TWorld>
-        where TWorld : EcsWorld<TWorld>
-        where TComponent : struct, IEcsComponent
-    {
-        private TWorld _world;
-        public void Inject(TWorld obj) => _world = obj;
-        private sealed class Subject : EcsSubject
-        {
-            public EcsPool<TComponent> pool;
-            public Subject(Builder b)
+            private List<EcsWorld> _worlds = new List<EcsWorld>();
+            public void PreInject(object obj)
             {
-                pool = b.Include<TComponent>();
+                if (obj is EcsWorld world)
+                    _worlds.Add(world);
+            }
+            public void Run(EcsPipeline pipeline)
+            {
+                foreach (var world in _worlds)
+                    world.DeleteEmptyEntites();
             }
         }
-        public void Run(EcsPipeline pipeline)
+        [DebugHide, DebugColor(DebugColor.Grey)]
+        public class DeleteOneFrameComponentSystem<TWorld, TComponent> : IEcsRunProcess, IEcsInject<TWorld>
+            where TWorld : EcsWorld<TWorld>
+            where TComponent : struct, IEcsComponent
         {
-            foreach (var e in _world.Where(out Subject s))
-                s.pool.Del(e);
+            private sealed class Subject : EcsSubject
+            {
+                public EcsPool<TComponent> pool;
+                public Subject(Builder b) => pool = b.Include<TComponent>();
+            }
+            private TWorld _world;
+            public void Inject(TWorld obj) => _world = obj;
+            public void Run(EcsPipeline pipeline)
+            {
+                foreach (var e in _world.Where(out Subject s))
+                    s.pool.Del(e);
+            }
         }
     }
-
-    public static class DeleteOneFrameComponentSystemExt
+    public static class DeleteOneFrameComponentSystemExtensions
     {
         private const string AUTO_DEL_LAYER = nameof(AUTO_DEL_LAYER);
         public static EcsPipeline.Builder AutoDel<TWorld, TComponent>(this EcsPipeline.Builder b)
