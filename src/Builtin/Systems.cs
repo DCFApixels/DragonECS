@@ -6,10 +6,10 @@ namespace DCFApixels.DragonECS
     namespace Internal
     {
         [DebugHide, DebugColor(DebugColor.Black)]
-        public class SystemsBlockMarkerSystem : IEcsSystem
+        public class SystemsLayerMarkerSystem : IEcsSystem
         {
             public readonly string name;
-            public SystemsBlockMarkerSystem(string name) => this.name = name;
+            public SystemsLayerMarkerSystem(string name) => this.name = name;
         }
         [DebugHide, DebugColor(DebugColor.Grey)]
         public class DeleteEmptyEntitesSystem : IEcsRunProcess, IEcsPreInject

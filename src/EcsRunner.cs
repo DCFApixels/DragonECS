@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.RunnersCore;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,9 +10,6 @@ using static DCFApixels.DragonECS.EcsDebugUtility;
 
 namespace DCFApixels.DragonECS
 {
-    using RunnersCore;
-    using System.ComponentModel;
-
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     sealed class EcsRunnerFilterAttribute : Attribute
     {
@@ -29,7 +27,6 @@ namespace DCFApixels.DragonECS
 
     namespace RunnersCore
     {
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public interface IEcsRunner
         {
             EcsPipeline Source { get; }
@@ -122,8 +119,10 @@ namespace DCFApixels.DragonECS
                 EcsRunner<TInterface>.Register(runnerType);
             }
         }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public abstract class EcsRunner<TInterface> : IEcsSystem, IEcsRunner
+#if UNITY_2020_3_OR_NEWER
+        [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
+#endif
+        public abstract class EcsRunner<TInterface> : IEcsSystem, IEcsRunner 
             where TInterface : IEcsSystem
         {
             #region Register

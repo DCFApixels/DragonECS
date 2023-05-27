@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -65,6 +67,7 @@ namespace DCFApixels.DragonECS
                 return (TSubject)newSubject;
             }
 
+            #region Include/Exclude/Optional
             public sealed override TPool Include<TComponent, TPool>()
             {
                 IncludeImplicit<TComponent>();
@@ -79,7 +82,6 @@ namespace DCFApixels.DragonECS
             {
                 return _world.GetPool<TComponent, TPool>();
             }
-
             public void IncludeImplicit<TComponent>()
             {
                 int id = _world.GetComponentID<TComponent>();
@@ -96,6 +98,7 @@ namespace DCFApixels.DragonECS
 #endif
                 _exc.Add(_world.GetComponentID<TComponent>());
             }
+            #endregion
 
             private void End(out EcsMask mask)
             {
@@ -106,6 +109,20 @@ namespace DCFApixels.DragonECS
                 _inc = null;
                 _exc = null;
             }
+
+            #region SupportReflectionHack
+#if UNITY_2020_3_OR_NEWER
+            [UnityEngine.Scripting.Preserve]
+#endif
+            private void SupportReflectionHack<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new()
+            {
+                Include<TComponent, TPool>();
+                Exclude<TComponent, TPool>();
+                Optional<TComponent, TPool>();
+                IncludeImplicit<TComponent>();
+                ExcludeImplicit<TComponent>();
+            }
+            #endregion
         }
         #endregion
     }
@@ -127,13 +144,14 @@ namespace DCFApixels.DragonECS
     #region BuilderBase
     public abstract class EcsSubjectBuilderBase
     {
-        public abstract TPool Include<TComponent, TPool>() where TComponent : struct where TPool : IEcsPoolImplementation<TComponent>, new();
-        public abstract TPool Exclude<TComponent, TPool>() where TComponent : struct where TPool : IEcsPoolImplementation<TComponent>, new();
-        public abstract TPool Optional<TComponent, TPool>() where TComponent : struct where TPool : IEcsPoolImplementation<TComponent>, new();
+        public abstract TPool Include<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new();
+        public abstract TPool Exclude<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new();
+        public abstract TPool Optional<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new();
     }
     #endregion
 
     #region Mask
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsMask
     {
         internal readonly Type _worldType;
@@ -145,10 +163,40 @@ namespace DCFApixels.DragonECS
             _inc = inc;
             _exc = exc;
         }
-        public override string ToString()
+
+        public override string ToString() => CreateLogString(_worldType, _inc, _exc);
+
+        #region Debug utils
+        private static string CreateLogString(Type worldType, int[] inc, int[] exc)
         {
-            return $"Inc({string.Join(", ", _inc)}) Exc({string.Join(", ", _exc)})";
+#if DEBUG
+            int worldID = WorldMetaStorage.GetWorldID(worldType);
+            string converter(int o) => EcsDebugUtility.GetGenericTypeName(WorldMetaStorage.GetComponentType(worldID, o), 1);
+            return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
+#else
+            return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
+#endif
         }
+        internal class DebuggerProxy
+        {
+            public readonly Type worldType;
+            public readonly int[] inc;
+            public readonly int[] exc;
+            public readonly Type[] incTypes;
+            public readonly Type[] excTypes;
+            public DebuggerProxy(EcsMask mask)
+            {
+                worldType = mask._worldType;
+                int worldID = WorldMetaStorage.GetWorldID(worldType);
+                inc = mask._inc;
+                exc = mask._exc;
+                Type converter(int o) => WorldMetaStorage.GetComponentType(worldID, o);
+                incTypes = inc.Select(converter).ToArray();
+                excTypes = exc.Select(converter).ToArray();
+            }
+            public override string ToString() => CreateLogString(worldType, inc, exc);
+        }
+        #endregion
     }
     #endregion
 
@@ -156,25 +204,25 @@ namespace DCFApixels.DragonECS
     public ref struct EcsSubjectIterator<TSubject> where TSubject : EcsSubject
     {
         public readonly TSubject s;
-        private EcsReadonlyGroup sourceGroup;
-        private Enumerator enumerator;
+        private EcsReadonlyGroup _sourceGroup;
+        private Enumerator _enumerator;
 
         public EcsSubjectIterator(TSubject s, EcsReadonlyGroup sourceGroup)
         {
             this.s = s;
-            this.sourceGroup = sourceGroup;
-            enumerator = default;
+            _sourceGroup = sourceGroup;
+            _enumerator = default;
         }
 
         public int Entity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => enumerator.Current;
+            get => _enumerator.Current;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Begin() => enumerator = GetEnumerator();
+        public void Begin() => _enumerator = GetEnumerator();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Next() => enumerator.MoveNext();
+        public bool Next() => _enumerator.MoveNext();
         public void CopyTo(EcsGroup group)
         {
             group.Clear();
@@ -183,7 +231,7 @@ namespace DCFApixels.DragonECS
                 group.AddInternal(enumerator.Current);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(sourceGroup, s);
+        public Enumerator GetEnumerator() => new Enumerator(_sourceGroup, s);
 
         public override string ToString()
         {

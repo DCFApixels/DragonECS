@@ -17,7 +17,6 @@ namespace DCFApixels.DragonECS
         public void End() => EcsDebug.ProfileMarkEnd(id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AutoScope Auto() => new AutoScope(id);
-
         public readonly ref struct AutoScope
         {
             private readonly int _id;
@@ -36,7 +35,14 @@ namespace DCFApixels.DragonECS
         public static void Set(DebugService service) => DebugService.Set(service);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Print(object v) => DebugService.Instance.Print(v);
+        public static void PrintWarning(object v) => Print(EcsConsts.DEBUG_WARNING_TAG, v);
+        public static void PrintError(object v) => Print(EcsConsts.DEBUG_ERROR_TAG, v);
+        public static void Print(object v)
+        {
+#if !DISABLE_DRAGONECS_DEBUGGER
+            DebugService.Instance.Print(v);
+#endif
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(string tag, object v)
         {
@@ -139,7 +145,6 @@ namespace DCFApixels.DragonECS
     {
         private Stopwatch[] _stopwatchs;
         private string[] _stopwatchsNames;
-
         public DefaultDebugService()
         {
 #if !DISABLE_DRAGONECS_DEBUGGER
@@ -147,17 +152,14 @@ namespace DCFApixels.DragonECS
             _stopwatchsNames= new string[64];
 #endif
         }
-
         public override void Print(string tag, object v)
         {
             Console.WriteLine($"[{tag}] {v}");
         }
-
         public override void ProfileMarkBegin(int id)
         {
             _stopwatchs[id].Start();
         }
-
         public override void ProfileMarkEnd(int id)
         {
             _stopwatchs[id].Stop();
@@ -165,12 +167,10 @@ namespace DCFApixels.DragonECS
             _stopwatchs[id].Reset();
             Print(_stopwatchsNames[id] + " s:" + time.TotalSeconds);
         }
-
         protected override void OnDelMark(int id)
         {
             _stopwatchs[id] = null;
         }
-
         protected override void OnNewMark(int id, string name)
         {
             if (id >= _stopwatchs.Length)

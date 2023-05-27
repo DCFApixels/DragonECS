@@ -6,9 +6,6 @@ namespace DCFApixels.DragonECS
     public sealed class DebugDescriptionAttribute : Attribute
     {
         public readonly string description;
-        public DebugDescriptionAttribute(string description) 
-        {
-            this.description = description;
-        }
+        public DebugDescriptionAttribute(string description) => this.description = description;
     }
 }

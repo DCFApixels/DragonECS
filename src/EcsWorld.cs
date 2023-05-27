@@ -26,9 +26,6 @@ namespace DCFApixels.DragonECS
         private short[] _componentCounts;
         private EcsGroup _allEntites;
 
-        //буфер удаления откладывает освобождение андишников сущностей.
-        //Нужен для того чтобы запускать некоторые процесыы связанные с удалением сущности не по одному при каждом удалении, а пачкой
-        //В теории такой подход частично улучшает ситуацию с переполнением поколений
         private int[] _delEntBuffer;
         private int _delEntBufferCount;
 
@@ -75,7 +72,7 @@ namespace DCFApixels.DragonECS
                 Worlds[uniqueID] = this;
             }
 
-            _worldTypeID = WorldMetaStorage.GetWorldId(Archetype);
+            _worldTypeID = WorldMetaStorage.GetWorldID(Archetype);
 
             _entityDispenser = new IntDispenser(0);
             _nullPool = EcsNullPool.instance;
@@ -95,7 +92,6 @@ namespace DCFApixels.DragonECS
             _subjects = new EcsSubject[128];
             _executors = new EcsQueryExecutor[128];
         }
-
         public void Destroy()
         {
             _entityDispenser = null;
@@ -109,10 +105,6 @@ namespace DCFApixels.DragonECS
             Worlds[uniqueID] = null;
             _worldIdDispenser.Release(uniqueID);
         }
-        public void DestryWithPipeline()
-        {
-            Destroy();
-        }
         #endregion
 
         #region GetComponentID
@@ -121,26 +113,25 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetPool
-        public TPool GetPool<TComponent, TPool>() where TComponent : struct where TPool : IEcsPoolImplementation<TComponent>, new()
+#if UNITY_2020_3_OR_NEWER
+        [UnityEngine.Scripting.Preserve]
+#endif
+        public TPool GetPool<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new()
         {
             int uniqueID = WorldMetaStorage.GetComponentId<TComponent>(_worldTypeID);
-
             if (uniqueID >= _pools.Length)
             {
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, _pools.Length << 1);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
             }
-
             if (_pools[uniqueID] == _nullPool)
             {
                 var pool = new TPool();
                 _pools[uniqueID] = pool;
                 pool.OnInit(this, uniqueID);
                 _poolsCount++;
-                //EcsDebug.Print(pool.GetType().FullName);
             }
-
             return (TPool)_pools[uniqueID];
         }
         #endregion
@@ -158,39 +149,38 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Queries
-        public TExecutor GetExecutor<TExecutor>(Func<EcsWorld, TExecutor> builder) where TExecutor: EcsQueryExecutor
+        public TExecutor GetExecutor<TExecutor>() where TExecutor : EcsQueryExecutor, new()
         {
             int id = WorldMetaStorage.GetExecutorId<TExecutor>(_worldTypeID);
             if (id >= _executors.Length)
                 Array.Resize(ref _executors, _executors.Length << 1);
             if (_executors[id] == null)
-                _executors[id] = builder(this);
+            {
+                var executor = new TExecutor();
+                executor.Initialize(this);
+                _executors[id] = executor;
+            }
             return (TExecutor)_executors[id];
-        }
-
-        private EcsWhereExecutor<TSubject> EcsWhereExecutorBuilder<TSubject>(EcsWorld world) where TSubject : EcsSubject
-        {
-            return new EcsWhereExecutor<TSubject>(world.GetSubject<TSubject>());
         }
         public EcsWhereResult<TSubject> WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject) where TSubject : EcsSubject
         {
-            var executor = GetExecutor(EcsWhereExecutorBuilder<TSubject>);
+            var executor = GetExecutor<EcsWhereExecutor<TSubject>>();
             subject = executor.Subject;
             return executor.ExecuteFor(sourceGroup);
         }
         public EcsWhereResult<TSubject> WhereFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
         {
-            return GetExecutor(EcsWhereExecutorBuilder<TSubject>).ExecuteFor(sourceGroup);
+            return GetExecutor<EcsWhereExecutor<TSubject>>().ExecuteFor(sourceGroup);
         }
         public EcsWhereResult<TSubject> Where<TSubject>(out TSubject subject) where TSubject : EcsSubject
         {
-            var executor = GetExecutor(EcsWhereExecutorBuilder<TSubject>);
+            var executor = GetExecutor<EcsWhereExecutor<TSubject>>();
             subject = executor.Subject;
             return executor.Execute();
         }
         public EcsWhereResult<TSubject> Where<TSubject>() where TSubject : EcsSubject
         {
-            return GetExecutor(EcsWhereExecutorBuilder<TSubject>).Execute();
+            return GetExecutor<EcsWhereExecutor<TSubject>>().Execute();
         }
         #endregion
 
@@ -332,15 +322,16 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Groups
+        #region Groups Pool
         internal void RegisterGroup(EcsGroup group)
         {
             _groups.Add(new WeakReference<EcsGroup>(group));
         }
         internal EcsGroup GetGroupFromPool()
         {
-            if (_groupsPool.Count <= 0) return new EcsGroup(this);
-            return _groupsPool.Pop();
+            EcsGroup result = _groupsPool.Count <= 0 ? new EcsGroup(this) : _groupsPool.Pop();
+            result._isReleased = false;
+            return result;
         }
         internal void ReleaseGroup(EcsGroup group)
         {
@@ -348,6 +339,7 @@ namespace DCFApixels.DragonECS
             if (group.World != this)
                 throw new ArgumentException("groupFilter.WorldIndex != this");
 #endif
+            group._isReleased = true;
             group.Clear();
             _groupsPool.Push(group);
         }
@@ -369,40 +361,13 @@ namespace DCFApixels.DragonECS
                     break;
             }
         }
+        #endregion
 
-        //  public int GetComponents(int entity, ref object[] list)
-        //  {
-        //      var entityOffset = GetRawEntityOffset(entity);
-        //      var itemsCount = _entities[entityOffset + RawEntityOffsets.ComponentsCount];
-        //      if (itemsCount == 0) { return 0; }
-        //      if (list == null || list.Length < itemsCount)
-        //      {
-        //          list = new object[_pools.Length];
-        //      }
-        //      var dataOffset = entityOffset + RawEntityOffsets.Components;
-        //      for (var i = 0; i < itemsCount; i++)
-        //      {
-        //          list[i] = _pools[_entities[dataOffset + i]].GetRaw(entity);
-        //      }
-        //      return itemsCount;
-        //  }
-        
-        //  public int GetComponentTypes(int entity, ref Type[] list)
-        //  {
-        //      var entityOffset = GetRawEntityOffset(entity);
-        //      var itemsCount = _entities[entityOffset + RawEntityOffsets.ComponentsCount];
-        //      if (itemsCount == 0) { return 0; }
-        //      if (list == null || list.Length < itemsCount)
-        //      {
-        //          list = new Type[_pools.Length];
-        //      }
-        //      var dataOffset = entityOffset + RawEntityOffsets.Components;
-        //      for (var i = 0; i < itemsCount; i++)
-        //      {
-        //          list[i] = _pools[_entities[dataOffset + i]].GetComponentType();
-        //      }
-        //      return itemsCount;
-        //  }
+        #region NullWorld
+        private sealed class EcsNullWorld : EcsWorld<EcsNullWorld>
+        {
+            public EcsNullWorld() : base(false) { }
+        }
         #endregion
     }
 
@@ -414,31 +379,33 @@ namespace DCFApixels.DragonECS
         internal EcsWorld(bool isIndexable) : base(isIndexable) { }
     }
 
-    #region Utils
+    #region WorldMetaStorage
     public static class WorldMetaStorage
     {
         private static List<Resizer> _resizer = new List<Resizer>();
         private static int _tokenCount = 0;
-        private static int[] _componentCounts = new int[0];
-        private static int[] _subjectsCounts = new int[0];
+
+        private static WorldTypeMeta[] _metas = new WorldTypeMeta[0];
         private static Dictionary<Type, int> _worldIds = new Dictionary<Type, int>();
         private static class WorldIndex<TWorldArchetype>
         {
-            public static int id = GetWorldId(typeof(TWorldArchetype));
+            public static int id = GetWorldID(typeof(TWorldArchetype));
         }
         private static int GetToken()
         {
-            _tokenCount++;
-            Array.Resize(ref _componentCounts, _tokenCount);
-            Array.Resize(ref _subjectsCounts, _tokenCount);
+            WorldTypeMeta meta = new WorldTypeMeta();
+            meta.id = _tokenCount;
+            Array.Resize(ref _metas, ++_tokenCount);
+            _metas[_tokenCount - 1] = meta;
+
             foreach (var item in _resizer)
                 item.Resize(_tokenCount);
             return _tokenCount - 1;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetWorldId(Type archetype)
+        public static int GetWorldID(Type archetype)
         {
-            if(_worldIds.TryGetValue(archetype, out int id) == false)
+            if(!_worldIds.TryGetValue(archetype, out int id))
             {
                 id = GetToken();
                 _worldIds.Add(archetype, id);
@@ -453,6 +420,11 @@ namespace DCFApixels.DragonECS
         public static int GetSubjectId<T>(int worldID) => Subject<T>.Get(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetExecutorId<T>(int worldID) => Executor<T>.Get(worldID);
+
+        public static bool IsComponentTypeDeclared(int worldID, Type type) => _metas[worldID].IsDeclaredType(type);
+        public static Type GetComponentType(int worldID, int componentID) => _metas[worldID].GetComponentType(componentID);
+
+        #region Resizer
         private abstract class Resizer
         {
             public abstract void Resize(int size);
@@ -466,6 +438,7 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref Executor<T>.ids, size);
             }
         }
+        #endregion
         private static class Component<T>
         {
             public static int[] ids;
@@ -481,7 +454,11 @@ namespace DCFApixels.DragonECS
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = _componentCounts[token]++;
+                {
+                    var meta = _metas[token];
+                    id = meta.componentCount++;
+                    meta.AddType(id, typeof(T));
+                }
                 return id;
             }
         }
@@ -500,7 +477,7 @@ namespace DCFApixels.DragonECS
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = _subjectsCounts[token]++;
+                    id = _metas[token].subjectsCount++;
                 return id;
             }
         }
@@ -519,8 +496,33 @@ namespace DCFApixels.DragonECS
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = _subjectsCounts[token]++;
+                    id = _metas[token].executorsCount++;
                 return id;
+            }
+        }
+
+        private class WorldTypeMeta
+        {
+            public int id;
+            public int componentCount;
+            public int subjectsCount;
+            public int executorsCount;
+            private Type[] types;
+            private HashSet<Type> declaredComponentTypes;
+            public void AddType(int id, Type type)
+            {
+                if(types.Length <= id)
+                    Array.Resize(ref types, id + 10);
+                types[id] = type;
+
+                declaredComponentTypes.Add(type);
+            }
+            public Type GetComponentType(int componentID) => types[componentID];
+            public bool IsDeclaredType(Type type) => declaredComponentTypes.Contains(type);
+            public WorldTypeMeta()
+            {
+                types = new Type[10];
+                declaredComponentTypes = new HashSet<Type>();
             }
         }
     }
@@ -562,6 +564,14 @@ namespace DCFApixels.DragonECS
         {
             for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnDelEntity(entityID);
         }
+    }
+    #endregion
+
+    #region Extensions
+    public static class IntExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static entlong ToEntityLong(this int self, EcsWorld world) => world.GetEntityLong(self);
     }
     #endregion
 }

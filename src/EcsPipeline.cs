@@ -20,7 +20,6 @@ namespace DCFApixels.DragonECS
 
         private bool _isInit;
         private bool _isDestoryed;
-        private bool _isEmptyDummy;
 
         #region Properties
         public ReadOnlyCollection<IEcsSystem> AllSystems => _allSystemsSealed;
@@ -39,7 +38,6 @@ namespace DCFApixels.DragonECS
             _allRunnersSealed = new ReadOnlyDictionary<Type, IEcsRunner>(_runners);
 
             _isInit = false;
-            _isEmptyDummy = false;
             _isDestoryed = false;
         }
         #endregion
@@ -64,9 +62,6 @@ namespace DCFApixels.DragonECS
         #region LifeCycle
         public void Init()
         {
-            if (_isEmptyDummy)
-                return;
-
             if (_isInit == true)
             {
                 EcsDebug.Print("[Warning]", $"This {nameof(EcsPipeline)} has already been initialized");
@@ -98,9 +93,6 @@ namespace DCFApixels.DragonECS
         }
         public void Destroy()
         {
-            if (_isEmptyDummy)
-                return;
-
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             CheckBeforeInitForMethod(nameof(Run));
 #endif
@@ -135,10 +127,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Builder
-        public static Builder New()
-        {
-            return new Builder();
-        }
+        public static Builder New() => new Builder();
         public class Builder
         {
             private const int KEYS_CAPACITY = 4;
@@ -149,16 +138,12 @@ namespace DCFApixels.DragonECS
             public Builder()
             {
                 _basicLayer = EcsConsts.BASIC_LAYER;
-
                 Layers = new LayerList(this, _basicLayer);
-
                 Layers.Insert(EcsConsts.BASIC_LAYER, EcsConsts.PRE_BEGIN_LAYER, EcsConsts.BEGIN_LAYER);
                 Layers.InsertAfter(EcsConsts.BASIC_LAYER, EcsConsts.END_LAYER, EcsConsts.POST_END_LAYER);
-
                 _uniqueTypes = new HashSet<Type>();
                 _systems = new Dictionary<string, List<IEcsSystem>>(KEYS_CAPACITY);
             }
-
             public Builder Add(IEcsSystem system, string layerName = null)
             {
                 AddInternal(system, layerName, false);
@@ -182,7 +167,7 @@ namespace DCFApixels.DragonECS
                 List<IEcsSystem> list;
                 if (!_systems.TryGetValue(layerName, out list))
                 {
-                    list = new List<IEcsSystem> { new SystemsBlockMarkerSystem(layerName.ToString()) };
+                    list = new List<IEcsSystem> { new SystemsLayerMarkerSystem(layerName.ToString()) };
                     _systems.Add(layerName, list);
                 }
                 if ((_uniqueTypes.Add(system.GetType()) == false && isUnique))
@@ -192,20 +177,16 @@ namespace DCFApixels.DragonECS
                 if (system is IEcsModule module)//если система одновременно явялется и системой и модулем то за один Add будет вызван Add и AddModule
                     AddModule(module);
             }
-
             public Builder AddModule(IEcsModule module)
             {
                 module.ImportSystems(this);
                 return this;
             }
-
             public EcsPipeline Build()
             {
                 Add(new DeleteEmptyEntitesSystem(), EcsConsts.POST_END_LAYER);
-
                 List<IEcsSystem> result = new List<IEcsSystem>(32);
                 List<IEcsSystem> basicBlockList = _systems[_basicLayer];
-
                 foreach (var item in _systems)
                 {
                     if (!Layers.Has(item.Key))
@@ -216,17 +197,14 @@ namespace DCFApixels.DragonECS
                     if(_systems.TryGetValue(item, out var list))
                         result.AddRange(list);
                 }
-
                 return new EcsPipeline(result.ToArray());
             }
-
             public class LayerList : IEnumerable<string>
             {
                 private const string ADD_LAYER = nameof(ADD_LAYER); // автоматический слой нужный только для метода Add
 
                 private Builder _source;
                 private List<string> _layers;
-
                 private string _basicLayerName;
 
                 public LayerList(Builder source, string basicLayerName)
