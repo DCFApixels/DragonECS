@@ -566,4 +566,12 @@ namespace DCFApixels.DragonECS
         }
     }
     #endregion
+
+    #region Extensions
+    public static class IntExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static entlong ToEntityLong(this int self, EcsWorld world) => world.GetEntityLong(self);
+    }
+    #endregion
 }
