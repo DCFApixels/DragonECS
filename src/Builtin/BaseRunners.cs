@@ -2,6 +2,7 @@
 
 namespace DCFApixels.DragonECS
 {
+    #region Interfaces
     public interface IEcsPreInitProcess : IEcsSystem
     {
         void PreInit(EcsPipeline pipeline);
@@ -18,7 +19,8 @@ namespace DCFApixels.DragonECS
     {
         void Destroy(EcsPipeline pipeline);
     }
-    public interface IEcsBaseSystem : IEcsInitProcess, IEcsRunProcess, IEcsDestroyProcess { }
+
+    #endregion
 
     namespace Internal
     {
@@ -40,7 +42,6 @@ namespace DCFApixels.DragonECS
             foreach (var item in targets) item.PreInit(pipeline);
 #endif
             }
-
 #if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
@@ -70,7 +71,6 @@ namespace DCFApixels.DragonECS
             foreach (var item in targets) item.Init(pipeline);
 #endif
             }
-
 #if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
@@ -101,7 +101,6 @@ namespace DCFApixels.DragonECS
             foreach (var item in targets) item.Run(pipeline);
 #endif
             }
-
 #if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
@@ -131,7 +130,6 @@ namespace DCFApixels.DragonECS
             foreach (var item in targets) item.Destroy(pipeline);
 #endif
             }
-
 #if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {

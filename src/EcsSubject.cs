@@ -148,7 +148,10 @@ namespace DCFApixels.DragonECS
             _inc = inc;
             _exc = exc;
         }
+
         public override string ToString() => CreateLogString(_worldType, _inc, _exc);
+
+        #region Debug utils
         private static string CreateLogString(Type worldType, int[] inc, int[] exc)
         {
 #if DEBUG
@@ -159,7 +162,6 @@ namespace DCFApixels.DragonECS
             return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
 #endif
         }
-
         internal class DebuggerProxy
         {
             public readonly Type worldType;
@@ -179,6 +181,7 @@ namespace DCFApixels.DragonECS
             }
             public override string ToString() => CreateLogString(worldType, inc, exc);
         }
+        #endregion
     }
     #endregion
 
@@ -186,25 +189,25 @@ namespace DCFApixels.DragonECS
     public ref struct EcsSubjectIterator<TSubject> where TSubject : EcsSubject
     {
         public readonly TSubject s;
-        private EcsReadonlyGroup sourceGroup;
-        private Enumerator enumerator;
+        private EcsReadonlyGroup _sourceGroup;
+        private Enumerator _enumerator;
 
         public EcsSubjectIterator(TSubject s, EcsReadonlyGroup sourceGroup)
         {
             this.s = s;
-            this.sourceGroup = sourceGroup;
-            enumerator = default;
+            this._sourceGroup = sourceGroup;
+            _enumerator = default;
         }
 
         public int Entity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => enumerator.Current;
+            get => _enumerator.Current;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Begin() => enumerator = GetEnumerator();
+        public void Begin() => _enumerator = GetEnumerator();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Next() => enumerator.MoveNext();
+        public bool Next() => _enumerator.MoveNext();
         public void CopyTo(EcsGroup group)
         {
             group.Clear();
@@ -213,7 +216,7 @@ namespace DCFApixels.DragonECS
                 group.AddInternal(enumerator.Current);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(sourceGroup, s);
+        public Enumerator GetEnumerator() => new Enumerator(_sourceGroup, s);
 
         public override string ToString()
         {

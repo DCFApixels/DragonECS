@@ -1,7 +1,9 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.RunnersCore;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -9,9 +11,6 @@ using static DCFApixels.DragonECS.EcsDebugUtility;
 
 namespace DCFApixels.DragonECS
 {
-    using RunnersCore;
-    using System.ComponentModel;
-
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     sealed class EcsRunnerFilterAttribute : Attribute
     {

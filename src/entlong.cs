@@ -1,15 +1,18 @@
 ﻿#pragma warning disable IDE1006
 using System;
-using System.ComponentModel;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using static DCFApixels.DragonECS.entlong.ThrowHalper;
 
 namespace DCFApixels.DragonECS
 {
-    using static entlong.ThrowHalper;
     // [        id 32        |  gen 16  | world 16 ]
     /// <summary>Strong identifier/Permanent entity identifier</summary>
     [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly struct entlong : IEquatable<long>, IEquatable<entlong>
     {
         public static readonly entlong NULL = default;
@@ -34,7 +37,6 @@ namespace DCFApixels.DragonECS
             get => this == NULL;
         }
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public int ID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -46,7 +48,6 @@ namespace DCFApixels.DragonECS
                 return id;
             }
         }
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public short Gen
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -69,7 +70,6 @@ namespace DCFApixels.DragonECS
                 return EcsWorld.Worlds[world];
             }
         }
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -156,6 +156,34 @@ namespace DCFApixels.DragonECS
                 else
                     throw new EcsFrameworkException($"The {entity} is not alive.");
             }
+        }
+        #endregion
+
+        #region DebuggerProxy
+        internal class DebuggerProxy
+        {
+            private List<object> _componentsList;
+            private entlong _value;
+            public long full => _value.full;
+            public int id => _value.id;
+            public int gen => _value.gen;
+            public int world => _value.world;
+            public EntState State => _value.IsNull ? EntState.Null : _value.IsAlive ? EntState.Alive : EntState.Dead;
+            public EcsWorld EcsWorld => _value.World;
+            public IEnumerable<object> components
+            {
+                get
+                {
+                    _value.World.GetComponents(_value.ID, _componentsList);
+                    return _componentsList;
+                }
+            }
+            public DebuggerProxy(entlong value)
+            {
+                _value = value;
+                _componentsList = new List<object>();
+            }
+            public enum EntState { Null, Dead, Alive, }
         }
         #endregion
     }
