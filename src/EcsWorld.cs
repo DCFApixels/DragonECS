@@ -26,9 +26,6 @@ namespace DCFApixels.DragonECS
         private short[] _componentCounts;
         private EcsGroup _allEntites;
 
-        //буфер удаления откладывает освобождение андишников сущностей.
-        //Нужен для того чтобы запускать некоторые процесыы связанные с удалением сущности не по одному при каждом удалении, а пачкой
-        //В теории такой подход частично улучшает ситуацию с переполнением поколений
         private int[] _delEntBuffer;
         private int _delEntBufferCount;
 
@@ -138,7 +135,6 @@ namespace DCFApixels.DragonECS
                 _pools[uniqueID] = pool;
                 pool.OnInit(this, uniqueID);
                 _poolsCount++;
-                //EcsDebug.Print(pool.GetType().FullName);
             }
 
             return (TPool)_pools[uniqueID];
@@ -158,39 +154,39 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Queries
-        public TExecutor GetExecutor<TExecutor>(Func<EcsWorld, TExecutor> builder) where TExecutor: EcsQueryExecutor
+        public TExecutor GetExecutor<TExecutor>() where TExecutor : EcsQueryExecutor, new()
         {
             int id = WorldMetaStorage.GetExecutorId<TExecutor>(_worldTypeID);
             if (id >= _executors.Length)
                 Array.Resize(ref _executors, _executors.Length << 1);
             if (_executors[id] == null)
-                _executors[id] = builder(this);
+            {
+                var executor = new TExecutor();
+                executor.Initialize(this);
+                _executors[id] = executor;
+            }
             return (TExecutor)_executors[id];
         }
 
-        private EcsWhereExecutor<TSubject> EcsWhereExecutorBuilder<TSubject>(EcsWorld world) where TSubject : EcsSubject
-        {
-            return new EcsWhereExecutor<TSubject>(world.GetSubject<TSubject>());
-        }
         public EcsWhereResult<TSubject> WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject) where TSubject : EcsSubject
         {
-            var executor = GetExecutor(EcsWhereExecutorBuilder<TSubject>);
+            var executor = GetExecutor<EcsWhereExecutor<TSubject>>();
             subject = executor.Subject;
             return executor.ExecuteFor(sourceGroup);
         }
         public EcsWhereResult<TSubject> WhereFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
         {
-            return GetExecutor(EcsWhereExecutorBuilder<TSubject>).ExecuteFor(sourceGroup);
+            return GetExecutor<EcsWhereExecutor<TSubject>>().ExecuteFor(sourceGroup);
         }
         public EcsWhereResult<TSubject> Where<TSubject>(out TSubject subject) where TSubject : EcsSubject
         {
-            var executor = GetExecutor(EcsWhereExecutorBuilder<TSubject>);
+            var executor = GetExecutor<EcsWhereExecutor<TSubject>>();
             subject = executor.Subject;
             return executor.Execute();
         }
         public EcsWhereResult<TSubject> Where<TSubject>() where TSubject : EcsSubject
         {
-            return GetExecutor(EcsWhereExecutorBuilder<TSubject>).Execute();
+            return GetExecutor<EcsWhereExecutor<TSubject>>().Execute();
         }
         #endregion
 
@@ -369,40 +365,6 @@ namespace DCFApixels.DragonECS
                     break;
             }
         }
-
-        //  public int GetComponents(int entity, ref object[] list)
-        //  {
-        //      var entityOffset = GetRawEntityOffset(entity);
-        //      var itemsCount = _entities[entityOffset + RawEntityOffsets.ComponentsCount];
-        //      if (itemsCount == 0) { return 0; }
-        //      if (list == null || list.Length < itemsCount)
-        //      {
-        //          list = new object[_pools.Length];
-        //      }
-        //      var dataOffset = entityOffset + RawEntityOffsets.Components;
-        //      for (var i = 0; i < itemsCount; i++)
-        //      {
-        //          list[i] = _pools[_entities[dataOffset + i]].GetRaw(entity);
-        //      }
-        //      return itemsCount;
-        //  }
-        
-        //  public int GetComponentTypes(int entity, ref Type[] list)
-        //  {
-        //      var entityOffset = GetRawEntityOffset(entity);
-        //      var itemsCount = _entities[entityOffset + RawEntityOffsets.ComponentsCount];
-        //      if (itemsCount == 0) { return 0; }
-        //      if (list == null || list.Length < itemsCount)
-        //      {
-        //          list = new Type[_pools.Length];
-        //      }
-        //      var dataOffset = entityOffset + RawEntityOffsets.Components;
-        //      for (var i = 0; i < itemsCount; i++)
-        //      {
-        //          list[i] = _pools[_entities[dataOffset + i]].GetComponentType();
-        //      }
-        //      return itemsCount;
-        //  }
         #endregion
     }
 

@@ -1,26 +1,28 @@
-﻿using Unity.Profiling;
-
-namespace DCFApixels.DragonECS
+﻿namespace DCFApixels.DragonECS
 {
     public sealed class EcsWhereExecutor<TSubject> : EcsQueryExecutor where TSubject : EcsSubject
     {
-        private readonly TSubject _subject;
-        private readonly EcsGroup _filteredGroup;
+        private TSubject _subject;
+        private EcsGroup _filteredGroup;
 
         private long _executeVersion;
 
-        private ProfilerMarker _executeWhere = new ProfilerMarker("JoinAttachQuery.Where");
+        private EcsProfilerMarker _executeWhere = new EcsProfilerMarker("Where");
 
         #region Properties
         public TSubject Subject => _subject;
         internal long ExecuteVersion => _executeVersion;
         #endregion
 
-        #region Constructors
-        public EcsWhereExecutor(TSubject subject)
+        #region OnInitialize/OnDestroy
+        protected sealed override void OnInitialize()
         {
-            _subject = subject;
-            _filteredGroup = EcsGroup.New(subject.World);
+            _subject = World.GetSubject<TSubject>();
+            _filteredGroup = EcsGroup.New(World);
+        }
+        protected sealed override void OnDestroy()
+        {
+            _filteredGroup.Release();
         }
         #endregion
 
@@ -33,13 +35,29 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
 #endif
-                _subject.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
+                //_subject.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
+
+                var pools = _subject.World._pools;
+                var mask = _subject.Mask;
+                _filteredGroup.Clear();
+                foreach (var e in sourceGroup)
+                {
+                    for (int i = 0, iMax = mask._inc.Length; i < iMax; i++)
+                    {
+                        if (!pools[mask._inc[i]].Has(e))
+                            goto next;
+                    }
+                    for (int i = 0, iMax = mask._exc.Length; i < iMax; i++)
+                    {
+                        if (pools[mask._exc[i]].Has(e))
+                            goto next;
+                    }
+                    _filteredGroup.AddInternal(e);
+                    next: continue;
+                }
+
                 return new EcsWhereResult<TSubject>(this, _filteredGroup.Readonly);
             }
-        }
-        protected sealed override void OnDestroy()
-        {
-            _filteredGroup.Release();
         }
         #endregion
     }

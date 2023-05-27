@@ -4,9 +4,6 @@ using System.Linq;
 
 namespace DCFApixels.DragonECS
 {
-    //TODO развить идею инжектов
-    //добавить контейнер, который автоматически создается, собирает в себя все пре-инжекты и авто-инжектится во все системы.
-    //но это спорная идея
     public interface IEcsPreInject : IEcsSystem
     {
         void PreInject(object obj);

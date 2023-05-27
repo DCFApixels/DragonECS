@@ -219,12 +219,11 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Sort/Clear
-        //public void Sort() { } //TODO прошлай реализация сортировки не удачная, так как в dense могут храниться занчения больше чем dense.Length
+        #region Clear
         public void Clear()
         {
             _count = 0;
-            //массив _dense нет смысла очищать, испольщуется только область от 1 до _count
+            //массив _dense нет смысла очищать
             for (int i = 0; i < _sparse.Length; i++)
                 _sparse[i] = 0;
         }
