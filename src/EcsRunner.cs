@@ -3,7 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -28,7 +27,6 @@ namespace DCFApixels.DragonECS
 
     namespace RunnersCore
     {
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public interface IEcsRunner
         {
             EcsPipeline Source { get; }
@@ -121,8 +119,10 @@ namespace DCFApixels.DragonECS
                 EcsRunner<TInterface>.Register(runnerType);
             }
         }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public abstract class EcsRunner<TInterface> : IEcsSystem, IEcsRunner
+#if UNITY_2020_3_OR_NEWER
+        [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
+#endif
+        public abstract class EcsRunner<TInterface> : IEcsSystem, IEcsRunner 
             where TInterface : IEcsSystem
         {
             #region Register

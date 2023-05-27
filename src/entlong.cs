@@ -1,6 +1,5 @@
 ﻿#pragma warning disable IDE1006
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -36,7 +35,6 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => this == NULL;
         }
-
         public int ID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -35,27 +35,7 @@
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
 #endif
-                //_subject.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
-
-                var pools = _subject.World._pools;
-                var mask = _subject.Mask;
-                _filteredGroup.Clear();
-                foreach (var e in sourceGroup)
-                {
-                    for (int i = 0, iMax = mask._inc.Length; i < iMax; i++)
-                    {
-                        if (!pools[mask._inc[i]].Has(e))
-                            goto next;
-                    }
-                    for (int i = 0, iMax = mask._exc.Length; i < iMax; i++)
-                    {
-                        if (pools[mask._exc[i]].Has(e))
-                            goto next;
-                    }
-                    _filteredGroup.AddInternal(e);
-                    next: continue;
-                }
-
+                _subject.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
                 return new EcsWhereResult<TSubject>(this, _filteredGroup.Readonly);
             }
         }
@@ -70,7 +50,6 @@
         public readonly EcsReadonlyGroup group;
         private readonly long _version;
         public bool IsRelevant => _version == _executer.ExecuteVersion;
-
         public EcsWhereResult(EcsWhereExecutor<TSubject> executer, EcsReadonlyGroup group)
         {
             _executer = executer;
@@ -85,7 +64,6 @@
 #endif
             return group.GetEnumerator();
         }
-
         public override string ToString()
         {
             return group.ToString();

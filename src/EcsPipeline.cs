@@ -182,7 +182,7 @@ namespace DCFApixels.DragonECS
                 List<IEcsSystem> list;
                 if (!_systems.TryGetValue(layerName, out list))
                 {
-                    list = new List<IEcsSystem> { new SystemsBlockMarkerSystem(layerName.ToString()) };
+                    list = new List<IEcsSystem> { new SystemsLayerMarkerSystem(layerName.ToString()) };
                     _systems.Add(layerName, list);
                 }
                 if ((_uniqueTypes.Add(system.GetType()) == false && isUnique))

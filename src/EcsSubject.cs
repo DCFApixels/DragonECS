@@ -67,6 +67,7 @@ namespace DCFApixels.DragonECS
                 return (TSubject)newSubject;
             }
 
+            #region Include/Exclude/Optional
             public sealed override TPool Include<TComponent, TPool>()
             {
                 IncludeImplicit<TComponent>();
@@ -81,7 +82,6 @@ namespace DCFApixels.DragonECS
             {
                 return _world.GetPool<TComponent, TPool>();
             }
-
             public void IncludeImplicit<TComponent>()
             {
                 int id = _world.GetComponentID<TComponent>();
@@ -98,6 +98,7 @@ namespace DCFApixels.DragonECS
 #endif
                 _exc.Add(_world.GetComponentID<TComponent>());
             }
+            #endregion
 
             private void End(out EcsMask mask)
             {
@@ -108,6 +109,20 @@ namespace DCFApixels.DragonECS
                 _inc = null;
                 _exc = null;
             }
+
+            #region SupportReflectionHack
+#if UNITY_2020_3_OR_NEWER
+            [UnityEngine.Scripting.Preserve]
+#endif
+            private void SupportReflectionHack<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new()
+            {
+                Include<TComponent, TPool>();
+                Exclude<TComponent, TPool>();
+                Optional<TComponent, TPool>();
+                IncludeImplicit<TComponent>();
+                ExcludeImplicit<TComponent>();
+            }
+            #endregion
         }
         #endregion
     }
@@ -195,7 +210,7 @@ namespace DCFApixels.DragonECS
         public EcsSubjectIterator(TSubject s, EcsReadonlyGroup sourceGroup)
         {
             this.s = s;
-            this._sourceGroup = sourceGroup;
+            _sourceGroup = sourceGroup;
             _enumerator = default;
         }
 

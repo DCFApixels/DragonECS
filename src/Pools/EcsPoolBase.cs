@@ -31,15 +31,6 @@ namespace DCFApixels.DragonECS
         void RemoveListener(IEcsPoolEventListener listener);
         #endregion
     }
-    public interface IEcsPoolEventListener
-    {
-        /// <summary>Called after adding an entity to the pool, but before changing values.</summary>
-        void OnAdd(int entityID);
-        /// <summary>Is called when EcsPool.Write or EcsPool.Add is called, but before changing values.</summary>
-        void OnWrite(int entityID);
-        /// <summary>Called after deleting an entity from the pool</summary>
-        void OnDel(int entityID);
-    }
     public interface IEcsPool<T>
     {
         ref T Add(int entityID);
@@ -47,7 +38,6 @@ namespace DCFApixels.DragonECS
         ref T Write(int entityID);
     }
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
-    /// <typeparam name="T">Component type</typeparam>
     public interface IEcsPoolImplementation : IEcsPool
     {
         void OnInit(EcsWorld world, int componentID);
@@ -98,7 +88,7 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    #region Dummy
+    #region Dummy EcsNullPool
     namespace Internal
     {
         public struct NullComponent { }
@@ -216,7 +206,16 @@ namespace DCFApixels.DragonECS
     }
     #endregion
 
-    #region Extensions
+    #region Callbacks Interface
+    public interface IEcsPoolEventListener
+    {
+        /// <summary>Called after adding an entity to the pool, but before changing values.</summary>
+        void OnAdd(int entityID);
+        /// <summary>Is called when EcsPool.Write or EcsPool.Add is called, but before changing values.</summary>
+        void OnWrite(int entityID);
+        /// <summary>Called after deleting an entity from the pool</summary>
+        void OnDel(int entityID);
+    }
     public static class PoolEventListExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
