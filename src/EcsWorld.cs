@@ -72,7 +72,7 @@ namespace DCFApixels.DragonECS
                 Worlds[uniqueID] = this;
             }
 
-            _worldTypeID = WorldMetaStorage.GetWorldId(Archetype);
+            _worldTypeID = WorldMetaStorage.GetWorldID(Archetype);
 
             _entityDispenser = new IntDispenser(0);
             _nullPool = EcsNullPool.instance;
@@ -376,31 +376,33 @@ namespace DCFApixels.DragonECS
         internal EcsWorld(bool isIndexable) : base(isIndexable) { }
     }
 
-    #region Utils
+    #region WorldMetaStorage
     public static class WorldMetaStorage
     {
         private static List<Resizer> _resizer = new List<Resizer>();
         private static int _tokenCount = 0;
-        private static int[] _componentCounts = new int[0];
-        private static int[] _subjectsCounts = new int[0];
+
+        private static WorldMeta[] _metas = new WorldMeta[0];
         private static Dictionary<Type, int> _worldIds = new Dictionary<Type, int>();
         private static class WorldIndex<TWorldArchetype>
         {
-            public static int id = GetWorldId(typeof(TWorldArchetype));
+            public static int id = GetWorldID(typeof(TWorldArchetype));
         }
         private static int GetToken()
         {
-            _tokenCount++;
-            Array.Resize(ref _componentCounts, _tokenCount);
-            Array.Resize(ref _subjectsCounts, _tokenCount);
+            WorldMeta meta = new WorldMeta();
+            meta.id = _tokenCount;
+            Array.Resize(ref _metas, ++_tokenCount);
+            _metas[_tokenCount - 1] = meta;
+
             foreach (var item in _resizer)
                 item.Resize(_tokenCount);
             return _tokenCount - 1;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetWorldId(Type archetype)
+        public static int GetWorldID(Type archetype)
         {
-            if(_worldIds.TryGetValue(archetype, out int id) == false)
+            if(!_worldIds.TryGetValue(archetype, out int id))
             {
                 id = GetToken();
                 _worldIds.Add(archetype, id);
@@ -415,6 +417,11 @@ namespace DCFApixels.DragonECS
         public static int GetSubjectId<T>(int worldID) => Subject<T>.Get(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetExecutorId<T>(int worldID) => Executor<T>.Get(worldID);
+
+        public static bool IsComponentTypeDeclared(int worldID, Type type) => _metas[worldID].IsDeclaredType(type);
+        public static Type GetComponentType(int worldID, int componentID) => _metas[worldID].GetComponentType(componentID);
+
+        #region Resizer
         private abstract class Resizer
         {
             public abstract void Resize(int size);
@@ -428,6 +435,7 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref Executor<T>.ids, size);
             }
         }
+        #endregion
         private static class Component<T>
         {
             public static int[] ids;
@@ -443,7 +451,11 @@ namespace DCFApixels.DragonECS
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = _componentCounts[token]++;
+                {
+                    var meta = _metas[token];
+                    id = meta.componentCount++;
+                    meta.AddType(id, typeof(T));
+                }
                 return id;
             }
         }
@@ -462,7 +474,7 @@ namespace DCFApixels.DragonECS
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = _subjectsCounts[token]++;
+                    id = _metas[token].subjectsCount++;
                 return id;
             }
         }
@@ -481,8 +493,38 @@ namespace DCFApixels.DragonECS
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = _subjectsCounts[token]++;
+                    id = _metas[token].executorsCount++;
                 return id;
+            }
+        }
+
+        private class WorldMeta
+        {
+            public int id;
+
+            public int componentCount;
+            public int subjectsCount;
+            public int executorsCount;
+
+            private Type[] types;
+            private HashSet<Type> declaredComponentTypes;
+
+            public void AddType(int id, Type type)
+            {
+                if(types.Length <= id)
+                    Array.Resize(ref types, id + 10);
+                types[id] = type;
+
+                declaredComponentTypes.Add(type);
+            }
+
+            public Type GetComponentType(int componentID) => types[componentID];
+            public bool IsDeclaredType(Type type) => declaredComponentTypes.Contains(type);
+
+            public WorldMeta()
+            {
+                types = new Type[10];
+                declaredComponentTypes = new HashSet<Type>();
             }
         }
     }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -134,6 +136,7 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region Mask
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsMask
     {
         internal readonly Type _worldType;
@@ -145,9 +148,36 @@ namespace DCFApixels.DragonECS
             _inc = inc;
             _exc = exc;
         }
-        public override string ToString()
+        public override string ToString() => CreateLogString(_worldType, _inc, _exc);
+        private static string CreateLogString(Type worldType, int[] inc, int[] exc)
         {
-            return $"Inc({string.Join(", ", _inc)}) Exc({string.Join(", ", _exc)})";
+#if DEBUG
+            int worldID = WorldMetaStorage.GetWorldID(worldType);
+            string converter(int o) => EcsDebugUtility.GetGenericTypeName(WorldMetaStorage.GetComponentType(worldID, o), 1);
+            return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
+#else
+            return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
+#endif
+        }
+
+        internal class DebuggerProxy
+        {
+            public readonly Type worldType;
+            public readonly int[] inc;
+            public readonly int[] exc;
+            public readonly Type[] incTypes;
+            public readonly Type[] excTypes;
+            public DebuggerProxy(EcsMask mask)
+            {
+                worldType = mask._worldType;
+                int worldID = WorldMetaStorage.GetWorldID(worldType);
+                inc = mask._inc;
+                exc = mask._exc;
+                Type converter(int o) => WorldMetaStorage.GetComponentType(worldID, o);
+                incTypes = inc.Select(converter).ToArray();
+                excTypes = exc.Select(converter).ToArray();
+            }
+            public override string ToString() => CreateLogString(worldType, inc, exc);
         }
     }
     #endregion
