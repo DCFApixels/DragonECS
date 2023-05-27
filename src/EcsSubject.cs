@@ -127,9 +127,9 @@ namespace DCFApixels.DragonECS
     #region BuilderBase
     public abstract class EcsSubjectBuilderBase
     {
-        public abstract TPool Include<TComponent, TPool>() where TComponent : struct where TPool : IEcsPoolImplementation<TComponent>, new();
-        public abstract TPool Exclude<TComponent, TPool>() where TComponent : struct where TPool : IEcsPoolImplementation<TComponent>, new();
-        public abstract TPool Optional<TComponent, TPool>() where TComponent : struct where TPool : IEcsPoolImplementation<TComponent>, new();
+        public abstract TPool Include<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new();
+        public abstract TPool Exclude<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new();
+        public abstract TPool Optional<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new();
     }
     #endregion
 

@@ -121,7 +121,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetPool
-        public TPool GetPool<TComponent, TPool>() where TComponent : struct where TPool : IEcsPoolImplementation<TComponent>, new()
+        public TPool GetPool<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new()
         {
             int uniqueID = WorldMetaStorage.GetComponentId<TComponent>(_worldTypeID);
 
