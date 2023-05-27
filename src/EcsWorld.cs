@@ -322,15 +322,16 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Groups
+        #region Groups Pool
         internal void RegisterGroup(EcsGroup group)
         {
             _groups.Add(new WeakReference<EcsGroup>(group));
         }
         internal EcsGroup GetGroupFromPool()
         {
-            if (_groupsPool.Count <= 0) return new EcsGroup(this);
-            return _groupsPool.Pop();
+            EcsGroup result = _groupsPool.Count <= 0 ? new EcsGroup(this) : _groupsPool.Pop();
+            result._isReleased = false;
+            return result;
         }
         internal void ReleaseGroup(EcsGroup group)
         {
@@ -338,6 +339,7 @@ namespace DCFApixels.DragonECS
             if (group.World != this)
                 throw new ArgumentException("groupFilter.WorldIndex != this");
 #endif
+            group._isReleased = true;
             group.Clear();
             _groupsPool.Push(group);
         }

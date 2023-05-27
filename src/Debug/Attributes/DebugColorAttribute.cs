@@ -10,45 +10,31 @@ namespace DCFApixels.DragonECS
         public byte r => color.r;
         public byte g => color.g;
         public byte b => color.b;
-
+        /// <summary>normalized R channel </summary>
         public float rn => color.r / 255f;
+        /// <summary>normalized G channel </summary>
         public float gn => color.g / 255f;
+        /// <summary>normalized B channel </summary>
         public float bn => color.b / 255f;
-
-        public DebugColorAttribute(byte r, byte g, byte b)
-        {
-            color = new ColorRecord(r, g, b);
-        }
-        public DebugColorAttribute(DebugColor color)
-        {
-            this.color = new ColorRecord((int)color);
-        }
+        public DebugColorAttribute(byte r, byte g, byte b) => color = new ColorRecord(r, g, b);
+        public DebugColorAttribute(DebugColor color) => this.color = new ColorRecord((int)color);
 
         [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 4)]
         private readonly struct ColorRecord // Union
         {
-            [FieldOffset(0)]
-            public readonly int full;
-            [FieldOffset(3)]
-            public readonly byte r;
-            [FieldOffset(2)]
-            public readonly byte g;
-            [FieldOffset(1)]
-            public readonly byte b;
-
+            [FieldOffset(0)] public readonly int full;
+            [FieldOffset(3)] public readonly byte r;
+            [FieldOffset(2)] public readonly byte g;
+            [FieldOffset(1)] public readonly byte b;
             public ColorRecord(byte r, byte g, byte b) : this()
             {
                 this.r = r;
                 this.g = g;
                 this.b = b;
             }
-            public ColorRecord(int full) : this()
-            {
-                this.full = full;
-            }
+            public ColorRecord(int full) : this() => this.full = full;
         }
     }
-
     public enum DebugColor
     {
         /// <summary> Red. RGB is (255, 0, 0)</summary>

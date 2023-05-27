@@ -6,9 +6,6 @@ namespace DCFApixels.DragonECS
     public sealed class DebugNameAttribute : Attribute
     {
         public readonly string name;
-        public DebugNameAttribute(string name)
-        {
-            this.name = name;
-        }
+        public DebugNameAttribute(string name) => this.name = name;
     }
 }

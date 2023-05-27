@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
@@ -8,6 +9,7 @@ using static DCFApixels.DragonECS.EcsGroup.ThrowHalper;
 namespace DCFApixels.DragonECS
 {
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly ref struct EcsReadonlyGroup
     {
         private readonly EcsGroup _source;
@@ -65,12 +67,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Object
-        public override string ToString()
-        {
-            if (_source != null)
-                return _source.ToString();
-            return "NULL";
-        }
+        public override string ToString() => _source != null ? _source.ToString() : "NULL";
         public override int GetHashCode() => _source.GetHashCode();
         public override bool Equals(object obj) => obj is EcsGroup group && group == this;
         public bool Equals(EcsReadonlyGroup other) => _source == other._source;
@@ -88,15 +85,23 @@ namespace DCFApixels.DragonECS
         public static bool operator !=(EcsReadonlyGroup a, EcsReadonlyGroup b) => !a.Equals(b);
         public static bool operator !=(EcsReadonlyGroup a, EcsGroup b) => !a.Equals(b);
         #endregion
+
+        #region DebuggerProxy
+        internal class DebuggerProxy : EcsGroup.DebuggerProxy
+        {
+            public DebuggerProxy(EcsReadonlyGroup group) : base(group._source) { }
+        }
+        #endregion
     }
 
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public unsafe class EcsGroup : IDisposable, IEquatable<EcsGroup>
     {
         private EcsWorld _source;
         private int[] _dense;
         private int[] _sparse;
         private int _count;
-        private bool _isReleased = true;
+        internal bool _isReleased = true;
 
         #region Properties
         public EcsWorld World => _source;
@@ -391,10 +396,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Object
-        public override string ToString()
-        {
-            return string.Join(", ", _dense.AsSpan(1, _count).ToArray());
-        }
+        public override string ToString() => string.Join(", ", _dense.AsSpan(1, _count).ToArray());
         public override bool Equals(object obj) => obj is EcsGroup group && Equals(group);
         public bool Equals(EcsReadonlyGroup other) => Equals(other.GetGroupInternal());
         public bool Equals(EcsGroup other)
@@ -448,13 +450,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IDisposable/Release
-        public void Dispose()
-        {
-            Release();
-        }
+        public void Dispose() => Release();
         public void Release()
         {
-            _isReleased = true;
             _source.ReleaseGroup(this);
         }
         #endregion
@@ -472,21 +470,30 @@ namespace DCFApixels.DragonECS
         }
 #endif
         #endregion
-    }
 
-    #region Extensions
-    public static class EcsGroupExtensions
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Normalize<T>(this EcsGroup self, ref T[] array)
+        #region DebuggerProxy
+        internal class DebuggerProxy
         {
-            if (array.Length < self.CapacityDense) Array.Resize(ref array, self.CapacityDense);
+            private EcsGroup _group;
+            public EcsWorld World => _group.World;
+            public bool IsReleased => _group.IsReleased;
+            public entlong[] Entities
+            {
+                get
+                {
+                    entlong[] result = new entlong[_group.Count];
+                    int i = 0;
+                    foreach (var e in _group)
+                        result[i++] = _group.World.GetEntityLong(e);
+                    return result;
+                }
+            }
+            public int Count => _group.Count;
+            public int CapacityDense => _group.CapacityDense;
+            public int CapacitySparce => _group.CapacitySparce;
+
+            public DebuggerProxy(EcsGroup group) => _group = group;
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Normalize<T>(this EcsReadonlyGroup self, ref T[] array)
-        {
-            if (array.Length < self.CapacityDense) Array.Resize(ref array, self.CapacityDense);
-        }
+        #endregion
     }
-    #endregion
 }
