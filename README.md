@@ -2,6 +2,10 @@
 <img width="660" src="https://github.com/DCFApixels/DragonECS/assets/99481254/176e13c8-20c8-4e7a-8eaf-e8f3ca590231.png">
 </p>
 
+<p align="center">
+<a href="https://github.com/DCFApixels/DragonECS/blob/main/package.json"><img src="https://img.shields.io/github/package-json/v/DCFApixels/DragonECS?color=%23ff4e85&style=for-the-badge"></a>
+</p>
+
 # DragonECS - C# Entity Component System Framework
 
 > **ВАЖНО!** Проект в стадии разработки. API может меняться.
