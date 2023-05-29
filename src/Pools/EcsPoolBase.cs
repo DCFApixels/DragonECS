@@ -59,14 +59,6 @@ namespace DCFApixels.DragonECS
         {
             throw new EcsFrameworkException($"Entity({entityID}) has no component {typeof(T).Name}.");
         }
-        public static void ThrowInvalidComponentType<T>(Type invalidType)
-        {
-            throw new EcsFrameworkException($"Invalid component type, {typeof(T).Name} required.");
-        }
-        public static void ThrowWorldDifferent<T>(int entityID)
-        {
-            throw new EcsRelationException($"The world of the target entity({entityID}) in {typeof(T).Name} is not the same as the world of the other entities. ");
-        }
     }
     public static class IEcsPoolImplementationExtensions
     {
