@@ -1,5 +1,6 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
+using System;
 using System.Linq;
 
 namespace DCFApixels.DragonECS
@@ -54,17 +55,38 @@ namespace DCFApixels.DragonECS
         [DebugHide, DebugColor(DebugColor.Gray)]
         public sealed class EcsInjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
         {
-            private IEcsPreInject _preInjectchache;
+            private EcsBaseTypeInjectRunner _baseTypeInjectRunner;
             void IEcsInject<T>.Inject(T obj)
             {
-                _preInjectchache.PreInject(obj);
+                _baseTypeInjectRunner.Inject(obj);
                 foreach (var item in targets) item.Inject(obj);
             }
             protected override void OnSetup()
             {
-                _preInjectchache = Source.GetRunner<IEcsPreInject>();
+                Type baseType = typeof(T).BaseType;
+                if (baseType != typeof(object) && baseType != typeof(ValueType) && baseType != null)
+                    _baseTypeInjectRunner = (EcsBaseTypeInjectRunner)Activator.CreateInstance(typeof(EcsBaseTypeInjectRunner<>).MakeGenericType(baseType), Source);
+                else
+                    _baseTypeInjectRunner = new EcsObjectTypePreInjectRunner(Source);
             }
         }
+        internal abstract class EcsBaseTypeInjectRunner
+        {
+            public abstract void Inject(object obj);
+        }
+        internal class EcsBaseTypeInjectRunner<T> : EcsBaseTypeInjectRunner
+        {
+            private IEcsInject<T> _runner;
+            public EcsBaseTypeInjectRunner(EcsPipeline pipeline) => _runner = pipeline.GetRunner<IEcsInject<T>>();
+            public override void Inject(object obj) => _runner.Inject((T)obj);
+        }
+        internal class EcsObjectTypePreInjectRunner : EcsBaseTypeInjectRunner
+        {
+            private IEcsPreInject _runner;
+            public EcsObjectTypePreInjectRunner(EcsPipeline pipeline) => _runner = pipeline.GetRunner<IEcsPreInject>();
+            public override void Inject(object obj) => _runner.PreInject(obj);
+        }
+
         [DebugHide, DebugColor(DebugColor.Gray)]
         public sealed class EcsPreInitInjectProcessRunner : EcsRunner<IEcsPreInitInjectProcess>, IEcsPreInitInjectProcess
         {

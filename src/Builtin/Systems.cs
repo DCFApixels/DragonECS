@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Internal;
+using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
 {
@@ -12,14 +12,10 @@ namespace DCFApixels.DragonECS
             public SystemsLayerMarkerSystem(string name) => this.name = name;
         }
         [DebugHide, DebugColor(DebugColor.Grey)]
-        public class DeleteEmptyEntitesSystem : IEcsRunProcess, IEcsPreInject
+        public class DeleteEmptyEntitesSystem : IEcsRunProcess, IEcsInject<EcsWorld>
         {
             private List<EcsWorld> _worlds = new List<EcsWorld>();
-            public void PreInject(object obj)
-            {
-                if (obj is EcsWorld world)
-                    _worlds.Add(world);
-            }
+            public void Inject(EcsWorld obj) => _worlds.Add(obj);
             public void Run(EcsPipeline pipeline)
             {
                 foreach (var world in _worlds)
@@ -27,7 +23,7 @@ namespace DCFApixels.DragonECS
             }
         }
         [DebugHide, DebugColor(DebugColor.Grey)]
-        public class DeleteOneFrameComponentSystem<TComponent> : IEcsRunProcess, IEcsPreInject
+        public class DeleteOneFrameComponentSystem<TComponent> : IEcsRunProcess, IEcsInject<EcsWorld>
             where TComponent : struct, IEcsComponent
         {
             private sealed class Subject : EcsSubject
@@ -36,11 +32,7 @@ namespace DCFApixels.DragonECS
                 public Subject(Builder b) => pool = b.Include<TComponent>();
             }
             List<EcsWorld> _worlds = new List<EcsWorld>();
-            public void PreInject(object obj)
-            {
-                if (obj is EcsWorld world)
-                    _worlds.Add(world);
-            }
+            public void Inject(EcsWorld obj) => _worlds.Add(obj);
             public void Run(EcsPipeline pipeline)
             {
                 for (int i = 0, iMax = _worlds.Count; i < iMax; i++)
