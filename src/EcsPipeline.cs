@@ -189,7 +189,7 @@ namespace DCFApixels.DragonECS
                 List<IEcsSystem> basicBlockList = _systems[_basicLayer];
                 foreach (var item in _systems)
                 {
-                    if (!Layers.Has(item.Key))
+                    if (!Layers.Contains(item.Key))
                         basicBlockList.AddRange(item.Value);
                 }
                 foreach (var item in Layers)
@@ -217,7 +217,7 @@ namespace DCFApixels.DragonECS
                 public Builder Add(string newLayer) => Insert(ADD_LAYER, newLayer);
                 public Builder Insert(string targetLayer, string newLayer)
                 {
-                    if (Has(newLayer)) return _source;
+                    if (Contains(newLayer)) return _source;
 
                     int index = _layers.IndexOf(targetLayer);
                     if (index < 0)
@@ -227,7 +227,7 @@ namespace DCFApixels.DragonECS
                 }
                 public Builder InsertAfter(string targetLayer, string newLayer)
                 {
-                    if (Has(newLayer)) return _source;
+                    if (Contains(newLayer)) return _source;
 
                     if (targetLayer == _basicLayerName) // нужно чтобы метод Add работал правильно. _basicLayerName и ADD_LAYER считается одним слоем, поэтому Before = _basicLayerName After = ADD_LAYER
                         targetLayer = ADD_LAYER;
@@ -262,7 +262,7 @@ namespace DCFApixels.DragonECS
                     int index = _layers.IndexOf(targetLayer);
                     if (index < 0)
                         throw new KeyNotFoundException($"Layer {targetLayer} not found");
-                    _layers.InsertRange(index, newLayers.Where(o => !Has(o)));
+                    _layers.InsertRange(index, newLayers.Where(o => !Contains(o)));
                     return _source;
                 }
                 public Builder InsertAfter(string targetLayer, params string[] newLayers)
@@ -275,9 +275,9 @@ namespace DCFApixels.DragonECS
                         targetLayer = ADD_LAYER;
 
                     if (++index >= _layers.Count)
-                        _layers.AddRange(newLayers.Where(o => !Has(o)));
+                        _layers.AddRange(newLayers.Where(o => !Contains(o)));
                     else
-                        _layers.InsertRange(index, newLayers.Where(o => !Has(o)));
+                        _layers.InsertRange(index, newLayers.Where(o => !Contains(o)));
                     return _source;
                 }
                 public Builder Move(string targetLayer, params string[] movingLayers)
@@ -296,7 +296,7 @@ namespace DCFApixels.DragonECS
                     return InsertAfter(targetLayer, movingLayers);
                 }
 
-                public bool Has(string layer) => _layers.Contains(layer);
+                public bool Contains(string layer) => _layers.Contains(layer);
 
                 public List<string>.Enumerator GetEnumerator() => _layers.GetEnumerator();
                 IEnumerator<string> IEnumerable<string>.GetEnumerator() => _layers.GetEnumerator();

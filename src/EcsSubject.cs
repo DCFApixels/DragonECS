@@ -82,7 +82,7 @@ namespace DCFApixels.DragonECS
             {
                 return _world.GetPool<TComponent, TPool>();
             }
-            public void IncludeImplicit<TComponent>()
+            private void IncludeImplicit<TComponent>()
             {
                 int id = _world.GetComponentID<TComponent>();
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
@@ -90,7 +90,7 @@ namespace DCFApixels.DragonECS
 #endif
                 _inc.Add(_world.GetComponentID<TComponent>());
             }
-            public void ExcludeImplicit<TComponent>()
+            private void ExcludeImplicit<TComponent>()
             {
                 int id = _world.GetComponentID<TComponent>();
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
