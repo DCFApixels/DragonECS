@@ -108,7 +108,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetComponentID
-        public int GetComponentID<T>() => WorldMetaStorage.GetComponentId<T>(_worldTypeID);////ComponentType<TWorldArchetype>.uniqueID;
+        public int GetComponentID<T>() => WorldMetaStorage.GetComponentId<T>(_worldTypeID);
+        public bool IsComponentTypeDeclared<T>() => WorldMetaStorage.IsComponentTypeDeclared<T>(_worldTypeID);
 
         #endregion
 
@@ -380,7 +381,7 @@ namespace DCFApixels.DragonECS
     }
 
     #region WorldMetaStorage
-    public static class WorldMetaStorage
+    internal static class WorldMetaStorage
     {
         private static List<Resizer> _resizer = new List<Resizer>();
         private static int _tokenCount = 0;
@@ -421,6 +422,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetExecutorId<T>(int worldID) => Executor<T>.Get(worldID);
 
+        public static bool IsComponentTypeDeclared<TComponent>(int worldID) => IsComponentTypeDeclared(worldID, typeof(TComponent));
         public static bool IsComponentTypeDeclared(int worldID, Type type) => _metas[worldID].IsDeclaredType(type);
         public static Type GetComponentType(int worldID, int componentID) => _metas[worldID].GetComponentType(componentID);
 
