@@ -129,6 +129,7 @@ namespace DCFApixels.DragonECS
                     injectCallbacksRunner.OnPreInitInjectionAfter();
                     EcsRunner.Destroy(injectCallbacksRunner);
                 }
+                _injectedData = default;
             }
             public void OnPreInitInjectionBefore() { }
             public void OnPreInitInjectionAfter() => _injectController = null;
