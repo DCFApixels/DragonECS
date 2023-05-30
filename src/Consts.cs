@@ -4,7 +4,7 @@
     {
         public const string FRAMEWORK_NAME = "DragonECS";
 
-        public const string EXCEPTION_MESSAGE_PREFIX = "["+ FRAMEWORK_NAME + "] ";
+        public const string EXCEPTION_MESSAGE_PREFIX = "[" + FRAMEWORK_NAME + "] ";
         public const string DEBUG_PREFIX = "[DEBUG] ";
         public const string DEBUG_WARNING_TAG = "WARNING";
         public const string DEBUG_ERROR_TAG = "ERROR";

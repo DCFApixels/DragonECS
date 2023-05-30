@@ -117,7 +117,7 @@ namespace DCFApixels.DragonECS
         public int RegisterMark(string name)
         {
             int id;
-            if(!_nameIdTable.TryGetValue(name, out id))
+            if (!_nameIdTable.TryGetValue(name, out id))
             {
                 id = _idDispenser.GetFree();
                 _nameIdTable.Add(name, id);
@@ -149,7 +149,7 @@ namespace DCFApixels.DragonECS
         {
 #if !DISABLE_DRAGONECS_DEBUGGER
             _stopwatchs = new Stopwatch[64];
-            _stopwatchsNames= new string[64];
+            _stopwatchsNames = new string[64];
 #endif
         }
         public override void Print(string tag, object v)

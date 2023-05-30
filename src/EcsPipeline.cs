@@ -194,7 +194,7 @@ namespace DCFApixels.DragonECS
                 }
                 foreach (var item in Layers)
                 {
-                    if(_systems.TryGetValue(item, out var list))
+                    if (_systems.TryGetValue(item, out var list))
                         result.AddRange(list);
                 }
                 return new EcsPipeline(result.ToArray());
@@ -211,7 +211,7 @@ namespace DCFApixels.DragonECS
                 {
                     _source = source;
                     _layers = new List<string>(16) { basicLayerName, ADD_LAYER };
-                    _basicLayerName = basicLayerName;   
+                    _basicLayerName = basicLayerName;
                 }
 
                 public Builder Add(string newLayer) => Insert(ADD_LAYER, newLayer);

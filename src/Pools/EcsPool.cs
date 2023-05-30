@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS
         void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
         {
             _source = world;
-            _id = componentID; 
+            _id = componentID;
 
             const int capacity = 512;
 
@@ -178,12 +178,12 @@ namespace DCFApixels.DragonECS
         #region Listeners
         public void AddListener(IEcsPoolEventListener listener)
         {
-            if(listener == null) { throw new ArgumentNullException("listener is null"); }
+            if (listener == null) { throw new ArgumentNullException("listener is null"); }
             _listeners.Add(listener);
         }
         public void RemoveListener(IEcsPoolEventListener listener)
         {
-            if(listener == null) { throw new ArgumentNullException("listener is null"); }
+            if (listener == null) { throw new ArgumentNullException("listener is null"); }
             _listeners.Remove(listener);
         }
         #endregion

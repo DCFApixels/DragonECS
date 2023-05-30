@@ -122,7 +122,7 @@ namespace DCFApixels.DragonECS
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
 #endif
-        public abstract class EcsRunner<TInterface> : IEcsProcess, IEcsRunner 
+        public abstract class EcsRunner<TInterface> : IEcsProcess, IEcsRunner
             where TInterface : IEcsProcess
         {
             #region Register

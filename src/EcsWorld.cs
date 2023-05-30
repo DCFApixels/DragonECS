@@ -360,13 +360,13 @@ namespace DCFApixels.DragonECS
         {
             list.Clear();
             var itemsCount = GetComponentsCount(entityID);
-            if (itemsCount == 0) 
+            if (itemsCount == 0)
                 return;
 
             for (var i = 0; i < _pools.Length; i++)
             {
                 if (_pools[i].Has(entityID))
-                list.Add(_pools[i].GetRaw(entityID));
+                    list.Add(_pools[i].GetRaw(entityID));
                 if (list.Count >= itemsCount)
                     break;
             }
