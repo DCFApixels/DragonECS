@@ -56,8 +56,6 @@ namespace DCFApixels.DragonECS
         #region Methods
         public ref T Add(int entityID)
         {
-            // using (_addMark.Auto())
-            //  {
             ref int itemIndex = ref _mapping[entityID];
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (itemIndex > 0) ThrowAlreadyHasComponent<T>(entityID);
@@ -76,12 +74,10 @@ namespace DCFApixels.DragonECS
             this.IncrementEntityComponentCount(entityID);
             _listeners.InvokeOnAddAndGet(entityID);
             return ref _items[itemIndex];
-            // }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get(int entityID)
         {
-            //   using (_writeMark.Auto())
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
@@ -91,7 +87,6 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID)
         {
-            //  using (_readMark.Auto())
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif

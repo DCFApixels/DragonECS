@@ -201,9 +201,9 @@ namespace DCFApixels.DragonECS
     #region Callbacks Interface
     public interface IEcsPoolEventListener
     {
-        /// <summary>Called after adding an entity to the pool, but before changing values.</summary>
+        /// <summary>Called after adding an entity to the pool, but before changing values</summary>
         void OnAdd(int entityID);
-        /// <summary>Is called when EcsPool.Get or EcsPool.Add is called, but before changing values.</summary>
+        /// <summary>Is called when EcsPool.Get or EcsPool.Add is called, but before changing values</summary>
         void OnGet(int entityID);
         /// <summary>Called after deleting an entity from the pool</summary>
         void OnDel(int entityID);
