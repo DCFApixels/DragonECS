@@ -13,7 +13,8 @@
 | :--- | :--- | :--- |
 
 The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes.
-> **NOTICE:** The project is a work in progress, API may change.
+> **NOTICE:** The project is a work in progress, API may change.  
+> While the English version of the README is incomplete, you can view the [Russian version](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md).
 
 # Versioning
 DragonECS uses this versioning semantics: [Open](https://gist.github.com/DCFApixels/c3b178a308b411f530361d1d56f1f929#versioning)
