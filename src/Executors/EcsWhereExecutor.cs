@@ -33,7 +33,7 @@
             using (_executeWhere.Auto())
             {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
+                if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
 #endif
                 _subject.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
                 return new EcsWhereResult<TSubject>(this, _filteredGroup.Readonly);

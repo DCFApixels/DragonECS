@@ -6,7 +6,7 @@ namespace DCFApixels.DragonECS
     namespace Internal
     {
         [DebugHide, DebugColor(DebugColor.Black)]
-        public class SystemsLayerMarkerSystem : IEcsSystem
+        public class SystemsLayerMarkerSystem : IEcsProcess
         {
             public readonly string name;
             public SystemsLayerMarkerSystem(string name) => this.name = name;
@@ -53,7 +53,7 @@ namespace DCFApixels.DragonECS
         public static EcsPipeline.Builder AutoDel<TComponent>(this EcsPipeline.Builder b, string layerName = AUTO_DEL_LAYER)
             where TComponent : struct, IEcsComponent
         {
-            if(AUTO_DEL_LAYER == layerName)
+            if (AUTO_DEL_LAYER == layerName)
                 b.Layers.Insert(EcsConsts.POST_END_LAYER, AUTO_DEL_LAYER);
             b.AddUnique(new DeleteOneFrameComponentSystem<TComponent>(), layerName);
             return b;

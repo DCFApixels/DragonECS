@@ -242,7 +242,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (group.World != _source) throw new ArgumentException("groupFilter.WorldIndex != WorldIndex");
 #endif
-            if(_count > 0)
+            if (_count > 0)
                 Clear();
             foreach (var item in group)
                 AddInternal(item);
@@ -371,14 +371,14 @@ namespace DCFApixels.DragonECS
         #region Enumerator
         public ref struct Enumerator// : IDisposable
         {
-           // private readonly EcsGroup source;
+            // private readonly EcsGroup source;
             private readonly int[] _dense;
             private readonly int _count;
             private int _index;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator(EcsGroup group)
             {
-               // source = group;
+                // source = group;
                 _dense = group._dense;
                 _count = group._count;
                 _index = 0;
@@ -389,7 +389,7 @@ namespace DCFApixels.DragonECS
                 get => _dense[_index];
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() => ++_index <= _count && _count<_dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
+            public bool MoveNext() => ++_index <= _count && _count < _dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
             //[MethodImpl(MethodImplOptions.AggressiveInlining)]
             //public void Dispose() => source.Unlock();
         }
@@ -410,7 +410,7 @@ namespace DCFApixels.DragonECS
                     return false;
             return true;
         }
-        public override int GetHashCode() 
+        public override int GetHashCode()
         {
             int hash = 0;
             foreach (var item in this)

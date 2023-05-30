@@ -69,7 +69,7 @@ namespace DCFApixels.DragonECS
         BlueViolet = (138 << 24) + (43 << 16) + (226 << 8),
         /// <summary> Yellow. RGB is (255, 3, 62)</summary>
         AmericanRose = (255 << 24) + (3 << 16) + (62 << 8),
-        
+
         /// <summary> Grey/Gray. RGB is (127, 127, 127)</summary>
         Gray = (127 << 24) + (127 << 16) + (127 << 8),
         /// <summary> Grey/Gray. RGB is (127, 127, 127)</summary>

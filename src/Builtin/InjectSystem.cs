@@ -5,15 +5,15 @@ using System.Linq;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsPreInject : IEcsSystem
+    public interface IEcsPreInject : IEcsProcess
     {
         void PreInject(object obj);
     }
-    public interface IEcsInject<T> : IEcsSystem
+    public interface IEcsInject<T> : IEcsProcess
     {
         void Inject(T obj);
     }
-    public interface IEcsPreInitInjectProcess : IEcsSystem
+    public interface IEcsPreInitInjectProcess : IEcsProcess
     {
         void OnPreInitInjectionBefore();
         void OnPreInitInjectionAfter();
@@ -129,6 +129,7 @@ namespace DCFApixels.DragonECS
                     injectCallbacksRunner.OnPreInitInjectionAfter();
                     EcsRunner.Destroy(injectCallbacksRunner);
                 }
+                _injectedData = default;
             }
             public void OnPreInitInjectionBefore() { }
             public void OnPreInitInjectionAfter() => _injectController = null;

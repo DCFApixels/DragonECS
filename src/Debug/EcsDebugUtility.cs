@@ -54,5 +54,11 @@ namespace DCFApixels.DragonECS
             var atr = type.GetCustomAttribute<DebugColorAttribute>();
             return atr != null ? (atr.r, atr.g, atr.b) : ((byte)255, (byte)255, (byte)255);
         }
+
+        public static bool IsHidden<T>() => IsHidden(typeof(T));
+        public static bool IsHidden(Type type)
+        {
+            return type.GetCustomAttribute<DebugHideAttribute>() != null;
+        }
     }
 }

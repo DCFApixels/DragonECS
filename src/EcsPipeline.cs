@@ -11,30 +11,30 @@ namespace DCFApixels.DragonECS
 {
     public sealed class EcsPipeline
     {
-        private IEcsSystem[] _allSystems;
+        private IEcsProcess[] _allSystems;
         private Dictionary<Type, IEcsRunner> _runners;
         private IEcsRunProcess _runRunnerCache;
 
-        private ReadOnlyCollection<IEcsSystem> _allSystemsSealed;
+        private ReadOnlyCollection<IEcsProcess> _allSystemsSealed;
         private ReadOnlyDictionary<Type, IEcsRunner> _allRunnersSealed;
 
         private bool _isInit;
         private bool _isDestoryed;
 
         #region Properties
-        public ReadOnlyCollection<IEcsSystem> AllSystems => _allSystemsSealed;
+        public ReadOnlyCollection<IEcsProcess> AllSystems => _allSystemsSealed;
         public ReadOnlyDictionary<Type, IEcsRunner> AllRunners => _allRunnersSealed;
         public bool IsInit => _isInit;
         public bool IsDestoryed => _isDestoryed;
         #endregion
 
         #region Constructors
-        private EcsPipeline(IEcsSystem[] systems)
+        private EcsPipeline(IEcsProcess[] systems)
         {
             _allSystems = systems;
             _runners = new Dictionary<Type, IEcsRunner>();
 
-            _allSystemsSealed = new ReadOnlyCollection<IEcsSystem>(_allSystems);
+            _allSystemsSealed = new ReadOnlyCollection<IEcsProcess>(_allSystems);
             _allRunnersSealed = new ReadOnlyDictionary<Type, IEcsRunner>(_runners);
 
             _isInit = false;
@@ -43,7 +43,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Runners
-        public T GetRunner<T>() where T : IEcsSystem
+        public T GetRunner<T>() where T : IEcsProcess
         {
             Type type = typeof(T);
             if (_runners.TryGetValue(type, out IEcsRunner result))
@@ -132,7 +132,7 @@ namespace DCFApixels.DragonECS
         {
             private const int KEYS_CAPACITY = 4;
             private HashSet<Type> _uniqueTypes;
-            private readonly Dictionary<string, List<IEcsSystem>> _systems;
+            private readonly Dictionary<string, List<IEcsProcess>> _systems;
             private readonly string _basicLayer;
             public readonly LayerList Layers;
             public Builder()
@@ -142,14 +142,14 @@ namespace DCFApixels.DragonECS
                 Layers.Insert(EcsConsts.BASIC_LAYER, EcsConsts.PRE_BEGIN_LAYER, EcsConsts.BEGIN_LAYER);
                 Layers.InsertAfter(EcsConsts.BASIC_LAYER, EcsConsts.END_LAYER, EcsConsts.POST_END_LAYER);
                 _uniqueTypes = new HashSet<Type>();
-                _systems = new Dictionary<string, List<IEcsSystem>>(KEYS_CAPACITY);
+                _systems = new Dictionary<string, List<IEcsProcess>>(KEYS_CAPACITY);
             }
-            public Builder Add(IEcsSystem system, string layerName = null)
+            public Builder Add(IEcsProcess system, string layerName = null)
             {
                 AddInternal(system, layerName, false);
                 return this;
             }
-            public Builder AddUnique(IEcsSystem system, string layerName = null)
+            public Builder AddUnique(IEcsProcess system, string layerName = null)
             {
                 AddInternal(system, layerName, true);
                 return this;
@@ -161,13 +161,13 @@ namespace DCFApixels.DragonECS
                     list.RemoveAll(o => o is TSystem);
                 return this;
             }
-            private void AddInternal(IEcsSystem system, string layerName, bool isUnique)
+            private void AddInternal(IEcsProcess system, string layerName, bool isUnique)
             {
                 if (layerName == null) layerName = _basicLayer;
-                List<IEcsSystem> list;
+                List<IEcsProcess> list;
                 if (!_systems.TryGetValue(layerName, out list))
                 {
-                    list = new List<IEcsSystem> { new SystemsLayerMarkerSystem(layerName.ToString()) };
+                    list = new List<IEcsProcess> { new SystemsLayerMarkerSystem(layerName.ToString()) };
                     _systems.Add(layerName, list);
                 }
                 if ((_uniqueTypes.Add(system.GetType()) == false && isUnique))
@@ -179,14 +179,14 @@ namespace DCFApixels.DragonECS
             }
             public Builder AddModule(IEcsModule module)
             {
-                module.ImportSystems(this);
+                module.Import(this);
                 return this;
             }
             public EcsPipeline Build()
             {
                 Add(new DeleteEmptyEntitesSystem(), EcsConsts.POST_END_LAYER);
-                List<IEcsSystem> result = new List<IEcsSystem>(32);
-                List<IEcsSystem> basicBlockList = _systems[_basicLayer];
+                List<IEcsProcess> result = new List<IEcsProcess>(32);
+                List<IEcsProcess> basicBlockList = _systems[_basicLayer];
                 foreach (var item in _systems)
                 {
                     if (!Layers.Contains(item.Key))
@@ -194,7 +194,7 @@ namespace DCFApixels.DragonECS
                 }
                 foreach (var item in Layers)
                 {
-                    if(_systems.TryGetValue(item, out var list))
+                    if (_systems.TryGetValue(item, out var list))
                         result.AddRange(list);
                 }
                 return new EcsPipeline(result.ToArray());
@@ -211,7 +211,7 @@ namespace DCFApixels.DragonECS
                 {
                     _source = source;
                     _layers = new List<string>(16) { basicLayerName, ADD_LAYER };
-                    _basicLayerName = basicLayerName;   
+                    _basicLayerName = basicLayerName;
                 }
 
                 public Builder Add(string newLayer) => Insert(ADD_LAYER, newLayer);
@@ -308,19 +308,19 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsModule
     {
-        void ImportSystems(EcsPipeline.Builder b);
+        void Import(EcsPipeline.Builder b);
     }
 
     #region Extensions
     public static class EcsPipelineExtensions
     {
         public static bool IsNullOrDestroyed(this EcsPipeline self) => self == null || self.IsDestoryed;
-        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsSystem> range, string layerName = null)
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsProcess> range, string layerName = null)
         {
             foreach (var item in range) self.Add(item, layerName);
             return self;
         }
-        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEnumerable<IEcsSystem> range, string layerName = null)
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEnumerable<IEcsProcess> range, string layerName = null)
         {
             foreach (var item in range) self.AddUnique(item, layerName);
             return self;
