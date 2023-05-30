@@ -9,8 +9,8 @@
 </p>
 
 # DragonECS - C# Entity Component System Framework
-
-> **ВАЖНО!** Проект в стадии разработки. API может меняться.
+The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes.
+> **NOTICE:** The project is a work in progress, API may change.
 
 ## Оглавление
 * [Установка](#Установка)
@@ -140,8 +140,9 @@ public sealed class EcsRunRunner : EcsRunner<IEcsRunProcess>, IEcsRunProcess
 * `DebugHideAttribute` - Скрывает тип.
 ## EcsDebugUtility
 Статические класс EcsDebugUtility имеет набор методов для упрощения получения данных из Debug-Aтрибутов.
-## Debug-Сервис
-  
+## EcsDebug
+EcsDebug Содержит в себе
+
 # Расширения
 * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * Интеграция с движком Unity (Work in progress)
