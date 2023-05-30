@@ -13,7 +13,7 @@
 | Languages: | [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [English(WIP)](https://github.com/DCFApixels/DragonECS) |
 | :--- | :--- | :--- |
 
-Данный [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Фреймворк нацелен на максимальную удобность использования, модульность, расширяемость и производительность динамического изменения сущностей.
+Данный [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Фреймворк нацелен на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей.
 > **NOTICE:** Проект в стадии разработки. API может меняться.
 
 ## Оглавление
@@ -26,8 +26,8 @@
   * [Component](#Component)
   * [System](#System)
 * [Концепции фреймворка](#Концепции-фреймворка)
-  * [Pipeline](#Pipeline)
-  * [Процесс](#Процесс)
+  * [Пайплайн](#Пайплайн)
+  * [Процессы](#Процессы)
   * [Мир](#Мир)
   * [Группа](#Группа)
   * [Субъект](#Субъект)
@@ -36,7 +36,6 @@
 * [Рекомендации](#Рекомендации)
 * [Debug](#Debug)
   * [Атрибуты](#Атрибуты)
-  * [EcsDebugUtility](#EcsDebugUtility)
   * [Debug-Сервис](#Debug-Сервис)
 * [Расширения](#Расширения)
 
@@ -50,51 +49,113 @@ https://github.com/DCFApixels/DragonECS.git
 Фреймворк так же может быть добавлен в проект в виде исходников.
 
 # Версионирование
-В DragonECS применяется следующая семантика версионирования: [Просмотреть](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D0%BE%D0%BD%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
+В DragonECS применяется следующая семантика версионирования: [Открыть](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D0%BE%D0%BD%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
 # Основные концепции
 ## Entity
-Сущности - это то к чему крепятся данные. Реализованны в виде идентификаторов, которых есть 2 вида:
+**Сущности** - это то к чему крепятся данные. Реализованны в виде идентификаторов, которых есть 2 вида:
 * `int` - однократный идентификатор, применяется в пределах одного тика. Не рекомендуется хранить `int` идентификаторы, в место этого используйте `entlong`;
 * `entlong` - долговременный идентификатор, содержит в себе полный набор информации для однозначной идентификации;
 
 ## Component
-Компоненты - это данные для сущностей. Обязаны реализовывать интерфейс IEcsComponent или другой указываюший вид компонента. 
+**Компоненты** - это данные для сущностей. Обязаны реализовывать интерфейс `IEcsComponent` или другой указываюший вид компонента. 
 ```c#
 struct Health : IEcsComponent
 {
     public float health;
     public int armor;
 }
+struct PlayerTag : IEcsTagComponent {}
 ```
-### Встроенные виды компонентов
+Встроенные виды компонентов:
 * `IEcsComponent` - Компоненты с данными.
 * `IEcsTagComponent` - Компоненты-теги. Без данных.
+> Компоненты-теги хоть и не имеют данных, само наличие или отсутсвие такого компонента у сущности уже несет ифномрацию и может применяться для определения типа сущности.
 
 ## System
-Системы - это основная логика, тут задается поведение сущьностей. Существуют в виде пользовательских классов, реализующих как минимум один из IEcsInitProcess, IEcsDestroyProcess, IEcsRunProcess интерфейсов.
+**Системы** - это основная логика, тут задается поведение сущностей. Существуют в виде пользовательских классов, реализующих как минимум один из интерфейсов процессов. Основные процессы:
 ```c#
-class UserSystem : IEcsPreInitProcess, IEcsInitProcess, IEcsRunProcess, IEcsDestroyProcess
+class SomeSystem : IEcsPreInitProcess, IEcsInitProcess, IEcsRunProcess, IEcsDestroyProcess
 {
-    public void PreInit (EcsSession session) {
-        // Будет вызван один раз в момент работы EcsSession.Init() и до срабатывания IEcsInitProcess.Init()
-    }
-    public void Init (EcsSession session) {
-        // Будет вызван один раз в момент работы EcsSession.Init() и после срабатывания IEcsPreInitProcess.PreInit()
-    }
-    public void Run (EcsSession session) {
-        // Будет вызван один раз в момент работы EcsSession.Run().
-    }
-    public void Destroy (EcsSession session) {
-        // Будет вызван один раз в момент работы EcsSession.Destroy()
-    }
-    //Для реализации дополнительных процессов используйте Раннеры
+    // Будет вызван один раз в момент работы EcsPipeline.Init() и до срабатывания IEcsInitProcess.Init()
+    public void PreInit (EcsPipeline pipeline) { }
+    
+    // Будет вызван один раз в момент работы EcsPipeline.Init() и после срабатывания IEcsPreInitProcess.PreInit()
+    public void Init (EcsPipeline pipeline)  { }
+    
+    // Будет вызван один раз в момент работы EcsPipeline.Run().
+    public void Run (EcsPipeline pipeline) { }
+    
+    // Будет вызван один раз в момент работы EcsPipeline.Destroy()
+    public void Destroy (EcsPipeline pipeline) { }
 }
 ```
+> Для реализации дополнительных процессов перейдите к разделу [Процессы](#Процессы)
 # Концепции фреймворка
-## Pipeline
-Класс EcsPipeline является контейнером и двжиком систем, определяя поочередность их вызова, предоставляющий механизм для сообщений между системами и механизм внедрения зависимостей в системы.
+## Пайплайн
+Является контейнером и двжиком систем, определяя поочередность их вызова, предоставляющий механизм для сообщений между системами и механизм внедрения зависимостей в системы.
+### Построение
+За построение пайплайна отвечает Builder. В Builder добавляются системы, а в конце строится пайплайн. Пример:
+```c#
+const string SOME_LAYER = nameof(SOME_LAYER);
+EcsPipelone pipeline = EcsPipeline.New() //Создает Builder пайплайна
+    // Добавляет систему System1 в очередь систем
+    .Add(new System1())
+    // Добавляет System2 в очередь после System1
+    .Add(new System2())
+    // Добавляет System3 в очередь после System2, но в единичном экземпляре
+    .AddUnique(new System3())
+    // Завершает построение пайплайна и возвращает его экземпляр 
+    .Build(); 
+pipeline.Init(); // Инициализация пайплайна
+```
+> Есть упрощенная инициализация пайплайна сразу в момент построение, для используйте Builder.BuildAndInit();
+### Слои
+Очередь систем можно разбить на слои
+``` c#
+EcsPipelone pipeline = EcsPipeline.New()
+    //...
+    .Layers.Insert(EcsConsts.END_LAYER, SOME_LAYER) // Вставляет новый слой перед конечным слоем EcsConsts.END_LAYER
+    //...
+    .BuildAndInit();
+```
+Встроенные слои расположены в следующем порядке:
+* `EcsConst.PRE_BEGIN_LAYER`
+* `EcsConst.BEGIN_LAYER`
+* `EcsConst.BASIC_LAYER` (Если при добавблении системы не казать слой, то она будет доавблена сюда)
+* `EcsConst.END_LAYER`
+* `EcsConst.POST_END_LAYER`
+### Внедрение зависимостей
+Внедрение зависимостей - это процесс который запускается вместе с инициализацией пайплайна и внедряет данные переданные в Builder.
+``` c#
+EcsPipelone pipeline = EcsPipeline.New()
+    //...
+    .Inject(_someData) // Внедрит в системы экземлпяр _someData
+    //...
+    .BuildAndInit();
+```
+### Модули
+Группы систем реализующие общую фичу можно объединять в модули, и просто добавлять модули в Pipeline.
+``` c#
+using DCFApixels.DragonECS;
+class Module : IEcsModule 
+{
+    public void Import(EcsPipeline.Builder b) 
+    {
+        b.Add(new System1());
+        b.Add(new System2(), EcsConsts.END_LAYER);
+        b.Add(new System3());
+    }
+}
+```
+``` csharp
+EcsPipelone pipeline = EcsPipeline.New()
+    //...
+    .AddModule(new Module())
+    //...
+    .BuildAndInit();
+```
 
-## Процесс
+## Процессы
 Процессы - это очереди систем реализующие общий интерфейс, например IEcsRunProcess. Для запуска процессов используются Runner-ы. Система ранеров и процессов может использоваться для создания реактивного поведения или для управления очередью вызова систем. Встроенные процессы вызываются автоматически, для ручного запуска испольщуйте раннеры получаемые из EcsPipeline.GetRunner<TInterface>().
 > Метод GetRunner относительно медленный, поэтому рекомендуется кешировать полученные раннеры.
 
@@ -138,28 +199,6 @@ public sealed class EcsRunRunner : EcsRunner<IEcsRunProcess>, IEcsRunProcess
     
 ## Запросы
 Используйте метод-запрос `EcsWorld.Where<TSubject>(out TSubject subject)` для получения необходимого системе набора сущностей. Запросы работают в связке с субъектами, субъекты определяют ограничения запросов, результатом запроса становится группа сущностей удовлетворяющия условиям субъекта. По умолчанию запрос делает выборку из всех сущностей в мире, но так же можно сделать выборку из определенной группы сущностей, для этого используйте `EcsWorld.WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject)`
-
-## Модули
-Группы систем реализующие общую фичу можно объединять в модули, и просто добавлять модули в Pipeline.
-```csharp
-using DCFApixels.DragonECS;
-class Module : IEcsModule 
-{
-    public void Import(EcsPipeline.Builder b) 
-    {
-        b.Add(new System1());
-        b.Add(new System2(), EcsConsts.END_LAYER);
-        b.Add(new System3());
-    }
-}
-```
-```csharp
-_pipeline = EcsPipeline.New()
-    ...
-    .AddModule(new Module())
-    ...
-    .BuildAndInit();
-```
  
 # Рекомендации
 ## Рекомендации по реаоизации систем
@@ -169,7 +208,7 @@ _pipeline = EcsPipeline.New()
 Фреймворк предоставляет дополнительные интрументы для отладки и логирования, не зависящие от среды.
 ## Атрибуты
 В чистом виде атрибуты не имеют применения, но испольщуются в интеграциях с движками для задания отображения в отладочных интурментах и редакторах.
-``` csharp
+``` c#
 // Задает пользовательское название типа, по умолчанию используется имя типа.
 using DCFApixels.DragonECS;
 ...
@@ -183,8 +222,6 @@ using DCFApixels.DragonECS;
 [DebugHide] 
 public struct Component { }
 ```
-## EcsDebugUtility
-Имеет набор методов для упрощения получения данных из Debug-Aтрибутов.
 ## EcsDebug
 Имеет набор методов для отладки и логирования. Реализован как статический класс вызывающий методы Debug-сервисов. Debug-сервисы являются посредниками между системами отладки среды и EcsDebug. Это позволяет не изменяя отладочный код проекта, переносить его на другие движки, достаточно только реализовать специальный Debug-сервис.  
 По умолчанию используется `DefaultDebugService` который выводит логи в консоль. Для реализации пользовательского создайте класс наследуемый от `DebugService` и реализайте абстрактные члены класса.
