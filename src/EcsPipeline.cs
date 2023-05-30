@@ -179,7 +179,7 @@ namespace DCFApixels.DragonECS
             }
             public Builder AddModule(IEcsModule module)
             {
-                module.ImportSystems(this);
+                module.Import(this);
                 return this;
             }
             public EcsPipeline Build()
@@ -308,7 +308,7 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsModule
     {
-        void ImportSystems(EcsPipeline.Builder b);
+        void Import(EcsPipeline.Builder b);
     }
 
     #region Extensions
