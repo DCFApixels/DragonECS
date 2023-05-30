@@ -143,7 +143,7 @@ namespace DCFApixels.DragonECS
 #endif
             return ref _fakeComponent;
         }
-        ref T IEcsPool<T>.Write(int entityID)
+        ref T IEcsPool<T>.Get(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);

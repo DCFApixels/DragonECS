@@ -74,18 +74,18 @@ namespace DCFApixels.DragonECS
                     Array.Resize(ref _items, _items.Length << 1);
             }
             this.IncrementEntityComponentCount(entityID);
-            _listeners.InvokeOnAddAndWrite(entityID);
+            _listeners.InvokeOnAddAndGet(entityID);
             return ref _items[itemIndex];
             // }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Write(int entityID)
+        public ref T Get(int entityID)
         {
             //   using (_writeMark.Auto())
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
-            _listeners.InvokeOnWrite(entityID);
+            _listeners.InvokeOnGet(entityID);
             return ref _items[_mapping[entityID]];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -97,7 +97,7 @@ namespace DCFApixels.DragonECS
 #endif
             return ref _items[_mapping[entityID]];
         }
-        public ref T TryAddOrWrite(int entityID)
+        public ref T TryAddOrGet(int entityID)
         {
             ref int itemIndex = ref _mapping[entityID];
             if (itemIndex <= 0)
@@ -116,7 +116,7 @@ namespace DCFApixels.DragonECS
                 this.IncrementEntityComponentCount(entityID);
                 _listeners.InvokeOnAdd(entityID);
             }
-            _listeners.InvokeOnWrite(entityID);
+            _listeners.InvokeOnGet(entityID);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -148,14 +148,14 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
 #endif
-            _componentCopyHandler.Copy(ref Write(fromEntityID), ref TryAddOrWrite(toEntityID));
+            _componentCopyHandler.Copy(ref Get(fromEntityID), ref TryAddOrGet(toEntityID));
         }
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
 #endif
-            _componentCopyHandler.Copy(ref Write(fromEntityID), ref toWorld.GetPool<T>().TryAddOrWrite(toEntityID));
+            _componentCopyHandler.Copy(ref Get(fromEntityID), ref toWorld.GetPool<T>().TryAddOrGet(toEntityID));
         }
         #endregion
 
@@ -175,9 +175,9 @@ namespace DCFApixels.DragonECS
         #region Other
         void IEcsPool.AddRaw(int entityID, object dataRaw) => Add(entityID) = (T)dataRaw;
         object IEcsPool.GetRaw(int entityID) => Read(entityID);
-        void IEcsPool.SetRaw(int entityID, object dataRaw) => Write(entityID) = (T)dataRaw;
+        void IEcsPool.SetRaw(int entityID, object dataRaw) => Get(entityID) = (T)dataRaw;
         ref readonly T IEcsPool<T>.Read(int entityID) => ref Read(entityID);
-        ref T IEcsPool<T>.Write(int entityID) => ref Write(entityID);
+        ref T IEcsPool<T>.Get(int entityID) => ref Get(entityID);
         #endregion
 
         #region Listeners

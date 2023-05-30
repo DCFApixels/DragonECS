@@ -35,7 +35,7 @@ namespace DCFApixels.DragonECS
     {
         ref T Add(int entityID);
         ref readonly T Read(int entityID);
-        ref T Write(int entityID);
+        ref T Get(int entityID);
     }
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
     public interface IEcsPoolImplementation : IEcsPool
@@ -106,7 +106,7 @@ namespace DCFApixels.DragonECS
             void IEcsPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID) => throw new NotImplementedException();
             ref NullComponent IEcsPool<NullComponent>.Add(int entityID) => throw new NotImplementedException();
             ref readonly NullComponent IEcsPool<NullComponent>.Read(int entityID) => throw new NotImplementedException();
-            ref NullComponent IEcsPool<NullComponent>.Write(int entityID) => throw new NotImplementedException();
+            ref NullComponent IEcsPool<NullComponent>.Get(int entityID) => throw new NotImplementedException();
             #endregion
 
             #region Callbacks
@@ -203,8 +203,8 @@ namespace DCFApixels.DragonECS
     {
         /// <summary>Called after adding an entity to the pool, but before changing values.</summary>
         void OnAdd(int entityID);
-        /// <summary>Is called when EcsPool.Write or EcsPool.Add is called, but before changing values.</summary>
-        void OnWrite(int entityID);
+        /// <summary>Is called when EcsPool.Get or EcsPool.Add is called, but before changing values.</summary>
+        void OnGet(int entityID);
         /// <summary>Called after deleting an entity from the pool</summary>
         void OnDel(int entityID);
     }
@@ -216,18 +216,18 @@ namespace DCFApixels.DragonECS
             for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnAdd(entityID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InvokeOnAddAndWrite(this List<IEcsPoolEventListener> self, int entityID)
+        public static void InvokeOnAddAndGet(this List<IEcsPoolEventListener> self, int entityID)
         {
             for (int i = 0, iMax = self.Count; i < iMax; i++)
             {
                 self[i].OnAdd(entityID);
-                self[i].OnWrite(entityID);
+                self[i].OnGet(entityID);
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InvokeOnWrite(this List<IEcsPoolEventListener> self, int entityID)
+        public static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnWrite(entityID);
+            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnGet(entityID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnDel(this List<IEcsPoolEventListener> self, int entityID)
