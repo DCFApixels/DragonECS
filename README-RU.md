@@ -9,8 +9,8 @@
 </p>
 
 # DragonECS - C# Entity Component System Framework
-The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes.
-> **NOTICE:** The project is a work in progress, API may change.
+Данный [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Фреймворк нацелен на максимальную удобность использования, модульность, расширяемость и производительность динамического изменения сущностей.
+> **NOTICE:** Проект в стадии разработки. API может меняться.
 
 ## Оглавление
 * [Установка](#Установка)
