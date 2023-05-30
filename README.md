@@ -15,6 +15,9 @@
 The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes.
 > **NOTICE:** The project is a work in progress, API may change.
 
+# Versioning
+DragonECS uses this versioning semantics: [Open](https://gist.github.com/DCFApixels/c3b178a308b411f530361d1d56f1f929#versioning)
+
 # Extensions
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * Unity integration (Work in progress)
