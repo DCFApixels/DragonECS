@@ -88,7 +88,7 @@ namespace DCFApixels.DragonECS
             _subjects = new EcsSubject[128];
             _executors = new EcsQueryExecutor[128];
 
-            _components = new object[0];
+            _components = new object[2];
         }
         public void Destroy()
         {
@@ -100,19 +100,6 @@ namespace DCFApixels.DragonECS
             _executors = null;
             Worlds[uniqueID] = null;
             _worldIdDispenser.Release(uniqueID);
-        }
-        #endregion
-
-        #region WorldComponent
-        public T Get<T>() where T : class, new()
-        {
-            var result = _components[WorldMetaStorage.GetWorldComponentId<T>(_worldTypeID)];
-            if(result == null)
-            {
-                result = new T();
-                _components[WorldMetaStorage.GetWorldComponentId<T>(_worldTypeID)] = result;
-            }
-            return (T)result;
         }
         #endregion
 
@@ -155,16 +142,30 @@ namespace DCFApixels.DragonECS
         }
         public TExecutor GetExecutor<TExecutor>() where TExecutor : EcsQueryExecutor, new()
         {
-            int id = WorldMetaStorage.GetExecutorId<TExecutor>(_worldTypeID);
-            if (id >= _executors.Length)
+            int index = WorldMetaStorage.GetExecutorId<TExecutor>(_worldTypeID);
+            if (index >= _executors.Length)
                 Array.Resize(ref _executors, _executors.Length << 1);
-            if (_executors[id] == null)
+            if (_executors[index] == null)
             {
                 var executor = new TExecutor();
                 executor.Initialize(this);
-                _executors[id] = executor;
+                _executors[index] = executor;
             }
-            return (TExecutor)_executors[id];
+            return (TExecutor)_executors[index];
+        }
+        public T Get<T>() where T : class, new()
+        {
+            int index = WorldMetaStorage.GetWorldComponentId<T>(_worldTypeID);
+            if (index >= _components.Length)
+                Array.Resize(ref _executors, _executors.Length << 1);
+
+            var result = _components[index];
+            if (result == null)
+            {
+                result = new T();
+                _components[index] = result;
+            }
+            return (T)result;
         }
         #endregion
 
