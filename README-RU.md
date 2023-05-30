@@ -9,12 +9,12 @@
 </p>
 
 # DragonECS - C# Entity Component System Framework
+
+| Languages: | [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [English(WIP)](https://github.com/DCFApixels/DragonECS) |
+| :--- | :--- | :--- |
+
 Данный [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Фреймворк нацелен на максимальную удобность использования, модульность, расширяемость и производительность динамического изменения сущностей.
 > **NOTICE:** Проект в стадии разработки. API может меняться.
-
-## Languages
-* [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) 
-* [English(WIP)](https://github.com/DCFApixels/DragonECS)
 
 ## Оглавление
 * [Установка](#Установка)
