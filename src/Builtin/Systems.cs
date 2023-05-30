@@ -6,7 +6,7 @@ namespace DCFApixels.DragonECS
     namespace Internal
     {
         [DebugHide, DebugColor(DebugColor.Black)]
-        public class SystemsLayerMarkerSystem : IEcsSystem
+        public class SystemsLayerMarkerSystem : IEcsProcess
         {
             public readonly string name;
             public SystemsLayerMarkerSystem(string name) => this.name = name;
