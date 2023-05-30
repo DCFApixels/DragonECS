@@ -14,7 +14,7 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 
 ## Languages
 * [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) 
-* [English(WIP)](https://github.com/DCFApixels/DragonECS
+* [English(WIP)](https://github.com/DCFApixels/DragonECS)
 
 # Extensions
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
