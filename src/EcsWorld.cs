@@ -170,23 +170,23 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Where Query
-        public EcsWhereResult<TSubject> WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject) where TSubject : EcsSubject
+        public EcsReadonlyGroup WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject) where TSubject : EcsSubject
         {
             var executor = GetExecutor<EcsWhereExecutor<TSubject>>();
             subject = executor.Subject;
             return executor.ExecuteFor(sourceGroup);
         }
-        public EcsWhereResult<TSubject> WhereFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
+        public EcsReadonlyGroup WhereFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
         {
             return GetExecutor<EcsWhereExecutor<TSubject>>().ExecuteFor(sourceGroup);
         }
-        public EcsWhereResult<TSubject> Where<TSubject>(out TSubject subject) where TSubject : EcsSubject
+        public EcsReadonlyGroup Where<TSubject>(out TSubject subject) where TSubject : EcsSubject
         {
             var executor = GetExecutor<EcsWhereExecutor<TSubject>>();
             subject = executor.Subject;
             return executor.Execute();
         }
-        public EcsWhereResult<TSubject> Where<TSubject>() where TSubject : EcsSubject
+        public EcsReadonlyGroup Where<TSubject>() where TSubject : EcsSubject
         {
             return GetExecutor<EcsWhereExecutor<TSubject>>().Execute();
         }

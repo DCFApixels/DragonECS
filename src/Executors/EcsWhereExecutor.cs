@@ -7,7 +7,9 @@
 
         private long _executeVersion;
 
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
         private EcsProfilerMarker _executeWhere = new EcsProfilerMarker("Where");
+#endif
 
         #region Properties
         public TSubject Subject => _subject;
@@ -27,47 +29,20 @@
         #endregion
 
         #region Methods
-        public EcsWhereResult<TSubject> Execute() => ExecuteFor(_subject.World.Entities);
-        public EcsWhereResult<TSubject> ExecuteFor(EcsReadonlyGroup sourceGroup)
+        public EcsReadonlyGroup Execute() => ExecuteFor(_subject.World.Entities);
+        public EcsReadonlyGroup ExecuteFor(EcsReadonlyGroup sourceGroup)
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             using (_executeWhere.Auto())
+#endif
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
 #endif
                 _subject.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
-                return new EcsWhereResult<TSubject>(this, _filteredGroup.Readonly);
+                return _filteredGroup.Readonly;
             }
         }
-        #endregion
+#endregion
     }
-
-    #region WhereExecuter Results
-    public readonly ref struct EcsWhereResult<TSubject> where TSubject : EcsSubject
-    {
-        public readonly TSubject s;
-        private readonly EcsWhereExecutor<TSubject> _executer;
-        public readonly EcsReadonlyGroup group;
-        private readonly long _version;
-        public bool IsRelevant => _version == _executer.ExecuteVersion;
-        public EcsWhereResult(EcsWhereExecutor<TSubject> executer, EcsReadonlyGroup group)
-        {
-            _executer = executer;
-            _version = executer.ExecuteVersion;
-            s = executer.Subject;
-            this.group = group;
-        }
-        public EcsGroup.Enumerator GetEnumerator()
-        {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!IsRelevant) throw new System.InvalidOperationException();//TODO составить текст исключения. 
-#endif
-            return group.GetEnumerator();
-        }
-        public override string ToString()
-        {
-            return group.ToString();
-        }
-    }
-    #endregion
 }
