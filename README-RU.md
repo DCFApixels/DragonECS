@@ -280,7 +280,60 @@ class Subject : EcsSubject
 Используйте метод-запрос `EcsWorld.Where<TSubject>(out TSubject subject)` для получения необходимого системе набора сущностей. Запросы работают в связке с субъектами, субъекты определяют ограничения запросов, результатом запроса становится группа сущностей удовлетворяющая условиям субъекта. По умолчанию запрос делает выборку из всех сущностей в мире, но так же можно сделать выборку из определенной группы сущностей, для этого используйте `EcsWorld.WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject)`
  
 ## Группа
-Группы это структуры данных для хранения множества сущностей и с быстрыми операциями добавления/удаления/проверки наличия и т.д. Реализованы классом `EcsGroup` и структурой `EcsReadonlyGroup`. 
+Группы это структуры данных для хранения множества сущностей с быстрыми операциями добавления/удаления/проверки наличия и т.д. Реализованы классом `EcsGroup` и структурой `EcsReadonlyGroup`. 
+
+``` c#
+//Получем новую группу. EcsWorld содержит в себе пул групп,
+//поэтому будет создана новая или переиспользована свободная.
+EcsGroup group = EcsGroup.New(_world);
+//Освобождаем группу.
+group.Release();
+```
+``` c#
+//Добвялем сущность entityID.
+group.Add(entityID);
+//Удялем сущность entityID.
+group.Remove(entityID);
+```
+``` c#
+//Итерируемся через foreach или for.
+foreach (var e in group) 
+{ 
+    //...
+}
+for (int i = 0; i < group.Count; i++)
+{
+    int e = group[i];
+    //...
+}
+```
+Так как группы это множества, они содержат операции над множествами:
+``` c#
+// Объединение groupA и groupB
+groupA.UnionWith(groupB);
+// или
+EcsGroup newGroup = EcsGroup.Union(groupA, groupB);
+
+// Пересечение groupA и groupB
+groupA.AndWith(groupB);
+// или
+EcsGroup newGroup = EcsGroup.And(groupA, groupB);
+
+// Разность groupA и groupB
+groupA.ExceptWith(groupB);
+// или
+EcsGroup newGroup = EcsGroup.Except(groupA, groupB);
+
+// Симметрическая разность groupA и groupB
+groupA.XorWith(groupB);
+// или
+EcsGroup newGroup = EcsGroup.Xor(groupA, groupB);
+
+//Разница всех сущностей в мире и groupA
+groupA.Inverse();
+// или
+EcsGroup newGroup = EcsGroup.Inverse(groupA);
+```
  
 # Debug
 Фреймворк предоставляет дополнительные инструменты для отладки и логирования, не зависящие от среды.
