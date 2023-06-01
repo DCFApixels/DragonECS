@@ -83,7 +83,7 @@ namespace DCFApixels.DragonECS
             _delEntBuffer = new int[_entitesCapacity >> DEL_ENT_BUFFER_SIZE_OFFSET];
 
             _groups = new List<WeakReference<EcsGroup>>();
-            _allEntites = GetGroupFromPool();
+            _allEntites = GetFreeGroup();
 
             _subjects = new EcsSubject[128];
             _executors = new EcsQueryExecutor[128];
@@ -337,7 +337,7 @@ namespace DCFApixels.DragonECS
         {
             _groups.Add(new WeakReference<EcsGroup>(group));
         }
-        internal EcsGroup GetGroupFromPool()
+        internal EcsGroup GetFreeGroup()
         {
             EcsGroup result = _groupsPool.Count <= 0 ? new EcsGroup(this) : _groupsPool.Pop();
             result._isReleased = false;

@@ -161,7 +161,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsGroup New(EcsWorld world)
         {
-            return world.GetGroupFromPool();
+            return world.GetFreeGroup();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal EcsGroup(EcsWorld world, int denseCapacity = 64)
@@ -259,7 +259,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsGroup Clone()
         {
-            EcsGroup result = _source.GetGroupFromPool();
+            EcsGroup result = _source.GetFreeGroup();
             result.CopyFrom(this);
             return result;
         }
@@ -350,6 +350,14 @@ namespace DCFApixels.DragonECS
                 else
                     AddInternal(item);
         }
+        public void Inverse()
+        {
+            foreach (var item in _source.Entities)
+                if (Has(item))
+                    RemoveInternal(item);
+                else
+                    AddInternal(item);
+        }
         #endregion
 
         #region Static Set operations
@@ -360,7 +368,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
-            EcsGroup result = a._source.GetGroupFromPool();
+            EcsGroup result = a._source.GetFreeGroup();
             foreach (var item in a)
                 result.AddInternal(item);
             foreach (var item in b)
@@ -374,7 +382,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
-            EcsGroup result = a._source.GetGroupFromPool();
+            EcsGroup result = a._source.GetFreeGroup();
             foreach (var item in a)
                 if (!b.Has(item))
                     result.AddInternal(item);
@@ -387,7 +395,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
-            EcsGroup result = a._source.GetGroupFromPool();
+            EcsGroup result = a._source.GetFreeGroup();
             foreach (var item in a)
                 if (b.Has(item))
                     result.AddInternal(item);
@@ -401,11 +409,20 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
-            EcsGroup result = a._source.GetGroupFromPool();
+            EcsGroup result = a._source.GetFreeGroup();
             foreach (var item in a)
                 if (!b.Has(item))
                     result.AddInternal(item);
             foreach (var item in b)
+                if (!a.Has(item))
+                    result.AddInternal(item);
+            return result;
+        }
+
+        public static EcsGroup Inverse(EcsGroup a)
+        {
+            EcsGroup result = a._source.GetFreeGroup();
+            foreach (var item in a._source.Entities)
                 if (!a.Has(item))
                     result.AddInternal(item);
             return result;
@@ -545,6 +562,7 @@ namespace DCFApixels.DragonECS
             public int CapacityDense => _group.CapacityDense;
             public int CapacitySparce => _group.CapacitySparce;
 
+            public override string ToString() => _group.ToString();
             public DebuggerProxy(EcsGroup group) => _group = group;
         }
         #endregion
