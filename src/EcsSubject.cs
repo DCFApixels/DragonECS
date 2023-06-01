@@ -125,21 +125,18 @@ namespace DCFApixels.DragonECS
             #endregion
         }
         #endregion
-    }
 
-    #region Extensions
-    public static class EcsSubjectExtensions
-    {
-        public static EcsSubjectIterator<TSubject> GetIterator<TSubject>(this TSubject self) where TSubject : EcsSubject
+        #region Iterator
+        public EcsSubjectIterator GetIterator<TSubject>() where TSubject : EcsSubject
         {
-            return new EcsSubjectIterator<TSubject>(self, self.World.Entities);
+            return new EcsSubjectIterator(this, World.Entities);
         }
-        public static EcsSubjectIterator<TSubject> GetIteratorFor<TSubject>(this TSubject self, EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
+        public EcsSubjectIterator GetIteratorFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
         {
-            return new EcsSubjectIterator<TSubject>(self, sourceGroup);
+            return new EcsSubjectIterator(this, sourceGroup);
         }
+        #endregion
     }
-    #endregion
 
     #region BuilderBase
     public abstract class EcsSubjectBuilderBase
@@ -201,20 +198,20 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region Iterator
-    public ref struct EcsSubjectIterator<TSubject> where TSubject : EcsSubject
+    public ref struct EcsSubjectIterator
     {
-        public readonly TSubject s;
+        public readonly EcsMask mask;
         private EcsReadonlyGroup _sourceGroup;
         private Enumerator _enumerator;
 
-        public EcsSubjectIterator(TSubject s, EcsReadonlyGroup sourceGroup)
+        public EcsSubjectIterator(EcsSubject subject, EcsReadonlyGroup sourceGroup)
         {
-            this.s = s;
+            mask = subject.mask;
             _sourceGroup = sourceGroup;
             _enumerator = default;
         }
 
-        public int Entity
+        public int Current
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _enumerator.Current;
@@ -230,9 +227,8 @@ namespace DCFApixels.DragonECS
             while (enumerator.MoveNext())
                 group.AddInternal(enumerator.Current);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(_sourceGroup, s);
 
+        #region object
         public override string ToString()
         {
             StringBuilder result = new StringBuilder();
@@ -243,6 +239,11 @@ namespace DCFApixels.DragonECS
             }
             return result.ToString();
         }
+        #endregion
+
+        #region Enumerator
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Enumerator GetEnumerator() => new Enumerator(_sourceGroup, mask);
 
         public ref struct Enumerator
         {
@@ -251,12 +252,12 @@ namespace DCFApixels.DragonECS
             private readonly int[] _exc;
             private readonly IEcsPoolImplementation[] _pools;
 
-            public Enumerator(EcsReadonlyGroup sourceGroup, EcsSubject subject)
+            public Enumerator(EcsReadonlyGroup sourceGroup, EcsMask mask)
             {
                 _sourceGroup = sourceGroup.GetEnumerator();
-                _inc = subject.mask._inc;
-                _exc = subject.mask._exc;
-                _pools = subject.World._pools;
+                _inc = mask._inc;
+                _exc = mask._exc;
+                _pools = sourceGroup.World._pools;
             }
             public int Current
             {
@@ -278,6 +279,7 @@ namespace DCFApixels.DragonECS
                 return false;
             }
         }
+        #endregion
     }
     #endregion
 }
