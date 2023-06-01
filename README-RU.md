@@ -310,6 +310,14 @@ for (int i = 0; i < group.Count; i++)
 }
 ```
 Так как группы это множества, они содержат операции над множествами. Каждый метод имеет 2 варианта, с записью результата в groupA, либо с возвращением новой группы:
+
+<details>
+<summary>Визуализация методов</summary>
+ 
+![Без имени-1](https://github.com/DCFApixels/DragonECS/assets/99481254/2b4830d7-1515-4d8d-aa79-e40db736c0c6)
+
+</details>                    
+                                
 ``` c#
 // Объединение groupA и groupB
 groupA.UnionWith(groupB);
