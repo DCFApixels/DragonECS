@@ -17,8 +17,7 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 > While the English version of the README is incomplete, you can view the [Russian version](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md).
 
 # Versioning
-DragonECS uses this versioning semantics: [Open](https://gist.github.com/DCFApixels/c3b178a308b411f530361d1d56f1f929#versioning)
-
+DragonECS uses this versioning semantics: [Open](https://gist.github.com/DCFApixels/c3b178a308b411f530361d1d56f1f929#file-dcfapixels_versioning_en-md)
 # Extensions
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * Unity integration (Work in progress)
