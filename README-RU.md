@@ -292,6 +292,8 @@ group.Release();
 ``` c#
 //Добвялем сущность entityID.
 group.Add(entityID);
+//Проверяем наличие сущности entityID.
+group.Has(entityID);
 //Удялем сущность entityID.
 group.Remove(entityID);
 ```
@@ -307,31 +309,26 @@ for (int i = 0; i < group.Count; i++)
     //...
 }
 ```
-Так как группы это множества, они содержат операции над множествами:
+Так как группы это множества, они содержат операции над множествами. Каждый метод имеет 2 варианта, с записью результата в groupA, либо с возвращением новой группы:
 ``` c#
 // Объединение groupA и groupB
 groupA.UnionWith(groupB);
-// или
 EcsGroup newGroup = EcsGroup.Union(groupA, groupB);
 
 // Пересечение groupA и groupB
 groupA.AndWith(groupB);
-// или
 EcsGroup newGroup = EcsGroup.And(groupA, groupB);
 
 // Разность groupA и groupB
 groupA.ExceptWith(groupB);
-// или
 EcsGroup newGroup = EcsGroup.Except(groupA, groupB);
 
 // Симметрическая разность groupA и groupB
 groupA.XorWith(groupB);
-// или
 EcsGroup newGroup = EcsGroup.Xor(groupA, groupB);
 
 //Разница всех сущностей в мире и groupA
 groupA.Inverse();
-// или
 EcsGroup newGroup = EcsGroup.Inverse(groupA);
 ```
  
