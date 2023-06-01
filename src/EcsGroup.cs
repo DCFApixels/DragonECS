@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-using static DCFApixels.DragonECS.EcsGroup.ThrowHalper;
+using static DCFApixels.DragonECS.EcsGroup.ThrowHelper;
 #endif
 
 namespace DCFApixels.DragonECS
@@ -57,9 +59,21 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID) => _source.Has(entityID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int IndexOf(int entityID) => _source.IndexOf(entityID);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup.Enumerator GetEnumerator() => _source.GetEnumerator();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone() => _source.Clone();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int[] Bake() => _source.Bake();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Bake(ref int[] entities) => _source.Bake(ref entities);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Bake(List<int> entities) => _source.Bake(entities);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<int> ToSpan() => _source.ToSpan();
+        public Span<int> ToSpan(int start, int length) => _source.ToSpan(start, length);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() => _source.First();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -95,7 +109,7 @@ namespace DCFApixels.DragonECS
     }
 
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public unsafe class EcsGroup : IDisposable, IEquatable<EcsGroup>
+    public unsafe class EcsGroup : IDisposable, IEquatable<EcsGroup>, IEnumerable<int>
     {
         private EcsWorld _source;
         private int[] _dense;
@@ -143,7 +157,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Constrcutors/Finalizer
+        #region Constrcutors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsGroup New(EcsWorld world)
         {
@@ -161,16 +175,12 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Has
-        //TODO переименовать в Has
+        #region Has/IndexOf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
         {
             return _sparse[entityID] > 0;
         }
-        #endregion
-
-        #region IndexOf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID)
         {
@@ -234,7 +244,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region CopyFrom/Clone
+        #region CopyFrom/Clone/Bake/ToSpan
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyFrom(EcsReadonlyGroup group) => CopyFrom(group.GetGroupInternal());
         public void CopyFrom(EcsGroup group)
@@ -253,6 +263,33 @@ namespace DCFApixels.DragonECS
             result.CopyFrom(this);
             return result;
         }
+        public int[] Bake()
+        {
+            int[] result = new int[_count];
+            Array.Copy(_dense, result, _count);
+            return result;
+        }
+        public int Bake(ref int[] entities)
+        {
+            if(entities.Length < _count)
+                entities = new int[_count];
+            Array.Copy(_dense, entities, _count);
+            return _count;
+        }
+        public void Bake(List<int> entities)
+        {
+            entities.Clear();
+            foreach (var e in this)
+                entities.Add(e);
+        }
+        public Span<int> ToSpan() => new Span<int>(_dense, 0, _count);
+        public Span<int> ToSpan(int start, int length)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+            if (start + length > _count) ThrowArgumentOutOfRangeException();
+#endif
+            return new Span<int>(_dense, start, length);
+        }
         #endregion
 
         #region Set operations
@@ -263,7 +300,7 @@ namespace DCFApixels.DragonECS
         public void UnionWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
+            if (_source != group.World) ThrowArgumentDifferentWorldsException();
 #endif
             foreach (var item in group)
                 if (!Has(item))
@@ -277,7 +314,7 @@ namespace DCFApixels.DragonECS
         public void ExceptWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
+            if (_source != group.World) ThrowArgumentDifferentWorldsException();
 #endif
             foreach (var item in this)
                 if (group.Has(item))
@@ -291,7 +328,7 @@ namespace DCFApixels.DragonECS
         public void AndWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (World != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
+            if (World != group.World) ThrowArgumentDifferentWorldsException();
 #endif
             foreach (var item in this)
                 if (!group.Has(item))
@@ -305,7 +342,7 @@ namespace DCFApixels.DragonECS
         public void XorWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) throw new ArgumentException("WorldIndex != groupFilter.WorldIndex");
+            if (_source != group.World) ThrowArgumentDifferentWorldsException();
 #endif
             foreach (var item in group)
                 if (Has(item))
@@ -316,18 +353,31 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Static Set operations
+        /// <summary>as Intersect sets</summary>
+        /// <returns>new group from pool</returns>
+        public static EcsGroup Union(EcsGroup a, EcsGroup b)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+            if (a._source != b._source) ThrowArgumentDifferentWorldsException();
+#endif
+            EcsGroup result = a._source.GetGroupFromPool();
+            foreach (var item in a)
+                result.AddInternal(item);
+            foreach (var item in b)
+                result.Add(item);
+            return result;
+        }
         /// <summary>as Except sets</summary>
         /// <returns>new group from pool</returns>
         public static EcsGroup Except(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) throw new ArgumentException("a.WorldIndex != b.WorldIndex");
+            if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
                 if (!b.Has(item))
                     result.AddInternal(item);
-            a._source.ReleaseGroup(a);
             return result;
         }
         /// <summary>as Intersect sets</summary>
@@ -335,50 +385,57 @@ namespace DCFApixels.DragonECS
         public static EcsGroup And(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) throw new ArgumentException("a.WorldIndex != b.WorldIndex");
+            if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
                 if (b.Has(item))
                     result.AddInternal(item);
-            a._source.ReleaseGroup(a);
             return result;
         }
-        /// <summary>as Intersect sets</summary>
+
+        /// <summary>as Symmetric Except sets</summary>
         /// <returns>new group from pool</returns>
-        public static EcsGroup Union(EcsGroup a, EcsGroup b)
+        public static EcsGroup Xor(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) throw new ArgumentException("a.WorldIndex != b.WorldIndex");
+            if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetGroupFromPool();
             foreach (var item in a)
-                result.AddInternal(item);
-            foreach (var item in a)
-                result.Add(item);
+                if (!b.Has(item))
+                    result.AddInternal(item);
+            foreach (var item in b)
+                if (!a.Has(item))
+                    result.AddInternal(item);
             return result;
         }
         #endregion
 
-        #region GetEnumerator
+        #region Enumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator()
         {
             return new Enumerator(this);
         }
-        #endregion
-
-        #region Enumerator
-        public ref struct Enumerator// : IDisposable
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            // private readonly EcsGroup source;
+            for (int i = 0; i < _count; i++)
+                yield return _dense[i];
+        }
+        IEnumerator<int> IEnumerable<int>.GetEnumerator()
+        {
+            for (int i = 0; i < _count; i++)
+                yield return _dense[i];
+        }
+        public ref struct Enumerator
+        {
             private readonly int[] _dense;
             private readonly int _count;
             private int _index;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator(EcsGroup group)
             {
-                // source = group;
                 _dense = group._dense;
                 _count = group._count;
                 _index = 0;
@@ -390,8 +447,6 @@ namespace DCFApixels.DragonECS
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index <= _count && _count < _dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
-            //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-            //public void Dispose() => source.Unlock();
         }
         #endregion
 
@@ -401,12 +456,10 @@ namespace DCFApixels.DragonECS
         public bool Equals(EcsReadonlyGroup other) => Equals(other.GetGroupInternal());
         public bool Equals(EcsGroup other)
         {
-            if (ReferenceEquals(other, null))
+            if (other is null || other.Count != Count)
                 return false;
-            if (other.Count != Count)
-                return false;
-            foreach (var item in other)
-                if (!Has(item))
+            foreach (var e in other)
+                if (!Has(e))
                     return false;
             return true;
         }
@@ -431,8 +484,7 @@ namespace DCFApixels.DragonECS
         private static bool StaticEquals(EcsGroup a, EcsReadonlyGroup b) => StaticEquals(a, b.GetGroupInternal());
         private static bool StaticEquals(EcsGroup a, EcsGroup b)
         {
-            if (ReferenceEquals(a, null))
-                return false;
+            if (a is null) return false;
             return a.Equals(b);
         }
         public static bool operator ==(EcsGroup a, EcsGroup b) => StaticEquals(a, b);
@@ -451,15 +503,12 @@ namespace DCFApixels.DragonECS
 
         #region IDisposable/Release
         public void Dispose() => Release();
-        public void Release()
-        {
-            _source.ReleaseGroup(this);
-        }
+        public void Release() => _source.ReleaseGroup(this);
         #endregion
 
         #region ThrowHalper
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-        internal static class ThrowHalper
+        internal static class ThrowHelper
         {
             [MethodImpl(MethodImplOptions.NoInlining)]
             public static void ThrowAlreadyContains(int entityID) => throw new EcsFrameworkException($"This group already contains entity {entityID}.");
@@ -467,6 +516,10 @@ namespace DCFApixels.DragonECS
             public static void ThrowArgumentOutOfRange() => throw new ArgumentOutOfRangeException($"index is less than 0 or is equal to or greater than Count.");
             [MethodImpl(MethodImplOptions.NoInlining)]
             public static void ThrowDoesNotContain(int entityID) => throw new EcsFrameworkException($"This group does not contain entity {entityID}.");
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public static void ThrowArgumentOutOfRangeException() => throw new ArgumentOutOfRangeException();
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public static void ThrowArgumentDifferentWorldsException() => throw new ArgumentException("The groups belong to different worlds.");
         }
 #endif
         #endregion
