@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
 using static DCFApixels.DragonECS.EcsGroup.ThrowHelper;
 #endif
 
@@ -149,7 +149,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (index < 0 || index >= Count) ThrowArgumentOutOfRange();
 #endif
                 return _dense[index];
@@ -198,7 +198,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AddInternal(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (Has(entityID)) ThrowAlreadyContains(entityID);
 #endif
             if (++_count >= _dense.Length)
@@ -216,7 +216,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RemoveInternal(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowDoesNotContain(entityID);
 #endif
             _dense[_sparse[entityID]] = _dense[_count];
@@ -249,7 +249,7 @@ namespace DCFApixels.DragonECS
         public void CopyFrom(EcsReadonlyGroup group) => CopyFrom(group.GetGroupInternal());
         public void CopyFrom(EcsGroup group)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (group.World != _source) throw new ArgumentException("groupFilter.WorldIndex != WorldIndex");
 #endif
             if (_count > 0)
@@ -285,7 +285,7 @@ namespace DCFApixels.DragonECS
         public Span<int> ToSpan() => new Span<int>(_dense, 0, _count);
         public Span<int> ToSpan(int start, int length)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (start + length > _count) ThrowArgumentOutOfRangeException();
 #endif
             return new Span<int>(_dense, start, length);
@@ -299,7 +299,7 @@ namespace DCFApixels.DragonECS
         /// <summary>as Union sets</summary>
         public void UnionWith(EcsGroup group)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) ThrowArgumentDifferentWorldsException();
 #endif
             foreach (var item in group)
@@ -313,7 +313,7 @@ namespace DCFApixels.DragonECS
         /// <summary>as Except sets</summary>
         public void ExceptWith(EcsGroup group)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) ThrowArgumentDifferentWorldsException();
 #endif
             foreach (var item in this)
@@ -327,7 +327,7 @@ namespace DCFApixels.DragonECS
         /// <summary>as Intersect sets</summary>
         public void AndWith(EcsGroup group)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (World != group.World) ThrowArgumentDifferentWorldsException();
 #endif
             foreach (var item in this)
@@ -341,7 +341,7 @@ namespace DCFApixels.DragonECS
         /// <summary>as Symmetric Except sets</summary>
         public void XorWith(EcsGroup group)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) ThrowArgumentDifferentWorldsException();
 #endif
             foreach (var item in group)
@@ -365,7 +365,7 @@ namespace DCFApixels.DragonECS
         /// <returns>new group from pool</returns>
         public static EcsGroup Union(EcsGroup a, EcsGroup b)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetFreeGroup();
@@ -379,7 +379,7 @@ namespace DCFApixels.DragonECS
         /// <returns>new group from pool</returns>
         public static EcsGroup Except(EcsGroup a, EcsGroup b)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetFreeGroup();
@@ -392,7 +392,7 @@ namespace DCFApixels.DragonECS
         /// <returns>new group from pool</returns>
         public static EcsGroup And(EcsGroup a, EcsGroup b)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetFreeGroup();
@@ -406,7 +406,7 @@ namespace DCFApixels.DragonECS
         /// <returns>new group from pool</returns>
         public static EcsGroup Xor(EcsGroup a, EcsGroup b)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (a._source != b._source) ThrowArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetFreeGroup();
@@ -524,7 +524,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region ThrowHalper
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
         internal static class ThrowHelper
         {
             [MethodImpl(MethodImplOptions.NoInlining)]

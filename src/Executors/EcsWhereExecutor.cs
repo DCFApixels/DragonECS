@@ -32,7 +32,7 @@
         {
             using (_executeWhere.Auto())
             {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
 #endif
                 _subject.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
@@ -59,7 +59,7 @@
         }
         public EcsGroup.Enumerator GetEnumerator()
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsRelevant) throw new System.InvalidOperationException();//TODO составить текст исключения. 
 #endif
             return group.GetEnumerator();
