@@ -10,17 +10,11 @@ namespace DCFApixels.DragonECS
         public byte r => color.r;
         public byte g => color.g;
         public byte b => color.b;
-        /// <summary>normalized R channel </summary>
-        public float rn => color.r / 255f;
-        /// <summary>normalized G channel </summary>
-        public float gn => color.g / 255f;
-        /// <summary>normalized B channel </summary>
-        public float bn => color.b / 255f;
         public DebugColorAttribute(byte r, byte g, byte b) => color = new ColorRecord(r, g, b);
         public DebugColorAttribute(DebugColor color) => this.color = new ColorRecord((int)color);
 
         [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 4)]
-        private readonly struct ColorRecord // Union
+        private readonly struct ColorRecord 
         {
             [FieldOffset(0)] public readonly int full;
             [FieldOffset(3)] public readonly byte r;
