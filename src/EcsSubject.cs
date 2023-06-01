@@ -127,11 +127,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Iterator
-        public EcsSubjectIterator GetIterator<TSubject>() where TSubject : EcsSubject
+        public EcsSubjectIterator GetIterator() where TSubject : EcsSubject
         {
             return new EcsSubjectIterator(this, World.Entities);
         }
-        public EcsSubjectIterator GetIteratorFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
+        public EcsSubjectIterator GetIteratorFor(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
         {
             return new EcsSubjectIterator(this, sourceGroup);
         }
