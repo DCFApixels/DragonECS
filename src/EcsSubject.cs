@@ -35,22 +35,22 @@ namespace DCFApixels.DragonECS
         public sealed class Builder : EcsSubjectBuilderBase
         {
             private EcsWorld _world;
-            private List<int> _inc;
-            private List<int> _exc;
+            private HashSet<int> _inc;
+            private HashSet<int> _exc;
 
             public EcsWorld World => _world;
 
             private Builder(EcsWorld world)
             {
                 _world = world;
-                _inc = new List<int>(8);
-                _exc = new List<int>(4);
+                _inc = new HashSet<int>(8);
+                _exc = new HashSet<int>(4);
             }
             internal static TSubject Build<TSubject>(EcsWorld world) where TSubject : EcsSubject
             {
                 Builder builder = new Builder(world);
-                Type queryType = typeof(TSubject);
-                ConstructorInfo constructorInfo = queryType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
+                Type subjectType = typeof(TSubject);
+                ConstructorInfo constructorInfo = subjectType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
                 EcsSubject newSubject;
                 if (constructorInfo != null)
                 {
@@ -100,11 +100,24 @@ namespace DCFApixels.DragonECS
             }
             #endregion
 
+            #region Combine
+            public TOtherSubject Combine<TOtherSubject>() where TOtherSubject : EcsSubject
+            {
+                var result = _world.GetSubject<TOtherSubject>();
+                _inc.UnionWith(result.mask._inc);
+                _exc.UnionWith(result.mask._exc);
+                return result;
+            }
+            #endregion
+
             private void End(out EcsMask mask)
             {
-                _inc.Sort();
-                _exc.Sort();
-                mask = new EcsMask(_world.Archetype, _inc.ToArray(), _exc.ToArray());
+                var inc = _inc.ToArray();
+                Array.Sort(inc);
+                var exc = _exc.ToArray();
+                Array.Sort(exc);
+
+                mask = new EcsMask(_world.Archetype, inc, exc);
                 _world = null;
                 _inc = null;
                 _exc = null;
@@ -161,12 +174,25 @@ namespace DCFApixels.DragonECS
             _exc = exc;
         }
 
+        public static EcsMask Union(EcsMask a, EcsMask b)
+        {
+            if(a._worldType != b._worldType) ThrowHelper.ThrowArgumentDifferentWorldsException();
+
+            HashSet<int> incset = new HashSet<int>(a._inc);
+            HashSet<int> excset = new HashSet<int>(a._exc);
+            incset.UnionWith(b._inc);
+            excset.UnionWith(b._exc);
+            return new EcsMask(a._worldType, incset.ToArray(), excset.ToArray());
+        }   
+
+        #region Object
         public override string ToString() => CreateLogString(_worldType, _inc, _exc);
+        #endregion
 
         #region Debug utils
         private static string CreateLogString(Type worldType, int[] inc, int[] exc)
         {
-#if DEBUG
+#if (DEBUG && !DISABLE_DEBUG)
             int worldID = WorldMetaStorage.GetWorldID(worldType);
             string converter(int o) => EcsDebugUtility.GetGenericTypeName(WorldMetaStorage.GetComponentType(worldID, o), 1);
             return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
@@ -192,6 +218,14 @@ namespace DCFApixels.DragonECS
                 excTypes = exc.Select(converter).ToArray();
             }
             public override string ToString() => CreateLogString(worldType, inc, exc);
+        }
+        #endregion
+
+        #region ThrowHelper
+        internal static class ThrowHelper
+        {
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public static void ThrowArgumentDifferentWorldsException() => throw new ArgumentException("The groups belong to different worlds.");
         }
         #endregion
     }
