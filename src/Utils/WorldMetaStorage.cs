@@ -49,9 +49,48 @@ namespace DCFApixels.DragonECS
         public static bool IsComponentTypeDeclared(int worldID, Type type) => _metas[worldID].IsDeclaredType(type);
         public static Type GetComponentType(int worldID, int componentID) => _metas[worldID].GetComponentType(componentID);
 
+
         private abstract class ResizerBase
         {
+            public abstract Type Type { get; }
+            public abstract int[] IDS { get; }
             public abstract void Resize(int size);
+        }
+
+        #region Containers
+        private static class Pool<T>
+        {
+            public static int[] ids;
+            static Pool()
+            {
+                ids = new int[_tokenCount];
+                for (int i = 0; i < ids.Length; i++)
+                    ids[i] = -1;
+                _resizers.Add(new Resizer());
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static int Get(int token)
+            {
+                ref int id = ref ids[token];
+                if (id < 0)
+                {
+                    var meta = _metas[token];
+                    id = meta.GetComponentID(typeof(T).GetGenericArguments()[0]);
+                    meta.AddType(id, typeof(T));
+                }
+                return id;
+            }
+            private sealed class Resizer : ResizerBase
+            {
+                public override Type Type => typeof(T);
+                public override int[] IDS => ids;
+                public override void Resize(int size)
+                {
+                    int oldSize = ids.Length;
+                    Array.Resize(ref ids, size);
+                    ArrayUtility.Fill(ids, -1, oldSize, size);
+                }
+            }
         }
         private static class Component<T>
         {
@@ -70,13 +109,15 @@ namespace DCFApixels.DragonECS
                 if (id < 0)
                 {
                     var meta = _metas[token];
-                    id = (ushort)meta.componentCount++;
+                    id = meta.componentCount++;
                     meta.AddType(id, typeof(T));
                 }
                 return id;
             }
             private sealed class Resizer : ResizerBase
             {
+                public override Type Type => typeof(T);
+                public override int[] IDS => ids;
                 public override void Resize(int size)
                 {
                     int oldSize = ids.Length;
@@ -105,6 +146,8 @@ namespace DCFApixels.DragonECS
             }
             private sealed class Resizer : ResizerBase
             {
+                public override Type Type => typeof(T);
+                public override int[] IDS => ids;
                 public override void Resize(int size)
                 {
                     int oldSize = ids.Length;
@@ -133,6 +176,8 @@ namespace DCFApixels.DragonECS
             }
             private sealed class Resizer : ResizerBase
             {
+                public override Type Type => typeof(T);
+                public override int[] IDS => ids;
                 public override void Resize(int size)
                 {
                     int oldSize = ids.Length;
@@ -161,6 +206,8 @@ namespace DCFApixels.DragonECS
             }
             private sealed class Resizer : ResizerBase
             {
+                public override Type Type => typeof(T);
+                public override int[] IDS => ids;
                 public override void Resize(int size)
                 {
                     int oldSize = ids.Length;
@@ -169,6 +216,8 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
+        #endregion
+
         private class WorldTypeMeta
         {
             public int id;
@@ -177,21 +226,30 @@ namespace DCFApixels.DragonECS
             public int executorsCount;
             public int worldComponentCount;
             private Type[] _types;
-            private HashSet<Type> _declaredComponentTypes;
+            private Dictionary<Type, int> _declaredComponentTypes;
             public void AddType(int id, Type type)
             {
                 if (_types.Length <= id)
                     Array.Resize(ref _types, id + 10);
                 _types[id] = type;
 
-                _declaredComponentTypes.Add(type);
+                _declaredComponentTypes.Add(type, id);
             }
             public Type GetComponentType(int componentID) => _types[componentID];
-            public bool IsDeclaredType(Type type) => _declaredComponentTypes.Contains(type);
+            public bool IsDeclaredType(Type type) => _declaredComponentTypes.ContainsKey(type);
+            public int GetComponentID(Type type)
+            {
+                if (!IsDeclaredType(type))
+                {
+                    RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+                    typeof(Component<>).MakeGenericType(type);
+                }
+                return _declaredComponentTypes[type];
+            }
             public WorldTypeMeta()
             {
                 _types = new Type[10];
-                _declaredComponentTypes = new HashSet<Type>();
+                _declaredComponentTypes = new Dictionary<Type, int>();
             }
         }
     }
