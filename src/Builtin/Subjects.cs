@@ -16,8 +16,8 @@
         public readonly S1 s1;
         public CombinedSubject(Builder b)
         {
-            s0 = b.CombineInclude<S0>();
-            s1 = b.CombineInclude<S1>();
+            s0 = b.Combine<S0>();
+            s1 = b.Combine<S1>();
         }
     }
 
@@ -31,9 +31,9 @@
         public readonly S2 s2;
         public CombinedSubject(Builder b)
         {
-            s0 = b.CombineInclude<S0>();
-            s1 = b.CombineInclude<S1>();
-            s2 = b.CombineInclude<S2>();
+            s0 = b.Combine<S0>();
+            s1 = b.Combine<S1>();
+            s2 = b.Combine<S2>();
         }
     }
 
@@ -49,10 +49,10 @@
         public readonly S3 s3;
         public CombinedSubject(Builder b)
         {
-            s0 = b.CombineInclude<S0>();
-            s1 = b.CombineInclude<S1>();
-            s2 = b.CombineInclude<S2>();
-            s3 = b.CombineInclude<S3>();
+            s0 = b.Combine<S0>();
+            s1 = b.Combine<S1>();
+            s2 = b.Combine<S2>();
+            s3 = b.Combine<S3>();
         }
     }
 
@@ -70,11 +70,11 @@
         public readonly S4 s4;
         public CombinedSubject(Builder b)
         {
-            s0 = b.CombineInclude<S0>();
-            s1 = b.CombineInclude<S1>();
-            s2 = b.CombineInclude<S2>();
-            s3 = b.CombineInclude<S3>();
-            s4 = b.CombineInclude<S4>();
+            s0 = b.Combine<S0>();
+            s1 = b.Combine<S1>();
+            s2 = b.Combine<S2>();
+            s3 = b.Combine<S3>();
+            s4 = b.Combine<S4>();
         }
     }
 
@@ -94,12 +94,12 @@
         public readonly S5 s5;
         public CombinedSubject(Builder b)
         {
-            s0 = b.CombineInclude<S0>();
-            s1 = b.CombineInclude<S1>();
-            s2 = b.CombineInclude<S2>();
-            s3 = b.CombineInclude<S3>();
-            s4 = b.CombineInclude<S4>();
-            s5 = b.CombineInclude<S5>();
+            s0 = b.Combine<S0>();
+            s1 = b.Combine<S1>();
+            s2 = b.Combine<S2>();
+            s3 = b.Combine<S3>();
+            s4 = b.Combine<S4>();
+            s5 = b.Combine<S5>();
         }
     }
 

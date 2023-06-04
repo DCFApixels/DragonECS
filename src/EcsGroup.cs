@@ -71,8 +71,8 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Bake(List<int> entities) => _source.Bake(entities);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ReadOnlySpan<int> ToSpan() => _source.ToSpan();
-        public ReadOnlySpan<int> ToSpan(int start, int length) => _source.ToSpan(start, length);
+        public Span<int> ToSpan() => _source.ToSpan();
+        public Span<int> ToSpan(int start, int length) => _source.ToSpan(start, length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() => _source.First();
@@ -163,6 +163,7 @@ namespace DCFApixels.DragonECS
         {
             return world.GetFreeGroup();
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal EcsGroup(EcsWorld world, int denseCapacity = 64)
         {
             _source = world;
@@ -281,13 +282,13 @@ namespace DCFApixels.DragonECS
             foreach (var e in this)
                 entities.Add(e);
         }
-        public ReadOnlySpan<int> ToSpan() => new ReadOnlySpan<int>(_dense, 0, _count);
-        public ReadOnlySpan<int> ToSpan(int start, int length)
+        public Span<int> ToSpan() => new Span<int>(_dense, 0, _count);
+        public Span<int> ToSpan(int start, int length)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (start + length > _count) ThrowArgumentOutOfRangeException();
 #endif
-            return new ReadOnlySpan<int>(_dense, start, length);
+            return new Span<int>(_dense, start, length);
         }
         #endregion
 
@@ -322,9 +323,9 @@ namespace DCFApixels.DragonECS
 
         /// <summary>as Intersect sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void IntersectWith(EcsReadonlyGroup group) => IntersectWith(group.GetGroupInternal());
+        public void AndWith(EcsReadonlyGroup group) => AndWith(group.GetGroupInternal());
         /// <summary>as Intersect sets</summary>
-        public void IntersectWith(EcsGroup group)
+        public void AndWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (World != group.World) ThrowArgumentDifferentWorldsException();
@@ -336,9 +337,9 @@ namespace DCFApixels.DragonECS
 
         /// <summary>as Symmetric Except sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SymmetricExceptWith(EcsReadonlyGroup group) => SymmetricExceptWith(group.GetGroupInternal());
+        public void XorWith(EcsReadonlyGroup group) => XorWith(group.GetGroupInternal());
         /// <summary>as Symmetric Except sets</summary>
-        public void SymmetricExceptWith(EcsGroup group)
+        public void XorWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) ThrowArgumentDifferentWorldsException();
@@ -389,7 +390,7 @@ namespace DCFApixels.DragonECS
         }
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
-        public static EcsGroup Intersect(EcsGroup a, EcsGroup b)
+        public static EcsGroup And(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (a._source != b._source) ThrowArgumentDifferentWorldsException();
@@ -403,7 +404,7 @@ namespace DCFApixels.DragonECS
 
         /// <summary>as Symmetric Except sets</summary>
         /// <returns>new group from pool</returns>
-        public static EcsGroup SymmetricExcept(EcsGroup a, EcsGroup b)
+        public static EcsGroup Xor(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (a._source != b._source) ThrowArgumentDifferentWorldsException();
