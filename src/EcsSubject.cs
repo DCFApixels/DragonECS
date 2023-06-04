@@ -104,6 +104,9 @@ namespace DCFApixels.DragonECS
             public TOtherSubject Combine<TOtherSubject>() where TOtherSubject : EcsSubject
             {
                 var result = _world.GetSubject<TOtherSubject>();
+                _inc.ExceptWith(result.mask._exc);//удаляю конфликтующие ограничения
+                _exc.ExceptWith(result.mask._inc);//удаляю конфликтующие ограничения
+
                 _inc.UnionWith(result.mask._inc);
                 _exc.UnionWith(result.mask._exc);
                 return result;
