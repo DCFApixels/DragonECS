@@ -1,11 +1,11 @@
 ﻿namespace DCFApixels.DragonECS
 {
-    public class SingleSubject<TComponent, TPool> : EcsSubject where TPool : IEcsPoolImplementation<TComponent>, new()
+    public class SingleSubject<TPool> : EcsSubject where TPool : IEcsPoolImplementation, new()
     {
         public readonly TPool pool;
         public SingleSubject(Builder b)
         {
-            pool = b.Include<TComponent, TPool>();
+            pool = b.Include<TPool>();
         }
     }
     public class CombinedSubject<S0, S1> : EcsSubject

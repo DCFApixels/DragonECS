@@ -5,7 +5,8 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    internal static class WorldMetaStorage
+    //TODO этот класс требует переработки, изначально такая конструкция имела хорошую производительность, но сейчас он слишком раздулся
+    internal static class WorldMetaStorage 
     {
         private static int _tokenCount = 0;
         private static List<ResizerBase> _resizers = new List<ResizerBase>();
@@ -37,15 +38,18 @@ namespace DCFApixels.DragonECS
             return id;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetWorldId<TWorldArchetype>() => WorldIndex<TWorldArchetype>.id;
+        public static int GetWorldID<TWorldArchetype>() => WorldIndex<TWorldArchetype>.id;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetComponentId<T>(int worldID) => Component<T>.Get(worldID);
+        public static int GetComponentID<T>(int worldID) => Component<T>.Get(worldID);
+        public static int GetComponentID(Type type, int worldID) => _metas[worldID].GetComponentID(type);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetSubjectId<T>(int worldID) => Subject<T>.Get(worldID);
+        public static int GetPoolID<T>(int worldID) => Pool<T>.Get(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetExecutorId<T>(int worldID) => Executor<T>.Get(worldID);
+        public static int GetSubjectID<T>(int worldID) => Subject<T>.Get(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetWorldComponentId<T>(int worldID) => WorldComponent<T>.Get(worldID);
+        public static int GetExecutorID<T>(int worldID) => Executor<T>.Get(worldID);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetWorldComponentID<T>(int worldID) => WorldComponent<T>.Get(worldID);
         public static bool IsComponentTypeDeclared(int worldID, Type type) => _metas[worldID].IsDeclaredType(type);
         public static Type GetComponentType(int worldID, int componentID) => _metas[worldID].GetComponentType(componentID);
 
@@ -58,14 +62,54 @@ namespace DCFApixels.DragonECS
         }
 
         #region Containers
+        public static class PoolComponentIdArrays
+        {
+            private static Dictionary<Type, int[]> _componentTypeArrayPairs = new Dictionary<Type, int[]>();
+
+            public static int[] GetIdsArray(Type type)
+            {
+                int targetSize = _tokenCount;
+                if (!_componentTypeArrayPairs.TryGetValue(type, out int[] result))
+                {
+                    result = new int[targetSize];
+                    for (int i = 0; i < result.Length; i++)
+                        result[i] = -1;
+                    _componentTypeArrayPairs.Add(type, result);
+                }
+                else
+                {
+                    if(result.Length < targetSize)
+                    {
+                        int oldSize = result.Length;
+                        Array.Resize(ref result, targetSize);
+                        ArrayUtility.Fill(result, -1, oldSize, targetSize);
+                        _componentTypeArrayPairs[type] = result;
+                    }
+                }
+
+                return result;
+            }
+
+            public static int GetComponentID(Type type, int token)
+            {
+                GetIdsArray(type);
+                ref int id = ref _componentTypeArrayPairs[type][token];
+                if (id < 0)
+                {
+                    var meta = _metas[token];
+                    id = meta.componentCount++;
+                    meta.AddType(id, type);
+                }
+                return id;
+            }
+        }
         private static class Pool<T>
         {
             public static int[] ids;
+            private static Type componentType = typeof(T).GetGenericArguments()[0];
             static Pool()
             {
-                ids = new int[_tokenCount];
-                for (int i = 0; i < ids.Length; i++)
-                    ids[i] = -1;
+                ids = PoolComponentIdArrays.GetIdsArray(componentType);
                 _resizers.Add(new Resizer());
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -74,9 +118,7 @@ namespace DCFApixels.DragonECS
                 ref int id = ref ids[token];
                 if (id < 0)
                 {
-                    var meta = _metas[token];
-                    id = meta.GetComponentID(typeof(T).GetGenericArguments()[0]);
-                    meta.AddType(id, typeof(T));
+                    id = PoolComponentIdArrays.GetComponentID(componentType, token);
                 }
                 return id;
             }
@@ -86,9 +128,7 @@ namespace DCFApixels.DragonECS
                 public override int[] IDS => ids;
                 public override void Resize(int size)
                 {
-                    int oldSize = ids.Length;
-                    Array.Resize(ref ids, size);
-                    ArrayUtility.Fill(ids, -1, oldSize, size);
+                    ids = PoolComponentIdArrays.GetIdsArray(componentType);
                 }
             }
         }
@@ -97,9 +137,7 @@ namespace DCFApixels.DragonECS
             public static int[] ids;
             static Component()
             {
-                ids = new int[_tokenCount];
-                for (int i = 0; i < ids.Length; i++)
-                    ids[i] = -1;
+                ids = PoolComponentIdArrays.GetIdsArray(typeof(T));
                 _resizers.Add(new Resizer());
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -108,9 +146,7 @@ namespace DCFApixels.DragonECS
                 ref int id = ref ids[token];
                 if (id < 0)
                 {
-                    var meta = _metas[token];
-                    id = meta.componentCount++;
-                    meta.AddType(id, typeof(T));
+                    id = PoolComponentIdArrays.GetComponentID(typeof(T), token);
                 }
                 return id;
             }
@@ -120,9 +156,7 @@ namespace DCFApixels.DragonECS
                 public override int[] IDS => ids;
                 public override void Resize(int size)
                 {
-                    int oldSize = ids.Length;
-                    Array.Resize(ref ids, size);
-                    ArrayUtility.Fill(ids, -1, oldSize, size);
+                    ids = PoolComponentIdArrays.GetIdsArray(typeof(T));
                 }
             }
         }
@@ -218,6 +252,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        public struct XXX : IEcsComponent { }
         private class WorldTypeMeta
         {
             public int id;
@@ -239,12 +274,7 @@ namespace DCFApixels.DragonECS
             public bool IsDeclaredType(Type type) => _declaredComponentTypes.ContainsKey(type);
             public int GetComponentID(Type type)
             {
-                if (!IsDeclaredType(type))
-                {
-                    RuntimeHelpers.RunClassConstructor(type.TypeHandle);
-                    typeof(Component<>).MakeGenericType(type);
-                }
-                return _declaredComponentTypes[type];
+                return PoolComponentIdArrays.GetComponentID(type, id);
             }
             public WorldTypeMeta()
             {

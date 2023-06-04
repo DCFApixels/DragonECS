@@ -191,20 +191,20 @@ namespace DCFApixels.DragonECS
     {
         public static EcsTagPool<TTagComponent> GetPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.GetPool<TTagComponent, EcsTagPool<TTagComponent>>();
+            return self.GetPool<EcsTagPool<TTagComponent>>();
         }
 
         public static EcsTagPool<TTagComponent> Include<TTagComponent>(this EcsSubjectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.Include<TTagComponent, EcsTagPool<TTagComponent>>();
+            return self.Include<EcsTagPool<TTagComponent>>();
         }
         public static EcsTagPool<TTagComponent> Exclude<TTagComponent>(this EcsSubjectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.Exclude<TTagComponent, EcsTagPool<TTagComponent>>();
+            return self.Exclude<EcsTagPool<TTagComponent>>();
         }
         public static EcsTagPool<TTagComponent> Optional<TTagComponent>(this EcsSubjectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.Optional<TTagComponent, EcsTagPool<TTagComponent>>();
+            return self.Optional<EcsTagPool<TTagComponent>>();
         }
     }
 }

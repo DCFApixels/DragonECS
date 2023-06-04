@@ -104,7 +104,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region ComponentInfo
-        public int GetComponentID<T>() => WorldMetaStorage.GetComponentId<T>(_worldTypeID);
+        public int GetComponentID<T>() => WorldMetaStorage.GetComponentID<T>(_worldTypeID);
+        public int GetComponentID(Type type) => WorldMetaStorage.GetComponentID(type, _worldTypeID);
         public Type GetComponentType(int componentID) => WorldMetaStorage.GetComponentType(_worldTypeID, componentID);
         public bool IsComponentTypeDeclared<T>() => IsComponentTypeDeclared(typeof(T));
         public bool IsComponentTypeDeclared(Type type) => WorldMetaStorage.IsComponentTypeDeclared(_worldTypeID, type);
@@ -114,9 +115,9 @@ namespace DCFApixels.DragonECS
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.Preserve]
 #endif
-        public TPool GetPool<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new()
+        public TPool GetPool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
-            int uniqueID = WorldMetaStorage.GetComponentId<TComponent>(_worldTypeID);
+            int uniqueID = WorldMetaStorage.GetPoolID<TPool>(_worldTypeID);
             if (uniqueID >= _pools.Length)
             {
                 int oldCapacity = _pools.Length;
@@ -133,7 +134,7 @@ namespace DCFApixels.DragonECS
         }
         public TSubject GetSubject<TSubject>() where TSubject : EcsSubject
         {
-            int uniqueID = WorldMetaStorage.GetSubjectId<TSubject>(_worldTypeID);
+            int uniqueID = WorldMetaStorage.GetSubjectID<TSubject>(_worldTypeID);
             if (uniqueID >= _subjects.Length)
                 Array.Resize(ref _subjects, _subjects.Length << 1);
             if (_subjects[uniqueID] == null)
@@ -142,7 +143,7 @@ namespace DCFApixels.DragonECS
         }
         public TExecutor GetExecutor<TExecutor>() where TExecutor : EcsQueryExecutor, new()
         {
-            int index = WorldMetaStorage.GetExecutorId<TExecutor>(_worldTypeID);
+            int index = WorldMetaStorage.GetExecutorID<TExecutor>(_worldTypeID);
             if (index >= _executors.Length)
                 Array.Resize(ref _executors, _executors.Length << 1);
             if (_executors[index] == null)
@@ -155,7 +156,7 @@ namespace DCFApixels.DragonECS
         }
         public T Get<T>() where T : class, new()
         {
-            int index = WorldMetaStorage.GetWorldComponentId<T>(_worldTypeID);
+            int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
             if (index >= _components.Length)
                 Array.Resize(ref _executors, _executors.Length << 1);
 

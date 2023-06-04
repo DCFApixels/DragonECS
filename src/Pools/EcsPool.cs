@@ -199,20 +199,20 @@ namespace DCFApixels.DragonECS
     {
         public static EcsPool<TComponent> GetPool<TComponent>(this EcsWorld self) where TComponent : struct, IEcsComponent
         {
-            return self.GetPool<TComponent, EcsPool<TComponent>>();
+            return self.GetPool<EcsPool<TComponent>>();
         }
 
         public static EcsPool<TComponent> Include<TComponent>(this EcsSubjectBuilderBase self) where TComponent : struct, IEcsComponent
         {
-            return self.Include<TComponent, EcsPool<TComponent>>();
+            return self.Include<EcsPool<TComponent>>();
         }
         public static EcsPool<TComponent> Exclude<TComponent>(this EcsSubjectBuilderBase self) where TComponent : struct, IEcsComponent
         {
-            return self.Exclude<TComponent, EcsPool<TComponent>>();
+            return self.Exclude<EcsPool<TComponent>>();
         }
         public static EcsPool<TComponent> Optional<TComponent>(this EcsSubjectBuilderBase self) where TComponent : struct, IEcsComponent
         {
-            return self.Optional<TComponent, EcsPool<TComponent>>();
+            return self.Optional<EcsPool<TComponent>>();
         }
     }
 }

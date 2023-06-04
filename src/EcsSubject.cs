@@ -68,35 +68,35 @@ namespace DCFApixels.DragonECS
             }
 
             #region Include/Exclude/Optional
-            public sealed override TPool Include<TComponent, TPool>()
+            public sealed override TPool Include<TPool>()
             {
-                IncludeImplicit<TComponent>();
-                return _world.GetPool<TComponent, TPool>();
+                IncludeImplicit(typeof(TPool).GetGenericArguments()[0]);
+                return _world.GetPool<TPool>();
             }
-            public sealed override TPool Exclude<TComponent, TPool>()
+            public sealed override TPool Exclude<TPool>()
             {
-                ExcludeImplicit<TComponent>();
-                return _world.GetPool<TComponent, TPool>();
+                ExcludeImplicit(typeof(TPool).GetGenericArguments()[0]);
+                return _world.GetPool<TPool>();
             }
-            public sealed override TPool Optional<TComponent, TPool>()
+            public sealed override TPool Optional<TPool>()
             {
-                return _world.GetPool<TComponent, TPool>();
+                return _world.GetPool<TPool>();
             }
-            private void IncludeImplicit<TComponent>()
+            private void IncludeImplicit(Type type)
             {
-                int id = _world.GetComponentID<TComponent>();
+                int id = _world.GetComponentID(type);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(id) || _exc.Contains(id)) throw new EcsFrameworkException($"{typeof(TComponent).Name} already in constraints list.");
+                if (_inc.Contains(id) || _exc.Contains(id)) throw new EcsFrameworkException($"{type.Name} already in constraints list.");
 #endif
-                _inc.Add(_world.GetComponentID<TComponent>());
+                _inc.Add(id);
             }
-            private void ExcludeImplicit<TComponent>()
+            private void ExcludeImplicit(Type type)
             {
-                int id = _world.GetComponentID<TComponent>();
+                int id = _world.GetComponentID(type);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(id) || _exc.Contains(id)) throw new EcsFrameworkException($"{typeof(TComponent).Name} already in constraints list.");
+                if (_inc.Contains(id) || _exc.Contains(id)) throw new EcsFrameworkException($"{type.Name} already in constraints list.");
 #endif
-                _exc.Add(_world.GetComponentID<TComponent>());
+                _exc.Add(id);
             }
             #endregion
 
@@ -127,13 +127,13 @@ namespace DCFApixels.DragonECS
 #if UNITY_2020_3_OR_NEWER
             [UnityEngine.Scripting.Preserve]
 #endif
-            private void SupportReflectionHack<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new()
+            private void SupportReflectionHack<TPool>() where TPool : IEcsPoolImplementation, new()
             {
-                Include<TComponent, TPool>();
-                Exclude<TComponent, TPool>();
-                Optional<TComponent, TPool>();
-                IncludeImplicit<TComponent>();
-                ExcludeImplicit<TComponent>();
+                Include<TPool>();
+                Exclude<TPool>();
+                Optional<TPool>();
+                IncludeImplicit(null);
+                ExcludeImplicit(null);
             }
             #endregion
         }
@@ -154,9 +154,9 @@ namespace DCFApixels.DragonECS
     #region BuilderBase
     public abstract class EcsSubjectBuilderBase
     {
-        public abstract TPool Include<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new();
-        public abstract TPool Exclude<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new();
-        public abstract TPool Optional<TComponent, TPool>() where TPool : IEcsPoolImplementation<TComponent>, new();
+        public abstract TPool Include<TPool>() where TPool : IEcsPoolImplementation, new();
+        public abstract TPool Exclude<TPool>() where TPool : IEcsPoolImplementation, new();
+        public abstract TPool Optional<TPool>() where TPool : IEcsPoolImplementation, new();
     }
     #endregion
 
