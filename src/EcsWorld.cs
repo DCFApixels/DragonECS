@@ -42,6 +42,8 @@ namespace DCFApixels.DragonECS
 
         private object[] _components;
 
+        private EcsGroup _emptyGroup;
+
         #region Properties
         public abstract Type Archetype { get; }
         public int UniqueID => uniqueID;
@@ -84,6 +86,7 @@ namespace DCFApixels.DragonECS
 
             _groups = new List<WeakReference<EcsGroup>>();
             _allEntites = GetFreeGroup();
+            _emptyGroup = GetFreeGroup();
 
             _subjects = new EcsSubject[128];
             _executors = new EcsQueryExecutor[128];
@@ -354,6 +357,7 @@ namespace DCFApixels.DragonECS
             group.Clear();
             _groupsPool.Push(group);
         }
+        internal EcsGroup GetEmptyGroup() => _emptyGroup;
         #endregion
 
         #region Debug

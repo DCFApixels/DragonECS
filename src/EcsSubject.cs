@@ -100,8 +100,8 @@ namespace DCFApixels.DragonECS
             }
             #endregion
 
-            #region Combine
-            public TOtherSubject Combine<TOtherSubject>() where TOtherSubject : EcsSubject
+            #region Combine Include/Exclude/Optional
+            public TOtherSubject CombineInclude<TOtherSubject>() where TOtherSubject : EcsSubject
             {
                 var result = _world.GetSubject<TOtherSubject>();
                 _inc.ExceptWith(result.mask._exc);//удаляю конфликтующие ограничения
@@ -110,6 +110,20 @@ namespace DCFApixels.DragonECS
                 _inc.UnionWith(result.mask._inc);
                 _exc.UnionWith(result.mask._exc);
                 return result;
+            }
+            public TOtherSubject CombineExclude<TOtherSubject>() where TOtherSubject : EcsSubject
+            {
+                var result = _world.GetSubject<TOtherSubject>();
+                _inc.ExceptWith(result.mask._exc);//удаляю конфликтующие ограничения
+                _exc.ExceptWith(result.mask._inc);//удаляю конфликтующие ограничения
+
+                _inc.UnionWith(result.mask._inc);
+                _exc.UnionWith(result.mask._exc);
+                return result;
+            }
+            public TOtherSubject CombineOptional<TOtherSubject>() where TOtherSubject : EcsSubject
+            {
+                return _world.GetSubject<TOtherSubject>();
             }
             #endregion
 
@@ -120,7 +134,7 @@ namespace DCFApixels.DragonECS
                 var exc = _exc.ToArray();
                 Array.Sort(exc);
 
-                mask = new EcsMask(_world.Archetype, inc, exc);
+                mask = new EcsMask(_world.Archetype, inc, exc, _inc.Overlaps(exc));
                 _world = null;
                 _inc = null;
                 _exc = null;
@@ -170,23 +184,15 @@ namespace DCFApixels.DragonECS
         internal readonly Type _worldType;
         internal readonly int[] _inc;
         internal readonly int[] _exc;
-        public EcsMask(Type worldType, int[] inc, int[] exc)
+        internal readonly bool _isConflicting;
+
+        public EcsMask(Type worldType, int[] inc, int[] exc, bool isConflicting)
         {
             _worldType = worldType;
             _inc = inc;
             _exc = exc;
+            _isConflicting = isConflicting;
         }
-
-        public static EcsMask Union(EcsMask a, EcsMask b)
-        {
-            if(a._worldType != b._worldType) ThrowHelper.ThrowArgumentDifferentWorldsException();
-
-            HashSet<int> incset = new HashSet<int>(a._inc);
-            HashSet<int> excset = new HashSet<int>(a._exc);
-            incset.UnionWith(b._inc);
-            excset.UnionWith(b._exc);
-            return new EcsMask(a._worldType, incset.ToArray(), excset.ToArray());
-        }   
 
         #region Object
         public override string ToString() => CreateLogString(_worldType, _inc, _exc);
