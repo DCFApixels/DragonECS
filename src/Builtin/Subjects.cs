@@ -16,8 +16,8 @@
         public readonly S1 s1;
         public CombinedSubject(Builder b)
         {
-            s0 = b.Combine<S0>();
-            s1 = b.Combine<S1>();
+            s0 = b.Combine<S0>(0);
+            s1 = b.Combine<S1>(1);
         }
     }
 
@@ -31,9 +31,9 @@
         public readonly S2 s2;
         public CombinedSubject(Builder b)
         {
-            s0 = b.Combine<S0>();
-            s1 = b.Combine<S1>();
-            s2 = b.Combine<S2>();
+            s0 = b.Combine<S0>(0);
+            s1 = b.Combine<S1>(1);
+            s2 = b.Combine<S2>(2);
         }
     }
 
@@ -49,10 +49,10 @@
         public readonly S3 s3;
         public CombinedSubject(Builder b)
         {
-            s0 = b.Combine<S0>();
-            s1 = b.Combine<S1>();
-            s2 = b.Combine<S2>();
-            s3 = b.Combine<S3>();
+            s0 = b.Combine<S0>(0);
+            s1 = b.Combine<S1>(1);
+            s2 = b.Combine<S2>(2);
+            s3 = b.Combine<S3>(3);
         }
     }
 
@@ -70,11 +70,11 @@
         public readonly S4 s4;
         public CombinedSubject(Builder b)
         {
-            s0 = b.Combine<S0>();
-            s1 = b.Combine<S1>();
-            s2 = b.Combine<S2>();
-            s3 = b.Combine<S3>();
-            s4 = b.Combine<S4>();
+            s0 = b.Combine<S0>(0);
+            s1 = b.Combine<S1>(1);
+            s2 = b.Combine<S2>(2);
+            s3 = b.Combine<S3>(3);
+            s4 = b.Combine<S4>(4);
         }
     }
 
@@ -94,12 +94,12 @@
         public readonly S5 s5;
         public CombinedSubject(Builder b)
         {
-            s0 = b.Combine<S0>();
-            s1 = b.Combine<S1>();
-            s2 = b.Combine<S2>();
-            s3 = b.Combine<S3>();
-            s4 = b.Combine<S4>();
-            s5 = b.Combine<S5>();
+            s0 = b.Combine<S0>(0);
+            s1 = b.Combine<S1>(1);
+            s2 = b.Combine<S2>(2);
+            s3 = b.Combine<S3>(3);
+            s4 = b.Combine<S4>(4);
+            s5 = b.Combine<S5>(5);
         }
     }
 
