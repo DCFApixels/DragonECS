@@ -37,6 +37,7 @@ namespace DCFApixels.DragonECS
             private EcsWorld _world;
             private HashSet<int> _inc;
             private HashSet<int> _exc;
+            private List<CombinedSubject> _subjects;
 
             public EcsWorld World => _world;
 
@@ -101,20 +102,29 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Combine
-            public TOtherSubject Combine<TOtherSubject>() where TOtherSubject : EcsSubject
+            public TOtherSubject Combine<TOtherSubject>(int order = 0) where TOtherSubject : EcsSubject
             {
                 var result = _world.GetSubject<TOtherSubject>();
-                _inc.ExceptWith(result.mask._exc);//удаляю конфликтующие ограничения
-                _exc.ExceptWith(result.mask._inc);//удаляю конфликтующие ограничения
-
-                _inc.UnionWith(result.mask._inc);
-                _exc.UnionWith(result.mask._exc);
+                _subjects.Add(new CombinedSubject(result, order));
                 return result;
             }
             #endregion
 
             private void End(out EcsMask mask)
             {
+                if(_subjects.Count > 0)
+                {
+                    _subjects.Sort((a, b) => a.order - b.order);
+                    foreach (var item in _subjects)
+                    {
+                        EcsMask submask = item.subject.mask;
+                        _inc.ExceptWith(submask._exc);//удаляю конфликтующие ограничения
+                        _exc.ExceptWith(submask._inc);//удаляю конфликтующие ограничения
+                        _inc.UnionWith(submask._inc);
+                        _exc.UnionWith(submask._exc);
+                    }
+                }
+
                 var inc = _inc.ToArray();
                 Array.Sort(inc);
                 var exc = _exc.ToArray();
@@ -152,6 +162,17 @@ namespace DCFApixels.DragonECS
             return new EcsSubjectIterator(this, sourceGroup);
         }
         #endregion
+
+        private struct CombinedSubject
+        {
+            public EcsSubject subject;
+            public int order;
+            public CombinedSubject(EcsSubject subject, int order)
+            {
+                this.subject = subject;
+                this.order = order;
+            }
+        }
     }
 
     #region BuilderBase
@@ -170,29 +191,46 @@ namespace DCFApixels.DragonECS
         internal readonly Type _worldType;
         internal readonly int[] _inc;
         internal readonly int[] _exc;
-        public EcsMask(Type worldType, int[] inc, int[] exc)
+        internal EcsMask(Type worldType, int[] inc, int[] exc)
         {
+#if DEBUG
+            if (worldType is null) throw new ArgumentNullException();
+            CheckConstraints(inc, exc);
+#endif
             _worldType = worldType;
             _inc = inc;
             _exc = exc;
         }
-
-        public static EcsMask Union(EcsMask a, EcsMask b)
-        {
-            if(a._worldType != b._worldType) ThrowHelper.ThrowArgumentDifferentWorldsException();
-
-            HashSet<int> incset = new HashSet<int>(a._inc);
-            HashSet<int> excset = new HashSet<int>(a._exc);
-            incset.UnionWith(b._inc);
-            excset.UnionWith(b._exc);
-            return new EcsMask(a._worldType, incset.ToArray(), excset.ToArray());
-        }   
 
         #region Object
         public override string ToString() => CreateLogString(_worldType, _inc, _exc);
         #endregion
 
         #region Debug utils
+#if DEBUG
+        private static HashSet<int> _dummyHashSet = new HashSet<int>();
+        private void CheckConstraints(int[] inc, int[] exc)
+        {
+            lock (_dummyHashSet)
+            {
+                if (CheckRepeats(inc)) throw new EcsFrameworkException("The values in the Include constraints are repeated.");
+                if (CheckRepeats(exc)) throw new EcsFrameworkException("The values in the Exclude constraints are repeated.");
+                _dummyHashSet.Clear();
+                _dummyHashSet.UnionWith(inc);
+                if (_dummyHashSet.Overlaps(exc)) throw new EcsFrameworkException("Conflicting Include and Exclude constraints.");
+            }
+        }
+        private bool CheckRepeats(int[] array)
+        {
+            _dummyHashSet.Clear();
+            foreach (var item in array)
+            {
+                if (_dummyHashSet.Contains(item)) return false;
+                _dummyHashSet.Add(item);
+            }
+            return true;
+        }
+#endif
         private static string CreateLogString(Type worldType, int[] inc, int[] exc)
         {
 #if (DEBUG && !DISABLE_DEBUG)
