@@ -44,6 +44,7 @@ namespace DCFApixels.DragonECS
             private Builder(EcsWorld world)
             {
                 _world = world;
+                _subjects = new List<CombinedSubject>();
                 _inc = new HashSet<int>(8);
                 _exc = new HashSet<int>(4);
             }
@@ -225,10 +226,10 @@ namespace DCFApixels.DragonECS
             _dummyHashSet.Clear();
             foreach (var item in array)
             {
-                if (_dummyHashSet.Contains(item)) return false;
+                if (_dummyHashSet.Contains(item)) return true;
                 _dummyHashSet.Add(item);
             }
-            return true;
+            return false;
         }
 #endif
         private static string CreateLogString(Type worldType, int[] inc, int[] exc)
