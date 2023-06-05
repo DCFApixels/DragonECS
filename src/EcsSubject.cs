@@ -113,22 +113,35 @@ namespace DCFApixels.DragonECS
 
             private void End(out EcsMask mask)
             {
-                if(_subjects.Count > 0)
+                HashSet<int> maskInc;
+                HashSet<int> maskExc;
+                if (_subjects.Count > 0)
                 {
+                    maskInc = new HashSet<int>();
+                    maskExc = new HashSet<int>();
                     _subjects.Sort((a, b) => a.order - b.order);
                     foreach (var item in _subjects)
                     {
                         EcsMask submask = item.subject.mask;
-                        _inc.ExceptWith(submask._exc);//удаляю конфликтующие ограничения
-                        _exc.ExceptWith(submask._inc);//удаляю конфликтующие ограничения
-                        _inc.UnionWith(submask._inc);
-                        _exc.UnionWith(submask._exc);
+                        maskInc.ExceptWith(submask._exc);//удаляю конфликтующие ограничения
+                        maskExc.ExceptWith(submask._inc);//удаляю конфликтующие ограничения
+                        maskInc.UnionWith(submask._inc);
+                        maskExc.UnionWith(submask._exc);
                     }
+                    maskInc.ExceptWith(_exc);//удаляю конфликтующие ограничения
+                    maskExc.ExceptWith(_inc);//удаляю конфликтующие ограничения
+                    maskInc.UnionWith(_inc);
+                    maskExc.UnionWith(_exc);
+                }
+                else
+                {
+                    maskInc = _inc;
+                    maskExc = _exc;
                 }
 
-                var inc = _inc.ToArray();
+                var inc = maskInc.ToArray();
                 Array.Sort(inc);
-                var exc = _exc.ToArray();
+                var exc = maskExc.ToArray();
                 Array.Sort(exc);
 
                 mask = new EcsMask(_world.Archetype, inc, exc);
