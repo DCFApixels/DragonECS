@@ -275,6 +275,28 @@ class Subject : EcsSubject
     }
 }
 ```
+Субъекты так же можно комбинировать. Если будут конфликтующие ограничения у комбинируемых субъектов, то такие ограничения будут удаленыы для субъектов добавленных раньше.
+``` csharp
+using DCFApixels.DragonECS;
+...
+class Subject : EcsSubject
+{
+    public SomeSubject1 someSubject1;
+    public SomeSubject2 someSubject2;
+    public EcsPool<Pose> poses;
+ 
+    // вместо конструктора можно использовать виртуальную функцию Init(Builder b)
+    public Subject(Builder b) 
+    {
+        // комбинирует с SomeSubject1.
+        someSubject1 = b.Combine<SomeSubject1>(1);
+        // хотя для SomeSubject1 метод Combine был вызван раньше, сначала будет скомбинирован с SomeSubject2, так как по умолчанию order = 0.
+        someSubject2 = b.Combine<SomeSubject2>();
+        // если в SomeSubject1 или в SomeSubject2 было ограничение b.Exclude<Pose>() тут оно будет удалено.
+        poses = b.Include<Pose>();
+    }
+}
+```
  
 ## Запросы
 Используйте метод-запрос `EcsWorld.Where<TSubject>(out TSubject subject)` для получения необходимого системе набора сущностей. Запросы работают в связке с субъектами, субъекты определяют ограничения запросов, результатом запроса становится группа сущностей удовлетворяющая условиям субъекта. По умолчанию запрос делает выборку из всех сущностей в мире, но так же можно сделать выборку из определенной группы сущностей, для этого используйте `EcsWorld.WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject)`
@@ -314,7 +336,7 @@ for (int i = 0; i < group.Count; i++)
 <details>
 <summary>Визуализация методов</summary>
  
-![Без имени-1](https://github.com/DCFApixels/DragonECS/assets/99481254/2b4830d7-1515-4d8d-aa79-e40db736c0c6)
+![Визуализация методов группы](https://github.com/DCFApixels/DragonECS/assets/99481254/f2c85a9f-949c-4908-9a02-acc3c883a22b)
 
 </details>                    
                                 
@@ -324,16 +346,16 @@ groupA.UnionWith(groupB);
 EcsGroup newGroup = EcsGroup.Union(groupA, groupB);
 
 // Пересечение groupA и groupB
-groupA.AndWith(groupB);
-EcsGroup newGroup = EcsGroup.And(groupA, groupB);
+groupA.IntersectWith(groupB);
+EcsGroup newGroup = EcsGroup.Intersect(groupA, groupB);
 
 // Разность groupA и groupB
 groupA.ExceptWith(groupB);
 EcsGroup newGroup = EcsGroup.Except(groupA, groupB);
 
 // Симметрическая разность groupA и groupB
-groupA.XorWith(groupB);
-EcsGroup newGroup = EcsGroup.Xor(groupA, groupB);
+groupA.SymmetricExceptWith(groupB);
+EcsGroup newGroup = EcsGroup.SymmetricExcept(groupA, groupB);
 
 //Разница всех сущностей в мире и groupA
 groupA.Inverse();
