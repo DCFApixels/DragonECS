@@ -1,6 +1,6 @@
 ﻿namespace DCFApixels.DragonECS
 {
-    public class SingleSubject<TPool> : EcsSubject where TPool : IEcsPoolImplementation, new()
+    public sealed class SingleSubject<TPool> : EcsSubject where TPool : IEcsPoolImplementation, new()
     {
         public readonly TPool pool;
         public SingleSubject(Builder b)
@@ -8,7 +8,7 @@
             pool = b.Include<TPool>();
         }
     }
-    public class CombinedSubject<S0, S1> : EcsSubject
+    public sealed class CombinedSubject<S0, S1> : EcsSubject
         where S0 : EcsSubject
         where S1 : EcsSubject
     {
@@ -21,7 +21,7 @@
         }
     }
 
-    public class CombinedSubject<S0, S1, S2> : EcsSubject
+    public sealed class CombinedSubject<S0, S1, S2> : EcsSubject
         where S0 : EcsSubject
         where S1 : EcsSubject
         where S2 : EcsSubject
@@ -37,7 +37,7 @@
         }
     }
 
-    public class CombinedSubject<S0, S1, S2, S3> : EcsSubject
+    public sealed class CombinedSubject<S0, S1, S2, S3> : EcsSubject
         where S0 : EcsSubject
         where S1 : EcsSubject
         where S2 : EcsSubject
@@ -56,7 +56,7 @@
         }
     }
 
-    public class CombinedSubject<S0, S1, S2, S3, S4> : EcsSubject
+    public sealed class CombinedSubject<S0, S1, S2, S3, S4> : EcsSubject
         where S0 : EcsSubject
         where S1 : EcsSubject
         where S2 : EcsSubject
@@ -78,7 +78,7 @@
         }
     }
 
-    public class CombinedSubject<S0, S1, S2, S3, S4, S5> : EcsSubject
+    public sealed class CombinedSubject<S0, S1, S2, S3, S4, S5> : EcsSubject
         where S0 : EcsSubject
         where S1 : EcsSubject
         where S2 : EcsSubject
@@ -105,7 +105,7 @@
 
     public static class CombinedSubjectExtensions
     {
-        #region 2
+        #region Where 2
         public static EcsReadonlyGroup Where<S0, S1>(this EcsWorld self, out S0 s0, out S1 s1)
             where S0 : EcsSubject
             where S1 : EcsSubject
@@ -123,7 +123,7 @@
         }
         #endregion
 
-        #region 3
+        #region Where 3
         public static EcsReadonlyGroup Where<S0, S1, S2>(this EcsWorld self, out S0 s0, out S1 s1, out S2 s2)
             where S0 : EcsSubject
             where S1 : EcsSubject
@@ -144,7 +144,7 @@
         }
         #endregion
 
-        #region 4
+        #region Where 4
         public static EcsReadonlyGroup Where<S0, S1, S2, S3>(this EcsWorld self, out S0 s0, out S1 s1, out S2 s2, out S3 s3)
             where S0 : EcsSubject
             where S1 : EcsSubject
@@ -168,7 +168,7 @@
         }
         #endregion
 
-        #region 5
+        #region Where 5
         public static EcsReadonlyGroup Where<S0, S1, S2, S3, S4>(this EcsWorld self, out S0 s0, out S1 s1, out S2 s2, out S3 s3, out S4 s4)
             where S0 : EcsSubject
             where S1 : EcsSubject
@@ -195,7 +195,7 @@
         }
         #endregion
 
-        #region 6
+        #region Where 6
         public static EcsReadonlyGroup Where<S0, S1, S2, S3, S4, S5>(this EcsWorld self, out S0 s0, out S1 s1, out S2 s2, out S3 s3, out S4 s4, out S5 s5)
             where S0 : EcsSubject
             where S1 : EcsSubject
