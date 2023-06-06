@@ -252,7 +252,7 @@ WorldComponent component = _world.Get<WorldComponent>();
 > эта функция будет описана в ближайшее время
  
 ## Субъект
-Это классы наследуемые от EcsSubject, которые используются как посредник для взаимодействия с сущностями. Субъекты ондовременно являются кешем пулов и ограничением для запросов сущностей.
+Это пользовательские классы наследуемые от `EcsSubject`, которые используются как посредник для взаимодействия с сущностями. Субъекты одновременно являются кешем пулов и ограничением для фильтрации сущностей.
 ``` csharp
 using DCFApixels.DragonECS;
 ...
@@ -275,29 +275,37 @@ class Subject : EcsSubject
     }
 }
 ```
-Субъекты так же можно комбинировать. Если будут конфликтующие ограничения у комбинируемых субъектов, то такие ограничения будут удаленыы для субъектов добавленных раньше.
+В субъекты можно добавлять другие субъекты, тем самым комбинируя их. Ограничения так же будут скомбинированы
 ``` csharp
 using DCFApixels.DragonECS;
 ...
 class Subject : EcsSubject
 {
-    public SomeSubject1 someSubject1;
-    public SomeSubject2 someSubject2;
+    public OtherSubject1 someSubject1;
+    public OtherSubject2 someSubject2;
     public EcsPool<Pose> poses;
  
-    // вместо конструктора можно использовать виртуальную функцию Init(Builder b)
-    public Subject(Builder b) 
+    // функция Init аналогична конструктору Subject(Builder b)
+    protected override void Init(Builder b)
     {
         // комбинирует с SomeSubject1.
-        someSubject1 = b.Combine<SomeSubject1>(1);
-        // хотя для SomeSubject1 метод Combine был вызван раньше, сначала будет скомбинирован с SomeSubject2, так как по умолчанию order = 0.
-        someSubject2 = b.Combine<SomeSubject2>();
-        // если в SomeSubject1 или в SomeSubject2 было ограничение b.Exclude<Pose>() тут оно будет удалено.
+        otherSubject1 = b.Combine<OtherSubject1>(1);
+        // хотя для SomeSubject1 метод Combine был вызван раньше, сначала будет скомбинирован с OtherSubject2, так как по умолчанию order = 0.
+        otherSubject2 = b.Combine<OtherSubject2>();
+        // если в OtherSubject1 или в OtherSubject2 было ограничение b.Exclude<Pose>() тут оно будет заменено на b.Include<Pose>().
         poses = b.Include<Pose>();
     }
 }
 ```
+Если будут конфликтующие ограничения у комбинируемых субъектов, то новые ограничения будут заменять добавленные ранее. Базовые ограничения всегда заменяют ограничения из добавленных субъектов. Визуальный пример комбинации ограничений:
+| | cmp1 | cmp2 | cmp3 | cmp4 | cmp5 | разрешение конфликтных ограничений|
+| :--- | :--- | :--- | :--- | :--- | :--- |:--- |
+| OtherSubject2 | :heavy_check_mark: | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | |
+| OtherSubject1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | Для `cmp2` будет выбрано :heavy_check_mark: |
+| Subject | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | Для `cmp1` будет выбрано :x: |
+| Итоговые ограничения | :x: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_check_mark: | |
  
+
 ## Запросы
 Используйте метод-запрос `EcsWorld.Where<TSubject>(out TSubject subject)` для получения необходимого системе набора сущностей. Запросы работают в связке с субъектами, субъекты определяют ограничения запросов, результатом запроса становится группа сущностей удовлетворяющая условиям субъекта. По умолчанию запрос делает выборку из всех сущностей в мире, но так же можно сделать выборку из определенной группы сущностей, для этого используйте `EcsWorld.WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject)`
  
