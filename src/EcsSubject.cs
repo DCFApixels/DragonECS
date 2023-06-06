@@ -203,7 +203,9 @@ namespace DCFApixels.DragonECS
     public sealed class EcsMask
     {
         internal readonly Type _worldType;
+        /// <summary>Including constraints</summary>
         internal readonly int[] _inc;
+        /// <summary>Excluding constraints</summary>
         internal readonly int[] _exc;
         internal EcsMask(Type worldType, int[] inc, int[] exc)
         {
@@ -258,21 +260,21 @@ namespace DCFApixels.DragonECS
         internal class DebuggerProxy
         {
             public readonly Type worldType;
-            public readonly int[] inc;
-            public readonly int[] exc;
-            public readonly Type[] incTypes;
-            public readonly Type[] excTypes;
+            public readonly int[] included;
+            public readonly int[] excluded;
+            public readonly Type[] includedTypes;
+            public readonly Type[] excludedTypes;
             public DebuggerProxy(EcsMask mask)
             {
                 worldType = mask._worldType;
                 int worldID = WorldMetaStorage.GetWorldID(worldType);
-                inc = mask._inc;
-                exc = mask._exc;
+                included = mask._inc;
+                excluded = mask._exc;
                 Type converter(int o) => WorldMetaStorage.GetComponentType(worldID, o);
-                incTypes = inc.Select(converter).ToArray();
-                excTypes = exc.Select(converter).ToArray();
+                includedTypes = included.Select(converter).ToArray();
+                excludedTypes = excluded.Select(converter).ToArray();
             }
-            public override string ToString() => CreateLogString(worldType, inc, exc);
+            public override string ToString() => CreateLogString(worldType, included, excluded);
         }
         #endregion
 
