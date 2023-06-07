@@ -356,6 +356,17 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region Listeners
+        public void AddListener(IEcsWorldEventListener listener)
+        {
+            _listeners.Add(listener);
+        }
+        public void RemoveListener(IEcsWorldEventListener listener)
+        {
+            _listeners.Remove(listener);
+        }
+        #endregion
+
         #region Debug
         public void GetComponents(int entityID, List<object> list)
         {

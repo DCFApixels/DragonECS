@@ -9,8 +9,8 @@
             _world = world;
             OnInitialize();
         }
-        protected abstract void OnInitialize();
         internal void Destroy() => OnDestroy();
+        protected abstract void OnInitialize();
         protected abstract void OnDestroy();
     }
 }
