@@ -157,7 +157,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Constrcutors
+        #region Constrcutors/Dispose
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsGroup New(EcsWorld world)
         {
@@ -172,6 +172,7 @@ namespace DCFApixels.DragonECS
 
             _count = 0;
         }
+        public void Dispose() => _source.ReleaseGroup(this);
         #endregion
 
         #region Has/IndexOf
@@ -515,11 +516,6 @@ namespace DCFApixels.DragonECS
         {
             Array.Resize(ref _sparse, newSize);
         }
-        #endregion
-
-        #region IDisposable/Release
-        public void Dispose() => Release();
-        public void Release() => _source.ReleaseGroup(this);
         #endregion
 
         #region ThrowHalper

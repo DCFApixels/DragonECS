@@ -24,7 +24,7 @@
         }
         protected sealed override void OnDestroy()
         {
-            _filteredGroup.Release();
+            _filteredGroup.Dispose();
         }
         #endregion
 
