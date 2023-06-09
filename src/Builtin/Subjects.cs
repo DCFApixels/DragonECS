@@ -121,6 +121,19 @@
             s1 = combined.s1;
             return self.WhereFor<CombinedSubject<S0, S1>>(sourceGroup);
         }
+
+        public static EcsReadonlyGroup Where<S0, S1>(this EcsWorld self)
+            where S0 : EcsSubject
+            where S1 : EcsSubject
+        {
+            return self.Where<CombinedSubject<S0, S1>>();
+        }
+        public static EcsReadonlyGroup WhereFor<S0, S1>(this EcsWorld self, EcsReadonlyGroup sourceGroup)
+            where S0 : EcsSubject
+            where S1 : EcsSubject
+        {
+            return self.WhereFor<CombinedSubject<S0, S1>>(sourceGroup);
+        }
         #endregion
 
         #region Where 3
@@ -140,6 +153,21 @@
             s0 = combined.s0;
             s1 = combined.s1;
             s2 = combined.s2;
+            return self.WhereFor<CombinedSubject<S0, S1, S2>>(sourceGroup);
+        }
+
+        public static EcsReadonlyGroup Where<S0, S1, S2>(this EcsWorld self)
+            where S0 : EcsSubject
+            where S1 : EcsSubject
+            where S2 : EcsSubject
+        {
+            return self.Where<CombinedSubject<S0, S1, S2>>();
+        }
+        public static EcsReadonlyGroup WhereFor<S0, S1, S2>(this EcsWorld self, EcsReadonlyGroup sourceGroup)
+            where S0 : EcsSubject
+            where S1 : EcsSubject
+            where S2 : EcsSubject
+        {
             return self.WhereFor<CombinedSubject<S0, S1, S2>>(sourceGroup);
         }
         #endregion
@@ -164,6 +192,23 @@
             s1 = combined.s1;
             s2 = combined.s2;
             s3 = combined.s3;
+            return self.WhereFor<CombinedSubject<S0, S1, S2, S3>>(sourceGroup);
+        }
+
+        public static EcsReadonlyGroup Where<S0, S1, S2, S3>(this EcsWorld self)
+            where S0 : EcsSubject
+            where S1 : EcsSubject
+            where S2 : EcsSubject
+            where S3 : EcsSubject
+        {
+            return self.Where<CombinedSubject<S0, S1, S2, S3>>();
+        }
+        public static EcsReadonlyGroup WhereFor<S0, S1, S2, S3>(this EcsWorld self, EcsReadonlyGroup sourceGroup)
+            where S0 : EcsSubject
+            where S1 : EcsSubject
+            where S2 : EcsSubject
+            where S3 : EcsSubject
+        {
             return self.WhereFor<CombinedSubject<S0, S1, S2, S3>>(sourceGroup);
         }
         #endregion
@@ -191,6 +236,26 @@
             s2 = combined.s2;
             s3 = combined.s3;
             s4 = combined.s4;
+            return self.WhereFor<CombinedSubject<S0, S1, S2, S3, S4>>(sourceGroup);
+        }
+
+
+        public static EcsReadonlyGroup Where<S0, S1, S2, S3, S4>(this EcsWorld self)
+            where S0 : EcsSubject
+            where S1 : EcsSubject
+            where S2 : EcsSubject
+            where S3 : EcsSubject
+            where S4 : EcsSubject
+        {
+            return self.Where<CombinedSubject<S0, S1, S2, S3, S4>>();
+        }
+        public static EcsReadonlyGroup WhereFor<S0, S1, S2, S3, S4>(this EcsWorld self, EcsReadonlyGroup sourceGroup)
+            where S0 : EcsSubject
+            where S1 : EcsSubject
+            where S2 : EcsSubject
+            where S3 : EcsSubject
+            where S4 : EcsSubject
+        {
             return self.WhereFor<CombinedSubject<S0, S1, S2, S3, S4>>(sourceGroup);
         }
         #endregion
@@ -221,6 +286,28 @@
             s3 = combined.s3;
             s4 = combined.s4;
             s5 = combined.s5;
+            return self.WhereFor<CombinedSubject<S0, S1, S2, S3, S4, S5>>(sourceGroup);
+        }
+
+
+        public static EcsReadonlyGroup Where<S0, S1, S2, S3, S4, S5>(this EcsWorld self)
+            where S0 : EcsSubject
+            where S1 : EcsSubject
+            where S2 : EcsSubject
+            where S3 : EcsSubject
+            where S4 : EcsSubject
+            where S5 : EcsSubject
+        {
+            return self.Where<CombinedSubject<S0, S1, S2, S3, S4, S5>>();
+        }
+        public static EcsReadonlyGroup WhereFor<S0, S1, S2, S3, S4, S5>(this EcsWorld self, EcsReadonlyGroup sourceGroup)
+            where S0 : EcsSubject
+            where S1 : EcsSubject
+            where S2 : EcsSubject
+            where S3 : EcsSubject
+            where S4 : EcsSubject
+            where S5 : EcsSubject
+        {
             return self.WhereFor<CombinedSubject<S0, S1, S2, S3, S4, S5>>(sourceGroup);
         }
         #endregion
