@@ -12,8 +12,9 @@ namespace DCFApixels.DragonECS
         private const short DEATH_GEN_BIT = short.MinValue;
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 2;
 
-        public static EcsWorld[] Worlds = new EcsWorld[8];
+        internal static EcsWorld[] Worlds = new EcsWorld[8];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
+        public static EcsWorld GetWorld(int index) => Worlds[index];
 
         public readonly short uniqueID;
 

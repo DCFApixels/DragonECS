@@ -9,12 +9,12 @@ namespace DCFApixels.DragonECS
     public readonly struct EcsProfilerMarker
     {
         public readonly int id;
-        public EcsProfilerMarker(int id) => this.id = id;
-        public EcsProfilerMarker(string name) => id = EcsDebug.RegisterMark(name);
+        internal EcsProfilerMarker(int id) => this.id = id;
+        public EcsProfilerMarker(string name) => id = DebugService.Instance.RegisterMark(name);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Begin() => EcsDebug.ProfileMarkBegin(id);
+        public void Begin() => DebugService.Instance.ProfileMarkBegin(id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void End() => EcsDebug.ProfileMarkEnd(id);
+        public void End() => DebugService.Instance.ProfileMarkEnd(id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AutoScope Auto() => new AutoScope(id);
         public readonly ref struct AutoScope
@@ -23,9 +23,9 @@ namespace DCFApixels.DragonECS
             public AutoScope(int id)
             {
                 _id = id;
-                EcsDebug.ProfileMarkBegin(id);
+                DebugService.Instance.ProfileMarkBegin(id);
             }
-            public void Dispose() => EcsDebug.ProfileMarkEnd(_id);
+            public void Dispose() => DebugService.Instance.ProfileMarkEnd(_id);
         }
     }
 
@@ -48,36 +48,6 @@ namespace DCFApixels.DragonECS
         {
 #if !DISABLE_DRAGONECS_DEBUGGER
             DebugService.Instance.Print(tag, v);
-#endif
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int RegisterMark(string name)
-        {
-#if !DISABLE_DRAGONECS_DEBUGGER
-            return DebugService.Instance.RegisterMark(name);
-#else
-            return 0;
-#endif
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void DeleteMark(string name)
-        {
-#if !DISABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.DeleteMark(name);
-#endif
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ProfileMarkBegin(int id)
-        {
-#if !DISABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.ProfileMarkBegin(id);
-#endif
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ProfileMarkEnd(int id)
-        {
-#if !DISABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.ProfileMarkEnd(id);
 #endif
         }
     }

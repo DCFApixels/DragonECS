@@ -48,7 +48,7 @@ namespace DCFApixels.DragonECS
                 _markers = new EcsProfilerMarker[targets.Length];
                 for (int i = 0; i < targets.Length; i++)
                 {
-                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(PreInit)}"));
+                    _markers[i] = new EcsProfilerMarker($"EcsRunner.{targets[i].GetType().Name}.{nameof(PreInit)}");
                 }
             }
 #endif
@@ -77,7 +77,7 @@ namespace DCFApixels.DragonECS
                 _markers = new EcsProfilerMarker[targets.Length];
                 for (int i = 0; i < targets.Length; i++)
                 {
-                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Init)}"));
+                    _markers[i] = new EcsProfilerMarker($"EcsRunner.{targets[i].GetType().Name}.{nameof(Init)}");
                 }
             }
 #endif
@@ -107,7 +107,7 @@ namespace DCFApixels.DragonECS
                 _markers = new EcsProfilerMarker[targets.Length];
                 for (int i = 0; i < targets.Length; i++)
                 {
-                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Run)}"));
+                    _markers[i] = new EcsProfilerMarker($"EcsRunner.{targets[i].GetType().Name}.{nameof(Run)}");
                 }
             }
 #endif
@@ -136,7 +136,7 @@ namespace DCFApixels.DragonECS
                 _markers = new EcsProfilerMarker[targets.Length];
                 for (int i = 0; i < targets.Length; i++)
                 {
-                    _markers[i] = new EcsProfilerMarker(EcsDebug.RegisterMark($"EcsRunner.{targets[i].GetType().Name}.{nameof(Destroy)}"));
+                    _markers[i] = new EcsProfilerMarker($"EcsRunner.{targets[i].GetType().Name}.{nameof(Destroy)}");
                 }
             }
 #endif
