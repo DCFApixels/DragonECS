@@ -120,54 +120,56 @@ namespace DCFApixels.DragonECS
 #endif
         public TPool GetPool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
-            int uniqueID = WorldMetaStorage.GetPoolID<TPool>(_worldTypeID);
-            if (uniqueID >= _pools.Length)
+            int index = WorldMetaStorage.GetPoolID<TPool>(_worldTypeID);
+            if (index >= _pools.Length)
             {
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, _pools.Length << 1);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
             }
-            if (_pools[uniqueID] == _nullPool)
+            if (_pools[index] == _nullPool)
             {
                 var pool = new TPool();
-                _pools[uniqueID] = pool;
-                pool.OnInit(this, uniqueID);
+                _pools[index] = pool;
+                pool.OnInit(this, index);
             }
-            return (TPool)_pools[uniqueID];
+            return (TPool)_pools[index];
         }
         public TSubject GetSubject<TSubject>() where TSubject : EcsSubject
         {
-            int uniqueID = WorldMetaStorage.GetSubjectID<TSubject>(_worldTypeID);
-            if (uniqueID >= _subjects.Length)
+            int index = WorldMetaStorage.GetSubjectID<TSubject>(_worldTypeID);
+            if (index >= _subjects.Length)
                 Array.Resize(ref _subjects, _subjects.Length << 1);
-            if (_subjects[uniqueID] == null)
-                _subjects[uniqueID] = EcsSubject.Builder.Build<TSubject>(this);
-            return (TSubject)_subjects[uniqueID];
+            if (_subjects[index] == null)
+                _subjects[index] = EcsSubject.Builder.Build<TSubject>(this);
+            return (TSubject)_subjects[index];
         }
         public TExecutor GetExecutor<TExecutor>() where TExecutor : EcsQueryExecutor, new()
         {
             int index = WorldMetaStorage.GetExecutorID<TExecutor>(_worldTypeID);
             if (index >= _executors.Length)
                 Array.Resize(ref _executors, _executors.Length << 1);
-            if (_executors[index] == null)
+            var result = _executors[index];
+            if (result == null)
             {
-                var executor = new TExecutor();
-                executor.Initialize(this);
-                _executors[index] = executor;
+                result = new TExecutor();
+                _executors[index] = result;
+                result.Initialize(this);
             }
-            return (TExecutor)_executors[index];
+            return (TExecutor)result;
         }
         public T Get<T>() where T : class, new()
         {
             int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
             if (index >= _components.Length)
-                Array.Resize(ref _executors, _executors.Length << 1);
-
+                Array.Resize(ref _components, _components.Length << 1);
             var result = _components[index];
             if (result == null)
             {
                 result = new T();
                 _components[index] = result;
+                if (result is IEcsWorldComponent component)
+                    component.Init(this);
             }
             return (T)result;
         }
@@ -411,6 +413,10 @@ namespace DCFApixels.DragonECS
     }
 
     #region Callbacks Interface
+    public interface IEcsWorldComponent
+    {
+        void Init(EcsWorld world);
+    }
     public interface IEcsWorldEventListener
     {
         void OnWorldResize(int newSize);
