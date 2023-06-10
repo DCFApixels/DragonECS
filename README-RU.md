@@ -37,10 +37,12 @@
   * [Группа](#Группа)
   * [Субъект](#Субъект)
   * [Запрос](#Запрос)
-  * [Модули](#Модули)
+  * [Корень ECS](#Корень-ECS)
+    * [Пример для Unity](#Пример-для-Unity)
+    * [Общий пример](#Общий-пример)
 * [Debug](#Debug)
   * [Debug-Атрибуты](#Debug-Атрибуты)
-  * [Debug-Сервис](#Debug-Сервис)
+  * [EcsDebug](#EcsDebug)
 * [Расширения](#Расширения)
 
 # Установка
@@ -368,6 +370,101 @@ EcsGroup newGroup = EcsGroup.SymmetricExcept(groupA, groupB);
 //Разница всех сущностей в мире и groupA
 groupA.Inverse();
 EcsGroup newGroup = EcsGroup.Inverse(groupA);
+```
+ 
+## Корень ECS
+Это пользовательский класс который явялестя точкой входа для ECS. Основное назначение инициализация, запуск систем на каждый Update движка и очистка по окончанию сипользования.
+### Пример для Unity
+``` csharp
+using DCFApixels.DragonECS;
+using UnityEngine;
+public class EcsRoot : MonoBehaviour
+{
+    private EcsPipeline _pipeline;
+    private EcsDefaultWorld _world;
+    private void Start()
+    {
+        //Создание мира для сущностей икомпонентов
+        _world = new EcsDefaultWorld();
+        //Создание пайплайна длясистем
+        _pipeline = EcsPipeline.New()
+            // Добавление систем.
+            // .Add(new SomeSystem1())
+            // .Add(new SomeSystem2())
+            // .Add(new SomeSystem3())
+
+            // Внедрение мира в системы.
+            .Inject(_world)
+            // Прочие внедрения.
+            // .Inject(SomeData)
+
+            // Завершение построения пайплайна.
+            .Build();
+        //Иницивлизация пайплайна и запуск IEcsPreInitProcess.PreInit
+        //и IEcsInitProcess.Init у всех добавленных систем
+        _pipeline.Init();
+    }
+    private void Update()
+    {
+        //Запуск IEcsRunProcess.Run у всех добавленных систем
+        _pipeline.Run();
+    }
+    private void OnDestroy()
+    {
+        //Запускает IEcsDestroyInitProcess.Destroy у всех добавленных систем
+        _pipeline.Destroy();
+        //Обязательно удалять миры которые больше не будут использованы 
+        _world.Destroy();
+    }
+}
+```
+### Общий пример
+``` csharp
+using DCFApixels.DragonECS;
+public class EcsRoot
+{
+    private EcsPipeline _pipeline;
+    private EcsDefaultWorld _world;
+    // Инициализация окружения.
+    public void Init()
+    {
+        //Создание мира для сущностей икомпонентов.
+        _world = new EcsDefaultWorld();
+        //Создание пайплайна для систем.
+        _pipeline = EcsPipeline.New()
+            // Добавление систем.
+            // .Add(new SomeSystem1())
+            // .Add(new SomeSystem2())
+            // .Add(new SomeSystem3())
+
+            // Внедрение мира в системы.
+            .Inject(_world)
+            // Прочие внедрения.
+            // .Inject(SomeData)
+
+            // Завершение построения пайплайна.
+            .Build();
+        // Иницивлизация пайплайна и запуск IEcsPreInitProcess.PreInit
+        // и IEcsInitProcess.Init у всех добавленных систем.
+        _pipeline.Init();
+    }
+
+    // Update-цикл движка.
+    public void Update()
+    {
+        // Запуск IEcsRunProcess.Run у всех добавленных систем.
+        _pipeline.Run();
+    }
+
+    // Очистка окружения.
+    public void Destroy()
+    {
+        // Запускает IEcsDestroyInitProcess.Destroy у всех добавленных систем.
+        _pipeline.Destroy();
+        // Обязательно удалять миры которые больше не будут использованы.
+        _world.Destroy();
+    }
+}
 ```
  
 # Debug
