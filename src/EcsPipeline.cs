@@ -67,7 +67,6 @@ namespace DCFApixels.DragonECS
                 EcsDebug.Print("[Warning]", $"This {nameof(EcsPipeline)} has already been initialized");
                 return;
             }
-            _isInit = true;
 
             var ecsPipelineInjectRunner = GetRunner<IEcsInject<EcsPipeline>>();
             ecsPipelineInjectRunner.Inject(this);
@@ -80,6 +79,7 @@ namespace DCFApixels.DragonECS
             EcsRunner.Destroy(initRunner);
 
             _runRunnerCache = GetRunner<IEcsRunProcess>();
+            _isInit = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
