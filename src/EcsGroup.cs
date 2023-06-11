@@ -266,14 +266,14 @@ namespace DCFApixels.DragonECS
         public int[] Bake()
         {
             int[] result = new int[_count];
-            Array.Copy(_dense, result, _count);
+            Array.Copy(_dense, 1, result, 0, _count);
             return result;
         }
         public int Bake(ref int[] entities)
         {
             if(entities.Length < _count)
                 entities = new int[_count];
-            Array.Copy(_dense, entities, _count);
+            Array.Copy(_dense, 1, entities, 0, _count);
             return _count;
         }
         public void Bake(List<int> entities)
