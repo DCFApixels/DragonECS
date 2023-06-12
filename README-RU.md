@@ -45,6 +45,7 @@
   * [Debug-Атрибуты](#Debug-Атрибуты)
   * [EcsDebug](#EcsDebug)
 * [Расширения](#Расширения)
+* [FAQ](#FAQ)
 
 # Установка
 * ### Unity-модуль
@@ -522,3 +523,11 @@ public struct Component { }
 * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * [Поддержка классической C# многопоточности](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * Интеграция с движком Unity (Work in progress)
+ 
+# FAQ
+## 'ReadOnlySpan<>' could not be found
+В версии юнити 2020.1.х в консоли может выпадать ошибка:
+```
+The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing a using directive or an assembly reference?)
+``` 
+Чтобы починить добавте директиву `ENABLE_DUMMY_SPAN` в `Project Settings/Player/Other Settings/Scripting Define Symbols`.
