@@ -9,11 +9,11 @@ namespace DCFApixels.DragonECS
     public interface IEcsPool
     {
         #region Properties
-        public int ComponentID { get; }
-        public Type ComponentType { get; }
-        public EcsWorld World { get; }
-        public int Count { get; }
-        public int Capacity { get; }
+        int ComponentID { get; }
+        Type ComponentType { get; }
+        EcsWorld World { get; }
+        int Count { get; }
+        int Capacity { get; }
         #endregion
 
         #region Methods
@@ -127,7 +127,7 @@ namespace DCFApixels.DragonECS
     #region Reset/Copy interfaces
     public interface IEcsComponentReset<T>
     {
-        public void Reset(ref T component);
+        void Reset(ref T component);
     }
     public static class EcsComponentResetHandler<T>
     {
@@ -163,7 +163,7 @@ namespace DCFApixels.DragonECS
 
     public interface IEcsComponentCopy<T>
     {
-        public void Copy(ref T from, ref T to);
+        void Copy(ref T from, ref T to);
     }
     public static class EcsComponentCopyHandler<T>
     {

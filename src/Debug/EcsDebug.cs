@@ -55,7 +55,15 @@ namespace DCFApixels.DragonECS
     public abstract class DebugService
     {
         private static DebugService _instance;
-        public static DebugService Instance => _instance ??= new DefaultDebugService();
+        public static DebugService Instance
+        {
+            get
+            {
+                if (_instance == null)
+                    _instance = new DefaultDebugService();
+                return _instance;
+            }
+        }
 
         public static void Set<T>() where T : DebugService, new() => Set(new T());
         public static void Set(DebugService service)
