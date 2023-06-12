@@ -45,8 +45,8 @@ namespace DCFApixels.DragonECS
             {
                 _world = world;
                 _subjects = new List<CombinedSubject>();
-                _inc = new HashSet<int>(8);
-                _exc = new HashSet<int>(4);
+                _inc = new HashSet<int>();
+                _exc = new HashSet<int>();
             }
             internal static TSubject Build<TSubject>(EcsWorld world) where TSubject : EcsSubject
             {

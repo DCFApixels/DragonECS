@@ -35,8 +35,9 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
-                    using (_markers[i].Auto())
-                        targets[i].PreInit(pipeline);
+                    _markers[i].Begin();
+                    targets[i].PreInit(pipeline);
+                    _markers[i].End();
                 }
 #else
             foreach (var item in targets) item.PreInit(pipeline);
@@ -64,8 +65,9 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
-                    using (_markers[i].Auto())
-                        targets[i].Init(pipeline);
+                    _markers[i].Begin();
+                    targets[i].Init(pipeline);
+                    _markers[i].End();
                 }
 #else
             foreach (var item in targets) item.Init(pipeline);
@@ -93,9 +95,9 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
-                    using (_markers[i].Auto())
-                        targets[i].Run(pipeline);
-
+                    _markers[i].Begin();
+                    targets[i].Run(pipeline);
+                    _markers[i].End();
                 }
 #else
             foreach (var item in targets) item.Run(pipeline);
@@ -123,8 +125,9 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
-                    using (_markers[i].Auto())
-                        targets[i].Destroy(pipeline);
+                    _markers[i].Begin();
+                    targets[i].Destroy(pipeline);
+                    _markers[i].End();
                 }
 #else
             foreach (var item in targets) item.Destroy(pipeline);

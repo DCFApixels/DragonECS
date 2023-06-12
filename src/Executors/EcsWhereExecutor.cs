@@ -33,15 +33,14 @@
         public EcsReadonlyGroup ExecuteFor(EcsReadonlyGroup sourceGroup)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            using (_executeWhere.Auto())
+            _executeWhere.Begin();
+            if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
 #endif
-            {
+            _subject.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
+            _executeWhere.End();
 #endif
-                _subject.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
-                return _filteredGroup.Readonly;
-            }
+            return _filteredGroup.Readonly;
         }
 #endregion
     }

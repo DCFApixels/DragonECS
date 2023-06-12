@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -468,7 +469,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Object
-        public override string ToString() => string.Join(", ", _dense.AsSpan(1, _count).ToArray());
+        public override string ToString() => string.Join(", ", _dense.Cast<string>(), 0, _count);
         public override bool Equals(object obj) => obj is EcsGroup group && Equals(group);
         public bool Equals(EcsReadonlyGroup other) => Equals(other.GetGroupInternal());
         public bool Equals(EcsGroup other)
