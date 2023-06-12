@@ -520,4 +520,5 @@ public struct Component { }
 По умолчанию используется `DefaultDebugService` который выводит логи в консоль. Для реализации пользовательского создайте класс наследуемый от `DebugService` и реализуйте абстрактные члены класса.
 # Расширения
 * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
+* [Поддержка классической C# многопоточности](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * Интеграция с движком Unity (Work in progress)
