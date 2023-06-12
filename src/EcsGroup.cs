@@ -152,7 +152,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (index < 0 || index >= Count) ThrowArgumentOutOfRange();
 #endif
-                return _dense[index];
+                return _dense[++index];
             }
         }
         #endregion
