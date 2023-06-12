@@ -20,4 +20,5 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 DragonECS uses this versioning semantics: [Open](https://gist.github.com/DCFApixels/c3b178a308b411f530361d1d56f1f929#file-dcfapixels_versioning_en-md)
 # Extensions
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
+* [Classic C# multithreading support](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * Unity integration (Work in progress)
