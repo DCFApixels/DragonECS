@@ -436,8 +436,10 @@ public class EcsRoot : MonoBehaviour
     {
         //Запускает IEcsDestroyInitProcess.Destroy у всех добавленных систем
         _pipeline.Destroy();
+        _pipeline = null;
         //Обязательно удалять миры которые больше не будут использованы 
         _world.Destroy();
+        _world = null;
     }
 }
 ```
@@ -484,8 +486,10 @@ public class EcsRoot
     {
         // Запускает IEcsDestroyInitProcess.Destroy у всех добавленных систем.
         _pipeline.Destroy();
+        _pipeline = null;
         // Обязательно удалять миры которые больше не будут использованы.
         _world.Destroy();
+        _world = null;
     }
 }
 ```
