@@ -2,6 +2,7 @@
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
@@ -58,9 +59,12 @@ namespace DCFApixels.DragonECS
             private EcsBaseTypeInjectRunner _baseTypeInjectRunner;
             void IEcsInject<T>.Inject(T obj)
             {
+                if (obj == null) ThrowArgumentNullException();
                 _baseTypeInjectRunner.Inject(obj);
                 foreach (var item in targets) item.Inject(obj);
             }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private void ThrowArgumentNullException() => throw new ArgumentNullException();
             protected override void OnSetup()
             {
                 Type baseType = typeof(T).BaseType;
