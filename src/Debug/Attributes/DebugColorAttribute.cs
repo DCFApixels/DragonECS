@@ -6,27 +6,43 @@ namespace DCFApixels.DragonECS
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class DebugColorAttribute : Attribute
     {
-        private ColorRecord color;
+        private Color color;
         public byte r => color.r;
         public byte g => color.g;
         public byte b => color.b;
-        public DebugColorAttribute(byte r, byte g, byte b) => color = new ColorRecord(r, g, b);
-        public DebugColorAttribute(DebugColor color) => this.color = new ColorRecord((int)color);
+        public DebugColorAttribute(byte r, byte g, byte b) => color = new Color(r, g, b);
+        public DebugColorAttribute(DebugColor color) => this.color = new Color((int)color);
 
         [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 4)]
-        private readonly struct ColorRecord 
+        internal readonly struct Color 
         {
             [FieldOffset(0)] public readonly int full;
             [FieldOffset(3)] public readonly byte r;
             [FieldOffset(2)] public readonly byte g;
             [FieldOffset(1)] public readonly byte b;
-            public ColorRecord(byte r, byte g, byte b) : this()
+            public Color(byte r, byte g, byte b) : this()
             {
                 this.r = r;
                 this.g = g;
                 this.b = b;
             }
-            public ColorRecord(int full) : this() => this.full = full;
+            public Color(int full) : this() => this.full = full;
+            public (byte, byte, byte) ToTuple() => (r, g, b);
+
+            public Color UpContrastColor()
+            {
+                byte minChannel = Math.Min(Math.Min(r, g), b);
+                byte maxChannel = Math.Max(Math.Max(r, g), b);
+                if (maxChannel == minChannel)
+                    return default;
+                float factor = 255f / (maxChannel - minChannel);
+                return new Color((byte)((r - minChannel) * factor), (byte)((g - minChannel) * factor), (byte)((b - minChannel) * factor));
+            }
+
+            public static Color operator /(Color a, float b)
+            {
+                return new Color((byte)(a.r / b), (byte)(a.g / b), (byte)(a.b / b));
+            }
         }
     }
     public enum DebugColor
