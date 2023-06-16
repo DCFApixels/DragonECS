@@ -112,7 +112,7 @@ namespace DCFApixels.DragonECS
             void IEcsInject<PreInitInjectController>.Inject(PreInitInjectController obj) => _injectController = obj;
             public InjectSystem(T injectedData)
             {
-                if (_injectedData == null) throw new ArgumentNullException();
+                if (injectedData == null) throw new ArgumentNullException();
                 _injectedData = injectedData;
             }
             public void PreInit(EcsPipeline pipeline)
