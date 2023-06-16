@@ -6,6 +6,7 @@ namespace DCFApixels.DragonECS
 {
     public static class EcsDebugUtility
     {
+        #region GetGenericTypeName
         public static string GetGenericTypeFullName<T>(int maxDepth = 2) => GetGenericTypeFullName(typeof(T), maxDepth);
         public static string GetGenericTypeFullName(Type type, int maxDepth = 2) => GetGenericTypeNameInternal(type, maxDepth, true);
         public static string GetGenericTypeName<T>(int maxDepth = 2) => GetGenericTypeName(typeof(T), maxDepth);
@@ -13,39 +14,36 @@ namespace DCFApixels.DragonECS
         private static string GetGenericTypeNameInternal(Type type, int maxDepth, bool isFull)
         {
 #if (DEBUG && !DISABLE_DEBUG)
-            string friendlyName = isFull ? type.FullName : type.Name;
+            string result = isFull ? type.FullName : type.Name;
             if (!type.IsGenericType || maxDepth == 0)
-                return friendlyName;
+                return result;
 
-            int iBacktick = friendlyName.IndexOf('`');
+            int iBacktick = result.IndexOf('`');
             if (iBacktick > 0)
-                friendlyName = friendlyName.Remove(iBacktick);
+                result = result.Remove(iBacktick);
 
-            friendlyName += "<";
+            result += "<";
             Type[] typeParameters = type.GetGenericArguments();
             for (int i = 0; i < typeParameters.Length; ++i)
             {
                 string typeParamName = GetGenericTypeNameInternal(typeParameters[i], maxDepth - 1, false);//чтобы строка не была слишком длинной, используются сокращенные имена для типов аргументов
-                friendlyName += (i == 0 ? typeParamName : "," + typeParamName);
+                result += (i == 0 ? typeParamName : "," + typeParamName);
             }
-            friendlyName += ">";
-            return friendlyName;
+            result += ">";
+            return result;
 #else //optimization for release build
             return type.Name;
 #endif
         }
+        #endregion
 
+        #region GetName
         public static string GetName<T>() => GetName(typeof(T));
-        public static string GetName(Type type)
-        {
-            var atr = type.GetCustomAttribute<DebugNameAttribute>();
-            return atr != null ? atr.name : GetGenericTypeName(type);
-        }
+        public static string GetName(Type type) => type.TryGetCustomAttribute(out DebugNameAttribute atr) ? atr.name : GetGenericTypeName(type);
         public static bool TryGetCustomName<T>(out string name) => TryGetCustomName(typeof(T), out name);
         public static bool TryGetCustomName(Type type, out string name)
         {
-            var atr = type.GetCustomAttribute<DebugNameAttribute>();
-            if (atr != null)
+            if (type.TryGetCustomAttribute(out DebugNameAttribute atr))
             {
                 name = atr.name;
                 return true;
@@ -53,18 +51,15 @@ namespace DCFApixels.DragonECS
             name = string.Empty;
             return false;
         }
+        #endregion
 
+        #region GetDescription
         public static string GetDescription<T>() => GetDescription(typeof(T));
-        public static string GetDescription(Type type)
-        {
-            var atr = type.GetCustomAttribute<DebugDescriptionAttribute>();
-            return atr != null ? atr.description : string.Empty;
-        }
+        public static string GetDescription(Type type) => type.TryGetCustomAttribute(out DebugDescriptionAttribute atr) ? atr.description : string.Empty;
         public static bool TryGetDescription<T>(out string text) => TryGetDescription(typeof(T), out text);
         public static bool TryGetDescription(Type type, out string text)
         {
-            var atr = type.GetCustomAttribute<DebugDescriptionAttribute>();
-            if (atr != null)
+            if (type.TryGetCustomAttribute(out DebugDescriptionAttribute atr))
             {
                 text = atr.description;
                 return true;
@@ -72,6 +67,7 @@ namespace DCFApixels.DragonECS
             text = string.Empty;
             return false;
         }
+        #endregion
 
         #region GetColor
         private static Random random = new Random();
@@ -179,10 +175,22 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region IsHidden
         public static bool IsHidden<T>() => IsHidden(typeof(T));
-        public static bool IsHidden(Type type)
+        public static bool IsHidden(Type type) => type.TryGetCustomAttribute(out DebugHideAttribute _);
+        #endregion
+
+        #region ReflectionExtensions
+        internal static bool TryGetCustomAttribute<T>(this Type self, out T attribute) where T : Attribute
         {
-            return type.GetCustomAttribute<DebugHideAttribute>() != null;
+            attribute = self.GetCustomAttribute<T>();
+            return attribute != null;
         }
+        internal static bool TryGetCustomAttribute<T>(this MemberInfo self, out T attribute) where T : Attribute
+        {
+            attribute = self.GetCustomAttribute<T>();
+            return attribute != null;
+        }
+        #endregion
     }
 }
