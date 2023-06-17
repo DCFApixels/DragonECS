@@ -55,7 +55,7 @@ namespace DCFApixels.DragonECS
 #if DISABLE_CATH_EXCEPTIONS
                         throw;
 #endif
-                        EcsDebug.PrintError(e.Message);
+                        EcsDebug.PrintError(e);
                     }
                 }
 #else
@@ -67,7 +67,7 @@ namespace DCFApixels.DragonECS
 #if DISABLE_CATH_EXCEPTIONS
                         throw;
 #endif
-                        EcsDebug.PrintError(e.Message);
+                        EcsDebug.PrintError(e);
                     }
                 }
 #endif
@@ -103,7 +103,7 @@ namespace DCFApixels.DragonECS
 #if DISABLE_CATH_EXCEPTIONS
                         throw;
 #endif
-                        EcsDebug.PrintError(e.Message);
+                        EcsDebug.PrintError(e);
                     }
                 }
 #else
@@ -115,7 +115,7 @@ namespace DCFApixels.DragonECS
 #if DISABLE_CATH_EXCEPTIONS
                         throw;
 #endif
-                        EcsDebug.PrintError(e.Message);
+                        EcsDebug.PrintError(e);
                     }
                 }
 #endif
@@ -151,7 +151,7 @@ namespace DCFApixels.DragonECS
 #if DISABLE_CATH_EXCEPTIONS
                         throw;
 #endif
-                        EcsDebug.PrintError(e.Message);
+                        EcsDebug.PrintError(e);
                     }
                 }
 #else
@@ -163,7 +163,7 @@ namespace DCFApixels.DragonECS
 #if DISABLE_CATH_EXCEPTIONS
                         throw;
 #endif
-                        EcsDebug.PrintError(e.Message);
+                        EcsDebug.PrintError(e);
                     }
                 }
 #endif
@@ -199,7 +199,7 @@ namespace DCFApixels.DragonECS
 #if DISABLE_CATH_EXCEPTIONS
                         throw;
 #endif
-                        EcsDebug.PrintError(e.Message);
+                        EcsDebug.PrintError(e);
                     }
                 }
 #else
@@ -211,7 +211,7 @@ namespace DCFApixels.DragonECS
 #if DISABLE_CATH_EXCEPTIONS
                         throw;
 #endif
-                        EcsDebug.PrintError(e.Message);
+                        EcsDebug.PrintError(e);
                     }
                 }
 #endif
