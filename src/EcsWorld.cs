@@ -14,9 +14,9 @@ namespace DCFApixels.DragonECS
 
         internal static EcsWorld[] Worlds = new EcsWorld[8];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
-        public static EcsWorld GetWorld(int index) => Worlds[index];
+        public static EcsWorld GetWorld(int worldID) => Worlds[worldID];
 
-        public readonly short uniqueID;
+        public readonly short id;
 
         private int _worldTypeID;
 
@@ -46,7 +46,6 @@ namespace DCFApixels.DragonECS
 
         #region Properties
         public abstract Type Archetype { get; }
-        public int UniqueID => uniqueID;
         public int Count => _entitiesCount;
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
@@ -62,10 +61,10 @@ namespace DCFApixels.DragonECS
 
             if (isIndexable)
             {
-                uniqueID = (short)_worldIdDispenser.GetFree();
-                if (uniqueID >= Worlds.Length)
+                id = (short)_worldIdDispenser.GetFree();
+                if (id >= Worlds.Length)
                     Array.Resize(ref Worlds, Worlds.Length << 1);
-                Worlds[uniqueID] = this;
+                Worlds[id] = this;
             }
 
             _worldTypeID = WorldMetaStorage.GetWorldID(Archetype);
@@ -94,8 +93,8 @@ namespace DCFApixels.DragonECS
             _nullPool = null;
             _subjects = null;
             _executors = null;
-            Worlds[uniqueID] = null;
-            _worldIdDispenser.Release(uniqueID);
+            Worlds[id] = null;
+            _worldIdDispenser.Release(id);
         }
         #endregion
 
@@ -262,7 +261,7 @@ namespace DCFApixels.DragonECS
                 ReleaseDelEntityBuffer();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public entlong GetEntityLong(int entityID) => new entlong(entityID, _gens[entityID], uniqueID); //TODO придумать получше имя метода
+        public entlong GetEntityLong(int entityID) => new entlong(entityID, _gens[entityID], id); //TODO придумать получше имя метода
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(int entityID, short gen) => _gens[entityID] == gen;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
