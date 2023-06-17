@@ -158,6 +158,21 @@ namespace DCFApixels.DragonECS
             }
             return (TExecutor)result;
         }
+        #endregion
+
+        #region WorldComponents
+        public void Set<T>(T component) where T : class
+        {
+            int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
+            if (index >= _components.Length)
+                Array.Resize(ref _components, _components.Length << 1);
+            if (component == null)
+            {
+                _components[index] = component;
+                if (component is IEcsWorldComponent intr)
+                    intr.Init(this);
+            }
+        }
         public T Get<T>() where T : class, new()
         {
             int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
