@@ -31,18 +31,18 @@ namespace DCFApixels.DragonECS
         private int _delEntBufferCount;
 
         internal IEcsPoolImplementation[] _pools;
-        private EcsNullPool _nullPool;
+        private EcsNullPool _nullPool = EcsNullPool.instance;
 
         private EcsSubject[] _subjects;
         private EcsQueryExecutor[] _executors;
 
-        private List<WeakReference<EcsGroup>> _groups;
+        private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
 
-        private List<IEcsWorldEventListener> _listeners;
-        private List<IEcsEntityEventListener> _entityListeners;
+        private List<IEcsWorldEventListener> _listeners = new List<IEcsWorldEventListener>();
+        private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
 
-        private object[] _components;
+        private object[] _components = new object[2];
 
         #region Properties
         public abstract Type Archetype { get; }
@@ -60,9 +60,6 @@ namespace DCFApixels.DragonECS
         {
             _entitesCapacity = 512;
 
-            _listeners = new List<IEcsWorldEventListener>();
-            _entityListeners = new List<IEcsEntityEventListener>();
-
             if (isIndexable)
             {
                 uniqueID = (short)_worldIdDispenser.GetFree();
@@ -74,7 +71,6 @@ namespace DCFApixels.DragonECS
             _worldTypeID = WorldMetaStorage.GetWorldID(Archetype);
 
             _entityDispenser = new IntDispenser(0);
-            _nullPool = EcsNullPool.instance;
             _pools = new IEcsPoolImplementation[512];
             ArrayUtility.Fill(_pools, _nullPool);
 
@@ -85,13 +81,10 @@ namespace DCFApixels.DragonECS
             _delEntBufferCount = 0;
             _delEntBuffer = new int[_entitesCapacity >> DEL_ENT_BUFFER_SIZE_OFFSET];
 
-            _groups = new List<WeakReference<EcsGroup>>();
             _allEntites = GetFreeGroup();
 
             _subjects = new EcsSubject[128];
             _executors = new EcsQueryExecutor[128];
-
-            _components = new object[2];
         }
         public void Destroy()
         {
@@ -161,7 +154,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region WorldComponents
-        public void Set<T>(T component) where T : class
+        public void SetComponent<T>(T component) where T : class
         {
             int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
             if (index >= _components.Length)
@@ -173,7 +166,7 @@ namespace DCFApixels.DragonECS
                     intr.Init(this);
             }
         }
-        public T Get<T>() where T : class, new()
+        public T GetComponent<T>() where T : class, new()
         {
             int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
             if (index >= _components.Length)
@@ -187,6 +180,13 @@ namespace DCFApixels.DragonECS
                     component.Init(this);
             }
             return (T)result;
+        }
+        public bool HasComponent<T>()
+        {
+            int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
+            if (index >= _components.Length)
+                return false;
+            return _components[index] == null;
         }
         #endregion
 
