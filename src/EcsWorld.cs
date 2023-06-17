@@ -159,27 +159,23 @@ namespace DCFApixels.DragonECS
             int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
             if (index >= _components.Length)
                 Array.Resize(ref _components, _components.Length << 1);
-            if (component == null)
-            {
-                _components[index] = component;
-                if (component is IEcsWorldComponent intr)
-                    intr.Init(this);
-            }
+            _components[index] = component;
+            if (component is IEcsWorldComponent intr)
+                intr.Init(this);
         }
-        public T GetComponent<T>() where T : class, new()
+        public T GetComponent<T>() where T : class
+        {
+            if (!TryGetComponent(out T result))
+                throw new NullReferenceException();
+            return result;
+        }
+        public bool TryGetComponent<T>(out T component) where T : class
         {
             int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
             if (index >= _components.Length)
                 Array.Resize(ref _components, _components.Length << 1);
-            var result = _components[index];
-            if (result == null)
-            {
-                result = new T();
-                _components[index] = result;
-                if (result is IEcsWorldComponent component)
-                    component.Init(this);
-            }
-            return (T)result;
+            component = (T)_components[index];
+            return component != null;
         }
         public bool HasComponent<T>()
         {
