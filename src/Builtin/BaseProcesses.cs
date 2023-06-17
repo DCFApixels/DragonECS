@@ -1,5 +1,6 @@
 ﻿#pragma warning disable CS0162 // Обнаружен недостижимый код
 using DCFApixels.DragonECS.RunnersCore;
+using System;
 
 namespace DCFApixels.DragonECS
 {
