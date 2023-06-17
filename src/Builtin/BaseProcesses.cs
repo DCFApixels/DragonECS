@@ -1,4 +1,5 @@
-﻿using DCFApixels.DragonECS.RunnersCore;
+﻿#pragma warning disable CS0162 // Обнаружен недостижимый код
+using DCFApixels.DragonECS.RunnersCore;
 
 namespace DCFApixels.DragonECS
 {
@@ -29,21 +30,6 @@ namespace DCFApixels.DragonECS
         {
 #if DEBUG && !DISABLE_DEBUG
             private EcsProfilerMarker[] _markers;
-#endif
-            public void PreInit(EcsPipeline pipeline)
-            {
-#if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
-                {
-                    _markers[i].Begin();
-                    targets[i].PreInit(pipeline);
-                    _markers[i].End();
-                }
-#else
-            foreach (var item in targets) item.PreInit(pipeline);
-#endif
-            }
-#if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
                 _markers = new EcsProfilerMarker[targets.Length];
@@ -53,27 +39,45 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
+            public void PreInit(EcsPipeline pipeline)
+            {
+#if DEBUG && !DISABLE_DEBUG
+                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
+                {
+                    try
+                    {
+                        _markers[i].Begin();
+                        targets[i].PreInit(pipeline);
+                        _markers[i].End();
+                    }
+                    catch (Exception e)
+                    {
+#if DISABLE_CATH_EXCEPTIONS
+                        throw;
+#endif
+                        EcsDebug.PrintError(e.Message);
+                    }
+                }
+#else
+                foreach (var item in targets)
+                {
+                    try { item.PreInit(pipeline); }
+                    catch (Exception e)
+                    {
+#if DISABLE_CATH_EXCEPTIONS
+                        throw;
+#endif
+                        EcsDebug.PrintError(e.Message);
+                    }
+                }
+#endif
+            }
         }
         [DebugColor(DebugColor.Orange)]
         public sealed class EcsInitProcessRunner : EcsRunner<IEcsInitProcess>, IEcsInitProcess
         {
 #if DEBUG && !DISABLE_DEBUG
             private EcsProfilerMarker[] _markers;
-#endif
-            public void Init(EcsPipeline pipeline)
-            {
-#if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
-                {
-                    _markers[i].Begin();
-                    targets[i].Init(pipeline);
-                    _markers[i].End();
-                }
-#else
-            foreach (var item in targets) item.Init(pipeline);
-#endif
-            }
-#if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
                 _markers = new EcsProfilerMarker[targets.Length];
@@ -83,27 +87,45 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
+            public void Init(EcsPipeline pipeline)
+            {
+#if DEBUG && !DISABLE_DEBUG
+                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
+                {
+                    try
+                    {
+                        _markers[i].Begin();
+                        targets[i].Init(pipeline);
+                        _markers[i].End();
+                    }
+                    catch (Exception e)
+                    {
+#if DISABLE_CATH_EXCEPTIONS
+                        throw;
+#endif
+                        EcsDebug.PrintError(e.Message);
+                    }
+                }
+#else
+                foreach (var item in targets)
+                {
+                    try { item.Init(pipeline); }
+                    catch (Exception e)
+                    {
+#if DISABLE_CATH_EXCEPTIONS
+                        throw;
+#endif
+                        EcsDebug.PrintError(e.Message);
+                    }
+                }
+#endif
+            }
         }
         [DebugColor(DebugColor.Orange)]
         public sealed class EcsRunProcessRunner : EcsRunner<IEcsRunProcess>, IEcsRunProcess
         {
 #if DEBUG && !DISABLE_DEBUG
             private EcsProfilerMarker[] _markers;
-#endif
-            public void Run(EcsPipeline pipeline)
-            {
-#if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
-                {
-                    _markers[i].Begin();
-                    targets[i].Run(pipeline);
-                    _markers[i].End();
-                }
-#else
-            foreach (var item in targets) item.Run(pipeline);
-#endif
-            }
-#if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
                 _markers = new EcsProfilerMarker[targets.Length];
@@ -113,27 +135,45 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
+            public void Run(EcsPipeline pipeline)
+            {
+#if DEBUG && !DISABLE_DEBUG
+                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
+                {
+                    try
+                    {
+                        _markers[i].Begin();
+                        targets[i].Run(pipeline);
+                        _markers[i].End();
+                    }
+                    catch (Exception e)
+                    {
+#if DISABLE_CATH_EXCEPTIONS
+                        throw;
+#endif
+                        EcsDebug.PrintError(e.Message);
+                    }
+                }
+#else
+                foreach (var item in targets)
+                {
+                    try { item.Run(pipeline); }
+                    catch (Exception e)
+                    {
+#if DISABLE_CATH_EXCEPTIONS
+                        throw;
+#endif
+                        EcsDebug.PrintError(e.Message);
+                    }
+                }
+#endif
+            }
         }
         [DebugColor(DebugColor.Orange)]
         public sealed class EcsDestroyProcessRunner : EcsRunner<IEcsDestroyProcess>, IEcsDestroyProcess
         {
 #if DEBUG && !DISABLE_DEBUG
             private EcsProfilerMarker[] _markers;
-#endif
-            public void Destroy(EcsPipeline pipeline)
-            {
-#if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
-                {
-                    _markers[i].Begin();
-                    targets[i].Destroy(pipeline);
-                    _markers[i].End();
-                }
-#else
-            foreach (var item in targets) item.Destroy(pipeline);
-#endif
-            }
-#if DEBUG && !DISABLE_DEBUG
             protected override void OnSetup()
             {
                 _markers = new EcsProfilerMarker[targets.Length];
@@ -143,6 +183,39 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
+            public void Destroy(EcsPipeline pipeline)
+            {
+#if DEBUG && !DISABLE_DEBUG
+                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
+                {
+                    try
+                    {
+                        _markers[i].Begin();
+                        targets[i].Destroy(pipeline);
+                        _markers[i].End();
+                    }
+                    catch (Exception e)
+                    {
+#if DISABLE_CATH_EXCEPTIONS
+                        throw;
+#endif
+                        EcsDebug.PrintError(e.Message);
+                    }
+                }
+#else
+                foreach (var item in targets)
+                {
+                    try { item.Destroy(pipeline); }
+                    catch (Exception e)
+                    {
+#if DISABLE_CATH_EXCEPTIONS
+                        throw;
+#endif
+                        EcsDebug.PrintError(e.Message);
+                    }
+                }
+#endif
+            }
         }
     }
 }
