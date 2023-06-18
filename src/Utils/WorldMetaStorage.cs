@@ -16,9 +16,9 @@ namespace DCFApixels.DragonECS
         {
             public static int id = GetWorldID(typeof(TWorldArchetype));
         }
-        private static int GetToken()
+        private static int GetToken(Type worldType)
         {
-            WorldTypeMeta meta = new WorldTypeMeta();
+            WorldTypeMeta meta = new WorldTypeMeta(worldType);
             meta.id = _tokenCount;
             Array.Resize(ref _metas, ++_tokenCount);
             _metas[_tokenCount - 1] = meta;
@@ -28,15 +28,17 @@ namespace DCFApixels.DragonECS
             return _tokenCount - 1;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetWorldID(Type archetype)
+        public static int GetWorldID(Type worldType)
         {
-            if (!_worldIds.TryGetValue(archetype, out int id))
+            if (!_worldIds.TryGetValue(worldType, out int id))
             {
-                id = GetToken();
-                _worldIds.Add(archetype, id);
+                id = GetToken(worldType);
+                _worldIds.Add(worldType, id);
             }
             return id;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Type GetWorldType(int worldTypeID) => _metas[worldTypeID].worldType;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetWorldID<TWorldArchetype>() => WorldIndex<TWorldArchetype>.id;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -255,6 +257,7 @@ namespace DCFApixels.DragonECS
         public struct XXX : IEcsComponent { }
         private class WorldTypeMeta
         {
+            public readonly Type worldType;
             public int id;
             public int componentCount;
             public int subjectsCount;
@@ -276,10 +279,11 @@ namespace DCFApixels.DragonECS
             {
                 return PoolComponentIdArrays.GetComponentID(type, id);
             }
-            public WorldTypeMeta()
+            public WorldTypeMeta(Type worldType)
             {
                 _types = new Type[10];
                 _declaredComponentTypes = new Dictionary<Type, int>();
+                this.worldType = worldType;
             }
         }
     }

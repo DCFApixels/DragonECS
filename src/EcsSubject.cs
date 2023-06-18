@@ -144,7 +144,7 @@ namespace DCFApixels.DragonECS
                 var exc = maskExc.ToArray();
                 Array.Sort(exc);
 
-                mask = new EcsMask(_world.Archetype, inc, exc);
+                mask = new EcsMask(_world.WorldTypeID, inc, exc);
                 _world = null;
                 _inc = null;
                 _exc = null;
@@ -202,24 +202,24 @@ namespace DCFApixels.DragonECS
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsMask
     {
-        internal readonly Type _worldType;
+        internal readonly int _worldTypeID;
         /// <summary>Including constraints</summary>
         internal readonly int[] _inc;
         /// <summary>Excluding constraints</summary>
         internal readonly int[] _exc;
-        internal EcsMask(Type worldType, int[] inc, int[] exc)
+        internal EcsMask(int worldTypeID, int[] inc, int[] exc)
         {
 #if DEBUG
-            if (worldType is null) throw new ArgumentNullException();
+            if (worldTypeID == 0) throw new ArgumentException();
             CheckConstraints(inc, exc);
 #endif
-            _worldType = worldType;
+            _worldTypeID = worldTypeID;
             _inc = inc;
             _exc = exc;
         }
 
         #region Object
-        public override string ToString() => CreateLogString(_worldType, _inc, _exc);
+        public override string ToString() => CreateLogString(_worldTypeID, _inc, _exc);
         #endregion
 
         #region Debug utils
@@ -247,11 +247,10 @@ namespace DCFApixels.DragonECS
             return false;
         }
 #endif
-        private static string CreateLogString(Type worldType, int[] inc, int[] exc)
+        private static string CreateLogString(int worldTypeID, int[] inc, int[] exc)
         {
 #if (DEBUG && !DISABLE_DEBUG)
-            int worldID = WorldMetaStorage.GetWorldID(worldType);
-            string converter(int o) => EcsDebugUtility.GetGenericTypeName(WorldMetaStorage.GetComponentType(worldID, o), 1);
+            string converter(int o) => EcsDebugUtility.GetGenericTypeName(WorldMetaStorage.GetComponentType(worldTypeID, o), 1);
             return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
 #else
             return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
@@ -260,21 +259,22 @@ namespace DCFApixels.DragonECS
         internal class DebuggerProxy
         {
             public readonly Type worldType;
+            public readonly int worldTypeID;
             public readonly int[] included;
             public readonly int[] excluded;
             public readonly Type[] includedTypes;
             public readonly Type[] excludedTypes;
             public DebuggerProxy(EcsMask mask)
             {
-                worldType = mask._worldType;
-                int worldID = WorldMetaStorage.GetWorldID(worldType);
+                worldType = WorldMetaStorage.GetWorldType(mask._worldTypeID);
+                worldTypeID = mask._worldTypeID;
                 included = mask._inc;
                 excluded = mask._exc;
-                Type converter(int o) => WorldMetaStorage.GetComponentType(worldID, o);
+                Type converter(int o) => WorldMetaStorage.GetComponentType(worldTypeID, o);
                 includedTypes = included.Select(converter).ToArray();
                 excludedTypes = excluded.Select(converter).ToArray();
             }
-            public override string ToString() => CreateLogString(worldType, included, excluded);
+            public override string ToString() => CreateLogString(worldTypeID, included, excluded);
         }
         #endregion
 

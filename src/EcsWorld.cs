@@ -18,6 +18,7 @@ namespace DCFApixels.DragonECS
 
         public readonly short id;
 
+        private Type _worldType;
         private int _worldTypeID;
 
         private IntDispenser _entityDispenser;
@@ -45,7 +46,7 @@ namespace DCFApixels.DragonECS
         private object[] _components = new object[2];
 
         #region Properties
-        public abstract Type Archetype { get; }
+        public int WorldTypeID => _worldTypeID;
         public int Count => _entitiesCount;
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
@@ -67,7 +68,8 @@ namespace DCFApixels.DragonECS
                 Worlds[id] = this;
             }
 
-            _worldTypeID = WorldMetaStorage.GetWorldID(Archetype);
+            _worldType = this.GetType();
+            _worldTypeID = WorldMetaStorage.GetWorldID(_worldType);
 
             _entityDispenser = new IntDispenser(0);
             _pools = new IEcsPoolImplementation[512];
@@ -274,7 +276,7 @@ namespace DCFApixels.DragonECS
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (mask._worldType != Archetype)
+            if (mask._worldTypeID != _worldTypeID)
                 throw new EcsFrameworkException("The types of the target world of the mask and this world are different.");
 #endif
             for (int i = 0, iMax = mask._inc.Length; i < iMax; i++)
@@ -405,18 +407,7 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    internal sealed class EcsNullWorld : EcsWorld<EcsNullWorld>
-    {
-        public EcsNullWorld() : base(false) { }
-    }
-
-    public abstract class EcsWorld<TWorldArchetype> : EcsWorld
-        where TWorldArchetype : EcsWorld<TWorldArchetype>
-    {
-        public override Type Archetype => typeof(TWorldArchetype);
-        public EcsWorld() : base() { }
-        internal EcsWorld(bool isIndexable) : base(isIndexable) { }
-    }
+    internal sealed class EcsNullWorld : EcsWorld { }
 
     #region Callbacks Interface
     public interface IEcsWorldComponent
