@@ -54,7 +54,7 @@ namespace DCFApixels.DragonECS
             where TComponent : struct, IEcsComponent
         {
             if (AUTO_DEL_LAYER == layerName)
-                b.Layers.Insert(EcsConsts.POST_END_LAYER, AUTO_DEL_LAYER);
+                b.Layers.InsertAfter(EcsConsts.POST_END_LAYER, AUTO_DEL_LAYER);
             b.AddUnique(new DeleteOneFrameComponentSystem<TComponent>(), layerName);
             return b;
         }
