@@ -250,8 +250,6 @@ namespace DCFApixels.DragonECS
             }
         }
         #endregion
-
-        public struct XXX : IEcsComponent { }
         private class WorldTypeMeta
         {
             public readonly Type worldType;
