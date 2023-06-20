@@ -7,16 +7,49 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract class EcsWorld
+    public abstract partial class EcsWorld
     {
         private const short GEN_BITS = 0x7fff;
         private const short DEATH_GEN_BIT = short.MinValue;
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 2;
 
-        internal static EcsWorld[] Worlds = new EcsWorld[8];
+        internal static EcsWorld[] Worlds = new EcsWorld[4];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
+
+        static EcsWorld()
+        {
+            Worlds[0] = new EcsNullWorld();
+        }
+
         public static EcsWorld GetWorld(int worldID) => Worlds[worldID];
 
+        private static class WorldComponentPool<T>
+        {
+            private static T[] _items = new T[4];
+            private static int[] _mapping = new int[4];
+            private static int _count;
+            private static IEcsWorldComponent<T> _interface = EcsWorldComponentHandler<T>.instance;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ref T Get(int itemIndex) => ref _items[itemIndex];
+            public static int GetItemIndex(int worldID)
+            {
+                if (_mapping.Length < Worlds.Length)
+                    Array.Resize(ref _mapping, Worlds.Length);
+
+                ref int itemIndex = ref _mapping[worldID];
+                if (itemIndex <= 0)
+                {
+                    itemIndex = ++_count;
+                    _interface.Init(ref _items[itemIndex], Worlds[worldID]);
+                }
+                return itemIndex;
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ref T GetForWorld(int worldID) => ref _items[GetItemIndex(worldID)];
+        }
+    }
+    public abstract partial class EcsWorld
+    {
         public readonly short id;
 
         private Type _worldType;
@@ -44,8 +77,6 @@ namespace DCFApixels.DragonECS
         private List<IEcsWorldEventListener> _listeners = new List<IEcsWorldEventListener>();
         private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
 
-        private object[] _components = new object[2];
-
         #region Properties
         public int WorldTypeID => _worldTypeID;
         public int Count => _entitiesCount;
@@ -55,10 +86,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors/Destroy
-        static EcsWorld()
-        {
-            Worlds[0] = new EcsNullWorld();
-        }
         public EcsWorld() : this(true) { }
         internal EcsWorld(bool isIndexable)
         {
@@ -156,80 +183,7 @@ namespace DCFApixels.DragonECS
             }
             return (TExecutor)result;
         }
-        #endregion
-
-        #region WorldComponents
-        public EcsWorld SetupComponents(IEnumerable<object> components, params object[] componentsParams)
-        {
-            foreach (var component in components)
-                SetComponent(component);
-            foreach (var component in componentsParams)
-                SetComponent(component);
-            return this;
-        }
-        public EcsWorld SetupComponents(params object[] components)
-        {
-            foreach (var component in components)
-                SetComponent(component);
-            return this;
-        }
-        public void SetComponent(object component)
-        {
-            Type componentType = component.GetType();
-            if (componentType.IsValueType || componentType.IsPrimitive)
-                throw new ArgumentException();
-            SetComponentInternal(WorldMetaStorage.GetWorldComponentID(componentType, _worldTypeID), component);
-        }
-        public void SetComponent<T>(T component) where T : class
-        {
-            SetComponentInternal(WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID), component);
-        }
-        private void SetComponentInternal(int index, object component)
-        {
-            if (index >= _components.Length)
-                Array.Resize(ref _components, _components.Length << 1);
-
-            ref var currentComponent = ref _components[index];
-            if (currentComponent == component)
-                return;
-            if (currentComponent != null && currentComponent is IEcsWorldComponent oldComponentInterface)
-                oldComponentInterface.OnRemovedFromWorld(this);
-            currentComponent = component;
-            if (component is IEcsWorldComponent newComponentInterface)
-                newComponentInterface.OnAddedToWorld(this);
-        }
-        public T GetComponent<T>() where T : class
-        {
-            if (!TryGetComponent(out T result))
-                throw new NullReferenceException();
-            return result;
-        }
-        public bool TryGetComponent<T>(out T component) where T : class
-        {
-            int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
-            if (index >= _components.Length)
-            {
-                component = null;
-                return false;
-            }
-            component = (T)_components[index];
-            return component != null;
-        }
-        public bool HasComponent<T>()
-        {
-            int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
-            if (index >= _components.Length)
-                return false;
-            return _components[index] != null;
-        }
-        public void RemoveComponent<T>()
-        {
-            int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
-            ref var currentComponent = ref _components[index];
-            if (currentComponent is IEcsWorldComponent componentInterface)
-                componentInterface.OnRemovedFromWorld(this);
-            currentComponent = null;
-        }
+        public ref T GetComponent<T>() where T : struct => ref WorldComponentPool<T>.GetForWorld(id);
         #endregion
 
         #region Where Query
@@ -455,11 +409,6 @@ namespace DCFApixels.DragonECS
     internal sealed class EcsNullWorld : EcsWorld { }
 
     #region Callbacks Interface
-    public interface IEcsWorldComponent
-    {
-        void OnAddedToWorld(EcsWorld world);
-        void OnRemovedFromWorld(EcsWorld world);
-    }
     public interface IEcsWorldEventListener
     {
         void OnWorldResize(int newSize);
