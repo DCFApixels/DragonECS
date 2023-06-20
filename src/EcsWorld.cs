@@ -2,6 +2,7 @@
 using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -54,7 +55,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors/Destroy
-        static EcsWorld() => Worlds[0] = new EcsNullWorld();
+        static EcsWorld()
+        {
+            Worlds[0] = new EcsNullWorld();
+        }
         public EcsWorld() : this(true) { }
         internal EcsWorld(bool isIndexable)
         {
@@ -155,14 +159,44 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region WorldComponents
+        public EcsWorld SetupComponents(IEnumerable<object> components, params object[] componentsParams)
+        {
+            foreach (var component in components)
+                SetComponent(component);
+            foreach (var component in componentsParams)
+                SetComponent(component);
+            return this;
+        }
+        public EcsWorld SetupComponents(params object[] components)
+        {
+            foreach (var component in components)
+                SetComponent(component);
+            return this;
+        }
+        public void SetComponent(object component)
+        {
+            Type componentType = component.GetType();
+            if (componentType.IsValueType || componentType.IsPrimitive)
+                throw new ArgumentException();
+            SetComponentInternal(WorldMetaStorage.GetWorldComponentID(componentType, _worldTypeID), component);
+        }
         public void SetComponent<T>(T component) where T : class
         {
-            int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
+            SetComponentInternal(WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID), component);
+        }
+        private void SetComponentInternal(int index, object component)
+        {
             if (index >= _components.Length)
                 Array.Resize(ref _components, _components.Length << 1);
-            _components[index] = component;
-            if (component is IEcsWorldComponent intr)
-                intr.Init(this);
+
+            ref var currentComponent = ref _components[index];
+            if (currentComponent == component)
+                return;
+            if (currentComponent != null && currentComponent is IEcsWorldComponent oldComponentInterface)
+                oldComponentInterface.OnRemovedFromWorld(this);
+            currentComponent = component;
+            if (component is IEcsWorldComponent newComponentInterface)
+                newComponentInterface.OnAddedToWorld(this);
         }
         public T GetComponent<T>() where T : class
         {
@@ -174,7 +208,10 @@ namespace DCFApixels.DragonECS
         {
             int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
             if (index >= _components.Length)
-                Array.Resize(ref _components, _components.Length << 1);
+            {
+                component = null;
+                return false;
+            }
             component = (T)_components[index];
             return component != null;
         }
@@ -183,7 +220,15 @@ namespace DCFApixels.DragonECS
             int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
             if (index >= _components.Length)
                 return false;
-            return _components[index] == null;
+            return _components[index] != null;
+        }
+        public void RemoveComponent<T>()
+        {
+            int index = WorldMetaStorage.GetWorldComponentID<T>(_worldTypeID);
+            ref var currentComponent = ref _components[index];
+            if (currentComponent is IEcsWorldComponent componentInterface)
+                componentInterface.OnRemovedFromWorld(this);
+            currentComponent = null;
         }
         #endregion
 
@@ -412,7 +457,8 @@ namespace DCFApixels.DragonECS
     #region Callbacks Interface
     public interface IEcsWorldComponent
     {
-        void Init(EcsWorld world);
+        void OnAddedToWorld(EcsWorld world);
+        void OnRemovedFromWorld(EcsWorld world);
     }
     public interface IEcsWorldEventListener
     {

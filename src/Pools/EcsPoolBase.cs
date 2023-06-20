@@ -31,7 +31,7 @@ namespace DCFApixels.DragonECS
         void RemoveListener(IEcsPoolEventListener listener);
         #endregion
     }
-    public interface IEcsPool<T>
+    public interface IEcsStructsPool<T>
     {
         ref T Add(int entityID);
         ref readonly T Read(int entityID);
@@ -47,7 +47,7 @@ namespace DCFApixels.DragonECS
     }
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
     /// <typeparam name="T">Component type</typeparam>
-    public interface IEcsPoolImplementation<T> : IEcsPool<T>, IEcsPoolImplementation { }
+    public interface IEcsPoolImplementation<T> : IEcsPoolImplementation { }
 
     public static class EcsPoolThrowHalper
     {
@@ -104,9 +104,6 @@ namespace DCFApixels.DragonECS
             void IEcsPool.SetRaw(int entity, object dataRaw) => throw new NotImplementedException();
             void IEcsPool.Copy(int fromEntityID, int toEntityID) => throw new NotImplementedException();
             void IEcsPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID) => throw new NotImplementedException();
-            ref NullComponent IEcsPool<NullComponent>.Add(int entityID) => throw new NotImplementedException();
-            ref readonly NullComponent IEcsPool<NullComponent>.Read(int entityID) => throw new NotImplementedException();
-            ref NullComponent IEcsPool<NullComponent>.Get(int entityID) => throw new NotImplementedException();
             #endregion
 
             #region Callbacks
@@ -117,8 +114,8 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Listeners
-            public void AddListener(IEcsPoolEventListener listener) { }
-            public void RemoveListener(IEcsPoolEventListener listener) { }
+            void IEcsPool.AddListener(IEcsPoolEventListener listener) { }
+            void IEcsPool.RemoveListener(IEcsPoolEventListener listener) { }
             #endregion
         }
     }

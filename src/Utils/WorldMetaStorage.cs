@@ -44,6 +44,8 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetComponentID<T>(int worldID) => Component<T>.Get(worldID);
         public static int GetComponentID(Type type, int worldID) => _metas[worldID].GetComponentID(type);
+        public static bool IsComponentTypeDeclared(int worldID, Type type) => _metas[worldID].IsDeclaredComponentType(type);
+        public static Type GetComponentType(int worldID, int componentID) => _metas[worldID].GetComponentType(componentID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetPoolID<T>(int worldID) => Pool<T>.Get(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -52,8 +54,7 @@ namespace DCFApixels.DragonECS
         public static int GetExecutorID<T>(int worldID) => Executor<T>.Get(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetWorldComponentID<T>(int worldID) => WorldComponent<T>.Get(worldID);
-        public static bool IsComponentTypeDeclared(int worldID, Type type) => _metas[worldID].IsDeclaredType(type);
-        public static Type GetComponentType(int worldID, int componentID) => _metas[worldID].GetComponentType(componentID);
+        public static int GetWorldComponentID(Type type, int worldID) => _metas[worldID].GetWorldComponentID(type);
 
 
         private abstract class ResizerBase
@@ -97,11 +98,7 @@ namespace DCFApixels.DragonECS
                 GetIdsArray(type);
                 ref int id = ref _componentTypeArrayPairs[type][token];
                 if (id < 0)
-                {
-                    var meta = _metas[token];
-                    id = meta.componentCount++;
-                    meta.AddType(id, type);
-                }
+                    id = _metas[token].DeclareComponentType(type);
                 return id;
             }
         }
@@ -237,7 +234,7 @@ namespace DCFApixels.DragonECS
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = _metas[token].worldComponentCount++;
+                    id = _metas[token].GetWorldComponentID(typeof(T));
                 return id;
             }
             private sealed class Resizer : ResizerBase
@@ -263,27 +260,41 @@ namespace DCFApixels.DragonECS
             public int subjectsCount;
             public int executorsCount;
             public int worldComponentCount;
-            private Type[] _types;
-            private Dictionary<Type, int> _declaredComponentTypes;
-            public void AddType(int id, Type type)
+            private Type[] _types = new Type[10];
+            private Dictionary<Type, int> _declaredComponentTypes = new Dictionary<Type, int>();
+            private Dictionary<Type, int> _declaredWorldComponentTypes = new Dictionary<Type, int>();
+
+            public WorldTypeMeta(Type worldType)
             {
+                this.worldType = worldType;
+            }
+
+            public int DeclareComponentType(Type type)
+            {
+                int id = componentCount++;
                 if (_types.Length <= id)
                     Array.Resize(ref _types, id + 10);
                 _types[id] = type;
-
                 _declaredComponentTypes.Add(type, id);
+                return id;
             }
+            public bool IsDeclaredComponentType(Type type) => _declaredComponentTypes.ContainsKey(type);
             public Type GetComponentType(int componentID) => _types[componentID];
-            public bool IsDeclaredType(Type type) => _declaredComponentTypes.ContainsKey(type);
-            public int GetComponentID(Type type)
+            public int GetComponentID(Type type) => PoolComponentIdArrays.GetComponentID(type, id);
+
+
+            public int DeclareWorldComponentType(Type type)
             {
-                return PoolComponentIdArrays.GetComponentID(type, id);
+                int id = worldComponentCount++;
+                _declaredWorldComponentTypes.Add(type, id);
+                return id;
             }
-            public WorldTypeMeta(Type worldType)
+            public bool IsDeclaredWorldComponentType(Type type) => _declaredWorldComponentTypes.ContainsKey(type);
+            public int GetWorldComponentID(Type type)
             {
-                _types = new Type[10];
-                _declaredComponentTypes = new Dictionary<Type, int>();
-                this.worldType = worldType;
+                if(!_declaredWorldComponentTypes.TryGetValue(type, out int id))
+                    id = DeclareWorldComponentType(type);
+                return id;
             }
         }
     }

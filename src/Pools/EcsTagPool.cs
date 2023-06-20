@@ -6,7 +6,7 @@ using static DCFApixels.DragonECS.EcsPoolThrowHalper;
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
+    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructsPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {
         private EcsWorld _source;
@@ -131,19 +131,19 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
-        ref T IEcsPool<T>.Add(int entityID)
+        ref T IEcsStructsPool<T>.Add(int entityID)
         {
             Add(entityID);
             return ref _fakeComponent;
         }
-        ref readonly T IEcsPool<T>.Read(int entityID)
+        ref readonly T IEcsStructsPool<T>.Read(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
             return ref _fakeComponent;
         }
-        ref T IEcsPool<T>.Get(int entityID)
+        ref T IEcsStructsPool<T>.Get(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);

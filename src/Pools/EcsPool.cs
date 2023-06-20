@@ -7,7 +7,7 @@ using static DCFApixels.DragonECS.EcsPoolThrowHalper;
 namespace DCFApixels.DragonECS
 {
     /// <summary>Pool for IEcsComponent components</summary>
-    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
+    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructsPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
     {
         private EcsWorld _source;
@@ -171,8 +171,8 @@ namespace DCFApixels.DragonECS
         void IEcsPool.AddRaw(int entityID, object dataRaw) => Add(entityID) = (T)dataRaw;
         object IEcsPool.GetRaw(int entityID) => Read(entityID);
         void IEcsPool.SetRaw(int entityID, object dataRaw) => Get(entityID) = (T)dataRaw;
-        ref readonly T IEcsPool<T>.Read(int entityID) => ref Read(entityID);
-        ref T IEcsPool<T>.Get(int entityID) => ref Get(entityID);
+        ref readonly T IEcsStructsPool<T>.Read(int entityID) => ref Read(entityID);
+        ref T IEcsStructsPool<T>.Get(int entityID) => ref Get(entityID);
         #endregion
 
         #region Listeners

@@ -18,11 +18,8 @@ namespace DCFApixels.DragonECS
         private bool _isInit;
 
         #region Properties
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public EcsMask Mask => mask;
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public EcsWorld World => source;
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public bool IsInit => _isInit;
         #endregion
 
@@ -169,7 +166,7 @@ namespace DCFApixels.DragonECS
         #region Iterator
         public EcsSubjectIterator GetIterator()
         {
-            return new EcsSubjectIterator(this, World.Entities);
+            return new EcsSubjectIterator(this, source.Entities);
         }
         public EcsSubjectIterator GetIteratorFor(EcsReadonlyGroup sourceGroup)
         {
