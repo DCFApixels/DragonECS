@@ -8,6 +8,7 @@ namespace DCFApixels.DragonECS
     public interface IEcsWorldComponent<T>
     {
         void Init(ref T component, EcsWorld world);
+        void OnDestroy(ref T component, EcsWorld world);
     }
     public static class EcsWorldComponentHandler<T>
     {
@@ -30,6 +31,7 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Init(ref T component, EcsWorld world) { }
+            public void OnDestroy(ref T component, EcsWorld world) { }
         }
     }
     internal class WorldComponentHandler<T> : IEcsWorldComponent<T>
@@ -38,6 +40,7 @@ namespace DCFApixels.DragonECS
         private T _fakeInstnace;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Init(ref T component, EcsWorld world) => _fakeInstnace.Init(ref component, world);
+        public void OnDestroy(ref T component, EcsWorld world) => _fakeInstnace.OnDestroy(ref component, world);
     }
     #endregion
 
