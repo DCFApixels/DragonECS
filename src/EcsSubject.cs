@@ -108,6 +108,11 @@ namespace DCFApixels.DragonECS
             }
             #endregion
 
+            public EcsWorldCmp<T> GetWorldData<T>() where T : struct
+            {
+                return new EcsWorldCmp<T>(_world.id);
+            }
+
             private void End(out EcsMask mask)
             {
                 HashSet<int> maskInc;

@@ -28,7 +28,7 @@ namespace DCFApixels.DragonECS
         public bool IsAlive
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => EcsWorld.Worlds[world].IsAlive(id, gen);
+            get => EcsWorld.GetWorld(world).IsAlive(id, gen);
         }
         public bool IsNull
         {
@@ -65,7 +65,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (!IsAlive) ThrowIsNotAlive(this);
 #endif
-                return EcsWorld.Worlds[world];
+                return EcsWorld.GetWorld(world);
             }
         }
         public short WorldID
@@ -104,12 +104,12 @@ namespace DCFApixels.DragonECS
         }
         public bool TryGetWorld(out EcsWorld world)
         {
-            world = EcsWorld.Worlds[this.world];
+            world = EcsWorld.GetWorld(this.world);
             return IsAlive;
         }
         public bool TryUnpack(out EcsWorld world, out int id)
         {
-            world = EcsWorld.Worlds[this.world];
+            world = EcsWorld.GetWorld(this.world);
             id = this.id;
             return IsAlive;
         }

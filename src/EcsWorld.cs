@@ -9,12 +9,12 @@ using System.Runtime.InteropServices;
 namespace DCFApixels.DragonECS
 {
     [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 4)]
-    public struct EcsWorldDataRef<T> where T : struct
+    public struct EcsWorldCmp<T> where T : struct
     {
         private int _worldID;
-        public EcsWorldDataRef(int worldID) => _worldID = worldID;
+        public EcsWorldCmp(int worldID) => _worldID = worldID;
         public EcsWorld World => EcsWorld.GetWorld(_worldID);
-        public ref T Inst => ref EcsWorld.GetData<T>(_worldID);
+        public ref T Value => ref EcsWorld.GetData<T>(_worldID);
     }
     public abstract partial class EcsWorld
     {
@@ -22,11 +22,10 @@ namespace DCFApixels.DragonECS
         private const short DEATH_GEN_BIT = short.MinValue;
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 2;
 
-        internal static EcsWorld[] Worlds = new EcsWorld[4];
+        private static EcsWorld[] Worlds = new EcsWorld[4];
         private static IntDispenser _worldIdDispenser = new IntDispenser(0);
 
         private static List<DataReleaser> _dataReleaseres = new List<DataReleaser>();
-
 
         static EcsWorld()
         {
