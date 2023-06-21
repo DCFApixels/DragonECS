@@ -1,5 +1,7 @@
 ﻿namespace DCFApixels.DragonECS
 {
+    public sealed class EmptySubject : EcsSubject { }
+
     public sealed class SingleSubject<TPool> : EcsSubject where TPool : IEcsPoolImplementation, new()
     {
         public readonly TPool pool;
