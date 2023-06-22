@@ -242,11 +242,71 @@ sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomet
 Является контейнером для сущностей и компонентов.
 > **NOTICE:** Необходимо вызывать EcsWorld.Destroy() у экземпляра мира если он больше не нужен.
 ### Компоненты мира
-С помощью компонентов можно прикреплять дополнительные данные к мирам. Компоненты можно применять создания расширений в связке с методами расширений.
+С помощью компонентов можно прикреплять дополнительные данные к мирам. В качестве компонентов используются `struct` типы.
 ``` csharp
-WorldComponent component = _world.Get<WorldComponent>();
+ref WorldComponent component = ref _world.Get<WorldComponent>();
 ```
-    
+Реализация компонента:
+``` csharp
+public struct WorldComponent
+{
+    // Данные.
+}
+```
+Так же можно реализовать интерфейс IEcsWorldComponent<T> для обработки событий: 
+``` csharp
+public struct WorldComponent : IEcsWorldComponent<WorldComponent>
+{
+    // Данные.
+    void IEcsWorldComponent<WorldComponent>.Init(ref WorldComponent component, EcsWorld world)
+    {
+        // Действия при инициализации компонента. Вызывается до первого возвращения из EcsWorld.Get
+    }
+    void IEcsWorldComponent<WorldComponent>.OnDestroy(ref WorldComponent component, EcsWorld world)
+    {
+        // Действия когда вызывается EcsWorld.Destroy.
+        // Вызов OnDestroy, обязует пользователя вручную обнулять компонент, если это необходимо. 
+        component = default;
+    }
+}
+```
+
+<details>
+<summary>Пример использования</summary>
+
+События интерфейса IEcsWorldComponent<T>, могут быть использованы для автоматической инициализации полей компонента, и освобождения ресурсов.
+``` csharp
+public struct WorldComponent : IEcsWorldComponent<WorldComponent>
+{
+    private SomeClass _object; // Объект который будет утилизироваться.
+    private SomeReusedClass _resusedObject; // Объект который будет переиспользоваться.
+    public SomeClass Object => _object;
+    public SomeReusedClass ResusedObject => _resusedObject;
+    void IEcsWorldComponent<WorldComponent>.Init(ref WorldComponent component, EcsWorld world)
+    {
+        if (component._resusedObject == null)
+            component._resusedObject = new SomeReusedClass();
+        component._object = new SomeClass();
+        // Теперь при получении компонента через EcsWorld.Get, _resusedObject и _object уже будут созданы.
+    }
+    void IEcsWorldComponent<WorldComponent>.OnDestroy(ref WorldComponent component, EcsWorld world)
+    {
+        // Утилизируем не нужный объект, и освобождаем ссылку на него, чтобы GC мог его собрать.
+        component._object.Dispose();
+        component._object = null;
+        
+        // Как вариант тут можно сделать сброс значений у переиспользуемого объекта.
+        //component._resusedObject.Reset();
+        
+        //Так как в этом примере не нужно полное обнуление компонента, то строчка ниже не нужна.
+        //component = default;
+    }
+}
+```
+
+</details>
+
+> Компоненты можно применять для создания расширений в связке с методами расширений.
 ## Пул
 Является контейнером для компонентов, предоставляет методы для добавления/чтения/редактирования/удаления компонентов на сущности. Есть несколько видов пулов, для разных целей
 * `EcsPool` - универсальный пул, хранит struct-компоненты реализующие интерфейс IEcsComponent;
