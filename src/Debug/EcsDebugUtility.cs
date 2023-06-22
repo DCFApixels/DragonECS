@@ -50,7 +50,7 @@ namespace DCFApixels.DragonECS
             var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             string[] values = new string[fields.Length];
             for (int i = 0; i < fields.Length; i++)
-                values[i] = fields[i].GetValue(target).ToString();
+                values[i] = (fields[i].GetValue(target) ?? "NULL").ToString();
             if (isWriteName)
                 return $"{type.Name}({string.Join(", ", values)})";
             else
