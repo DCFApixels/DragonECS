@@ -2,7 +2,6 @@
 using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -67,7 +66,7 @@ namespace DCFApixels.DragonECS
                 ref int itemIndex = ref _mapping[worldID];
                 if (itemIndex <= 0)
                 {
-                    if(_recycledItemsCount > 0)
+                    if (_recycledItemsCount > 0)
                     {
                         _count++;
                         itemIndex = _recycledItems[--_recycledItemsCount];
@@ -84,7 +83,7 @@ namespace DCFApixels.DragonECS
             private static void Release(int worldID)
             {
                 ref int itemIndex = ref _mapping[worldID];
-                if(itemIndex != 0)
+                if (itemIndex != 0)
                 {
                     _interface.OnDestroy(ref _items[itemIndex], Worlds[worldID]);
                     _recycledItems[_recycledItemsCount++] = itemIndex;

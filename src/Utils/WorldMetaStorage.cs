@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 namespace DCFApixels.DragonECS
 {
     //TODO этот класс требует переработки, изначально такая конструкция имела хорошую производительность, но сейчас он слишком раздулся
-    internal static class WorldMetaStorage 
+    internal static class WorldMetaStorage
     {
         private static int _tokenCount = 0;
         private static List<ResizerBase> _resizers = new List<ResizerBase>();
@@ -81,7 +81,7 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
-                    if(result.Length < targetSize)
+                    if (result.Length < targetSize)
                     {
                         int oldSize = result.Length;
                         Array.Resize(ref result, targetSize);
@@ -290,7 +290,7 @@ namespace DCFApixels.DragonECS
             public bool IsDeclaredWorldComponentType(Type type) => _declaredWorldComponentTypes.ContainsKey(type);
             public int GetWorldComponentID(Type type)
             {
-                if(!_declaredWorldComponentTypes.TryGetValue(type, out int id))
+                if (!_declaredWorldComponentTypes.TryGetValue(type, out int id))
                     id = DeclareWorldComponentType(type);
                 return id;
             }

@@ -42,6 +42,6 @@
 #endif
             return _filteredGroup.Readonly;
         }
-#endregion
+        #endregion
     }
 }

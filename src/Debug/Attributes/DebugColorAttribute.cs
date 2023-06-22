@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS
         public DebugColorAttribute(DebugColor color) => this.color = new Color((int)color);
 
         [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 4)]
-        internal readonly struct Color 
+        internal readonly struct Color
         {
             [FieldOffset(0)] public readonly int full;
             [FieldOffset(3)] public readonly byte r;

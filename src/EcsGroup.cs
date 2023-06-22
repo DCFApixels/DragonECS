@@ -272,7 +272,7 @@ namespace DCFApixels.DragonECS
         }
         public int Bake(ref int[] entities)
         {
-            if(entities.Length < _count)
+            if (entities.Length < _count)
                 entities = new int[_count];
             Array.Copy(_dense, 1, entities, 0, _count);
             return _count;

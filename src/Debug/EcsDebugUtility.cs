@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace DCFApixels.DragonECS
 {
@@ -105,7 +103,7 @@ namespace DCFApixels.DragonECS
             {
                 foreach (var word in nameWords)
                 {
-                    if(!_words.TryGetValue(word, out WordColor color))
+                    if (!_words.TryGetValue(word, out WordColor color))
                     {
                         color = new WordColor();
                         _words.Add(word, color);
@@ -143,7 +141,7 @@ namespace DCFApixels.DragonECS
         private static DebugColorAttribute.Color CalcNameColorFor(Type type)
         {
             Type targetType = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
-            if(!_names.TryGetValue(targetType, out NameColor nameColor))
+            if (!_names.TryGetValue(targetType, out NameColor nameColor))
             {
                 nameColor = new NameColor(SplitString(targetType.Name));
                 _names.Add(targetType, nameColor);
@@ -186,7 +184,7 @@ namespace DCFApixels.DragonECS
         public static bool TryGetColorRGB(Type type, out (byte, byte, byte) color)
         {
             var atr = type.GetCustomAttribute<DebugColorAttribute>();
-            if(atr != null)
+            if (atr != null)
             {
                 color = (atr.r, atr.g, atr.b);
                 return true;
