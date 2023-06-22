@@ -202,15 +202,15 @@ namespace DCFApixels.DragonECS
             return self.GetPool<EcsPool<TComponent>>();
         }
 
-        public static EcsPool<TComponent> Include<TComponent>(this EcsSubjectBuilderBase self) where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> Include<TComponent>(this EcsAspectBuilderBase self) where TComponent : struct, IEcsComponent
         {
             return self.Include<EcsPool<TComponent>>();
         }
-        public static EcsPool<TComponent> Exclude<TComponent>(this EcsSubjectBuilderBase self) where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> Exclude<TComponent>(this EcsAspectBuilderBase self) where TComponent : struct, IEcsComponent
         {
             return self.Exclude<EcsPool<TComponent>>();
         }
-        public static EcsPool<TComponent> Optional<TComponent>(this EcsSubjectBuilderBase self) where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> Optional<TComponent>(this EcsAspectBuilderBase self) where TComponent : struct, IEcsComponent
         {
             return self.Optional<EcsPool<TComponent>>();
         }

@@ -119,7 +119,7 @@ namespace DCFApixels.DragonECS
         internal IEcsPoolImplementation[] _pools;
         private EcsNullPool _nullPool = EcsNullPool.instance;
 
-        private EcsSubject[] _subjects;
+        private EcsAspect[] _aspects;
         private EcsQueryExecutor[] _executors;
 
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
@@ -166,7 +166,7 @@ namespace DCFApixels.DragonECS
 
             _allEntites = GetFreeGroup();
 
-            _subjects = new EcsSubject[128];
+            _aspects = new EcsAspect[128];
             _executors = new EcsQueryExecutor[128];
         }
         public void Destroy()
@@ -175,7 +175,7 @@ namespace DCFApixels.DragonECS
             _gens = null;
             _pools = null;
             _nullPool = null;
-            _subjects = null;
+            _aspects = null;
             _executors = null;
             Worlds[id] = null;
             ReleaseData(id);
@@ -212,14 +212,14 @@ namespace DCFApixels.DragonECS
             }
             return (TPool)_pools[index];
         }
-        public TSubject GetSubject<TSubject>() where TSubject : EcsSubject
+        public TAspect GetAspect<TAspect>() where TAspect : EcsAspect
         {
-            int index = WorldMetaStorage.GetSubjectID<TSubject>(_worldTypeID);
-            if (index >= _subjects.Length)
-                Array.Resize(ref _subjects, _subjects.Length << 1);
-            if (_subjects[index] == null)
-                _subjects[index] = EcsSubject.Builder.Build<TSubject>(this);
-            return (TSubject)_subjects[index];
+            int index = WorldMetaStorage.GetAspectID<TAspect>(_worldTypeID);
+            if (index >= _aspects.Length)
+                Array.Resize(ref _aspects, _aspects.Length << 1);
+            if (_aspects[index] == null)
+                _aspects[index] = EcsAspect.Builder.Build<TAspect>(this);
+            return (TAspect)_aspects[index];
         }
         public TExecutor GetExecutor<TExecutor>() where TExecutor : EcsQueryExecutor, new()
         {
@@ -239,25 +239,25 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Where Query
-        public EcsReadonlyGroup WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject) where TSubject : EcsSubject
+        public EcsReadonlyGroup WhereFor<TAspect>(EcsReadonlyGroup sourceGroup, out TAspect aspect) where TAspect : EcsAspect
         {
-            var executor = GetExecutor<EcsWhereExecutor<TSubject>>();
-            subject = executor.Subject;
+            var executor = GetExecutor<EcsWhereExecutor<TAspect>>();
+            aspect = executor.Aspect;
             return executor.ExecuteFor(sourceGroup);
         }
-        public EcsReadonlyGroup WhereFor<TSubject>(EcsReadonlyGroup sourceGroup) where TSubject : EcsSubject
+        public EcsReadonlyGroup WhereFor<TAspect>(EcsReadonlyGroup sourceGroup) where TAspect : EcsAspect
         {
-            return GetExecutor<EcsWhereExecutor<TSubject>>().ExecuteFor(sourceGroup);
+            return GetExecutor<EcsWhereExecutor<TAspect>>().ExecuteFor(sourceGroup);
         }
-        public EcsReadonlyGroup Where<TSubject>(out TSubject subject) where TSubject : EcsSubject
+        public EcsReadonlyGroup Where<TAspect>(out TAspect aspect) where TAspect : EcsAspect
         {
-            var executor = GetExecutor<EcsWhereExecutor<TSubject>>();
-            subject = executor.Subject;
+            var executor = GetExecutor<EcsWhereExecutor<TAspect>>();
+            aspect = executor.Aspect;
             return executor.Execute();
         }
-        public EcsReadonlyGroup Where<TSubject>() where TSubject : EcsSubject
+        public EcsReadonlyGroup Where<TAspect>() where TAspect : EcsAspect
         {
-            return GetExecutor<EcsWhereExecutor<TSubject>>().Execute();
+            return GetExecutor<EcsWhereExecutor<TAspect>>().Execute();
         }
         #endregion
 

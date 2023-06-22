@@ -49,7 +49,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetPoolID<T>(int worldID) => Pool<T>.Get(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetSubjectID<T>(int worldID) => Subject<T>.Get(worldID);
+        public static int GetAspectID<T>(int worldID) => Aspect<T>.Get(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetExecutorID<T>(int worldID) => Executor<T>.Get(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -159,10 +159,10 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-        private static class Subject<T>
+        private static class Aspect<T>
         {
             public static int[] ids;
-            static Subject()
+            static Aspect()
             {
                 ids = new int[_tokenCount];
                 for (int i = 0; i < ids.Length; i++)
@@ -174,7 +174,7 @@ namespace DCFApixels.DragonECS
             {
                 ref int id = ref ids[token];
                 if (id < 0)
-                    id = _metas[token].subjectsCount++;
+                    id = _metas[token].aspectsCount++;
                 return id;
             }
             private sealed class Resizer : ResizerBase
@@ -255,7 +255,7 @@ namespace DCFApixels.DragonECS
             public readonly Type worldType;
             public int id;
             public int componentCount;
-            public int subjectsCount;
+            public int aspectsCount;
             public int executorsCount;
             public int worldComponentCount;
             private Type[] _types = new Type[10];

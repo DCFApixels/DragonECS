@@ -9,7 +9,7 @@ using System.Text;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract class EcsSubject
+    public abstract class EcsAspect
     {
         [EditorBrowsable(EditorBrowsableState.Always)]
         internal EcsWorld source;
@@ -29,41 +29,41 @@ namespace DCFApixels.DragonECS
 
         #region Builder
         protected virtual void Init(Builder b) { }
-        public sealed class Builder : EcsSubjectBuilderBase
+        public sealed class Builder : EcsAspectBuilderBase
         {
             private EcsWorld _world;
             private HashSet<int> _inc;
             private HashSet<int> _exc;
-            private List<CombinedSubject> _subjects;
+            private List<Combined> _combined;
 
             public EcsWorld World => _world;
 
             private Builder(EcsWorld world)
             {
                 _world = world;
-                _subjects = new List<CombinedSubject>();
+                _combined = new List<Combined>();
                 _inc = new HashSet<int>();
                 _exc = new HashSet<int>();
             }
-            internal static TSubject Build<TSubject>(EcsWorld world) where TSubject : EcsSubject
+            internal static TAspect Build<TAspect>(EcsWorld world) where TAspect : EcsAspect
             {
                 Builder builder = new Builder(world);
-                Type subjectType = typeof(TSubject);
-                ConstructorInfo constructorInfo = subjectType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
-                EcsSubject newSubject;
+                Type aspectType = typeof(TAspect);
+                ConstructorInfo constructorInfo = aspectType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
+                EcsAspect newAspect;
                 if (constructorInfo != null)
                 {
-                    newSubject = (EcsSubject)constructorInfo.Invoke(new object[] { builder });
+                    newAspect = (EcsAspect)constructorInfo.Invoke(new object[] { builder });
                 }
                 else
                 {
-                    newSubject = (EcsSubject)Activator.CreateInstance(typeof(TSubject));
-                    newSubject.Init(builder);
+                    newAspect = (EcsAspect)Activator.CreateInstance(typeof(TAspect));
+                    newAspect.Init(builder);
                 }
-                newSubject.source = world;
-                builder.End(out newSubject.mask);
-                newSubject._isInit = true;
-                return (TSubject)newSubject;
+                newAspect.source = world;
+                builder.End(out newAspect.mask);
+                newAspect._isInit = true;
+                return (TAspect)newAspect;
             }
 
             #region Include/Exclude/Optional
@@ -100,10 +100,10 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Combine
-            public TOtherSubject Combine<TOtherSubject>(int order = 0) where TOtherSubject : EcsSubject
+            public TOtherAspect Combine<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect
             {
-                var result = _world.GetSubject<TOtherSubject>();
-                _subjects.Add(new CombinedSubject(result, order));
+                var result = _world.GetAspect<TOtherAspect>();
+                _combined.Add(new Combined(result, order));
                 return result;
             }
             #endregion
@@ -117,14 +117,14 @@ namespace DCFApixels.DragonECS
             {
                 HashSet<int> maskInc;
                 HashSet<int> maskExc;
-                if (_subjects.Count > 0)
+                if (_combined.Count > 0)
                 {
                     maskInc = new HashSet<int>();
                     maskExc = new HashSet<int>();
-                    _subjects.Sort((a, b) => a.order - b.order);
-                    foreach (var item in _subjects)
+                    _combined.Sort((a, b) => a.order - b.order);
+                    foreach (var item in _combined)
                     {
-                        EcsMask submask = item.subject.mask;
+                        EcsMask submask = item.aspect.mask;
                         maskInc.ExceptWith(submask._exc);//удаляю конфликтующие ограничения
                         maskExc.ExceptWith(submask._inc);//удаляю конфликтующие ограничения
                         maskInc.UnionWith(submask._inc);
@@ -169,30 +169,30 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Iterator
-        public EcsSubjectIterator GetIterator()
+        public EcsAspectIterator GetIterator()
         {
-            return new EcsSubjectIterator(this, source.Entities);
+            return new EcsAspectIterator(this, source.Entities);
         }
-        public EcsSubjectIterator GetIteratorFor(EcsReadonlyGroup sourceGroup)
+        public EcsAspectIterator GetIteratorFor(EcsReadonlyGroup sourceGroup)
         {
-            return new EcsSubjectIterator(this, sourceGroup);
+            return new EcsAspectIterator(this, sourceGroup);
         }
         #endregion
 
-        private struct CombinedSubject
+        private struct Combined
         {
-            public EcsSubject subject;
+            public EcsAspect aspect;
             public int order;
-            public CombinedSubject(EcsSubject subject, int order)
+            public Combined(EcsAspect aspect, int order)
             {
-                this.subject = subject;
+                this.aspect = aspect;
                 this.order = order;
             }
         }
     }
 
     #region BuilderBase
-    public abstract class EcsSubjectBuilderBase
+    public abstract class EcsAspectBuilderBase
     {
         public abstract TPool Include<TPool>() where TPool : IEcsPoolImplementation, new();
         public abstract TPool Exclude<TPool>() where TPool : IEcsPoolImplementation, new();
@@ -291,15 +291,15 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region Iterator
-    public ref struct EcsSubjectIterator
+    public ref struct EcsAspectIterator
     {
         public readonly EcsMask mask;
         private EcsReadonlyGroup _sourceGroup;
         private Enumerator _enumerator;
 
-        public EcsSubjectIterator(EcsSubject subject, EcsReadonlyGroup sourceGroup)
+        public EcsAspectIterator(EcsAspect aspect, EcsReadonlyGroup sourceGroup)
         {
-            mask = subject.mask;
+            mask = aspect.mask;
             _sourceGroup = sourceGroup;
             _enumerator = default;
         }

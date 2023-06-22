@@ -312,7 +312,7 @@ namespace DCFApixels.DragonECS
     }
 
     #region Extensions
-    public static class EcsPipelineExtensions
+    public static partial class EcsPipelineExtensions
     {
         public static bool IsNullOrDestroyed(this EcsPipeline self) => self == null || self.IsDestoryed;
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsProcess> range, string layerName = null)

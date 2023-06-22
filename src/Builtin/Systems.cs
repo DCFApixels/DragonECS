@@ -26,10 +26,10 @@ namespace DCFApixels.DragonECS
         public class DeleteOneFrameComponentSystem<TComponent> : IEcsRunProcess, IEcsInject<EcsWorld>
             where TComponent : struct, IEcsComponent
         {
-            private sealed class Subject : EcsSubject
+            private sealed class Aspect : EcsAspect
             {
                 public EcsPool<TComponent> pool;
-                public Subject(Builder b) => pool = b.Include<TComponent>();
+                public Aspect(Builder b) => pool = b.Include<TComponent>();
             }
             List<EcsWorld> _worlds = new List<EcsWorld>();
             public void Inject(EcsWorld obj) => _worlds.Add(obj);
@@ -40,8 +40,8 @@ namespace DCFApixels.DragonECS
                     EcsWorld world = _worlds[i];
                     if (world.IsComponentTypeDeclared<TComponent>())
                     {
-                        foreach (var e in world.Where(out Subject s))
-                            s.pool.Del(e);
+                        foreach (var e in world.Where(out Aspect a))
+                            a.pool.Del(e);
                     }
                 }
             }

@@ -141,9 +141,12 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public static class InjectSystemExtensions
+    public static partial class EcsPipelineExtensions
     {
         public static void Inject<T>(EcsPipeline self, T data) => self.GetRunner<IEcsInject<T>>().Inject(data);
+    }
+    public static partial class EcsPipelineBuilderExtensions
+    {
         public static EcsPipeline.Builder Inject<T>(this EcsPipeline.Builder self, T data)
         {
             if (data == null) throw new ArgumentNullException();
