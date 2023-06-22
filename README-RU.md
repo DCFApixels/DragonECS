@@ -253,7 +253,7 @@ public struct WorldComponent
     // Данные.
 }
 ```
-Так же можно реализовать интерфейс IEcsWorldComponent<T> для обработки событий: 
+Или:
 ``` csharp
 public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 {
