@@ -403,7 +403,7 @@ class Subject : EcsSubject
 //поэтому будет создана новая или переиспользована свободная.
 EcsGroup group = EcsGroup.New(_world);
 //Освобождаем группу.
-group.Release();
+group.Dispose();
 ```
 ``` c#
 //Добвялем сущность entityID.
