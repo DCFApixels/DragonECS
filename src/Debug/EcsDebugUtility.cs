@@ -40,17 +40,18 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region AutoToString
+        /// <summary> slow but automatic conversion of ValueType to string in the format "name(field1, field2... fieldn)" </summary>
         public static string AutoToString<T>(this T self, bool isWriteName = true) where T : struct
         {
             return AutoToString(self, typeof(T), isWriteName);
         }
-        private static string AutoToString(object target, Type type, bool isWriteName) 
+        private static string AutoToString(object target, Type type, bool isWriteName)
         {
             var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             string[] values = new string[fields.Length];
             for (int i = 0; i < fields.Length; i++)
                 values[i] = fields[i].GetValue(target).ToString();
-            if(isWriteName)
+            if (isWriteName)
                 return $"{type.Name}({string.Join(", ", values)})";
             else
                 return $"({string.Join(", ", values)})";
