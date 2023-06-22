@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace DCFApixels.DragonECS
 {
@@ -34,6 +36,24 @@ namespace DCFApixels.DragonECS
 #else //optimization for release build
             return type.Name;
 #endif
+        }
+        #endregion
+
+        #region AutoToString
+        public static string AutoToString<T>(this T self, bool isWriteName = true) where T : struct
+        {
+            return AutoToString(self, typeof(T), isWriteName);
+        }
+        private static string AutoToString(object target, Type type, bool isWriteName) 
+        {
+            var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            string[] values = new string[fields.Length];
+            for (int i = 0; i < fields.Length; i++)
+                values[i] = fields[i].GetValue(target).ToString();
+            if(isWriteName)
+                return $"{type.Name}({string.Join(", ", values)})";
+            else
+                return $"({string.Join(", ", values)})";
         }
         #endregion
 
