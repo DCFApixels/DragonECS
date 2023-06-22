@@ -36,7 +36,7 @@
   * [Мир](#Мир)
   * [Пул](#Пул)
   * [Группа](#Группа)
-  * [Субъект](#Субъект)
+  * [Аспект](#Аспект)
   * [Запрос](#Запрос)
   * [Корень ECS](#Корень-ECS)
     * [Пример для Unity](#Пример-для-Unity)
@@ -337,18 +337,18 @@ poses.Del(entityID);
 Имеется возможность реализации пользовательского пула
 > эта функция будет описана в ближайшее время
  
-## Субъект
-Это пользовательские классы наследуемые от `EcsSubject`, которые используются как посредник для взаимодействия с сущностями. Субъекты одновременно являются кешем пулов и ограничением для фильтрации сущностей.
+## Аспект
+Это пользовательские классы наследуемые от `EcsAspect`, которые используются как посредник для взаимодействия с сущностями. Аспекты одновременно являются кешем пулов и ограничением для фильтрации сущностей.
 ``` csharp
 using DCFApixels.DragonECS;
 ...
-class Subject : EcsSubject
+class Aspect : EcsAspect
 {
     public EcsPool<Pose> poses;
     public EcsPool<Velocity> velocities;
  
     // вместо конструктора можно использовать виртуальную функцию Init(Builder b)
-    public Subject(Builder b) 
+    public Aspect(Builder b) 
     {
         // кешируется пул и Pose добавляется во включающее ограничение.
         poses = b.Include<Pose>();
@@ -361,39 +361,39 @@ class Subject : EcsSubject
     }
 }
 ```
-В субъекты можно добавлять другие субъекты, тем самым комбинируя их. Ограничения так же будут скомбинированы
+В аспекты можно добавлять другие аспекты, тем самым комбинируя их. Ограничения так же будут скомбинированы
 ``` csharp
 using DCFApixels.DragonECS;
 ...
-class Subject : EcsSubject
+class Aspect : EcsAspect
 {
-    public OtherSubject1 someSubject1;
-    public OtherSubject2 someSubject2;
+    public OtherAspect1 otherAspect1;
+    public OtherAspect2 otherAspect2;
     public EcsPool<Pose> poses;
  
-    // функция Init аналогична конструктору Subject(Builder b)
+    // функция Init аналогична конструктору Aspect(Builder b)
     protected override void Init(Builder b)
     {
-        // комбинирует с SomeSubject1.
-        otherSubject1 = b.Combine<OtherSubject1>(1);
-        // хотя для SomeSubject1 метод Combine был вызван раньше, сначала будет скомбинирован с OtherSubject2, так как по умолчанию order = 0.
-        otherSubject2 = b.Combine<OtherSubject2>();
-        // если в OtherSubject1 или в OtherSubject2 было ограничение b.Exclude<Pose>() тут оно будет заменено на b.Include<Pose>().
+        // комбинирует с SomeAspect1.
+        otherAspect1 = b.Combine<OtherAspect1>(1);
+        // хотя для OtherAspect1 метод Combine был вызван раньше, сначала будет скомбинирован с OtherAspect2, так как по умолчанию order = 0.
+        otherAspect2 = b.Combine<OtherAspect2>();
+        // если в OtherAspect1 или в OtherAspect2 было ограничение b.Exclude<Pose>() тут оно будет заменено на b.Include<Pose>().
         poses = b.Include<Pose>();
     }
 }
 ```
-Если будут конфликтующие ограничения у комбинируемых субъектов, то новые ограничения будут заменять добавленные ранее. Базовые ограничения всегда заменяют ограничения из добавленных субъектов. Визуальный пример комбинации ограничений:
+Если будут конфликтующие ограничения у комбинируемых аспектов, то новые ограничения будут заменять добавленные ранее. Ограничения корневого аспекта всегда заменяют ограничения из добавленных аспектов. Визуальный пример комбинации ограничений:
 | | cmp1 | cmp2 | cmp3 | cmp4 | cmp5 | разрешение конфликтных ограничений|
 | :--- | :--- | :--- | :--- | :--- | :--- |:--- |
-| OtherSubject2 | :heavy_check_mark: | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | |
-| OtherSubject1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | Для `cmp2` будет выбрано :heavy_check_mark: |
-| Subject | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | Для `cmp1` будет выбрано :x: |
+| OtherAspect2 | :heavy_check_mark: | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | |
+| OtherAspect1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | Для `cmp2` будет выбрано :heavy_check_mark: |
+| Aspect | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | Для `cmp1` будет выбрано :x: |
 | Итоговые ограничения | :x: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_check_mark: | |
  
 
 ## Запросы
-Используйте метод-запрос `EcsWorld.Where<TSubject>(out TSubject subject)` для получения необходимого системе набора сущностей. Запросы работают в связке с субъектами, субъекты определяют ограничения запросов, результатом запроса становится группа сущностей удовлетворяющая условиям субъекта. По умолчанию запрос делает выборку из всех сущностей в мире, но так же можно сделать выборку из определенной группы сущностей, для этого используйте `EcsWorld.WhereFor<TSubject>(EcsReadonlyGroup sourceGroup, out TSubject subject)`
+Используйте метод-запрос `EcsWorld.Where<TAspcet>(out TAspcet aspect)` для получения необходимого системе набора сущностей. Запросы работают в связке с аспектами, аспекты определяют ограничения запросов, результатом запроса становится группа сущностей удовлетворяющая условиям аспекта. По умолчанию запрос делает выборку из всех сущностей в мире, но так же можно сделать выборку из определенной группы сущностей, для этого используйте `EcsWorld.WhereFor<TAspcet>(EcsReadonlyGroup sourceGroup, out TAspcet aspect)`
  
 ## Группа
 Группы это структуры данных для хранения множества сущностей с быстрыми операциями добавления/удаления/проверки наличия и т.д. Реализованы классом `EcsGroup` и структурой `EcsReadonlyGroup`. 
