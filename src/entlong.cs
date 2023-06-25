@@ -1,10 +1,10 @@
 ﻿#pragma warning disable IDE1006
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using static DCFApixels.DragonECS.EcsThrowHalper;
 
 namespace DCFApixels.DragonECS
 {

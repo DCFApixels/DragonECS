@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using static DCFApixels.DragonECS.EcsPoolThrowHalper;
 
 namespace DCFApixels.DragonECS
 {
@@ -53,7 +52,7 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (itemIndex > 0) ThrowAlreadyHasComponent<T>(entityID);
+            if (itemIndex > 0) EcsPoolThrowHalper.ThrowAlreadyHasComponent<T>(entityID);
 #endif
             if (_recycledItemsCount > 0)
             {
@@ -74,7 +73,7 @@ namespace DCFApixels.DragonECS
         public ref T Get(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
 #endif
             _listeners.InvokeOnGet(entityID);
             return ref _items[_mapping[entityID]];
@@ -83,7 +82,7 @@ namespace DCFApixels.DragonECS
         public ref readonly T Read(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
 #endif
             return ref _items[_mapping[entityID]];
         }
@@ -117,7 +116,7 @@ namespace DCFApixels.DragonECS
         public void Del(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
+            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
 #endif
             ref int itemIndex = ref _mapping[entityID];
             _componentResetHandler.Reset(ref _items[itemIndex]);
@@ -136,14 +135,14 @@ namespace DCFApixels.DragonECS
         public void Copy(int fromEntityID, int toEntityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+            if (!Has(fromEntityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID);
 #endif
             _componentCopyHandler.Copy(ref Get(fromEntityID), ref TryAddOrGet(toEntityID));
         }
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(fromEntityID)) ThrowNotHaveComponent<T>(fromEntityID);
+            if (!Has(fromEntityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID);
 #endif
             _componentCopyHandler.Copy(ref Get(fromEntityID), ref toWorld.GetPool<T>().TryAddOrGet(toEntityID));
         }

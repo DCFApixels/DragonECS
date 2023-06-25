@@ -2,7 +2,6 @@
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Linq;
-using static DCFApixels.DragonECS.EcsThrowHalper;
 
 namespace DCFApixels.DragonECS
 {

@@ -3,7 +3,6 @@ using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using static DCFApixels.DragonECS.EcsThrowHalper;
 
 namespace DCFApixels.DragonECS
 {

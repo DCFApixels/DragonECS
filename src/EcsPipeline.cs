@@ -6,21 +6,20 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using static DCFApixels.DragonECS.EcsThrowHalper;
 
 namespace DCFApixels.DragonECS
 {
     public sealed class EcsPipeline
     {
         private IEcsProcess[] _allSystems;
-        private Dictionary<Type, IEcsRunner> _runners;
+        private Dictionary<Type, IEcsRunner> _runners = new Dictionary<Type, IEcsRunner>();
         private IEcsRunProcess _runRunnerCache;
 
         private ReadOnlyCollection<IEcsProcess> _allSystemsSealed;
         private ReadOnlyDictionary<Type, IEcsRunner> _allRunnersSealed;
 
-        private bool _isInit;
-        private bool _isDestoryed;
+        private bool _isInit = false;
+        private bool _isDestoryed = false;
 
         #region Properties
         public ReadOnlyCollection<IEcsProcess> AllSystems => _allSystemsSealed;
@@ -33,13 +32,8 @@ namespace DCFApixels.DragonECS
         private EcsPipeline(IEcsProcess[] systems)
         {
             _allSystems = systems;
-            _runners = new Dictionary<Type, IEcsRunner>();
-
             _allSystemsSealed = new ReadOnlyCollection<IEcsProcess>(_allSystems);
             _allRunnersSealed = new ReadOnlyDictionary<Type, IEcsRunner>(_runners);
-
-            _isInit = false;
-            _isDestoryed = false;
         }
         #endregion
 
@@ -87,7 +81,7 @@ namespace DCFApixels.DragonECS
         public void Run()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run));
+            if (!_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run));
             if (_isDestoryed) Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run));
 #endif
             _runRunnerCache.Run(this);
@@ -95,9 +89,9 @@ namespace DCFApixels.DragonECS
         public void Destroy()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Destroy));
+            if (!_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Destroy));
 #endif
-            if (_isDestoryed == true)
+            if (_isDestoryed)
             {
                 EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been destroyed");
                 return;

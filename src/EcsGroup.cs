@@ -1,13 +1,11 @@
-﻿using System;
-using System.Linq;
+﻿using DCFApixels.DragonECS.Internal;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-using static DCFApixels.DragonECS.EcsThrowHalper;
-#endif
 
 namespace DCFApixels.DragonECS
 {

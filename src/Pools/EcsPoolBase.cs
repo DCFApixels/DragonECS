@@ -1,4 +1,5 @@
 ﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -57,11 +58,11 @@ namespace DCFApixels.DragonECS
     {
         public static void ThrowAlreadyHasComponent<T>(int entityID)
         {
-            throw new EcsFrameworkException($"Entity({entityID}) already has component {typeof(T).Name}.");
+            throw new EcsFrameworkException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
         public static void ThrowNotHaveComponent<T>(int entityID)
         {
-            throw new EcsFrameworkException($"Entity({entityID}) has no component {typeof(T).Name}.");
+            throw new EcsFrameworkException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
     }
     public static class IEcsPoolImplementationExtensions
