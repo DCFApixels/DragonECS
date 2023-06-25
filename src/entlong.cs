@@ -33,7 +33,7 @@ namespace DCFApixels.DragonECS
         public bool IsNull
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => this == NULL;
+            get => full == 0l;
         }
         public int ID
         {

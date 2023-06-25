@@ -179,10 +179,10 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        private struct Combined
+        private readonly struct Combined
         {
-            public EcsAspect aspect;
-            public int order;
+            public readonly EcsAspect aspect;
+            public readonly int order;
             public Combined(EcsAspect aspect, int order)
             {
                 this.aspect = aspect;

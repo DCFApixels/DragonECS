@@ -7,11 +7,11 @@ using static DCFApixels.DragonECS.EcsPoolThrowHalper;
 namespace DCFApixels.DragonECS
 {
     /// <summary>Pool for IEcsComponent components</summary>
-    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructsPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
+    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
     {
         private EcsWorld _source;
-        private int _id;
+        private int _componentID;
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
@@ -19,15 +19,15 @@ namespace DCFApixels.DragonECS
         private int[] _recycledItems;
         private int _recycledItemsCount;
 
-        private IEcsComponentReset<T> _componentResetHandler;
-        private IEcsComponentCopy<T> _componentCopyHandler;
+        private IEcsComponentReset<T> _componentResetHandler = EcsComponentResetHandler<T>.instance;
+        private IEcsComponentCopy<T> _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
 
-        private List<IEcsPoolEventListener> _listeners;
+        private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
 
         #region Properites
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
-        public int ComponentID => _id;
+        public int ComponentID => _componentID;
         public Type ComponentType => typeof(T);
         public EcsWorld World => _source;
         #endregion
@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS
         void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
         {
             _source = world;
-            _id = componentID;
+            _componentID = componentID;
 
             const int capacity = 512;
 
@@ -45,11 +45,6 @@ namespace DCFApixels.DragonECS
             _recycledItemsCount = 0;
             _items = new T[capacity];
             _itemsCount = 0;
-
-            _listeners = new List<IEcsPoolEventListener>();
-
-            _componentResetHandler = EcsComponentResetHandler<T>.instance;
-            _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
         }
         #endregion
 
@@ -171,8 +166,8 @@ namespace DCFApixels.DragonECS
         void IEcsPool.AddRaw(int entityID, object dataRaw) => Add(entityID) = (T)dataRaw;
         object IEcsPool.GetRaw(int entityID) => Read(entityID);
         void IEcsPool.SetRaw(int entityID, object dataRaw) => Get(entityID) = (T)dataRaw;
-        ref readonly T IEcsStructsPool<T>.Read(int entityID) => ref Read(entityID);
-        ref T IEcsStructsPool<T>.Get(int entityID) => ref Get(entityID);
+        ref readonly T IEcsStructPool<T>.Read(int entityID) => ref Read(entityID);
+        ref T IEcsStructPool<T>.Get(int entityID) => ref Get(entityID);
         #endregion
 
         #region Listeners

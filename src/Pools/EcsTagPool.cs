@@ -6,23 +6,23 @@ using static DCFApixels.DragonECS.EcsPoolThrowHalper;
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructsPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
+    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {
         private EcsWorld _source;
-        private int _id;
+        private int _componentID;
 
         private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private int _count;
 
-        private List<IEcsPoolEventListener> _listeners;
+        private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
 
         private T _fakeComponent;
 
         #region Properites
         public int Count => _count;
         int IEcsPool.Capacity => -1;
-        public int ComponentID => _id;
+        public int ComponentID => _componentID;
         public Type ComponentType => typeof(T);
         public EcsWorld World => _source;
         #endregion
@@ -31,12 +31,10 @@ namespace DCFApixels.DragonECS
         void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
         {
             _source = world;
-            _id = componentID;
+            _componentID = componentID;
 
             _mapping = new bool[world.Capacity];
             _count = 0;
-
-            _listeners = new List<IEcsPoolEventListener>();
         }
         #endregion
 
@@ -131,19 +129,19 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
-        ref T IEcsStructsPool<T>.Add(int entityID)
+        ref T IEcsStructPool<T>.Add(int entityID)
         {
             Add(entityID);
             return ref _fakeComponent;
         }
-        ref readonly T IEcsStructsPool<T>.Read(int entityID)
+        ref readonly T IEcsStructPool<T>.Read(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);
 #endif
             return ref _fakeComponent;
         }
-        ref T IEcsStructsPool<T>.Get(int entityID)
+        ref T IEcsStructPool<T>.Get(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) ThrowNotHaveComponent<T>(entityID);

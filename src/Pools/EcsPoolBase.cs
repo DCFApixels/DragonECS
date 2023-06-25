@@ -30,11 +30,16 @@ namespace DCFApixels.DragonECS
         void RemoveListener(IEcsPoolEventListener listener);
         #endregion
     }
-    public interface IEcsStructsPool<T>
+    public interface IEcsStructPool<T> : IEcsPool
     {
         ref T Add(int entityID);
         ref readonly T Read(int entityID);
         ref T Get(int entityID);
+    }
+    public interface IEcsClassPool<T> : IEcsPool
+    {
+        T Add(int entityID);
+        T Get(int entityID);
     }
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
     public interface IEcsPoolImplementation : IEcsPool
