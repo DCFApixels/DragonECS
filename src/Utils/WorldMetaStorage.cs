@@ -52,10 +52,6 @@ namespace DCFApixels.DragonECS
         public static int GetAspectID<T>(int worldID) => Aspect<T>.Get(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetExecutorID<T>(int worldID) => Executor<T>.Get(worldID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetWorldComponentID<T>(int worldID) => WorldComponent<T>.Get(worldID);
-        public static int GetWorldComponentID(Type type, int worldID) => _metas[worldID].GetWorldComponentID(type);
-
 
         private abstract class ResizerBase
         {
@@ -219,36 +215,6 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-        private static class WorldComponent<T>
-        {
-            public static int[] ids;
-            static WorldComponent()
-            {
-                ids = new int[_tokenCount];
-                for (int i = 0; i < ids.Length; i++)
-                    ids[i] = -1;
-                _resizers.Add(new Resizer());
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static int Get(int token)
-            {
-                ref int id = ref ids[token];
-                if (id < 0)
-                    id = _metas[token].GetWorldComponentID(typeof(T));
-                return id;
-            }
-            private sealed class Resizer : ResizerBase
-            {
-                public override Type Type => typeof(T);
-                public override int[] IDS => ids;
-                public override void Resize(int size)
-                {
-                    int oldSize = ids.Length;
-                    Array.Resize(ref ids, size);
-                    ArrayUtility.Fill(ids, -1, oldSize, size);
-                }
-            }
-        }
         #endregion
         private class WorldTypeMeta
         {
@@ -260,7 +226,6 @@ namespace DCFApixels.DragonECS
             public int worldComponentCount;
             private Type[] _types = new Type[10];
             private Dictionary<Type, int> _declaredComponentTypes = new Dictionary<Type, int>();
-            private Dictionary<Type, int> _declaredWorldComponentTypes = new Dictionary<Type, int>();
 
             public WorldTypeMeta(Type worldType)
             {
@@ -279,21 +244,6 @@ namespace DCFApixels.DragonECS
             public bool IsDeclaredComponentType(Type type) => _declaredComponentTypes.ContainsKey(type);
             public Type GetComponentType(int componentID) => _types[componentID];
             public int GetComponentID(Type type) => PoolComponentIdArrays.GetComponentID(type, id);
-
-
-            public int DeclareWorldComponentType(Type type)
-            {
-                int id = worldComponentCount++;
-                _declaredWorldComponentTypes.Add(type, id);
-                return id;
-            }
-            public bool IsDeclaredWorldComponentType(Type type) => _declaredWorldComponentTypes.ContainsKey(type);
-            public int GetWorldComponentID(Type type)
-            {
-                if (!_declaredWorldComponentTypes.TryGetValue(type, out int id))
-                    id = DeclareWorldComponentType(type);
-                return id;
-            }
         }
     }
 }
