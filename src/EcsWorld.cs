@@ -3,6 +3,7 @@ using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using static DCFApixels.DragonECS.EcsThrowHalper;
 
 namespace DCFApixels.DragonECS
 {
@@ -301,7 +302,7 @@ namespace DCFApixels.DragonECS
             var count = --_componentCounts[entityID];
             if (count == 0 && _allEntites.Has(entityID)) DelEntity(entityID);
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (count < 0) throw new EcsFrameworkException("нарушен баланс инкремента/декремента компонентов");
+            if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
 #endif
         }
         #endregion
@@ -322,8 +323,7 @@ namespace DCFApixels.DragonECS
         internal void ReleaseGroup(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (group.World != this)
-                throw new ArgumentException("groupFilter.WorldIndex != this");
+            if (group.World != this) Throw.World_GroupDoesNotBelongWorld();
 #endif
             group._isReleased = true;
             group.Clear();
@@ -364,8 +364,6 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
-
-    internal sealed class EcsNullWorld : EcsWorld { }
 
     #region Callbacks Interface
     public interface IEcsWorldEventListener

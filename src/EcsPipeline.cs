@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using static DCFApixels.DragonECS.EcsThrowHalper;
 
 namespace DCFApixels.DragonECS
 {
@@ -86,44 +87,24 @@ namespace DCFApixels.DragonECS
         public void Run()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            CheckBeforeInitForMethod(nameof(Run));
-            CheckAfterDestroyForMethod(nameof(Run));
+            if (_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run));
+            if (_isDestoryed) Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run));
 #endif
             _runRunnerCache.Run(this);
         }
         public void Destroy()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            CheckBeforeInitForMethod(nameof(Run));
+            if (_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Destroy));
 #endif
             if (_isDestoryed == true)
             {
-                EcsDebug.Print("[Warning]", $"This {nameof(EcsPipeline)} has already been destroyed");
+                EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been destroyed");
                 return;
             }
             _isDestoryed = true;
             GetRunner<IEcsDestroyProcess>().Destroy(this);
         }
-        #endregion
-
-        #region StateChecks
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-        private void CheckBeforeInitForMethod(string methodName)
-        {
-            if (!_isInit)
-                throw new MethodAccessException($"It is forbidden to call {methodName}, before initialization {nameof(EcsPipeline)}");
-        }
-        private void CheckAfterInitForMethod(string methodName)
-        {
-            if (_isInit)
-                throw new MethodAccessException($"It is forbidden to call {methodName}, after initialization {nameof(EcsPipeline)}");
-        }
-        private void CheckAfterDestroyForMethod(string methodName)
-        {
-            if (_isDestoryed)
-                throw new MethodAccessException($"It is forbidden to call {methodName}, after destroying {nameof(EcsPipeline)}");
-        }
-#endif
         #endregion
 
         #region Builder

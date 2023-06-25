@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-using static DCFApixels.DragonECS.EcsGroup.ThrowHelper;
+using static DCFApixels.DragonECS.EcsThrowHalper;
 #endif
 
 namespace DCFApixels.DragonECS
@@ -151,7 +151,7 @@ namespace DCFApixels.DragonECS
             get
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (index < 0 || index >= Count) ThrowArgumentOutOfRange();
+                if (index < 0 || index >= Count) Throw.ArgumentOutOfRange();
 #endif
                 return _dense[++index];
             }
@@ -200,7 +200,7 @@ namespace DCFApixels.DragonECS
         internal void AddInternal(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (Has(entityID)) ThrowAlreadyContains(entityID);
+            if (Has(entityID)) Throw.Group_AlreadyContains(entityID);
 #endif
             if (++_count >= _dense.Length)
                 Array.Resize(ref _dense, _dense.Length << 1);
@@ -218,7 +218,7 @@ namespace DCFApixels.DragonECS
         internal void RemoveInternal(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) ThrowDoesNotContain(entityID);
+            if (!Has(entityID)) Throw.Group_DoesNotContain(entityID);
 #endif
             _dense[_sparse[entityID]] = _dense[_count];
             _sparse[_dense[_count--]] = _sparse[entityID];
@@ -287,7 +287,7 @@ namespace DCFApixels.DragonECS
         public ReadOnlySpan<int> ToSpan(int start, int length)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (start + length > _count) ThrowArgumentOutOfRangeException();
+            if (start + length > _count) Throw.ArgumentOutOfRange();
 #endif
             return new ReadOnlySpan<int>(_dense, start, length);
         }
@@ -301,7 +301,7 @@ namespace DCFApixels.DragonECS
         public void UnionWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) ThrowArgumentDifferentWorldsException();
+            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             foreach (var item in group)
                 if (!Has(item))
@@ -315,7 +315,7 @@ namespace DCFApixels.DragonECS
         public void ExceptWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) ThrowArgumentDifferentWorldsException();
+            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             foreach (var item in this)
                 if (group.Has(item))
@@ -329,7 +329,7 @@ namespace DCFApixels.DragonECS
         public void IntersectWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (World != group.World) ThrowArgumentDifferentWorldsException();
+            if (World != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             foreach (var item in this)
                 if (!group.Has(item))
@@ -343,7 +343,7 @@ namespace DCFApixels.DragonECS
         public void SymmetricExceptWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) ThrowArgumentDifferentWorldsException();
+            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             foreach (var item in group)
                 if (Has(item))
@@ -367,7 +367,7 @@ namespace DCFApixels.DragonECS
         public static EcsGroup Union(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) ThrowArgumentDifferentWorldsException();
+            if (a._source != b._source) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetFreeGroup();
             foreach (var item in a)
@@ -381,7 +381,7 @@ namespace DCFApixels.DragonECS
         public static EcsGroup Except(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) ThrowArgumentDifferentWorldsException();
+            if (a._source != b._source) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetFreeGroup();
             foreach (var item in a)
@@ -394,7 +394,7 @@ namespace DCFApixels.DragonECS
         public static EcsGroup Intersect(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) ThrowArgumentDifferentWorldsException();
+            if (a._source != b._source) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetFreeGroup();
             foreach (var item in a)
@@ -408,7 +408,7 @@ namespace DCFApixels.DragonECS
         public static EcsGroup SymmetricExcept(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) ThrowArgumentDifferentWorldsException();
+            if (a._source != b._source) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             EcsGroup result = a._source.GetFreeGroup();
             foreach (var item in a)
@@ -517,24 +517,6 @@ namespace DCFApixels.DragonECS
         {
             Array.Resize(ref _sparse, newSize);
         }
-        #endregion
-
-        #region ThrowHalper
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-        internal static class ThrowHelper
-        {
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowAlreadyContains(int entityID) => throw new EcsFrameworkException($"This group already contains entity {entityID}.");
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowArgumentOutOfRange() => throw new ArgumentOutOfRangeException($"index is less than 0 or is equal to or greater than Count.");
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowDoesNotContain(int entityID) => throw new EcsFrameworkException($"This group does not contain entity {entityID}.");
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowArgumentOutOfRangeException() => throw new ArgumentOutOfRangeException();
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowArgumentDifferentWorldsException() => throw new ArgumentException("The groups belong to different worlds.");
-        }
-#endif
         #endregion
 
         #region DebuggerProxy

@@ -73,8 +73,7 @@ namespace DCFApixels.DragonECS
                 }
                 if (delayedExceptions.Count > 0)
                 {
-                    foreach (var item in delayedExceptions) EcsDebug.Print(EcsConsts.DEBUG_ERROR_TAG, item.Message);
-                    throw delayedExceptions[0];
+                    throw new AggregateException(delayedExceptions);
                 }
             }
 

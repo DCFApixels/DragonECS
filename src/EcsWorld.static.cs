@@ -97,4 +97,5 @@ namespace DCFApixels.DragonECS
             }
         }
     }
+    internal sealed class EcsNullWorld : EcsWorld { }
 }

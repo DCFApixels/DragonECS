@@ -2,7 +2,7 @@
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using static DCFApixels.DragonECS.EcsThrowHalper;
 
 namespace DCFApixels.DragonECS
 {
@@ -59,12 +59,10 @@ namespace DCFApixels.DragonECS
             private EcsBaseTypeInjectRunner _baseTypeInjectRunner;
             void IEcsInject<T>.Inject(T obj)
             {
-                if (obj == null) ThrowArgumentNullException();
+                if (obj == null) Throw.ArgumentNull();
                 _baseTypeInjectRunner.Inject(obj);
                 foreach (var item in targets) item.Inject(obj);
             }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private void ThrowArgumentNullException() => throw new ArgumentNullException();
             protected override void OnSetup()
             {
                 Type baseType = typeof(T).BaseType;
@@ -112,7 +110,7 @@ namespace DCFApixels.DragonECS
             void IEcsInject<PreInitInjectController>.Inject(PreInitInjectController obj) => _injectController = obj;
             public InjectSystem(T injectedData)
             {
-                if (injectedData == null) throw new ArgumentNullException();
+                if (injectedData == null) Throw.ArgumentNull();
                 _injectedData = injectedData;
             }
             public void PreInit(EcsPipeline pipeline)
@@ -149,7 +147,7 @@ namespace DCFApixels.DragonECS
     {
         public static EcsPipeline.Builder Inject<T>(this EcsPipeline.Builder self, T data)
         {
-            if (data == null) throw new ArgumentNullException();
+            if (data == null) Throw.ArgumentNull();
             return self.Add(new InjectSystem<T>(data));
         }
         public static EcsPipeline.Builder Inject<A, B>(this EcsPipeline.Builder self, A a, B b)

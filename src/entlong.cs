@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using static DCFApixels.DragonECS.entlong.ThrowHalper;
+using static DCFApixels.DragonECS.EcsThrowHalper;
 
 namespace DCFApixels.DragonECS
 {
@@ -33,7 +33,7 @@ namespace DCFApixels.DragonECS
         public bool IsNull
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => full == 0l;
+            get => full == 0L;
         }
         public int ID
         {
@@ -41,7 +41,7 @@ namespace DCFApixels.DragonECS
             get
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (!IsAlive) ThrowIsNotAlive(this);
+                if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
 #endif
                 return id;
             }
@@ -52,7 +52,7 @@ namespace DCFApixels.DragonECS
             get
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (!IsAlive) ThrowIsNotAlive(this);
+                if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
 #endif
                 return gen;
             }
@@ -63,7 +63,7 @@ namespace DCFApixels.DragonECS
             get
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (!IsAlive) ThrowIsNotAlive(this);
+                if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
 #endif
                 return EcsWorld.GetWorld(world);
             }
@@ -74,7 +74,7 @@ namespace DCFApixels.DragonECS
             get
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (!IsAlive) ThrowIsNotAlive(this);
+                if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
 #endif
                 return world;
             }
@@ -141,20 +141,6 @@ namespace DCFApixels.DragonECS
         public static explicit operator long(in entlong a) => a.full;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator entlong(in long a) => new entlong(a);
-        #endregion
-
-        #region ThrowHalper
-        internal static class ThrowHalper
-        {
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsNotAlive(entlong entity)
-            {
-                if (entity.IsNull)
-                    throw new EcsFrameworkException($"The {entity} is null.");
-                else
-                    throw new EcsFrameworkException($"The {entity} is not alive.");
-            }
-        }
         #endregion
 
         #region DebuggerProxy

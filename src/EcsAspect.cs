@@ -6,14 +6,13 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using static DCFApixels.DragonECS.EcsThrowHalper;
 
 namespace DCFApixels.DragonECS
 {
     public abstract class EcsAspect
     {
-        [EditorBrowsable(EditorBrowsableState.Always)]
         internal EcsWorld source;
-        [EditorBrowsable(EditorBrowsableState.Always)]
         internal EcsMask mask;
         private bool _isInit;
 
@@ -85,7 +84,7 @@ namespace DCFApixels.DragonECS
             {
                 int id = _world.GetComponentID(type);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(id) || _exc.Contains(id)) throw new EcsFrameworkException($"{type.Name} already in constraints list.");
+                if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
 #endif
                 _inc.Add(id);
             }
@@ -93,7 +92,7 @@ namespace DCFApixels.DragonECS
             {
                 int id = _world.GetComponentID(type);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(id) || _exc.Contains(id)) throw new EcsFrameworkException($"{type.Name} already in constraints list.");
+                if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
 #endif
                 _exc.Add(id);
             }
@@ -277,14 +276,6 @@ namespace DCFApixels.DragonECS
                 excludedTypes = excluded.Select(converter).ToArray();
             }
             public override string ToString() => CreateLogString(worldTypeID, included, excluded);
-        }
-        #endregion
-
-        #region ThrowHelper
-        internal static class ThrowHelper
-        {
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowArgumentDifferentWorldsException() => throw new ArgumentException("The groups belong to different worlds.");
         }
         #endregion
     }
