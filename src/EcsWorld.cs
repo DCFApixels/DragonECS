@@ -27,9 +27,6 @@ namespace DCFApixels.DragonECS
         internal IEcsPoolImplementation[] _pools;
         private EcsNullPool _nullPool = EcsNullPool.instance;
 
-        private EcsAspect[] _aspects;
-        private EcsQueryExecutor[] _executors;
-
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
 
@@ -73,9 +70,6 @@ namespace DCFApixels.DragonECS
             _delEntBuffer = new int[_entitesCapacity >> DEL_ENT_BUFFER_SIZE_OFFSET];
 
             _allEntites = GetFreeGroup();
-
-            _aspects = new EcsAspect[128];
-            _executors = new EcsQueryExecutor[128];
         }
         public void Destroy()
         {
@@ -83,8 +77,6 @@ namespace DCFApixels.DragonECS
             _gens = null;
             _pools = null;
             _nullPool = null;
-            _aspects = null;
-            _executors = null;
             Worlds[id] = null;
             ReleaseData(id);
             _worldIdDispenser.Release(id);
@@ -108,28 +100,15 @@ namespace DCFApixels.DragonECS
         {
             return Get<PoolCache<TPool>>().instance;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TAspect GetAspect<TAspect>() where TAspect : EcsAspect
         {
-            int index = WorldMetaStorage.GetAspectID<TAspect>(_worldTypeID);
-            if (index >= _aspects.Length)
-                Array.Resize(ref _aspects, _aspects.Length << 1);
-            if (_aspects[index] == null)
-                _aspects[index] = EcsAspect.Builder.Build<TAspect>(this);
-            return (TAspect)_aspects[index];
+            return Get<AspectCache<TAspect>>().instance;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TExecutor GetExecutor<TExecutor>() where TExecutor : EcsQueryExecutor, new()
         {
-            int index = WorldMetaStorage.GetExecutorID<TExecutor>(_worldTypeID);
-            if (index >= _executors.Length)
-                Array.Resize(ref _executors, _executors.Length << 1);
-            var result = _executors[index];
-            if (result == null)
-            {
-                result = new TExecutor();
-                _executors[index] = result;
-                result.Initialize(this);
-            }
-            return (TExecutor)result;
+            return Get<ExcecutorCache<TExecutor>>().instance;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

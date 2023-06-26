@@ -1,5 +1,4 @@
 ﻿using DCFApixels.DragonECS.Internal;
-using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

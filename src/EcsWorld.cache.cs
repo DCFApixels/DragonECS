@@ -1,20 +1,21 @@
 ﻿using DCFApixels.DragonECS.Utils;
 using System;
+using System.Reflection;
 
 namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {
-        internal readonly struct PoolCache<TPool> : IEcsWorldComponent<PoolCache<TPool>>
-            where TPool : IEcsPoolImplementation, new()
+        internal readonly struct PoolCache<T> : IEcsWorldComponent<PoolCache<T>>
+            where T : IEcsPoolImplementation, new()
         {
-            public readonly TPool instance;
-            public PoolCache(TPool instance) => this.instance = instance;
-            void IEcsWorldComponent<PoolCache<TPool>>.Init(ref PoolCache<TPool> component, EcsWorld world)
+            public readonly T instance;
+            public PoolCache(T instance) => this.instance = instance;
+            void IEcsWorldComponent<PoolCache<T>>.Init(ref PoolCache<T> component, EcsWorld world)
             {
-                component = new PoolCache<TPool>(world.CreatePool<TPool>());
+                component = new PoolCache<T>(world.CreatePool<T>());
             }
-            void IEcsWorldComponent<PoolCache<TPool>>.OnDestroy(ref PoolCache<TPool> component, EcsWorld world)
+            void IEcsWorldComponent<PoolCache<T>>.OnDestroy(ref PoolCache<T> component, EcsWorld world)
             {
                 component = default;
             }
@@ -35,6 +36,36 @@ namespace DCFApixels.DragonECS
                 pool.OnInit(this, index);
             }
             return (TPool)_pools[index];
+        }
+        internal readonly struct AspectCache<T> : IEcsWorldComponent<AspectCache<T>>
+            where T : EcsAspect
+        {
+            public readonly T instance;
+            public AspectCache(T instance) => this.instance = instance;
+            void IEcsWorldComponent<AspectCache<T>>.Init(ref AspectCache<T> component, EcsWorld world)
+            {
+                component = new AspectCache<T>(EcsAspect.Builder.Build<T>(world));
+            }
+            void IEcsWorldComponent<AspectCache<T>>.OnDestroy(ref AspectCache<T> component, EcsWorld world)
+            {
+                component = default;
+            }
+        }
+        internal readonly struct ExcecutorCache<T> : IEcsWorldComponent<ExcecutorCache<T>>
+            where T : EcsQueryExecutor, new()
+        {
+            public readonly T instance;
+            public ExcecutorCache(T instance) => this.instance = instance;
+            void IEcsWorldComponent<ExcecutorCache<T>>.Init(ref ExcecutorCache<T> component, EcsWorld world)
+            {
+                T instance = new T();
+                instance.Initialize(world);
+                component = new ExcecutorCache<T>(instance);
+            }
+            void IEcsWorldComponent<ExcecutorCache<T>>.OnDestroy(ref ExcecutorCache<T> component, EcsWorld world)
+            {
+                component = default;
+            }
         }
     }
 }
