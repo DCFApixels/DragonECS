@@ -47,10 +47,10 @@ namespace DCFApixels.DragonECS
         private static class WorldComponentPool<T>
         {
             private static T[] _items = new T[4];
-            private static int[] _mapping = new int[4];
-            private static int _count;
-            private static int[] _recycledItems = new int[4];
-            private static int _recycledItemsCount;
+            private static short[] _mapping = new short[4];
+            private static short _count;
+            private static short[] _recycledItems = new short[4];
+            private static short _recycledItemsCount;
             private static IEcsWorldComponent<T> _interface = EcsWorldComponentHandler<T>.instance;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -62,7 +62,7 @@ namespace DCFApixels.DragonECS
                 if (_mapping.Length < Worlds.Length)
                     Array.Resize(ref _mapping, Worlds.Length);
 
-                ref int itemIndex = ref _mapping[worldID];
+                ref short itemIndex = ref _mapping[worldID];
                 if (itemIndex <= 0)
                 {
                     if (_recycledItemsCount > 0)
@@ -79,9 +79,10 @@ namespace DCFApixels.DragonECS
                 }
                 return itemIndex;
             }
+          
             private static void Release(int worldID)
             {
-                ref int itemIndex = ref _mapping[worldID];
+                ref short itemIndex = ref _mapping[worldID];
                 if (itemIndex != 0)
                 {
                     _interface.OnDestroy(ref _items[itemIndex], Worlds[worldID]);

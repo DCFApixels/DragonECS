@@ -142,6 +142,8 @@ namespace DCFApixels.DragonECS
             }
             return (TExecutor)result;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get<T>() where T : struct => ref WorldComponentPool<T>.GetForWorld(id);
         #endregion
 
