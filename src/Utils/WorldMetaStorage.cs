@@ -48,10 +48,6 @@ namespace DCFApixels.DragonECS
         public static Type GetComponentType(int worldID, int componentID) => _metas[worldID].GetComponentType(componentID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetPoolID<T>(int worldID) => Pool<T>.Get(worldID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetAspectID<T>(int worldID) => Aspect<T>.Get(worldID);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetExecutorID<T>(int worldID) => Executor<T>.Get(worldID);
 
         private abstract class ResizerBase
         {
@@ -155,74 +151,13 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-        private static class Aspect<T>
-        {
-            public static int[] ids;
-            static Aspect()
-            {
-                ids = new int[_tokenCount];
-                for (int i = 0; i < ids.Length; i++)
-                    ids[i] = -1;
-                _resizers.Add(new Resizer());
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static int Get(int token)
-            {
-                ref int id = ref ids[token];
-                if (id < 0)
-                    id = _metas[token].aspectsCount++;
-                return id;
-            }
-            private sealed class Resizer : ResizerBase
-            {
-                public override Type Type => typeof(T);
-                public override int[] IDS => ids;
-                public override void Resize(int size)
-                {
-                    int oldSize = ids.Length;
-                    Array.Resize(ref ids, size);
-                    ArrayUtility.Fill(ids, -1, oldSize, size);
-                }
-            }
-        }
-        private static class Executor<T>
-        {
-            public static int[] ids;
-            static Executor()
-            {
-                ids = new int[_tokenCount];
-                for (int i = 0; i < ids.Length; i++)
-                    ids[i] = -1;
-                _resizers.Add(new Resizer());
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static int Get(int token)
-            {
-                ref int id = ref ids[token];
-                if (id < 0)
-                    id = _metas[token].executorsCount++;
-                return id;
-            }
-            private sealed class Resizer : ResizerBase
-            {
-                public override Type Type => typeof(T);
-                public override int[] IDS => ids;
-                public override void Resize(int size)
-                {
-                    int oldSize = ids.Length;
-                    Array.Resize(ref ids, size);
-                    ArrayUtility.Fill(ids, -1, oldSize, size);
-                }
-            }
-        }
         #endregion
+
         private class WorldTypeMeta
         {
             public readonly Type worldType;
             public int id;
             public int componentCount;
-            public int aspectsCount;
-            public int executorsCount;
             public int worldComponentCount;
             private Type[] _types = new Type[10];
             private Dictionary<Type, int> _declaredComponentTypes = new Dictionary<Type, int>();
