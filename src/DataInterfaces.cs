@@ -20,7 +20,7 @@ namespace DCFApixels.DragonECS
             isHasHandler = targetType.GetInterfaces().Contains(typeof(IEcsWorldComponent<>).MakeGenericType(targetType));
             if (isHasHandler)
             {
-                instance = (IEcsWorldComponent<T>)Activator.CreateInstance(typeof(ComponentResetHandler<>).MakeGenericType(targetType));
+                instance = (IEcsWorldComponent<T>)Activator.CreateInstance(typeof(WorldComponentHandler<>).MakeGenericType(targetType));
             }
             else
             {
