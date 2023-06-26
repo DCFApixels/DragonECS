@@ -3,6 +3,7 @@ using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using typecode = System.Int32;
 
 namespace DCFApixels.DragonECS
 {
@@ -102,22 +103,10 @@ namespace DCFApixels.DragonECS
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.Preserve]
 #endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TPool GetPool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
-            int index = WorldMetaStorage.GetPoolID<TPool>(_worldTypeID);
-            if (index >= _pools.Length)
-            {
-                int oldCapacity = _pools.Length;
-                Array.Resize(ref _pools, _pools.Length << 1);
-                ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
-            }
-            if (_pools[index] == _nullPool)
-            {
-                var pool = new TPool();
-                _pools[index] = pool;
-                pool.OnInit(this, index);
-            }
-            return (TPool)_pools[index];
+            return Get<PoolCache<TPool>>().instance;
         }
         public TAspect GetAspect<TAspect>() where TAspect : EcsAspect
         {
@@ -236,17 +225,17 @@ namespace DCFApixels.DragonECS
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (mask._worldTypeID != _worldTypeID)
+            if (mask.worldID != id)
                 throw new EcsFrameworkException("The types of the target world of the mask and this world are different.");
 #endif
-            for (int i = 0, iMax = mask._inc.Length; i < iMax; i++)
+            for (int i = 0, iMax = mask.inc.Length; i < iMax; i++)
             {
-                if (!_pools[mask._inc[i]].Has(entityID))
+                if (!_pools[mask.inc[i]].Has(entityID))
                     return false;
             }
-            for (int i = 0, iMax = mask._exc.Length; i < iMax; i++)
+            for (int i = 0, iMax = mask.exc.Length; i < iMax; i++)
             {
-                if (_pools[mask._exc[i]].Has(entityID))
+                if (_pools[mask.exc[i]].Has(entityID))
                     return false;
             }
             return true;
