@@ -19,10 +19,10 @@ namespace DCFApixels.DragonECS
                 return code;
             }
             public static int Count => _codes.Count;
-        }
-        internal static class EcsTypeCodeCache<T>
-        {
-            public static readonly int code = EcsTypeCode.GetCode(typeof(T));
+            internal static class Cache<T>
+            {
+                public static readonly int code = EcsTypeCode.GetCode(typeof(T));
+            }
         }
     }
 }

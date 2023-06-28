@@ -1,10 +1,9 @@
 ﻿using DCFApixels.DragonECS.Utils;
 using System;
-using System.Reflection;
 
 namespace DCFApixels.DragonECS
 {
-    public partial class EcsWorld
+    public abstract partial class EcsWorld
     {
         internal readonly struct PoolCache<T> : IEcsWorldComponent<PoolCache<T>>
             where T : IEcsPoolImplementation, new()

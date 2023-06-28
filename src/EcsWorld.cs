@@ -3,7 +3,6 @@ using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using typecode = System.Int32;
 
 namespace DCFApixels.DragonECS
 {
@@ -13,6 +12,8 @@ namespace DCFApixels.DragonECS
 
         private Type _worldType;
         private int _worldTypeID;
+
+        private bool _isDestroyed;
 
         private IntDispenser _entityDispenser;
         private int _entitiesCount;
@@ -34,6 +35,7 @@ namespace DCFApixels.DragonECS
         private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
 
         #region Properties
+        public bool IsDestroyed => _isDestroyed;
         public int WorldTypeID => _worldTypeID;
         public int Count => _entitiesCount;
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
@@ -80,6 +82,7 @@ namespace DCFApixels.DragonECS
             Worlds[id] = null;
             ReleaseData(id);
             _worldIdDispenser.Release(id);
+            _isDestroyed = true;
         }
         #endregion
 
@@ -242,13 +245,28 @@ namespace DCFApixels.DragonECS
         {
             foreach (var pool in _pools)
             {
-                if (pool.Has(fromEntityID)) pool.Copy(fromEntityID, toEntityID);
+                if (pool.Has(fromEntityID)) 
+                    pool.Copy(fromEntityID, toEntityID);
+            }
+        }
+        public void CopyEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        {
+            foreach (var pool in _pools)
+            {
+                if (pool.Has(fromEntityID))
+                    pool.Copy(fromEntityID, toWorld, toEntityID);
             }
         }
         public int CloneEntity(int fromEntityID)
         {
             int newEntity = NewEmptyEntity();
             CopyEntity(fromEntityID, newEntity);
+            return newEntity;
+        }
+        public int CloneEntity(int fromEntityID, EcsWorld toWorld)
+        {
+            int newEntity = NewEmptyEntity();
+            CopyEntity(fromEntityID, toWorld, newEntity);
             return newEntity;
         }
         public void CloneEntity(int fromEntityID, int toEntityID)
@@ -260,6 +278,7 @@ namespace DCFApixels.DragonECS
                     pool.Del(toEntityID);
             }
         }
+        //public void CloneEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
         #endregion
 
         #region Components Increment
