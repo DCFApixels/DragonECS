@@ -50,6 +50,14 @@ namespace DCFApixels.DragonECS
             DebugService.Instance.Print(tag, v);
 #endif
         }
+        public static void Break()
+        {
+            {
+#if !DISABLE_DRAGONECS_DEBUGGER
+                DebugService.Instance.Break();
+#endif
+            }
+        }
     }
 
     public abstract class DebugService
