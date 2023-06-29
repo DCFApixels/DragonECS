@@ -88,7 +88,7 @@ namespace DCFApixels.DragonECS
             else
             {//not null
                 _listeners.InvokeOnDel(entityID);
-                component.OnDelFromPool();
+                _items[itemIndex].OnDelFromPool();
             }
             _listeners.InvokeOnAdd(entityID);
             component.OnAddToPool();
