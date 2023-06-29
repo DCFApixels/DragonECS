@@ -467,7 +467,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Object
-        public override string ToString() => string.Join(", ", _dense.Cast<string>(), 0, _count);
+        public override string ToString() => $"group{{{string.Join(", ", _dense.Take(_count))}}}";
         public override bool Equals(object obj) => obj is EcsGroup group && Equals(group);
         public bool Equals(EcsReadonlyGroup other) => Equals(other.GetGroupInternal());
         public bool Equals(EcsGroup other)
@@ -500,7 +500,7 @@ namespace DCFApixels.DragonECS
         private static bool StaticEquals(EcsGroup a, EcsReadonlyGroup b) => StaticEquals(a, b.GetGroupInternal());
         private static bool StaticEquals(EcsGroup a, EcsGroup b)
         {
-            if (a is null) return false;
+            if (a is null || b is null) return false;
             return a.Equals(b);
         }
         public static bool operator ==(EcsGroup a, EcsGroup b) => StaticEquals(a, b);
