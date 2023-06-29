@@ -18,9 +18,6 @@ namespace DCFApixels.DragonECS
         private int[] _recycledItems;
         private int _recycledItemsCount;
 
-        private IEcsComponentReset<T> _componentResetHandler = EcsComponentResetHandler<T>.instance;
-        private IEcsComponentCopy<T> _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
-
         private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
 
         #region Properites
@@ -67,6 +64,7 @@ namespace DCFApixels.DragonECS
             }
             this.IncrementEntityComponentCount(entityID);
             _listeners.InvokeOnAdd(entityID);
+            component.OnAddToPool();
             _items[itemIndex] = component;
         }
         public void Set(int entityID, T component)
@@ -90,10 +88,10 @@ namespace DCFApixels.DragonECS
             else
             {//not null
                 _listeners.InvokeOnDel(entityID);
-                if (_items[itemIndex] is IDisposable disposable)
-                    disposable.Dispose();
+                component.OnDelFromPool();
             }
             _listeners.InvokeOnAdd(entityID);
+            component.OnAddToPool();
             _items[itemIndex] = component;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -125,8 +123,7 @@ namespace DCFApixels.DragonECS
 #endif
             ref int itemIndex = ref _mapping[entityID];
             T component = _items[itemIndex];
-            if (component is IDisposable disposable)
-                disposable.Dispose();
+            component.OnDelFromPool();
             if (_recycledItemsCount >= _recycledItems.Length)
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
             _recycledItems[_recycledItemsCount++] = itemIndex;
