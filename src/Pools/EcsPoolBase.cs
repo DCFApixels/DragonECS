@@ -41,6 +41,11 @@ namespace DCFApixels.DragonECS
         T Add(int entityID);
         T Get(int entityID);
     }
+    public interface IEcsHybridPool<T> : IEcsPool
+    {
+        void Add(int entityID, T component);
+        T Get(int entityID);
+    }
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
     public interface IEcsPoolImplementation : IEcsPool
     {

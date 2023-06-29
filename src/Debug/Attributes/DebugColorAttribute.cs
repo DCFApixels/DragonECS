@@ -61,7 +61,6 @@ namespace DCFApixels.DragonECS
         /// <summary> color code Black. RGB is (0, 0, 0)</summary>
         public const int Black = 0;
 
-
         [FieldOffset(0)] public readonly int colorCode;
         [FieldOffset(3)] public readonly byte r;
         [FieldOffset(2)] public readonly byte g;
@@ -99,6 +98,5 @@ namespace DCFApixels.DragonECS
         {
             return new DebugColor((byte)(a.r / b), (byte)(a.g / b), (byte)(a.b / b));
         }
-        //public static explicit operator DebugColor(int colorCode) => new DebugColor(colorCode);
     }
 }
