@@ -64,7 +64,7 @@ namespace DCFApixels.DragonECS
             }
             this.IncrementEntityComponentCount(entityID);
             _listeners.InvokeOnAdd(entityID);
-            component.OnAddToPool();
+            component.OnAddToPool(_source.GetEntityLong(entityID));
             _items[itemIndex] = component;
         }
         public void Set(int entityID, T component)
@@ -88,10 +88,10 @@ namespace DCFApixels.DragonECS
             else
             {//not null
                 _listeners.InvokeOnDel(entityID);
-                _items[itemIndex].OnDelFromPool();
+                _items[itemIndex].OnDelFromPool(_source.GetEntityLong(entityID));
             }
             _listeners.InvokeOnAdd(entityID);
-            component.OnAddToPool();
+            component.OnAddToPool(_source.GetEntityLong(entityID));
             _items[itemIndex] = component;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,7 +123,7 @@ namespace DCFApixels.DragonECS
 #endif
             ref int itemIndex = ref _mapping[entityID];
             T component = _items[itemIndex];
-            component.OnDelFromPool();
+            component.OnDelFromPool(_source.GetEntityLong(entityID));
             if (_recycledItemsCount >= _recycledItems.Length)
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
             _recycledItems[_recycledItemsCount++] = itemIndex;
@@ -193,9 +193,8 @@ namespace DCFApixels.DragonECS
     public interface IEcsHybridComponent
     {
         bool IsAlive { get; }
-        entlong Entity { set; }
-        void OnAddToPool();
-        void OnDelFromPool();
+        void OnAddToPool(entlong entity);
+        void OnDelFromPool(entlong entity);
     }
     public static class EcsHybridPoolExt
     {
