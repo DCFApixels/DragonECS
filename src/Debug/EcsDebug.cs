@@ -80,7 +80,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Print(object v) => Print(null, v);
         public abstract void Print(string tag, object v);
-
+        public abstract void Break();
         public int RegisterMark(string name)
         {
             int id;
@@ -122,6 +122,10 @@ namespace DCFApixels.DragonECS
         public override void Print(string tag, object v)
         {
             Console.WriteLine($"[{tag}] {v}");
+        }
+        public override void Break()
+        {
+            Console.ReadLine();
         }
         public override void ProfilerMarkBegin(int id)
         {
