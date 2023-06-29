@@ -21,7 +21,7 @@ namespace DCFApixels.DragonECS
             public static int Count => _codes.Count;
             internal static class Cache<T>
             {
-                public static readonly int code = EcsTypeCode.GetCode(typeof(T));
+                public static readonly int code = GetCode(typeof(T));
             }
         }
     }

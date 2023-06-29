@@ -72,6 +72,22 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region GetGroup
+        public static DebugGroup GetGroup<T>() => GetGroup(typeof(T));
+        public static DebugGroup GetGroup(Type type) => type.TryGetCustomAttribute(out DebugGroupAttribute atr) ? atr.GetData() : DebugGroup.Empty;
+        public static bool TryGetGroup<T>(out DebugGroup text) => TryGetGroup(typeof(T), out text);
+        public static bool TryGetGroup(Type type, out DebugGroup group)
+        {
+            if (type.TryGetCustomAttribute(out DebugGroupAttribute atr))
+            {
+                group = atr.GetData();
+                return true;
+            }
+            group = DebugGroup.Empty;
+            return false;
+        }
+        #endregion
+
         #region GetDescription
         public static string GetDescription<T>() => GetDescription(typeof(T));
         public static string GetDescription(Type type) => type.TryGetCustomAttribute(out DebugDescriptionAttribute atr) ? atr.description : string.Empty;
@@ -94,7 +110,7 @@ namespace DCFApixels.DragonECS
         private class WordColor
         {
             public int wordsCount;
-            public DebugColorAttribute.Color color;
+            public DebugColor color;
         }
         private class NameColor
         {
@@ -107,7 +123,7 @@ namespace DCFApixels.DragonECS
                     {
                         color = new WordColor();
                         _words.Add(word, color);
-                        color.color = new DebugColorAttribute.Color((byte)random.Next(), (byte)random.Next(), (byte)random.Next()).UpContrastColor() / 2;
+                        color.color = new DebugColor((byte)random.Next(), (byte)random.Next(), (byte)random.Next()).UpContrastColor() / 2;
                     }
                     color.wordsCount++;
                     colors.Add(color);
@@ -122,7 +138,7 @@ namespace DCFApixels.DragonECS
                 }
                 return result;
             }
-            public DebugColorAttribute.Color CalcColor()
+            public DebugColor CalcColor()
             {
                 float r = 0, g = 0, b = 0;
                 int totalWordsCount = CalcTotalWordsColor();
@@ -134,11 +150,11 @@ namespace DCFApixels.DragonECS
                     g += m * color.color.g;
                     b += m * color.color.b;
                 }
-                return new DebugColorAttribute.Color((byte)r, (byte)g, (byte)b);
+                return new DebugColor((byte)r, (byte)g, (byte)b);
             }
         }
         private static Dictionary<Type, NameColor> _names = new Dictionary<Type, NameColor>();
-        private static DebugColorAttribute.Color CalcNameColorFor(Type type)
+        private static DebugColor CalcNameColorFor(Type type)
         {
             Type targetType = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
             if (!_names.TryGetValue(targetType, out NameColor nameColor))
@@ -169,27 +185,27 @@ namespace DCFApixels.DragonECS
             return words;
         }
 
-        public static (byte, byte, byte) GetColorRGB<T>() => GetColorRGB(typeof(T));
-        public static (byte, byte, byte) GetColorRGB(Type type)
+        public static DebugColor GetColor<T>() => GetColor(typeof(T));
+        public static DebugColor GetColor(Type type)
         {
             var atr = type.GetCustomAttribute<DebugColorAttribute>();
-            return atr != null ? (atr.r, atr.g, atr.b)
+            return atr != null ? atr.color
 #if DEBUG //optimization for release build
-                : CalcNameColorFor(type).ToTuple();
-#else 
-                : ((byte)0, (byte)0, (byte)0);
+                : CalcNameColorFor(type);
+#else
+                : DebugColor.BlackColor;
 #endif
         }
-        public static bool TryGetColorRGB<T>(out (byte, byte, byte) color) => TryGetColorRGB(typeof(T), out color);
-        public static bool TryGetColorRGB(Type type, out (byte, byte, byte) color)
+        public static bool TryGetColor<T>(out DebugColor color) => TryGetColor(typeof(T), out color);
+        public static bool TryGetColor(Type type, out DebugColor color)
         {
             var atr = type.GetCustomAttribute<DebugColorAttribute>();
             if (atr != null)
             {
-                color = (atr.r, atr.g, atr.b);
+                color = atr.color;
                 return true;
             }
-            color = ((byte)0, (byte)0, (byte)0);
+            color = DebugColor.BlackColor;
             return false;
         }
         #endregion
@@ -197,6 +213,20 @@ namespace DCFApixels.DragonECS
         #region IsHidden
         public static bool IsHidden<T>() => IsHidden(typeof(T));
         public static bool IsHidden(Type type) => type.TryGetCustomAttribute(out DebugHideAttribute _);
+        #endregion
+
+        #region GenerateTypeDebugData
+        public static TypeDebugData GenerateTypeDebugData<T>() => GenerateTypeDebugData(typeof(T));
+        public static TypeDebugData GenerateTypeDebugData(Type type)
+        {
+            return new TypeDebugData(
+                type,
+                GetName(type),
+                GetGroup(type),
+                GetColor(type),
+                GetDescription(type),
+                IsHidden(type));
+        }
         #endregion
 
         #region ReflectionExtensions
@@ -211,5 +241,25 @@ namespace DCFApixels.DragonECS
             return attribute != null;
         }
         #endregion
+    }
+
+    [Serializable]
+    public sealed class TypeDebugData
+    {
+        public readonly Type type;
+        public readonly string name;
+        public readonly DebugGroup group;
+        public readonly DebugColor color;
+        public readonly string description;
+        public readonly bool isHidden;
+        public TypeDebugData(Type type, string name, DebugGroup group, DebugColor color, string description, bool isHidden)
+        {
+            this.type = type;
+            this.name = name;
+            this.group = group;
+            this.color = color;
+            this.description = description;
+            this.isHidden = isHidden;
+        }
     }
 }
