@@ -39,6 +39,8 @@ namespace DCFApixels.DragonECS
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetData<T>(int worldID) => ref WorldComponentPool<T>.GetForWorld(worldID);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T UncheckedGetData<T>(int worldID) => ref WorldComponentPool<T>.UncheckedGetForWorld(worldID);
 
         private abstract class DataReleaser
         {

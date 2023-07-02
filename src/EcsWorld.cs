@@ -109,6 +109,17 @@ namespace DCFApixels.DragonECS
             return UncheckedGet<PoolCache<TPool>>().instance;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TPool GetPool<TPool>(int worldID) where TPool : IEcsPoolImplementation, new()
+        {
+            return Get<PoolCache<TPool>>(worldID).instance;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TPool UncheckedGetPool<TPool>(int worldID) where TPool : IEcsPoolImplementation, new()
+        {
+            return UncheckedGet<PoolCache<TPool>>(worldID).instance;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TAspect GetAspect<TAspect>() where TAspect : EcsAspect
         {
             return Get<AspectCache<TAspect>>().instance;
@@ -123,6 +134,10 @@ namespace DCFApixels.DragonECS
         public ref T Get<T>() where T : struct => ref WorldComponentPool<T>.GetForWorld(id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T UncheckedGet<T>() where T : struct => ref WorldComponentPool<T>.UncheckedGetForWorld(id);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T Get<T>(int worldID) where T : struct => ref WorldComponentPool<T>.GetForWorld(worldID);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T UncheckedGet<T>(int worldID) where T : struct => ref WorldComponentPool<T>.UncheckedGetForWorld(worldID);
         #endregion
 
         #region Where Query
