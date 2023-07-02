@@ -201,7 +201,11 @@ namespace DCFApixels.DragonECS
                 ReleaseDelEntityBuffer();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public entlong GetEntityLong(int entityID) => new entlong(entityID, _gens[entityID], id); //TODO придумать получше имя метода
+        public unsafe entlong GetEntityLong(int entityID)
+        {
+            long x = ((long)id << 48 | (long)_gens[entityID] << 32  | entityID);
+            return *(entlong*)&x;
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(int entityID, short gen) => _gens[entityID] == gen;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
