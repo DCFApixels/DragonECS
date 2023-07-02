@@ -104,6 +104,11 @@ namespace DCFApixels.DragonECS
             return Get<PoolCache<TPool>>().instance;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TPool UncheckedGetPool<TPool>() where TPool : IEcsPoolImplementation, new()
+        {
+            return UncheckedGet<PoolCache<TPool>>().instance;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TAspect GetAspect<TAspect>() where TAspect : EcsAspect
         {
             return Get<AspectCache<TAspect>>().instance;
