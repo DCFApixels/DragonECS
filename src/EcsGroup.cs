@@ -71,7 +71,10 @@ namespace DCFApixels.DragonECS
         public void Bake(List<int> entities) => _source.Bake(entities);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan<int> ToSpan() => _source.ToSpan();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan<int> ToSpan(int start, int length) => _source.ToSpan(start, length);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsGroup.LongsIterator GetLongs() => _source.GetLongs();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() => _source.First();
@@ -430,10 +433,7 @@ namespace DCFApixels.DragonECS
 
         #region Enumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
+        public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator IEnumerable.GetEnumerator()
         {
             for (int i = 0; i < _count; i++)
@@ -444,6 +444,7 @@ namespace DCFApixels.DragonECS
             for (int i = 0; i < _count; i++)
                 yield return _dense[i];
         }
+        public LongsIterator GetLongs() => new LongsIterator(this);
         public ref struct Enumerator
         {
             private readonly int[] _dense;
@@ -463,6 +464,45 @@ namespace DCFApixels.DragonECS
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index <= _count && _count < _dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
+        }
+        public readonly struct LongsIterator : IEnumerable<entlong>
+        {
+            private readonly EcsGroup _group;
+            public LongsIterator(EcsGroup group) => _group = group;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Enumerator GetEnumerator() => new Enumerator(_group);
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                for (int i = 0; i < _group._count; i++)
+                    yield return _group.World.GetEntityLong(_group._dense[i]);
+            }
+            IEnumerator<entlong> IEnumerable<entlong>.GetEnumerator()
+            {
+                for (int i = 0; i < _group._count; i++)
+                    yield return _group.World.GetEntityLong(_group._dense[i]);
+            }
+            public ref struct Enumerator
+            {
+                private readonly EcsWorld world;
+                private readonly int[] _dense;
+                private readonly int _count;
+                private int _index;
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public Enumerator(EcsGroup group)
+                {
+                    world = group.World;
+                    _dense = group._dense;
+                    _count = group._count;
+                    _index = 0;
+                }
+                public entlong Current
+                {
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    get => world.GetEntityLong(_dense[_index]);
+                }
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public bool MoveNext() => ++_index <= _count && _count < _dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
+            }
         }
         #endregion
 
