@@ -198,19 +198,28 @@ namespace DCFApixels.DragonECS
     }
     public static class EcsHybridPoolExt
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsHybridPool<T> GetPool<T>(this EcsWorld self) where T : IEcsHybridComponent
         {
             return self.GetPool<EcsHybridPool<T>>();
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsHybridPool<T> UncheckedGetPool<T>(this EcsWorld self) where T : IEcsHybridComponent
+        {
+            return self.UncheckedGetPool<EcsHybridPool<T>>();
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsHybridPool<T> Include<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
         {
             return self.Include<EcsHybridPool<T>>();
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsHybridPool<T> Exclude<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
         {
             return self.Exclude<EcsHybridPool<T>>();
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsHybridPool<T> Optional<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
         {
             return self.Optional<EcsHybridPool<T>>();

@@ -186,19 +186,28 @@ namespace DCFApixels.DragonECS
     public interface IEcsTagComponent { }
     public static class EcsTagPoolExt
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> GetPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.GetPool<EcsTagPool<TTagComponent>>();
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> UncheckedGetPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.UncheckedGetPool<EcsTagPool<TTagComponent>>();
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Include<TTagComponent>(this EcsAspectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.Include<EcsTagPool<TTagComponent>>();
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Exclude<TTagComponent>(this EcsAspectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.Exclude<EcsTagPool<TTagComponent>>();
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Optional<TTagComponent>(this EcsAspectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.Optional<EcsTagPool<TTagComponent>>();
