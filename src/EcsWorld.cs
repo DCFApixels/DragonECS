@@ -116,6 +116,8 @@ namespace DCFApixels.DragonECS
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get<T>() where T : struct => ref WorldComponentPool<T>.GetForWorld(id);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T UncheckedGet<T>() where T : struct => ref WorldComponentPool<T>.UncheckedGetForWorld(id);
         #endregion
 
         #region Where Query

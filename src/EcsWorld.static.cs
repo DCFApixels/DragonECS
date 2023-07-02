@@ -57,6 +57,8 @@ namespace DCFApixels.DragonECS
             public static ref T Get(int itemIndex) => ref _items[itemIndex];
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetForWorld(int worldID) => ref _items[GetItemIndex(worldID)];
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ref T UncheckedGetForWorld(int worldID) => ref _items[_mapping[worldID]];
             public static int GetItemIndex(int worldID)
             {
                 if (_mapping.Length < Worlds.Length)
@@ -79,7 +81,6 @@ namespace DCFApixels.DragonECS
                 }
                 return itemIndex;
             }
-          
             private static void Release(int worldID)
             {
                 ref short itemIndex = ref _mapping[worldID];
