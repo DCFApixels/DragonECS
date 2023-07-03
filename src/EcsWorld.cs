@@ -10,9 +10,6 @@ namespace DCFApixels.DragonECS
     {
         public readonly short id;
 
-        private Type _worldType;
-        private int _worldTypeID;
-
         private bool _isDestroyed;
 
         private IntDispenser _entityDispenser;
@@ -25,9 +22,6 @@ namespace DCFApixels.DragonECS
         private int[] _delEntBuffer;
         private int _delEntBufferCount;
 
-        internal IEcsPoolImplementation[] _pools;
-        private EcsNullPool _nullPool = EcsNullPool.instance;
-
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
 
@@ -36,7 +30,6 @@ namespace DCFApixels.DragonECS
 
         #region Properties
         public bool IsDestroyed => _isDestroyed;
-        public int WorldTypeID => _worldTypeID;
         public int Count => _entitiesCount;
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
@@ -51,14 +44,11 @@ namespace DCFApixels.DragonECS
 
             if (isIndexable)
             {
-                id = (short)_worldIdDispenser.GetFree();
+                id = (short)_worldIdDispenser.UseFree();
                 if (id >= Worlds.Length)
                     Array.Resize(ref Worlds, Worlds.Length << 1);
                 Worlds[id] = this;
             }
-
-            _worldType = this.GetType();
-            _worldTypeID = WorldMetaStorage.GetWorldID(_worldType);
 
             _entityDispenser = new IntDispenser(0);
             _pools = new IEcsPoolImplementation[512];
@@ -83,42 +73,15 @@ namespace DCFApixels.DragonECS
             ReleaseData(id);
             _worldIdDispenser.Release(id);
             _isDestroyed = true;
+            _poolIds = null;
+            _componentIds = null;
         }
-        #endregion
-
-        #region ComponentInfo
-        public int GetComponentID<T>() => WorldMetaStorage.GetComponentID<T>(_worldTypeID);
-        public int GetComponentID(Type type) => WorldMetaStorage.GetComponentID(type, _worldTypeID);
-        public Type GetComponentType(int componentID) => WorldMetaStorage.GetComponentType(_worldTypeID, componentID);
-        public bool IsComponentTypeDeclared<T>() => IsComponentTypeDeclared(typeof(T));
-        public bool IsComponentTypeDeclared(Type type) => WorldMetaStorage.IsComponentTypeDeclared(_worldTypeID, type);
         #endregion
 
         #region Getters
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.Preserve]
 #endif
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TPool GetPool<TPool>() where TPool : IEcsPoolImplementation, new()
-        {
-            return Get<PoolCache<TPool>>().instance;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TPool UncheckedGetPool<TPool>() where TPool : IEcsPoolImplementation, new()
-        {
-            return UncheckedGet<PoolCache<TPool>>().instance;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TPool GetPool<TPool>(int worldID) where TPool : IEcsPoolImplementation, new()
-        {
-            return Get<PoolCache<TPool>>(worldID).instance;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TPool UncheckedGetPool<TPool>(int worldID) where TPool : IEcsPoolImplementation, new()
-        {
-            return UncheckedGet<PoolCache<TPool>>(worldID).instance;
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TAspect GetAspect<TAspect>() where TAspect : EcsAspect
         {

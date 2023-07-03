@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
@@ -9,7 +10,8 @@ namespace DCFApixels.DragonECS
         {
             private static readonly Dictionary<Type, int> _codes = new Dictionary<Type, int>();
             private static int _incremetn = 1;
-            public static int GetCode(Type type)
+            public static int Count => _codes.Count;
+            public static int Get(Type type)
             {
                 if (!_codes.TryGetValue(type, out int code))
                 {
@@ -18,10 +20,11 @@ namespace DCFApixels.DragonECS
                 }
                 return code;
             }
-            public static int Count => _codes.Count;
-            internal static class Cache<T>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static int Get<T>() => Cache<T>.code;
+            private static class Cache<T>
             {
-                public static readonly int code = GetCode(typeof(T));
+                public static readonly int code = Get(typeof(T));
             }
         }
     }

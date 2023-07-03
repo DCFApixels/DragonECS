@@ -257,7 +257,7 @@ namespace DCFApixels.DragonECS
         }
         internal class DebuggerProxy
         {
-            public readonly Type worldType;
+            public readonly EcsWorld world;
             public readonly int worldID;
             public readonly int[] included;
             public readonly int[] excluded;
@@ -265,11 +265,11 @@ namespace DCFApixels.DragonECS
             public readonly Type[] excludedTypes;
             public DebuggerProxy(EcsMask mask)
             {
-                worldType = WorldMetaStorage.GetWorldType(mask.worldID);
+                world = EcsWorld.GetWorld(mask.worldID);
                 worldID = mask.worldID;
                 included = mask.inc;
                 excluded = mask.exc;
-                Type converter(int o) => WorldMetaStorage.GetComponentType(worldID, o);
+                Type converter(int o) => world.GetComponentType(o);
                 includedTypes = included.Select(converter).ToArray();
                 excludedTypes = excluded.Select(converter).ToArray();
             }

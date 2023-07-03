@@ -21,7 +21,7 @@ namespace DCFApixels.DragonECS
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 2;
 
         private static EcsWorld[] Worlds = new EcsWorld[4];
-        private static IntDispenser _worldIdDispenser = new IntDispenser(0);
+        private static IdDispenser _worldIdDispenser = new IdDispenser(0);
 
         private static List<DataReleaser> _dataReleaseres = new List<DataReleaser>();
 
@@ -101,5 +101,8 @@ namespace DCFApixels.DragonECS
             }
         }
     }
-    internal sealed class EcsNullWorld : EcsWorld { }
+    internal sealed class EcsNullWorld : EcsWorld
+    {
+        internal EcsNullWorld() : base(false) { }
+    }
 }

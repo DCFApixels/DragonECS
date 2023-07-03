@@ -19,23 +19,6 @@ namespace DCFApixels.DragonECS
                 component = default;
             }
         }
-        private TPool CreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
-        {
-            int index = WorldMetaStorage.GetPoolID<TPool>(_worldTypeID);
-            if (index >= _pools.Length)
-            {
-                int oldCapacity = _pools.Length;
-                Array.Resize(ref _pools, _pools.Length << 1);
-                ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
-            }
-            if (_pools[index] == _nullPool)
-            {
-                var pool = new TPool();
-                _pools[index] = pool;
-                pool.OnInit(this, index);
-            }
-            return (TPool)_pools[index];
-        }
         internal readonly struct AspectCache<T> : IEcsWorldComponent<AspectCache<T>>
             where T : EcsAspect
         {

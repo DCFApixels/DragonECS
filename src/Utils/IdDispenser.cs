@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace DCFApixels
+namespace DCFApixels.DragonECS.Utils
 {
     [Serializable]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
