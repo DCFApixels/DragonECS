@@ -161,6 +161,8 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator long(in entlong a) => a.full;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int(in entlong a) => a.ID;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator entlong(in long a) => new entlong(a);
         #endregion
 
