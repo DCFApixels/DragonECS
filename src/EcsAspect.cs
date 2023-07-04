@@ -203,10 +203,13 @@ namespace DCFApixels.DragonECS
     public sealed class EcsMask
     {
         internal readonly int worldID;
-        /// <summary>Including constraints</summary>
         internal readonly int[] inc;
-        /// <summary>Excluding constraints</summary>
         internal readonly int[] exc;
+        public int WorldID => worldID;
+        /// <summary>Including constraints</summary>
+        public ReadOnlySpan<int> Inc => inc;
+        /// <summary>Excluding constraints</summary>
+        public ReadOnlySpan<int> Exc => exc;
         internal EcsMask(int worldID, int[] inc, int[] exc)
         {
 #if DEBUG
