@@ -21,4 +21,5 @@ DragonECS uses this versioning semantics: [Open](https://gist.github.com/DCFApix
 # Extensions
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * [Classic C# multithreading support](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+* Relations (Work in progress)
 * Unity integration (Work in progress)
