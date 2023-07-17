@@ -12,16 +12,17 @@ namespace DCFApixels.DragonECS
     /// <summary>Strong identifier/Permanent entity identifier</summary>
     [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
+    [Serializable]
     public readonly struct entlong : IEquatable<long>, IEquatable<entlong>
     {
         public static readonly entlong NULL = default;
         [FieldOffset(0)]
         internal readonly long full; //Union
-        [FieldOffset(0)]
+        [FieldOffset(0), NonSerialized]
         internal readonly int id;
-        [FieldOffset(4)]
+        [FieldOffset(4), NonSerialized]
         internal readonly short gen;
-        [FieldOffset(6)]
+        [FieldOffset(6), NonSerialized]
         internal readonly short world;
 
         #region Properties
@@ -154,16 +155,18 @@ namespace DCFApixels.DragonECS
 
         #region operators
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(in entlong a, in entlong b) => a.full == b.full;
+        public static bool operator ==(entlong a, entlong b) => a.full == b.full;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(in entlong a, in entlong b) => a.full != b.full;
+        public static bool operator !=(entlong a, entlong b) => a.full != b.full;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator long(in entlong a) => a.full;
+        public static explicit operator long(entlong a) => a.full;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator int(in entlong a) => a.ID;
+        public static explicit operator entlong(long a) => new entlong(a);
+
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator entlong(in long a) => new entlong(a);
+        public static explicit operator int(entlong a) => a.ID;
         #endregion
 
         #region DebuggerProxy
