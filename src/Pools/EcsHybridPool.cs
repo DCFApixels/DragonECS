@@ -14,7 +14,9 @@ namespace DCFApixels.DragonECS
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
+        private int[] _entities;
         private int _itemsCount;
+
         private int[] _recycledItems;
         private int _recycledItemsCount;
 
@@ -40,6 +42,7 @@ namespace DCFApixels.DragonECS
             _recycledItems = new int[128];
             _recycledItemsCount = 0;
             _items = new T[capacity];
+            _entities = new int[capacity];
             _itemsCount = 0;
         }
         #endregion
@@ -60,12 +63,16 @@ namespace DCFApixels.DragonECS
             {
                 itemIndex = ++_itemsCount;
                 if (itemIndex >= _items.Length)
+                {
                     Array.Resize(ref _items, _items.Length << 1);
+                    Array.Resize(ref _entities, _items.Length);
+                }
             }
             this.IncrementEntityComponentCount(entityID);
             _listeners.InvokeOnAdd(entityID);
             component.OnAddToPool(_source.GetEntityLong(entityID));
             _items[itemIndex] = component;
+            _entities[itemIndex] = entityID;
         }
         public void Set(int entityID, T component)
         {
@@ -81,7 +88,10 @@ namespace DCFApixels.DragonECS
                 {
                     itemIndex = ++_itemsCount;
                     if (itemIndex >= _items.Length)
+                    {
                         Array.Resize(ref _items, _items.Length << 1);
+                        Array.Resize(ref _entities, _items.Length);
+                    }
                 }
                 this.IncrementEntityComponentCount(entityID);
             }
@@ -93,6 +103,7 @@ namespace DCFApixels.DragonECS
             _listeners.InvokeOnAdd(entityID);
             component.OnAddToPool(_source.GetEntityLong(entityID));
             _items[itemIndex] = component;
+            _entities[itemIndex] = entityID;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Get(int entityID)
@@ -128,6 +139,7 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
             _recycledItems[_recycledItemsCount++] = itemIndex;
             _mapping[entityID] = 0;
+            _entities[itemIndex] = 0;
             _itemsCount--;
             this.DecrementEntityComponentCount(entityID);
             _listeners.InvokeOnDel(entityID);
@@ -149,6 +161,15 @@ namespace DCFApixels.DragonECS
             if (!Has(fromEntityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID);
 #endif
             toWorld.GetPool<T>().Set(toEntityID, Get(fromEntityID));
+        }
+
+        public void ClearNotAliveComponents()
+        {
+            for (int i = _itemsCount - 1; i >= 0; i--)
+            {
+                if (!_items[i].IsAlive)
+                    Del(_entities[i]);
+            }
         }
         #endregion
 
