@@ -181,7 +181,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe entlong GetEntityLong(int entityID)
         {
-            long x = ((long)id << 48 | (long)_gens[entityID] << 32  | entityID);
+            long x = (long)id << 48 | (long)_gens[entityID] << 32 | (long)entityID;
             return *(entlong*)&x;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

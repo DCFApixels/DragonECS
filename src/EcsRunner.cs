@@ -71,6 +71,7 @@ namespace DCFApixels.DragonECS
                     Type interfaceType = item.BaseType.GenericTypeArguments[0];
                     _runnerHandlerTypes.Add(interfaceType.IsGenericType ? interfaceType.GetGenericTypeDefinition() : interfaceType, item);
                 }
+
                 if (delayedExceptions.Count > 0)
                 {
                     throw new AggregateException(delayedExceptions);

@@ -1,3 +1,4 @@
+using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    /// <summary>Pool for IEcsComponent components</summary>
+    /// <summary>Pool for IEcsHybridComponent components</summary>
     public sealed class EcsHybridPool<T> : IEcsPoolImplementation<T>, IEcsHybridPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : IEcsHybridComponent
     {
@@ -216,6 +217,11 @@ namespace DCFApixels.DragonECS
         bool IsAlive { get; }
         void OnAddToPool(entlong entity);
         void OnDelFromPool(entlong entity);
+    }
+    public static class IEcsHybridComponentExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNullOrNotAlive(this IEcsHybridComponent self) => self == null || self.IsAlive;
     }
     public static class EcsHybridPoolExt
     {

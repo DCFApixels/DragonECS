@@ -27,8 +27,8 @@ namespace DCFApixels.DragonECS.Utils
         #region Properties
         public TValue this[int keyX, int keyY]
         {
-            get => _entries[FindEntry((keyX << 32) | keyY)].value;
-            set => Insert(keyX + (keyY << 32), value);
+            get => _entries[FindEntry((keyX << 16) | keyY)].value;
+            set => Insert(keyX + (keyY << 16), value);
         }
         public TValue this[int key]
         {
@@ -52,7 +52,7 @@ namespace DCFApixels.DragonECS.Utils
 
         #region Add/Contains/Remove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(int keyX, int keyY, TValue value) => Add((keyX << 32) | keyY, value);
+        public void Add(int keyX, int keyY, TValue value) => Add((keyX << 16) | keyY, value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(int key, TValue value)
         {
@@ -63,11 +63,11 @@ namespace DCFApixels.DragonECS.Utils
             Insert(key, value);
         }
 
-        public bool Contains(int keyX, int keyY) => FindEntry((keyX << 32) | keyY) >= 0;
+        public bool Contains(int keyX, int keyY) => FindEntry((keyX << 16) | keyY) >= 0;
         public bool Contains(int key) => FindEntry(key) >= 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Remove(int keyX, int keyY) => Remove((keyX << 32) | keyY);
+        public bool Remove(int keyX, int keyY) => Remove((keyX << 16) | keyY);
         public bool Remove(int key)
         {
             int bucket = key & _modBitMask;
@@ -144,7 +144,7 @@ namespace DCFApixels.DragonECS.Utils
         #region TryGetValue
         public bool TryGetValue(int keyX, int keyY, out TValue value)
         {
-            int index = FindEntry((keyX << 32) | keyY);
+            int index = FindEntry((keyX << 16) | keyY);
             if (index < 0)
             {
                 value = default;

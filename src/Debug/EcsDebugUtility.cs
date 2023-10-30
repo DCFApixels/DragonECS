@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
@@ -57,8 +58,24 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetName
+        public static string GetNameForObject(IEcsDebugName obj) => obj.DebugName;
+        public static string GetNameForObject(object obj) => obj is IEcsDebugName dn ? dn.DebugName : GetName(obj.GetType());
         public static string GetName<T>() => GetName(typeof(T));
         public static string GetName(Type type) => type.TryGetCustomAttribute(out DebugNameAttribute atr) ? atr.name : GetGenericTypeName(type);
+        public static bool TryGetCustomNameForObject(IEcsDebugName obj, out string name)
+        {
+            name = obj.DebugName;
+            return true;
+        }
+        public static bool TryGetCustomNameForObject(object obj, out string name)
+        {
+            if (obj is IEcsDebugName dn)
+            {
+                name = dn.DebugName;
+                return true;
+            }
+            return TryGetCustomName(obj.GetType(), out name);
+        }
         public static bool TryGetCustomName<T>(out string name) => TryGetCustomName(typeof(T), out name);
         public static bool TryGetCustomName(Type type, out string name)
         {
@@ -230,11 +247,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region ReflectionExtensions
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool TryGetCustomAttribute<T>(this Type self, out T attribute) where T : Attribute
         {
             attribute = self.GetCustomAttribute<T>();
             return attribute != null;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool TryGetCustomAttribute<T>(this MemberInfo self, out T attribute) where T : Attribute
         {
             attribute = self.GetCustomAttribute<T>();

@@ -75,6 +75,7 @@ namespace DCFApixels.DragonECS
 
             _runRunnerCache = GetRunner<IEcsRunProcess>();
             _isInit = true;
+            GC.Collect();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
