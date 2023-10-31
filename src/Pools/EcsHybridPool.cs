@@ -252,4 +252,66 @@ namespace DCFApixels.DragonECS
             return self.Optional<EcsHybridPool<T>>();
         }
     }
+
+
+
+
+
+
+
+    public static class InterfaceMatrix
+    {
+        private static SparseArray<InterfaceMatrixEdge> _edges = new SparseArray<InterfaceMatrixEdge>();
+        private static SparseArray64<InterfaceMatrixEdge> _matrix = new SparseArray64<InterfaceMatrixEdge>();
+        public static bool HasEdge<TParent, TChild>()
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (!InterfaceIsDeclared<TParent>() || !InterfaceIsDeclared<TChild>())
+                EcsDebug.PrintWarning($"{nameof(TParent)} or {nameof(TChild)} not declared.");
+#endif
+            return _matrix.Contains(InterfaceId<TParent>._id, InterfaceId<TChild>._id);
+        }
+        public static bool InterfaceIsDeclared<T>() => _edges.Contains(InterfaceId<T>._id);
+
+        public static void DeclareInterfacesFromClass<T>()
+        {
+            Type type = typeof(T);
+            if (type.IsInterface)
+                throw new ArgumentException($"The argument {nameof(T)} cannot be an interface");
+        }
+    }
+    internal class InterfaceMatrixEdge
+    {
+        private static int _increment = 0;
+
+        public readonly int id;
+        public readonly Type parentType;
+        public readonly Type childType;
+        public readonly int parentID;
+        public readonly int childID;
+        public static InterfaceMatrixEdge New<TParent, TChild>()
+        {
+            return new InterfaceMatrixEdge(
+                typeof(TParent), 
+                typeof(TChild), 
+                InterfaceId<TParent>._id, 
+                InterfaceId<TChild>._id);
+        }
+        public InterfaceMatrixEdge(Type parentType, Type childType, int parentID, int childID)
+        {
+            id = _increment++;
+            this.parentType = parentType;
+            this.childType = childType;
+            this.parentID = parentID;
+            this.childID = childID;
+        }
+    }
+    internal static class InterfaceId
+    {
+        internal static int _increment;
+    }
+    internal static class InterfaceId<T>
+    {
+        public static int _id = InterfaceId._increment++;
+    }
 }

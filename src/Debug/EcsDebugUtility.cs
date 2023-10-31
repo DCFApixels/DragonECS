@@ -2,11 +2,68 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace DCFApixels.DragonECS
 {
     public static class EcsDebugUtility
     {
+        private const BindingFlags RFL_FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+        private struct ProcessInterface
+        {
+            public Type interfaceType;
+            public string processName;
+            public ProcessInterface(Type interfaceType, string processName)
+            {
+                this.interfaceType = interfaceType;
+                this.processName = processName;
+            }
+        }
+        private static Dictionary<Type, ProcessInterface> _processes = new Dictionary<Type, ProcessInterface>();
+
+        static EcsDebugUtility()
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var types = assembly.GetTypes();
+                foreach (var type in types)
+                {
+                    if (!type.IsInterface)
+                        continue;
+
+                    if (type.GetInterface(nameof(IEcsProcess)) != null)
+                    {
+                        string name = type.Name;
+                        if (name[0] == 'I' && name.Length > 1 && char.IsUpper(name[1]))
+                            name = name.Substring(1);
+                        name = Regex.Replace(name, @"\bEcs|Process\b", "");
+                        _processes.Add(type, new ProcessInterface(type, name));
+                    }
+                }
+            }
+        }
+
+        #region Process
+        public static bool IsProcessInterface(Type type)
+        {
+            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
+            return _processes.ContainsKey(type);
+        }
+        public static string GetProcessInterfaceName(Type type)
+        {
+            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
+            return _processes[type].processName;
+        }
+        public static bool TryGetProcessInterfaceName(Type type, out string name)
+        {
+            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
+            bool result = _processes.TryGetValue(type, out ProcessInterface data);
+            name = data.processName;
+            return result;
+        }
+        #endregion
+
         #region GetGenericTypeName
         public static string GetGenericTypeFullName<T>(int maxDepth = 2) => GetGenericTypeFullName(typeof(T), maxDepth);
         public static string GetGenericTypeFullName(Type type, int maxDepth = 2) => GetGenericTypeNameInternal(type, maxDepth, true);
@@ -46,7 +103,7 @@ namespace DCFApixels.DragonECS
         }
         private static string AutoToString(object target, Type type, bool isWriteName)
         {
-            var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var fields = type.GetFields(RFL_FLAGS);
             string[] values = new string[fields.Length];
             for (int i = 0; i < fields.Length; i++)
                 values[i] = (fields[i].GetValue(target) ?? "NULL").ToString();
@@ -58,25 +115,21 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetName
-        public static string GetNameForObject(IEcsDebugName obj) => obj.DebugName;
-        public static string GetNameForObject(object obj) => obj is IEcsDebugName dn ? dn.DebugName : GetName(obj.GetType());
-        public static string GetName<T>() => GetName(typeof(T));
-        public static string GetName(Type type) => type.TryGetCustomAttribute(out DebugNameAttribute atr) ? atr.name : GetGenericTypeName(type);
-        public static bool TryGetCustomNameForObject(IEcsDebugName obj, out string name)
+        public static string GetName(object obj, int maxGenericDepth = 2)
         {
-            name = obj.DebugName;
-            return true;
+            return obj is IEcsDebugMetaProvider intr ?
+                GetName(intr.DebugMetaSource, maxGenericDepth) :
+                GetName(type: obj.GetType(), maxGenericDepth);
         }
-        public static bool TryGetCustomNameForObject(object obj, out string name)
+        public static string GetName<T>(int maxGenericDepth = 2) => GetName(typeof(T), maxGenericDepth);
+        public static string GetName(Type type, int maxGenericDepth = 2) => type.TryGetCustomAttribute(out DebugNameAttribute atr) ? atr.name : GetGenericTypeName(type, maxGenericDepth);
+        public static bool TryGetCustomName(object obj, out string name)
         {
-            if (obj is IEcsDebugName dn)
-            {
-                name = dn.DebugName;
-                return true;
-            }
-            return TryGetCustomName(obj.GetType(), out name);
+            return obj is IEcsDebugMetaProvider intr ? 
+                TryGetCustomName(intr.DebugMetaSource, out name) : 
+                TryGetCustomName(type: obj.GetType(), out name);
         }
-        public static bool TryGetCustomName<T>(out string name) => TryGetCustomName(typeof(T), out name);
+        public static bool TryGetCustomName<T>(out string name) => TryGetCustomName(type: typeof(T), out name);
         public static bool TryGetCustomName(Type type, out string name)
         {
             if (type.TryGetCustomAttribute(out DebugNameAttribute atr))
@@ -90,8 +143,20 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetGroup
+        public static DebugGroup GetGroup(object obj)
+        {
+            return obj is IEcsDebugMetaProvider intr ?
+                GetGroup(intr.DebugMetaSource) :
+                GetGroup(type: obj.GetType());
+        }
         public static DebugGroup GetGroup<T>() => GetGroup(typeof(T));
         public static DebugGroup GetGroup(Type type) => type.TryGetCustomAttribute(out DebugGroupAttribute atr) ? atr.GetData() : DebugGroup.Empty;
+        public static bool TryGetGroup(object obj, out DebugGroup group)
+        {
+            return obj is IEcsDebugMetaProvider intr ?
+                TryGetGroup(intr.DebugMetaSource, out group) :
+                TryGetGroup(type: obj.GetType(), out group);
+        }
         public static bool TryGetGroup<T>(out DebugGroup text) => TryGetGroup(typeof(T), out text);
         public static bool TryGetGroup(Type type, out DebugGroup group)
         {
@@ -106,8 +171,20 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetDescription
+        public static string GetDescription(object obj)
+        {
+            return obj is IEcsDebugMetaProvider intr ?
+                GetDescription(intr.DebugMetaSource) :
+                GetDescription(type: obj.GetType());
+        }
         public static string GetDescription<T>() => GetDescription(typeof(T));
         public static string GetDescription(Type type) => type.TryGetCustomAttribute(out DebugDescriptionAttribute atr) ? atr.description : string.Empty;
+        public static bool TryGetDescription(object obj, out string text)
+        {
+            return obj is IEcsDebugMetaProvider intr ?
+                TryGetDescription(intr.DebugMetaSource, out text) :
+                TryGetDescription(type: obj.GetType(), out text);
+        }
         public static bool TryGetDescription<T>(out string text) => TryGetDescription(typeof(T), out text);
         public static bool TryGetDescription(Type type, out string text)
         {
@@ -122,7 +199,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetColor
-        private static Random random = new Random();
+        private static Random random = new Random(100100100);
         private static Dictionary<string, WordColor> _words = new Dictionary<string, WordColor>();
         private class WordColor
         {
@@ -181,7 +258,7 @@ namespace DCFApixels.DragonECS
             }
             return nameColor.CalcColor();
         }
-        public static List<string> SplitString(string s)
+        private static List<string> SplitString(string s)
         {
             string subs;
             List<string> words = new List<string>();
@@ -202,6 +279,12 @@ namespace DCFApixels.DragonECS
             return words;
         }
 
+        public static DebugColor GetColor(object obj)
+        {
+            return obj is IEcsDebugMetaProvider intr ?
+                GetColor(intr.DebugMetaSource) :
+                GetColor(type: obj.GetType());
+        }
         public static DebugColor GetColor<T>() => GetColor(typeof(T));
         public static DebugColor GetColor(Type type)
         {
@@ -212,6 +295,12 @@ namespace DCFApixels.DragonECS
 #else
                 : DebugColor.BlackColor;
 #endif
+        }
+        public static bool TryGetColor(object obj, out DebugColor color)
+        {
+            return obj is IEcsDebugMetaProvider intr ?
+                TryGetColor(intr.DebugMetaSource, out color) :
+                TryGetColor(type: obj.GetType(), out color);
         }
         public static bool TryGetColor<T>(out DebugColor color) => TryGetColor(typeof(T), out color);
         public static bool TryGetColor(Type type, out DebugColor color)
@@ -228,11 +317,34 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IsHidden
+        public static bool IsHidden(object obj)
+        {
+            return obj is IEcsDebugMetaProvider intr ?
+                IsHidden(intr.DebugMetaSource) :
+                IsHidden(type: obj.GetType());
+        }
         public static bool IsHidden<T>() => IsHidden(typeof(T));
         public static bool IsHidden(Type type) => type.TryGetCustomAttribute(out DebugHideAttribute _);
         #endregion
 
+        #region MetaSource
+        public static bool IsMetaSourceProvided(object obj)
+        {
+            return obj is IEcsDebugMetaProvider;
+        }
+        public static object GetMetaSource(object obj)
+        {
+            return obj is IEcsDebugMetaProvider intr ? intr.DebugMetaSource : obj;
+        }
+        #endregion
+
         #region GenerateTypeDebugData
+        public static TypeDebugData GenerateTypeDebugData(object obj)
+        {
+            return obj is IEcsDebugMetaProvider intr ?
+                GenerateTypeDebugData(intr.DebugMetaSource) :
+                GenerateTypeDebugData(type: obj.GetType());
+        }
         public static TypeDebugData GenerateTypeDebugData<T>() => GenerateTypeDebugData(typeof(T));
         public static TypeDebugData GenerateTypeDebugData(Type type)
         {
