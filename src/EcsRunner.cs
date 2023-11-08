@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using static DCFApixels.DragonECS.EcsDebugUtility;
 
 namespace DCFApixels.DragonECS
@@ -263,4 +264,85 @@ namespace DCFApixels.DragonECS
         }
     }
     #endregion
+
+    public static class EcsProcessUtility
+    {
+        private struct ProcessInterface
+        {
+            public Type interfaceType;
+            public string processName;
+            public ProcessInterface(Type interfaceType, string processName)
+            {
+                this.interfaceType = interfaceType;
+                this.processName = processName;
+            }
+        }
+        private static Dictionary<Type, ProcessInterface> _processes = new Dictionary<Type, ProcessInterface>();
+        private static HashSet<Type> _systems = new HashSet<Type>();
+
+        static EcsProcessUtility()
+        {
+            Type processBasicInterface = typeof(IEcsProcess);
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var types = assembly.GetTypes();
+                foreach (var type in types)
+                {
+                    if (type.GetInterface(nameof(IEcsProcess)) != null || type == processBasicInterface)
+                    {
+                        if (type.IsInterface)
+                        {
+                            string name = type.Name;
+                            if (name[0] == 'I' && name.Length > 1 && char.IsUpper(name[1]))
+                                name = name.Substring(1);
+                            name = Regex.Replace(name, @"\bEcs|Process\b", "");
+                            if (Regex.IsMatch(name, "`\\w{1,}$"))
+                            {
+                                var s = name.Split("`");
+                                name = s[0] + $"<{s[1]}>";
+                            }
+                            _processes.Add(type, new ProcessInterface(type, name));
+                        }
+                        else
+                        {
+                            _systems.Add(type);
+                        }
+                    }
+                }
+            }
+        }
+
+        #region Systems
+        public static bool IsSystem(Type type) => _systems.Contains(type);
+        public static bool IsEcsSystem(this Type type) => _systems.Contains(type);
+        #endregion
+
+        #region Process
+        public static bool IsProcessInterface(Type type)
+        {
+            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
+            return _processes.ContainsKey(type);
+        }
+        public static bool IsEcsProcessInterface(this Type type) => IsProcessInterface(type);
+
+        public static string GetProcessInterfaceName(Type type)
+        {
+            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
+            return _processes[type].processName;
+        }
+        public static bool TryGetProcessInterfaceName(Type type, out string name)
+        {
+            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
+            bool result = _processes.TryGetValue(type, out ProcessInterface data);
+            name = data.processName;
+            return result;
+        }
+
+        public static IEnumerable<Type> GetEcsProcessInterfaces(this Type self)
+        {
+            return self.GetInterfaces().Where(o=> o.IsEcsProcessInterface());
+        }
+        #endregion
+
+    }
 }

@@ -10,60 +10,6 @@ namespace DCFApixels.DragonECS
     {
         private const BindingFlags RFL_FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        private struct ProcessInterface
-        {
-            public Type interfaceType;
-            public string processName;
-            public ProcessInterface(Type interfaceType, string processName)
-            {
-                this.interfaceType = interfaceType;
-                this.processName = processName;
-            }
-        }
-        private static Dictionary<Type, ProcessInterface> _processes = new Dictionary<Type, ProcessInterface>();
-
-        static EcsDebugUtility()
-        {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                var types = assembly.GetTypes();
-                foreach (var type in types)
-                {
-                    if (!type.IsInterface)
-                        continue;
-
-                    if (type.GetInterface(nameof(IEcsProcess)) != null)
-                    {
-                        string name = type.Name;
-                        if (name[0] == 'I' && name.Length > 1 && char.IsUpper(name[1]))
-                            name = name.Substring(1);
-                        name = Regex.Replace(name, @"\bEcs|Process\b", "");
-                        _processes.Add(type, new ProcessInterface(type, name));
-                    }
-                }
-            }
-        }
-
-        #region Process
-        public static bool IsProcessInterface(Type type)
-        {
-            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
-            return _processes.ContainsKey(type);
-        }
-        public static string GetProcessInterfaceName(Type type)
-        {
-            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
-            return _processes[type].processName;
-        }
-        public static bool TryGetProcessInterfaceName(Type type, out string name)
-        {
-            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
-            bool result = _processes.TryGetValue(type, out ProcessInterface data);
-            name = data.processName;
-            return result;
-        }
-        #endregion
-
         #region GetGenericTypeName
         public static string GetGenericTypeFullName<T>(int maxDepth = 2) => GetGenericTypeFullName(typeof(T), maxDepth);
         public static string GetGenericTypeFullName(Type type, int maxDepth = 2) => GetGenericTypeNameInternal(type, maxDepth, true);

@@ -1,13 +1,24 @@
-using DCFApixels.DragonECS.Utils;
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using UnityEngine;
+using static UnityEditor.Progress;
 
 namespace DCFApixels.DragonECS
 {
+    namespace Internal
+    {
+        public interface IEcsHybridPoolInternal : IEcsPool
+        {
+            void AddRefInternal(int entityID, object component, bool isAppend);
+            void DelInternal(int entityID, bool isAppend);
+        }
+    }
     /// <summary>Pool for IEcsHybridComponent components</summary>
-    public sealed class EcsHybridPool<T> : IEcsPoolImplementation<T>, IEcsHybridPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
+    public sealed class EcsHybridPool<T> : IEcsPoolImplementation<T>, IEcsHybridPool<T>, IEcsHybridPoolInternal, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : IEcsHybridComponent
     {
         private EcsWorld _source;
@@ -31,25 +42,12 @@ namespace DCFApixels.DragonECS
         public EcsWorld World => _source;
         #endregion
 
-        #region Init
-        void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
-        {
-            _source = world;
-            _componentID = componentID;
-
-            const int capacity = 512;
-
-            _mapping = new int[world.Capacity];
-            _recycledItems = new int[128];
-            _recycledItemsCount = 0;
-            _items = new T[capacity];
-            _entities = new int[capacity];
-            _itemsCount = 0;
-        }
-        #endregion
-
         #region Methods
-        public void Add(int entityID, T component)
+        void IEcsHybridPoolInternal.AddRefInternal(int entityID, object component, bool isMain)
+        {
+            AddInternal(entityID, (T)component, isMain);
+        }
+        private void AddInternal(int entityID, T component, bool isMain)
         {
             ref int itemIndex = ref _mapping[entityID];
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
@@ -71,40 +69,23 @@ namespace DCFApixels.DragonECS
             }
             this.IncrementEntityComponentCount(entityID);
             _listeners.InvokeOnAdd(entityID);
-            component.OnAddToPool(_source.GetEntityLong(entityID));
+            if(isMain)
+                component.OnAddToPool(_source.GetEntityLong(entityID));
             _items[itemIndex] = component;
             _entities[itemIndex] = entityID;
         }
+        public void Add(int entityID, T component)
+        {
+            HybridMapping mapping = _source.GetHybridMapping(component.GetType());
+            mapping.GetTargetTypePool().AddRefInternal(entityID, component, false);
+            foreach (var pool in mapping.GetPools())
+                pool.AddRefInternal(entityID, component, true);
+        }
         public void Set(int entityID, T component)
         {
-            ref int itemIndex = ref _mapping[entityID];
-            if(itemIndex <= 0)
-            {//null
-                if (_recycledItemsCount > 0)
-                {
-                    itemIndex = _recycledItems[--_recycledItemsCount];
-                    _itemsCount++;
-                }
-                else
-                {
-                    itemIndex = ++_itemsCount;
-                    if (itemIndex >= _items.Length)
-                    {
-                        Array.Resize(ref _items, _items.Length << 1);
-                        Array.Resize(ref _entities, _items.Length);
-                    }
-                }
-                this.IncrementEntityComponentCount(entityID);
-            }
-            else
-            {//not null
-                _listeners.InvokeOnDel(entityID);
-                _items[itemIndex].OnDelFromPool(_source.GetEntityLong(entityID));
-            }
-            _listeners.InvokeOnAdd(entityID);
-            component.OnAddToPool(_source.GetEntityLong(entityID));
-            _items[itemIndex] = component;
-            _entities[itemIndex] = entityID;
+            if(Has(entityID))
+                Del(entityID);
+            Add(entityID, component);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Get(int entityID)
@@ -128,14 +109,19 @@ namespace DCFApixels.DragonECS
         {
             return _mapping[entityID] > 0;
         }
-        public void Del(int entityID)
+        void IEcsHybridPoolInternal.DelInternal(int entityID, bool isMain)
+        {
+            DelInternal(entityID, isMain);
+        }
+        private void DelInternal(int entityID, bool isMain)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
 #endif
             ref int itemIndex = ref _mapping[entityID];
             T component = _items[itemIndex];
-            component.OnDelFromPool(_source.GetEntityLong(entityID));
+            if(isMain)
+                component.OnDelFromPool(_source.GetEntityLong(entityID));
             if (_recycledItemsCount >= _recycledItems.Length)
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
             _recycledItems[_recycledItemsCount++] = itemIndex;
@@ -144,6 +130,14 @@ namespace DCFApixels.DragonECS
             _itemsCount--;
             this.DecrementEntityComponentCount(entityID);
             _listeners.InvokeOnDel(entityID);
+        }
+        public void Del(int entityID)
+        {
+            var component = Get(entityID);
+            HybridMapping mapping = _source.GetHybridMapping(component.GetType());
+            mapping.GetTargetTypePool().DelInternal(entityID, false);
+            foreach (var pool in mapping.GetPools())
+                pool.DelInternal(entityID, true);
         }
         public void TryDel(int entityID)
         {
@@ -175,6 +169,20 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Callbacks
+        void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
+        {
+            _source = world;
+            _componentID = componentID;
+
+            const int capacity = 512;
+
+            _mapping = new int[world.Capacity];
+            _recycledItems = new int[128];
+            _recycledItemsCount = 0;
+            _items = new T[capacity];
+            _entities = new int[capacity];
+            _itemsCount = 0;
+        }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);
@@ -218,13 +226,11 @@ namespace DCFApixels.DragonECS
         void OnAddToPool(entlong entity);
         void OnDelFromPool(entlong entity);
     }
-    public static class IEcsHybridComponentExtensions
+    public static class EcsHybridPoolExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNullOrNotAlive(this IEcsHybridComponent self) => self == null || self.IsAlive;
-    }
-    public static class EcsHybridPoolExt
-    {
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsHybridPool<T> GetPool<T>(this EcsWorld self) where T : IEcsHybridComponent
         {
@@ -253,65 +259,94 @@ namespace DCFApixels.DragonECS
         }
     }
 
-
-
-
-
-
-
-    public static class InterfaceMatrix
+    public partial class EcsWorld
     {
-        private static SparseArray<InterfaceMatrixEdge> _edges = new SparseArray<InterfaceMatrixEdge>();
-        private static SparseArray64<InterfaceMatrixEdge> _matrix = new SparseArray64<InterfaceMatrixEdge>();
-        public static bool HasEdge<TParent, TChild>()
-        {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!InterfaceIsDeclared<TParent>() || !InterfaceIsDeclared<TChild>())
-                EcsDebug.PrintWarning($"{nameof(TParent)} or {nameof(TChild)} not declared.");
-#endif
-            return _matrix.Contains(InterfaceId<TParent>._id, InterfaceId<TChild>._id);
-        }
-        public static bool InterfaceIsDeclared<T>() => _edges.Contains(InterfaceId<T>._id);
+        private Dictionary<Type, HybridMapping> _mappings = new Dictionary<Type, HybridMapping>();
 
-        public static void DeclareInterfacesFromClass<T>()
+        internal HybridMapping GetHybridMapping(Type type)
         {
-            Type type = typeof(T);
-            if (type.IsInterface)
-                throw new ArgumentException($"The argument {nameof(T)} cannot be an interface");
+            if(!_mappings.TryGetValue(type, out HybridMapping mapping))
+            {
+                mapping = new HybridMapping(this, type);
+                _mappings.Add(type, mapping);
+            }
+            return mapping;
         }
     }
-    internal class InterfaceMatrixEdge
-    {
-        private static int _increment = 0;
 
-        public readonly int id;
-        public readonly Type parentType;
-        public readonly Type childType;
-        public readonly int parentID;
-        public readonly int childID;
-        public static InterfaceMatrixEdge New<TParent, TChild>()
-        {
-            return new InterfaceMatrixEdge(
-                typeof(TParent), 
-                typeof(TChild), 
-                InterfaceId<TParent>._id, 
-                InterfaceId<TChild>._id);
-        }
-        public InterfaceMatrixEdge(Type parentType, Type childType, int parentID, int childID)
-        {
-            id = _increment++;
-            this.parentType = parentType;
-            this.childType = childType;
-            this.parentID = parentID;
-            this.childID = childID;
-        }
-    }
-    internal static class InterfaceId
+    internal class HybridMapping
     {
-        internal static int _increment;
-    }
-    internal static class InterfaceId<T>
-    {
-        public static int _id = InterfaceId._increment++;
+        private EcsWorld _source;
+        private object[] _sourceForReflection;
+        private Type _type;
+
+        private IEcsHybridPoolInternal _targetTypePool;
+        private List<IEcsHybridPoolInternal> _relatedPools;
+
+        private static Type hybridPoolType = typeof(EcsHybridPool<>); 
+        private static MethodInfo getHybridPoolMethod = typeof(EcsHybridPoolExtensions).GetMethod($"{nameof(EcsHybridPoolExtensions.GetPool)}", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+
+
+        private static HashSet<Type> _hybridComponents = new HashSet<Type>();
+        static HybridMapping()
+        {
+            Type hybridComponentType = typeof(IEcsHybridComponent);
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var types = assembly.GetTypes();
+                foreach (var type in types)
+                {
+                    if (type.GetInterface(nameof(IEcsHybridComponent)) != null && type != hybridComponentType)
+                    {
+                        _hybridComponents.Add(type);
+                    }
+                }
+            }
+        }
+        public static bool IsEcsHybridComponentType(Type type)
+        {
+            return _hybridComponents.Contains(type);
+        }
+
+        public HybridMapping(EcsWorld source, Type type)
+        {
+            if (!type.IsClass)
+                throw new ArgumentException();
+
+            _source = source;
+            _type = type;
+            _relatedPools = new List<IEcsHybridPoolInternal>();
+            _sourceForReflection = new object[]{ source };
+            _targetTypePool = CreateHybridPool(type);
+            foreach (var item in type.GetInterfaces())
+            {
+                if(IsEcsHybridComponentType(item))
+                {
+                    _relatedPools.Add(CreateHybridPool(item));
+                }
+            }
+            Type baseType = type.BaseType;
+            while(baseType != typeof(object) && IsEcsHybridComponentType(baseType))
+            {
+                _relatedPools.Add(CreateHybridPool(baseType));
+                baseType = baseType.BaseType;
+            }
+        }
+        private IEcsHybridPoolInternal CreateHybridPool(Type componentType)
+        {
+            //var x = (IEcsHybridPoolInternal)getHybridPoolMethod.MakeGenericMethod(componentType).Invoke(null, _sourceForReflection);
+            //Debug.Log("_" + x.ComponentID + "_" +x.ComponentType.Name);
+            //return x;
+            return (IEcsHybridPoolInternal)getHybridPoolMethod.MakeGenericMethod(componentType).Invoke(null, _sourceForReflection);
+        }
+
+        public IEcsHybridPoolInternal GetTargetTypePool()
+        {
+            return _targetTypePool;
+        }
+        public List<IEcsHybridPoolInternal> GetPools()
+        {
+            return _relatedPools;
+        }
     }
 }

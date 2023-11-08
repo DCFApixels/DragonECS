@@ -31,22 +31,6 @@ namespace DCFApixels.DragonECS
         public EcsWorld World => _source;
         #endregion
 
-        #region Init
-        void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
-        {
-            _source = world;
-            _componentID = componentID;
-
-            const int capacity = 512;
-
-            _mapping = new int[world.Capacity];
-            _recycledItems = new int[128];
-            _recycledItemsCount = 0;
-            _items = new T[capacity];
-            _itemsCount = 0;
-        }
-        #endregion
-
         #region Methods
         public ref T Add(int entityID)
         {
@@ -149,6 +133,19 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Callbacks
+        void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
+        {
+            _source = world;
+            _componentID = componentID;
+
+            const int capacity = 512;
+
+            _mapping = new int[world.Capacity];
+            _recycledItems = new int[128];
+            _recycledItemsCount = 0;
+            _items = new T[capacity];
+            _itemsCount = 0;
+        }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);

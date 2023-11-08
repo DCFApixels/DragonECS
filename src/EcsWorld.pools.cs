@@ -73,7 +73,7 @@ namespace DCFApixels.DragonECS
             if (_poolIds.Contains(EcsTypeCode.Get<TPool>()))
                 throw new EcsFrameworkException("The pool has already been created.");
 
-            Type componentType = typeof(TPool).GetInterfaces().First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>));
+            Type componentType = typeof(TPool).GetInterfaces().First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>)).GetGenericArguments()[0];
             int componentTypeCode = EcsTypeCode.Get(componentType);
 
             if (_componentIds.TryGetValue(componentTypeCode, out int componentID))
