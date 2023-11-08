@@ -579,7 +579,7 @@ public class Transform : ITransform
     public Vector3 Position { get; set; }
     // ...
 }
-public class Rigidbody : ITransform
+public class Rigidbody : Transform
 {
     public Vector3 Position { get; set; }
     public float Mass { get; set; }
@@ -589,6 +589,16 @@ public class Camera : ITransform
 {
     Vector3 Position { get; set; }
     // ...
+}
+// ...
+
+pubcli TransformAspect : EcsAspect
+{
+    public EcsPool<Transform> transforms;
+    public Aspect(Builder b) 
+    {
+        transforms = b.Include<Transform>();
+    }
 }
 // ...
 
@@ -609,6 +619,9 @@ Transform transform = _world.GetPool<Transform>().Get(entity);
 Rigidbody rigidbody = _world.GetPool<Rigidbody>().Get(entity);
 //Исключение - отсутсвует компонент. Camera не является наследником или наследуемым классом для _rigidbody.
 Camera camera = _world.GetPool<Camera>().Get(entity);
+
+//Вернет True.
+bool isMatches = _world.GetAspect<TransformAspect>().IsMatches(entity);
 
 //Все эти строчки вернут True.
 bool isITransform = _world.GetPool<ITransform>().Has(entity);  
