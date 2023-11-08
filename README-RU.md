@@ -618,7 +618,7 @@ Rigidbody rigidbody = _world.GetPool<Rigidbody>().Get(entity);
 //Исключение - отсутсвует компонент. Camera не является наследником или наследуемым классом для _rigidbody.
 Camera camera = _world.GetPool<Camera>().Get(entity);
 
-//Вернет True.
+//Вернет True. Поэтому фишка гибридных пулов будет работать и в запросах сущностей
 bool isMatches = _world.GetAspect<TransformAspect>().IsMatches(entity);
 
 //Все эти строчки вернут True.
