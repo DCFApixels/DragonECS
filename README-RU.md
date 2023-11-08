@@ -192,13 +192,14 @@ const string SOME_LAYER = nameof(SOME_LAYER);
 EcsPipelone pipeline = EcsPipeline.New()
     //...
     .Layers.Insert(EcsConsts.END_LAYER, SOME_LAYER) // Вставляет новый слой перед конечным слоем EcsConsts.END_LAYER
+    .Add(New SomeSystem(), SOME_LAYER) // Система SomeSystem будет вставлена в слой SOME_LAYER
     //...
     .BuildAndInit();
 ```
 Встроенные слои расположены в следующем порядке:
 * `EcsConst.PRE_BEGIN_LAYER`
 * `EcsConst.BEGIN_LAYER`
-* `EcsConst.BASIC_LAYER` (Если при добавблении системы не казать слой, то она будет доавблена сюда)
+* `EcsConst.BASIC_LAYER` (Если при добавблении системы не указать слой, то она будет доавблена сюда)
 * `EcsConst.END_LAYER`
 * `EcsConst.POST_END_LAYER`
 
