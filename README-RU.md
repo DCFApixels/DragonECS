@@ -49,6 +49,8 @@
 * [Расширения](#Расширения)
 * [FAQ](#FAQ)
 
+</br></br>
+
 # Установка
 * ### Unity-модуль
 Поддерживается установка в виде Unity-модуля в  при помощи добавления git-URL [в PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) или ручного добавления в `Packages/manifest.json`: 
@@ -60,6 +62,8 @@ https://github.com/DCFApixels/DragonECS.git
 
 ### Версионирование
 В DragonECS применяется следующая семантика версионирования: [Открыть](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
+
+</br></br>
 
 # Основные концепции
 ## Entity
@@ -641,6 +645,8 @@ bool isCamera = _world.GetPool<Camera>().Has(entity);
 // ...
 ```
 
+</br></br>
+
 # Debug
 Фреймворк предоставляет дополнительные инструменты для отладки и логирования, не зависящие от среды.
 ## Атрибуты
@@ -702,11 +708,15 @@ using (marker.Auto())
 }
 ```
 
+</br></br>
+
 # Расширения
 * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * [Поддержка классической C# многопоточности](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * Отношения (Work in progress)
 * Интеграция с движком Unity (Work in progress)
+
+</br></br>
  
 # FAQ
 ## 'ReadOnlySpan<>' could not be found
@@ -715,3 +725,6 @@ using (marker.Auto())
 The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing a using directive or an assembly reference?)
 ``` 
 Чтобы починить добавте директиву `ENABLE_DUMMY_SPAN` в `Project Settings/Player/Other Settings/Scripting Define Symbols`.
+
+</br></br></br>
+
