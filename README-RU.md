@@ -715,6 +715,7 @@ using (marker.Auto())
 * [Поддержка классической C# многопоточности](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * Отношения (Work in progress)
 * Интеграция с движком Unity (Work in progress)
+<!--* Твое расширение? Если разрабатываешь свои расширения для DragonECS, дай знать и они будут добавлены сюда-->
 
 </br></br>
  
