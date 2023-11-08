@@ -590,7 +590,7 @@ public class Camera : ITransform
     Vector3 Position { get; set; }
     // ...
 }
-pubcli TransformAspect : EcsAspect
+public TransformAspect : EcsAspect
 {
     public EcsHybridPool<Transform> transforms;
     public Aspect(Builder b) 
