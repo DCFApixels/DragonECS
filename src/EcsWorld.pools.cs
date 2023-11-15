@@ -70,7 +70,8 @@ namespace DCFApixels.DragonECS
         }
         private TPool CreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
-            if (_poolIds.Contains(EcsTypeCode.Get<TPool>()))
+            int poolTypeCode = EcsTypeCode.Get<TPool>();
+            if (_poolIds.Contains(poolTypeCode))
                 throw new EcsFrameworkException("The pool has already been created.");
 
             Type componentType = typeof(TPool).GetInterfaces().First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>)).GetGenericArguments()[0];
@@ -78,12 +79,12 @@ namespace DCFApixels.DragonECS
 
             if (_componentIds.TryGetValue(componentTypeCode, out int componentID))
             {
-                _poolIds[componentTypeCode] = componentID;
+                _poolIds[poolTypeCode] = componentID;
             }
             else
             {
                 componentID = _poolsCount++;
-                _poolIds[componentTypeCode] = componentID;
+                _poolIds[poolTypeCode] = componentID;
                 _componentIds[componentTypeCode] = componentID;
             }
 

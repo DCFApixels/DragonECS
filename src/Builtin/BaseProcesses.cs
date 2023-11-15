@@ -45,19 +45,19 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
+                    _markers[i].Begin();
                     try
                     {
-                        _markers[i].Begin();
                         targets[i].PreInit(pipeline);
-                        _markers[i].End();
                     }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
+                    _markers[i].End();
                 }
 #else
                 foreach (var item in targets)
@@ -66,7 +66,7 @@ namespace DCFApixels.DragonECS
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
@@ -93,19 +93,19 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
+                    _markers[i].Begin();
                     try
                     {
-                        _markers[i].Begin();
                         targets[i].Init(pipeline);
-                        _markers[i].End();
                     }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
+                    _markers[i].End();
                 }
 #else
                 foreach (var item in targets)
@@ -114,7 +114,7 @@ namespace DCFApixels.DragonECS
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
@@ -141,19 +141,19 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
+                    _markers[i].Begin();
                     try
                     {
-                        _markers[i].Begin();
                         targets[i].Run(pipeline);
-                        _markers[i].End();
                     }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
+                    _markers[i].End();
                 }
 #else
                 foreach (var item in targets)
@@ -162,7 +162,7 @@ namespace DCFApixels.DragonECS
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
@@ -189,19 +189,19 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
+                    _markers[i].Begin();
                     try
                     {
-                        _markers[i].Begin();
                         targets[i].Destroy(pipeline);
-                        _markers[i].End();
                     }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
+                    _markers[i].End();
                 }
 #else
                 foreach (var item in targets)
@@ -210,7 +210,7 @@ namespace DCFApixels.DragonECS
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }

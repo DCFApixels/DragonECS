@@ -137,22 +137,6 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Equals
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(entlong other) => full == other.full;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(long other) => full == other;
-        #endregion
-
-        #region Object
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() => unchecked((int)full) ^ (int)(full >> 32);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override string ToString() => $"entity(id:{id} g:{gen} w:{world} {(IsNull ? "null" : IsAlive ? "alive" : "not alive")})";
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool Equals(object obj) => obj is entlong other && full == other.full;
-        #endregion
-
         #region operators
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(entlong a, entlong b) => a.full == b.full;
@@ -169,7 +153,18 @@ namespace DCFApixels.DragonECS
         public static explicit operator int(entlong a) => a.ID;
         #endregion
 
-        #region DebuggerProxy
+        #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode() => unchecked((int)full) ^ (int)(full >> 32);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override string ToString() => $"entity(id:{id} g:{gen} w:{world} {(IsNull ? "null" : IsAlive ? "alive" : "not alive")})";
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override bool Equals(object obj) => obj is entlong other && full == other.full;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(entlong other) => full == other.full;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(long other) => full == other;
+
         internal class DebuggerProxy
         {
             private List<object> _componentsList;

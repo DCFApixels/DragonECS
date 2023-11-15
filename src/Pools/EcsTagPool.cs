@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -17,6 +18,18 @@ namespace DCFApixels.DragonECS
         private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
 
         private T _fakeComponent;
+
+
+        private static bool _isInvalidType;
+        static EcsTagPool()
+        {
+            _isInvalidType = typeof(T).GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Length > 0;
+        }
+        public EcsTagPool()
+        {
+            if (_isInvalidType)
+                throw new EcsFrameworkException($"{typeof(T).Name} type must not contain any data.");
+        }
 
         #region Properites
         public int Count => _count;
