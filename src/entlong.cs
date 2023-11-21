@@ -95,6 +95,12 @@ namespace DCFApixels.DragonECS
         {
             this.full = full;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static unsafe entlong NewUnsafe(long id, long gen, long world)
+        {
+            long x = id << 48 | gen << 32 | id;
+            return *(entlong*)&x;
+        }
         #endregion
 
         #region TryGetters
