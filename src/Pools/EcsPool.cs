@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -194,9 +195,9 @@ namespace DCFApixels.DragonECS
             return self.GetPool<EcsPool<TComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsPool<TComponent> UncheckedGetPool<TComponent>(this EcsWorld self) where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> GetPoolUnchecked<TComponent>(this EcsWorld self) where TComponent : struct, IEcsComponent
         {
-            return self.UncheckedGetPool<EcsPool<TComponent>>();
+            return self.GetPoolUnchecked<EcsPool<TComponent>>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

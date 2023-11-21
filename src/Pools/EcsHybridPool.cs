@@ -235,9 +235,9 @@ namespace DCFApixels.DragonECS
             return self.GetPool<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> UncheckedGetPool<T>(this EcsWorld self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> GetPoolUnchecked<T>(this EcsWorld self) where T : IEcsHybridComponent
         {
-            return self.UncheckedGetPool<EcsHybridPool<T>>();
+            return self.GetPoolUnchecked<EcsHybridPool<T>>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -252,6 +252,35 @@ namespace DCFApixels.DragonECS
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsHybridPool<T> Optional<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
+        {
+            return self.Optional<EcsHybridPool<T>>();
+        }
+
+        //-------------------------------------------------
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsHybridPool<T> GetHybridPool<T>(this EcsWorld self) where T : IEcsHybridComponent
+        {
+            return self.GetPool<EcsHybridPool<T>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsHybridPool<T> GetHybridPoolUnchecked<T>(this EcsWorld self) where T : IEcsHybridComponent
+        {
+            return self.GetPoolUnchecked<EcsHybridPool<T>>();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsHybridPool<T> IncludeHybrid<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
+        {
+            return self.Include<EcsHybridPool<T>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsHybridPool<T> ExcludeHybrid<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
+        {
+            return self.Exclude<EcsHybridPool<T>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsHybridPool<T> OptionalHybrid<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
         {
             return self.Optional<EcsHybridPool<T>>();
         }

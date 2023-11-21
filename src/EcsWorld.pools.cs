@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS
         [UnityEngine.Scripting.Preserve]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TPool UncheckedGetPool<TPool>() where TPool : IEcsPoolImplementation, new()
+        public TPool GetPoolUnchecked<TPool>() where TPool : IEcsPoolImplementation, new()
         {
             return UncheckedGet<PoolCache<TPool>>().instance;
         }

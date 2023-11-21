@@ -202,9 +202,9 @@ namespace DCFApixels.DragonECS
             return self.GetPool<EcsTagPool<TTagComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsTagPool<TTagComponent> UncheckedGetPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
+        public static EcsTagPool<TTagComponent> GetPoolUnchecked<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.UncheckedGetPool<EcsTagPool<TTagComponent>>();
+            return self.GetPoolUnchecked<EcsTagPool<TTagComponent>>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -219,6 +219,35 @@ namespace DCFApixels.DragonECS
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Optional<TTagComponent>(this EcsAspectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.Optional<EcsTagPool<TTagComponent>>();
+        }
+
+        //---------------------------------------------------
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> GetTagPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.GetPool<EcsTagPool<TTagComponent>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> GetTagPoolUnchecked<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.GetPoolUnchecked<EcsTagPool<TTagComponent>>();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> IncludeTag<TTagComponent>(this EcsAspectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.Include<EcsTagPool<TTagComponent>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> ExcludeTag<TTagComponent>(this EcsAspectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.Exclude<EcsTagPool<TTagComponent>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> OptionalTag<TTagComponent>(this EcsAspectBuilderBase self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.Optional<EcsTagPool<TTagComponent>>();
         }
