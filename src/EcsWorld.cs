@@ -150,36 +150,8 @@ namespace DCFApixels.DragonECS
             _entitiesCount++;
 
             if (_gens.Length <= entityID)
-            {
-                Array.Resize(ref _gens, _gens.Length << 1);
-                Array.Resize(ref _componentCounts, _gens.Length);
-                Array.Resize(ref _delEntBuffer, _gens.Length);
-                Array.Resize(ref _entitiesComponentMasks, _gens.Length);
-                for (int i = _entitesCapacity; i < _gens.Length; i++)
-                    _entitiesComponentMasks[i] = new int[_pools.Length / 32 + 1];
+                Upsize();
 
-                _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
-                ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitesCapacity);
-                _entitesCapacity = _gens.Length;
-
-                for (int i = 0; i < _groups.Count; i++)
-                {
-                    if (_groups[i].TryGetTarget(out EcsGroup group))
-                    {
-                        group.OnWorldResize(_gens.Length);
-                    }
-                    else
-                    {
-                        int last = _groups.Count - 1;
-                        _groups[i--] = _groups[last];
-                        _groups.RemoveAt(last);
-                    }
-                }
-                foreach (var item in _pools)
-                    item.OnWorldResize(_gens.Length);
-
-                _listeners.InvokeOnWorldResize(_gens.Length);
-            }
             _gens[entityID] &= GEN_BITS;
             _allEntites.Add(entityID);
             _entityListeners.InvokeOnNewEntity(entityID);
@@ -218,22 +190,21 @@ namespace DCFApixels.DragonECS
 
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
-            throw new NotImplementedException();
-//#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-//            if (mask.worldID != id)
-//                throw new EcsFrameworkException("The types of the target world of the mask and this world are different.");
-//#endif
-//            for (int i = 0, iMax = mask.incChunckMasks.Length; i < iMax; i++)
-//            {
-//                if (!_pools[mask.incChunckMasks[i]].Has(entityID))
-//                    return false;
-//            }
-//            for (int i = 0, iMax = mask.excChunckMasks.Length; i < iMax; i++)
-//            {
-//                if (_pools[mask.excChunckMasks[i]].Has(entityID))
-//                    return false;
-//            }
-//            return true;
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+            if (mask.worldID != id)
+                throw new EcsFrameworkException("The types of the target world of the mask and this world are different.");
+#endif
+            for (int i = 0, iMax = mask.incChunckMasks.Length; i < iMax; i++)
+            {
+                if (!_pools[mask.inc[i]].Has(entityID))
+                    return false;
+            }
+            for (int i = 0, iMax = mask.excChunckMasks.Length; i < iMax; i++)
+            {
+                if (_pools[mask.exc[i]].Has(entityID))
+                    return false;
+            }
+            return true;
         }
         public void ReleaseDelEntityBuffer()
         {
@@ -320,6 +291,41 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #endregion
+
+        #region Upsize
+        //[MethodImpl(MethodImplOptions.NoInlining)]
+        private void Upsize()
+        {
+            Array.Resize(ref _gens, _gens.Length << 1);
+            Array.Resize(ref _componentCounts, _gens.Length);
+            Array.Resize(ref _delEntBuffer, _gens.Length);
+            Array.Resize(ref _entitiesComponentMasks, _gens.Length);
+            for (int i = _entitesCapacity; i < _gens.Length; i++)
+                _entitiesComponentMasks[i] = new int[_pools.Length / 32 + 1];
+
+            _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
+            ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitesCapacity);
+            _entitesCapacity = _gens.Length;
+
+            for (int i = 0; i < _groups.Count; i++)
+            {
+                if (_groups[i].TryGetTarget(out EcsGroup group))
+                {
+                    group.OnWorldResize(_gens.Length);
+                }
+                else
+                {
+                    int last = _groups.Count - 1;
+                    _groups[i--] = _groups[last];
+                    _groups.RemoveAt(last);
+                }
+            }
+            foreach (var item in _pools)
+                item.OnWorldResize(_gens.Length);
+
+            _listeners.InvokeOnWorldResize(_gens.Length);
+        }
         #endregion
 
         #region Groups Pool
@@ -427,4 +433,9 @@ namespace DCFApixels.DragonECS
         public static entlong ToEntityLong(this int self, EcsWorld world) => world.GetEntityLong(self);
     }
     #endregion
+
+    public class PoolsController
+    {
+
+    }
 }
