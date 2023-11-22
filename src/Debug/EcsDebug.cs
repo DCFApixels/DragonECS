@@ -31,6 +31,9 @@ namespace DCFApixels.DragonECS
 
     public static class EcsDebug
     {
+        public const string WARNING_TAG = EcsConsts.DEBUG_WARNING_TAG;
+        public const string ERROR_TAG = EcsConsts.DEBUG_ERROR_TAG;
+
         public static void Set<T>() where T : DebugService, new() => DebugService.Set<T>();
         public static void Set(DebugService service) => DebugService.Set(service);
 
@@ -135,11 +138,33 @@ namespace DCFApixels.DragonECS
         }
         public override void Print(string tag, object v)
         {
-            Console.WriteLine($"[{tag}] {v}");
+            if (string.IsNullOrEmpty(tag))
+            {
+                Console.WriteLine(v);
+            }
+            else
+            {
+                var color = Console.ForegroundColor;
+                switch (tag)
+                {
+                    case EcsDebug.ERROR_TAG:
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        break;
+                    case EcsDebug.WARNING_TAG:
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        break;
+                }
+                Console.WriteLine($"[{tag}] {v}");
+                Console.ForegroundColor = color;
+            }
         }
         public override void Break()
         {
-            Console.ReadLine();
+            var color = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Press Enter to сontinue.");
+            Console.ReadKey();
+            Console.ForegroundColor = color;
         }
         public override void ProfilerMarkBegin(int id)
         {
@@ -147,10 +172,13 @@ namespace DCFApixels.DragonECS
         }
         public override void ProfilerMarkEnd(int id)
         {
+            var color = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkGray;
             _stopwatchs[id].Stop();
             var time = _stopwatchs[id].Elapsed;
             _stopwatchs[id].Reset();
             Print("ProfilerMark", _stopwatchsNames[id] + " s:" + time.TotalSeconds);
+            Console.ForegroundColor = color;
         }
         protected override void OnDelProfilerMark(int id)
         {
