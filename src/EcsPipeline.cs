@@ -160,7 +160,7 @@ namespace DCFApixels.DragonECS
             }
             public EcsPipeline Build()
             {
-                Add(new DeleteEmptyEntitesSystem(), EcsConsts.POST_END_LAYER);
+                Add(new EndFrameSystem(), EcsConsts.POST_END_LAYER);
                 List<IEcsProcess> result = new List<IEcsProcess>(32);
                 List<IEcsProcess> basicBlockList = _systems[_basicLayer];
                 foreach (var item in _systems)

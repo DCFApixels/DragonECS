@@ -12,14 +12,17 @@ namespace DCFApixels.DragonECS
             public SystemsLayerMarkerSystem(string name) => this.name = name;
         }
         [DebugHide, DebugColor(DebugColor.Grey)]
-        public class DeleteEmptyEntitesSystem : IEcsRunProcess, IEcsInject<EcsWorld>
+        public class EndFrameSystem : IEcsRunProcess, IEcsInject<EcsWorld>
         {
-            private List<EcsWorld> _worlds = new List<EcsWorld>();
+            private readonly List<EcsWorld> _worlds = new List<EcsWorld>();
             public void Inject(EcsWorld obj) => _worlds.Add(obj);
             public void Run(EcsPipeline pipeline)
             {
                 foreach (var world in _worlds)
+                {
                     world.DeleteEmptyEntites();
+                    world.ReleaseDelEntityBuffer();
+                }
             }
         }
         [DebugHide, DebugColor(DebugColor.Grey)]
@@ -31,7 +34,7 @@ namespace DCFApixels.DragonECS
                 public EcsPool<TComponent> pool;
                 public Aspect(Builder b) => pool = b.Include<TComponent>();
             }
-            List<EcsWorld> _worlds = new List<EcsWorld>();
+            private readonly List<EcsWorld> _worlds = new List<EcsWorld>();
             public void Inject(EcsWorld obj) => _worlds.Add(obj);
             public void Run(EcsPipeline pipeline)
             {

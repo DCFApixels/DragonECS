@@ -2,6 +2,7 @@
 using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -21,6 +22,8 @@ namespace DCFApixels.DragonECS
 
         private int[] _delEntBuffer;
         private int _delEntBufferCount;
+        private int _delEntBufferMinCount;
+        private int _usedSpace;
 
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
@@ -32,6 +35,7 @@ namespace DCFApixels.DragonECS
         public bool IsDestroyed => _isDestroyed;
         public int Count => _entitiesCount;
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
+        internal int DelBufferCount => _usedSpace - _entitiesCount; //_denseEntities.Length;
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
         public ReadOnlySpan<IEcsPoolImplementation> AllPools => _pools;// new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
         #endregion
@@ -59,7 +63,9 @@ namespace DCFApixels.DragonECS
 
             ArrayUtility.Fill(_gens, DEATH_GEN_BIT);
             _delEntBufferCount = 0;
-            _delEntBuffer = new int[_entitesCapacity >> DEL_ENT_BUFFER_SIZE_OFFSET];
+            //_delEntBuffer = new int[_entitesCapacity >> DEL_ENT_BUFFER_SIZE_OFFSET];
+            _delEntBuffer = new int[_entitesCapacity];
+            _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
 
             _allEntites = GetFreeGroup();
         }
@@ -127,15 +133,23 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entity
+
+        private int FreeSpace => Capacity - _usedSpace;
         public int NewEmptyEntity()
         {
+            if(FreeSpace <= 1 && DelBufferCount > _delEntBufferMinCount)
+                ReleaseDelEntityBuffer();
+
             int entityID = _entityDispenser.GetFree();
+            _usedSpace++;
             _entitiesCount++;
 
             if (_gens.Length <= entityID)
             {
                 Array.Resize(ref _gens, _gens.Length << 1);
                 Array.Resize(ref _componentCounts, _gens.Length);
+                Array.Resize(ref _delEntBuffer, _gens.Length);
+                _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
                 ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitesCapacity);
                 _entitesCapacity = _gens.Length;
 
@@ -213,12 +227,15 @@ namespace DCFApixels.DragonECS
         }
         public void ReleaseDelEntityBuffer()
         {
+            if (_delEntBufferCount <= 0)
+                return;
             ReadOnlySpan<int> buffser = new ReadOnlySpan<int>(_delEntBuffer, 0, _delEntBufferCount);
             foreach (var pool in _pools)
                 pool.OnReleaseDelEntityBuffer(buffser);
             _listeners.InvokeOnReleaseDelEntityBuffer(buffser);
             for (int i = 0; i < _delEntBufferCount; i++)
                 _entityDispenser.Release(_delEntBuffer[i]);
+            _usedSpace = _entitiesCount;
             _delEntBufferCount = 0;
         }
         public void DeleteEmptyEntites()

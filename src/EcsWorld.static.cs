@@ -18,7 +18,8 @@ namespace DCFApixels.DragonECS
     {
         private const short GEN_BITS = 0x7fff;
         private const short DEATH_GEN_BIT = short.MinValue;
-        private const int DEL_ENT_BUFFER_SIZE_OFFSET = 2;
+        private const int DEL_ENT_BUFFER_SIZE_OFFSET = 5;
+        private const int DEL_ENT_BUFFER_MIN_SIZE = 64;
 
         private static EcsWorld[] Worlds = new EcsWorld[4];
         private static IdDispenser _worldIdDispenser = new IdDispenser(0);
