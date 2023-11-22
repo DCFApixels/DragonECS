@@ -131,11 +131,14 @@ namespace DCFApixels.DragonECS
         private string[] _stopwatchsNames;
         public DefaultDebugService()
         {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.BackgroundColor = ConsoleColor.Black;
 #if !DISABLE_DRAGONECS_DEBUGGER
             _stopwatchs = new Stopwatch[64];
             _stopwatchsNames = new string[64];
 #endif
         }
+
         public override void Print(string tag, object v)
         {
             if (string.IsNullOrEmpty(tag))
