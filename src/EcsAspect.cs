@@ -123,10 +123,10 @@ namespace DCFApixels.DragonECS
                     foreach (var item in _combined)
                     {
                         EcsMask submask = item.aspect.mask;
-                        maskInc.ExceptWith(submask.exc);//удаляю конфликтующие ограничения
-                        maskExc.ExceptWith(submask.inc);//удаляю конфликтующие ограничения
-                        maskInc.UnionWith(submask.inc);
-                        maskExc.UnionWith(submask.exc);
+                        maskInc.ExceptWith(submask.excChunckMasks);//удаляю конфликтующие ограничения
+                        maskExc.ExceptWith(submask.incChunckMasks);//удаляю конфликтующие ограничения
+                        maskInc.UnionWith(submask.incChunckMasks);
+                        maskExc.UnionWith(submask.excChunckMasks);
                     }
                     maskInc.ExceptWith(_exc);//удаляю конфликтующие ограничения
                     maskExc.ExceptWith(_inc);//удаляю конфликтующие ограничения
@@ -139,12 +139,29 @@ namespace DCFApixels.DragonECS
                     maskExc = _exc;
                 }
 
-                var inc = maskInc.ToArray();
-                Array.Sort(inc);
-                var exc = maskExc.ToArray();
-                Array.Sort(exc);
+                int[] inc = new int[0];
+                int[] exc = new int[0];
+                foreach (var v in maskInc)
+                {
+                    var bit = EcsMaskBit.FromPoolID(v);
+                    if (inc.Length <= bit.chankIndex)
+                        Array.Resize(ref inc, bit.chankIndex + 1);
+                    inc[bit.chankIndex] |= bit.mask;
+                }
+                foreach (var v in maskExc)
+                {
+                    var bit = EcsMaskBit.FromPoolID(v);
+                    if (exc.Length <= bit.chankIndex)
+                        Array.Resize(ref exc, bit.chankIndex + 1);
+                    exc[bit.chankIndex] |= bit.mask;
+                }
 
-                mask = new EcsMask(_world.id, inc, exc);
+                //var inc = maskInc.ToArray();
+                //Array.Sort(inc);
+                //var exc = maskExc.ToArray();
+                //Array.Sort(exc);
+
+                mask = new EcsMask(_world.id, inc.ToArray(), exc.ToArray());
                 _world = null;
                 _inc = null;
                 _exc = null;
@@ -203,25 +220,25 @@ namespace DCFApixels.DragonECS
     public sealed class EcsMask
     {
         internal readonly int worldID;
-        internal readonly int[] inc;
-        internal readonly int[] exc;
+        internal readonly int[] incChunckMasks;
+        internal readonly int[] excChunckMasks;
         public int WorldID => worldID;
         /// <summary>Including constraints</summary>
-        public ReadOnlySpan<int> Inc => inc;
+        public ReadOnlySpan<int> Inc => incChunckMasks;
         /// <summary>Excluding constraints</summary>
-        public ReadOnlySpan<int> Exc => exc;
+        public ReadOnlySpan<int> Exc => excChunckMasks;
         internal EcsMask(int worldID, int[] inc, int[] exc)
         {
 #if DEBUG
-            CheckConstraints(inc, exc);
+            //CheckConstraints(inc, exc);
 #endif
             this.worldID = worldID;
-            this.inc = inc;
-            this.exc = exc;
+            this.incChunckMasks = inc;
+            this.excChunckMasks = exc;
         }
 
         #region Object
-        public override string ToString() => CreateLogString(worldID, inc, exc);
+        public override string ToString() => CreateLogString(worldID, incChunckMasks, excChunckMasks);
         #endregion
 
         #region Debug utils
@@ -264,17 +281,17 @@ namespace DCFApixels.DragonECS
             public readonly int worldID;
             public readonly int[] included;
             public readonly int[] excluded;
-            public readonly Type[] includedTypes;
-            public readonly Type[] excludedTypes;
+            //public readonly Type[] includedTypes;
+            //public readonly Type[] excludedTypes;
             public DebuggerProxy(EcsMask mask)
             {
                 world = EcsWorld.GetWorld(mask.worldID);
                 worldID = mask.worldID;
-                included = mask.inc;
-                excluded = mask.exc;
-                Type converter(int o) => world.GetComponentType(o);
-                includedTypes = included.Select(converter).ToArray();
-                excludedTypes = excluded.Select(converter).ToArray();
+                included = mask.incChunckMasks;
+                excluded = mask.excChunckMasks;
+                //Type converter(int o) => world.GetComponentType(o);
+                //includedTypes = included.Select(converter).ToArray();
+                //excludedTypes = excluded.Select(converter).ToArray();
             }
             public override string ToString() => CreateLogString(worldID, included, excluded);
         }
@@ -335,31 +352,36 @@ namespace DCFApixels.DragonECS
             private EcsGroup.Enumerator _sourceGroup;
             private readonly int[] _inc;
             private readonly int[] _exc;
-            private readonly IEcsPoolImplementation[] _pools;
+            private readonly int[][] _entitiesComponentMasks;
 
             public Enumerator(EcsReadonlyGroup sourceGroup, EcsMask mask)
             {
                 _sourceGroup = sourceGroup.GetEnumerator();
-                _inc = mask.inc;
-                _exc = mask.exc;
-                _pools = sourceGroup.World._pools;
+                _inc = mask.incChunckMasks;
+                _exc = mask.excChunckMasks;
+                _entitiesComponentMasks = sourceGroup.World._entitiesComponentMasks;
             }
             public int Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _sourceGroup.Current;
             }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 while (_sourceGroup.MoveNext())
                 {
                     int e = _sourceGroup.Current;
                     for (int i = 0, iMax = _inc.Length; i < iMax; i++)
-                        if (!_pools[_inc[i]].Has(e)) goto next;
+                    {
+                        if (_inc[i] > 0 && (_entitiesComponentMasks[e][i] & _inc[i]) == 0) goto skip;
+                    }
                     for (int i = 0, iMax = _exc.Length; i < iMax; i++)
-                        if (_pools[_exc[i]].Has(e)) goto next;
+                    {
+                        if (_exc[i] > 0 && (_entitiesComponentMasks[e][i] & _exc[i]) != 0) goto skip;
+                    }
                     return true;
-                    next: continue;
+                    skip: continue;
                 }
                 return false;
             }

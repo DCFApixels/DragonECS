@@ -93,6 +93,9 @@ namespace DCFApixels.DragonECS
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, _pools.Length << 1);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
+
+                for (int i = 0; i < _entitesCapacity; i++)
+                    Array.Resize(ref _entitiesComponentMasks[i], _pools.Length / 32 + 1);
             }
 
             if (_pools[componentID] == _nullPool)

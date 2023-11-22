@@ -65,7 +65,7 @@ namespace DCFApixels.DragonECS
                     Array.Resize(ref _entities, _items.Length);
                 }
             }
-            this.IncrementEntityComponentCount(entityID);
+            this.IncrementEntityComponentCount(entityID, _componentID);
             _listeners.InvokeOnAdd(entityID);
             if(isMain)
                 component.OnAddToPool(_source.GetEntityLong(entityID));
@@ -126,7 +126,7 @@ namespace DCFApixels.DragonECS
             _mapping[entityID] = 0;
             _entities[itemIndex] = 0;
             _itemsCount--;
-            this.DecrementEntityComponentCount(entityID);
+            this.DecrementEntityComponentCount(entityID, _componentID);
             _listeners.InvokeOnDel(entityID);
         }
         public void Del(int entityID)

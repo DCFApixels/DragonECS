@@ -12,6 +12,7 @@ namespace DCFApixels.DragonECS
     {
         private EcsWorld _source;
         private int _componentID;
+        private EcsMaskBit _maskBit;
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
@@ -50,7 +51,7 @@ namespace DCFApixels.DragonECS
                 if (itemIndex >= _items.Length)
                     Array.Resize(ref _items, _items.Length << 1);
             }
-            this.IncrementEntityComponentCount(entityID);
+            this.IncrementEntityComponentCount(entityID, _componentID);
             _listeners.InvokeOnAddAndGet(entityID);
             return ref _items[itemIndex];
         }
@@ -87,7 +88,7 @@ namespace DCFApixels.DragonECS
                     if (itemIndex >= _items.Length)
                         Array.Resize(ref _items, _items.Length << 1);
                 }
-                this.IncrementEntityComponentCount(entityID);
+                this.IncrementEntityComponentCount(entityID, _componentID);
                 _listeners.InvokeOnAdd(entityID);
             }
             _listeners.InvokeOnGet(entityID);
@@ -110,7 +111,7 @@ namespace DCFApixels.DragonECS
             _recycledItems[_recycledItemsCount++] = itemIndex;
             _mapping[entityID] = 0;
             _itemsCount--;
-            this.DecrementEntityComponentCount(entityID);
+            this.DecrementEntityComponentCount(entityID, _componentID);
             _listeners.InvokeOnDel(entityID);
         }
         public void TryDel(int entityID)
@@ -138,6 +139,8 @@ namespace DCFApixels.DragonECS
         {
             _source = world;
             _componentID = componentID;
+
+            _maskBit = EcsMaskBit.FromPoolID(componentID);
 
             const int capacity = 512;
 

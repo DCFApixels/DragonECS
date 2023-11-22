@@ -72,14 +72,14 @@ namespace DCFApixels.DragonECS
     public static class IEcsPoolImplementationExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void IncrementEntityComponentCount<T>(this IEcsPoolImplementation<T> self, int entityID)
+        public static void IncrementEntityComponentCount<T>(this IEcsPoolImplementation<T> self, int entityID, int componentID)
         {
-            self.World.IncrementEntityComponentCount(entityID);
+            self.World.IncrementEntityComponentCount(entityID, componentID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void DecrementEntityComponentCount<T>(this IEcsPoolImplementation<T> self, int entityID)
+        public static void DecrementEntityComponentCount<T>(this IEcsPoolImplementation<T> self, int entityID, int componentID)
         {
-            self.World.DecrementEntityComponentCount(entityID);
+            self.World.DecrementEntityComponentCount(entityID, componentID);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

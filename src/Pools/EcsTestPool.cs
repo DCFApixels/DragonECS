@@ -167,7 +167,7 @@ namespace DCFApixels.DragonECS
             entry.key = key;
             entry.value = default;
             _buckets[targetBucket] = index;
-            this.IncrementEntityComponentCount(entityID);
+            this.IncrementEntityComponentCount(entityID, _componentID);
             _listeners.InvokeOnAddAndGet(entityID);
             return ref entry.value;
         }
@@ -235,7 +235,7 @@ namespace DCFApixels.DragonECS
                     _componentResetHandler.Reset(ref _entries[i].value);
                     _freeList = i;
                     _freeCount++;
-                    this.DecrementEntityComponentCount(entityID);
+                    this.DecrementEntityComponentCount(entityID, _componentID);
                     _listeners.InvokeOnDel(entityID);
                     return;
                 }

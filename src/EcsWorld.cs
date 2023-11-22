@@ -30,6 +30,8 @@ namespace DCFApixels.DragonECS
         private List<IEcsWorldEventListener> _listeners = new List<IEcsWorldEventListener>();
         private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
 
+        internal int[][] _entitiesComponentMasks;
+
         #region Properties
         public bool IsDestroyed => _isDestroyed;
         public int Count => _entitiesCount;
@@ -66,6 +68,10 @@ namespace DCFApixels.DragonECS
             _delEntBufferCount = 0;
             //_delEntBuffer = new int[_entitesCapacity >> DEL_ENT_BUFFER_SIZE_OFFSET];
             _delEntBuffer = new int[_entitesCapacity];
+            _entitiesComponentMasks = new int[_entitesCapacity][];
+            for (int i = 0; i < _entitesCapacity; i++)
+                _entitiesComponentMasks[i] = new int[_pools.Length / 32 + 1];
+
             _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
 
             _allEntites = GetFreeGroup();
@@ -148,6 +154,10 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref _gens, _gens.Length << 1);
                 Array.Resize(ref _componentCounts, _gens.Length);
                 Array.Resize(ref _delEntBuffer, _gens.Length);
+                Array.Resize(ref _entitiesComponentMasks, _gens.Length);
+                for (int i = _entitesCapacity; i < _gens.Length; i++)
+                    _entitiesComponentMasks[i] = new int[_pools.Length / 32 + 1];
+
                 _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
                 ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitesCapacity);
                 _entitesCapacity = _gens.Length;
@@ -212,14 +222,14 @@ namespace DCFApixels.DragonECS
             if (mask.worldID != id)
                 throw new EcsFrameworkException("The types of the target world of the mask and this world are different.");
 #endif
-            for (int i = 0, iMax = mask.inc.Length; i < iMax; i++)
+            for (int i = 0, iMax = mask.incChunckMasks.Length; i < iMax; i++)
             {
-                if (!_pools[mask.inc[i]].Has(entityID))
+                if (!_pools[mask.incChunckMasks[i]].Has(entityID))
                     return false;
             }
-            for (int i = 0, iMax = mask.exc.Length; i < iMax; i++)
+            for (int i = 0, iMax = mask.excChunckMasks.Length; i < iMax; i++)
             {
-                if (_pools[mask.exc[i]].Has(entityID))
+                if (_pools[mask.excChunckMasks[i]].Has(entityID))
                     return false;
             }
             return true;
@@ -288,13 +298,22 @@ namespace DCFApixels.DragonECS
 
         #region Components Increment
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void IncrementEntityComponentCount(int entityID) => _componentCounts[entityID]++;
+        internal void IncrementEntityComponentCount(int entityID, int componentID)
+        {
+            _componentCounts[entityID]++;
+            EcsMaskBit bit = EcsMaskBit.FromPoolID(componentID);
+            _entitiesComponentMasks[entityID][bit.chankIndex] |= bit.mask;
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DecrementEntityComponentCount(int entityID)
+        internal void DecrementEntityComponentCount(int entityID, int componentID)
         {
             var count = --_componentCounts[entityID];
-            if (count == 0 && _allEntites.Has(entityID)) DelEntity(entityID);
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+            EcsMaskBit bit = EcsMaskBit.FromPoolID(componentID);
+            _entitiesComponentMasks[entityID][bit.chankIndex] &= ~bit.mask;
+
+            if (count == 0 && _allEntites.Has(entityID)) 
+                DelEntity(entityID);
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
 #endif
         }

@@ -47,7 +47,7 @@ namespace DCFApixels.DragonECS
 #endif
             _count++;
             _mapping[entityID] = true;
-            this.IncrementEntityComponentCount(entityID);
+            this.IncrementEntityComponentCount(entityID, _componentID);
             _listeners.InvokeOnAdd(entityID);
         }
         public void TryAdd(int entityID)
@@ -56,7 +56,7 @@ namespace DCFApixels.DragonECS
             {
                 _count++;
                 _mapping[entityID] = true;
-                this.IncrementEntityComponentCount(entityID);
+                this.IncrementEntityComponentCount(entityID, _componentID);
                 _listeners.InvokeOnAdd(entityID);
             }
         }
@@ -72,7 +72,7 @@ namespace DCFApixels.DragonECS
 #endif
             _mapping[entityID] = false;
             _count--;
-            this.DecrementEntityComponentCount(entityID);
+            this.DecrementEntityComponentCount(entityID, _componentID);
             _listeners.InvokeOnDel(entityID);
         }
         public void TryDel(int entityID)
