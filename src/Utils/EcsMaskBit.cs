@@ -13,5 +13,10 @@
         {
             return new EcsMaskBit(id / 32, 1 << (id % 32));
         }
+
+        public override string ToString()
+        {
+            return $"bit({chankIndex}, {mask})";
+        }
     }
 }

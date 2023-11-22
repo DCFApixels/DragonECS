@@ -30,8 +30,8 @@ namespace DCFApixels.DragonECS
         public sealed class Builder : EcsAspectBuilderBase
         {
             private EcsWorld _world;
-            private HashSet<int> _inc;
-            private HashSet<int> _exc;
+            private Dictionary<int, int> _inc;
+            private Dictionary<int, int> _exc;
             private List<Combined> _combined;
 
             public EcsWorld World => _world;
@@ -40,8 +40,8 @@ namespace DCFApixels.DragonECS
             {
                 _world = world;
                 _combined = new List<Combined>();
-                _inc = new HashSet<int>();
-                _exc = new HashSet<int>();
+                _inc = new Dictionary<int, int>();
+                _exc = new Dictionary<int, int>();
             }
             internal static TAspect Build<TAspect>(EcsWorld world) where TAspect : EcsAspect
             {
@@ -82,18 +82,24 @@ namespace DCFApixels.DragonECS
             private void IncludeImplicit(Type type)
             {
                 int id = _world.GetComponentID(type);
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
-#endif
-                _inc.Add(id);
+//#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+//                if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
+//#endif
+                var bit = EcsMaskBit.FromPoolID(id);
+                if (!_inc.ContainsKey(bit.chankIndex))
+                    _inc.Add(bit.chankIndex, 0);
+                _inc[bit.chankIndex] = _inc[bit.chankIndex] | bit.mask;
             }
             private void ExcludeImplicit(Type type)
             {
                 int id = _world.GetComponentID(type);
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
-#endif
-                _exc.Add(id);
+//#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+//                if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
+//#endif
+                var bit = EcsMaskBit.FromPoolID(id);
+                if (!_exc.ContainsKey(bit.chankIndex))
+                    _exc.Add(bit.chankIndex, 0);
+                _exc[bit.chankIndex] = _exc[bit.chankIndex] | bit.mask;
             }
             #endregion
 
@@ -113,25 +119,26 @@ namespace DCFApixels.DragonECS
 
             private void End(out EcsMask mask)
             {
-                HashSet<int> maskInc;
-                HashSet<int> maskExc;
+                Dictionary<int, int> maskInc;
+                Dictionary<int, int> maskExc;
                 if (_combined.Count > 0)
                 {
-                    maskInc = new HashSet<int>();
-                    maskExc = new HashSet<int>();
-                    _combined.Sort((a, b) => a.order - b.order);
-                    foreach (var item in _combined)
-                    {
-                        EcsMask submask = item.aspect.mask;
-                        maskInc.ExceptWith(submask.excChunckMasks);//удаляю конфликтующие ограничения
-                        maskExc.ExceptWith(submask.incChunckMasks);//удаляю конфликтующие ограничения
-                        maskInc.UnionWith(submask.incChunckMasks);
-                        maskExc.UnionWith(submask.excChunckMasks);
-                    }
-                    maskInc.ExceptWith(_exc);//удаляю конфликтующие ограничения
-                    maskExc.ExceptWith(_inc);//удаляю конфликтующие ограничения
-                    maskInc.UnionWith(_inc);
-                    maskExc.UnionWith(_exc);
+                    throw new NotImplementedException();
+                 //  maskInc = new Dictionary<int, int>();
+                 //  maskExc = new Dictionary<int, int>();
+                 //  _combined.Sort((a, b) => a.order - b.order);
+                 //  foreach (var item in _combined)
+                 //  {
+                 //      EcsMask submask = item.aspect.mask;
+                 //      maskInc.ExceptWith(submask.excChunckMasks);//удаляю конфликтующие ограничения
+                 //      maskExc.ExceptWith(submask.incChunckMasks);//удаляю конфликтующие ограничения
+                 //      maskInc.UnionWith(submask.incChunckMasks);
+                 //      maskExc.UnionWith(submask.excChunckMasks);
+                 //  }
+                 //  maskInc.ExceptWith(_exc);//удаляю конфликтующие ограничения
+                 //  maskExc.ExceptWith(_inc);//удаляю конфликтующие ограничения
+                 //  maskInc.UnionWith(_inc);
+                 //  maskExc.UnionWith(_exc);
                 }
                 else
                 {
@@ -139,29 +146,10 @@ namespace DCFApixels.DragonECS
                     maskExc = _exc;
                 }
 
-                int[] inc = new int[0];
-                int[] exc = new int[0];
-                foreach (var v in maskInc)
-                {
-                    var bit = EcsMaskBit.FromPoolID(v);
-                    if (inc.Length <= bit.chankIndex)
-                        Array.Resize(ref inc, bit.chankIndex + 1);
-                    inc[bit.chankIndex] |= bit.mask;
-                }
-                foreach (var v in maskExc)
-                {
-                    var bit = EcsMaskBit.FromPoolID(v);
-                    if (exc.Length <= bit.chankIndex)
-                        Array.Resize(ref exc, bit.chankIndex + 1);
-                    exc[bit.chankIndex] |= bit.mask;
-                }
-
-                //var inc = maskInc.ToArray();
-                //Array.Sort(inc);
-                //var exc = maskExc.ToArray();
-                //Array.Sort(exc);
-
-                mask = new EcsMask(_world.id, inc.ToArray(), exc.ToArray());
+                mask = new EcsMask(
+                    _world.id, 
+                    maskInc.Select(o => new EcsMaskBit(o.Key, o.Value)).ToArray(), 
+                    maskExc.Select(o => new EcsMaskBit(o.Key, o.Value)).ToArray());
                 _world = null;
                 _inc = null;
                 _exc = null;
@@ -220,14 +208,14 @@ namespace DCFApixels.DragonECS
     public sealed class EcsMask
     {
         internal readonly int worldID;
-        internal readonly int[] incChunckMasks;
-        internal readonly int[] excChunckMasks;
+        internal readonly EcsMaskBit[] incChunckMasks;
+        internal readonly EcsMaskBit[] excChunckMasks;
         public int WorldID => worldID;
         /// <summary>Including constraints</summary>
-        public ReadOnlySpan<int> Inc => incChunckMasks;
+        public ReadOnlySpan<EcsMaskBit> Inc => incChunckMasks;
         /// <summary>Excluding constraints</summary>
-        public ReadOnlySpan<int> Exc => excChunckMasks;
-        internal EcsMask(int worldID, int[] inc, int[] exc)
+        public ReadOnlySpan<EcsMaskBit> Exc => excChunckMasks;
+        internal EcsMask(int worldID, EcsMaskBit[] inc, EcsMaskBit[] exc)
         {
 #if DEBUG
             //CheckConstraints(inc, exc);
@@ -266,11 +254,12 @@ namespace DCFApixels.DragonECS
             return false;
         }
 #endif
-        private static string CreateLogString(int worldID, int[] inc, int[] exc)
+        private static string CreateLogString(int worldID, EcsMaskBit[] inc, EcsMaskBit[] exc)
         {
 #if (DEBUG && !DISABLE_DEBUG)
-            string converter(int o) => EcsDebugUtility.GetGenericTypeName(EcsWorld.GetWorld(worldID).AllPools[o].ComponentType, 1);
-            return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
+            //string converter(int o) => EcsDebugUtility.GetGenericTypeName(EcsWorld.GetWorld(worldID).AllPools[o].ComponentType, 1);
+            //return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
+            return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
 #else
             return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
 #endif
@@ -279,8 +268,8 @@ namespace DCFApixels.DragonECS
         {
             public readonly EcsWorld world;
             public readonly int worldID;
-            public readonly int[] included;
-            public readonly int[] excluded;
+            public readonly EcsMaskBit[] included;
+            public readonly EcsMaskBit[] excluded;
             //public readonly Type[] includedTypes;
             //public readonly Type[] excludedTypes;
             public DebuggerProxy(EcsMask mask)
@@ -350,8 +339,8 @@ namespace DCFApixels.DragonECS
         public ref struct Enumerator
         {
             private EcsGroup.Enumerator _sourceGroup;
-            private readonly int[] _inc;
-            private readonly int[] _exc;
+            private readonly EcsMaskBit[] _inc;
+            private readonly EcsMaskBit[] _exc;
             private readonly int[][] _entitiesComponentMasks;
 
             public Enumerator(EcsReadonlyGroup sourceGroup, EcsMask mask)
@@ -374,11 +363,13 @@ namespace DCFApixels.DragonECS
                     int e = _sourceGroup.Current;
                     for (int i = 0, iMax = _inc.Length; i < iMax; i++)
                     {
-                        if (_inc[i] > 0 && (_entitiesComponentMasks[e][i] & _inc[i]) == 0) goto skip;
+                        EcsMaskBit bit = _inc[i];
+                        if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) == 0) goto skip;
                     }
                     for (int i = 0, iMax = _exc.Length; i < iMax; i++)
                     {
-                        if (_exc[i] > 0 && (_entitiesComponentMasks[e][i] & _exc[i]) != 0) goto skip;
+                        EcsMaskBit bit = _exc[i];
+                        if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != 0) goto skip;
                     }
                     return true;
                     skip: continue;

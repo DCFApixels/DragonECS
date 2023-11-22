@@ -218,21 +218,22 @@ namespace DCFApixels.DragonECS
 
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (mask.worldID != id)
-                throw new EcsFrameworkException("The types of the target world of the mask and this world are different.");
-#endif
-            for (int i = 0, iMax = mask.incChunckMasks.Length; i < iMax; i++)
-            {
-                if (!_pools[mask.incChunckMasks[i]].Has(entityID))
-                    return false;
-            }
-            for (int i = 0, iMax = mask.excChunckMasks.Length; i < iMax; i++)
-            {
-                if (_pools[mask.excChunckMasks[i]].Has(entityID))
-                    return false;
-            }
-            return true;
+            throw new NotImplementedException();
+//#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+//            if (mask.worldID != id)
+//                throw new EcsFrameworkException("The types of the target world of the mask and this world are different.");
+//#endif
+//            for (int i = 0, iMax = mask.incChunckMasks.Length; i < iMax; i++)
+//            {
+//                if (!_pools[mask.incChunckMasks[i]].Has(entityID))
+//                    return false;
+//            }
+//            for (int i = 0, iMax = mask.excChunckMasks.Length; i < iMax; i++)
+//            {
+//                if (_pools[mask.excChunckMasks[i]].Has(entityID))
+//                    return false;
+//            }
+//            return true;
         }
         public void ReleaseDelEntityBuffer()
         {
