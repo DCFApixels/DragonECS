@@ -273,14 +273,14 @@ namespace DCFApixels.DragonECS
         internal void IncrementEntityComponentCount(int entityID, int componentID)
         {
             _componentCounts[entityID]++;
-            EcsMaskBit bit = EcsMaskBit.FromPoolID(componentID);
+            EcsMaskBit bit = EcsMaskBit.FromID(componentID);
             _entitiesComponentMasks[entityID][bit.chankIndex] |= bit.mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DecrementEntityComponentCount(int entityID, int componentID)
         {
             var count = --_componentCounts[entityID];
-            EcsMaskBit bit = EcsMaskBit.FromPoolID(componentID);
+            EcsMaskBit bit = EcsMaskBit.FromID(componentID);
             _entitiesComponentMasks[entityID][bit.chankIndex] &= ~bit.mask;
 
             if (count == 0 && _allEntites.Has(entityID)) 

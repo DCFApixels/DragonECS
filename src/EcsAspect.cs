@@ -142,7 +142,7 @@ namespace DCFApixels.DragonECS
                 Dictionary<int, int> r = new Dictionary<int, int>();
                 foreach (var id in maskInc)
                 {
-                    var bit = EcsMaskBit.FromPoolID(id);
+                    var bit = EcsMaskBit.FromID(id);
                     if(!r.TryAdd(bit.chankIndex, bit.mask))
                         r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
                 }
@@ -150,7 +150,7 @@ namespace DCFApixels.DragonECS
                 r.Clear();
                 foreach (var id in maskExc)
                 {
-                    var bit = EcsMaskBit.FromPoolID(id);
+                    var bit = EcsMaskBit.FromID(id);
                     if (!r.TryAdd(bit.chankIndex, bit.mask))
                         r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
                 }
@@ -218,6 +218,10 @@ namespace DCFApixels.DragonECS
     #region Mask
     public readonly struct EcsMaskBit
     {
+        private const int BITS = 32;
+        private const int DIV_SHIFT = 5;
+        private const int MOD_MASK = BITS - 1;
+
         public readonly int chankIndex;
         public readonly int mask;
         public EcsMaskBit(int chankIndex, int mask)
@@ -225,11 +229,10 @@ namespace DCFApixels.DragonECS
             this.chankIndex = chankIndex;
             this.mask = mask;
         }
-        public static EcsMaskBit FromPoolID(int id)
+        public static EcsMaskBit FromID(int id)
         {
-            return new EcsMaskBit(id / 32, 1 << (id % 32));
+            return new EcsMaskBit(id >> DIV_SHIFT, 1 << (id & MOD_MASK)); //аналогично new EcsMaskBit(id / BITS, 1 << (id % BITS)) но быстрее
         }
-
         public override string ToString()
         {
             return $"bit({chankIndex}, {mask})";

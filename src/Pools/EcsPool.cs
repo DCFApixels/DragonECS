@@ -140,7 +140,7 @@ namespace DCFApixels.DragonECS
             _source = world;
             _componentID = componentID;
 
-            _maskBit = EcsMaskBit.FromPoolID(componentID);
+            _maskBit = EcsMaskBit.FromID(componentID);
 
             const int capacity = 512;
 

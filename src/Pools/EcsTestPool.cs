@@ -187,7 +187,14 @@ namespace DCFApixels.DragonECS
             if (!Has(key: key)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(unchecked((int)key));
 #endif
             _listeners.InvokeOnGet(unchecked((int)key));
-            return ref _entries[FindEntry(key)].value;
+            //return ref _entries[FindEntry(key)].value;
+
+            for (int i = _buckets[unchecked((int)key & _modBitMask)]; i >= 0; i = _entries[i].next)
+                if (_entries[i].key == key) return ref _entries[i].value; // return i;
+
+#pragma warning disable CS0251 // Индексация массива с отрицательным индексом
+            return ref _entries[-1].value; //при нормальной работе это недостижимый код.
+#pragma warning restore CS0251 // Индексация массива с отрицательным индексом
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -25,15 +25,15 @@ namespace DCFApixels.DragonECS.Utils
         private int _modBitMask;
 
         #region Properties
-        public TValue this[long keyX, long keyY]
+        public ref TValue this[long keyX, long keyY]
         {
-            get => _entries[FindEntry(keyX + (keyY << 32))].value;
-            set => Insert(keyX + (keyY << 32), value);
+            get => ref _entries[FindEntry(keyX + (keyY << 32))].value;
+            //set => Insert(keyX + (keyY << 32), value);
         }
-        public TValue this[long key]
+        public ref TValue this[long key]
         {
-            get => _entries[FindEntry(key)].value;
-            set => Insert(key, value);
+            get => ref _entries[FindEntry(key)].value;
+            //set => Insert(key, value);
         }
 
         public int Count => _count;
