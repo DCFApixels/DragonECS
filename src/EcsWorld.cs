@@ -2,7 +2,6 @@
 using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -23,7 +22,7 @@ namespace DCFApixels.DragonECS
         private int[] _delEntBuffer;
         private int _delEntBufferCount;
         private int _delEntBufferMinCount;
-        private int _usedSpace;
+        private int _freeSpace;
 
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
@@ -35,7 +34,9 @@ namespace DCFApixels.DragonECS
         public bool IsDestroyed => _isDestroyed;
         public int Count => _entitiesCount;
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
-        internal int DelBufferCount => _usedSpace - _entitiesCount; //_denseEntities.Length;
+
+        public int DelEntBufferCount => _delEntBufferCount;
+
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
         public ReadOnlySpan<IEcsPoolImplementation> AllPools => _pools;// new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
         #endregion
@@ -133,15 +134,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entity
-
-        private int FreeSpace => Capacity - _usedSpace;
         public int NewEmptyEntity()
         {
-            if(FreeSpace <= 1 && DelBufferCount > _delEntBufferMinCount)
+            if(_freeSpace <= 1 && _delEntBufferCount > _delEntBufferMinCount)
                 ReleaseDelEntityBuffer();
 
             int entityID = _entityDispenser.GetFree();
-            _usedSpace++;
+            _freeSpace--;
             _entitiesCount++;
 
             if (_gens.Length <= entityID)
@@ -235,7 +234,7 @@ namespace DCFApixels.DragonECS
             _listeners.InvokeOnReleaseDelEntityBuffer(buffser);
             for (int i = 0; i < _delEntBufferCount; i++)
                 _entityDispenser.Release(_delEntBuffer[i]);
-            _usedSpace = _entitiesCount;
+            _freeSpace = _entitesCapacity - _entitiesCount;
             _delEntBufferCount = 0;
         }
         public void DeleteEmptyEntites()
