@@ -77,15 +77,15 @@ namespace DCFApixels.DragonECS
             Type componentType = typeof(TPool).GetInterfaces().First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>)).GetGenericArguments()[0];
             int componentTypeCode = EcsTypeCode.Get(componentType);
 
-            if (_componentIds.TryGetValue(componentTypeCode, out int componentID))
+            if (_componentIds.TryGetValue(componentTypeCode, out int componentTypeID))
             {
-                _poolIds[poolTypeCode] = componentID;
+                _poolIds[poolTypeCode] = componentTypeID;
             }
             else
             {
-                componentID = _poolsCount++;
-                _poolIds[poolTypeCode] = componentID;
-                _componentIds[componentTypeCode] = componentID;
+                componentTypeID = _poolsCount++;
+                _poolIds[poolTypeCode] = componentTypeID;
+                _componentIds[componentTypeCode] = componentTypeID;
             }
 
             if (_poolsCount >= _pools.Length)
@@ -98,13 +98,13 @@ namespace DCFApixels.DragonECS
                     Array.Resize(ref _entitiesComponentMasks[i], _pools.Length / 32 + 1);
             }
 
-            if (_pools[componentID] == _nullPool)
+            if (_pools[componentTypeID] == _nullPool)
             {
                 var pool = new TPool();
-                _pools[componentID] = pool;
-                pool.OnInit(this, componentID);
+                _pools[componentTypeID] = pool;
+                pool.OnInit(this, _poolsMediator, componentTypeID);
             }
-            return (TPool)_pools[componentID];
+            return (TPool)_pools[componentTypeID];
         }
         #endregion
     }

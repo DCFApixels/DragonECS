@@ -102,32 +102,36 @@ namespace DCFApixels.DragonECS
         }
         public class InjectSystemBase { }
         [DebugHide, DebugColor(DebugColor.Gray)]
-        public class InjectSystem<T> : InjectSystemBase, IEcsPreInitProcess, IEcsInject<PreInitInjectController>, IEcsPreInitInjectProcess
+        public class InjectSystem<T> : InjectSystemBase, IEcsInject<EcsPipeline>, IEcsPreInitProcess, IEcsInject<PreInitInjectController>, IEcsPreInitInjectProcess
         {
-            private T _injectedData;
+            private EcsPipeline _pipeline;
+            void IEcsInject<EcsPipeline>.Inject(EcsPipeline obj) => _pipeline = obj;
             private PreInitInjectController _injectController;
             void IEcsInject<PreInitInjectController>.Inject(PreInitInjectController obj) => _injectController = obj;
+
+            private T _injectedData;
+
             public InjectSystem(T injectedData)
             {
                 if (injectedData == null) Throw.ArgumentNull();
                 _injectedData = injectedData;
             }
-            public void PreInit(EcsPipeline pipeline)
+            public void PreInit()
             {
                 if (_injectedData == null) return;
                 if (_injectController == null)
                 {
-                    _injectController = new PreInitInjectController(pipeline);
-                    var injectMapRunner = pipeline.GetRunner<IEcsInject<PreInitInjectController>>();
-                    pipeline.GetRunner<IEcsPreInitInjectProcess>().OnPreInitInjectionBefore();
+                    _injectController = new PreInitInjectController(_pipeline);
+                    var injectMapRunner = _pipeline.GetRunner<IEcsInject<PreInitInjectController>>();
+                    _pipeline.GetRunner<IEcsPreInitInjectProcess>().OnPreInitInjectionBefore();
                     injectMapRunner.Inject(_injectController);
                 }
-                var injectRunnerGeneric = pipeline.GetRunner<IEcsInject<T>>();
+                var injectRunnerGeneric = _pipeline.GetRunner<IEcsInject<T>>();
                 injectRunnerGeneric.Inject(_injectedData);
                 if (_injectController.OnInject())
                 {
                     _injectController.Destroy();
-                    var injectCallbacksRunner = pipeline.GetRunner<IEcsPreInitInjectProcess>();
+                    var injectCallbacksRunner = _pipeline.GetRunner<IEcsPreInitInjectProcess>();
                     injectCallbacksRunner.OnPreInitInjectionAfter();
                     EcsRunner.Destroy(injectCallbacksRunner);
                 }

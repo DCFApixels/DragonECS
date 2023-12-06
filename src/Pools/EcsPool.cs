@@ -11,7 +11,7 @@ namespace DCFApixels.DragonECS
         where T : struct, IEcsComponent
     {
         private EcsWorld _source;
-        private int _componentID;
+        private int _componentTypeID;
         private EcsMaskBit _maskBit;
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
@@ -25,10 +25,12 @@ namespace DCFApixels.DragonECS
 
         private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
 
+        private EcsWorld.PoolsMediator _mediator;
+
         #region Properites
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
-        public int ComponentID => _componentID;
+        public int ComponentID => _componentTypeID;
         public Type ComponentType => typeof(T);
         public EcsWorld World => _source;
         #endregion
@@ -51,7 +53,7 @@ namespace DCFApixels.DragonECS
                 if (itemIndex >= _items.Length)
                     Array.Resize(ref _items, _items.Length << 1);
             }
-            this.IncrementEntityComponentCount(entityID, _componentID);
+            _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnAddAndGet(entityID);
             return ref _items[itemIndex];
         }
@@ -88,7 +90,7 @@ namespace DCFApixels.DragonECS
                     if (itemIndex >= _items.Length)
                         Array.Resize(ref _items, _items.Length << 1);
                 }
-                this.IncrementEntityComponentCount(entityID, _componentID);
+                _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
                 _listeners.InvokeOnAdd(entityID);
             }
             _listeners.InvokeOnGet(entityID);
@@ -111,7 +113,7 @@ namespace DCFApixels.DragonECS
             _recycledItems[_recycledItemsCount++] = itemIndex;
             _mapping[entityID] = 0;
             _itemsCount--;
-            this.DecrementEntityComponentCount(entityID, _componentID);
+            _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnDel(entityID);
         }
         public void TryDel(int entityID)
@@ -135,12 +137,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Callbacks
-        void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
+        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
             _source = world;
-            _componentID = componentID;
-
-            _maskBit = EcsMaskBit.FromID(componentID);
+            _mediator = mediator;
+            _componentTypeID = componentTypeID;
+            _maskBit = EcsMaskBit.FromID(componentTypeID);
 
             const int capacity = 512;
 

@@ -49,7 +49,7 @@ namespace DCFApixels.DragonECS
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
     public interface IEcsPoolImplementation : IEcsPool
     {
-        void OnInit(EcsWorld world, int componentID);
+        void OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID);
         void OnWorldResize(int newSize);
         void OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer);
         void OnWorldDestroy();
@@ -71,17 +71,6 @@ namespace DCFApixels.DragonECS
     }
     public static class IEcsPoolImplementationExtensions
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void IncrementEntityComponentCount<T>(this IEcsPoolImplementation<T> self, int entityID, int componentID)
-        {
-            self.World.IncrementEntityComponentCount(entityID, componentID);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void DecrementEntityComponentCount<T>(this IEcsPoolImplementation<T> self, int entityID, int componentID)
-        {
-            self.World.DecrementEntityComponentCount(entityID, componentID);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNullOrDummy(this IEcsPool self)
         {
@@ -116,7 +105,7 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Callbacks
-            void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID) { }
+            void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID) { }
             void IEcsPoolImplementation.OnWorldDestroy() { }
             void IEcsPoolImplementation.OnWorldResize(int newSize) { }
             void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer) { }

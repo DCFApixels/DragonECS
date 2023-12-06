@@ -10,7 +10,8 @@ namespace DCFApixels.DragonECS
         where T : struct, IEcsTagComponent
     {
         private EcsWorld _source;
-        private int _componentID;
+        private int _componentTypeID;
+        private EcsMaskBit _maskBit;
 
         private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private int _count;
@@ -18,8 +19,9 @@ namespace DCFApixels.DragonECS
         private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
 
         private T _fakeComponent;
+        private EcsWorld.PoolsMediator _mediator;
 
-
+        #region Constructors
         private static bool _isInvalidType;
         static EcsTagPool()
         {
@@ -30,11 +32,12 @@ namespace DCFApixels.DragonECS
             if (_isInvalidType)
                 throw new EcsFrameworkException($"{typeof(T).Name} type must not contain any data.");
         }
+        #endregion
 
         #region Properites
         public int Count => _count;
         int IEcsPool.Capacity => -1;
-        public int ComponentID => _componentID;
+        public int ComponentID => _componentTypeID;
         public Type ComponentType => typeof(T);
         public EcsWorld World => _source;
         #endregion
@@ -47,7 +50,7 @@ namespace DCFApixels.DragonECS
 #endif
             _count++;
             _mapping[entityID] = true;
-            this.IncrementEntityComponentCount(entityID, _componentID);
+            _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnAdd(entityID);
         }
         public void TryAdd(int entityID)
@@ -56,7 +59,7 @@ namespace DCFApixels.DragonECS
             {
                 _count++;
                 _mapping[entityID] = true;
-                this.IncrementEntityComponentCount(entityID, _componentID);
+                _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
                 _listeners.InvokeOnAdd(entityID);
             }
         }
@@ -72,7 +75,7 @@ namespace DCFApixels.DragonECS
 #endif
             _mapping[entityID] = false;
             _count--;
-            this.DecrementEntityComponentCount(entityID, _componentID);
+            _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnDel(entityID);
         }
         public void TryDel(int entityID)
@@ -116,10 +119,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Callbacks
-        void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
+        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
             _source = world;
-            _componentID = componentID;
+            _mediator = mediator;
+            _componentTypeID = componentTypeID;
+            _maskBit = EcsMaskBit.FromID(componentTypeID);
 
             _mapping = new bool[world.Capacity];
             _count = 0;

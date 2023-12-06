@@ -67,10 +67,10 @@ namespace DCFApixels.DragonECS
             ecsPipelineInjectRunner.Inject(this);
             EcsRunner.Destroy(ecsPipelineInjectRunner);
             var preInitRunner = GetRunner<IEcsPreInitProcess>();
-            preInitRunner.PreInit(this);
+            preInitRunner.PreInit();
             EcsRunner.Destroy(preInitRunner);
             var initRunner = GetRunner<IEcsInitProcess>();
-            initRunner.Init(this);
+            initRunner.Init();
             EcsRunner.Destroy(initRunner);
 
             _runRunnerCache = GetRunner<IEcsRunProcess>();
@@ -85,7 +85,7 @@ namespace DCFApixels.DragonECS
             if (!_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run));
             if (_isDestoryed) Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run));
 #endif
-            _runRunnerCache.Run(this);
+            _runRunnerCache.Run();
         }
         public void Destroy()
         {
@@ -98,7 +98,7 @@ namespace DCFApixels.DragonECS
                 return;
             }
             _isDestoryed = true;
-            GetRunner<IEcsDestroyProcess>().Destroy(this);
+            GetRunner<IEcsDestroyProcess>().Destroy();
         }
         #endregion
 

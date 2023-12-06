@@ -3,6 +3,7 @@ using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using static DCFApixels.DragonECS.EcsWorld;
 
 namespace DCFApixels.DragonECS
 {
@@ -32,6 +33,8 @@ namespace DCFApixels.DragonECS
 
         internal int[][] _entitiesComponentMasks;
 
+        private readonly PoolsMediator _poolsMediator;
+
         #region Properties
         public bool IsDestroyed => _isDestroyed;
         public int Count => _entitiesCount;
@@ -47,6 +50,8 @@ namespace DCFApixels.DragonECS
         public EcsWorld() : this(true) { }
         internal EcsWorld(bool isIndexable)
         {
+            _poolsMediator = new PoolsMediator(this);
+
             _entitesCapacity = 512;
 
             if (isIndexable)
@@ -268,20 +273,18 @@ namespace DCFApixels.DragonECS
         //public void CloneEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
         #endregion
 
-        #region Components Increment
+        #region Components Register
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void IncrementEntityComponentCount(int entityID, int componentID)
+        private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
         {
             _componentCounts[entityID]++;
-            EcsMaskBit bit = EcsMaskBit.FromID(componentID);
-            _entitiesComponentMasks[entityID][bit.chankIndex] |= bit.mask;
+            _entitiesComponentMasks[entityID][maskBit.chankIndex] |= maskBit.mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DecrementEntityComponentCount(int entityID, int componentID)
+        private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
         {
             var count = --_componentCounts[entityID];
-            EcsMaskBit bit = EcsMaskBit.FromID(componentID);
-            _entitiesComponentMasks[entityID][bit.chankIndex] &= ~bit.mask;
+            _entitiesComponentMasks[entityID][maskBit.chankIndex] &= ~maskBit.mask;
 
             if (count == 0 && _allEntites.Has(entityID)) 
                 DelEntity(entityID);
@@ -382,6 +385,34 @@ namespace DCFApixels.DragonECS
             }
         }
         #endregion
+
+        public readonly struct PoolsMediator
+        {
+            private readonly EcsWorld _world;
+            public PoolsMediator(EcsWorld world)
+            {
+                if (world == null)
+                {
+                    throw new ArgumentNullException();
+                }
+                if (world._poolsMediator._world != null)
+                {
+                    throw new MethodAccessException("Нельзя создавать вручную");
+                }
+                _world = world;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal void RegisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+            {
+                _world.RegisterEntityComponent(entityID, componentTypeID, maskBit);
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal void UnregisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+            {
+                _world.UnregisterEntityComponent(entityID, componentTypeID, maskBit);
+            }
+        }
     }
 
     #region Callbacks Interface
@@ -433,9 +464,4 @@ namespace DCFApixels.DragonECS
         public static entlong ToEntityLong(this int self, EcsWorld world) => world.GetEntityLong(self);
     }
     #endregion
-
-    public class PoolsController
-    {
-
-    }
 }

@@ -7,19 +7,19 @@ namespace DCFApixels.DragonECS
     #region Interfaces
     public interface IEcsPreInitProcess : IEcsProcess
     {
-        void PreInit(EcsPipeline pipeline);
+        void PreInit();
     }
     public interface IEcsInitProcess : IEcsProcess
     {
-        void Init(EcsPipeline pipeline);
+        void Init();
     }
     public interface IEcsRunProcess : IEcsProcess
     {
-        void Run(EcsPipeline pipeline);
+        void Run();
     }
     public interface IEcsDestroyProcess : IEcsProcess
     {
-        void Destroy(EcsPipeline pipeline);
+        void Destroy();
     }
 
     #endregion
@@ -40,7 +40,7 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
-            public void PreInit(EcsPipeline pipeline)
+            public void PreInit()
             {
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
@@ -48,7 +48,7 @@ namespace DCFApixels.DragonECS
                     _markers[i].Begin();
                     try
                     {
-                        targets[i].PreInit(pipeline);
+                        targets[i].PreInit();
                     }
                     catch (Exception e)
                     {
@@ -62,7 +62,7 @@ namespace DCFApixels.DragonECS
 #else
                 foreach (var item in targets)
                 {
-                    try { item.PreInit(pipeline); }
+                    try { item.PreInit(); }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
@@ -88,7 +88,7 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
-            public void Init(EcsPipeline pipeline)
+            public void Init()
             {
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
@@ -96,7 +96,7 @@ namespace DCFApixels.DragonECS
                     _markers[i].Begin();
                     try
                     {
-                        targets[i].Init(pipeline);
+                        targets[i].Init();
                     }
                     catch (Exception e)
                     {
@@ -110,7 +110,7 @@ namespace DCFApixels.DragonECS
 #else
                 foreach (var item in targets)
                 {
-                    try { item.Init(pipeline); }
+                    try { item.Init(); }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
@@ -136,7 +136,7 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
-            public void Run(EcsPipeline pipeline)
+            public void Run()
             {
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
@@ -144,7 +144,7 @@ namespace DCFApixels.DragonECS
                     _markers[i].Begin();
                     try
                     {
-                        targets[i].Run(pipeline);
+                        targets[i].Run();
                     }
                     catch (Exception e)
                     {
@@ -158,7 +158,7 @@ namespace DCFApixels.DragonECS
 #else
                 foreach (var item in targets)
                 {
-                    try { item.Run(pipeline); }
+                    try { item.Run(); }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
@@ -184,7 +184,7 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
-            public void Destroy(EcsPipeline pipeline)
+            public void Destroy()
             {
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
@@ -192,7 +192,7 @@ namespace DCFApixels.DragonECS
                     _markers[i].Begin();
                     try
                     {
-                        targets[i].Destroy(pipeline);
+                        targets[i].Destroy();
                     }
                     catch (Exception e)
                     {
@@ -206,7 +206,7 @@ namespace DCFApixels.DragonECS
 #else
                 foreach (var item in targets)
                 {
-                    try { item.Destroy(pipeline); }
+                    try { item.Destroy(); }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS

@@ -20,7 +20,8 @@ namespace DCFApixels.DragonECS
         where T : IEcsHybridComponent
     {
         private EcsWorld _source;
-        private int _componentID;
+        private int _componentTypeID;
+        private EcsMaskBit _maskBit;
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
@@ -32,10 +33,12 @@ namespace DCFApixels.DragonECS
 
         private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
 
+        private EcsWorld.PoolsMediator _mediator;
+
         #region Properites
         public int Count => _itemsCount;
         public int Capacity => _items.Length;
-        public int ComponentID => _componentID;
+        public int ComponentID => _componentTypeID;
         public Type ComponentType => typeof(T);
         public EcsWorld World => _source;
         #endregion
@@ -65,7 +68,7 @@ namespace DCFApixels.DragonECS
                     Array.Resize(ref _entities, _items.Length);
                 }
             }
-            this.IncrementEntityComponentCount(entityID, _componentID);
+            _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnAdd(entityID);
             if(isMain)
                 component.OnAddToPool(_source.GetEntityLong(entityID));
@@ -126,7 +129,7 @@ namespace DCFApixels.DragonECS
             _mapping[entityID] = 0;
             _entities[itemIndex] = 0;
             _itemsCount--;
-            this.DecrementEntityComponentCount(entityID, _componentID);
+            _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnDel(entityID);
         }
         public void Del(int entityID)
@@ -167,10 +170,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Callbacks
-        void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID)
+        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
             _source = world;
-            _componentID = componentID;
+            _mediator = mediator;
+            _componentTypeID = componentTypeID;
+            _maskBit = EcsMaskBit.FromID(componentTypeID);
 
             const int capacity = 512;
 
@@ -286,16 +291,15 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public partial class EcsWorld
+    public abstract partial class EcsWorld
     {
-        private Dictionary<Type, HybridMapping> _mappings = new Dictionary<Type, HybridMapping>();
-
+        private Dictionary<Type, HybridMapping> _hybridMapping = new Dictionary<Type, HybridMapping>();
         internal HybridMapping GetHybridMapping(Type type)
         {
-            if(!_mappings.TryGetValue(type, out HybridMapping mapping))
+            if(!_hybridMapping.TryGetValue(type, out HybridMapping mapping))
             {
                 mapping = new HybridMapping(this, type);
-                _mappings.Add(type, mapping);
+                _hybridMapping.Add(type, mapping);
             }
             return mapping;
         }
@@ -312,7 +316,6 @@ namespace DCFApixels.DragonECS
 
         private static Type hybridPoolType = typeof(EcsHybridPool<>); 
         private static MethodInfo getHybridPoolMethod = typeof(EcsHybridPoolExtensions).GetMethod($"{nameof(EcsHybridPoolExtensions.GetPool)}", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-
 
         private static HashSet<Type> _hybridComponents = new HashSet<Type>();
         static HybridMapping()

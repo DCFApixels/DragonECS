@@ -16,7 +16,7 @@ namespace DCFApixels.DragonECS
         {
             private readonly List<EcsWorld> _worlds = new List<EcsWorld>();
             public void Inject(EcsWorld obj) => _worlds.Add(obj);
-            public void Run(EcsPipeline pipeline)
+            public void Run()
             {
                 foreach (var world in _worlds)
                 {
@@ -29,6 +29,7 @@ namespace DCFApixels.DragonECS
         public class DeleteOneFrameComponentSystem<TComponent> : IEcsRunProcess, IEcsInject<EcsWorld>
             where TComponent : struct, IEcsComponent
         {
+            public EcsPipeline pipeline { get; set; }
             private sealed class Aspect : EcsAspect
             {
                 public EcsPool<TComponent> pool;
@@ -36,7 +37,7 @@ namespace DCFApixels.DragonECS
             }
             private readonly List<EcsWorld> _worlds = new List<EcsWorld>();
             public void Inject(EcsWorld obj) => _worlds.Add(obj);
-            public void Run(EcsPipeline pipeline)
+            public void Run()
             {
                 for (int i = 0, iMax = _worlds.Count; i < iMax; i++)
                 {
