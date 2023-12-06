@@ -273,7 +273,7 @@ namespace DCFApixels.DragonECS
         //public void CloneEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
         #endregion
 
-        #region Components Register
+        #region RegisterEntityComponent/UnregisterEntityComponent
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
         {

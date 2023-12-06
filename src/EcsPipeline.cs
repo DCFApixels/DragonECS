@@ -59,7 +59,7 @@ namespace DCFApixels.DragonECS
         {
             if (_isInit == true)
             {
-                EcsDebug.Print("[Warning]", $"This {nameof(EcsPipeline)} has already been initialized");
+                EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been initialized");
                 return;
             }
 
