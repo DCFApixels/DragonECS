@@ -1,22 +1,27 @@
 ﻿#pragma warning disable CS0162 // Обнаружен недостижимый код
+using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 
 namespace DCFApixels.DragonECS
 {
     #region Interfaces
+    [EcsBindWithRunner(typeof(EcsPreInitProcessRunner))]
     public interface IEcsPreInitProcess : IEcsProcess
     {
         void PreInit();
     }
+    [EcsBindWithRunner(typeof(EcsInitProcessRunner))]
     public interface IEcsInitProcess : IEcsProcess
     {
         void Init();
     }
+    [EcsBindWithRunner(typeof(EcsRunProcessRunner))]
     public interface IEcsRunProcess : IEcsProcess
     {
         void Run();
     }
+    [EcsBindWithRunner(typeof(EcsDestroyProcessRunner))]
     public interface IEcsDestroyProcess : IEcsProcess
     {
         void Destroy();

@@ -23,6 +23,31 @@ namespace DCFApixels.DragonECS
         }
         public EcsRunnerFilterAttribute(object filter) : this(null, filter) { }
     }
+#if UNITY_2020_3_OR_NEWER
+        [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
+#endif
+    [AttributeUsage(AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
+    public sealed class EcsBindWithRunnerAttribute : Attribute
+    {
+        private static readonly Type baseType = typeof(EcsRunner<>);
+        public readonly Type runnerType;
+        public EcsBindWithRunnerAttribute(Type runnerType)
+        {
+            if (runnerType == null)
+                throw new ArgumentNullException();
+            if (!Check(runnerType))
+                throw new ArgumentException();
+            this.runnerType = runnerType;
+        }
+        private bool Check(Type type)
+        {
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == baseType)
+                return true;
+            if (type.BaseType != null)
+                return Check(type.BaseType);
+            return false;
+        }
+    }
 
     public interface IEcsProcess { }
 
@@ -188,7 +213,25 @@ namespace DCFApixels.DragonECS
             #region Instantiate
             private static TInterface Instantiate(EcsPipeline source, TInterface[] targets, bool isHasFilter, object filter)
             {
-                if (_subclass == null) EcsRunnerActivator.InitFor<TInterface>();
+                if(_subclass == null)
+                {
+                    Type interfaceType = typeof(TInterface);
+                    if (interfaceType.TryGetAttribute(out EcsBindWithRunnerAttribute atr))
+                    {
+                        Type runnerType = atr.runnerType;
+                        if (interfaceType.IsGenericType)
+                        {
+                            Type[] genericTypes = interfaceType.GetGenericArguments();
+                            runnerType = runnerType.MakeGenericType(genericTypes);
+                        }
+                        _subclass = runnerType;
+                    }
+                    else
+                    {
+                        EcsRunnerActivator.InitFor<TInterface>();
+                    }
+                }
+                
                 var instance = (EcsRunner<TInterface>)Activator.CreateInstance(_subclass);
                 return (TInterface)(IEcsProcess)instance.Set(source, targets, isHasFilter, filter);
             }
@@ -201,7 +244,7 @@ namespace DCFApixels.DragonECS
                 return Instantiate(source, FilterSystems(source.AllSystems, filter), true, filter);
             }
             #endregion
-
+            
             private EcsPipeline _source;
             protected TInterface[] targets;
             private ReadOnlyCollection<TInterface> _targetsSealed;
