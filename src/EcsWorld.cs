@@ -2,6 +2,7 @@
 using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using static DCFApixels.DragonECS.EcsWorld;
 
@@ -273,7 +274,7 @@ namespace DCFApixels.DragonECS
         //public void CloneEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
         #endregion
 
-        #region RegisterEntityComponent/UnregisterEntityComponent
+        #region Pools mediation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
         {
@@ -291,6 +292,11 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
 #endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool HasEntityComponent(int entityID, EcsMaskBit maskBit)
+        {
+            return (_entitiesComponentMasks[entityID][maskBit.chankIndex] & maskBit.mask) != maskBit.mask;
         }
         #endregion
 
@@ -389,7 +395,7 @@ namespace DCFApixels.DragonECS
         public readonly struct PoolsMediator
         {
             private readonly EcsWorld _world;
-            public PoolsMediator(EcsWorld world)
+            internal PoolsMediator(EcsWorld world)
             {
                 if (world == null)
                 {
@@ -397,20 +403,25 @@ namespace DCFApixels.DragonECS
                 }
                 if (world._poolsMediator._world != null)
                 {
-                    throw new MethodAccessException("Нельзя создавать вручную");
+                    throw new MethodAccessException();
                 }
                 _world = world;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal void RegisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+            public void RegisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
             {
                 _world.RegisterEntityComponent(entityID, componentTypeID, maskBit);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal void UnregisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+            public void UnregisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
             {
                 _world.UnregisterEntityComponent(entityID, componentTypeID, maskBit);
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool HasComponent(int entityID, EcsMaskBit maskBit)
+            {
+                return _world.HasEntityComponent(entityID, maskBit);
             }
         }
     }
