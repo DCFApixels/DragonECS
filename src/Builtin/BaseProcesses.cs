@@ -6,22 +6,22 @@ using System;
 namespace DCFApixels.DragonECS
 {
     #region Interfaces
-    [EcsBindWithRunner(typeof(EcsPreInitProcessRunner))]
+    [BindWithEcsRunner(typeof(EcsPreInitProcessRunner))]
     public interface IEcsPreInitProcess : IEcsProcess
     {
         void PreInit();
     }
-    [EcsBindWithRunner(typeof(EcsInitProcessRunner))]
+    [BindWithEcsRunner(typeof(EcsInitProcessRunner))]
     public interface IEcsInitProcess : IEcsProcess
     {
         void Init();
     }
-    [EcsBindWithRunner(typeof(EcsRunProcessRunner))]
+    [BindWithEcsRunner(typeof(EcsRunProcessRunner))]
     public interface IEcsRunProcess : IEcsProcess
     {
         void Run();
     }
-    [EcsBindWithRunner(typeof(EcsDestroyProcessRunner))]
+    [BindWithEcsRunner(typeof(EcsDestroyProcessRunner))]
     public interface IEcsDestroyProcess : IEcsProcess
     {
         void Destroy();

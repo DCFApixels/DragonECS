@@ -27,11 +27,11 @@ namespace DCFApixels.DragonECS
         [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
 #endif
     [AttributeUsage(AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
-    public sealed class EcsBindWithRunnerAttribute : Attribute
+    public sealed class BindWithEcsRunnerAttribute : Attribute
     {
-        private static readonly Type baseType = typeof(EcsRunner<>);
+        private static readonly Type _baseType = typeof(EcsRunner<>);
         public readonly Type runnerType;
-        public EcsBindWithRunnerAttribute(Type runnerType)
+        public BindWithEcsRunnerAttribute(Type runnerType)
         {
             if (runnerType == null)
                 throw new ArgumentNullException();
@@ -41,7 +41,7 @@ namespace DCFApixels.DragonECS
         }
         private bool Check(Type type)
         {
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == baseType)
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == _baseType)
                 return true;
             if (type.BaseType != null)
                 return Check(type.BaseType);
@@ -216,7 +216,7 @@ namespace DCFApixels.DragonECS
                 if(_subclass == null)
                 {
                     Type interfaceType = typeof(TInterface);
-                    if (interfaceType.TryGetAttribute(out EcsBindWithRunnerAttribute atr))
+                    if (interfaceType.TryGetAttribute(out BindWithEcsRunnerAttribute atr))
                     {
                         Type runnerType = atr.runnerType;
                         if (interfaceType.IsGenericType)

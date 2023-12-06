@@ -5,12 +5,12 @@ using System.Linq;
 
 namespace DCFApixels.DragonECS
 {
-    [EcsBindWithRunner(typeof(EcsPreInjectRunner))]
+    [BindWithEcsRunner(typeof(EcsPreInjectRunner))]
     public interface IEcsPreInject : IEcsProcess
     {
         void PreInject(object obj);
     }
-    [EcsBindWithRunner(typeof(EcsInjectRunner<>))]
+    [BindWithEcsRunner(typeof(EcsInjectRunner<>))]
     public interface IEcsInject<T> : IEcsProcess
     {
         void Inject(T obj);
