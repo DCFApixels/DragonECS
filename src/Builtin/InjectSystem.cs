@@ -15,6 +15,7 @@ namespace DCFApixels.DragonECS
     {
         void Inject(T obj);
     }
+    [BindWithEcsRunner(typeof(EcsPreInitInjectProcessRunner))]
     public interface IEcsPreInitInjectProcess : IEcsProcess
     {
         void OnPreInitInjectionBefore();

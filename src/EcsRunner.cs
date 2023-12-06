@@ -35,16 +35,16 @@ namespace DCFApixels.DragonECS
         {
             if (runnerType == null)
                 throw new ArgumentNullException();
-            if (!Check(runnerType))
+            if (!CheckSubclass(runnerType))
                 throw new ArgumentException();
             this.runnerType = runnerType;
         }
-        private bool Check(Type type)
+        private bool CheckSubclass(Type type)
         {
             if (type.IsGenericType && type.GetGenericTypeDefinition() == _baseType)
                 return true;
             if (type.BaseType != null)
-                return Check(type.BaseType);
+                return CheckSubclass(type.BaseType);
             return false;
         }
     }
@@ -65,86 +65,6 @@ namespace DCFApixels.DragonECS
             void Destroy();
         }
 
-        internal static class EcsRunnerActivator
-        {
-            private static Dictionary<Type, Type> _runnerHandlerTypes; //interface base type/Runner handler type pairs;
-            static EcsRunnerActivator()
-            {
-                List<Exception> delayedExceptions = new List<Exception>();
-                Type runnerBaseType = typeof(EcsRunner<>);
-                List<Type> runnerHandlerTypes = new List<Type>();
-
-                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    runnerHandlerTypes.AddRange(assembly.GetTypes()
-                        .Where(type => type.BaseType != null && type.BaseType.IsGenericType && runnerBaseType == type.BaseType.GetGenericTypeDefinition()));
-                }
-
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                for (int i = 0; i < runnerHandlerTypes.Count; i++)
-                {
-                    var e = CheckRunnerValide(runnerHandlerTypes[i]);
-                    if (e != null)
-                    {
-                        runnerHandlerTypes.RemoveAt(i--);
-                        delayedExceptions.Add(e);
-                    }
-                }
-#endif
-                _runnerHandlerTypes = new Dictionary<Type, Type>();
-                foreach (var item in runnerHandlerTypes)
-                {
-                    Type interfaceType = item.BaseType.GenericTypeArguments[0];
-                    _runnerHandlerTypes.Add(interfaceType.IsGenericType ? interfaceType.GetGenericTypeDefinition() : interfaceType, item);
-                }
-
-                if (delayedExceptions.Count > 0)
-                {
-                    throw new AggregateException(delayedExceptions);
-                }
-            }
-
-            private static Exception CheckRunnerValide(Type type) //TODO доработать проверку валидности реалиазации ранера
-            {
-                Type baseType = type.BaseType;
-                Type baseTypeArgument = baseType.GenericTypeArguments[0];
-
-                if (type.ReflectedType != null)
-                {
-                    return new EcsRunnerImplementationException($"{GetGenericTypeFullName(type, 1)}.ReflectedType must be Null, but equal to {GetGenericTypeFullName(type.ReflectedType, 1)}.");
-                }
-                if (!baseTypeArgument.IsInterface)
-                {
-                    return new EcsRunnerImplementationException($"Argument T of class EcsRunner<T>, can only be an inetrface. The {GetGenericTypeFullName(baseTypeArgument, 1)} type is not an interface.");
-                }
-
-                var interfaces = type.GetInterfaces();
-
-                if (!interfaces.Any(o => o == baseTypeArgument))
-                {
-                    return new EcsRunnerImplementationException($"Runner {GetGenericTypeFullName(type, 1)} does not implement interface {GetGenericTypeFullName(baseTypeArgument, 1)}.");
-                }
-
-                return null;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal static void InitFor<TInterface>() where TInterface : IEcsProcess
-            {
-                Type interfaceType = typeof(TInterface);
-
-                if (!_runnerHandlerTypes.TryGetValue(interfaceType.IsGenericType ? interfaceType.GetGenericTypeDefinition() : interfaceType, out Type runnerType))
-                {
-                    throw new EcsRunnerImplementationException($"There is no implementation of a runner for the {GetGenericTypeFullName<TInterface>(1)} interface.");
-                }
-                if (interfaceType.IsGenericType)
-                {
-                    Type[] genericTypes = interfaceType.GetGenericArguments();
-                    runnerType = runnerType.MakeGenericType(genericTypes);
-                }
-                EcsRunner<TInterface>.Register(runnerType);
-            }
-        }
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
 #endif
@@ -211,6 +131,36 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Instantiate
+            private static void CheckRunnerValide(Type type) //TODO доработать проверку валидности реалиазации ранера
+            {
+                Type targetInterface = typeof(TInterface);
+                if (type.IsAbstract)
+                {
+                    throw new Exception();
+                }
+
+                Type GetRunnerBaseType(Type type)
+                {
+                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(EcsRunner<>))
+                        return type;
+                    if (type.BaseType != null)
+                        return GetRunnerBaseType(type.BaseType);
+                    return null;
+                }
+                Type baseType = GetRunnerBaseType(type);
+                Type baseTypeArgument = baseType.GenericTypeArguments[0];
+
+                if (baseTypeArgument != targetInterface)
+                {
+                    throw new Exception();
+                }
+
+                if (!type.GetInterfaces().Any(o => o == targetInterface))
+                {
+                    throw new EcsRunnerImplementationException($"Runner {GetGenericTypeFullName(type, 1)} does not implement interface {GetGenericTypeFullName(baseTypeArgument, 1)}.");
+                }
+            }
+
             private static TInterface Instantiate(EcsPipeline source, TInterface[] targets, bool isHasFilter, object filter)
             {
                 if(_subclass == null)
@@ -224,11 +174,12 @@ namespace DCFApixels.DragonECS
                             Type[] genericTypes = interfaceType.GetGenericArguments();
                             runnerType = runnerType.MakeGenericType(genericTypes);
                         }
+                        CheckRunnerValide(runnerType);
                         _subclass = runnerType;
                     }
                     else
                     {
-                        EcsRunnerActivator.InitFor<TInterface>();
+                        throw new EcsFrameworkException("Процесс не связан с раннером, используйте атрибуут BindWithEcsRunner(Type runnerType)");
                     }
                 }
                 
