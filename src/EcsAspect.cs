@@ -408,12 +408,14 @@ namespace DCFApixels.DragonECS
                     for (int i = 0, iMax = _inc.Length; i < iMax; i++)
                     {
                         bit = _inc[i];
-                        if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) == 0) goto skip;
+                        //if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) == 0) goto skip;
+                        if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != bit.mask) goto skip;
                     }
                     for (int i = 0, iMax = _exc.Length; i < iMax; i++)
                     {
                         bit = _exc[i];
-                        if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != 0) goto skip;
+                        //if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != 0) goto skip;
+                        if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) == bit.mask) goto skip;
                     }
                     return true;
                     skip: continue;
