@@ -9,7 +9,7 @@
 </p>
 
 # DragonECS - C# Entity Component System Framework
-
+Вдохновленно [LeoEcs](https://github.com/Leopotam/ecslite)
 | Languages: | [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [English(WIP)](https://github.com/DCFApixels/DragonECS) |
 | :--- | :--- | :--- |
 
