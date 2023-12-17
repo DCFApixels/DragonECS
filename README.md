@@ -5,7 +5,7 @@
 <p align="center">
 <img alt="Version" src="https://img.shields.io/github/package-json/v/DCFApixels/DragonECS?color=%23ff4e85&style=for-the-badge">
 <img alt="License" src="https://img.shields.io/github/license/DCFApixels/DragonECS?color=ff4e85&style=for-the-badge">
-<img alt="Discord" src="https://img.shields.io/discord/1111696966208999525?color=%2300b269&label=Discord&logo=Discord&logoColor=%23ffffff&style=for-the-badge">
+<a href="https://discord.gg/2pBNf7v3"><img alt="Discord" src="https://img.shields.io/discord/1111696966208999525?color=%2300b269&label=Discord&logo=Discord&logoColor=%23ffffff&style=for-the-badge"></a>
 </p>
 
 # DragonECS - C# Entity Component System Framework
@@ -23,3 +23,6 @@ DragonECS uses this versioning semantics: [Open](https://gist.github.com/DCFApix
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * [Classic C# multithreading support](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * Unity integration (Work in progress)
+
+# Feedback
+Discord for discussions [https://discord.gg/2pBNf7v3](https://discord.gg/2pBNf7v3)https://discord.gg/2pBNf7v3
