@@ -25,4 +25,4 @@ DragonECS uses this versioning semantics: [Open](https://gist.github.com/DCFApix
 * Unity integration (Work in progress)
 
 # Feedback
-Discord for discussions [https://discord.gg/2pBNf7v3](https://discord.gg/2pBNf7v3)https://discord.gg/2pBNf7v3
+Discord for discussions [https://discord.gg/2pBNf7v3](https://discord.gg/2pBNf7v3)
