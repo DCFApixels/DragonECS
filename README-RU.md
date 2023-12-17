@@ -5,7 +5,7 @@
 <p align="center">
 <img alt="Version" src="https://img.shields.io/github/package-json/v/DCFApixels/DragonECS?color=%23ff4e85&style=for-the-badge">
 <img alt="License" src="https://img.shields.io/github/license/DCFApixels/DragonECS?color=ff4e85&style=for-the-badge">
-<img alt="Discord" src="https://img.shields.io/discord/1111696966208999525?color=%2300b269&label=Discord&logo=Discord&logoColor=%23ffffff&style=for-the-badge">
+<a href="https://discord.gg/2pBNf7v3"><img alt="Discord" src="https://img.shields.io/discord/1111696966208999525?color=%2300b269&label=Discord&logo=Discord&logoColor=%23ffffff&style=for-the-badge"></a>
 </p>
 
 # DragonECS - C# Entity Component System Framework
@@ -46,7 +46,8 @@
   * [EcsDebug](#EcsDebug)
 * [Расширения](#Расширения)
 * [FAQ](#FAQ)
-
+* [Обратная связь](#Обратная-связь)
+* 
 # Установка
 * ### Unity-модуль
 Поддерживается установка в виде Unity-модуля в  при помощи добавления git-URL [в PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) или ручного добавления в `Packages/manifest.json`: 
@@ -591,3 +592,6 @@ public struct Component { }
 The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing a using directive or an assembly reference?)
 ``` 
 Чтобы починить добавте директиву `ENABLE_DUMMY_SPAN` в `Project Settings/Player/Other Settings/Scripting Define Symbols`.
+
+# Обратная связь
+Discord для дискуссий [https://discord.gg/2pBNf7v3](https://discord.gg/2pBNf7v3)
