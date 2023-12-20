@@ -84,22 +84,12 @@ namespace DCFApixels.DragonECS
 
         #region Object
         public override string ToString() => _source != null ? _source.ToString() : "NULL";
-        public override int GetHashCode() => _source.GetHashCode();
-        public override bool Equals(object obj) => obj is EcsGroup group && group == this;
-        public bool Equals(EcsReadonlyGroup other) => _source == other._source;
         #endregion
 
         #region Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal EcsGroup GetGroupInternal() => _source;
 
-        #endregion
-
-        #region operators
-        public static bool operator ==(EcsReadonlyGroup a, EcsReadonlyGroup b) => a.Equals(b);
-        public static bool operator ==(EcsReadonlyGroup a, EcsGroup b) => a.Equals(b);
-        public static bool operator !=(EcsReadonlyGroup a, EcsReadonlyGroup b) => !a.Equals(b);
-        public static bool operator !=(EcsReadonlyGroup a, EcsGroup b) => !a.Equals(b);
         #endregion
 
         #region DebuggerProxy
@@ -111,7 +101,7 @@ namespace DCFApixels.DragonECS
     }
 
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public unsafe class EcsGroup : IDisposable, IEquatable<EcsGroup>, IEnumerable<int>
+    public unsafe class EcsGroup : IDisposable, IEnumerable<int>
     {
         private EcsWorld _source;
         private int[] _dense;
@@ -120,7 +110,11 @@ namespace DCFApixels.DragonECS
         internal bool _isReleased = true;
 
         #region Properties
-        public EcsWorld World => _source;
+        public EcsWorld World
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _source;
+        }
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -352,6 +346,7 @@ namespace DCFApixels.DragonECS
                 else
                     AddInternal(item);
         }
+
         public void Inverse()
         {
             foreach (var item in _source.Entities)
@@ -359,6 +354,64 @@ namespace DCFApixels.DragonECS
                     RemoveInternal(item);
                 else
                     AddInternal(item);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetEquals(EcsReadonlyGroup group) => SetEquals(group.GetGroupInternal());
+        public bool SetEquals(EcsGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            if (group.Count != Count)
+                return false;
+            foreach (var item in group)
+                if (!Has(item))
+                    return false;
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Overlaps(EcsReadonlyGroup group) => Overlaps(group.GetGroupInternal());
+        public bool Overlaps(EcsGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            foreach (var item in group)
+                if (!Has(item))
+                    return true;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSubsetOf(EcsReadonlyGroup group) => Overlaps(group.GetGroupInternal());
+        public bool IsSubsetOf(EcsGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            if (group.Count < Count)
+                return false;
+            foreach (var item in this)
+                if (!group.Has(item))
+                    return false;
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSupersetOf(EcsReadonlyGroup group) => Overlaps(group.GetGroupInternal());
+        public bool IsSupersetOf(EcsGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            if (group.Count > Count)
+                return false;
+            foreach (var item in group)
+                if (!Has(item))
+                    return false;
+            return true;
         }
         #endregion
 
@@ -508,24 +561,16 @@ namespace DCFApixels.DragonECS
 
         #region Object
         public override string ToString() => $"group{{{string.Join(", ", _dense.Take(_count))}}}";
-        public override bool Equals(object obj) => obj is EcsGroup group && Equals(group);
-        public bool Equals(EcsReadonlyGroup other) => Equals(other.GetGroupInternal());
-        public bool Equals(EcsGroup other)
-        {
-            if (other is null || other.Count != Count)
-                return false;
-            foreach (var e in other)
-                if (!Has(e))
-                    return false;
-            return true;
-        }
-        public override int GetHashCode()
-        {
-            int hash = 0;
-            foreach (var item in this)
-                hash ^= 1 << (item % 32); //реализация от балды, так как не нужен, но фишка в том что хеш не учитывает порядок сущьностей, что явлется правильным поведением.
-            return hash;
-        }
+        //public override int GetHashCode()
+        //{
+        //    unchecked
+        //    {
+        //        uint hash = 0;
+        //        foreach (var item in this)
+        //            hash ^= ((uint)item * 314159u); //реализация от балды, так как не нужен, но фишка в том что хеш не учитывает порядок сущьностей, что явлется правильным поведением.
+        //        return (int)hash;
+        //    }
+        //}
         #endregion
 
         #region OtherMethods
@@ -533,20 +578,6 @@ namespace DCFApixels.DragonECS
         public int First() => this[0];
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() => this[_count - 1];
-
-        #endregion
-
-        #region operators
-        private static bool StaticEquals(EcsGroup a, EcsReadonlyGroup b) => StaticEquals(a, b.GetGroupInternal());
-        private static bool StaticEquals(EcsGroup a, EcsGroup b)
-        {
-            if (a is null || b is null) return false;
-            return a.Equals(b);
-        }
-        public static bool operator ==(EcsGroup a, EcsGroup b) => StaticEquals(a, b);
-        public static bool operator ==(EcsGroup a, EcsReadonlyGroup b) => StaticEquals(a, b);
-        public static bool operator !=(EcsGroup a, EcsGroup b) => !StaticEquals(a, b);
-        public static bool operator !=(EcsGroup a, EcsReadonlyGroup b) => !StaticEquals(a, b);
         #endregion
 
         #region OnWorldResize
