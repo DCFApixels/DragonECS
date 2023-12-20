@@ -63,16 +63,16 @@ namespace DCFApixels.DragonECS
         #region GetName
         public static string GetName(object obj, int maxGenericDepth = 2)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                GetName(intr.DebugMetaSource, maxGenericDepth) :
+            return obj is IEcsMetaProvider intr ?
+                GetName(intr.MetaSource, maxGenericDepth) :
                 GetName(type: obj.GetType(), maxGenericDepth);
         }
         public static string GetName<T>(int maxGenericDepth = 2) => GetName(typeof(T), maxGenericDepth);
         public static string GetName(Type type, int maxGenericDepth = 2) => type.TryGetCustomAttribute(out MetaNameAttribute atr) ? atr.name : GetGenericTypeName(type, maxGenericDepth);
         public static bool TryGetCustomName(object obj, out string name)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                TryGetCustomName(intr.DebugMetaSource, out name) :
+            return obj is IEcsMetaProvider intr ?
+                TryGetCustomName(intr.MetaSource, out name) :
                 TryGetCustomName(type: obj.GetType(), out name);
         }
         public static bool TryGetCustomName<T>(out string name) => TryGetCustomName(type: typeof(T), out name);
@@ -91,16 +91,16 @@ namespace DCFApixels.DragonECS
         #region GetGroup
         public static MetaGroup GetGroup(object obj)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                GetGroup(intr.DebugMetaSource) :
+            return obj is IEcsMetaProvider intr ?
+                GetGroup(intr.MetaSource) :
                 GetGroup(type: obj.GetType());
         }
         public static MetaGroup GetGroup<T>() => GetGroup(typeof(T));
         public static MetaGroup GetGroup(Type type) => type.TryGetCustomAttribute(out MetaGroupAttribute atr) ? atr.GetData() : MetaGroup.Empty;
         public static bool TryGetGroup(object obj, out MetaGroup group)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                TryGetGroup(intr.DebugMetaSource, out group) :
+            return obj is IEcsMetaProvider intr ?
+                TryGetGroup(intr.MetaSource, out group) :
                 TryGetGroup(type: obj.GetType(), out group);
         }
         public static bool TryGetGroup<T>(out MetaGroup text) => TryGetGroup(typeof(T), out text);
@@ -119,16 +119,16 @@ namespace DCFApixels.DragonECS
         #region GetDescription
         public static string GetDescription(object obj)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                GetDescription(intr.DebugMetaSource) :
+            return obj is IEcsMetaProvider intr ?
+                GetDescription(intr.MetaSource) :
                 GetDescription(type: obj.GetType());
         }
         public static string GetDescription<T>() => GetDescription(typeof(T));
         public static string GetDescription(Type type) => type.TryGetCustomAttribute(out MetaDescriptionAttribute atr) ? atr.description : string.Empty;
         public static bool TryGetDescription(object obj, out string text)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                TryGetDescription(intr.DebugMetaSource, out text) :
+            return obj is IEcsMetaProvider intr ?
+                TryGetDescription(intr.MetaSource, out text) :
                 TryGetDescription(type: obj.GetType(), out text);
         }
         public static bool TryGetDescription<T>(out string text) => TryGetDescription(typeof(T), out text);
@@ -227,8 +227,8 @@ namespace DCFApixels.DragonECS
 
         public static MetaColor GetColor(object obj)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                GetColor(intr.DebugMetaSource) :
+            return obj is IEcsMetaProvider intr ?
+                GetColor(intr.MetaSource) :
                 GetColor(type: obj.GetType());
         }
         public static MetaColor GetColor<T>() => GetColor(typeof(T));
@@ -244,8 +244,8 @@ namespace DCFApixels.DragonECS
         }
         public static bool TryGetColor(object obj, out MetaColor color)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                TryGetColor(intr.DebugMetaSource, out color) :
+            return obj is IEcsMetaProvider intr ?
+                TryGetColor(intr.MetaSource, out color) :
                 TryGetColor(type: obj.GetType(), out color);
         }
         public static bool TryGetColor<T>(out MetaColor color) => TryGetColor(typeof(T), out color);
@@ -265,8 +265,8 @@ namespace DCFApixels.DragonECS
         #region GetTags
         public static IReadOnlyCollection<string> GetTags(object obj)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                GetTags(intr.DebugMetaSource) :
+            return obj is IEcsMetaProvider intr ?
+                GetTags(intr.MetaSource) :
                 GetTags(type: obj.GetType());
         }
         public static IReadOnlyCollection<string> GetTags<T>() => GetTags(typeof(T));
@@ -278,8 +278,8 @@ namespace DCFApixels.DragonECS
 
         public static bool TryGetTags(object obj, out IReadOnlyCollection<string> tags)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                TryGetTags(intr.DebugMetaSource, out tags) :
+            return obj is IEcsMetaProvider intr ?
+                TryGetTags(intr.MetaSource, out tags) :
                 TryGetTags(type: obj.GetType(), out tags);
         }
         public static bool TryGetTags<T>(out IReadOnlyCollection<string> tags) => TryGetTags(typeof(T), out tags);
@@ -299,8 +299,8 @@ namespace DCFApixels.DragonECS
         #region IsHidden
         public static bool IsHidden(object obj)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                IsHidden(intr.DebugMetaSource) :
+            return obj is IEcsMetaProvider intr ?
+                IsHidden(intr.MetaSource) :
                 IsHidden(type: obj.GetType());
         }
         public static bool IsHidden<T>() => IsHidden(typeof(T));
@@ -310,19 +310,19 @@ namespace DCFApixels.DragonECS
         #region MetaSource
         public static bool IsMetaSourceProvided(object obj)
         {
-            return obj is IEcsDebugMetaProvider;
+            return obj is IEcsMetaProvider;
         }
         public static object GetMetaSource(object obj)
         {
-            return obj is IEcsDebugMetaProvider intr ? intr.DebugMetaSource : obj;
+            return obj is IEcsMetaProvider intr ? intr.MetaSource : obj;
         }
         #endregion
 
         #region GenerateTypeDebugData
         public static TypeMetaData GenerateTypeDebugData(object obj)
         {
-            return obj is IEcsDebugMetaProvider intr ?
-                GenerateTypeDebugData(intr.DebugMetaSource) :
+            return obj is IEcsMetaProvider intr ?
+                GenerateTypeDebugData(intr.MetaSource) :
                 GenerateTypeDebugData(type: obj.GetType());
         }
         public static TypeMetaData GenerateTypeDebugData<T>() => GenerateTypeDebugData(typeof(T));
