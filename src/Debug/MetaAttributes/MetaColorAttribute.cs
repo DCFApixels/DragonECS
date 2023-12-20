@@ -3,20 +3,23 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
-    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public sealed class DebugColorAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
+    public sealed class MetaColorAttribute : Attribute
     {
-        public readonly DebugColor color;
-        public byte r => color.r;
-        public byte g => color.g;
-        public byte b => color.b;
-        public DebugColorAttribute(byte r, byte g, byte b) => color = new DebugColor(r, g, b, 255);
-        public DebugColorAttribute(int colorCode) => color = new DebugColor(colorCode, true);
+        public readonly MetaColor color;
+        public byte R => color.r;
+        public byte G => color.g;
+        public byte B => color.b;
+        public float FloatT => R / (float)byte.MaxValue;
+        public float FloatG => G / (float)byte.MaxValue;
+        public float FloatB => B / (float)byte.MaxValue;
+        public MetaColorAttribute(byte r, byte g, byte b) => color = new MetaColor(r, g, b, 255);
+        public MetaColorAttribute(int colorCode) => color = new MetaColor(colorCode, true);
     }
     [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 4)]
-    public readonly struct DebugColor
+    public readonly struct MetaColor
     {
-        public static readonly DebugColor BlackColor = new DebugColor(Black);
+        public static readonly MetaColor BlackColor = new MetaColor(Black);
         /// <summary> color code Red. RGB is (255, 0, 0)</summary>
         public const int Red = (255 << 24) | (000 << 16) | (000 << 8) | 255;
         /// <summary> color code Green. RGB is (0, 255, 0)</summary>
@@ -66,37 +69,37 @@ namespace DCFApixels.DragonECS
         [FieldOffset(2)] public readonly byte g;
         [FieldOffset(1)] public readonly byte b;
         [FieldOffset(0)] public readonly byte a;
-        public DebugColor(byte r, byte g, byte b) : this()
+        public MetaColor(byte r, byte g, byte b) : this()
         {
             this.r = r;
             this.g = g;
             this.b = b;
             a = 255;
         }
-        public DebugColor(byte r, byte g, byte b, byte a) : this()
+        public MetaColor(byte r, byte g, byte b, byte a) : this()
         {
             this.r = r;
             this.g = g;
             this.b = b;
             this.a = a;
         }
-        public DebugColor(int colorCode) : this() => this.colorCode = colorCode;
-        public DebugColor(int colorCode, bool withoutAlpha) : this() => this.colorCode = withoutAlpha ? colorCode | 255 : colorCode;
+        public MetaColor(int colorCode) : this() => this.colorCode = colorCode;
+        public MetaColor(int colorCode, bool withoutAlpha) : this() => this.colorCode = withoutAlpha ? colorCode | 255 : colorCode;
         public (byte, byte, byte) ToTupleRGB() => (r, g, b);
         public (byte, byte, byte, byte) ToTupleRGBA() => (r, g, b, a);
 
-        public DebugColor UpContrastColor()
+        public MetaColor UpContrastColor()
         {
             byte minChannel = Math.Min(Math.Min(r, g), b);
             byte maxChannel = Math.Max(Math.Max(r, g), b);
             if (maxChannel == minChannel)
                 return default;
             float factor = 255f / (maxChannel - minChannel);
-            return new DebugColor((byte)((r - minChannel) * factor), (byte)((g - minChannel) * factor), (byte)((b - minChannel) * factor));
+            return new MetaColor((byte)((r - minChannel) * factor), (byte)((g - minChannel) * factor), (byte)((b - minChannel) * factor));
         }
-        public static DebugColor operator /(DebugColor a, float b)
+        public static MetaColor operator /(MetaColor a, float b)
         {
-            return new DebugColor((byte)(a.r / b), (byte)(a.g / b), (byte)(a.b / b));
+            return new MetaColor((byte)(a.r / b), (byte)(a.g / b), (byte)(a.b / b));
         }
     }
 }

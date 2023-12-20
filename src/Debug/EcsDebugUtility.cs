@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -67,7 +68,7 @@ namespace DCFApixels.DragonECS
                 GetName(type: obj.GetType(), maxGenericDepth);
         }
         public static string GetName<T>(int maxGenericDepth = 2) => GetName(typeof(T), maxGenericDepth);
-        public static string GetName(Type type, int maxGenericDepth = 2) => type.TryGetCustomAttribute(out DebugNameAttribute atr) ? atr.name : GetGenericTypeName(type, maxGenericDepth);
+        public static string GetName(Type type, int maxGenericDepth = 2) => type.TryGetCustomAttribute(out MetaNameAttribute atr) ? atr.name : GetGenericTypeName(type, maxGenericDepth);
         public static bool TryGetCustomName(object obj, out string name)
         {
             return obj is IEcsDebugMetaProvider intr ? 
@@ -77,7 +78,7 @@ namespace DCFApixels.DragonECS
         public static bool TryGetCustomName<T>(out string name) => TryGetCustomName(type: typeof(T), out name);
         public static bool TryGetCustomName(Type type, out string name)
         {
-            if (type.TryGetCustomAttribute(out DebugNameAttribute atr))
+            if (type.TryGetCustomAttribute(out MetaNameAttribute atr))
             {
                 name = atr.name;
                 return true;
@@ -88,29 +89,29 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetGroup
-        public static DebugGroup GetGroup(object obj)
+        public static MetaGroup GetGroup(object obj)
         {
             return obj is IEcsDebugMetaProvider intr ?
                 GetGroup(intr.DebugMetaSource) :
                 GetGroup(type: obj.GetType());
         }
-        public static DebugGroup GetGroup<T>() => GetGroup(typeof(T));
-        public static DebugGroup GetGroup(Type type) => type.TryGetCustomAttribute(out DebugGroupAttribute atr) ? atr.GetData() : DebugGroup.Empty;
-        public static bool TryGetGroup(object obj, out DebugGroup group)
+        public static MetaGroup GetGroup<T>() => GetGroup(typeof(T));
+        public static MetaGroup GetGroup(Type type) => type.TryGetCustomAttribute(out MetaGroupAttribute atr) ? atr.GetData() : MetaGroup.Empty;
+        public static bool TryGetGroup(object obj, out MetaGroup group)
         {
             return obj is IEcsDebugMetaProvider intr ?
                 TryGetGroup(intr.DebugMetaSource, out group) :
                 TryGetGroup(type: obj.GetType(), out group);
         }
-        public static bool TryGetGroup<T>(out DebugGroup text) => TryGetGroup(typeof(T), out text);
-        public static bool TryGetGroup(Type type, out DebugGroup group)
+        public static bool TryGetGroup<T>(out MetaGroup text) => TryGetGroup(typeof(T), out text);
+        public static bool TryGetGroup(Type type, out MetaGroup group)
         {
-            if (type.TryGetCustomAttribute(out DebugGroupAttribute atr))
+            if (type.TryGetCustomAttribute(out MetaGroupAttribute atr))
             {
                 group = atr.GetData();
                 return true;
             }
-            group = DebugGroup.Empty;
+            group = MetaGroup.Empty;
             return false;
         }
         #endregion
@@ -123,7 +124,7 @@ namespace DCFApixels.DragonECS
                 GetDescription(type: obj.GetType());
         }
         public static string GetDescription<T>() => GetDescription(typeof(T));
-        public static string GetDescription(Type type) => type.TryGetCustomAttribute(out DebugDescriptionAttribute atr) ? atr.description : string.Empty;
+        public static string GetDescription(Type type) => type.TryGetCustomAttribute(out MetaDescriptionAttribute atr) ? atr.description : string.Empty;
         public static bool TryGetDescription(object obj, out string text)
         {
             return obj is IEcsDebugMetaProvider intr ?
@@ -133,7 +134,7 @@ namespace DCFApixels.DragonECS
         public static bool TryGetDescription<T>(out string text) => TryGetDescription(typeof(T), out text);
         public static bool TryGetDescription(Type type, out string text)
         {
-            if (type.TryGetCustomAttribute(out DebugDescriptionAttribute atr))
+            if (type.TryGetCustomAttribute(out MetaDescriptionAttribute atr))
             {
                 text = atr.description;
                 return true;
@@ -149,7 +150,7 @@ namespace DCFApixels.DragonECS
         private class WordColor
         {
             public int wordsCount;
-            public DebugColor color;
+            public MetaColor color;
         }
         private class NameColor
         {
@@ -162,7 +163,7 @@ namespace DCFApixels.DragonECS
                     {
                         color = new WordColor();
                         _words.Add(word, color);
-                        color.color = new DebugColor((byte)random.Next(), (byte)random.Next(), (byte)random.Next()).UpContrastColor() / 2;
+                        color.color = new MetaColor((byte)random.Next(), (byte)random.Next(), (byte)random.Next()).UpContrastColor() / 2;
                     }
                     color.wordsCount++;
                     colors.Add(color);
@@ -177,7 +178,7 @@ namespace DCFApixels.DragonECS
                 }
                 return result;
             }
-            public DebugColor CalcColor()
+            public MetaColor CalcColor()
             {
                 float r = 0, g = 0, b = 0;
                 int totalWordsCount = CalcTotalWordsColor();
@@ -189,11 +190,11 @@ namespace DCFApixels.DragonECS
                     g += m * color.color.g;
                     b += m * color.color.b;
                 }
-                return new DebugColor((byte)r, (byte)g, (byte)b);
+                return new MetaColor((byte)r, (byte)g, (byte)b);
             }
         }
         private static Dictionary<Type, NameColor> _names = new Dictionary<Type, NameColor>();
-        private static DebugColor CalcNameColorFor(Type type)
+        private static MetaColor CalcNameColorFor(Type type)
         {
             Type targetType = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
             if (!_names.TryGetValue(targetType, out NameColor nameColor))
@@ -224,39 +225,73 @@ namespace DCFApixels.DragonECS
             return words;
         }
 
-        public static DebugColor GetColor(object obj)
+        public static MetaColor GetColor(object obj)
         {
             return obj is IEcsDebugMetaProvider intr ?
                 GetColor(intr.DebugMetaSource) :
                 GetColor(type: obj.GetType());
         }
-        public static DebugColor GetColor<T>() => GetColor(typeof(T));
-        public static DebugColor GetColor(Type type)
+        public static MetaColor GetColor<T>() => GetColor(typeof(T));
+        public static MetaColor GetColor(Type type)
         {
-            var atr = type.GetCustomAttribute<DebugColorAttribute>();
+            var atr = type.GetCustomAttribute<MetaColorAttribute>();
             return atr != null ? atr.color
 #if DEBUG //optimization for release build
                 : CalcNameColorFor(type);
 #else
-                : DebugColor.BlackColor;
+                : MetaColor.BlackColor;
 #endif
         }
-        public static bool TryGetColor(object obj, out DebugColor color)
+        public static bool TryGetColor(object obj, out MetaColor color)
         {
             return obj is IEcsDebugMetaProvider intr ?
                 TryGetColor(intr.DebugMetaSource, out color) :
                 TryGetColor(type: obj.GetType(), out color);
         }
-        public static bool TryGetColor<T>(out DebugColor color) => TryGetColor(typeof(T), out color);
-        public static bool TryGetColor(Type type, out DebugColor color)
+        public static bool TryGetColor<T>(out MetaColor color) => TryGetColor(typeof(T), out color);
+        public static bool TryGetColor(Type type, out MetaColor color)
         {
-            var atr = type.GetCustomAttribute<DebugColorAttribute>();
+            var atr = type.GetCustomAttribute<MetaColorAttribute>();
             if (atr != null)
             {
                 color = atr.color;
                 return true;
             }
-            color = DebugColor.BlackColor;
+            color = MetaColor.BlackColor;
+            return false;
+        }
+        #endregion
+
+        #region GetTags
+        public static IReadOnlyCollection<string> GetTags(object obj)
+        {
+            return obj is IEcsDebugMetaProvider intr ?
+                GetTags(intr.DebugMetaSource) :
+                GetTags(type: obj.GetType());
+        }
+        public static IReadOnlyCollection<string> GetTags<T>() => GetTags(typeof(T));
+        public static IReadOnlyCollection<string> GetTags(Type type)
+        {
+            var atr = type.GetCustomAttribute<MetaTagsAttribute>();
+            return atr != null ? atr.Tags : Array.Empty<string>();
+        }
+
+        public static bool TryGetTags(object obj, out IReadOnlyCollection<string> tags)
+        {
+            return obj is IEcsDebugMetaProvider intr ?
+                TryGetTags(intr.DebugMetaSource, out tags) :
+                TryGetTags(type: obj.GetType(), out tags);
+        }
+        public static bool TryGetTags<T>(out IReadOnlyCollection<string> tags) => TryGetTags(typeof(T), out tags);
+        public static bool TryGetTags(Type type, out IReadOnlyCollection<string> tags)
+        {
+            var atr = type.GetCustomAttribute<MetaTagsAttribute>();
+            if (atr != null)
+            {
+                tags = atr.Tags;
+                return true;
+            }
+            tags = Array.Empty<string>();
             return false;
         }
         #endregion
@@ -269,7 +304,7 @@ namespace DCFApixels.DragonECS
                 IsHidden(type: obj.GetType());
         }
         public static bool IsHidden<T>() => IsHidden(typeof(T));
-        public static bool IsHidden(Type type) => type.TryGetCustomAttribute(out DebugHideAttribute _);
+        public static bool IsHidden(Type type) => type.TryGetCustomAttribute(out MetaTagsAttribute atr) && atr.Tags.Contains(MetaTags.HIDDEN);
         #endregion
 
         #region MetaSource
@@ -284,22 +319,22 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GenerateTypeDebugData
-        public static TypeDebugData GenerateTypeDebugData(object obj)
+        public static TypeMetaData GenerateTypeDebugData(object obj)
         {
             return obj is IEcsDebugMetaProvider intr ?
                 GenerateTypeDebugData(intr.DebugMetaSource) :
                 GenerateTypeDebugData(type: obj.GetType());
         }
-        public static TypeDebugData GenerateTypeDebugData<T>() => GenerateTypeDebugData(typeof(T));
-        public static TypeDebugData GenerateTypeDebugData(Type type)
+        public static TypeMetaData GenerateTypeDebugData<T>() => GenerateTypeDebugData(typeof(T));
+        public static TypeMetaData GenerateTypeDebugData(Type type)
         {
-            return new TypeDebugData(
+            return new TypeMetaData(
                 type,
                 GetName(type),
                 GetGroup(type),
                 GetColor(type),
                 GetDescription(type),
-                IsHidden(type));
+                GetTags(type).ToArray());
         }
         #endregion
 
@@ -320,22 +355,22 @@ namespace DCFApixels.DragonECS
     }
 
     [Serializable]
-    public sealed class TypeDebugData
+    public sealed class TypeMetaData
     {
         public readonly Type type;
         public readonly string name;
-        public readonly DebugGroup group;
-        public readonly DebugColor color;
+        public readonly MetaGroup group;
+        public readonly MetaColor color;
         public readonly string description;
-        public readonly bool isHidden;
-        public TypeDebugData(Type type, string name, DebugGroup group, DebugColor color, string description, bool isHidden)
+        public readonly string[] tags;
+        public TypeMetaData(Type type, string name, MetaGroup group, MetaColor color, string description, string[] tags)
         {
             this.type = type;
             this.name = name;
             this.group = group;
             this.color = color;
             this.description = description;
-            this.isHidden = isHidden;
+            this.tags = tags;
         }
     }
 }

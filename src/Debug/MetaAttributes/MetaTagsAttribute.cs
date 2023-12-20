@@ -1,0 +1,24 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace DCFApixels.DragonECS
+{
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
+    public sealed class MetaTagsAttribute : Attribute
+    {
+        private readonly string[] _tags;
+        public IReadOnlyCollection<string> Tags => _tags;
+
+        [Obsolete("With empty parameters, this attribute makes no sense.", true)]
+        public MetaTagsAttribute() { }
+        public MetaTagsAttribute(params string[] tags)
+        {
+            _tags = tags.Where(o => !string.IsNullOrEmpty(o)).ToArray();
+        }
+    }
+    public readonly ref struct MetaTags
+    {
+        public const string HIDDEN = EcsConsts.META_HIDDEN_TAG;
+    }
+}

@@ -5,13 +5,15 @@ namespace DCFApixels.DragonECS
 {
     namespace Internal
     {
-        [DebugHide, DebugColor(DebugColor.Black)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Black)]
         public class SystemsLayerMarkerSystem : IEcsProcess
         {
             public readonly string name;
             public SystemsLayerMarkerSystem(string name) => this.name = name;
         }
-        [DebugHide, DebugColor(DebugColor.Grey)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Grey)]
         public class EndFrameSystem : IEcsRunProcess, IEcsInject<EcsWorld>
         {
             private readonly List<EcsWorld> _worlds = new List<EcsWorld>();
@@ -25,7 +27,8 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-        [DebugHide, DebugColor(DebugColor.Grey)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Grey)]
         public class DeleteOneFrameComponentSystem<TComponent> : IEcsRunProcess, IEcsInject<EcsWorld>
             where TComponent : struct, IEcsComponent
         {

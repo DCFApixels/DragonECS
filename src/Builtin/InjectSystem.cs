@@ -5,16 +5,19 @@ using System.Linq;
 
 namespace DCFApixels.DragonECS
 {
+    [MetaName(nameof(PreInject))]
     [BindWithEcsRunner(typeof(EcsPreInjectRunner))]
     public interface IEcsPreInject : IEcsProcess
     {
         void PreInject(object obj);
     }
+    [MetaName(nameof(Inject))]
     [BindWithEcsRunner(typeof(EcsInjectRunner<>))]
     public interface IEcsInject<T> : IEcsProcess
     {
         void Inject(T obj);
     }
+    [MetaName("PreInitInject")]
     [BindWithEcsRunner(typeof(EcsPreInitInjectProcessRunner))]
     public interface IEcsPreInitInjectProcess : IEcsProcess
     {
@@ -47,7 +50,8 @@ namespace DCFApixels.DragonECS
                 _injectSystems = null;
             }
         }
-        [DebugHide, DebugColor(DebugColor.Gray)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Gray)]
         public sealed class EcsPreInjectRunner : EcsRunner<IEcsPreInject>, IEcsPreInject
         {
             void IEcsPreInject.PreInject(object obj)
@@ -55,7 +59,8 @@ namespace DCFApixels.DragonECS
                 foreach (var item in targets) item.PreInject(obj);
             }
         }
-        [DebugHide, DebugColor(DebugColor.Gray)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Gray)]
         public sealed class EcsInjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
         {
             private EcsBaseTypeInjectRunner _baseTypeInjectRunner;
@@ -91,7 +96,8 @@ namespace DCFApixels.DragonECS
             public override void Inject(object obj) => _runner.PreInject(obj);
         }
 
-        [DebugHide, DebugColor(DebugColor.Gray)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Gray)]
         public sealed class EcsPreInitInjectProcessRunner : EcsRunner<IEcsPreInitInjectProcess>, IEcsPreInitInjectProcess
         {
             public void OnPreInitInjectionAfter()
@@ -103,8 +109,10 @@ namespace DCFApixels.DragonECS
                 foreach (var item in targets) item.OnPreInitInjectionBefore();
             }
         }
-        public class InjectSystemBase { }
-        [DebugHide, DebugColor(DebugColor.Gray)]
+        public abstract class InjectSystemBase { }
+
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Gray)]
         public class InjectSystem<T> : InjectSystemBase, IEcsInject<EcsPipeline>, IEcsPreInitProcess, IEcsInject<PreInitInjectController>, IEcsPreInitInjectProcess
         {
             private EcsPipeline _pipeline;

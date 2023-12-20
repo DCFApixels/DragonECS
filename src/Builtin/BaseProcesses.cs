@@ -6,21 +6,25 @@ using System;
 namespace DCFApixels.DragonECS
 {
     #region Interfaces
+    [MetaName(nameof(PreInit))]
     [BindWithEcsRunner(typeof(EcsPreInitProcessRunner))]
     public interface IEcsPreInitProcess : IEcsProcess
     {
         void PreInit();
     }
+    [MetaName(nameof(Init))]
     [BindWithEcsRunner(typeof(EcsInitProcessRunner))]
     public interface IEcsInitProcess : IEcsProcess
     {
         void Init();
     }
+    [MetaName(nameof(Run))]
     [BindWithEcsRunner(typeof(EcsRunProcessRunner))]
     public interface IEcsRunProcess : IEcsProcess
     {
         void Run();
     }
+    [MetaName(nameof(Destroy))]
     [BindWithEcsRunner(typeof(EcsDestroyProcessRunner))]
     public interface IEcsDestroyProcess : IEcsProcess
     {
@@ -31,7 +35,7 @@ namespace DCFApixels.DragonECS
 
     namespace Internal
     {
-        [DebugColor(DebugColor.Orange)]
+        [MetaColor(MetaColor.Orange)]
         public sealed class EcsPreInitProcessRunner : EcsRunner<IEcsPreInitProcess>, IEcsPreInitProcess
         {
 #if DEBUG && !DISABLE_DEBUG
@@ -79,7 +83,7 @@ namespace DCFApixels.DragonECS
 #endif
             }
         }
-        [DebugColor(DebugColor.Orange)]
+        [MetaColor(MetaColor.Orange)]
         public sealed class EcsInitProcessRunner : EcsRunner<IEcsInitProcess>, IEcsInitProcess
         {
 #if DEBUG && !DISABLE_DEBUG
@@ -127,7 +131,7 @@ namespace DCFApixels.DragonECS
 #endif
             }
         }
-        [DebugColor(DebugColor.Orange)]
+        [MetaColor(MetaColor.Orange)]
         public sealed class EcsRunProcessRunner : EcsRunner<IEcsRunProcess>, IEcsRunProcess
         {
 #if DEBUG && !DISABLE_DEBUG
@@ -175,7 +179,7 @@ namespace DCFApixels.DragonECS
 #endif
             }
         }
-        [DebugColor(DebugColor.Orange)]
+        [MetaColor(MetaColor.Orange)]
         public sealed class EcsDestroyProcessRunner : EcsRunner<IEcsDestroyProcess>, IEcsDestroyProcess
         {
 #if DEBUG && !DISABLE_DEBUG
@@ -185,11 +189,11 @@ namespace DCFApixels.DragonECS
                 _markers = new EcsProfilerMarker[targets.Length];
                 for (int i = 0; i < targets.Length; i++)
                 {
-                    _markers[i] = new EcsProfilerMarker($"{targets[i].GetType().Name}.{nameof(Destroy)}");
+                    _markers[i] = new EcsProfilerMarker($"{targets[i].GetType().Name}.{nameof(IEcsDestroyProcess.Destroy)}");
                 }
             }
 #endif
-            public void Destroy()
+            void IEcsDestroyProcess.Destroy()
             {
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)

@@ -1,5 +1,4 @@
-﻿using DCFApixels.DragonECS.Internal;
-using DCFApixels.DragonECS.RunnersCore;
+﻿using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -166,7 +165,7 @@ namespace DCFApixels.DragonECS
                 if(_subclass == null)
                 {
                     Type interfaceType = typeof(TInterface);
-                    if (interfaceType.TryGetAttribute(out BindWithEcsRunnerAttribute atr))
+                    if (interfaceType.TryGetCustomAttribute(out BindWithEcsRunnerAttribute atr))
                     {
                         Type runnerType = atr.runnerType;
                         if (interfaceType.IsGenericType)

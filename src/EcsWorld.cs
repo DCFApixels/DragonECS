@@ -2,9 +2,7 @@
 using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
-using static DCFApixels.DragonECS.EcsWorld;
 
 namespace DCFApixels.DragonECS
 {

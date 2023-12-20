@@ -14,5 +14,7 @@
         public const string BASIC_LAYER = nameof(BASIC_LAYER);
         public const string END_LAYER = nameof(END_LAYER);
         public const string POST_END_LAYER = nameof(POST_END_LAYER);
+
+        public const string META_HIDDEN_TAG = "HiddenInDebagging";
     }
 }
