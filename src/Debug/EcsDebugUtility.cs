@@ -71,8 +71,8 @@ namespace DCFApixels.DragonECS
         public static string GetName(Type type, int maxGenericDepth = 2) => type.TryGetCustomAttribute(out MetaNameAttribute atr) ? atr.name : GetGenericTypeName(type, maxGenericDepth);
         public static bool TryGetCustomName(object obj, out string name)
         {
-            return obj is IEcsDebugMetaProvider intr ? 
-                TryGetCustomName(intr.DebugMetaSource, out name) : 
+            return obj is IEcsDebugMetaProvider intr ?
+                TryGetCustomName(intr.DebugMetaSource, out name) :
                 TryGetCustomName(type: obj.GetType(), out name);
         }
         public static bool TryGetCustomName<T>(out string name) => TryGetCustomName(type: typeof(T), out name);

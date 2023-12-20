@@ -146,7 +146,7 @@ namespace DCFApixels.DragonECS
         #region Entity
         public int NewEntity()
         {
-            if(_freeSpace <= 1 && _delEntBufferCount > _delEntBufferMinCount)
+            if (_freeSpace <= 1 && _delEntBufferCount > _delEntBufferMinCount)
                 ReleaseDelEntityBuffer();
 
             int entityID = _entityDispenser.GetFree();
@@ -236,7 +236,7 @@ namespace DCFApixels.DragonECS
         {
             foreach (var pool in _pools)
             {
-                if (pool.Has(fromEntityID)) 
+                if (pool.Has(fromEntityID))
                     pool.Copy(fromEntityID, toEntityID);
             }
         }
@@ -285,7 +285,7 @@ namespace DCFApixels.DragonECS
             var count = --_componentCounts[entityID];
             _entitiesComponentMasks[entityID][maskBit.chankIndex] &= ~maskBit.mask;
 
-            if (count == 0 && _allEntites.Has(entityID)) 
+            if (count == 0 && _allEntites.Has(entityID))
                 DelEntity(entityID);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (count < 0) Throw.World_InvalidIncrementComponentsBalance();

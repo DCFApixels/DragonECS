@@ -70,7 +70,7 @@ namespace DCFApixels.DragonECS
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnAdd(entityID);
-            if(isMain)
+            if (isMain)
                 component.OnAddToPool(_source.GetEntityLong(entityID));
             _items[itemIndex] = component;
             _entities[itemIndex] = entityID;
@@ -84,7 +84,7 @@ namespace DCFApixels.DragonECS
         }
         public void Set(int entityID, T component)
         {
-            if(Has(entityID))
+            if (Has(entityID))
                 Del(entityID);
             Add(entityID, component);
         }
@@ -121,7 +121,7 @@ namespace DCFApixels.DragonECS
 #endif
             ref int itemIndex = ref _mapping[entityID];
             T component = _items[itemIndex];
-            if(isMain)
+            if (isMain)
                 component.OnDelFromPool(_source.GetEntityLong(entityID));
             if (_recycledItemsCount >= _recycledItems.Length)
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
@@ -296,7 +296,7 @@ namespace DCFApixels.DragonECS
         private Dictionary<Type, HybridMapping> _hybridMapping = new Dictionary<Type, HybridMapping>();
         internal HybridMapping GetHybridMapping(Type type)
         {
-            if(!_hybridMapping.TryGetValue(type, out HybridMapping mapping))
+            if (!_hybridMapping.TryGetValue(type, out HybridMapping mapping))
             {
                 mapping = new HybridMapping(this, type);
                 _hybridMapping.Add(type, mapping);
@@ -314,7 +314,7 @@ namespace DCFApixels.DragonECS
         private IEcsHybridPoolInternal _targetTypePool;
         private List<IEcsHybridPoolInternal> _relatedPools;
 
-        private static Type hybridPoolType = typeof(EcsHybridPool<>); 
+        private static Type hybridPoolType = typeof(EcsHybridPool<>);
         private static MethodInfo getHybridPoolMethod = typeof(EcsHybridPoolExtensions).GetMethod($"{nameof(EcsHybridPoolExtensions.GetPool)}", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 
         private static HashSet<Type> _hybridComponents = new HashSet<Type>();
@@ -346,17 +346,17 @@ namespace DCFApixels.DragonECS
             _source = source;
             _type = type;
             _relatedPools = new List<IEcsHybridPoolInternal>();
-            _sourceForReflection = new object[]{ source };
+            _sourceForReflection = new object[] { source };
             _targetTypePool = CreateHybridPool(type);
             foreach (var item in type.GetInterfaces())
             {
-                if(IsEcsHybridComponentType(item))
+                if (IsEcsHybridComponentType(item))
                 {
                     _relatedPools.Add(CreateHybridPool(item));
                 }
             }
             Type baseType = type.BaseType;
-            while(baseType != typeof(object) && IsEcsHybridComponentType(baseType))
+            while (baseType != typeof(object) && IsEcsHybridComponentType(baseType))
             {
                 _relatedPools.Add(CreateHybridPool(baseType));
                 baseType = baseType.BaseType;

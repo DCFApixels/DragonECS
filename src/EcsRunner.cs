@@ -162,7 +162,7 @@ namespace DCFApixels.DragonECS
 
             private static TInterface Instantiate(EcsPipeline source, TInterface[] targets, bool isHasFilter, object filter)
             {
-                if(_subclass == null)
+                if (_subclass == null)
                 {
                     Type interfaceType = typeof(TInterface);
                     if (interfaceType.TryGetCustomAttribute(out BindWithEcsRunnerAttribute atr))
@@ -181,7 +181,7 @@ namespace DCFApixels.DragonECS
                         throw new EcsFrameworkException("Процесс не связан с раннером, используйте атрибуут BindWithEcsRunner(Type runnerType)");
                     }
                 }
-                
+
                 var instance = (EcsRunner<TInterface>)Activator.CreateInstance(_subclass);
                 return (TInterface)(IEcsProcess)instance.Set(source, targets, isHasFilter, filter);
             }
@@ -194,7 +194,7 @@ namespace DCFApixels.DragonECS
                 return Instantiate(source, FilterSystems(source.AllSystems, filter), true, filter);
             }
             #endregion
-            
+
             private EcsPipeline _source;
             protected TInterface[] targets;
             private ReadOnlyCollection<TInterface> _targetsSealed;
@@ -333,7 +333,7 @@ namespace DCFApixels.DragonECS
 
         public static IEnumerable<Type> GetEcsProcessInterfaces(this Type self)
         {
-            return self.GetInterfaces().Where(o=> o.IsEcsProcessInterface());
+            return self.GetInterfaces().Where(o => o.IsEcsProcessInterface());
         }
         #endregion
 

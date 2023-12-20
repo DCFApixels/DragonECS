@@ -1,7 +1,4 @@
-﻿using DCFApixels.DragonECS.Utils;
-using System;
-
-namespace DCFApixels.DragonECS
+﻿namespace DCFApixels.DragonECS
 {
     public abstract partial class EcsWorld
     {

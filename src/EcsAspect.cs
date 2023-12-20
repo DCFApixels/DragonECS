@@ -143,7 +143,7 @@ namespace DCFApixels.DragonECS
                 foreach (var id in maskInc)
                 {
                     var bit = EcsMaskBit.FromID(id);
-                    if(!r.TryAdd(bit.chankIndex, bit.mask))
+                    if (!r.TryAdd(bit.chankIndex, bit.mask))
                         r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
                 }
                 EcsMaskBit[] incMasks = r.Select(o => new EcsMaskBit(o.Key, o.Value)).ToArray();
@@ -155,7 +155,7 @@ namespace DCFApixels.DragonECS
                         r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
                 }
                 EcsMaskBit[] excMasks = r.Select(o => new EcsMaskBit(o.Key, o.Value)).ToArray();
-                
+
                 var inc = maskInc.ToArray();
                 Array.Sort(inc);
                 var exc = maskExc.ToArray();
