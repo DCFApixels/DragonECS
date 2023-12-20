@@ -146,7 +146,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entity
-        public int NewEmptyEntity()
+        public int NewEntity()
         {
             if(_freeSpace <= 1 && _delEntBufferCount > _delEntBufferMinCount)
                 ReleaseDelEntityBuffer();
@@ -163,9 +163,9 @@ namespace DCFApixels.DragonECS
             _entityListeners.InvokeOnNewEntity(entityID);
             return entityID;
         }
-        public entlong NewEmptyEntityLong()
+        public entlong NewEntityLong()
         {
-            int e = NewEmptyEntity();
+            int e = NewEntity();
             return GetEntityLong(e);
         }
         public void DelEntity(int entityID)
@@ -252,13 +252,13 @@ namespace DCFApixels.DragonECS
         }
         public int CloneEntity(int fromEntityID)
         {
-            int newEntity = NewEmptyEntity();
+            int newEntity = NewEntity();
             CopyEntity(fromEntityID, newEntity);
             return newEntity;
         }
         public int CloneEntity(int fromEntityID, EcsWorld toWorld)
         {
-            int newEntity = NewEmptyEntity();
+            int newEntity = NewEntity();
             CopyEntity(fromEntityID, toWorld, newEntity);
             return newEntity;
         }
