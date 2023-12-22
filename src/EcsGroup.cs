@@ -342,9 +342,9 @@ namespace DCFApixels.DragonECS
                     AddInternal(item);
             }
         }
-        public void UnionWithRange(IEnumerable<int> otherRange)
+        public void UnionWithRange(IEnumerable<int> range)
         {
-            foreach (var item in otherRange)
+            foreach (var item in range)
             {
                 if (!Has(item))
                     AddInternal(item);
@@ -408,12 +408,12 @@ namespace DCFApixels.DragonECS
                     RemoveInternal(item);
             }
         }
-        public void ExceptWithRange(IEnumerable<int> otherRange)
+        public void ExceptWithRange(IEnumerable<int> range)
         {
-            foreach (var item in otherRange)
+            foreach (var item in range)
             {
-                if (!Has(item))
-                    AddInternal(item);
+                if (Has(item))
+                    RemoveInternal(item);
             }
         }
         #endregion
@@ -720,4 +720,58 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
+
+#if false
+    public static class EcsGroupAliases
+    {
+        /// <summary>Alias for UnionWith</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Add(this EcsGroup self, EcsGroup group)
+        {
+            self.UnionWith(group);
+        }
+        /// <summary>Alias for UnionWith</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Add(this EcsGroup self, EcsReadonlyGroup group)
+        {
+            self.UnionWith(group);
+        }
+        /// <summary>Alias for ExceptWith</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Remove(this EcsGroup self, EcsGroup group)
+        {
+            self.ExceptWith(group);
+        }
+        /// <summary>Alias for ExceptWith</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Remove(this EcsGroup self, EcsReadonlyGroup group)
+        {
+            self.ExceptWith(group);
+        }
+        /// <summary>Alias for SymmetricExceptWith</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Xor(this EcsGroup self, EcsGroup group)
+        {
+            self.SymmetricExceptWith(group);
+        }
+        /// <summary>Alias for SymmetricExceptWith</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Xor(this EcsGroup self, EcsReadonlyGroup group)
+        {
+            self.SymmetricExceptWith(group);
+        }
+        /// <summary>Alias for IntersectWith</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void And(this EcsGroup self, EcsGroup group)
+        {
+            self.IntersectWith(group);
+        }
+        /// <summary>Alias for IntersectWith</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void And(this EcsGroup self, EcsReadonlyGroup group)
+        {
+            self.IntersectWith(group);
+        }
+    }
+#endif
 }
