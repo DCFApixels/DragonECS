@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
+    //_dense заполняется с индекса 1
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly ref struct EcsReadonlyGroup
@@ -185,11 +186,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Add/Remove
-        public void UncheckedAdd(int entityID) => AddInternal(entityID);
-        public void Add(int entityID)
+        public void AddUnchecked(int entityID) => AddInternal(entityID);
+        public bool Add(int entityID)
         {
-            if (Has(entityID)) return;
+            if (Has(entityID))
+                return false;
             AddInternal(entityID);
+            return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AddInternal(int entityID)
@@ -203,11 +206,13 @@ namespace DCFApixels.DragonECS
             _sparse[entityID] = _count;
         }
 
-        public void UncheckedRemove(int entityID) => RemoveInternal(entityID);
-        public void Remove(int entityID)
+        public void RemoveUnchecked(int entityID) => RemoveInternal(entityID);
+        public bool Remove(int entityID)
         {
-            if (!Has(entityID)) return;
+            if (!Has(entityID))
+                return false;
             RemoveInternal(entityID);
+            return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RemoveInternal(int entityID)
@@ -289,6 +294,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Set operations
+
+        #region UnionWith
         /// <summary>as Union sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UnionWith(EcsReadonlyGroup group) => UnionWith(group.GetGroupInternal());
@@ -302,7 +309,50 @@ namespace DCFApixels.DragonECS
                 if (!Has(item))
                     AddInternal(item);
         }
+        public void UnionWithRange(int[] range)
+        {
+            foreach (var item in range)
+            {
+                if (!Has(item))
+                    AddInternal(item);
+            }
+        }
+        public void UnionWithRange(Span<int> range)
+        {
+            foreach (var item in range)
+            {
+                if (!Has(item))
+                    AddInternal(item);
+            }
+        }
+        public void UnionWithRange(ReadOnlySpan<int> range)
+        {
+            foreach (var item in range)
+            {
+                if (!Has(item))
+                    AddInternal(item);
+            }
+        }
+        public void UnionWithRange<T>(T range) where T : IList<int>
+        {
+            for (int i = 0; i < range.Count; i++)
+            {
+                int item = range[i];
+                if (!Has(item))
+                    AddInternal(item);
+            }
+        }
+        public void UnionWithRange(IEnumerable<int> otherRange)
+        {
+            foreach (var item in otherRange)
+            {
+                if (!Has(item))
+                    AddInternal(item);
+            }
+        }
+        #endregion
 
+        #region ExceptWith
         /// <summary>as Except sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExceptWith(EcsReadonlyGroup group) => ExceptWith(group.GetGroupInternal());
@@ -312,11 +362,63 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            foreach (var item in this)
-                if (group.Has(item))
-                    RemoveInternal(item);
+            if (group.Count > Count)
+            {
+                foreach (var item in this)
+                    if (group.Has(item))
+                        RemoveInternal(item);
+            }
+            else
+            {
+                foreach (var item in group)
+                    if (Has(item))
+                        RemoveInternal(item);
+            }
         }
+        public void ExceptWithRange(int[] range)
+        {
+            foreach (var item in range)
+            {
+                if (Has(item))
+                    RemoveInternal(item);
+            }
+        }
+        public void ExceptWithRange(Span<int> range)
+        {
+            foreach (var item in range)
+            {
+                if (Has(item))
+                    RemoveInternal(item);
+            }
+        }
+        public void ExceptWithRange(ReadOnlySpan<int> range)
+        {
+            foreach (var item in range)
+            {
+                if (Has(item))
+                    RemoveInternal(item);
+            }
+        }
+        public void ExceptWithRange<T>(T range) where T : IList<int>
+        {
+            for (int i = 0; i < range.Count; i++)
+            {
+                int item = range[i];
+                if (Has(item))
+                    RemoveInternal(item);
+            }
+        }
+        public void ExceptWithRange(IEnumerable<int> otherRange)
+        {
+            foreach (var item in otherRange)
+            {
+                if (!Has(item))
+                    AddInternal(item);
+            }
+        }
+        #endregion
 
+        #region IntersectWith
         /// <summary>as Intersect sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void IntersectWith(EcsReadonlyGroup group) => IntersectWith(group.GetGroupInternal());
@@ -330,7 +432,9 @@ namespace DCFApixels.DragonECS
                 if (!group.Has(item))
                     RemoveInternal(item);
         }
+        #endregion
 
+        #region SymmetricExceptWith
         /// <summary>as Symmetric Except sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SymmetricExceptWith(EcsReadonlyGroup group) => SymmetricExceptWith(group.GetGroupInternal());
@@ -346,7 +450,9 @@ namespace DCFApixels.DragonECS
                 else
                     AddInternal(item);
         }
+        #endregion
 
+        #region Inverse
         public void Inverse()
         {
             foreach (var item in _source.Entities)
@@ -355,7 +461,9 @@ namespace DCFApixels.DragonECS
                 else
                     AddInternal(item);
         }
+        #endregion
 
+        #region SetEquals
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetEquals(EcsReadonlyGroup group) => SetEquals(group.GetGroupInternal());
         public bool SetEquals(EcsGroup group)
@@ -370,7 +478,9 @@ namespace DCFApixels.DragonECS
                     return false;
             return true;
         }
+        #endregion
 
+        #region Overlaps
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Overlaps(EcsReadonlyGroup group) => Overlaps(group.GetGroupInternal());
         public bool Overlaps(EcsGroup group)
@@ -383,7 +493,9 @@ namespace DCFApixels.DragonECS
                     return true;
             return false;
         }
+        #endregion
 
+        #region IsSubsetOf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(EcsReadonlyGroup group) => Overlaps(group.GetGroupInternal());
         public bool IsSubsetOf(EcsGroup group)
@@ -398,7 +510,9 @@ namespace DCFApixels.DragonECS
                     return false;
             return true;
         }
+        #endregion
 
+        #region IsSupersetOf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(EcsReadonlyGroup group) => Overlaps(group.GetGroupInternal());
         public bool IsSupersetOf(EcsGroup group)
@@ -413,6 +527,8 @@ namespace DCFApixels.DragonECS
                     return false;
             return true;
         }
+        #endregion
+
         #endregion
 
         #region Static Set operations
@@ -560,24 +676,14 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Object
-        public override string ToString() => $"group{{{string.Join(", ", _dense.Take(_count))}}}";
-        //public override int GetHashCode()
-        //{
-        //    unchecked
-        //    {
-        //        uint hash = 0;
-        //        foreach (var item in this)
-        //            hash ^= ((uint)item * 314159u); //реализация от балды, так как не нужен, но фишка в том что хеш не учитывает порядок сущьностей, что явлется правильным поведением.
-        //        return (int)hash;
-        //    }
-        //}
+        public override string ToString() => $"group{{{string.Join(", ", _dense.Skip(1).Take(_count))}}}";
         #endregion
 
         #region OtherMethods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int First() => this[0];
+        public int First() => _dense[1];
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Last() => this[_count - 1];
+        public int Last() => _dense[_count];
         #endregion
 
         #region OnWorldResize
