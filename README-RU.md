@@ -14,7 +14,8 @@
 | :--- | :--- | :--- |
 
 Данный [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Фреймворк нацелен на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Без генерации кода и зависимостей.
-> **NOTICE:** Проект в стадии разработки. API может меняться.  
+> [!Warning]
+> Проект в стадии разработки. API может меняться.  
 > Readme еще не завершен
 
 ## Оглавление
@@ -47,7 +48,9 @@
 * [Расширения](#Расширения)
 * [FAQ](#FAQ)
 * [Обратная связь](#Обратная-связь)
-* 
+
+</br>
+
 # Установка
 * ### Unity-модуль
 Поддерживается установка в виде Unity-модуля в  при помощи добавления git-URL [в PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) или ручного добавления в `Packages/manifest.json`: 
@@ -59,6 +62,8 @@ https://github.com/DCFApixels/DragonECS.git
 
 ### Версионирование
 В DragonECS применяется следующая семантика версионирования: [Открыть](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
+
+</br>
 
 # Основные концепции
 ## Entity
@@ -135,6 +140,9 @@ class SomeSystem : IEcsPreInitProcess, IEcsInitProcess, IEcsRunProcess, IEcsDest
 }
 ```
 > Для реализации дополнительных процессов перейдите к разделу [Процессы](#Процессы).
+
+</br>
+
 # Концепции фреймворка
 ## Пайплайн
 Является контейнером и движком систем, определяя поочередность их вызова, предоставляющий механизм для сообщений между системами и механизм внедрения зависимостей. Реализован в виде класса `EcsPipeline`.
@@ -555,7 +563,9 @@ public class EcsRoot
     }
 }
 ```
- 
+
+</br>
+
 # Debug
 Фреймворк предоставляет дополнительные инструменты для отладки и логирования, не зависящие от среды.
 ## Debug-Атрибуты
@@ -584,7 +594,9 @@ public struct Component { }
 * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * [Поддержка классической C# многопоточности](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * Интеграция с движком Unity (Work in progress)
- 
+
+</br>
+
 # FAQ
 ## 'ReadOnlySpan<>' could not be found
 В версии юнити 2020.1.х в консоли может выпадать ошибка:
@@ -593,5 +605,9 @@ The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing 
 ``` 
 Чтобы починить добавте директиву `ENABLE_DUMMY_SPAN` в `Project Settings/Player/Other Settings/Scripting Define Symbols`.
 
+</br>
+
 # Обратная связь
 Discord для дискуссий [https://discord.gg/2pBNf7v3](https://discord.gg/2pBNf7v3)
+
+</br></br>
