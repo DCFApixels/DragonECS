@@ -5,7 +5,7 @@
 <p align="center">
 <img alt="Version" src="https://img.shields.io/github/package-json/v/DCFApixels/DragonECS?color=%23ff4e85&style=for-the-badge">
 <img alt="License" src="https://img.shields.io/github/license/DCFApixels/DragonECS?color=ff4e85&style=for-the-badge">
-<!--<img alt="Discord" src="https://img.shields.io/discord/1111696966208999525?color=%23ff4e85&label=Discord&logo=Discord&logoColor=%23ff4e85&style=for-the-badge">-->
+<a href="https://discord.gg/2pBNf7v3"><img alt="Discord" src="https://img.shields.io/discord/1111696966208999525?color=%2300b269&label=Discord&logo=Discord&logoColor=%23ffffff&style=for-the-badge"></a>
 </p>
 
 # DragonECS - C# Entity Component System Framework
@@ -19,8 +19,6 @@
 > Readme еще не завершен
 
 ## Оглавление
-- [DragonECS - C# Entity Component System Framework](#dragonecs---c-entity-component-system-framework)
-  - [Оглавление](#оглавление)
 - [Установка](#установка)
     - [Версионирование](#версионирование)
 - [Основные концепции](#основные-концепции)
@@ -50,7 +48,6 @@
   - [Профилирование](#профилирование)
 - [Расширения](#расширения)
 - [FAQ](#faq)
-  - ['ReadOnlySpan\<\>' could not be found](#readonlyspan-could-not-be-found)
 - [Обратная связь](#обратная-связь)
 
 </br>
@@ -655,7 +652,7 @@ bool isCamera = _world.GetPool<Camera>().Has(entity);
 </br>
 
 # Debug
-Фреймворк предоставляет дополнительные инструменты для отладки и логирования, не зависящие от среды.
+Фреймворк предоставляет дополнительные инструменты для отладки и логирования, не зависящие от среды. Так же многие типы имеют свой DebuggerProxy для более информативного отображения в IDE.
 ## Атрибуты
 В чистом виде дебаг-атрибуты не имеют применения, но могут быть использованы для генерации автоматической документации и используются в интеграциях с движками для задания отображения в отладочных инструментах и редакторах.
 ``` c#
