@@ -93,6 +93,11 @@ namespace DCFApixels.DragonECS
 
         #endregion
 
+        #region Convertions
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator ReadOnlySpan<int>(EcsReadonlyGroup a) => a.ToSpan();
+        #endregion
+
         #region DebuggerProxy
         internal class DebuggerProxy : EcsGroup.DebuggerProxy
         {
@@ -623,7 +628,7 @@ namespace DCFApixels.DragonECS
             public Enumerator(EcsGroup group)
             {
                 _dense = group._dense;
-                _count = group._count;
+                _count = group._count > _dense.Length ? _dense.Length : group._count;
                 _index = 0;
             }
             public int Current
@@ -632,7 +637,7 @@ namespace DCFApixels.DragonECS
                 get => _dense[_index];
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() => ++_index <= _count && _count < _dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
+            public bool MoveNext() => ++_index <= _count; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
         }
         public readonly struct LongsIterator : IEnumerable<entlong>
         {
@@ -661,7 +666,7 @@ namespace DCFApixels.DragonECS
                 {
                     world = group.World;
                     _dense = group._dense;
-                    _count = group._count;
+                    _count = group._count > _dense.Length ? _dense.Length : group._count;
                     _index = 0;
                 }
                 public entlong Current
@@ -670,7 +675,7 @@ namespace DCFApixels.DragonECS
                     get => world.GetEntityLong(_dense[_index]);
                 }
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public bool MoveNext() => ++_index <= _count && _count < _dense.Length; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
+                public bool MoveNext() => ++_index <= _count; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
             }
         }
         #endregion
@@ -692,6 +697,13 @@ namespace DCFApixels.DragonECS
         {
             Array.Resize(ref _sparse, newSize);
         }
+        #endregion
+
+        #region Convertions
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator EcsReadonlyGroup(EcsGroup a) => a.Readonly;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator ReadOnlySpan<int>(EcsGroup a) => a.ToSpan();
         #endregion
 
         #region DebuggerProxy
