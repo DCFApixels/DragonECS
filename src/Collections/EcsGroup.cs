@@ -91,11 +91,15 @@ namespace DCFApixels.DragonECS
         public bool SetEquals(EcsReadonlyGroup group) => _source.SetEquals(group._source);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetEquals(EcsGroup group) => _source.SetEquals(group);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetEquals(EcsSpan span) => _source.SetEquals(span);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Overlaps(EcsReadonlyGroup group) => _source.Overlaps(group._source);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Overlaps(EcsGroup group) => _source.Overlaps(group);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Overlaps(EcsSpan span) => _source.Overlaps(span);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(EcsReadonlyGroup group) => _source.IsSubsetOf(group._source);
@@ -451,6 +455,18 @@ namespace DCFApixels.DragonECS
                     return false;
             return true;
         }
+        public bool SetEquals(EcsSpan span)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source != span.World) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            if (span.Length != Count)
+                return false;
+            foreach (var item in span)
+                if (!Has(item))
+                    return false;
+            return true;
+        }
         #endregion
 
         #region Overlaps
@@ -461,8 +477,27 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            foreach (var item in group)
-                if (!Has(item))
+            if(group.Count > Count)
+            {
+                foreach (var item in this)
+                    if (group.Has(item))
+                        return true;
+            }
+            else
+            {
+                foreach (var item in group)
+                    if (Has(item))
+                        return true;
+            }
+            return false;
+        }
+        public bool Overlaps(EcsSpan span)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source != span.World) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            foreach (var item in span)
+                if (Has(item))
                     return true;
             return false;
         }
