@@ -141,6 +141,10 @@ namespace DCFApixels.DragonECS
         {
             return GetExecutor<EcsWhereExecutor<TAspect>>().Execute();
         }
+        public EcsSpan WhereSpan<TAspect>() where TAspect : EcsAspect
+        {
+            return GetExecutor<EcsWhereSpanExecutor<TAspect>>().Execute();
+        }
         #endregion
 
         #region Entity

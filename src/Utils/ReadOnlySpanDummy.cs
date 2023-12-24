@@ -38,13 +38,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan(T[] array)
         {
             _array = array ?? Array.Empty<T>();
             _start = 0;
             _length = array.Length;
         }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan(T[] array, int start, int length)
         {

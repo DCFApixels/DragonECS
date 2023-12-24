@@ -334,13 +334,15 @@ namespace DCFApixels.DragonECS
     #region Iterator
     public ref struct EcsAspectIterator
     {
+        public readonly int worldID;
         public readonly EcsMask mask;
         private EcsReadonlyGroup _sourceGroup;
         private Enumerator _enumerator;
 
         public EcsAspectIterator(EcsAspect aspect, EcsReadonlyGroup sourceGroup)
         {
-            mask = aspect.mask;
+            worldID = aspect.World.id;
+            mask = aspect.mask; 
             _sourceGroup = sourceGroup;
             _enumerator = default;
         }
@@ -360,6 +362,30 @@ namespace DCFApixels.DragonECS
             var enumerator = GetEnumerator();
             while (enumerator.MoveNext())
                 group.AddInternal(enumerator.Current);
+        }
+        public int CopyTo(ref int[] array)
+        {
+            var enumerator = GetEnumerator();
+            int count = 0;
+            while (enumerator.MoveNext())
+            {
+                if(array.Length <= count)
+                    Array.Resize(ref array, array.Length << 1);
+                array[count++] = enumerator.Current;
+            }
+            return count;
+        }
+        public EcsSpan CopyToSpan(ref int[] array)
+        {
+            var enumerator = GetEnumerator();
+            int count = 0;
+            while (enumerator.MoveNext())
+            {
+                if (array.Length <= count)
+                    Array.Resize(ref array, array.Length << 1);
+                array[count++] = enumerator.Current;
+            }
+            return new EcsSpan(worldID, array, count);
         }
 
         #region object

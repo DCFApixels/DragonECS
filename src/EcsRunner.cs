@@ -239,7 +239,7 @@ namespace DCFApixels.DragonECS
                 _filter = null;
                 OnDestroy();
             }
-            protected virtual void OnSetup() { }
+            protected virtual void OnSetup() { } //rename to OnInitialize
             protected virtual void OnDestroy() { }
         }
     }

@@ -23,6 +23,11 @@ namespace DCFApixels.DragonECS
 
         #region Properties
         public bool IsNull => _source == null;
+        public int WorldID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _source.World.id;
+        }
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -116,6 +121,11 @@ namespace DCFApixels.DragonECS
         internal bool _isReleased = true;
 
         #region Properties
+        public int WorldID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _source.id;
+        }
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -619,7 +629,7 @@ namespace DCFApixels.DragonECS
                 yield return _dense[i];
         }
         public LongsIterator GetLongs() => new LongsIterator(this);
-        public ref struct Enumerator
+        public struct Enumerator : IEnumerator<int>
         {
             private readonly int[] _dense;
             private readonly int _count;
@@ -636,8 +646,13 @@ namespace DCFApixels.DragonECS
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _dense[_index];
             }
+            object IEnumerator.Current => Current;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index <= _count; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Dispose() { }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Reset() { }
         }
         public readonly struct LongsIterator : IEnumerable<entlong>
         {
@@ -680,25 +695,6 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Object
-        public override string ToString() => $"group{{{string.Join(", ", _dense.Skip(1).Take(_count))}}}";
-        #endregion
-
-        #region OtherMethods
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int First() => _dense[1];
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Last() => _dense[_count];
-        #endregion
-
-        #region OnWorldResize
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void OnWorldResize(int newSize)
-        {
-            Array.Resize(ref _sparse, newSize);
-        }
-        #endregion
-
         #region Convertions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsReadonlyGroup(EcsGroup a) => a.Readonly;
@@ -706,7 +702,26 @@ namespace DCFApixels.DragonECS
         public static implicit operator ReadOnlySpan<int>(EcsGroup a) => a.ToSpan();
         #endregion
 
-        #region DebuggerProxy
+        #region Other
+        public override string ToString()
+        {
+            return $"group{{{string.Join(", ", _dense.Skip(1).Take(_count))}}}";
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int First()
+        {
+            return _dense[1];
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Last()
+        {
+            return _dense[_count];
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void OnWorldResize(int newSize)
+        {
+            Array.Resize(ref _sparse, newSize);
+        }
         internal class DebuggerProxy
         {
             private EcsGroup _group;
@@ -726,7 +741,6 @@ namespace DCFApixels.DragonECS
             public int Count => _group.Count;
             public int CapacityDense => _group.CapacityDense;
             public int CapacitySparce => _group.CapacitySparce;
-
             public override string ToString() => _group.ToString();
             public DebuggerProxy(EcsGroup group) => _group = group;
         }
