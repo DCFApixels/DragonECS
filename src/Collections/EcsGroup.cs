@@ -349,7 +349,7 @@ namespace DCFApixels.DragonECS
         public void UnionWith(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != span.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             foreach (var item in span)
             {
@@ -385,7 +385,7 @@ namespace DCFApixels.DragonECS
         public void ExceptWith(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != span.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             foreach (var item in span)
             {
@@ -458,7 +458,7 @@ namespace DCFApixels.DragonECS
         public bool SetEquals(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != span.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             if (span.Length != Count)
                 return false;
@@ -494,7 +494,7 @@ namespace DCFApixels.DragonECS
         public bool Overlaps(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != span.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             foreach (var item in span)
                 if (Has(item))
