@@ -324,42 +324,12 @@ namespace DCFApixels.DragonECS
                 if (!Has(item))
                     AddInternal(item);
         }
-        public void UnionWithRange(int[] range)
+        public void UnionWith(EcsSpan span)
         {
-            foreach (var item in range)
-            {
-                if (!Has(item))
-                    AddInternal(item);
-            }
-        }
-        public void UnionWithRange(Span<int> range)
-        {
-            foreach (var item in range)
-            {
-                if (!Has(item))
-                    AddInternal(item);
-            }
-        }
-        public void UnionWithRange(ReadOnlySpan<int> range)
-        {
-            foreach (var item in range)
-            {
-                if (!Has(item))
-                    AddInternal(item);
-            }
-        }
-        public void UnionWithRange<T>(T range) where T : IList<int>
-        {
-            for (int i = 0; i < range.Count; i++)
-            {
-                int item = range[i];
-                if (!Has(item))
-                    AddInternal(item);
-            }
-        }
-        public void UnionWithRange(IEnumerable<int> range)
-        {
-            foreach (var item in range)
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source != span.World) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            foreach (var item in span)
             {
                 if (!Has(item))
                     AddInternal(item);
@@ -390,42 +360,12 @@ namespace DCFApixels.DragonECS
                         RemoveInternal(item);
             }
         }
-        public void ExceptWithRange(int[] range)
+        public void ExceptWith(EcsSpan span)
         {
-            foreach (var item in range)
-            {
-                if (Has(item))
-                    RemoveInternal(item);
-            }
-        }
-        public void ExceptWithRange(Span<int> range)
-        {
-            foreach (var item in range)
-            {
-                if (Has(item))
-                    RemoveInternal(item);
-            }
-        }
-        public void ExceptWithRange(ReadOnlySpan<int> range)
-        {
-            foreach (var item in range)
-            {
-                if (Has(item))
-                    RemoveInternal(item);
-            }
-        }
-        public void ExceptWithRange<T>(T range) where T : IList<int>
-        {
-            for (int i = 0; i < range.Count; i++)
-            {
-                int item = range[i];
-                if (Has(item))
-                    RemoveInternal(item);
-            }
-        }
-        public void ExceptWithRange(IEnumerable<int> range)
-        {
-            foreach (var item in range)
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source != span.World) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            foreach (var item in span)
             {
                 if (Has(item))
                     RemoveInternal(item);
