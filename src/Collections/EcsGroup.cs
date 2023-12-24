@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 namespace DCFApixels.DragonECS
 {
     //_dense заполняется с индекса 1
+    //в операциях изменяющих состояние группы нельзя итерироваться по this, либо осторожно учитывать этот момент
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly ref struct EcsReadonlyGroup
@@ -369,17 +370,39 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
+            //if (group.Count > Count) // вариант 1. есть итерация по this
+            //{
+            //    foreach (var item in this)
+            //        if (group.Has(item))
+            //            RemoveInternal(item);
+            //}
+            //else
+            //{
+            //    foreach (var item in group)
+            //        if (Has(item))
+            //            RemoveInternal(item);
+            //}
+
+            //foreach (var item in group) // вариант 2
+            //    if (Has(item))
+            //        RemoveInternal(item);
+
             if (group.Count > Count)
             {
-                foreach (var item in this)
+                for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
+                {
+                    int item = _dense[i];
                     if (group.Has(item))
                         RemoveInternal(item);
+                }
             }
             else
             {
                 foreach (var item in group)
+                {
                     if (Has(item))
                         RemoveInternal(item);
+                }
             }
         }
         public void ExceptWith(EcsSpan span)
@@ -405,9 +428,12 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (World != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            foreach (var item in this)
+            for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
+            {
+                int item = _dense[i];
                 if (!group.Has(item))
                     RemoveInternal(item);
+            }
         }
         #endregion
 
