@@ -86,6 +86,24 @@ namespace DCFApixels.DragonECS
         public int First() => _source.First();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() => _source.Last();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetEquals(EcsReadonlyGroup group) => _source.SetEquals(group._source);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetEquals(EcsGroup group) => _source.SetEquals(group);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Overlaps(EcsReadonlyGroup group) => _source.Overlaps(group._source);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Overlaps(EcsGroup group) => _source.Overlaps(group);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSubsetOf(EcsReadonlyGroup group) => _source.IsSubsetOf(group._source);
+        public bool IsSubsetOf(EcsGroup group) => _source.IsSubsetOf(group);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSupersetOf(EcsReadonlyGroup group) => _source.Overlaps(group._source);
+        public bool IsSupersetOf(EcsGroup group) => _source.IsSupersetOf(group);
         #endregion
 
         #region Object
@@ -452,7 +470,7 @@ namespace DCFApixels.DragonECS
 
         #region IsSubsetOf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSubsetOf(EcsReadonlyGroup group) => Overlaps(group.GetGroupInternal());
+        public bool IsSubsetOf(EcsReadonlyGroup group) => IsSubsetOf(group.GetGroupInternal());
         public bool IsSubsetOf(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
@@ -469,7 +487,7 @@ namespace DCFApixels.DragonECS
 
         #region IsSupersetOf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSupersetOf(EcsReadonlyGroup group) => Overlaps(group.GetGroupInternal());
+        public bool IsSupersetOf(EcsReadonlyGroup group) => IsSupersetOf(group.GetGroupInternal());
         public bool IsSupersetOf(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
