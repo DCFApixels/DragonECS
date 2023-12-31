@@ -14,11 +14,17 @@
 | :--- | :--- | :--- |
 
 Данный [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Фреймворк нацелен на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Без генерации кода и зависимостей. Вднохновлен [LeoEcs](https://github.com/Leopotam/ecslite).
+
+> [!IMPORTANT]
+> И с Новым Годом
+
 > [!WARNING]
 > Проект в стадии разработки. API может меняться.  
 > Readme еще не завершен
 
 ## Оглавление
+- [DragonECS - C# Entity Component System Framework](#dragonecs---c-entity-component-system-framework)
+  - [Оглавление](#оглавление)
 - [Установка](#установка)
     - [Версионирование](#версионирование)
 - [Основные концепции](#основные-концепции)
@@ -48,6 +54,7 @@
   - [Профилирование](#профилирование)
 - [Расширения](#расширения)
 - [FAQ](#faq)
+  - ['ReadOnlySpan\<\>' could not be found](#readonlyspan-could-not-be-found)
 - [Обратная связь](#обратная-связь)
 
 </br>
@@ -73,7 +80,7 @@ https://github.com/DCFApixels/DragonECS.git
 * `entlong` - долговременный идентификатор, содержит в себе полный набор информации для однозначной идентификации;
 ``` csharp
 // Создание новой сущности в мире.
-int entityID = _world.NewEmptyEntity();
+int entityID = _world.NewEntity();
 
 // Удаление сущности.
 _world.DelEntity(entityID);
@@ -128,16 +135,16 @@ struct PlayerTag : IEcsTagComponent {}
 class SomeSystem : IEcsPreInitProcess, IEcsInitProcess, IEcsRunProcess, IEcsDestroyProcess
 {
     // Будет вызван один раз в момент работы EcsPipeline.Init() и до срабатывания IEcsInitProcess.Init()
-    public void PreInit (EcsPipeline pipeline) { }
+    public void PreInit () { }
     
     // Будет вызван один раз в момент работы EcsPipeline.Init() и после срабатывания IEcsPreInitProcess.PreInit()
-    public void Init (EcsPipeline pipeline)  { }
+    public void Init ()  { }
     
     // Будет вызван один раз в момент работы EcsPipeline.Run().
-    public void Run (EcsPipeline pipeline) { }
+    public void Run () { }
     
     // Будет вызван один раз в момент работы EcsPipeline.Destroy()
-    public void Destroy (EcsPipeline pipeline) { }
+    public void Destroy () { }
 }
 ```
 > Для реализации дополнительных процессов перейдите к разделу [Процессы](#Процессы).
@@ -164,12 +171,45 @@ pipeline.Init(); // Инициализация пайплайна
 > Для одновременного построения и инициализации есть метод Builder.BuildAndInit();
 ### Внедрение зависимостей
 Внедрение зависимостей - это процесс который запускается вместе с инициализацией пайплайна и внедряет данные переданные в Builder.
+
+> [!WARNING]
+> Внедрение идет параллельно с PreInit, поэтому в PreInit инъекция - не гарантируется.
+> [!WARNING]
+> Экземпляр EcsPipeline автоматически внедряется до еще до PreInit.
 ``` c#
+SomeData _someData;
+//...
 EcsPipelone pipeline = EcsPipeline.New()
     //...
     .Inject(_someData) // Внедрит в системы экземпляр _someData
     //...
     .BuildAndInit();
+
+//...
+
+class SomeSystem : IInject<SomeData>, IEcsRunProcess
+{
+    // Для внедрения используется интерфейс IInject<T> и его метод Inject(T obj)
+    SomeData _someData
+    public void Inject(SomeData obj) => _someData = obj;
+
+    public void PreInit ()
+    {
+        // тут возможно еще не внедрен _someData
+    }
+    public void Init ()
+    {
+        // тут можно пользовать _someData
+    }
+    public void Run ()
+    {
+        // тут можно пользовать _someData
+    }
+    public void Destroy () 
+    {
+        // тут можно пользовать _someData
+    }
+}
 ```
 ### Модули
 Группы систем реализующие общую фичу можно объединять в модули, и просто добавлять модули в Pipeline.
@@ -226,8 +266,9 @@ EcsPipelone pipeline = EcsPipeline.New()
 <details>
 <summary>Пользовательские процессы</summary>
  
-Для добавления нового процесса создайте интерфейс наследованный от `IEcsProcess` и создайте раннер для него. Раннер это класс реализующий интерфейс запускаемого процесса и наследуемый от EcsRunner<TInterface>. Пример:
+Для добавления нового процесса создайте интерфейс наследованный от `IEcsProcess` и создайте раннер для него. Раннер это класс реализующий интерфейс запускаемого процесса и наследуемый от EcsRunner<TInterface>. А после к интерфейсу добавте атрибут `BindWithEcsRunner` для связи. Пример:
  ```c#
+[BindWithEcsRunner(typeof(DoSomethingProcessRunner))]
 interface IDoSomethingProcess : IEcsProcess
 {
     void Do();
@@ -437,14 +478,7 @@ for (int i = 0; i < group.Count; i++)
     //...
 }
 ```
-Так как группы это множества, они содержат операции над множествами. Каждый метод имеет 2 варианта, с записью результата в groupA, либо с возвращением новой группы:
-
-<details>
-<summary> Визуализация методов</summary>
- 
-![Визуализация методов группы](https://github.com/DCFApixels/DragonECS/assets/99481254/f2c85a9f-949c-4908-9a02-acc3c883a22b)
-
-</details>                    
+Так как группы это множества, они содержат методы аналогичные `ISet<T>`. Редактирующие методы имеет 2 варианта, с записью результата в groupA, либо с возвращением новой группы:            
                                 
 ``` c#
 // Объединение groupA и groupB
@@ -654,24 +688,24 @@ bool isCamera = _world.GetPool<Camera>().Has(entity);
 # Debug
 Фреймворк предоставляет дополнительные инструменты для отладки и логирования, не зависящие от среды. Так же многие типы имеют свой DebuggerProxy для более информативного отображения в IDE.
 ## Атрибуты
-В чистом виде дебаг-атрибуты не имеют применения, но могут быть использованы для генерации автоматической документации и используются в интеграциях с движками для задания отображения в отладочных инструментах и редакторах.
+В чистом виде мета-атрибуты не имеют применения, но могут быть использованы для генерации автоматической документации и используются в интеграциях с движками для задания отображения в отладочных инструментах и редакторах.
 ``` c#
 using DCFApixels.DragonECS;
 
 // Задает пользовательское название типа, по умолчанию используется имя типа.
-[DebugName("SomeComponent")]
+[MetaName("SomeComponent")]
 
 // Используется для группировки типов.
-[DebugGroup("Abilities/Passive/")]
+[MetaGroup("Abilities/Passive/")]
 
 // Задает цвет типа в системе rgb, где каждый канал принимает значение от 0 до 255, по умолчанию белый. 
-[DebugColor(DebugColor.Red)] // или [DebugColor(255, 0, 0)]
+[MetaColor(MetaColor.Red)] // или [DebugColor(255, 0, 0)]
  
 // Добавляет описание типу.
-[DebugDescription("The quick brown fox jumps over the lazy dog")] 
+[MetaDescription("The quick brown fox jumps over the lazy dog")] 
  
-// Скрывает тип.
-[DebugHide] 
+// Добавляет строковые теги.
+[MetaTags(...)]  // [MetaTags(MetaTags.HIDDEN))] чтобы скрыть в редакторе 
 public struct Component { }
 ```
 ## EcsDebug
