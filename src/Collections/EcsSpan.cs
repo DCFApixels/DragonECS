@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -59,6 +60,34 @@ namespace DCFApixels.DragonECS
         {
             _worldID = worldID;
             _values = new ReadOnlySpan<int>(array, start, length);
+        }
+        #endregion
+
+        #region Methdos
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int[] Bake()
+        {
+            int[] result = new int[_values.Length];
+            _values.CopyTo(result);
+            return result;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Bake(ref int[] entities)
+        {
+            if (entities.Length < _values.Length)
+                Array.Resize(ref entities, _values.Length);
+            int[] result = new int[_values.Length];
+            _values.CopyTo(result);
+            return _values.Length;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Bake(List<int> entities)
+        {
+            entities.Clear();
+            foreach (var e in _values)
+            {
+                entities.Add(e);
+            }
         }
         #endregion
 
