@@ -23,7 +23,7 @@ namespace DCFApixels.DragonECS
         private int _delEntBufferCount;
         private int _delEntBufferMinCount;
         private int _freeSpace;
-        //private bool _isEnableReleaseDelEntBuffer = true;
+        private bool _isEnableReleaseDelEntBuffer = true;
 
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
@@ -41,6 +41,7 @@ namespace DCFApixels.DragonECS
         public int Capacity => _entitesCapacity; //_denseEntities.Length;
 
         public int DelEntBufferCount => _delEntBufferCount;
+        public bool IsEnableReleaseDelEntBuffer => _isEnableReleaseDelEntBuffer;
 
         public EcsReadonlyGroup Entities => _allEntites.Readonly;
         public ReadOnlySpan<IEcsPoolImplementation> AllPools => _pools;// new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
@@ -136,51 +137,75 @@ namespace DCFApixels.DragonECS
         #region Where Query
         public EcsReadonlyGroup WhereToGroupFor<TAspect>(EcsSpan span, out TAspect aspect) where TAspect : EcsAspect
         {
-            ReleaseDelEntityBufferAll();
+            if(_isEnableReleaseDelEntBuffer)
+            {
+                ReleaseDelEntityBufferAll();
+            }
             var executor = GetExecutor<EcsWhereExecutor<TAspect>>();
             aspect = executor.Aspect;
             return executor.ExecuteFor(span);
         }
         public EcsReadonlyGroup WhereToGroupFor<TAspect>(EcsSpan span) where TAspect : EcsAspect
         {
-            ReleaseDelEntityBufferAll();
+            if (_isEnableReleaseDelEntBuffer)
+            {
+                ReleaseDelEntityBufferAll();
+            }
             return GetExecutor<EcsWhereExecutor<TAspect>>().ExecuteFor(span);
         }
         public EcsReadonlyGroup WhereToGroup<TAspect>(out TAspect aspect) where TAspect : EcsAspect
         {
-            ReleaseDelEntityBufferAll();
+            if (_isEnableReleaseDelEntBuffer)
+            {
+                ReleaseDelEntityBufferAll();
+            }
             var executor = GetExecutor<EcsWhereExecutor<TAspect>>();
             aspect = executor.Aspect;
             return executor.Execute();
         }
         public EcsReadonlyGroup WhereToGroup<TAspect>() where TAspect : EcsAspect
         {
-            ReleaseDelEntityBufferAll();
+            if (_isEnableReleaseDelEntBuffer)
+            {
+                ReleaseDelEntityBufferAll();
+            }
             return GetExecutor<EcsWhereExecutor<TAspect>>().Execute();
         }
 
         public EcsSpan WhereFor<TAspect>(EcsSpan span, out TAspect aspect) where TAspect : EcsAspect
         {
-            ReleaseDelEntityBufferAll();
+            if (_isEnableReleaseDelEntBuffer)
+            {
+                ReleaseDelEntityBufferAll();
+            }
             var executor = GetExecutor<EcsWhereSpanExecutor<TAspect>>();
             aspect = executor.Aspect;
             return executor.ExecuteFor(span);
         }
         public EcsSpan WhereFor<TAspect>(EcsSpan span) where TAspect : EcsAspect
         {
-            ReleaseDelEntityBufferAll();
+            if (_isEnableReleaseDelEntBuffer)
+            {
+                ReleaseDelEntityBufferAll();
+            }
             return GetExecutor<EcsWhereSpanExecutor<TAspect>>().ExecuteFor(span);
         }
         public EcsSpan Where<TAspect>(out TAspect aspect) where TAspect : EcsAspect
         {
-            ReleaseDelEntityBufferAll();
+            if (_isEnableReleaseDelEntBuffer)
+            {
+                ReleaseDelEntityBufferAll();
+            }
             var executor = GetExecutor<EcsWhereSpanExecutor<TAspect>>();
             aspect = executor.Aspect;
             return executor.Execute();
         }
         public EcsSpan Where<TAspect>() where TAspect : EcsAspect
         {
-            ReleaseDelEntityBufferAll();
+            if (_isEnableReleaseDelEntBuffer)
+            {
+                ReleaseDelEntityBufferAll();
+            }
             return GetExecutor<EcsWhereSpanExecutor<TAspect>>().Execute();
         }
         #endregion
@@ -333,27 +358,27 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region DelEntBuffer
-        //public AutoReleaseDelEntBufferLonkUnloker DisableAutoReleaseDelEntBuffer()
-        //{
-        //    _isEnableReleaseDelEntBuffer = false;
-        //    return new AutoReleaseDelEntBufferLonkUnloker(this);
-        //}
-        //public void EnableAutoReleaseDelEntBuffer()
-        //{
-        //    _isEnableReleaseDelEntBuffer = true;
-        //}
-        //public readonly struct AutoReleaseDelEntBufferLonkUnloker : IDisposable
-        //{
-        //    private readonly EcsWorld _source;
-        //    public AutoReleaseDelEntBufferLonkUnloker(EcsWorld source)
-        //    {
-        //        _source = source;
-        //    }
-        //    public void Dispose()
-        //    {
-        //        _source.EnableAutoReleaseDelEntBuffer();
-        //    }
-        //}
+        public AutoReleaseDelEntBufferLonkUnloker DisableAutoReleaseDelEntBuffer()
+        {
+            _isEnableReleaseDelEntBuffer = false;
+            return new AutoReleaseDelEntBufferLonkUnloker(this);
+        }
+        public void EnableAutoReleaseDelEntBuffer()
+        {
+            _isEnableReleaseDelEntBuffer = true;
+        }
+        public readonly struct AutoReleaseDelEntBufferLonkUnloker : IDisposable
+        {
+            private readonly EcsWorld _source;
+            public AutoReleaseDelEntBufferLonkUnloker(EcsWorld source)
+            {
+                _source = source;
+            }
+            public void Dispose()
+            {
+                _source.EnableAutoReleaseDelEntBuffer();
+            }
+        }
         public void ReleaseDelEntityBufferAll()
         {
             ReleaseDelEntityBuffer(-1);
