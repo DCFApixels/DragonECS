@@ -107,7 +107,7 @@ namespace DCFApixels.DragonECS
         public bool IsSubsetOf(EcsGroup group) => _source.IsSubsetOf(group);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSupersetOf(EcsReadonlyGroup group) => _source.Overlaps(group._source);
+        public bool IsSupersetOf(EcsReadonlyGroup group) => _source.IsSupersetOf(group._source);
         public bool IsSupersetOf(EcsGroup group) => _source.IsSupersetOf(group);
         #endregion
 
@@ -648,7 +648,7 @@ namespace DCFApixels.DragonECS
             public Enumerator(EcsGroup group)
             {
                 _dense = group._dense;
-                _index = (uint)(group._count > _dense.Length ? _dense.Length : group._count);
+                _index = (uint)(group._count > _dense.Length ? _dense.Length : group._count) + 1;
             }
             public int Current
             {
@@ -689,7 +689,7 @@ namespace DCFApixels.DragonECS
                 {
                     world = group.World;
                     _dense = group._dense;
-                    _index = (uint)(group._count > _dense.Length ? _dense.Length : group._count);
+                    _index = (uint)(group._count > _dense.Length ? _dense.Length : group._count) + 1;
                 }
                 public entlong Current
                 {
@@ -698,7 +698,7 @@ namespace DCFApixels.DragonECS
                 }
                 object IEnumerator.Current => Current;
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public bool MoveNext() => ++_index > 0; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
+                public bool MoveNext() => --_index > 0; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public void Dispose() { }
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
