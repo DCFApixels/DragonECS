@@ -173,8 +173,9 @@ pipeline.Init(); // Инициализация пайплайна
 
 > [!WARNING]
 > Внедрение идет параллельно с PreInit, поэтому в PreInit инъекция - не гарантируется.
+
 > [!WARNING]
-> Экземпляр EcsPipeline автоматически внедряется до еще до PreInit.
+> Экземпляр EcsPipeline автоматически внедряется еще до PreInit.
 ``` c#
 SomeData _someData;
 //...
