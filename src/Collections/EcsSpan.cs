@@ -93,10 +93,10 @@ namespace DCFApixels.DragonECS
 
         #region Object
 #pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
-        [Obsolete($"Equals() on {nameof(EcsSpan)} will always throw an exception. Use the equality operator instead.")]
+        [Obsolete("Equals() on EcsSpan will always throw an exception. Use the equality operator instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override bool Equals(object obj) => throw new NotSupportedException();
-        [Obsolete($"GetHashCode() on {nameof(EcsSpan)} will always throw an exception.")]
+        [Obsolete("GetHashCode() on EcsSpan will always throw an exception.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override int GetHashCode() => throw new NotSupportedException();
 #pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член

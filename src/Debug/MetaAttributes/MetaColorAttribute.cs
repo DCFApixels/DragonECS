@@ -10,7 +10,7 @@ namespace DCFApixels.DragonECS
         public byte R => color.r;
         public byte G => color.g;
         public byte B => color.b;
-        public float FloatT => R / (float)byte.MaxValue;
+        public float FloatR => R / (float)byte.MaxValue;
         public float FloatG => G / (float)byte.MaxValue;
         public float FloatB => B / (float)byte.MaxValue;
         public MetaColorAttribute(byte r, byte g, byte b) => color = new MetaColor(r, g, b, 255);
@@ -69,6 +69,10 @@ namespace DCFApixels.DragonECS
         [FieldOffset(2)] public readonly byte g;
         [FieldOffset(1)] public readonly byte b;
         [FieldOffset(0)] public readonly byte a;
+        public float FloatR => r / (float)byte.MaxValue;
+        public float FloatG => g / (float)byte.MaxValue;
+        public float FloatB => b / (float)byte.MaxValue;
+        public float FloatA => a / (float)byte.MaxValue;
         public MetaColor(byte r, byte g, byte b) : this()
         {
             this.r = r;

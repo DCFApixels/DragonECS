@@ -340,13 +340,13 @@ namespace DCFApixels.DragonECS
 
         #region ReflectionExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool TryGetCustomAttribute<T>(this Type self, out T attribute) where T : Attribute
+        public static bool TryGetCustomAttribute<T>(this Type self, out T attribute) where T : Attribute
         {
             attribute = self.GetCustomAttribute<T>();
             return attribute != null;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool TryGetCustomAttribute<T>(this MemberInfo self, out T attribute) where T : Attribute
+        public static bool TryGetCustomAttribute<T>(this MemberInfo self, out T attribute) where T : Attribute
         {
             attribute = self.GetCustomAttribute<T>();
             return attribute != null;
