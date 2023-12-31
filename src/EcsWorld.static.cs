@@ -41,7 +41,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetData<T>(int worldID) => ref WorldComponentPool<T>.GetForWorld(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T UncheckedGetData<T>(int worldID) => ref WorldComponentPool<T>.UncheckedGetForWorld(worldID);
+        public static ref T UncheckedGetData<T>(int worldID) => ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
 
         private abstract class DataReleaser
         {
@@ -57,11 +57,24 @@ namespace DCFApixels.DragonECS
             private static IEcsWorldComponent<T> _interface = EcsWorldComponentHandler<T>.instance;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ref T Get(int itemIndex) => ref _items[itemIndex];
+            public static ref T Get(int itemIndex)
+            {
+                return ref _items[itemIndex];
+            }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ref T GetForWorld(int worldID) => ref _items[GetItemIndex(worldID)];
+            public static ref T GetForWorld(int worldID)
+            {
+                return ref _items[GetItemIndex(worldID)];
+            }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ref T UncheckedGetForWorld(int worldID) => ref _items[_mapping[worldID]];
+            public static ref T GetForWorldUnchecked(int worldID)
+            {
+#if (DEBUG && !DISABLE_DEBUG)
+                if (_mapping[worldID] <= 0)
+                    throw new Exception();
+#endif
+                return ref _items[_mapping[worldID]];
+            }
             public static int GetItemIndex(int worldID)
             {
                 if (_mapping.Length < Worlds.Length)

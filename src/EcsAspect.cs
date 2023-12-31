@@ -188,9 +188,9 @@ namespace DCFApixels.DragonECS
         {
             return new EcsAspectIterator(this, source.Entities);
         }
-        public EcsAspectIterator GetIteratorFor(EcsReadonlyGroup sourceGroup)
+        public EcsAspectIterator GetIteratorFor(EcsSpan span)
         {
-            return new EcsAspectIterator(this, sourceGroup);
+            return new EcsAspectIterator(this, span);
         }
         #endregion
 
@@ -336,14 +336,14 @@ namespace DCFApixels.DragonECS
     {
         public readonly int worldID;
         public readonly EcsMask mask;
-        private EcsReadonlyGroup _sourceGroup;
+        private EcsSpan _span;
         private Enumerator _enumerator;
 
-        public EcsAspectIterator(EcsAspect aspect, EcsReadonlyGroup sourceGroup)
+        public EcsAspectIterator(EcsAspect aspect, EcsSpan span)
         {
             worldID = aspect.World.id;
             mask = aspect.mask; 
-            _sourceGroup = sourceGroup;
+            _span = span;
             _enumerator = default;
         }
 
@@ -403,33 +403,33 @@ namespace DCFApixels.DragonECS
 
         #region Enumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(_sourceGroup, mask);
+        public Enumerator GetEnumerator() => new Enumerator(_span, mask);
 
         public ref struct Enumerator
         {
-            private EcsGroup.Enumerator _sourceGroup;
+            private ReadOnlySpan<int>.Enumerator _span;
             private readonly EcsMaskBit[] _inc;
             private readonly EcsMaskBit[] _exc;
             private readonly int[][] _entitiesComponentMasks;
 
-            public Enumerator(EcsReadonlyGroup sourceGroup, EcsMask mask)
+            public Enumerator(EcsSpan span, EcsMask mask)
             {
-                _sourceGroup = sourceGroup.GetEnumerator();
+                _span = span.GetEnumerator();
                 _inc = mask.incChunckMasks;
                 _exc = mask.excChunckMasks;
-                _entitiesComponentMasks = sourceGroup.World._entitiesComponentMasks;
+                _entitiesComponentMasks = span.World._entitiesComponentMasks;
             }
             public int Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _sourceGroup.Current;
+                get => _span.Current;
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                while (_sourceGroup.MoveNext())
+                while (_span.MoveNext())
                 {
-                    int e = _sourceGroup.Current;
+                    int e = _span.Current;
                     EcsMaskBit bit;
                     for (int i = 0, iMax = _inc.Length; i < iMax; i++)
                     {

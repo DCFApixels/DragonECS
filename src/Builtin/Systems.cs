@@ -23,7 +23,7 @@ namespace DCFApixels.DragonECS
                 foreach (var world in _worlds)
                 {
                     world.DeleteEmptyEntites();
-                    world.ReleaseDelEntityBuffer();
+                    world.ReleaseDelEntityBufferAll();
                 }
             }
         }
@@ -47,7 +47,7 @@ namespace DCFApixels.DragonECS
                     EcsWorld world = _worlds[i];
                     if (world.IsComponentTypeDeclared<TComponent>())
                     {
-                        foreach (var e in world.Where(out Aspect a))
+                        foreach (var e in world.WhereToGroup(out Aspect a))
                             a.pool.Del(e);
                     }
                 }

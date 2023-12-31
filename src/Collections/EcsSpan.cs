@@ -10,15 +10,30 @@ namespace DCFApixels.DragonECS
         private readonly ReadOnlySpan<int> _values;
 
         #region Properties
-        public int WorldID => _worldID;
-        public EcsWorld World => EcsWorld.GetWorld(_worldID);
-        public int Length => _values.Length;
-        public bool IsEmpty => _values.IsEmpty;
+        public int WorldID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _worldID;
+        }
+        public EcsWorld World
+        {
+            get => EcsWorld.GetWorld(_worldID);
+        }
+        public int Length
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _values.Length;
+        }
         public readonly int this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _values[index];
         }
+        public bool IsNull
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _values.IsEmpty;
+    }
         #endregion
 
         #region Constructors

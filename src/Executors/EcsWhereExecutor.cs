@@ -42,15 +42,15 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup Execute() => ExecuteFor(_aspect.World.Entities);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsReadonlyGroup ExecuteFor(EcsReadonlyGroup sourceGroup)
+        public EcsReadonlyGroup ExecuteFor(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _executeMarker.Begin();
-            if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
-            if (sourceGroup.WorldID != WorldID) throw new System.ArgumentException();//TODO составить текст исключения. 
+            if (span.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
+            if (span.WorldID != WorldID) throw new System.ArgumentException();//TODO составить текст исключения. 
 #endif
             unchecked { _version++; }
-            _aspect.GetIteratorFor(sourceGroup).CopyTo(_filteredGroup);
+            _aspect.GetIteratorFor(span).CopyTo(_filteredGroup);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _executeMarker.End();
 #endif
@@ -99,15 +99,15 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Execute() => ExecuteFor(_aspect.World.Entities);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan ExecuteFor(EcsReadonlyGroup sourceGroup)
+        public EcsSpan ExecuteFor(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _executeMarker.Begin();
-            if (sourceGroup.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
-            if (sourceGroup.WorldID != WorldID) throw new System.ArgumentException();//TODO составить текст исключения. 
+            if (span.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
+            if (span.WorldID != WorldID) throw new System.ArgumentException();//TODO составить текст исключения. 
 #endif
             unchecked { _version++; }
-            EcsSpan result = _aspect.GetIteratorFor(sourceGroup).CopyToSpan(ref _filteredEntities);
+            EcsSpan result = _aspect.GetIteratorFor(span).CopyToSpan(ref _filteredEntities);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _executeMarker.End();
 #endif
