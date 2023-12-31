@@ -83,17 +83,17 @@ namespace DCFApixels.DragonECS
         {
             public abstract void Inject(object obj);
         }
-        internal class EcsBaseTypeInjectRunner<T> : EcsBaseTypeInjectRunner
+        internal sealed class EcsBaseTypeInjectRunner<T> : EcsBaseTypeInjectRunner
         {
             private IEcsInject<T> _runner;
             public EcsBaseTypeInjectRunner(EcsPipeline pipeline) => _runner = pipeline.GetRunner<IEcsInject<T>>();
-            public override void Inject(object obj) => _runner.Inject((T)obj);
+            public sealed override void Inject(object obj) => _runner.Inject((T)obj);
         }
-        internal class EcsObjectTypePreInjectRunner : EcsBaseTypeInjectRunner
+        internal sealed class EcsObjectTypePreInjectRunner : EcsBaseTypeInjectRunner
         {
             private IEcsPreInject _runner;
             public EcsObjectTypePreInjectRunner(EcsPipeline pipeline) => _runner = pipeline.GetRunner<IEcsPreInject>();
-            public override void Inject(object obj) => _runner.PreInject(obj);
+            public sealed override void Inject(object obj) => _runner.PreInject(obj);
         }
 
         [MetaTags(MetaTags.HIDDEN)]

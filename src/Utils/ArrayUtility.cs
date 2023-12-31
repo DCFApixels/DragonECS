@@ -20,13 +20,13 @@ namespace DCFApixels.DragonECS.Utils
     internal static unsafe class UnmanagedArrayUtility
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void* New<T>(int capacity) where T : struct
+        public static T* New<T>(int capacity) where T : unmanaged
         {
-            return Marshal.AllocHGlobal(Marshal.SizeOf(typeof(T)) * capacity).ToPointer();
+            return (T*)Marshal.AllocHGlobal(Marshal.SizeOf<T>() * capacity).ToPointer();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void* NewAndInit<T>(int capacity) where T : struct
+        public static T* NewAndInit<T>(int capacity) where T : unmanaged
         {
             int newSize = Marshal.SizeOf(typeof(T)) * capacity;
             byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
@@ -34,7 +34,7 @@ namespace DCFApixels.DragonECS.Utils
             for (int i = 0; i < newSize; i++)
                 *(newPointer + i) = 0;
 
-            return newPointer;
+            return (T*)newPointer;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -44,9 +44,9 @@ namespace DCFApixels.DragonECS.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void* Resize<T>(void* oldPointer, int newCount) where T : struct
+        public static T* Resize<T>(void* oldPointer, int newCount) where T : unmanaged
         {
-            return (Marshal.ReAllocHGlobal(
+            return (T*)(Marshal.ReAllocHGlobal(
                 new IntPtr(oldPointer),
                 new IntPtr(Marshal.SizeOf(typeof(T)) * newCount))).ToPointer();
         }
