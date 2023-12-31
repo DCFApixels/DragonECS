@@ -33,6 +33,7 @@ namespace DCFApixels.DragonECS
     {
         public const string WARNING_TAG = EcsConsts.DEBUG_WARNING_TAG;
         public const string ERROR_TAG = EcsConsts.DEBUG_ERROR_TAG;
+        public const string PASS_TAG = EcsConsts.DEBUG_PASS_TAG;
 
         public static void Set<T>() where T : DebugService, new() => DebugService.Set<T>();
         public static void Set(DebugService service) => DebugService.Set(service);
@@ -40,6 +41,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintWarning(object v) => Print(EcsConsts.DEBUG_WARNING_TAG, v);
         public static void PrintError(object v) => Print(EcsConsts.DEBUG_ERROR_TAG, v);
+        public static void PrintPass(object v) => Print(EcsConsts.DEBUG_PASS_TAG, v);
         public static void Print()
         {
 #if !DISABLE_DRAGONECS_DEBUGGER
@@ -155,6 +157,9 @@ namespace DCFApixels.DragonECS
                         break;
                     case EcsDebug.WARNING_TAG:
                         Console.ForegroundColor = ConsoleColor.Yellow;
+                        break;
+                    case EcsDebug.PASS_TAG:
+                        Console.ForegroundColor = ConsoleColor.Green;
                         break;
                 }
                 Console.WriteLine($"[{tag}] {v}");

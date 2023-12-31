@@ -469,11 +469,30 @@ namespace DCFApixels.DragonECS
         {
             list.Clear();
             var itemsCount = GetComponentsCount(entityID);
-
-            for (var i = 0; i < _pools.Length; i++)
+            for (var i = 0; i < _poolsCount; i++)
             {
                 if (_pools[i].Has(entityID))
+                {
+                    itemsCount--;
                     list.Add(_pools[i].GetRaw(entityID));
+                    if (itemsCount <= 0)
+                        break;
+                }
+            }
+        }
+        public void GetComponentTypes(int entityID, HashSet<Type> typeSet)
+        {
+            typeSet.Clear();
+            var itemsCount = GetComponentsCount(entityID);
+            for (var i = 0; i < _poolsCount; i++)
+            {
+                if (_pools[i].Has(entityID))
+                {
+                    itemsCount--;
+                    typeSet.Add(_pools[i].ComponentType);
+                    if (itemsCount <= 0)
+                        break;
+                }
             }
         }
         #endregion
