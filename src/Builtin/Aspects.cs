@@ -121,20 +121,20 @@
             var combined = self.GetAspect<CombinedAspect<A0, A1>>();
             a0 = combined.a0;
             a1 = combined.a1;
-            return self.WhereFor<CombinedAspect<A0, A1>>(sourceGroup);
+            return self.WhereToGroupFor<CombinedAspect<A0, A1>>(sourceGroup);
         }
 
         public static EcsReadonlyGroup Where<A0, A1>(this EcsWorld self)
             where A0 : EcsAspect
             where A1 : EcsAspect
         {
-            return self.Where<CombinedAspect<A0, A1>>();
+            return self.WhereToGroup<CombinedAspect<A0, A1>>();
         }
         public static EcsReadonlyGroup WhereFor<A0, A1>(this EcsWorld self, EcsReadonlyGroup sourceGroup)
             where A0 : EcsAspect
             where A1 : EcsAspect
         {
-            return self.WhereFor<CombinedAspect<A0, A1>>(sourceGroup);
+            return self.WhereToGroupFor<CombinedAspect<A0, A1>>(sourceGroup);
         }
         #endregion
 
@@ -155,7 +155,7 @@
             a0 = combined.a0;
             a1 = combined.a1;
             a2 = combined.a2;
-            return self.WhereFor<CombinedAspect<A0, A1, A2>>(sourceGroup);
+            return self.WhereToGroupFor<CombinedAspect<A0, A1, A2>>(sourceGroup);
         }
 
         public static EcsReadonlyGroup Where<A0, A1, A2>(this EcsWorld self)
@@ -163,14 +163,14 @@
             where A1 : EcsAspect
             where A2 : EcsAspect
         {
-            return self.Where<CombinedAspect<A0, A1, A2>>();
+            return self.WhereToGroup<CombinedAspect<A0, A1, A2>>();
         }
         public static EcsReadonlyGroup WhereFor<A0, A1, A2>(this EcsWorld self, EcsReadonlyGroup sourceGroup)
             where A0 : EcsAspect
             where A1 : EcsAspect
             where A2 : EcsAspect
         {
-            return self.WhereFor<CombinedAspect<A0, A1, A2>>(sourceGroup);
+            return self.WhereToGroupFor<CombinedAspect<A0, A1, A2>>(sourceGroup);
         }
         #endregion
 
@@ -194,7 +194,7 @@
             a1 = combined.a1;
             a2 = combined.a2;
             a3 = combined.a3;
-            return self.WhereFor<CombinedAspect<A0, A1, A2, A3>>(sourceGroup);
+            return self.WhereToGroupFor<CombinedAspect<A0, A1, A2, A3>>(sourceGroup);
         }
 
         public static EcsReadonlyGroup Where<A0, A1, A2, A3>(this EcsWorld self)
@@ -203,7 +203,7 @@
             where A2 : EcsAspect
             where A3 : EcsAspect
         {
-            return self.Where<CombinedAspect<A0, A1, A2, A3>>();
+            return self.WhereToGroup<CombinedAspect<A0, A1, A2, A3>>();
         }
         public static EcsReadonlyGroup WhereFor<A0, A1, A2, A3>(this EcsWorld self, EcsReadonlyGroup sourceGroup)
             where A0 : EcsAspect
@@ -211,7 +211,7 @@
             where A2 : EcsAspect
             where A3 : EcsAspect
         {
-            return self.WhereFor<CombinedAspect<A0, A1, A2, A3>>(sourceGroup);
+            return self.WhereToGroupFor<CombinedAspect<A0, A1, A2, A3>>(sourceGroup);
         }
         #endregion
 
@@ -238,7 +238,7 @@
             a2 = combined.a2;
             a3 = combined.a3;
             a4 = combined.a4;
-            return self.WhereFor<CombinedAspect<A0, A1, A2, A3, A4>>(sourceGroup);
+            return self.WhereToGroupFor<CombinedAspect<A0, A1, A2, A3, A4>>(sourceGroup);
         }
 
 
@@ -249,7 +249,7 @@
             where A3 : EcsAspect
             where A4 : EcsAspect
         {
-            return self.Where<CombinedAspect<A0, A1, A2, A3, A4>>();
+            return self.WhereToGroup<CombinedAspect<A0, A1, A2, A3, A4>>();
         }
         public static EcsReadonlyGroup WhereFor<A0, A1, A2, A3, A4>(this EcsWorld self, EcsReadonlyGroup sourceGroup)
             where A0 : EcsAspect
@@ -258,7 +258,7 @@
             where A3 : EcsAspect
             where A4 : EcsAspect
         {
-            return self.WhereFor<CombinedAspect<A0, A1, A2, A3, A4>>(sourceGroup);
+            return self.WhereToGroupFor<CombinedAspect<A0, A1, A2, A3, A4>>(sourceGroup);
         }
         #endregion
 
@@ -288,7 +288,7 @@
             a3 = combined.a3;
             a4 = combined.a4;
             a5 = combined.a5;
-            return self.WhereFor<CombinedAspect<A0, A1, A2, A3, A4, A5>>(sourceGroup);
+            return self.WhereToGroupFor<CombinedAspect<A0, A1, A2, A3, A4, A5>>(sourceGroup);
         }
 
 
@@ -300,7 +300,7 @@
             where A4 : EcsAspect
             where A5 : EcsAspect
         {
-            return self.Where<CombinedAspect<A0, A1, A2, A3, A4, A5>>();
+            return self.WhereToGroup<CombinedAspect<A0, A1, A2, A3, A4, A5>>();
         }
         public static EcsReadonlyGroup WhereFor<A0, A1, A2, A3, A4, A5>(this EcsWorld self, EcsReadonlyGroup sourceGroup)
             where A0 : EcsAspect
@@ -310,7 +310,7 @@
             where A4 : EcsAspect
             where A5 : EcsAspect
         {
-            return self.WhereFor<CombinedAspect<A0, A1, A2, A3, A4, A5>>(sourceGroup);
+            return self.WhereToGroupFor<CombinedAspect<A0, A1, A2, A3, A4, A5>>(sourceGroup);
         }
         #endregion
     }

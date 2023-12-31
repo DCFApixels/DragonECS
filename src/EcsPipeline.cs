@@ -12,14 +12,14 @@ namespace DCFApixels.DragonECS
     public sealed class EcsPipeline
     {
         private IEcsProcess[] _allSystems;
-        private Dictionary<Type, IEcsRunner> _runners;
+        private Dictionary<Type, IEcsRunner> _runners = new Dictionary<Type, IEcsRunner>();
         private IEcsRunProcess _runRunnerCache;
 
         private ReadOnlyCollection<IEcsProcess> _allSystemsSealed;
         private ReadOnlyDictionary<Type, IEcsRunner> _allRunnersSealed;
 
-        private bool _isInit;
-        private bool _isDestoryed;
+        private bool _isInit = false;
+        private bool _isDestoryed = false;
 
         #region Properties
         public ReadOnlyCollection<IEcsProcess> AllSystems => _allSystemsSealed;
@@ -32,13 +32,8 @@ namespace DCFApixels.DragonECS
         private EcsPipeline(IEcsProcess[] systems)
         {
             _allSystems = systems;
-            _runners = new Dictionary<Type, IEcsRunner>();
-
             _allSystemsSealed = new ReadOnlyCollection<IEcsProcess>(_allSystems);
             _allRunnersSealed = new ReadOnlyDictionary<Type, IEcsRunner>(_runners);
-
-            _isInit = false;
-            _isDestoryed = false;
         }
         #endregion
 
@@ -64,7 +59,7 @@ namespace DCFApixels.DragonECS
         {
             if (_isInit == true)
             {
-                EcsDebug.Print("[Warning]", $"This {nameof(EcsPipeline)} has already been initialized");
+                EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been initialized");
                 return;
             }
 
@@ -72,58 +67,39 @@ namespace DCFApixels.DragonECS
             ecsPipelineInjectRunner.Inject(this);
             EcsRunner.Destroy(ecsPipelineInjectRunner);
             var preInitRunner = GetRunner<IEcsPreInitProcess>();
-            preInitRunner.PreInit(this);
+            preInitRunner.PreInit();
             EcsRunner.Destroy(preInitRunner);
             var initRunner = GetRunner<IEcsInitProcess>();
-            initRunner.Init(this);
+            initRunner.Init();
             EcsRunner.Destroy(initRunner);
 
             _runRunnerCache = GetRunner<IEcsRunProcess>();
             _isInit = true;
+            GC.Collect();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            CheckBeforeInitForMethod(nameof(Run));
-            CheckAfterDestroyForMethod(nameof(Run));
+            if (!_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run));
+            if (_isDestoryed) Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run));
 #endif
-            _runRunnerCache.Run(this);
+            _runRunnerCache.Run();
         }
         public void Destroy()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            CheckBeforeInitForMethod(nameof(Run));
+            if (!_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Destroy));
 #endif
-            if (_isDestoryed == true)
+            if (_isDestoryed)
             {
-                EcsDebug.Print("[Warning]", $"This {nameof(EcsPipeline)} has already been destroyed");
+                EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been destroyed");
                 return;
             }
             _isDestoryed = true;
-            GetRunner<IEcsDestroyProcess>().Destroy(this);
+            GetRunner<IEcsDestroyProcess>().Destroy();
         }
-        #endregion
-
-        #region StateChecks
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-        private void CheckBeforeInitForMethod(string methodName)
-        {
-            if (!_isInit)
-                throw new MethodAccessException($"It is forbidden to call {methodName}, before initialization {nameof(EcsPipeline)}");
-        }
-        private void CheckAfterInitForMethod(string methodName)
-        {
-            if (_isInit)
-                throw new MethodAccessException($"It is forbidden to call {methodName}, after initialization {nameof(EcsPipeline)}");
-        }
-        private void CheckAfterDestroyForMethod(string methodName)
-        {
-            if (_isDestoryed)
-                throw new MethodAccessException($"It is forbidden to call {methodName}, after destroying {nameof(EcsPipeline)}");
-        }
-#endif
         #endregion
 
         #region Builder
@@ -184,7 +160,7 @@ namespace DCFApixels.DragonECS
             }
             public EcsPipeline Build()
             {
-                Add(new DeleteEmptyEntitesSystem(), EcsConsts.POST_END_LAYER);
+                Add(new EndFrameSystem(), EcsConsts.POST_END_LAYER);
                 List<IEcsProcess> result = new List<IEcsProcess>(32);
                 List<IEcsProcess> basicBlockList = _systems[_basicLayer];
                 foreach (var item in _systems)

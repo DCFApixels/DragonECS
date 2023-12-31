@@ -1,32 +1,45 @@
 ﻿#pragma warning disable CS0162 // Обнаружен недостижимый код
+using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 
 namespace DCFApixels.DragonECS
 {
     #region Interfaces
+    [MetaName(nameof(PreInit))]
+    [MetaColor(MetaColor.Orange)]
+    [BindWithEcsRunner(typeof(EcsPreInitProcessRunner))]
     public interface IEcsPreInitProcess : IEcsProcess
     {
-        void PreInit(EcsPipeline pipeline);
+        void PreInit();
     }
+    [MetaName(nameof(Init))]
+    [MetaColor(MetaColor.Orange)]
+    [BindWithEcsRunner(typeof(EcsInitProcessRunner))]
     public interface IEcsInitProcess : IEcsProcess
     {
-        void Init(EcsPipeline pipeline);
+        void Init();
     }
+    [MetaName(nameof(Run))]
+    [MetaColor(MetaColor.Orange)]
+    [BindWithEcsRunner(typeof(EcsRunProcessRunner))]
     public interface IEcsRunProcess : IEcsProcess
     {
-        void Run(EcsPipeline pipeline);
+        void Run();
     }
+    [MetaName(nameof(Destroy))]
+    [MetaColor(MetaColor.Orange)]
+    [BindWithEcsRunner(typeof(EcsDestroyProcessRunner))]
     public interface IEcsDestroyProcess : IEcsProcess
     {
-        void Destroy(EcsPipeline pipeline);
+        void Destroy();
     }
 
     #endregion
 
     namespace Internal
     {
-        [DebugColor(DebugColor.Orange)]
+        [MetaColor(MetaColor.Orange)]
         public sealed class EcsPreInitProcessRunner : EcsRunner<IEcsPreInitProcess>, IEcsPreInitProcess
         {
 #if DEBUG && !DISABLE_DEBUG
@@ -40,33 +53,33 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
-            public void PreInit(EcsPipeline pipeline)
+            public void PreInit()
             {
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
+                    _markers[i].Begin();
                     try
                     {
-                        _markers[i].Begin();
-                        targets[i].PreInit(pipeline);
-                        _markers[i].End();
+                        targets[i].PreInit();
                     }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
+                    _markers[i].End();
                 }
 #else
                 foreach (var item in targets)
                 {
-                    try { item.PreInit(pipeline); }
+                    try { item.PreInit(); }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
@@ -74,7 +87,7 @@ namespace DCFApixels.DragonECS
 #endif
             }
         }
-        [DebugColor(DebugColor.Orange)]
+        [MetaColor(MetaColor.Orange)]
         public sealed class EcsInitProcessRunner : EcsRunner<IEcsInitProcess>, IEcsInitProcess
         {
 #if DEBUG && !DISABLE_DEBUG
@@ -88,33 +101,33 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
-            public void Init(EcsPipeline pipeline)
+            public void Init()
             {
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
+                    _markers[i].Begin();
                     try
                     {
-                        _markers[i].Begin();
-                        targets[i].Init(pipeline);
-                        _markers[i].End();
+                        targets[i].Init();
                     }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
+                    _markers[i].End();
                 }
 #else
                 foreach (var item in targets)
                 {
-                    try { item.Init(pipeline); }
+                    try { item.Init(); }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
@@ -122,7 +135,7 @@ namespace DCFApixels.DragonECS
 #endif
             }
         }
-        [DebugColor(DebugColor.Orange)]
+        [MetaColor(MetaColor.Orange)]
         public sealed class EcsRunProcessRunner : EcsRunner<IEcsRunProcess>, IEcsRunProcess
         {
 #if DEBUG && !DISABLE_DEBUG
@@ -136,33 +149,33 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
-            public void Run(EcsPipeline pipeline)
+            public void Run()
             {
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
+                    _markers[i].Begin();
                     try
                     {
-                        _markers[i].Begin();
-                        targets[i].Run(pipeline);
-                        _markers[i].End();
+                        targets[i].Run();
                     }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
+                    _markers[i].End();
                 }
 #else
                 foreach (var item in targets)
                 {
-                    try { item.Run(pipeline); }
+                    try { item.Run(); }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
@@ -170,7 +183,7 @@ namespace DCFApixels.DragonECS
 #endif
             }
         }
-        [DebugColor(DebugColor.Orange)]
+        [MetaColor(MetaColor.Orange)]
         public sealed class EcsDestroyProcessRunner : EcsRunner<IEcsDestroyProcess>, IEcsDestroyProcess
         {
 #if DEBUG && !DISABLE_DEBUG
@@ -180,37 +193,37 @@ namespace DCFApixels.DragonECS
                 _markers = new EcsProfilerMarker[targets.Length];
                 for (int i = 0; i < targets.Length; i++)
                 {
-                    _markers[i] = new EcsProfilerMarker($"{targets[i].GetType().Name}.{nameof(Destroy)}");
+                    _markers[i] = new EcsProfilerMarker($"{targets[i].GetType().Name}.{nameof(IEcsDestroyProcess.Destroy)}");
                 }
             }
 #endif
-            public void Destroy(EcsPipeline pipeline)
+            void IEcsDestroyProcess.Destroy()
             {
 #if DEBUG && !DISABLE_DEBUG
                 for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
                 {
+                    _markers[i].Begin();
                     try
                     {
-                        _markers[i].Begin();
-                        targets[i].Destroy(pipeline);
-                        _markers[i].End();
+                        targets[i].Destroy();
                     }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }
+                    _markers[i].End();
                 }
 #else
                 foreach (var item in targets)
                 {
-                    try { item.Destroy(pipeline); }
+                    try { item.Destroy(); }
                     catch (Exception e)
                     {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw;
+                        throw e;
 #endif
                         EcsDebug.PrintError(e);
                     }

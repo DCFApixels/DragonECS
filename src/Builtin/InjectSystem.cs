@@ -2,18 +2,23 @@
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    [MetaName(nameof(PreInject))]
+    [BindWithEcsRunner(typeof(EcsPreInjectRunner))]
     public interface IEcsPreInject : IEcsProcess
     {
         void PreInject(object obj);
     }
+    [MetaName(nameof(Inject))]
+    [BindWithEcsRunner(typeof(EcsInjectRunner<>))]
     public interface IEcsInject<T> : IEcsProcess
     {
         void Inject(T obj);
     }
+    [MetaName("PreInitInject")]
+    [BindWithEcsRunner(typeof(EcsPreInitInjectProcessRunner))]
     public interface IEcsPreInitInjectProcess : IEcsProcess
     {
         void OnPreInitInjectionBefore();
@@ -45,7 +50,8 @@ namespace DCFApixels.DragonECS
                 _injectSystems = null;
             }
         }
-        [DebugHide, DebugColor(DebugColor.Gray)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Gray)]
         public sealed class EcsPreInjectRunner : EcsRunner<IEcsPreInject>, IEcsPreInject
         {
             void IEcsPreInject.PreInject(object obj)
@@ -53,18 +59,17 @@ namespace DCFApixels.DragonECS
                 foreach (var item in targets) item.PreInject(obj);
             }
         }
-        [DebugHide, DebugColor(DebugColor.Gray)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Gray)]
         public sealed class EcsInjectRunner<T> : EcsRunner<IEcsInject<T>>, IEcsInject<T>
         {
             private EcsBaseTypeInjectRunner _baseTypeInjectRunner;
             void IEcsInject<T>.Inject(T obj)
             {
-                if (obj == null) ThrowArgumentNullException();
+                if (obj == null) Throw.ArgumentNull();
                 _baseTypeInjectRunner.Inject(obj);
                 foreach (var item in targets) item.Inject(obj);
             }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private void ThrowArgumentNullException() => throw new ArgumentNullException();
             protected override void OnSetup()
             {
                 Type baseType = typeof(T).BaseType;
@@ -78,20 +83,21 @@ namespace DCFApixels.DragonECS
         {
             public abstract void Inject(object obj);
         }
-        internal class EcsBaseTypeInjectRunner<T> : EcsBaseTypeInjectRunner
+        internal sealed class EcsBaseTypeInjectRunner<T> : EcsBaseTypeInjectRunner
         {
             private IEcsInject<T> _runner;
             public EcsBaseTypeInjectRunner(EcsPipeline pipeline) => _runner = pipeline.GetRunner<IEcsInject<T>>();
-            public override void Inject(object obj) => _runner.Inject((T)obj);
+            public sealed override void Inject(object obj) => _runner.Inject((T)obj);
         }
-        internal class EcsObjectTypePreInjectRunner : EcsBaseTypeInjectRunner
+        internal sealed class EcsObjectTypePreInjectRunner : EcsBaseTypeInjectRunner
         {
             private IEcsPreInject _runner;
             public EcsObjectTypePreInjectRunner(EcsPipeline pipeline) => _runner = pipeline.GetRunner<IEcsPreInject>();
-            public override void Inject(object obj) => _runner.PreInject(obj);
+            public sealed override void Inject(object obj) => _runner.PreInject(obj);
         }
 
-        [DebugHide, DebugColor(DebugColor.Gray)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Gray)]
         public sealed class EcsPreInitInjectProcessRunner : EcsRunner<IEcsPreInitInjectProcess>, IEcsPreInitInjectProcess
         {
             public void OnPreInitInjectionAfter()
@@ -103,34 +109,40 @@ namespace DCFApixels.DragonECS
                 foreach (var item in targets) item.OnPreInitInjectionBefore();
             }
         }
-        public class InjectSystemBase { }
-        [DebugHide, DebugColor(DebugColor.Gray)]
-        public class InjectSystem<T> : InjectSystemBase, IEcsPreInitProcess, IEcsInject<PreInitInjectController>, IEcsPreInitInjectProcess
+        public abstract class InjectSystemBase { }
+
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Gray)]
+        public class InjectSystem<T> : InjectSystemBase, IEcsInject<EcsPipeline>, IEcsPreInitProcess, IEcsInject<PreInitInjectController>, IEcsPreInitInjectProcess
         {
-            private T _injectedData;
+            private EcsPipeline _pipeline;
+            void IEcsInject<EcsPipeline>.Inject(EcsPipeline obj) => _pipeline = obj;
             private PreInitInjectController _injectController;
             void IEcsInject<PreInitInjectController>.Inject(PreInitInjectController obj) => _injectController = obj;
+
+            private T _injectedData;
+
             public InjectSystem(T injectedData)
             {
-                if (injectedData == null) throw new ArgumentNullException();
+                if (injectedData == null) Throw.ArgumentNull();
                 _injectedData = injectedData;
             }
-            public void PreInit(EcsPipeline pipeline)
+            public void PreInit()
             {
                 if (_injectedData == null) return;
                 if (_injectController == null)
                 {
-                    _injectController = new PreInitInjectController(pipeline);
-                    var injectMapRunner = pipeline.GetRunner<IEcsInject<PreInitInjectController>>();
-                    pipeline.GetRunner<IEcsPreInitInjectProcess>().OnPreInitInjectionBefore();
+                    _injectController = new PreInitInjectController(_pipeline);
+                    var injectMapRunner = _pipeline.GetRunner<IEcsInject<PreInitInjectController>>();
+                    _pipeline.GetRunner<IEcsPreInitInjectProcess>().OnPreInitInjectionBefore();
                     injectMapRunner.Inject(_injectController);
                 }
-                var injectRunnerGeneric = pipeline.GetRunner<IEcsInject<T>>();
+                var injectRunnerGeneric = _pipeline.GetRunner<IEcsInject<T>>();
                 injectRunnerGeneric.Inject(_injectedData);
                 if (_injectController.OnInject())
                 {
                     _injectController.Destroy();
-                    var injectCallbacksRunner = pipeline.GetRunner<IEcsPreInitInjectProcess>();
+                    var injectCallbacksRunner = _pipeline.GetRunner<IEcsPreInitInjectProcess>();
                     injectCallbacksRunner.OnPreInitInjectionAfter();
                     EcsRunner.Destroy(injectCallbacksRunner);
                 }
@@ -149,8 +161,11 @@ namespace DCFApixels.DragonECS
     {
         public static EcsPipeline.Builder Inject<T>(this EcsPipeline.Builder self, T data)
         {
-            if (data == null) throw new ArgumentNullException();
-            return self.Add(new InjectSystem<T>(data));
+            if (data == null) Throw.ArgumentNull();
+            self.Add(new InjectSystem<T>(data));
+            if (data is IEcsModule module)
+                self.AddModule(module);
+            return self;
         }
         public static EcsPipeline.Builder Inject<A, B>(this EcsPipeline.Builder self, A a, B b)
         {

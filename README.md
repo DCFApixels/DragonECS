@@ -13,8 +13,14 @@ inspired by [LeoEcs](https://github.com/Leopotam/ecslite)
 | Languages: | [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [English(WIP)](https://github.com/DCFApixels/DragonECS) |
 | :--- | :--- | :--- |
 
-The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes. Without code generation and dependencies
-> **NOTICE:** The project is a work in progress, API may change.  
+The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes. Without code generation and dependencies. Inspired by [LeoEcs](https://github.com/Leopotam/ecslite). 
+
+> [!IMPORTANT]
+> And a Happy New Year.
+
+> [!WARNING]
+> The project is a work in progress, API may change.
+> 
 > While the English version of the README is incomplete, you can view the [Russian version](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md).
 
 # Versioning
@@ -22,6 +28,7 @@ DragonECS uses this versioning semantics: [Open](https://gist.github.com/DCFApix
 # Extensions
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * [Classic C# multithreading support](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+* Relations (Work in progress)
 * Unity integration (Work in progress)
 
 # Feedback

@@ -5,42 +5,49 @@ namespace DCFApixels.DragonECS
 {
     namespace Internal
     {
-        [DebugHide, DebugColor(DebugColor.Black)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Black)]
         public class SystemsLayerMarkerSystem : IEcsProcess
         {
             public readonly string name;
             public SystemsLayerMarkerSystem(string name) => this.name = name;
         }
-        [DebugHide, DebugColor(DebugColor.Grey)]
-        public class DeleteEmptyEntitesSystem : IEcsRunProcess, IEcsInject<EcsWorld>
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Grey)]
+        public class EndFrameSystem : IEcsRunProcess, IEcsInject<EcsWorld>
         {
-            private List<EcsWorld> _worlds = new List<EcsWorld>();
+            private readonly List<EcsWorld> _worlds = new List<EcsWorld>();
             public void Inject(EcsWorld obj) => _worlds.Add(obj);
-            public void Run(EcsPipeline pipeline)
+            public void Run()
             {
                 foreach (var world in _worlds)
+                {
                     world.DeleteEmptyEntites();
+                    world.ReleaseDelEntityBufferAll();
+                }
             }
         }
-        [DebugHide, DebugColor(DebugColor.Grey)]
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaColor(MetaColor.Grey)]
         public class DeleteOneFrameComponentSystem<TComponent> : IEcsRunProcess, IEcsInject<EcsWorld>
             where TComponent : struct, IEcsComponent
         {
+            public EcsPipeline pipeline { get; set; }
             private sealed class Aspect : EcsAspect
             {
                 public EcsPool<TComponent> pool;
                 public Aspect(Builder b) => pool = b.Include<TComponent>();
             }
-            List<EcsWorld> _worlds = new List<EcsWorld>();
+            private readonly List<EcsWorld> _worlds = new List<EcsWorld>();
             public void Inject(EcsWorld obj) => _worlds.Add(obj);
-            public void Run(EcsPipeline pipeline)
+            public void Run()
             {
                 for (int i = 0, iMax = _worlds.Count; i < iMax; i++)
                 {
                     EcsWorld world = _worlds[i];
                     if (world.IsComponentTypeDeclared<TComponent>())
                     {
-                        foreach (var e in world.Where(out Aspect a))
+                        foreach (var e in world.WhereToGroup(out Aspect a))
                             a.pool.Del(e);
                     }
                 }

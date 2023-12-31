@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using static DCFApixels.DragonECS.EcsDebugUtility;
 
 namespace DCFApixels.DragonECS
@@ -21,6 +21,31 @@ namespace DCFApixels.DragonECS
             this.filter = filter;
         }
         public EcsRunnerFilterAttribute(object filter) : this(null, filter) { }
+    }
+#if UNITY_2020_3_OR_NEWER
+        [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
+#endif
+    [AttributeUsage(AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
+    public sealed class BindWithEcsRunnerAttribute : Attribute
+    {
+        private static readonly Type _baseType = typeof(EcsRunner<>);
+        public readonly Type runnerType;
+        public BindWithEcsRunnerAttribute(Type runnerType)
+        {
+            if (runnerType == null)
+                throw new ArgumentNullException();
+            if (!CheckSubclass(runnerType))
+                throw new ArgumentException();
+            this.runnerType = runnerType;
+        }
+        private bool CheckSubclass(Type type)
+        {
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == _baseType)
+                return true;
+            if (type.BaseType != null)
+                return CheckSubclass(type.BaseType);
+            return false;
+        }
     }
 
     public interface IEcsProcess { }
@@ -39,86 +64,6 @@ namespace DCFApixels.DragonECS
             void Destroy();
         }
 
-        internal static class EcsRunnerActivator
-        {
-            private static Dictionary<Type, Type> _runnerHandlerTypes; //interface base type/Runner handler type pairs;
-            static EcsRunnerActivator()
-            {
-                List<Exception> delayedExceptions = new List<Exception>();
-                Type runnerBaseType = typeof(EcsRunner<>);
-                List<Type> runnerHandlerTypes = new List<Type>();
-
-                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    runnerHandlerTypes.AddRange(assembly.GetTypes()
-                        .Where(type => type.BaseType != null && type.BaseType.IsGenericType && runnerBaseType == type.BaseType.GetGenericTypeDefinition()));
-                }
-
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                for (int i = 0; i < runnerHandlerTypes.Count; i++)
-                {
-                    var e = CheckRunnerValide(runnerHandlerTypes[i]);
-                    if (e != null)
-                    {
-                        runnerHandlerTypes.RemoveAt(i--);
-                        delayedExceptions.Add(e);
-                    }
-                }
-#endif
-                _runnerHandlerTypes = new Dictionary<Type, Type>();
-                foreach (var item in runnerHandlerTypes)
-                {
-                    Type interfaceType = item.BaseType.GenericTypeArguments[0];
-                    _runnerHandlerTypes.Add(interfaceType.IsGenericType ? interfaceType.GetGenericTypeDefinition() : interfaceType, item);
-                }
-                if (delayedExceptions.Count > 0)
-                {
-                    foreach (var item in delayedExceptions) EcsDebug.Print(EcsConsts.DEBUG_ERROR_TAG, item.Message);
-                    throw delayedExceptions[0];
-                }
-            }
-
-            private static Exception CheckRunnerValide(Type type) //TODO доработать проверку валидности реалиазации ранера
-            {
-                Type baseType = type.BaseType;
-                Type baseTypeArgument = baseType.GenericTypeArguments[0];
-
-                if (type.ReflectedType != null)
-                {
-                    return new EcsRunnerImplementationException($"{GetGenericTypeFullName(type, 1)}.ReflectedType must be Null, but equal to {GetGenericTypeFullName(type.ReflectedType, 1)}.");
-                }
-                if (!baseTypeArgument.IsInterface)
-                {
-                    return new EcsRunnerImplementationException($"Argument T of class EcsRunner<T>, can only be an inetrface. The {GetGenericTypeFullName(baseTypeArgument, 1)} type is not an interface.");
-                }
-
-                var interfaces = type.GetInterfaces();
-
-                if (!interfaces.Any(o => o == baseTypeArgument))
-                {
-                    return new EcsRunnerImplementationException($"Runner {GetGenericTypeFullName(type, 1)} does not implement interface {GetGenericTypeFullName(baseTypeArgument, 1)}.");
-                }
-
-                return null;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal static void InitFor<TInterface>() where TInterface : IEcsProcess
-            {
-                Type interfaceType = typeof(TInterface);
-
-                if (!_runnerHandlerTypes.TryGetValue(interfaceType.IsGenericType ? interfaceType.GetGenericTypeDefinition() : interfaceType, out Type runnerType))
-                {
-                    throw new EcsRunnerImplementationException($"There is no implementation of a runner for the {GetGenericTypeFullName<TInterface>(1)} interface.");
-                }
-                if (interfaceType.IsGenericType)
-                {
-                    Type[] genericTypes = interfaceType.GetGenericArguments();
-                    runnerType = runnerType.MakeGenericType(genericTypes);
-                }
-                EcsRunner<TInterface>.Register(runnerType);
-            }
-        }
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
 #endif
@@ -185,9 +130,58 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Instantiate
+            private static void CheckRunnerValide(Type type) //TODO доработать проверку валидности реалиазации ранера
+            {
+                Type targetInterface = typeof(TInterface);
+                if (type.IsAbstract)
+                {
+                    throw new Exception();
+                }
+
+                Type GetRunnerBaseType(Type type)
+                {
+                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(EcsRunner<>))
+                        return type;
+                    if (type.BaseType != null)
+                        return GetRunnerBaseType(type.BaseType);
+                    return null;
+                }
+                Type baseType = GetRunnerBaseType(type);
+                Type baseTypeArgument = baseType.GenericTypeArguments[0];
+
+                if (baseTypeArgument != targetInterface)
+                {
+                    throw new Exception();
+                }
+
+                if (!type.GetInterfaces().Any(o => o == targetInterface))
+                {
+                    throw new EcsRunnerImplementationException($"Runner {GetGenericTypeFullName(type, 1)} does not implement interface {GetGenericTypeFullName(baseTypeArgument, 1)}.");
+                }
+            }
+
             private static TInterface Instantiate(EcsPipeline source, TInterface[] targets, bool isHasFilter, object filter)
             {
-                if (_subclass == null) EcsRunnerActivator.InitFor<TInterface>();
+                if (_subclass == null)
+                {
+                    Type interfaceType = typeof(TInterface);
+                    if (interfaceType.TryGetCustomAttribute(out BindWithEcsRunnerAttribute atr))
+                    {
+                        Type runnerType = atr.runnerType;
+                        if (interfaceType.IsGenericType)
+                        {
+                            Type[] genericTypes = interfaceType.GetGenericArguments();
+                            runnerType = runnerType.MakeGenericType(genericTypes);
+                        }
+                        CheckRunnerValide(runnerType);
+                        _subclass = runnerType;
+                    }
+                    else
+                    {
+                        throw new EcsFrameworkException("Процесс не связан с раннером, используйте атрибуут BindWithEcsRunner(Type runnerType)");
+                    }
+                }
+
                 var instance = (EcsRunner<TInterface>)Activator.CreateInstance(_subclass);
                 return (TInterface)(IEcsProcess)instance.Set(source, targets, isHasFilter, filter);
             }
@@ -245,7 +239,7 @@ namespace DCFApixels.DragonECS
                 _filter = null;
                 OnDestroy();
             }
-            protected virtual void OnSetup() { }
+            protected virtual void OnSetup() { } //rename to OnInitialize
             protected virtual void OnDestroy() { }
         }
     }
@@ -263,4 +257,85 @@ namespace DCFApixels.DragonECS
         }
     }
     #endregion
+
+    public static class EcsProcessUtility
+    {
+        private struct ProcessInterface
+        {
+            public Type interfaceType;
+            public string processName;
+            public ProcessInterface(Type interfaceType, string processName)
+            {
+                this.interfaceType = interfaceType;
+                this.processName = processName;
+            }
+        }
+        private static Dictionary<Type, ProcessInterface> _processes = new Dictionary<Type, ProcessInterface>();
+        private static HashSet<Type> _systems = new HashSet<Type>();
+
+        static EcsProcessUtility()
+        {
+            Type processBasicInterface = typeof(IEcsProcess);
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var types = assembly.GetTypes();
+                foreach (var type in types)
+                {
+                    if (type.GetInterface(nameof(IEcsProcess)) != null || type == processBasicInterface)
+                    {
+                        if (type.IsInterface)
+                        {
+                            string name = type.Name;
+                            if (name[0] == 'I' && name.Length > 1 && char.IsUpper(name[1]))
+                                name = name.Substring(1);
+                            name = Regex.Replace(name, @"\bEcs|Process\b", "");
+                            if (Regex.IsMatch(name, "`\\w{1,}$"))
+                            {
+                                var s = name.Split("`");
+                                name = s[0] + $"<{s[1]}>";
+                            }
+                            _processes.Add(type, new ProcessInterface(type, name));
+                        }
+                        else
+                        {
+                            _systems.Add(type);
+                        }
+                    }
+                }
+            }
+        }
+
+        #region Systems
+        public static bool IsSystem(Type type) => _systems.Contains(type);
+        public static bool IsEcsSystem(this Type type) => _systems.Contains(type);
+        #endregion
+
+        #region Process
+        public static bool IsProcessInterface(Type type)
+        {
+            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
+            return _processes.ContainsKey(type);
+        }
+        public static bool IsEcsProcessInterface(this Type type) => IsProcessInterface(type);
+
+        public static string GetProcessInterfaceName(Type type)
+        {
+            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
+            return _processes[type].processName;
+        }
+        public static bool TryGetProcessInterfaceName(Type type, out string name)
+        {
+            if (type.IsGenericType) type = type.GetGenericTypeDefinition();
+            bool result = _processes.TryGetValue(type, out ProcessInterface data);
+            name = data.processName;
+            return result;
+        }
+
+        public static IEnumerable<Type> GetEcsProcessInterfaces(this Type self)
+        {
+            return self.GetInterfaces().Where(o => o.IsEcsProcessInterface());
+        }
+        #endregion
+
+    }
 }

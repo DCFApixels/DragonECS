@@ -30,16 +30,26 @@ namespace DCFApixels.DragonECS
         void RemoveListener(IEcsPoolEventListener listener);
         #endregion
     }
-    public interface IEcsStructsPool<T>
+    public interface IEcsStructPool<T> : IEcsPool
     {
         ref T Add(int entityID);
         ref readonly T Read(int entityID);
         ref T Get(int entityID);
     }
+    public interface IEcsClassPool<T> : IEcsPool
+    {
+        T Add(int entityID);
+        T Get(int entityID);
+    }
+    public interface IEcsHybridPool<T> : IEcsPool
+    {
+        void Add(int entityID, T component);
+        T Get(int entityID);
+    }
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
     public interface IEcsPoolImplementation : IEcsPool
     {
-        void OnInit(EcsWorld world, int componentID);
+        void OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID);
         void OnWorldResize(int newSize);
         void OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer);
         void OnWorldDestroy();
@@ -52,26 +62,15 @@ namespace DCFApixels.DragonECS
     {
         public static void ThrowAlreadyHasComponent<T>(int entityID)
         {
-            throw new EcsFrameworkException($"Entity({entityID}) already has component {typeof(T).Name}.");
+            throw new EcsFrameworkException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
         public static void ThrowNotHaveComponent<T>(int entityID)
         {
-            throw new EcsFrameworkException($"Entity({entityID}) has no component {typeof(T).Name}.");
+            throw new EcsFrameworkException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
     }
     public static class IEcsPoolImplementationExtensions
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void IncrementEntityComponentCount<T>(this IEcsPoolImplementation<T> self, int entityID)
-        {
-            self.World.IncrementEntityComponentCount(entityID);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void DecrementEntityComponentCount<T>(this IEcsPoolImplementation<T> self, int entityID)
-        {
-            self.World.DecrementEntityComponentCount(entityID);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNullOrDummy(this IEcsPool self)
         {
@@ -106,7 +105,7 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Callbacks
-            void IEcsPoolImplementation.OnInit(EcsWorld world, int componentID) { }
+            void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID) { }
             void IEcsPoolImplementation.OnWorldDestroy() { }
             void IEcsPoolImplementation.OnWorldResize(int newSize) { }
             void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer) { }
