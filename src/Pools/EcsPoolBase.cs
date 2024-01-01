@@ -84,7 +84,7 @@ namespace DCFApixels.DragonECS
         public struct NullComponent { }
         public sealed class EcsNullPool : IEcsPoolImplementation<NullComponent>
         {
-            public static EcsNullPool instance => new EcsNullPool();
+            public static readonly EcsNullPool instance = new EcsNullPool();
 
             #region Properties
             int IEcsPool.ComponentID => -1;

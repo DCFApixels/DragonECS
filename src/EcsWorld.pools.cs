@@ -12,7 +12,9 @@ namespace DCFApixels.DragonECS
         private SparseArray<int> _componentIds = new SparseArray<int>();
         private int _poolsCount;
         internal IEcsPoolImplementation[] _pools;
-        private EcsNullPool _nullPool = EcsNullPool.instance;
+        //internal int[] _poolComponentCounts;
+
+        private static EcsNullPool _nullPool = EcsNullPool.instance;
 
         #region ComponentInfo
         public int GetComponentID<T>() => DeclareComponentType(EcsTypeCode.Get<T>());
@@ -92,6 +94,7 @@ namespace DCFApixels.DragonECS
             {
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, _pools.Length << 1);
+                //Array.Resize(ref _poolComponentCounts, _pools.Length);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
 
                 for (int i = 0; i < _entitesCapacity; i++)
@@ -105,6 +108,64 @@ namespace DCFApixels.DragonECS
                 pool.OnInit(this, _poolsMediator, componentTypeID);
             }
             return (TPool)_pools[componentTypeID];
+        }
+        #endregion
+
+        #region Pools mediation
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+        {
+            //_poolComponentCounts[componentTypeID]++;
+            _componentCounts[entityID]++;
+            _entitiesComponentMasks[entityID][maskBit.chankIndex] |= maskBit.mask;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+        {
+            //_poolComponentCounts[componentTypeID]--;
+            var count = --_componentCounts[entityID];
+            _entitiesComponentMasks[entityID][maskBit.chankIndex] &= ~maskBit.mask;
+
+            if (count == 0 && _allEntites.Has(entityID))
+                DelEntity(entityID);
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool HasEntityComponent(int entityID, EcsMaskBit maskBit)
+        {
+            return (_entitiesComponentMasks[entityID][maskBit.chankIndex] & maskBit.mask) != maskBit.mask;
+        }
+        #endregion
+
+        #region PoolsMediator
+        public readonly struct PoolsMediator
+        {
+            private readonly EcsWorld _world;
+            internal PoolsMediator(EcsWorld world)
+            {
+                if (world == null || world._poolsMediator._world != null)
+                {
+                    throw new MethodAccessException();
+                }
+                _world = world;
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void RegisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+            {
+                _world.RegisterEntityComponent(entityID, componentTypeID, maskBit);
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void UnregisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+            {
+                _world.UnregisterEntityComponent(entityID, componentTypeID, maskBit);
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool HasComponent(int entityID, EcsMaskBit maskBit)
+            {
+                return _world.HasEntityComponent(entityID, maskBit);
+            }
         }
         #endregion
     }

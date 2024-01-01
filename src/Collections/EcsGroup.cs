@@ -710,7 +710,7 @@ namespace DCFApixels.DragonECS
         #region Other
         public override string ToString()
         {
-            return $"group{{{string.Join(", ", _dense.Skip(1).Take(_count))}}}";
+            return $"group{{{string.Join(", ", _dense.Skip(1).Take(_count).OrderBy(o => o))}}}";
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First()
