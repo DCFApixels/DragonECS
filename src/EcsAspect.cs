@@ -14,7 +14,6 @@ namespace DCFApixels.DragonECS
         internal EcsWorld source;
         internal EcsMask mask;
         private bool _isInit;
-
         #region Properties
         public EcsMask Mask => mask;
         public EcsWorld World => source;
@@ -231,6 +230,7 @@ namespace DCFApixels.DragonECS
         }
         public static EcsMaskBit FromID(int id)
         {
+            short x = 10;
             return new EcsMaskBit(id >> DIV_SHIFT, 1 << (id & MOD_MASK)); //аналогично new EcsMaskBit(id / BITS, 1 << (id % BITS)) но быстрее
         }
         public override string ToString()
@@ -408,16 +408,21 @@ namespace DCFApixels.DragonECS
         public ref struct Enumerator
         {
             private ReadOnlySpan<int>.Enumerator _span;
-            private readonly EcsMaskBit[] _inc;
-            private readonly EcsMaskBit[] _exc;
+            private readonly EcsMaskBit[] _incChunckMasks;
+            private readonly EcsMaskBit[] _excChunckMasks;
             private readonly int[][] _entitiesComponentMasks;
+
+            private int minCount = 0;
 
             public Enumerator(EcsSpan span, EcsMask mask)
             {
                 _span = span.GetEnumerator();
-                _inc = mask.incChunckMasks;
-                _exc = mask.excChunckMasks;
+                _incChunckMasks = mask.incChunckMasks;
+                _excChunckMasks = mask.excChunckMasks;
                 _entitiesComponentMasks = span.World._entitiesComponentMasks;
+
+
+                
             }
             public int Current
             {
@@ -431,17 +436,17 @@ namespace DCFApixels.DragonECS
                 {
                     int e = _span.Current;
                     EcsMaskBit bit;
-                    for (int i = 0, iMax = _inc.Length; i < iMax; i++)
+                    for (int i = 0, iMax = _incChunckMasks.Length; i < iMax; i++)
                     {
-                        bit = _inc[i];
-                        //if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) == 0) goto skip;
-                        if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != bit.mask) goto skip;
+                        bit = _incChunckMasks[i];
+                        if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != bit.mask)
+                            goto skip;
                     }
-                    for (int i = 0, iMax = _exc.Length; i < iMax; i++)
+                    for (int i = 0, iMax = _excChunckMasks.Length; i < iMax; i++)
                     {
-                        bit = _exc[i];
-                        //if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != 0) goto skip;
-                        if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) == bit.mask) goto skip;
+                        bit = _excChunckMasks[i];
+                        if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) > 0)
+                            goto skip;
                     }
                     return true;
                     skip: continue;

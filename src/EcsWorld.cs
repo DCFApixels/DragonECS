@@ -51,6 +51,7 @@ namespace DCFApixels.DragonECS
         public EcsWorld() : this(true) { }
         internal EcsWorld(bool isIndexable)
         {
+            const int POOLS_CAPACITY = 512;
             _poolsMediator = new PoolsMediator(this);
 
             _entitesCapacity = 512;
@@ -64,7 +65,8 @@ namespace DCFApixels.DragonECS
             }
 
             _entityDispenser = new IntDispenser(0);
-            _pools = new IEcsPoolImplementation[512];
+            _pools = new IEcsPoolImplementation[POOLS_CAPACITY];
+            //_poolComponentCounts = new int[POOLS_CAPACITY];
             ArrayUtility.Fill(_pools, _nullPool);
 
             _gens = new short[_entitesCapacity];
@@ -76,7 +78,9 @@ namespace DCFApixels.DragonECS
             _delEntBuffer = new int[_entitesCapacity];
             _entitiesComponentMasks = new int[_entitesCapacity][];
             for (int i = 0; i < _entitesCapacity; i++)
+            {
                 _entitiesComponentMasks[i] = new int[_pools.Length / 32 + 1];
+            }
 
             _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
 
@@ -329,32 +333,6 @@ namespace DCFApixels.DragonECS
         //public void CloneEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
         #endregion
 
-        #region Pools mediation
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
-        {
-            _componentCounts[entityID]++;
-            _entitiesComponentMasks[entityID][maskBit.chankIndex] |= maskBit.mask;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
-        {
-            var count = --_componentCounts[entityID];
-            _entitiesComponentMasks[entityID][maskBit.chankIndex] &= ~maskBit.mask;
-
-            if (count == 0 && _allEntites.Has(entityID))
-                DelEntity(entityID);
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
-#endif
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool HasEntityComponent(int entityID, EcsMaskBit maskBit)
-        {
-            return (_entitiesComponentMasks[entityID][maskBit.chankIndex] & maskBit.mask) != maskBit.mask;
-        }
-        #endregion
-
         #endregion
 
         #region DelEntBuffer
@@ -518,40 +496,6 @@ namespace DCFApixels.DragonECS
                     if (itemsCount <= 0)
                         break;
                 }
-            }
-        }
-        #endregion
-
-        #region PoolsMediator
-        public readonly struct PoolsMediator
-        {
-            private readonly EcsWorld _world;
-            internal PoolsMediator(EcsWorld world)
-            {
-                if (world == null)
-                {
-                    throw new ArgumentNullException();
-                }
-                if (world._poolsMediator._world != null)
-                {
-                    throw new MethodAccessException();
-                }
-                _world = world;
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RegisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
-            {
-                _world.RegisterEntityComponent(entityID, componentTypeID, maskBit);
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void UnregisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
-            {
-                _world.UnregisterEntityComponent(entityID, componentTypeID, maskBit);
-            }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool HasComponent(int entityID, EcsMaskBit maskBit)
-            {
-                return _world.HasEntityComponent(entityID, maskBit);
             }
         }
         #endregion
