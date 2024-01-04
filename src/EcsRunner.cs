@@ -138,12 +138,12 @@ namespace DCFApixels.DragonECS
                     throw new Exception();
                 }
 
-                Type GetRunnerBaseType(Type type)
+                Type GetRunnerBaseType(Type typeX)
                 {
-                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(EcsRunner<>))
-                        return type;
-                    if (type.BaseType != null)
-                        return GetRunnerBaseType(type.BaseType);
+                    if (typeX.IsGenericType && typeX.GetGenericTypeDefinition() == typeof(EcsRunner<>))
+                        return typeX;
+                    if (typeX.BaseType != null)
+                        return GetRunnerBaseType(typeX.BaseType);
                     return null;
                 }
                 Type baseType = GetRunnerBaseType(type);
@@ -291,7 +291,7 @@ namespace DCFApixels.DragonECS
                             name = Regex.Replace(name, @"\bEcs|Process\b", "");
                             if (Regex.IsMatch(name, "`\\w{1,}$"))
                             {
-                                var s = name.Split("`");
+                                var s = name.Split("`".ToCharArray());
                                 name = s[0] + $"<{s[1]}>";
                             }
                             _processes.Add(type, new ProcessInterface(type, name));

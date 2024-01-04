@@ -142,16 +142,28 @@ namespace DCFApixels.DragonECS
                 foreach (var id in maskInc)
                 {
                     var bit = EcsMaskBit.FromID(id);
-                    if (!r.TryAdd(bit.chankIndex, bit.mask))
+                    if (r.ContainsKey(bit.chankIndex))
+                    {
                         r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
+                    }
+                    else
+                    {
+                        r[bit.chankIndex] = bit.mask;
+                    }
                 }
                 EcsMaskBit[] incMasks = r.Select(o => new EcsMaskBit(o.Key, o.Value)).ToArray();
                 r.Clear();
                 foreach (var id in maskExc)
                 {
                     var bit = EcsMaskBit.FromID(id);
-                    if (!r.TryAdd(bit.chankIndex, bit.mask))
+                    if (r.ContainsKey(bit.chankIndex))
+                    {
                         r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
+                    }
+                    else
+                    {
+                        r[bit.chankIndex] = bit.mask;
+                    }
                 }
                 EcsMaskBit[] excMasks = r.Select(o => new EcsMaskBit(o.Key, o.Value)).ToArray();
 
@@ -230,7 +242,6 @@ namespace DCFApixels.DragonECS
         }
         public static EcsMaskBit FromID(int id)
         {
-            short x = 10;
             return new EcsMaskBit(id >> DIV_SHIFT, 1 << (id & MOD_MASK)); //аналогично new EcsMaskBit(id / BITS, 1 << (id % BITS)) но быстрее
         }
         public override string ToString()
