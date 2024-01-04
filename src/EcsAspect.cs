@@ -412,8 +412,6 @@ namespace DCFApixels.DragonECS
             private readonly EcsMaskBit[] _excChunckMasks;
             private readonly int[][] _entitiesComponentMasks;
 
-            private int minCount = 0;
-
             public Enumerator(EcsSpan span, EcsMask mask)
             {
                 _span = span.GetEnumerator();
