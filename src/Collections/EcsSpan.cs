@@ -1,8 +1,8 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Utils;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -122,7 +122,8 @@ namespace DCFApixels.DragonECS
 #pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
         public override string ToString()
         {
-            return $"span({_values.Length}) {{{string.Join(", ", _values.ToArray().OrderBy(o => o))}}}";
+            return EntitiesCollectionUtility.AutoToString(_values.ToArray(), "span");
+            //return $"span({_values.Length}) {{{string.Join(", ", _values.ToArray().OrderBy(o => o))}}}";
         }
 
         internal class DebuggerProxy
@@ -142,7 +143,6 @@ namespace DCFApixels.DragonECS
                 }
             }
             public int Count => _values.Length;
-            //public override string ToString() => $"span({_values.Length}) {{{string.Join(", ", _values.OrderBy(o => o))}}}";
             public DebuggerProxy(EcsSpan span)
             {
                 _values = new int[span.Length];

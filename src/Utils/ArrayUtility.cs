@@ -1,6 +1,8 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System;
 
 namespace DCFApixels.DragonECS.Utils
 {
@@ -49,6 +51,14 @@ namespace DCFApixels.DragonECS.Utils
             return (T*)(Marshal.ReAllocHGlobal(
                 new IntPtr(oldPointer),
                 new IntPtr(Marshal.SizeOf(typeof(T)) * newCount))).ToPointer();
+        }
+    }
+
+    public static class EntitiesCollectionUtility
+    {
+        public static string AutoToString(IEnumerable<int> range, string name)
+        {
+            return $"{name}({range.Count()}) {{{string.Join(", ", range.OrderBy(o => o))}}})";
         }
     }
 }

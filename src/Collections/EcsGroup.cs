@@ -1,4 +1,5 @@
 ﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace DCFApixels.DragonECS
     //_dense заполняется с индекса 1
     //в операциях изменяющих состояние группы нельзя итерироваться по this, либо осторожно учитывать этот момент
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
-    [DebuggerTypeProxy(typeof(DebuggerProxy))]
+    [DebuggerTypeProxy(typeof(EcsGroup.DebuggerProxy))]
     public readonly ref struct EcsReadonlyGroup
     {
         private readonly EcsGroup _source;
@@ -134,10 +135,10 @@ namespace DCFApixels.DragonECS
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsSpan(EcsReadonlyGroup a) => a.ToSpan();
-        internal class DebuggerProxy : EcsGroup.DebuggerProxy
-        {
-            public DebuggerProxy(EcsReadonlyGroup group) : base(group._source) { }
-        }
+        //internal class DebuggerProxy : EcsGroup.DebuggerProxy
+        //{
+        //    public DebuggerProxy(EcsReadonlyGroup group) : base(group._source) { }
+        //}
         #endregion
     }
 
@@ -720,7 +721,8 @@ namespace DCFApixels.DragonECS
         #region Other
         public override string ToString()
         {
-            return $"group({_count}) {{{string.Join(", ", _dense.Skip(1).Take(_count).OrderBy(o => o))}}}";
+            return EntitiesCollectionUtility.AutoToString(_dense.Skip(1).Take(_count), "group");
+            //return $"group({_count}) {{{string.Join(", ", _dense.Skip(1).Take(_count).OrderBy(o => o))}}}";
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First()
@@ -762,6 +764,7 @@ namespace DCFApixels.DragonECS
             public int CapacitySparce => _group.CapacitySparce;
             public override string ToString() => _group.ToString();
             public DebuggerProxy(EcsGroup group) => _group = group;
+            public DebuggerProxy(EcsReadonlyGroup group) : this(group.GetGroupInternal()) { }
         }
         #endregion
     }
