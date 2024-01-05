@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -111,10 +112,6 @@ namespace DCFApixels.DragonECS
         public bool IsSupersetOf(EcsGroup group) => _source.IsSupersetOf(group);
         #endregion
 
-        #region Object
-        public override string ToString() => _source != null ? _source.ToString() : "NULL";
-        #endregion
-
         #region Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal EcsGroup GetGroupInternal() => _source;
@@ -122,6 +119,19 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        public override string ToString()
+        {
+            return _source != null ? _source.ToString() : "NULL";
+        }
+#pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
+        [Obsolete("Equals() on EcsGroup will always throw an exception. Use the equality operator instead.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override bool Equals(object obj) => throw new NotSupportedException();
+        [Obsolete("GetHashCode() on EcsGroup will always throw an exception.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override int GetHashCode() => throw new NotSupportedException();
+#pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsSpan(EcsReadonlyGroup a) => a.ToSpan();
         internal class DebuggerProxy : EcsGroup.DebuggerProxy
@@ -710,7 +720,7 @@ namespace DCFApixels.DragonECS
         #region Other
         public override string ToString()
         {
-            return $"group{{{string.Join(", ", _dense.Skip(1).Take(_count).OrderBy(o => o))}}}";
+            return $"group({_count}) {{{string.Join(", ", _dense.Skip(1).Take(_count).OrderBy(o => o))}}}";
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First()
