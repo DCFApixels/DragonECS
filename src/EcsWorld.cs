@@ -66,7 +66,9 @@ namespace DCFApixels.DragonECS
 
             _entityDispenser = new IntDispenser(0);
             _pools = new IEcsPoolImplementation[POOLS_CAPACITY];
-            //_poolComponentCounts = new int[POOLS_CAPACITY];
+            _poolComponentCounts = new int[POOLS_CAPACITY];
+            //_sortedPoolIds = new int[POOLS_CAPACITY];
+            //_sortedPoolIdsMapping = new int[POOLS_CAPACITY];
             ArrayUtility.Fill(_pools, _nullPool);
 
             _gens = new short[_entitesCapacity];
@@ -74,7 +76,6 @@ namespace DCFApixels.DragonECS
 
             ArrayUtility.Fill(_gens, DEATH_GEN_BIT);
             _delEntBufferCount = 0;
-            //_delEntBuffer = new int[_entitesCapacity >> DEL_ENT_BUFFER_SIZE_OFFSET];
             _delEntBuffer = new int[_entitesCapacity];
             _entitiesComponentMasks = new int[_entitesCapacity][];
             for (int i = 0; i < _entitesCapacity; i++)

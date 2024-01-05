@@ -1,4 +1,9 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿//#define sort_1
+#define lockSwapCheck
+// Зеленый свет, тесты показали идентичную скорость или даже прирост
+
+using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -215,6 +220,7 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region Mask
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly struct EcsMaskBit
     {
         private const int BITS = 32;
@@ -228,14 +234,32 @@ namespace DCFApixels.DragonECS
             this.chankIndex = chankIndex;
             this.mask = mask;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsMaskBit FromID(int id)
         {
-            short x = 10;
             return new EcsMaskBit(id >> DIV_SHIFT, 1 << (id & MOD_MASK)); //аналогично new EcsMaskBit(id / BITS, 1 << (id % BITS)) но быстрее
         }
         public override string ToString()
         {
-            return $"bit({chankIndex}, {mask})";
+            return $"mask({chankIndex}, {mask}, {BitsUtility.CountBits(mask)})";
+        }
+        internal class DebuggerProxy
+        {
+            public int chunk;
+            public uint mask;
+            public int[] values = Array.Empty<int>();
+            public string bits;
+            public DebuggerProxy(EcsMaskBit maskbits)
+            {
+                chunk = maskbits.chankIndex;
+                mask = (uint)maskbits.mask;
+                BitsUtility.GetBitNumbersNoAlloc(mask, ref values);
+                for (int i = 0; i < values.Length; i++)
+                {
+                    values[i] += (chunk) << 5;
+                }
+                bits = BitsUtility.ToBitsString(mask, '_', 8);
+            }
         }
     }
 
@@ -248,6 +272,7 @@ namespace DCFApixels.DragonECS
         internal readonly int[] inc;
         internal readonly int[] exc;
         public int WorldID => worldID;
+        public EcsWorld World => EcsWorld.GetWorld(worldID);
         /// <summary>Including constraints</summary>
         public ReadOnlySpan<int> Inc => inc;
         /// <summary>Excluding constraints</summary>
@@ -405,24 +430,302 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator() => new Enumerator(_span, mask);
 
-        public ref struct Enumerator
+
+        public unsafe ref struct Enumerator
         {
             private ReadOnlySpan<int>.Enumerator _span;
+#if sort_1
             private readonly EcsMaskBit[] _incChunckMasks;
             private readonly EcsMaskBit[] _excChunckMasks;
+#else
+            private readonly EcsMaskBit[] _incChunckMasks;
+            private readonly EcsMaskBit[] _excChunckMasks;
+#endif
             private readonly int[][] _entitiesComponentMasks;
 
-            private int minCount = 0;
 
-            public Enumerator(EcsSpan span, EcsMask mask)
+
+            private static EcsMaskBit* _sortedIncBuffer;
+            private static EcsMaskBit* _sortedExcBuffer;
+            private static SparseArray<int> _sp;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public unsafe Enumerator(EcsSpan span, EcsMask mask)
             {
                 _span = span.GetEnumerator();
+#if sort_1
                 _incChunckMasks = mask.incChunckMasks;
                 _excChunckMasks = mask.excChunckMasks;
+#endif
                 _entitiesComponentMasks = span.World._entitiesComponentMasks;
 
 
+                #region MyRegion
+                #region Trash
+#if !sort_1
+                int[] inc = mask.inc;
+                int[] exc = mask.exc;
+                int[] counts = mask.World._poolComponentCounts;
+                if (inc.Length > 1)
+                {
+                    //if (inc.Length == 2)
+                    //{
+                    //    if (counts[inc[0]] > counts[inc[1]])
+                    //    {
+                    //        int tmp = inc[0];
+                    //        inc[0] = inc[1];
+                    //        inc[1] = tmp;
+                    //    }
+                    //    //...
+                    //}
+                    //else
+                    {
+                        //for (int i = 0; i < inc.Length; i++)
+                        //{
+                        //    int counti = counts[inc[i]];
+                        //    if (counti <= 0)
+                        //    {
+                        //        _span = ReadOnlySpan<int>.Empty.GetEnumerator();
+                        //        goto skip1;
+                        //    }
+                        //    for (int j = inc.Length - 1; j >= i; j--)
+                        //    {
+                        //        if (counts[inc[j]] < counti)
+                        //        {
+                        //            int tmp = inc[j];
+                        //            inc[j] = inc[i];
+                        //            inc[i] = tmp;
+                        //        }
+                        //    }
+                        //}
+
+                        //...
+
+                        for (int i = 0, n = inc.Length; i < n - 1; i++)
+                        {
+                            //int counti = counts[inc[i]];
+                            //if (counti <= 0)
+                            //{
+                            //    _span = ReadOnlySpan<int>.Empty.GetEnumerator();
+                            //    goto skip1;
+                            //}
+                            bool noSwaped = true; 
+                            for (int j = 0; j < n - i - 1; )
+                            {
+                                ref int j0 = ref inc[j++];
+                                if (counts[j0] > counts[inc[j]])
+                                {
+                                    int tmp = inc[j];
+                                    inc[j] = j0;
+                                    j0 = tmp;
+                                    noSwaped = false;
+                                }
+                            }
+#if !lockSwapCheck
+                            if (noSwaped)
+                                break;
+#endif
+                        }
+                    }
+                }
+                skip1:;
+                if (exc.Length > 1)
+                {
+                    //if (exc.Length == 2)
+                    //{
+                    //    if (counts[exc[0]] < counts[exc[1]])
+                    //    {
+                    //        int tmp = exc[0];
+                    //        exc[0] = inc[1];
+                    //        exc[1] = tmp;
+                    //    }
+                    //    //...
+                    //}
+                    //else
+                    {
+                        //for (int i = 0; i < exc.Length; i++)
+                        //{
+                        //    int counti = counts[inc[i]];
+                        //    if (counti <= 0)
+                        //    {
+                        //        _excChunckMasks = ReadOnlySpan<EcsMaskBit>.Empty;
+                        //        goto skip2;
+                        //    }
+                        //    for (int j = exc.Length - 1; j >= i; j--)
+                        //    {
+                        //        if (counts[exc[j]] > counti)
+                        //        {
+                        //            int tmp = exc[j];
+                        //            exc[j] = exc[i];
+                        //            exc[i] = tmp;
+                        //        }
+                        //    }
+                        //}
+
+                        //...
+
+                        for (int i = 0, n = exc.Length; i < n - 1; i++)
+                        {
+                            //int counti = counts[inc[i]];
+                            //if (counti <= 0)
+                            //{
+                            //    _excChunckMasks = ReadOnlySpan<EcsMaskBit>.Empty;
+                            //    goto skip2;
+                            //}
+                            bool noSwaped = true;
+                            for (int j = 0; j < n - i - 1;)
+                            {
+                                ref int j0 = ref exc[j++];
+                                if (counts[j0] < counts[exc[j]])
+                                {
+                                    int tmp = exc[j];
+                                    exc[j] = j0;
+                                    j0 = tmp;
+                                    noSwaped = false;
+                                }
+                            }
+#if !lockSwapCheck
+                            if (noSwaped)
+                                break;
+#endif
+                        }
+                    }
+                }
+                skip2:;
+
+                if (_sortedIncBuffer == null)
+                {
+                    _sortedIncBuffer = UnmanagedArrayUtility.New<EcsMaskBit>(256);
+                    _sortedExcBuffer = UnmanagedArrayUtility.New<EcsMaskBit>(256);
+                    _sp = new SparseArray<int>(32);
+                }
+
+                _sp.Clear();
+                for (int i = 0, ii = 0; i < inc.Length; i++)
+                {
+                    //int id = inc[i];
+                    //_sortedIncBuffer[i] = new EcsMaskBit(id >> DIV_SHIFT, 1 << (id & MOD_MASK));
+                    _sortedIncBuffer[i] = EcsMaskBit.FromID(inc[i]);
+                }
+                for (int i = 0; i < exc.Length; i++)
+                {
+                    //int id = inc[i];
+                    //_sortedExcBuffer[i] = new EcsMaskBit(id >> DIV_SHIFT, 1 << (id & MOD_MASK));
+                    _sortedExcBuffer[i] = EcsMaskBit.FromID(exc[i]);
+                }
+
+                EcsMaskBit[] incChunckMasks = mask.incChunckMasks;
+                EcsMaskBit[] excChunckMasks = mask.excChunckMasks;
+
+                //_incChunckMasks = new ReadOnlySpan<EcsMaskBit>(_sortedIncBuffer, inc.Length);
+                //_excChunckMasks = new ReadOnlySpan<EcsMaskBit>(_sortedExcBuffer, exc.Length);
+
                 
+                int _sortedIncBufferLength = inc.Length;
+                int _sortedExcBufferLength = exc.Length;
+
+                if (_sortedIncBufferLength > 1)//перенести этот чек в начала сортировки, для _incChunckMasks.Length == 1 сортировка не нужна
+                {
+                    for (int i = 0, ii = 0; ii < incChunckMasks.Length; ii++)
+                    {
+                        EcsMaskBit bas = _sortedIncBuffer[i];
+                        int chankIndexX = bas.chankIndex;
+                        int maskX = bas.mask;
+
+                        for (int j = i + 1; j < _sortedIncBufferLength; j++)
+                        {
+                            if (_sortedIncBuffer[j].chankIndex == chankIndexX)
+                            {
+                                maskX |= _sortedIncBuffer[j].mask;
+                            }
+                        }
+                        incChunckMasks[ii] = new EcsMaskBit(chankIndexX, maskX);
+                        while (++i < _sortedIncBufferLength && _sortedIncBuffer[i].chankIndex == chankIndexX)
+                        {
+
+                        }
+                    }
+                }
+
+                if (_sortedExcBufferLength > 1)//перенести этот чек в начала сортировки, для _excChunckMasks.Length == 1 сортировка не нужна
+                {
+                    for (int i = 0, ii = 0; ii < excChunckMasks.Length; ii++)
+                    {
+                        EcsMaskBit bas = _sortedExcBuffer[i];
+                        int chankIndexX = bas.chankIndex;
+                        int maskX = bas.mask;
+
+                        for (int j = i + 1; j < _sortedExcBufferLength; j++)
+                        {
+                            if (_sortedExcBuffer[j].chankIndex == chankIndexX)
+                            {
+                                maskX |= _sortedExcBuffer[j].mask;
+                            }
+                        }
+                        excChunckMasks[ii] = new EcsMaskBit(chankIndexX, maskX);
+                        while (++i < _sortedExcBufferLength && _sortedExcBuffer[i].chankIndex == chankIndexX)
+                        {
+
+                        }
+                    }
+                }
+
+                _incChunckMasks = incChunckMasks;
+                _excChunckMasks = excChunckMasks;
+
+#endif
+                #endregion
+
+                #endregion
+
+                #region MyRegion
+                //_inc = mask.inc;
+                //_exc = mask.exc;
+                //int[] inc = mask.inc;
+                //int[] exc = mask.exc;
+                //int[] counts = mask.World._poolComponentCounts;
+                //if (_inc.Length > 1)
+                //{
+                //    for (int i = 0; i < inc.Length; i++)
+                //    {
+                //        if (counts[inc[i]] <= 0)
+                //        {
+                //            _span = ReadOnlySpan<int>.Empty.GetEnumerator();
+                //            goto skip1;
+                //        }
+                //        for (int j = 0; j < inc.Length - i - 1; j++)
+                //        {
+                //            if (counts[inc[i]] > counts[inc[j]])
+                //            {
+                //                int tmp = inc[j];
+                //                inc[j] = inc[i];
+                //                inc[i] = tmp;
+                //            }
+                //        }
+                //    }
+                //}
+                //skip1:;
+                //if(exc.Length > 1)
+                //{
+                //    for (int i = 0; i < exc.Length; i++)
+                //    {
+                //        if (counts[exc[i]] <= 0)
+                //        {
+                //            _exc = ReadOnlySpan<int>.Empty;
+                //            goto skip2;
+                //        }
+                //        for (int j = 0; j < exc.Length - i - 1; j++)
+                //        {
+                //            if (counts[exc[i]] < counts[exc[j]])
+                //            {
+                //                int tmp = exc[j];
+                //                exc[j] = exc[i];
+                //                exc[i] = tmp;
+                //            }
+                //        }
+                //    }
+                //}
+                //skip2:;
+                #endregion
             }
             public int Current
             {
@@ -435,21 +738,49 @@ namespace DCFApixels.DragonECS
                 while (_span.MoveNext())
                 {
                     int e = _span.Current;
-                    EcsMaskBit bit;
-                    for (int i = 0, iMax = _incChunckMasks.Length; i < iMax; i++)
+
+                    foreach (var bit in _incChunckMasks)
                     {
-                        bit = _incChunckMasks[i];
                         if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != bit.mask)
                             goto skip;
                     }
-                    for (int i = 0, iMax = _excChunckMasks.Length; i < iMax; i++)
+                    foreach (var bit in _excChunckMasks)
                     {
-                        bit = _excChunckMasks[i];
                         if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) > 0)
                             goto skip;
                     }
+
+                    //for (int i = 0, iMax = _incChunckMasks.Length; i < iMax; i++)
+                    //{
+                    //    var bit = _incChunckMasks[i];
+                    //    if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != bit.mask)
+                    //        goto skip;
+                    //}
+                    //for (int i = 0, iMax = _excChunckMasks.Length; i < iMax; i++)
+                    //{
+                    //    var bit = _excChunckMasks[i];
+                    //    if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) > 0)
+                    //        goto skip;
+                    //}
                     return true;
                     skip: continue;
+
+                    #region MyRegion
+                    //for (int i = 0, iMax = _inc.Length; i < iMax; i++)
+                    //{
+                    //    bit = EcsMaskBit.FromID(_inc[i]);
+                    //    if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != bit.mask)
+                    //        goto skip;
+                    //}
+                    //for (int i = 0, iMax = _exc.Length; i < iMax; i++)
+                    //{
+                    //    bit = EcsMaskBit.FromID(_exc[i]);
+                    //    if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) > 0)
+                    //        goto skip;
+                    //}
+                    //return true;
+                    //skip: continue;
+                    #endregion
                 }
                 return false;
             }
