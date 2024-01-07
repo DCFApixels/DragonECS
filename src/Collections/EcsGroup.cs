@@ -721,7 +721,7 @@ namespace DCFApixels.DragonECS
         #region Other
         public override string ToString()
         {
-            return EntitiesCollectionUtility.AutoToString(_dense.Skip(1).Take(_count), "group");
+            return CollectionUtility.EntitiesToString(_dense.Skip(1).Take(_count), "group");
             //return $"group({_count}) {{{string.Join(", ", _dense.Skip(1).Take(_count).OrderBy(o => o))}}}";
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

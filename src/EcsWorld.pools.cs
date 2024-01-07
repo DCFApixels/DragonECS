@@ -125,14 +125,14 @@ namespace DCFApixels.DragonECS
 
         #region Pools mediation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+        private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
             _poolComponentCounts[componentTypeID]++;
             _componentCounts[entityID]++;
             _entitiesComponentMasks[entityID][maskBit.chankIndex] |= maskBit.mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+        private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
             _poolComponentCounts[componentTypeID]--;
             var count = --_componentCounts[entityID];
@@ -145,7 +145,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool HasEntityComponent(int entityID, EcsMaskBit maskBit)
+        private bool HasEntityComponent(int entityID, EcsMaskChunck maskBit)
         {
             return (_entitiesComponentMasks[entityID][maskBit.chankIndex] & maskBit.mask) != maskBit.mask;
         }
@@ -164,17 +164,17 @@ namespace DCFApixels.DragonECS
                 _world = world;
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RegisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+            public void RegisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
             {
                 _world.RegisterEntityComponent(entityID, componentTypeID, maskBit);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void UnregisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+            public void UnregisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
             {
                 _world.UnregisterEntityComponent(entityID, componentTypeID, maskBit);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool HasComponent(int entityID, EcsMaskBit maskBit)
+            public bool HasComponent(int entityID, EcsMaskChunck maskBit)
             {
                 return _world.HasEntityComponent(entityID, maskBit);
             }

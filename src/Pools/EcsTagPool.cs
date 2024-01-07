@@ -11,7 +11,7 @@ namespace DCFApixels.DragonECS
     {
         private EcsWorld _source;
         private int _componentTypeID;
-        private EcsMaskBit _maskBit;
+        private EcsMaskChunck _maskBit;
 
         private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private int _count;
@@ -124,7 +124,7 @@ namespace DCFApixels.DragonECS
             _source = world;
             _mediator = mediator;
             _componentTypeID = componentTypeID;
-            _maskBit = EcsMaskBit.FromID(componentTypeID);
+            _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
             _mapping = new bool[world.Capacity];
             _count = 0;

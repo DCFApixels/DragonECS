@@ -122,7 +122,7 @@ namespace DCFApixels.DragonECS
 #pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
         public override string ToString()
         {
-            return EntitiesCollectionUtility.AutoToString(_values.ToArray(), "span");
+            return CollectionUtility.EntitiesToString(_values.ToArray(), "span");
             //return $"span({_values.Length}) {{{string.Join(", ", _values.ToArray().OrderBy(o => o))}}}";
         }
 
