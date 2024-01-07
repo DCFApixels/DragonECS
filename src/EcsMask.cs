@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
@@ -46,26 +47,38 @@ namespace DCFApixels.DragonECS
             this.exc = exc;
             this.worldID = worldID;
 
-            //TODO пересесть с дикта на подсчет в цикле.
-            Dictionary<int, int> r = new Dictionary<int, int>();
-            foreach (var cmpID in inc)
-            {
-                var bit = EcsMaskChunck.FromID(cmpID);
-                if (!r.TryAdd(bit.chankIndex, bit.mask))
-                    r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
-            }
-            EcsMaskChunck[] incMasks = r.Select(o => new EcsMaskChunck(o.Key, o.Value)).ToArray();
-            r.Clear();
-            foreach (var cmpID in exc)
-            {
-                var bit = EcsMaskChunck.FromID(cmpID);
-                if (!r.TryAdd(bit.chankIndex, bit.mask))
-                    r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
-            }
-            EcsMaskChunck[] excMasks = r.Select(o => new EcsMaskChunck(o.Key, o.Value)).ToArray();
+            incChunckMasks = MakeMaskChuncsArray(inc);
+            excChunckMasks = MakeMaskChuncsArray(exc);
+        }
 
-            incChunckMasks = incMasks;
-            excChunckMasks = excMasks;
+        private unsafe EcsMaskChunck[] MakeMaskChuncsArray(int[] sortedArray)
+        {
+            EcsMaskChunck* buffer = stackalloc EcsMaskChunck[sortedArray.Length];
+
+            int resultLength = 0;
+            for (int i = 0; i < sortedArray.Length;)
+            {
+                int chankIndexX = sortedArray[i] >> EcsMaskChunck.DIV_SHIFT;
+                int maskX = 0;
+                do
+                {
+                    EcsMaskChunck bitJ = EcsMaskChunck.FromID(sortedArray[i]);
+                    if (bitJ.chankIndex != chankIndexX)
+                    {
+                        break;
+                    }
+                    maskX |= bitJ.mask;
+                    i++;
+                } while (i < sortedArray.Length);
+                buffer[resultLength++] = new EcsMaskChunck(chankIndexX, maskX);
+            }
+
+            EcsMaskChunck[] result = new EcsMaskChunck[resultLength];
+            for (int i = 0; i < resultLength; i++)
+            {
+                result[i] = buffer[i];
+            }
+            return result;
         }
 
         #region Object
