@@ -2,7 +2,6 @@
 using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -34,20 +33,16 @@ namespace DCFApixels.DragonECS
         public sealed class Builder : EcsAspectBuilderBase
         {
             private EcsWorld _world;
-            private HashSet<int> _inc;
-            private HashSet<int> _exc;
-            private List<Combined> _combined;
+            private EcsMask.Builder _maskBuilder;
 
             public EcsWorld World => _world;
 
             private Builder(EcsWorld world)
             {
                 _world = world;
-                _combined = new List<Combined>();
-                _inc = new HashSet<int>();
-                _exc = new HashSet<int>();
+                _maskBuilder = new EcsMask.Builder(world);
             }
-            internal static unsafe TAspect Build<TAspect>(EcsWorld world) where TAspect : EcsAspect
+            internal static unsafe TAspect New<TAspect>(EcsWorld world) where TAspect : EcsAspect
             {
                 Builder builder = new Builder(world);
                 Type aspectType = typeof(TAspect);
@@ -63,7 +58,7 @@ namespace DCFApixels.DragonECS
                     newAspect.Init(builder);
                 }
                 newAspect._source = world;
-                builder.End(out newAspect._mask);
+                builder.Build(out newAspect._mask);
                 newAspect._isInit = true;
 
                 newAspect._sortIncBuffer = new UnsafeArray<int>(newAspect._mask.inc.Length, true);
@@ -92,7 +87,7 @@ namespace DCFApixels.DragonECS
                 return (TAspect)newAspect;
             }
 
-            #region Include/Exclude/Optional
+            #region Include/Exclude/Optional/Combine
             public sealed override TPool Include<TPool>()
             {
                 IncludeImplicit(typeof(TPool).GetGenericArguments()[0]);
@@ -109,27 +104,16 @@ namespace DCFApixels.DragonECS
             }
             private void IncludeImplicit(Type type)
             {
-                int id = _world.GetComponentID(type);
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
-#endif
-                _inc.Add(id);
+                _maskBuilder.Include(type);
             }
             private void ExcludeImplicit(Type type)
             {
-                int id = _world.GetComponentID(type);
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
-#endif
-                _exc.Add(id);
+                _maskBuilder.Exclude(type);
             }
-            #endregion
-
-            #region Combine
             public TOtherAspect Combine<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect
             {
                 var result = _world.GetAspect<TOtherAspect>();
-                _combined.Add(new Combined(result, order));
+                _maskBuilder.CombineWith(result.Mask);
                 return result;
             }
             #endregion
@@ -139,60 +123,9 @@ namespace DCFApixels.DragonECS
                 return new EcsWorldCmp<T>(_world.id);
             }
 
-            private void End(out EcsMask mask)
+            private void Build(out EcsMask mask)
             {
-                HashSet<int> maskInc;
-                HashSet<int> maskExc;
-                if (_combined.Count > 0)
-                {
-                    maskInc = new HashSet<int>();
-                    maskExc = new HashSet<int>();
-                    _combined.Sort((a, b) => a.order - b.order);
-                    foreach (var item in _combined)
-                    {
-                        EcsMask submask = item.aspect._mask;
-                        maskInc.ExceptWith(submask.exc);//удаляю конфликтующие ограничения
-                        maskExc.ExceptWith(submask.inc);//удаляю конфликтующие ограничения
-                        maskInc.UnionWith(submask.inc);
-                        maskExc.UnionWith(submask.exc);
-                    }
-                    maskInc.ExceptWith(_exc);//удаляю конфликтующие ограничения
-                    maskExc.ExceptWith(_inc);//удаляю конфликтующие ограничения
-                    maskInc.UnionWith(_inc);
-                    maskExc.UnionWith(_exc);
-                }
-                else
-                {
-                    maskInc = _inc;
-                    maskExc = _exc;
-                }
-
-                Dictionary<int, int> r = new Dictionary<int, int>();
-                foreach (var id in maskInc)
-                {
-                    var bit = EcsMaskChunck.FromID(id);
-                    if (!r.TryAdd(bit.chankIndex, bit.mask))
-                        r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
-                }
-                EcsMaskChunck[] incMasks = r.Select(o => new EcsMaskChunck(o.Key, o.Value)).ToArray();
-                r.Clear();
-                foreach (var id in maskExc)
-                {
-                    var bit = EcsMaskChunck.FromID(id);
-                    if (!r.TryAdd(bit.chankIndex, bit.mask))
-                        r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
-                }
-                EcsMaskChunck[] excMasks = r.Select(o => new EcsMaskChunck(o.Key, o.Value)).ToArray();
-
-                var inc = maskInc.ToArray();
-                Array.Sort(inc);
-                var exc = maskExc.ToArray();
-                Array.Sort(exc);
-
-                mask = new EcsMask(0, _world.id, inc, exc, incMasks, excMasks);
-                _world = null;
-                _inc = null;
-                _exc = null;
+                mask = _maskBuilder.Build();
             }
 
             #region SupportReflectionHack
@@ -281,7 +214,7 @@ namespace DCFApixels.DragonECS
             int count = 0;
             while (enumerator.MoveNext())
             {
-                if(array.Length <= count)
+                if (array.Length <= count)
                     Array.Resize(ref array, array.Length << 1);
                 array[count++] = enumerator.Current;
             }
@@ -365,15 +298,11 @@ namespace DCFApixels.DragonECS
                 UnsafeArray<int> _sortExcBuffer = aspect._sortExcBuffer;
                 _sortIncChunckBuffer = aspect._sortIncChunckBuffer;
                 _sortExcChunckBuffer = aspect._sortExcChunckBuffer;
-
                 int[] counts = mask.World._poolComponentCounts;
 
-
-
+                #region Sort
                 IncCountComparer incComparer = new IncCountComparer(counts);
                 ExcCountComparer excComparer = new ExcCountComparer(counts);
-
-                #region Sort
                 UnsafeArraySortHalperX<int>.InsertionSort(_sortIncBuffer.ptr, _sortIncBuffer.Length, ref incComparer);
                 UnsafeArraySortHalperX<int>.InsertionSort(_sortExcBuffer.ptr, _sortExcBuffer.Length, ref excComparer);
 
@@ -475,9 +404,6 @@ namespace DCFApixels.DragonECS
                 {
                     _preSortedExcBuffer[i] = EcsMaskChunck.FromID(_sortExcBuffer.ptr[i]);
                 }
-
-                //int _sortedIncBufferLength = mask.inc.Length;
-                //int _sortedExcBufferLength = mask.exc.Length;
 
                 //if (_sortIncChunckBuffer.Length > 1)//перенести этот чек в начала сортировки, для _incChunckMasks.Length == 1 сортировка не нужна
                 if (_sortIncBuffer.Length > 1)

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using static Leopotam.EcsLite.EcsWorld;
 
 namespace DCFApixels.DragonECS
 {
@@ -13,38 +12,17 @@ namespace DCFApixels.DragonECS
         private Dictionary<EcsMask.BuilderMaskKey, EcsMask> _masks = new Dictionary<EcsMask.BuilderMaskKey, EcsMask>(256);
         internal EcsMask GetMask_Internal(EcsMask.BuilderMaskKey maskKey)
         {
-            if(!_masks.TryGetValue(maskKey, out EcsMask result))
+            if (!_masks.TryGetValue(maskKey, out EcsMask result))
             {
-                int[] combinedInc = maskKey.inc;
-                int[] combinedExc = maskKey.exc;
-                Dictionary<int, int> r = new Dictionary<int, int>();
-                foreach (var id in combinedInc)
-                {
-                    var bit = EcsMaskChunck.FromID(id);
-                    if (!r.TryAdd(bit.chankIndex, bit.mask))
-                        r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
-                }
-                EcsMaskChunck[] incMasks = r.Select(o => new EcsMaskChunck(o.Key, o.Value)).ToArray();
-                r.Clear();
-                foreach (var id in combinedExc)
-                {
-                    var bit = EcsMaskChunck.FromID(id);
-                    if (!r.TryAdd(bit.chankIndex, bit.mask))
-                        r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
-                }
-                EcsMaskChunck[] excMasks = r.Select(o => new EcsMaskChunck(o.Key, o.Value)).ToArray();
-
-                result = new EcsMask(_masks.Count, id, combinedInc, combinedExc, incMasks, excMasks);
+                result = new EcsMask(_masks.Count, id, maskKey.inc, maskKey.exc);
                 _masks.Add(maskKey, result);
             }
             return result;
         }
     }
 
-
-
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public sealed class EcsMask
+    public sealed class EcsMask : IEquatable<EcsMask>
     {
         internal readonly int id;
         internal readonly int worldID;
@@ -58,7 +36,7 @@ namespace DCFApixels.DragonECS
         public ReadOnlySpan<int> Inc => inc;
         /// <summary>Excluding constraints</summary>
         public ReadOnlySpan<int> Exc => exc;
-        internal EcsMask(int id, int worldID, int[] inc, int[] exc, EcsMaskChunck[] incChunckMasks, EcsMaskChunck[] excChunckMasks)
+        internal EcsMask(int id, int worldID, int[] inc, int[] exc)
         {
 #if DEBUG
             CheckConstraints(inc, exc);
@@ -67,12 +45,43 @@ namespace DCFApixels.DragonECS
             this.inc = inc;
             this.exc = exc;
             this.worldID = worldID;
-            this.incChunckMasks = incChunckMasks;
-            this.excChunckMasks = excChunckMasks;
+
+            //TODO пересесть с дикта на подсчет в цикле.
+            Dictionary<int, int> r = new Dictionary<int, int>();
+            foreach (var cmpID in inc)
+            {
+                var bit = EcsMaskChunck.FromID(cmpID);
+                if (!r.TryAdd(bit.chankIndex, bit.mask))
+                    r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
+            }
+            EcsMaskChunck[] incMasks = r.Select(o => new EcsMaskChunck(o.Key, o.Value)).ToArray();
+            r.Clear();
+            foreach (var cmpID in exc)
+            {
+                var bit = EcsMaskChunck.FromID(cmpID);
+                if (!r.TryAdd(bit.chankIndex, bit.mask))
+                    r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
+            }
+            EcsMaskChunck[] excMasks = r.Select(o => new EcsMaskChunck(o.Key, o.Value)).ToArray();
+
+            incChunckMasks = incMasks;
+            excChunckMasks = excMasks;
         }
 
         #region Object
         public override string ToString() => CreateLogString(worldID, inc, exc);
+        public bool Equals(EcsMask mask)
+        {
+            return id == mask.id && worldID == mask.worldID;
+        }
+        public override bool Equals(object obj)
+        {
+            return obj is EcsMask mask && id == mask.id && Equals(mask);
+        }
+        public override int GetHashCode()
+        {
+            return unchecked(id ^ (worldID * EcsConsts.MAGIC_PRIME));
+        }
         #endregion
 
         #region Debug utils
@@ -109,10 +118,12 @@ namespace DCFApixels.DragonECS
             return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
 #endif
         }
+
         internal class DebuggerProxy
         {
+            public readonly int ID;
             public readonly EcsWorld world;
-            public readonly int worldID;
+            private readonly int _worldID;
             public readonly EcsMaskChunck[] includedChunkMasks;
             public readonly EcsMaskChunck[] excludedChunkMasks;
             public readonly int[] included;
@@ -122,8 +133,9 @@ namespace DCFApixels.DragonECS
 
             public DebuggerProxy(EcsMask mask)
             {
+                ID = mask.id;
                 world = EcsWorld.GetWorld(mask.worldID);
-                worldID = mask.worldID;
+                _worldID = mask.worldID;
                 includedChunkMasks = mask.incChunckMasks;
                 excludedChunkMasks = mask.excChunckMasks;
                 included = mask.inc;
@@ -132,10 +144,11 @@ namespace DCFApixels.DragonECS
                 includedTypes = included.Select(converter).ToArray();
                 excludedTypes = excluded.Select(converter).ToArray();
             }
-            public override string ToString() => CreateLogString(worldID, included, excluded);
+            public override string ToString() => CreateLogString(_worldID, included, excluded);
         }
         #endregion
 
+        #region Builder
         public readonly struct BuilderMaskKey : IEquatable<BuilderMaskKey>
         {
             public readonly int[] inc;
@@ -173,7 +186,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
 #if DEBUG
-                if(other.hash != hash)
+                if (other.hash != hash)
                 {
                     throw new Exception("other.hash != hash");
                 }
@@ -186,16 +199,14 @@ namespace DCFApixels.DragonECS
 
         public class Builder
         {
-            private EcsWorld _world;
-            private HashSet<int> _inc;
-            private HashSet<int> _exc;
-            private List<Combined> _combined;
+            private readonly EcsWorld _world;
+            private readonly HashSet<int> _inc = new HashSet<int>();
+            private readonly HashSet<int> _exc = new HashSet<int>();
+            private readonly List<Combined> _combined = new List<Combined>();
 
             internal Builder(EcsWorld world)
             {
                 _world = world;
-                _inc = new HashSet<int>();
-                _exc = new HashSet<int>();
             }
 
             public void Include<T>()
@@ -269,26 +280,23 @@ namespace DCFApixels.DragonECS
                 var exc = combinedExc.ToArray();
                 Array.Sort(exc);
 
-                int keyHash = inc.Length + exc.Length;
-                for (int i = 0, iMax = inc.Length; i < iMax; i++)
+                unchecked
                 {
-                    keyHash = unchecked(keyHash * 314159 + inc[i]);
+                    int keyHash = inc.Length + exc.Length;
+                    for (int i = 0, iMax = inc.Length; i < iMax; i++)
+                    {
+                        keyHash = keyHash * EcsConsts.MAGIC_PRIME + inc[i];
+                    }
+                    for (int i = 0, iMax = exc.Length; i < iMax; i++)
+                    {
+                        keyHash = keyHash * EcsConsts.MAGIC_PRIME - exc[i];
+                    }
+                    BuilderMaskKey key = new BuilderMaskKey(inc, exc, keyHash);
+                    return _world.GetMask_Internal(key);
                 }
-                for (int i = 0, iMax = exc.Length; i < iMax; i++)
-                {
-                    keyHash = unchecked(keyHash * 314159 - exc[i]);
-                }
-                BuilderMaskKey key = new BuilderMaskKey(inc, exc, keyHash);
-
-                _world = null;
-                _inc = null;
-                _exc = null;
-                _combined = null;
-
-                return _world.GetMask_Internal(key);
             }
         }
-       
+
         private readonly struct Combined
         {
             public readonly EcsMask mask;
@@ -299,6 +307,7 @@ namespace DCFApixels.DragonECS
                 this.order = order;
             }
         }
+        #endregion
     }
 
     [DebuggerTypeProxy(typeof(DebuggerProxy))]

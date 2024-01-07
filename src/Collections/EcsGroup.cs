@@ -514,7 +514,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            if(group.Count > Count)
+            if (group.Count > Count)
             {
                 foreach (var item in this)
                     if (group.Has(item))

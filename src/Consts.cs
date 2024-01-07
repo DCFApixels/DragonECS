@@ -17,5 +17,7 @@
         public const string POST_END_LAYER = nameof(POST_END_LAYER);
 
         public const string META_HIDDEN_TAG = "HiddenInDebagging";
+
+        public const int MAGIC_PRIME = 314159;
     }
 }

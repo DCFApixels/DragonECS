@@ -37,7 +37,7 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _values.IsEmpty;
-    }
+        }
         #endregion
 
         #region Constructors

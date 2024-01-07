@@ -142,7 +142,7 @@ namespace DCFApixels.DragonECS
         #region Where Query
         public EcsReadonlyGroup WhereToGroupFor<TAspect>(EcsSpan span, out TAspect aspect) where TAspect : EcsAspect
         {
-            if(_isEnableReleaseDelEntBuffer)
+            if (_isEnableReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
