@@ -30,12 +30,18 @@ namespace DCFApixels.DragonECS
         internal readonly EcsMaskChunck[] excChunckMasks;
         internal readonly int[] inc;
         internal readonly int[] exc;
+
+        #region Properties
+        public int ID => id;
         public int WorldID => worldID;
         public EcsWorld World => EcsWorld.GetWorld(worldID);
         /// <summary>Including constraints</summary>
         public ReadOnlySpan<int> Inc => inc;
         /// <summary>Excluding constraints</summary>
         public ReadOnlySpan<int> Exc => exc;
+        #endregion
+
+        #region Constructors
         internal EcsMask(int id, int worldID, int[] inc, int[] exc)
         {
 #if DEBUG
@@ -79,6 +85,7 @@ namespace DCFApixels.DragonECS
             }
             return result;
         }
+        #endregion
 
         #region Object
         public override string ToString() => CreateLogString(worldID, inc, exc);
@@ -322,6 +329,7 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    #region EcsMaskChunck
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly struct EcsMaskChunck
     {
@@ -364,4 +372,5 @@ namespace DCFApixels.DragonECS
             }
         }
     }
+    #endregion
 }

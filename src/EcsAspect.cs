@@ -251,6 +251,7 @@ namespace DCFApixels.DragonECS
 
         public unsafe ref struct Enumerator
         {
+            #region CountComparers
             private readonly struct IncCountComparer : IComparerX<int>
             {
                 public readonly int[] counts;
@@ -275,6 +276,8 @@ namespace DCFApixels.DragonECS
                     return counts[b] - counts[a];
                 }
             }
+            #endregion
+
             private ReadOnlySpan<int>.Enumerator _span;
             private readonly int[][] _entitiesComponentMasks;
 
@@ -284,110 +287,20 @@ namespace DCFApixels.DragonECS
             private UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
             private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
-            private EcsAspect aspect;
+            //private EcsAspect aspect;
 
             public unsafe Enumerator(EcsSpan span, EcsAspect aspect)
             {
-                this.aspect = aspect;
+                //this.aspect = aspect;
                 _span = span.GetEnumerator();
-                _entitiesComponentMasks = span.World._entitiesComponentMasks;
-
-                EcsMask mask = aspect.Mask;
-
-                UnsafeArray<int> _sortIncBuffer = aspect._sortIncBuffer;
-                UnsafeArray<int> _sortExcBuffer = aspect._sortExcBuffer;
+                _entitiesComponentMasks = aspect.World._entitiesComponentMasks;
                 _sortIncChunckBuffer = aspect._sortIncChunckBuffer;
                 _sortExcChunckBuffer = aspect._sortExcChunckBuffer;
-                int[] counts = mask.World._poolComponentCounts;
 
                 #region Sort
-                IncCountComparer incComparer = new IncCountComparer(counts);
-                ExcCountComparer excComparer = new ExcCountComparer(counts);
-                UnsafeArraySortHalperX<int>.InsertionSort(_sortIncBuffer.ptr, _sortIncBuffer.Length, ref incComparer);
-                UnsafeArraySortHalperX<int>.InsertionSort(_sortExcBuffer.ptr, _sortExcBuffer.Length, ref excComparer);
-
-                //if (_sortIncBuffer.Length > 1)
-                //{
-                //    //if (_sortIncBufferLength == 2)
-                //    //{
-                //    //    if (counts[_sortIncBuffer[0]] > counts[_sortIncBuffer[1]])
-                //    //    {
-                //    //        int tmp = _sortIncBuffer[0];
-                //    //        _sortIncBuffer[0] = _sortIncBuffer[1];
-                //    //        _sortIncBuffer[1] = tmp;
-                //    //    }
-                //    //    //...
-                //    //}
-                //    //else
-                //    {
-                //        for (int i = 0, n = _sortIncBuffer.Length - 1; i < n; i++)
-                //        {
-                //            //int counti = counts[_sortIncBuffer[i]];
-                //            //if (counti <= 0)
-                //            //{
-                //            //    _span = ReadOnlySpan<int>.Empty.GetEnumerator();
-                //            //    goto skip1;
-                //            //}
-                //            bool noSwaped = true; 
-                //            for (int j = 0; j < n - i; )
-                //            {
-                //                ref int j0 = ref _sortIncBuffer.ptr[j++];
-                //                if (counts[j0] > counts[_sortIncBuffer.ptr[j]])
-                //                {
-                //                    int tmp = _sortIncBuffer.ptr[j];
-                //                    _sortIncBuffer.ptr[j] = j0;
-                //                    j0 = tmp;
-                //                    noSwaped = false;
-                //                }
-                //            }
-                //            if (noSwaped)
-                //                break;
-                //        }
-                //    }
-                //}
-                //skip1:;
-                //if (_sortExcBuffer.Length > 1)
-                //{
-                //    //if (_sortExcBufferLength == 2)
-                //    //{
-                //    //    if (counts[_sortExcBuffer[0]] < counts[_sortExcBuffer[1]])
-                //    //    {
-                //    //        int tmp = _sortExcBuffer[0];
-                //    //        _sortExcBuffer[0] = _sortExcBuffer[1];
-                //    //        _sortExcBuffer[1] = tmp;
-                //    //    }
-                //    //    //...
-                //    //}
-                //    //else
-                //    {
-                //        for (int i = 0, n = _sortExcBuffer.Length - 1; i < n; i++)
-                //        {
-                //            //int counti = counts[_sortExcBuffer[i]];
-                //            //if (counti <= 0)
-                //            //{
-                //            //    _excChunckMasks = ReadOnlySpan<EcsMaskBit>.Empty;
-                //            //    goto skip2;
-                //            //}
-                //            bool noSwaped = true;
-                //            for (int j = 0; j < n - i;)
-                //            {
-                //                ref int j0 = ref _sortExcBuffer.ptr[j++];
-                //                if (counts[j0] < counts[_sortExcBuffer.ptr[j]])
-                //                {
-                //                    int tmp = _sortExcBuffer.ptr[j];
-                //                    _sortExcBuffer.ptr[j] = j0;
-                //                    j0 = tmp;
-                //                    noSwaped = false;
-                //                }
-                //            }
-                //            if (noSwaped)
-                //                break;
-                //        }
-                //    }
-                //}
-                //skip2:;
-
-
+                UnsafeArray<int> _sortIncBuffer = aspect._sortIncBuffer;
+                UnsafeArray<int> _sortExcBuffer = aspect._sortExcBuffer;
+                int[] counts = aspect.World._poolComponentCounts;
 
                 if (_preSortedIncBuffer == null)
                 {
@@ -395,19 +308,14 @@ namespace DCFApixels.DragonECS
                     _preSortedExcBuffer = UnmanagedArrayUtility.New<EcsMaskChunck>(256);
                 }
 
-
-                for (int i = 0; i < _sortIncBuffer.Length; i++)
+                if (_sortIncChunckBuffer.Length > 1)
                 {
-                    _preSortedIncBuffer[i] = EcsMaskChunck.FromID(_sortIncBuffer.ptr[i]);
-                }
-                for (int i = 0; i < _sortExcBuffer.Length; i++)
-                {
-                    _preSortedExcBuffer[i] = EcsMaskChunck.FromID(_sortExcBuffer.ptr[i]);
-                }
-
-                //if (_sortIncChunckBuffer.Length > 1)//перенести этот чек в начала сортировки, для _incChunckMasks.Length == 1 сортировка не нужна
-                if (_sortIncBuffer.Length > 1)
-                {
+                    IncCountComparer incComparer = new IncCountComparer(counts);
+                    UnsafeArraySortHalperX<int>.InsertionSort(_sortIncBuffer.ptr, _sortIncBuffer.Length, ref incComparer);
+                    for (int i = 0; i < _sortIncBuffer.Length; i++)
+                    {
+                        _preSortedIncBuffer[i] = EcsMaskChunck.FromID(_sortIncBuffer.ptr[i]);
+                    }
                     for (int i = 0, ii = 0; ii < _sortIncChunckBuffer.Length; ii++)
                     {
                         EcsMaskChunck bas = _preSortedIncBuffer[i];
@@ -428,14 +336,16 @@ namespace DCFApixels.DragonECS
                         }
                     }
                 }
-                else
-                {
-                    _sortIncChunckBuffer.ptr[0] = _preSortedIncBuffer[0];
-                }
 
-                //if (_sortExcChunckBuffer.Length > 1)//перенести этот чек в начала сортировки, для _excChunckMasks.Length == 1 сортировка не нужна
-                if (_sortExcBuffer.Length > 1)
+                if (_sortExcChunckBuffer.Length > 1)
                 {
+                    ExcCountComparer excComparer = new ExcCountComparer(counts);
+                    UnsafeArraySortHalperX<int>.InsertionSort(_sortExcBuffer.ptr, _sortExcBuffer.Length, ref excComparer);
+                    for (int i = 0; i < _sortExcBuffer.Length; i++)
+                    {
+                        _preSortedExcBuffer[i] = EcsMaskChunck.FromID(_sortExcBuffer.ptr[i]);
+                    }
+
                     for (int i = 0, ii = 0; ii < _sortExcChunckBuffer.Length; ii++)
                     {
                         EcsMaskChunck bas = _preSortedExcBuffer[i];
@@ -456,10 +366,6 @@ namespace DCFApixels.DragonECS
                         }
                     }
                 }
-                else
-                {
-                    _sortExcChunckBuffer.ptr[0] = _preSortedExcBuffer[0];
-                }
                 #endregion
             }
             public int Current
@@ -467,11 +373,11 @@ namespace DCFApixels.DragonECS
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _span.Current;
             }
-            public entlong CurrentLong
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => aspect.World.GetEntityLong(_span.Current);
-            }
+            //public entlong CurrentLong
+            //{
+            //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            //    get => aspect.World.GetEntityLong(_span.Current);
+            //}
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
