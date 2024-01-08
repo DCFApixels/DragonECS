@@ -170,19 +170,6 @@ namespace DCFApixels.DragonECS
             }
         }
 
-        public void CopyTo(T[] array)
-        {
-            if (_length > array.Length)
-            {
-                throw new ArgumentOutOfRangeException();
-            }
-
-            for (int i = 0; i < _length; i++)
-            {
-                array[i] = _array[i];
-            }
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan<T> Slice(int start)
         {
