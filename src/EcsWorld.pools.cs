@@ -12,7 +12,9 @@ namespace DCFApixels.DragonECS
         private SparseArray<int> _componentIds = new SparseArray<int>();
         private int _poolsCount;
         internal IEcsPoolImplementation[] _pools;
-        //internal int[] _poolComponentCounts;
+        //private int[] _sortedPoolIds;
+        //private int[] _sortedPoolIdsMapping;
+        internal int[] _poolComponentCounts;
 
         private static EcsNullPool _nullPool = EcsNullPool.instance;
 
@@ -25,6 +27,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Getters
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TPool TestGetPool<TPool>() where TPool : IEcsPoolImplementation, new()
+        {
+            return Get<PoolCache<TPool>>().instance;
+        }
+
 
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.Preserve]
@@ -94,7 +103,9 @@ namespace DCFApixels.DragonECS
             {
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, _pools.Length << 1);
-                //Array.Resize(ref _poolComponentCounts, _pools.Length);
+                Array.Resize(ref _poolComponentCounts, _pools.Length);
+                //Array.Resize(ref _sortedPoolIds, _pools.Length);
+                //Array.Resize(ref _sortedPoolIdsMapping, _pools.Length);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
 
                 for (int i = 0; i < _entitesCapacity; i++)
@@ -111,18 +122,19 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+
         #region Pools mediation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+        private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
-            //_poolComponentCounts[componentTypeID]++;
+            _poolComponentCounts[componentTypeID]++;
             _componentCounts[entityID]++;
             _entitiesComponentMasks[entityID][maskBit.chankIndex] |= maskBit.mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+        private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
-            //_poolComponentCounts[componentTypeID]--;
+            _poolComponentCounts[componentTypeID]--;
             var count = --_componentCounts[entityID];
             _entitiesComponentMasks[entityID][maskBit.chankIndex] &= ~maskBit.mask;
 
@@ -133,7 +145,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool HasEntityComponent(int entityID, EcsMaskBit maskBit)
+        private bool HasEntityComponent(int entityID, EcsMaskChunck maskBit)
         {
             return (_entitiesComponentMasks[entityID][maskBit.chankIndex] & maskBit.mask) != maskBit.mask;
         }
@@ -152,17 +164,17 @@ namespace DCFApixels.DragonECS
                 _world = world;
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RegisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+            public void RegisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
             {
                 _world.RegisterEntityComponent(entityID, componentTypeID, maskBit);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void UnregisterComponent(int entityID, int componentTypeID, EcsMaskBit maskBit)
+            public void UnregisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
             {
                 _world.UnregisterEntityComponent(entityID, componentTypeID, maskBit);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool HasComponent(int entityID, EcsMaskBit maskBit)
+            public bool HasComponent(int entityID, EcsMaskChunck maskBit)
             {
                 return _world.HasEntityComponent(entityID, maskBit);
             }

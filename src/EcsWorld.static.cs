@@ -96,7 +96,7 @@ namespace DCFApixels.DragonECS
                     {
                         itemIndex = ++_count;
                     }
-                    if(_items.Length <= itemIndex)
+                    if (_items.Length <= itemIndex)
                     {
                         Array.Resize(ref _items, _items.Length << 1);
                     }

@@ -11,7 +11,7 @@ namespace DCFApixels.DragonECS
     {
         private EcsWorld _source;
         private int _componentTypeID;
-        private EcsMaskBit _maskBit;
+        private EcsMaskChunck _maskBit;
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
@@ -141,7 +141,7 @@ namespace DCFApixels.DragonECS
             _source = world;
             _mediator = mediator;
             _componentTypeID = componentTypeID;
-            _maskBit = EcsMaskBit.FromID(componentTypeID);
+            _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
             const int capacity = 512;
 

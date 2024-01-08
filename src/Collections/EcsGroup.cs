@@ -1,7 +1,9 @@
 ﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -12,7 +14,7 @@ namespace DCFApixels.DragonECS
     //_dense заполняется с индекса 1
     //в операциях изменяющих состояние группы нельзя итерироваться по this, либо осторожно учитывать этот момент
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
-    [DebuggerTypeProxy(typeof(DebuggerProxy))]
+    [DebuggerTypeProxy(typeof(EcsGroup.DebuggerProxy))]
     public readonly ref struct EcsReadonlyGroup
     {
         private readonly EcsGroup _source;
@@ -111,10 +113,6 @@ namespace DCFApixels.DragonECS
         public bool IsSupersetOf(EcsGroup group) => _source.IsSupersetOf(group);
         #endregion
 
-        #region Object
-        public override string ToString() => _source != null ? _source.ToString() : "NULL";
-        #endregion
-
         #region Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal EcsGroup GetGroupInternal() => _source;
@@ -122,12 +120,25 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        public override string ToString()
+        {
+            return _source != null ? _source.ToString() : "NULL";
+        }
+#pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
+        [Obsolete("Equals() on EcsGroup will always throw an exception. Use the equality operator instead.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override bool Equals(object obj) => throw new NotSupportedException();
+        [Obsolete("GetHashCode() on EcsGroup will always throw an exception.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override int GetHashCode() => throw new NotSupportedException();
+#pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsSpan(EcsReadonlyGroup a) => a.ToSpan();
-        internal class DebuggerProxy : EcsGroup.DebuggerProxy
-        {
-            public DebuggerProxy(EcsReadonlyGroup group) : base(group._source) { }
-        }
+        //internal class DebuggerProxy : EcsGroup.DebuggerProxy
+        //{
+        //    public DebuggerProxy(EcsReadonlyGroup group) : base(group._source) { }
+        //}
         #endregion
     }
 
@@ -503,7 +514,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            if(group.Count > Count)
+            if (group.Count > Count)
             {
                 foreach (var item in this)
                     if (group.Has(item))
@@ -710,7 +721,8 @@ namespace DCFApixels.DragonECS
         #region Other
         public override string ToString()
         {
-            return $"group{{{string.Join(", ", _dense.Skip(1).Take(_count).OrderBy(o => o))}}}";
+            return CollectionUtility.EntitiesToString(_dense.Skip(1).Take(_count), "group");
+            //return $"group({_count}) {{{string.Join(", ", _dense.Skip(1).Take(_count).OrderBy(o => o))}}}";
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First()
@@ -752,6 +764,7 @@ namespace DCFApixels.DragonECS
             public int CapacitySparce => _group.CapacitySparce;
             public override string ToString() => _group.ToString();
             public DebuggerProxy(EcsGroup group) => _group = group;
+            public DebuggerProxy(EcsReadonlyGroup group) : this(group.GetGroupInternal()) { }
         }
         #endregion
     }

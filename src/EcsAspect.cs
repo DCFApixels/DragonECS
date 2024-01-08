@@ -1,27 +1,31 @@
 ﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace DCFApixels.DragonECS
 {
     public abstract class EcsAspect
     {
-        internal EcsWorld source;
-        internal EcsMask mask;
+        internal EcsWorld _source;
+        internal EcsMask _mask;
         private bool _isInit;
+
+        internal UnsafeArray<int> _sortIncBuffer;
+        internal UnsafeArray<int> _sortExcBuffer;
+        internal UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
+        internal UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
+
         #region Properties
-        public EcsMask Mask => mask;
-        public EcsWorld World => source;
+        public EcsMask Mask => _mask;
+        public EcsWorld World => _source;
         public bool IsInit => _isInit;
         #endregion
 
         #region Methods
-        public bool IsMatches(int entityID) => source.IsMatchesMask(mask, entityID);
+        public bool IsMatches(int entityID) => _source.IsMatchesMask(_mask, entityID);
         #endregion
 
         #region Builder
@@ -29,20 +33,16 @@ namespace DCFApixels.DragonECS
         public sealed class Builder : EcsAspectBuilderBase
         {
             private EcsWorld _world;
-            private HashSet<int> _inc;
-            private HashSet<int> _exc;
-            private List<Combined> _combined;
+            private EcsMask.Builder _maskBuilder;
 
             public EcsWorld World => _world;
 
             private Builder(EcsWorld world)
             {
                 _world = world;
-                _combined = new List<Combined>();
-                _inc = new HashSet<int>();
-                _exc = new HashSet<int>();
+                _maskBuilder = new EcsMask.Builder(world);
             }
-            internal static TAspect Build<TAspect>(EcsWorld world) where TAspect : EcsAspect
+            internal static unsafe TAspect New<TAspect>(EcsWorld world) where TAspect : EcsAspect
             {
                 Builder builder = new Builder(world);
                 Type aspectType = typeof(TAspect);
@@ -57,13 +57,37 @@ namespace DCFApixels.DragonECS
                     newAspect = (EcsAspect)Activator.CreateInstance(typeof(TAspect));
                     newAspect.Init(builder);
                 }
-                newAspect.source = world;
-                builder.End(out newAspect.mask);
+                newAspect._source = world;
+                builder.Build(out newAspect._mask);
                 newAspect._isInit = true;
+
+                newAspect._sortIncBuffer = new UnsafeArray<int>(newAspect._mask.inc.Length, true);
+                newAspect._sortExcBuffer = new UnsafeArray<int>(newAspect._mask.exc.Length, true);
+                newAspect._sortIncChunckBuffer = new UnsafeArray<EcsMaskChunck>(newAspect._mask.incChunckMasks.Length, true);
+                newAspect._sortExcChunckBuffer = new UnsafeArray<EcsMaskChunck>(newAspect._mask.excChunckMasks.Length, true);
+
+                for (int i = 0; i < newAspect._sortIncBuffer.Length; i++)
+                {
+                    newAspect._sortIncBuffer.ptr[i] = newAspect._mask.inc[i];
+                }
+                for (int i = 0; i < newAspect._sortExcBuffer.Length; i++)
+                {
+                    newAspect._sortExcBuffer.ptr[i] = newAspect._mask.exc[i];
+                }
+
+                for (int i = 0; i < newAspect._sortIncChunckBuffer.Length; i++)
+                {
+                    newAspect._sortIncChunckBuffer.ptr[i] = newAspect._mask.incChunckMasks[i];
+                }
+                for (int i = 0; i < newAspect._sortExcChunckBuffer.Length; i++)
+                {
+                    newAspect._sortExcChunckBuffer.ptr[i] = newAspect._mask.excChunckMasks[i];
+                }
+
                 return (TAspect)newAspect;
             }
 
-            #region Include/Exclude/Optional
+            #region Include/Exclude/Optional/Combine
             public sealed override TPool Include<TPool>()
             {
                 IncludeImplicit(typeof(TPool).GetGenericArguments()[0]);
@@ -80,27 +104,16 @@ namespace DCFApixels.DragonECS
             }
             private void IncludeImplicit(Type type)
             {
-                int id = _world.GetComponentID(type);
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
-#endif
-                _inc.Add(id);
+                _maskBuilder.Include(type);
             }
             private void ExcludeImplicit(Type type)
             {
-                int id = _world.GetComponentID(type);
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
-#endif
-                _exc.Add(id);
+                _maskBuilder.Exclude(type);
             }
-            #endregion
-
-            #region Combine
             public TOtherAspect Combine<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect
             {
                 var result = _world.GetAspect<TOtherAspect>();
-                _combined.Add(new Combined(result, order));
+                _maskBuilder.CombineWith(result.Mask);
                 return result;
             }
             #endregion
@@ -110,72 +123,9 @@ namespace DCFApixels.DragonECS
                 return new EcsWorldCmp<T>(_world.id);
             }
 
-            private void End(out EcsMask mask)
+            private void Build(out EcsMask mask)
             {
-                HashSet<int> maskInc;
-                HashSet<int> maskExc;
-                if (_combined.Count > 0)
-                {
-                    maskInc = new HashSet<int>();
-                    maskExc = new HashSet<int>();
-                    _combined.Sort((a, b) => a.order - b.order);
-                    foreach (var item in _combined)
-                    {
-                        EcsMask submask = item.aspect.mask;
-                        maskInc.ExceptWith(submask.exc);//удаляю конфликтующие ограничения
-                        maskExc.ExceptWith(submask.inc);//удаляю конфликтующие ограничения
-                        maskInc.UnionWith(submask.inc);
-                        maskExc.UnionWith(submask.exc);
-                    }
-                    maskInc.ExceptWith(_exc);//удаляю конфликтующие ограничения
-                    maskExc.ExceptWith(_inc);//удаляю конфликтующие ограничения
-                    maskInc.UnionWith(_inc);
-                    maskExc.UnionWith(_exc);
-                }
-                else
-                {
-                    maskInc = _inc;
-                    maskExc = _exc;
-                }
-
-                Dictionary<int, int> r = new Dictionary<int, int>();
-                foreach (var id in maskInc)
-                {
-                    var bit = EcsMaskBit.FromID(id);
-                    if (r.ContainsKey(bit.chankIndex))
-                    {
-                        r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
-                    }
-                    else
-                    {
-                        r[bit.chankIndex] = bit.mask;
-                    }
-                }
-                EcsMaskBit[] incMasks = r.Select(o => new EcsMaskBit(o.Key, o.Value)).ToArray();
-                r.Clear();
-                foreach (var id in maskExc)
-                {
-                    var bit = EcsMaskBit.FromID(id);
-                    if (r.ContainsKey(bit.chankIndex))
-                    {
-                        r[bit.chankIndex] = r[bit.chankIndex] | bit.mask;
-                    }
-                    else
-                    {
-                        r[bit.chankIndex] = bit.mask;
-                    }
-                }
-                EcsMaskBit[] excMasks = r.Select(o => new EcsMaskBit(o.Key, o.Value)).ToArray();
-
-                var inc = maskInc.ToArray();
-                Array.Sort(inc);
-                var exc = maskExc.ToArray();
-                Array.Sort(exc);
-
-                mask = new EcsMask(_world.id, inc, exc, incMasks, excMasks);
-                _world = null;
-                _inc = null;
-                _exc = null;
+                mask = _maskBuilder.Build();
             }
 
             #region SupportReflectionHack
@@ -194,10 +144,20 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region Destructor
+        unsafe ~EcsAspect()
+        {
+            _sortIncBuffer.Dispose();
+            _sortExcBuffer.Dispose();
+            _sortIncChunckBuffer.Dispose();
+            _sortExcChunckBuffer.Dispose();
+        }
+        #endregion
+
         #region Iterator
         public EcsAspectIterator GetIterator()
         {
-            return new EcsAspectIterator(this, source.Entities);
+            return new EcsAspectIterator(this, _source.Entities);
         }
         public EcsAspectIterator GetIteratorFor(EcsSpan span)
         {
@@ -205,6 +165,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region Combined
         private readonly struct Combined
         {
             public readonly EcsAspect aspect;
@@ -215,6 +176,7 @@ namespace DCFApixels.DragonECS
                 this.order = order;
             }
         }
+        #endregion
     }
 
     #region BuilderBase
@@ -226,147 +188,19 @@ namespace DCFApixels.DragonECS
     }
     #endregion
 
-    #region Mask
-    public readonly struct EcsMaskBit
-    {
-        private const int BITS = 32;
-        private const int DIV_SHIFT = 5;
-        private const int MOD_MASK = BITS - 1;
-
-        public readonly int chankIndex;
-        public readonly int mask;
-        public EcsMaskBit(int chankIndex, int mask)
-        {
-            this.chankIndex = chankIndex;
-            this.mask = mask;
-        }
-        public static EcsMaskBit FromID(int id)
-        {
-            return new EcsMaskBit(id >> DIV_SHIFT, 1 << (id & MOD_MASK)); //аналогично new EcsMaskBit(id / BITS, 1 << (id % BITS)) но быстрее
-        }
-        public override string ToString()
-        {
-            return $"bit({chankIndex}, {mask})";
-        }
-    }
-
-    [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public sealed class EcsMask
-    {
-        internal readonly int worldID;
-        internal readonly EcsMaskBit[] incChunckMasks;
-        internal readonly EcsMaskBit[] excChunckMasks;
-        internal readonly int[] inc;
-        internal readonly int[] exc;
-        public int WorldID => worldID;
-        /// <summary>Including constraints</summary>
-        public ReadOnlySpan<int> Inc => inc;
-        /// <summary>Excluding constraints</summary>
-        public ReadOnlySpan<int> Exc => exc;
-        internal EcsMask(int worldID, int[] inc, int[] exc, EcsMaskBit[] incChunckMasks, EcsMaskBit[] excChunckMasks)
-        {
-#if DEBUG
-            CheckConstraints(inc, exc);
-#endif
-            this.inc = inc;
-            this.exc = exc;
-            this.worldID = worldID;
-            this.incChunckMasks = incChunckMasks;
-            this.excChunckMasks = excChunckMasks;
-        }
-
-        #region Object
-        public override string ToString() => CreateLogString(worldID, inc, exc);
-        #endregion
-
-        #region Debug utils
-#if DEBUG
-        private static HashSet<int> _dummyHashSet = new HashSet<int>();
-        private void CheckConstraints(int[] inc, int[] exc)
-        {
-            lock (_dummyHashSet)
-            {
-                if (CheckRepeats(inc)) throw new EcsFrameworkException("The values in the Include constraints are repeated.");
-                if (CheckRepeats(exc)) throw new EcsFrameworkException("The values in the Exclude constraints are repeated.");
-                _dummyHashSet.Clear();
-                _dummyHashSet.UnionWith(inc);
-                if (_dummyHashSet.Overlaps(exc)) throw new EcsFrameworkException("Conflicting Include and Exclude constraints.");
-            }
-        }
-        private bool CheckRepeats(int[] array)
-        {
-            _dummyHashSet.Clear();
-            foreach (var item in array)
-            {
-                if (_dummyHashSet.Contains(item)) return true;
-                _dummyHashSet.Add(item);
-            }
-            return false;
-        }
-#endif
-        private static string CreateLogString(int worldID, int[] inc, int[] exc)
-        {
-#if (DEBUG && !DISABLE_DEBUG)
-            string converter(int o) => EcsDebugUtility.GetGenericTypeName(EcsWorld.GetWorld(worldID).AllPools[o].ComponentType, 1);
-            return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
-#else
-            return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
-#endif
-        }
-        internal class DebuggerProxy
-        {
-            public readonly EcsWorld world;
-            public readonly int worldID;
-            public readonly EcsMaskBit[] includedChunkMasks;
-            public readonly EcsMaskBit[] excludedChunkMasks;
-            public readonly int[] included;
-            public readonly int[] excluded;
-            public readonly Type[] includedTypes;
-            public readonly Type[] excludedTypes;
-
-            public DebuggerProxy(EcsMask mask)
-            {
-                world = EcsWorld.GetWorld(mask.worldID);
-                worldID = mask.worldID;
-                includedChunkMasks = mask.incChunckMasks;
-                excludedChunkMasks = mask.excChunckMasks;
-                included = mask.inc;
-                excluded = mask.exc;
-                Type converter(int o) => world.GetComponentType(o);
-                includedTypes = included.Select(converter).ToArray();
-                excludedTypes = excluded.Select(converter).ToArray();
-            }
-            public override string ToString() => CreateLogString(worldID, included, excluded);
-        }
-        #endregion
-    }
-    #endregion
-
     #region Iterator
     public ref struct EcsAspectIterator
     {
         public readonly int worldID;
-        public readonly EcsMask mask;
+        public readonly EcsAspect aspect;
         private EcsSpan _span;
-        private Enumerator _enumerator;
 
         public EcsAspectIterator(EcsAspect aspect, EcsSpan span)
         {
             worldID = aspect.World.id;
-            mask = aspect.mask; 
             _span = span;
-            _enumerator = default;
+            this.aspect = aspect;
         }
-
-        public int Current
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _enumerator.Current;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Begin() => _enumerator = GetEnumerator();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Next() => _enumerator.MoveNext();
         public void CopyTo(EcsGroup group)
         {
             group.Clear();
@@ -380,7 +214,7 @@ namespace DCFApixels.DragonECS
             int count = 0;
             while (enumerator.MoveNext())
             {
-                if(array.Length <= count)
+                if (array.Length <= count)
                     Array.Resize(ref array, array.Length << 1);
                 array[count++] = enumerator.Current;
             }
@@ -402,58 +236,163 @@ namespace DCFApixels.DragonECS
         #region object
         public override string ToString()
         {
-            StringBuilder result = new StringBuilder();
+            List<int> ints = new List<int>();
             foreach (var e in this)
             {
-                result.Append(e);
-                result.Append(", ");
+                ints.Add(e);
             }
-            return result.ToString();
+            return CollectionUtility.EntitiesToString(ints, "it");
         }
         #endregion
 
         #region Enumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(_span, mask);
+        public Enumerator GetEnumerator() => new Enumerator(_span, aspect);
 
-        public ref struct Enumerator
+        public unsafe ref struct Enumerator
         {
+            #region CountComparers
+            private readonly struct IncCountComparer : IComparerX<int>
+            {
+                public readonly int[] counts;
+                public IncCountComparer(int[] counts)
+                {
+                    this.counts = counts;
+                }
+                public int Compare(int a, int b)
+                {
+                    return counts[a] - counts[b];
+                }
+            }
+            private readonly struct ExcCountComparer : IComparerX<int>
+            {
+                public readonly int[] counts;
+                public ExcCountComparer(int[] counts)
+                {
+                    this.counts = counts;
+                }
+                public int Compare(int a, int b)
+                {
+                    return counts[b] - counts[a];
+                }
+            }
+            #endregion
+
             private ReadOnlySpan<int>.Enumerator _span;
-            private readonly EcsMaskBit[] _incChunckMasks;
-            private readonly EcsMaskBit[] _excChunckMasks;
             private readonly int[][] _entitiesComponentMasks;
 
-            public Enumerator(EcsSpan span, EcsMask mask)
+            private static EcsMaskChunck* _preSortedIncBuffer;
+            private static EcsMaskChunck* _preSortedExcBuffer;
+
+            private UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
+            private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
+
+            //private EcsAspect aspect;
+
+            public unsafe Enumerator(EcsSpan span, EcsAspect aspect)
             {
+                //this.aspect = aspect;
                 _span = span.GetEnumerator();
-                _incChunckMasks = mask.incChunckMasks;
-                _excChunckMasks = mask.excChunckMasks;
-                _entitiesComponentMasks = span.World._entitiesComponentMasks;
+                _entitiesComponentMasks = aspect.World._entitiesComponentMasks;
+                _sortIncChunckBuffer = aspect._sortIncChunckBuffer;
+                _sortExcChunckBuffer = aspect._sortExcChunckBuffer;
 
+                #region Sort
+                UnsafeArray<int> _sortIncBuffer = aspect._sortIncBuffer;
+                UnsafeArray<int> _sortExcBuffer = aspect._sortExcBuffer;
+                int[] counts = aspect.World._poolComponentCounts;
 
-                
+                if (_preSortedIncBuffer == null)
+                {
+                    _preSortedIncBuffer = UnmanagedArrayUtility.New<EcsMaskChunck>(256);
+                    _preSortedExcBuffer = UnmanagedArrayUtility.New<EcsMaskChunck>(256);
+                }
+
+                if (_sortIncChunckBuffer.Length > 1)
+                {
+                    IncCountComparer incComparer = new IncCountComparer(counts);
+                    UnsafeArraySortHalperX<int>.InsertionSort(_sortIncBuffer.ptr, _sortIncBuffer.Length, ref incComparer);
+                    for (int i = 0; i < _sortIncBuffer.Length; i++)
+                    {
+                        _preSortedIncBuffer[i] = EcsMaskChunck.FromID(_sortIncBuffer.ptr[i]);
+                    }
+                    for (int i = 0, ii = 0; ii < _sortIncChunckBuffer.Length; ii++)
+                    {
+                        EcsMaskChunck bas = _preSortedIncBuffer[i];
+                        int chankIndexX = bas.chankIndex;
+                        int maskX = bas.mask;
+
+                        for (int j = i + 1; j < _sortIncBuffer.Length; j++)
+                        {
+                            if (_preSortedIncBuffer[j].chankIndex == chankIndexX)
+                            {
+                                maskX |= _preSortedIncBuffer[j].mask;
+                            }
+                        }
+                        _sortIncChunckBuffer.ptr[ii] = new EcsMaskChunck(chankIndexX, maskX);
+                        while (++i < _sortIncBuffer.Length && _preSortedIncBuffer[i].chankIndex == chankIndexX)
+                        {
+                            // skip
+                        }
+                    }
+                }
+
+                if (_sortExcChunckBuffer.Length > 1)
+                {
+                    ExcCountComparer excComparer = new ExcCountComparer(counts);
+                    UnsafeArraySortHalperX<int>.InsertionSort(_sortExcBuffer.ptr, _sortExcBuffer.Length, ref excComparer);
+                    for (int i = 0; i < _sortExcBuffer.Length; i++)
+                    {
+                        _preSortedExcBuffer[i] = EcsMaskChunck.FromID(_sortExcBuffer.ptr[i]);
+                    }
+
+                    for (int i = 0, ii = 0; ii < _sortExcChunckBuffer.Length; ii++)
+                    {
+                        EcsMaskChunck bas = _preSortedExcBuffer[i];
+                        int chankIndexX = bas.chankIndex;
+                        int maskX = bas.mask;
+
+                        for (int j = i + 1; j < _sortExcBuffer.Length; j++)
+                        {
+                            if (_preSortedExcBuffer[j].chankIndex == chankIndexX)
+                            {
+                                maskX |= _preSortedExcBuffer[j].mask;
+                            }
+                        }
+                        _sortExcChunckBuffer.ptr[ii] = new EcsMaskChunck(chankIndexX, maskX);
+                        while (++i < _sortExcBuffer.Length && _preSortedExcBuffer[i].chankIndex == chankIndexX)
+                        {
+                            // skip
+                        }
+                    }
+                }
+                #endregion
             }
             public int Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _span.Current;
             }
+            //public entlong CurrentLong
+            //{
+            //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            //    get => aspect.World.GetEntityLong(_span.Current);
+            //}
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 while (_span.MoveNext())
                 {
                     int e = _span.Current;
-                    EcsMaskBit bit;
-                    for (int i = 0, iMax = _incChunckMasks.Length; i < iMax; i++)
+                    for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
                     {
-                        bit = _incChunckMasks[i];
+                        var bit = _sortIncChunckBuffer.ptr[i];
                         if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != bit.mask)
                             goto skip;
                     }
-                    for (int i = 0, iMax = _excChunckMasks.Length; i < iMax; i++)
+                    for (int i = 0; i < _sortExcChunckBuffer.Length; i++)
                     {
-                        bit = _excChunckMasks[i];
+                        var bit = _sortExcChunckBuffer.ptr[i];
                         if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) > 0)
                             goto skip;
                     }

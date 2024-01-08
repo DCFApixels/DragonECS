@@ -37,7 +37,7 @@ namespace DCFApixels.DragonECS
     internal class WorldComponentHandler<T> : IEcsWorldComponent<T>
         where T : IEcsWorldComponent<T>
     {
-        private T _fakeInstnace;
+        private T _fakeInstnace = default;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Init(ref T component, EcsWorld world) => _fakeInstnace.Init(ref component, world);
         public void OnDestroy(ref T component, EcsWorld world) => _fakeInstnace.OnDestroy(ref component, world);
@@ -75,7 +75,7 @@ namespace DCFApixels.DragonECS
     internal sealed class ComponentResetHandler<T> : IEcsComponentReset<T>
         where T : IEcsComponentReset<T>
     {
-        private T _fakeInstnace;
+        private T _fakeInstnace = default;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reset(ref T component) => _fakeInstnace.Reset(ref component);
     }
@@ -112,7 +112,7 @@ namespace DCFApixels.DragonECS
     internal sealed class ComponentCopyHandler<T> : IEcsComponentCopy<T>
         where T : IEcsComponentCopy<T>
     {
-        private T _fakeInstnace;
+        private T _fakeInstnace = default;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Copy(ref T from, ref T to) => _fakeInstnace.Copy(ref from, ref to);
     }

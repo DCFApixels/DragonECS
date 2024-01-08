@@ -1,10 +1,13 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Utils;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly ref struct EcsSpan
     {
         private readonly int _worldID;
@@ -34,7 +37,7 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _values.IsEmpty;
-    }
+        }
         #endregion
 
         #region Constructors
@@ -91,18 +94,6 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Object
-#pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
-        [Obsolete("Equals() on EcsSpan will always throw an exception. Use the equality operator instead.")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool Equals(object obj) => throw new NotSupportedException();
-        [Obsolete("GetHashCode() on EcsSpan will always throw an exception.")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public override int GetHashCode() => throw new NotSupportedException();
-#pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
-        public override string ToString() => _values.ToString();
-        #endregion
-
         #region operators
         public static bool operator ==(EcsSpan left, EcsSpan right) => left._values == right._values;
         public static bool operator !=(EcsSpan left, EcsSpan right) => left._values != right._values;
@@ -120,6 +111,45 @@ namespace DCFApixels.DragonECS
         public EcsSpan Slice(int start, int length) => new EcsSpan(_worldID, _values.Slice(start, length));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int[] ToArray() => _values.ToArray();
+
+#pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
+        [Obsolete("Equals() on EcsSpan will always throw an exception. Use the equality operator instead.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override bool Equals(object obj) => throw new NotSupportedException();
+        [Obsolete("GetHashCode() on EcsSpan will always throw an exception.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override int GetHashCode() => throw new NotSupportedException();
+#pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
+        public override string ToString()
+        {
+            return CollectionUtility.EntitiesToString(_values.ToArray(), "span");
+            //return $"span({_values.Length}) {{{string.Join(", ", _values.ToArray().OrderBy(o => o))}}}";
+        }
+
+        internal class DebuggerProxy
+        {
+            private int[] _values;
+            private int _worldID;
+            public EcsWorld World => EcsWorld.GetWorld(_worldID);
+            public entlong[] Entities
+            {
+                get
+                {
+                    entlong[] result = new entlong[_values.Length];
+                    int i = 0;
+                    foreach (var e in _values)
+                        result[i++] = World.GetEntityLong(e);
+                    return result;
+                }
+            }
+            public int Count => _values.Length;
+            public DebuggerProxy(EcsSpan span)
+            {
+                _values = new int[span.Length];
+                span._values.CopyTo(_values);
+                _worldID = span._worldID;
+            }
+        }
         #endregion
     }
 }

@@ -23,7 +23,7 @@
             public AspectCache(T instance) => this.instance = instance;
             void IEcsWorldComponent<AspectCache<T>>.Init(ref AspectCache<T> component, EcsWorld world)
             {
-                component = new AspectCache<T>(EcsAspect.Builder.Build<T>(world));
+                component = new AspectCache<T>(EcsAspect.Builder.New<T>(world));
             }
             void IEcsWorldComponent<AspectCache<T>>.OnDestroy(ref AspectCache<T> component, EcsWorld world)
             {
