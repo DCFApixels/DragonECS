@@ -75,7 +75,7 @@ namespace DCFApixels.DragonECS
     internal sealed class ComponentResetHandler<T> : IEcsComponentReset<T>
         where T : IEcsComponentReset<T>
     {
-        private T _fakeInstnace;
+        private T _fakeInstnace = default;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reset(ref T component) => _fakeInstnace.Reset(ref component);
     }

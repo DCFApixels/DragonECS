@@ -68,12 +68,14 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Object
+#pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
         [Obsolete("Equals() on ReadOnlySpan will always throw an exception. Use the equality operator instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override bool Equals(object obj) => throw new NotSupportedException();
         [Obsolete("GetHashCode() on ReadOnlySpan will always throw an exception.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override int GetHashCode() => throw new NotSupportedException();
+#pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
         public override string ToString()
         {
             //if (typeof(T) == typeof(char))
@@ -154,6 +156,18 @@ namespace DCFApixels.DragonECS
         //    }
         //    return retVal;
         //}
+        public void CopyTo(T[] array)
+        {
+            if (_length > array.Length)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            for (int i = 0; i < _length; i++)
+            {
+                array[i] = _array[i];
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan<T> Slice(int start)
