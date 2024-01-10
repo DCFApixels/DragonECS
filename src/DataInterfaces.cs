@@ -12,7 +12,8 @@ namespace DCFApixels.DragonECS.Internal
         public static void CheckFakeInstanceValide<T>(T fakeInstnace)
         {
 #if DEBUG
-            if (fakeInstnace.Equals(default) == false)
+            T nil = default;
+            if (fakeInstnace.Equals(nil) == false)
             {
                 throw new Exception("Не правильное применение интерфейса, менять нужно передаваемое по ref значение");
             }
