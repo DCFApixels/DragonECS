@@ -1,7 +1,26 @@
 ﻿using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using static DCFApixels.DragonECS.Internal.DataInterfaceHalper;
 
+namespace DCFApixels.DragonECS.Internal
+{
+    #region DataInterfaceHalper
+    public static class DataInterfaceHalper
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CheckFakeInstanceValide<T>(T fakeInstnace)
+        {
+#if DEBUG
+            if (fakeInstnace.Equals(default) == false)
+            {
+                throw new Exception("Не правильное применение интерфейса, менять нужно передаваемое по ref значение");
+            }
+#endif
+        }
+    }
+    #endregion
+}
 namespace DCFApixels.DragonECS
 {
     #region IEcsWorldComponent
@@ -34,13 +53,22 @@ namespace DCFApixels.DragonECS
             public void OnDestroy(ref T component, EcsWorld world) { }
         }
     }
-    internal class WorldComponentHandler<T> : IEcsWorldComponent<T>
-        where T : IEcsWorldComponent<T>
+    internal sealed class WorldComponentHandler<T> : IEcsWorldComponent<T>
+        where T : struct, IEcsWorldComponent<T>
     {
         private T _fakeInstnace = default;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Init(ref T component, EcsWorld world) => _fakeInstnace.Init(ref component, world);
-        public void OnDestroy(ref T component, EcsWorld world) => _fakeInstnace.OnDestroy(ref component, world);
+        public void Init(ref T component, EcsWorld world)
+        {
+            _fakeInstnace.Init(ref component, world);
+            CheckFakeInstanceValide(_fakeInstnace);
+        }
+        public void OnDestroy(ref T component, EcsWorld world)
+        {
+            _fakeInstnace.OnDestroy(ref component, world);
+            CheckFakeInstanceValide(_fakeInstnace);
+        }
+
     }
     #endregion
 
@@ -77,7 +105,11 @@ namespace DCFApixels.DragonECS
     {
         private T _fakeInstnace = default;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Reset(ref T component) => _fakeInstnace.Reset(ref component);
+        public void Reset(ref T component)
+        {
+            _fakeInstnace.Reset(ref component);
+            CheckFakeInstanceValide(_fakeInstnace);
+        }
     }
     #endregion
 
@@ -114,7 +146,11 @@ namespace DCFApixels.DragonECS
     {
         private T _fakeInstnace = default;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Copy(ref T from, ref T to) => _fakeInstnace.Copy(ref from, ref to);
+        public void Copy(ref T from, ref T to)
+        {
+            _fakeInstnace.Copy(ref from, ref to);
+            CheckFakeInstanceValide(_fakeInstnace);
+        }
     }
     #endregion
 }

@@ -40,7 +40,7 @@ namespace DCFApixels.DragonECS
             private Builder(EcsWorld world)
             {
                 _world = world;
-                _maskBuilder = new EcsMask.Builder(world);
+                _maskBuilder = EcsMask.New(world);
             }
             internal static unsafe TAspect New<TAspect>(EcsWorld world) where TAspect : EcsAspect
             {
@@ -113,15 +113,10 @@ namespace DCFApixels.DragonECS
             public TOtherAspect Combine<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect
             {
                 var result = _world.GetAspect<TOtherAspect>();
-                _maskBuilder.CombineWith(result.Mask);
+                _maskBuilder.Combine(result.Mask);
                 return result;
             }
             #endregion
-
-            public EcsWorldCmp<T> GetWorldData<T>() where T : struct
-            {
-                return new EcsWorldCmp<T>(_world.id);
-            }
 
             private void Build(out EcsMask mask)
             {
