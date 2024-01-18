@@ -78,9 +78,9 @@ namespace DCFApixels.DragonECS
         public void Add(int entityID, T component)
         {
             HybridMapping mapping = _source.GetHybridMapping(component.GetType());
-            mapping.GetTargetTypePool().AddRefInternal(entityID, component, false);
+            mapping.GetTargetTypePool().AddRefInternal(entityID, component, true);
             foreach (var pool in mapping.GetPools())
-                pool.AddRefInternal(entityID, component, true);
+                pool.AddRefInternal(entityID, component, false);
         }
         public void Set(int entityID, T component)
         {
@@ -136,9 +136,9 @@ namespace DCFApixels.DragonECS
         {
             var component = Get(entityID);
             HybridMapping mapping = _source.GetHybridMapping(component.GetType());
-            mapping.GetTargetTypePool().DelInternal(entityID, false);
+            mapping.GetTargetTypePool().DelInternal(entityID, true);
             foreach (var pool in mapping.GetPools())
-                pool.DelInternal(entityID, true);
+                pool.DelInternal(entityID, false);
         }
         public void TryDel(int entityID)
         {
