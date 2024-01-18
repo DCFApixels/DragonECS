@@ -71,16 +71,18 @@ namespace DCFApixels.DragonECS
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnAdd(entityID);
             if (isMain)
+            {
                 component.OnAddToPool(_source.GetEntityLong(entityID));
+            }
             _items[itemIndex] = component;
             _entities[itemIndex] = entityID;
         }
         public void Add(int entityID, T component)
         {
             HybridMapping mapping = _source.GetHybridMapping(component.GetType());
-            mapping.GetTargetTypePool().AddRefInternal(entityID, component, false);
+            mapping.GetTargetTypePool().AddRefInternal(entityID, component, true);
             foreach (var pool in mapping.GetPools())
-                pool.AddRefInternal(entityID, component, true);
+                pool.AddRefInternal(entityID, component, false);
         }
         public void Set(int entityID, T component)
         {
@@ -122,9 +124,13 @@ namespace DCFApixels.DragonECS
             ref int itemIndex = ref _mapping[entityID];
             T component = _items[itemIndex];
             if (isMain)
+            {
                 component.OnDelFromPool(_source.GetEntityLong(entityID));
+            }
             if (_recycledItemsCount >= _recycledItems.Length)
+            {
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
+            }
             _recycledItems[_recycledItemsCount++] = itemIndex;
             _mapping[entityID] = 0;
             _entities[itemIndex] = 0;
@@ -136,9 +142,11 @@ namespace DCFApixels.DragonECS
         {
             var component = Get(entityID);
             HybridMapping mapping = _source.GetHybridMapping(component.GetType());
-            mapping.GetTargetTypePool().DelInternal(entityID, false);
+            mapping.GetTargetTypePool().DelInternal(entityID, true);
             foreach (var pool in mapping.GetPools())
-                pool.DelInternal(entityID, true);
+            {
+                pool.DelInternal(entityID, false);
+            }
         }
         public void TryDel(int entityID)
         {
