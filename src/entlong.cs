@@ -1,4 +1,5 @@
 ﻿#pragma warning disable IDE1006
+#pragma warning disable CS8981
 using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
