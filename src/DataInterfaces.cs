@@ -1,27 +1,5 @@
-﻿using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using static DCFApixels.DragonECS.Internal.DataInterfaceHalper;
 
-namespace DCFApixels.DragonECS.Internal
-{
-    #region DataInterfaceHalper
-    public static class DataInterfaceHalper
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CheckFakeInstanceValide<T>(T fakeInstnace)
-        {
-#if DEBUG
-            T nil = default;
-            if (fakeInstnace.Equals(nil) == false)
-            {
-                throw new Exception("Не правильное применение интерфейса, менять нужно передаваемое по ref значение");
-            }
-#endif
-        }
-    }
-    #endregion
-}
 namespace DCFApixels.DragonECS
 {
     #region IEcsWorldComponent
@@ -36,11 +14,10 @@ namespace DCFApixels.DragonECS
         public static readonly bool isHasHandler;
         static EcsWorldComponentHandler()
         {
-            Type targetType = typeof(T);
-            isHasHandler = targetType.GetInterfaces().Contains(typeof(IEcsWorldComponent<>).MakeGenericType(targetType));
-            if (isHasHandler)
+            T def = default;
+            if (def is IEcsWorldComponent<T> intrf)
             {
-                instance = (IEcsWorldComponent<T>)Activator.CreateInstance(typeof(WorldComponentHandler<>).MakeGenericType(targetType));
+                instance = intrf;
             }
             else
             {
@@ -53,23 +30,6 @@ namespace DCFApixels.DragonECS
             public void Init(ref T component, EcsWorld world) { }
             public void OnDestroy(ref T component, EcsWorld world) { }
         }
-    }
-    internal sealed class WorldComponentHandler<T> : IEcsWorldComponent<T>
-        where T : struct, IEcsWorldComponent<T>
-    {
-        private T _fakeInstnace = default;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Init(ref T component, EcsWorld world)
-        {
-            _fakeInstnace.Init(ref component, world);
-            CheckFakeInstanceValide(_fakeInstnace);
-        }
-        public void OnDestroy(ref T component, EcsWorld world)
-        {
-            _fakeInstnace.OnDestroy(ref component, world);
-            CheckFakeInstanceValide(_fakeInstnace);
-        }
-
     }
     #endregion
 
@@ -84,11 +44,10 @@ namespace DCFApixels.DragonECS
         public static readonly bool isHasHandler;
         static EcsComponentResetHandler()
         {
-            Type targetType = typeof(T);
-            isHasHandler = targetType.GetInterfaces().Contains(typeof(IEcsComponentReset<>).MakeGenericType(targetType));
-            if (isHasHandler)
+            T def = default;
+            if (def is IEcsComponentReset<T> intrf)
             {
-                instance = (IEcsComponentReset<T>)Activator.CreateInstance(typeof(ComponentResetHandler<>).MakeGenericType(targetType));
+                instance = intrf;
             }
             else
             {
@@ -99,17 +58,6 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset(ref T component) => component = default;
-        }
-    }
-    internal sealed class ComponentResetHandler<T> : IEcsComponentReset<T>
-        where T : IEcsComponentReset<T>
-    {
-        private T _fakeInstnace = default;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Reset(ref T component)
-        {
-            _fakeInstnace.Reset(ref component);
-            CheckFakeInstanceValide(_fakeInstnace);
         }
     }
     #endregion
@@ -125,11 +73,10 @@ namespace DCFApixels.DragonECS
         public static readonly bool isHasHandler;
         static EcsComponentCopyHandler()
         {
-            Type targetType = typeof(T);
-            isHasHandler = targetType.GetInterfaces().Contains(typeof(IEcsComponentCopy<>).MakeGenericType(targetType));
-            if (isHasHandler)
+            T def = default;
+            if(def is IEcsComponentCopy<T> intrf)
             {
-                instance = (IEcsComponentCopy<T>)Activator.CreateInstance(typeof(ComponentCopyHandler<>).MakeGenericType(targetType));
+                instance = intrf;
             }
             else
             {
@@ -140,17 +87,6 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Copy(ref T from, ref T to) => to = from;
-        }
-    }
-    internal sealed class ComponentCopyHandler<T> : IEcsComponentCopy<T>
-        where T : IEcsComponentCopy<T>
-    {
-        private T _fakeInstnace = default;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Copy(ref T from, ref T to)
-        {
-            _fakeInstnace.Copy(ref from, ref to);
-            CheckFakeInstanceValide(_fakeInstnace);
         }
     }
     #endregion
