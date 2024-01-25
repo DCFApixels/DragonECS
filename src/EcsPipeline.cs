@@ -38,16 +38,21 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Runners
+        public T[] GetSystems<T>() where T : IEcsProcess
+        {
+            return _allSystems.Where(o => o is T).Select(o => (T)o).ToArray();
+        }
         public T GetRunner<T>() where T : IEcsProcess
         {
             Type type = typeof(T);
             if (_runners.TryGetValue(type, out IEcsRunner result))
+            {
                 return (T)result;
+            }
             result = (IEcsRunner)EcsRunner<T>.Instantiate(this);
             _runners.Add(type, result);
             return (T)result;
         }
-
         internal void OnRunnerDestroy(IEcsRunner runner)
         {
             _runners.Remove(runner.Interface);

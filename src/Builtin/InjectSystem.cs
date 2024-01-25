@@ -5,6 +5,23 @@ using System.Linq;
 
 namespace DCFApixels.DragonECS
 {
+    public readonly struct Injector
+    {
+        private readonly EcsPipeline _pipeline;
+        public Injector(EcsPipeline pipeline)
+        {
+            _pipeline = pipeline;
+        }
+        public void Inject<T>(T data)
+        {
+            _pipeline.Inject(data);
+        }
+    }
+    public interface IInjectionBlock
+    {
+        void InjectTo(Injector i);
+    }
+
     [MetaName(nameof(PreInject))]
     [BindWithEcsRunner(typeof(EcsPreInjectRunner))]
     public interface IEcsPreInject : IEcsProcess
@@ -56,7 +73,14 @@ namespace DCFApixels.DragonECS
         {
             void IEcsPreInject.PreInject(object obj)
             {
-                foreach (var item in targets) item.PreInject(obj);
+                if (obj is IInjectionBlock container)
+                {
+                    container.InjectTo(new Injector(Pipeline));
+                }
+                foreach (var item in targets)
+                {
+                    item.PreInject(obj);
+                }
             }
         }
         [MetaTags(MetaTags.HIDDEN)]
@@ -74,9 +98,9 @@ namespace DCFApixels.DragonECS
             {
                 Type baseType = typeof(T).BaseType;
                 if (baseType != typeof(object) && baseType != typeof(ValueType) && baseType != null)
-                    _baseTypeInjectRunner = (EcsBaseTypeInjectRunner)Activator.CreateInstance(typeof(EcsBaseTypeInjectRunner<>).MakeGenericType(baseType), Source);
+                    _baseTypeInjectRunner = (EcsBaseTypeInjectRunner)Activator.CreateInstance(typeof(EcsBaseTypeInjectRunner<>).MakeGenericType(baseType), Pipeline);
                 else
-                    _baseTypeInjectRunner = new EcsObjectTypePreInjectRunner(Source);
+                    _baseTypeInjectRunner = new EcsObjectTypePreInjectRunner(Pipeline);
             }
         }
         internal abstract class EcsBaseTypeInjectRunner
@@ -155,7 +179,10 @@ namespace DCFApixels.DragonECS
 
     public static partial class EcsPipelineExtensions
     {
-        public static void Inject<T>(EcsPipeline self, T data) => self.GetRunner<IEcsInject<T>>().Inject(data);
+        public static void Inject<T>(this EcsPipeline self, T data)
+        {
+            self.GetRunner<IEcsInject<T>>().Inject(data);
+        }
     }
     public static partial class EcsPipelineBuilderExtensions
     {
@@ -167,33 +194,33 @@ namespace DCFApixels.DragonECS
                 self.AddModule(module);
             return self;
         }
-        public static EcsPipeline.Builder Inject<A, B>(this EcsPipeline.Builder self, A a, B b)
+        public static EcsPipeline.Builder Inject<T0, T1>(this EcsPipeline.Builder self, T0 d0, T1 d1)
         {
-            return self.Inject(a).Inject(b);
+            return self.Inject(d0).Inject(d1);
         }
-        public static EcsPipeline.Builder Inject<A, B, C>(this EcsPipeline.Builder self, A a, B b, C c)
+        public static EcsPipeline.Builder Inject<T0, T1, T2>(this EcsPipeline.Builder self, T0 d0, T1 d1, T2 d2)
         {
-            return self.Inject(a).Inject(b).Inject(c);
+            return self.Inject(d0).Inject(d1).Inject(d2);
         }
-        public static EcsPipeline.Builder Inject<A, B, C, D>(this EcsPipeline.Builder self, A a, B b, C c, D d)
+        public static EcsPipeline.Builder Inject<T0, T1, T2, T3>(this EcsPipeline.Builder self, T0 d0, T1 d1, T2 d2, T3 d3)
         {
-            return self.Inject(a).Inject(b).Inject(c).Inject(d);
+            return self.Inject(d0).Inject(d1).Inject(d2).Inject(d3);
         }
-        public static EcsPipeline.Builder Inject<A, B, C, D, E>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e)
+        public static EcsPipeline.Builder Inject<T0, T1, T2, T3, T4>(this EcsPipeline.Builder self, T0 d0, T1 d1, T2 d2, T3 d3, T4 d4)
         {
-            return self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e);
+            return self.Inject(d0).Inject(d1).Inject(d2).Inject(d3).Inject(d4);
         }
-        public static EcsPipeline.Builder Inject<A, B, C, D, E, F>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e, F f)
+        public static EcsPipeline.Builder Inject<T0, T1, T2, T3, T4, T5>(this EcsPipeline.Builder self, T0 d0, T1 d1, T2 d2, T3 d3, T4 d4, T5 f)
         {
-            return self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f);
+            return self.Inject(d0).Inject(d1).Inject(d2).Inject(d3).Inject(d4).Inject(f);
         }
-        public static EcsPipeline.Builder Inject<A, B, C, D, E, F, G>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e, F f, G g)
+        public static EcsPipeline.Builder Inject<T0, T1, T2, T3, T4, T5, T6>(this EcsPipeline.Builder self, T0 d0, T1 d1, T2 d2, T3 d3, T4 d4, T5 f, T6 d6)
         {
-            return self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f).Inject(g);
+            return self.Inject(d0).Inject(d1).Inject(d2).Inject(d3).Inject(d4).Inject(f).Inject(d6);
         }
-        public static EcsPipeline.Builder Inject<A, B, C, D, E, F, G, H>(this EcsPipeline.Builder self, A a, B b, C c, D d, E e, F f, G g, H h)
+        public static EcsPipeline.Builder Inject<T0, T1, T2, T3, T4, T5, T6, T7>(this EcsPipeline.Builder self, T0 d0, T1 d1, T2 d2, T3 d3, T4 d4, T5 f, T6 d6, T7 d7)
         {
-            return self.Inject(a).Inject(b).Inject(c).Inject(d).Inject(e).Inject(f).Inject(g).Inject(h);
+            return self.Inject(d0).Inject(d1).Inject(d2).Inject(d3).Inject(d4).Inject(f).Inject(d6).Inject(d7);
         }
     }
 }

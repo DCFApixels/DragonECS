@@ -54,9 +54,9 @@ namespace DCFApixels.DragonECS
     {
         public interface IEcsRunner
         {
-            EcsPipeline Source { get; }
+            EcsPipeline Pipeline { get; }
             Type Interface { get; }
-            IList Targets { get; }
+            IList TargetsRaw { get; }
             object Filter { get; }
             bool IsHasFilter { get; }
             bool IsDestroyed { get; }
@@ -203,9 +203,10 @@ namespace DCFApixels.DragonECS
             private bool _isDestroyed;
 
             #region Properties
-            public EcsPipeline Source => _source;
+            public EcsPipeline Pipeline => _source;
             public Type Interface => typeof(TInterface);
-            public IList Targets => _targetsSealed;
+            public IList TargetsRaw => _targetsSealed;
+            public ReadOnlySpan<TInterface> Targets => targets;
             public object Filter => _filter;
             public bool IsHasFilter => _isHasFilter;
             public bool IsDestroyed => _isDestroyed;
@@ -225,9 +226,13 @@ namespace DCFApixels.DragonECS
             internal void Rebuild()
             {
                 if (_isHasFilter)
+                {
                     Set(_source, FilterSystems(_source.AllSystems), _isHasFilter, _filter);
+                }
                 else
+                {
                     Set(_source, FilterSystems(_source.AllSystems, _filter), _isHasFilter, _filter);
+                }
             }
             public void Destroy()
             {
