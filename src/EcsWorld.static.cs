@@ -25,6 +25,7 @@ namespace DCFApixels.DragonECS
         private static IdDispenser _worldIdDispenser = new IdDispenser(0);
 
         private static List<DataReleaser> _dataReleaseres = new List<DataReleaser>();
+        //public static int Copacity => Worlds.Length;
 
         static EcsWorld()
         {
@@ -41,7 +42,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetData<T>(int worldID) => ref WorldComponentPool<T>.GetForWorld(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T UncheckedGetData<T>(int worldID) => ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
+        public static ref T GetDataUnchecked<T>(int worldID) => ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
 
         private abstract class DataReleaser
         {

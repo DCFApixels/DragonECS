@@ -29,7 +29,7 @@ namespace DCFApixels.DragonECS
         public int WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _source.World.id;
+            get => _source.WorldID;
         }
         public EcsWorld World
         {
@@ -106,17 +106,18 @@ namespace DCFApixels.DragonECS
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(EcsReadonlyGroup group) => _source.IsSubsetOf(group._source);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(EcsGroup group) => _source.IsSubsetOf(group);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(EcsReadonlyGroup group) => _source.IsSupersetOf(group._source);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(EcsGroup group) => _source.IsSupersetOf(group);
         #endregion
 
         #region Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal EcsGroup GetGroupInternal() => _source;
-
+        internal EcsGroup GetSource_Internal() => _source;
         #endregion
 
         #region Other
@@ -293,7 +294,7 @@ namespace DCFApixels.DragonECS
 
         #region CopyFrom/Clone/Bake/ToSpan
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CopyFrom(EcsReadonlyGroup group) => CopyFrom(group.GetGroupInternal());
+        public void CopyFrom(EcsReadonlyGroup group) => CopyFrom(group.GetSource_Internal());
         public void CopyFrom(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
@@ -347,7 +348,7 @@ namespace DCFApixels.DragonECS
         #region UnionWith
         /// <summary>as Union sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UnionWith(EcsReadonlyGroup group) => UnionWith(group.GetGroupInternal());
+        public void UnionWith(EcsReadonlyGroup group) => UnionWith(group.GetSource_Internal());
         /// <summary>as Union sets</summary>
         public void UnionWith(EcsGroup group)
         {
@@ -374,7 +375,7 @@ namespace DCFApixels.DragonECS
         #region ExceptWith
         /// <summary>as Except sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ExceptWith(EcsReadonlyGroup group) => ExceptWith(group.GetGroupInternal());
+        public void ExceptWith(EcsReadonlyGroup group) => ExceptWith(group.GetSource_Internal());
         /// <summary>as Except sets</summary>
         public void ExceptWith(EcsGroup group)
         {
@@ -432,7 +433,7 @@ namespace DCFApixels.DragonECS
         #region IntersectWith
         /// <summary>as Intersect sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void IntersectWith(EcsReadonlyGroup group) => IntersectWith(group.GetGroupInternal());
+        public void IntersectWith(EcsReadonlyGroup group) => IntersectWith(group.GetSource_Internal());
         /// <summary>as Intersect sets</summary>
         public void IntersectWith(EcsGroup group)
         {
@@ -451,7 +452,7 @@ namespace DCFApixels.DragonECS
         #region SymmetricExceptWith
         /// <summary>as Symmetric Except sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SymmetricExceptWith(EcsReadonlyGroup group) => SymmetricExceptWith(group.GetGroupInternal());
+        public void SymmetricExceptWith(EcsReadonlyGroup group) => SymmetricExceptWith(group.GetSource_Internal());
         /// <summary>as Symmetric Except sets</summary>
         public void SymmetricExceptWith(EcsGroup group)
         {
@@ -479,7 +480,7 @@ namespace DCFApixels.DragonECS
 
         #region SetEquals
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool SetEquals(EcsReadonlyGroup group) => SetEquals(group.GetGroupInternal());
+        public bool SetEquals(EcsReadonlyGroup group) => SetEquals(group.GetSource_Internal());
         public bool SetEquals(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
@@ -508,7 +509,7 @@ namespace DCFApixels.DragonECS
 
         #region Overlaps
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Overlaps(EcsReadonlyGroup group) => Overlaps(group.GetGroupInternal());
+        public bool Overlaps(EcsReadonlyGroup group) => Overlaps(group.GetSource_Internal());
         public bool Overlaps(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
@@ -542,7 +543,7 @@ namespace DCFApixels.DragonECS
 
         #region IsSubsetOf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSubsetOf(EcsReadonlyGroup group) => IsSubsetOf(group.GetGroupInternal());
+        public bool IsSubsetOf(EcsReadonlyGroup group) => IsSubsetOf(group.GetSource_Internal());
         public bool IsSubsetOf(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
@@ -559,7 +560,7 @@ namespace DCFApixels.DragonECS
 
         #region IsSupersetOf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSupersetOf(EcsReadonlyGroup group) => IsSupersetOf(group.GetGroupInternal());
+        public bool IsSupersetOf(EcsReadonlyGroup group) => IsSupersetOf(group.GetSource_Internal());
         public bool IsSupersetOf(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
@@ -764,7 +765,7 @@ namespace DCFApixels.DragonECS
             public int CapacitySparce => _group.CapacitySparce;
             public override string ToString() => _group.ToString();
             public DebuggerProxy(EcsGroup group) => _group = group;
-            public DebuggerProxy(EcsReadonlyGroup group) : this(group.GetGroupInternal()) { }
+            public DebuggerProxy(EcsReadonlyGroup group) : this(group.GetSource_Internal()) { }
         }
         #endregion
     }
