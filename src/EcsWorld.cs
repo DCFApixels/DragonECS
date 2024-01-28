@@ -23,7 +23,7 @@ namespace DCFApixels.DragonECS
         private int _delEntBufferCount;
         private int _delEntBufferMinCount;
         private int _freeSpace;
-        private bool _isEnableReleaseDelEntBuffer = true;
+        private bool _isEnableAutoReleaseDelEntBuffer = true;
 
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
@@ -36,15 +36,51 @@ namespace DCFApixels.DragonECS
         private readonly PoolsMediator _poolsMediator;
 
         #region Properties
-        public bool IsDestroyed => _isDestroyed;
-        public int Count => _entitiesCount;
-        public int Capacity => _entitesCapacity; //_denseEntities.Length;
+        public bool IsDestroyed
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _isDestroyed; }
+        }
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _entitiesCount; }
+        }
+        public int Capacity
+        {
+            //_denseEntities.Length;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _entitesCapacity; }
+        }
+        public int DelEntBufferCount
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _delEntBufferCount; }
+        }
+        public bool IsEnableReleaseDelEntBuffer
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _isEnableAutoReleaseDelEntBuffer; }
+        }
 
-        public int DelEntBufferCount => _delEntBufferCount;
-        public bool IsEnableReleaseDelEntBuffer => _isEnableReleaseDelEntBuffer;
-
-        public EcsReadonlyGroup Entities => _allEntites.Readonly;
-        public ReadOnlySpan<IEcsPoolImplementation> AllPools => _pools;// new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
+        public EcsReadonlyGroup Entities 
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if (_isEnableAutoReleaseDelEntBuffer)
+                {
+                    ReleaseDelEntityBufferAll();
+                }
+                return _allEntites.Readonly;
+            }
+        }
+        public ReadOnlySpan<IEcsPoolImplementation> AllPools
+        {
+            // new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pools; }
+        }
         #endregion
 
         #region Constructors/Destroy
@@ -60,7 +96,9 @@ namespace DCFApixels.DragonECS
             {
                 id = (short)_worldIdDispenser.UseFree();
                 if (id >= Worlds.Length)
+                {
                     Array.Resize(ref Worlds, Worlds.Length << 1);
+                }
                 Worlds[id] = this;
             }
 
@@ -142,7 +180,7 @@ namespace DCFApixels.DragonECS
         #region Where Query
         public EcsReadonlyGroup WhereToGroupFor<TAspect>(EcsSpan span, out TAspect aspect) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -152,7 +190,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsReadonlyGroup WhereToGroupFor<TAspect>(EcsSpan span) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -160,7 +198,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsReadonlyGroup WhereToGroup<TAspect>(out TAspect aspect) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -170,7 +208,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsReadonlyGroup WhereToGroup<TAspect>() where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -179,7 +217,7 @@ namespace DCFApixels.DragonECS
 
         public EcsSpan WhereFor<TAspect>(EcsSpan span, out TAspect aspect) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -189,7 +227,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsSpan WhereFor<TAspect>(EcsSpan span) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -197,7 +235,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsSpan Where<TAspect>(out TAspect aspect) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -207,7 +245,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsSpan Where<TAspect>() where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -339,12 +377,12 @@ namespace DCFApixels.DragonECS
         #region DelEntBuffer
         public AutoReleaseDelEntBufferLonkUnloker DisableAutoReleaseDelEntBuffer()
         {
-            _isEnableReleaseDelEntBuffer = false;
+            _isEnableAutoReleaseDelEntBuffer = false;
             return new AutoReleaseDelEntBufferLonkUnloker(this);
         }
         public void EnableAutoReleaseDelEntBuffer()
         {
-            _isEnableReleaseDelEntBuffer = true;
+            _isEnableAutoReleaseDelEntBuffer = true;
         }
         public readonly struct AutoReleaseDelEntBufferLonkUnloker : IDisposable
         {
