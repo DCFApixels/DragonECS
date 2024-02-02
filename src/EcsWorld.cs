@@ -3,12 +3,14 @@ using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using static Leopotam.EcsLite.EcsWorld;
 
 namespace DCFApixels.DragonECS
 {
     public abstract partial class EcsWorld
     {
         public readonly short id;
+        private IEcsWorldConfig _config;
 
         private bool _isDestroyed;
 
@@ -36,6 +38,11 @@ namespace DCFApixels.DragonECS
         private readonly PoolsMediator _poolsMediator;
 
         #region Properties
+        public IEcsWorldConfig Config
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _config; }
+        }
         public bool IsDestroyed
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -63,7 +70,7 @@ namespace DCFApixels.DragonECS
             get { return _isEnableAutoReleaseDelEntBuffer; }
         }
 
-        public EcsReadonlyGroup Entities 
+        public EcsReadonlyGroup Entities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -84,13 +91,15 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors/Destroy
-        public EcsWorld() : this(true) { }
-        internal EcsWorld(bool isIndexable)
+        public EcsWorld(IEcsWorldConfig config) : this(config, true) { }
+        private EcsWorld(IEcsWorldConfig config, bool isIndexable)
         {
-            const int POOLS_CAPACITY = 512;
-            _poolsMediator = new PoolsMediator(this);
-
-            _entitesCapacity = 512;
+            if (config == null)
+            {
+                config = EmptyConfig.Instance;
+            }
+            config.Lock();
+            _config = config;
 
             if (isIndexable)
             {
@@ -102,13 +111,15 @@ namespace DCFApixels.DragonECS
                 Worlds[id] = this;
             }
 
+            _poolsMediator = new PoolsMediator(this);
             _entityDispenser = new IntDispenser(0);
-            _pools = new IEcsPoolImplementation[POOLS_CAPACITY];
-            _poolComponentCounts = new int[POOLS_CAPACITY];
-            //_sortedPoolIds = new int[POOLS_CAPACITY];
-            //_sortedPoolIdsMapping = new int[POOLS_CAPACITY];
+
+            int poolsCapacity = config.Get_PoolsCapacity();
+            _pools = new IEcsPoolImplementation[poolsCapacity];
+            _poolComponentCounts = new int[poolsCapacity];
             ArrayUtility.Fill(_pools, _nullPool);
 
+            _entitesCapacity = config.Get_EntitiesCapacity();
             _gens = new short[_entitesCapacity];
             _componentCounts = new short[_entitesCapacity];
 
@@ -116,9 +127,11 @@ namespace DCFApixels.DragonECS
             _delEntBufferCount = 0;
             _delEntBuffer = new int[_entitesCapacity];
             _entitiesComponentMasks = new int[_entitesCapacity][];
+
+            int maskLength = _pools.Length / 32 + 1;
             for (int i = 0; i < _entitesCapacity; i++)
             {
-                _entitiesComponentMasks[i] = new int[_pools.Length / 32 + 1];
+                _entitiesComponentMasks[i] = new int[maskLength];
             }
 
             _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
@@ -264,7 +277,9 @@ namespace DCFApixels.DragonECS
             _entitiesCount++;
 
             if (_gens.Length <= entityID)
-                Upsize();
+            {
+                Upsize(_gens.Length << 1);
+            }
 
             _gens[entityID] &= GEN_BITS;
             _allEntites.Add(entityID);
@@ -432,24 +447,31 @@ namespace DCFApixels.DragonECS
 
         #region Upsize
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void Upsize()
+        public void Upsize(int minSize)
         {
-            Array.Resize(ref _gens, _gens.Length << 1);
-            Array.Resize(ref _componentCounts, _gens.Length);
-            Array.Resize(ref _delEntBuffer, _gens.Length);
-            Array.Resize(ref _entitiesComponentMasks, _gens.Length);
-            for (int i = _entitesCapacity; i < _gens.Length; i++)
+            if (minSize < Capacity)
+            {
+                return;
+            }
+
+            int newSize = 1 << (BitsUtility.GetHighBitNumber(minSize - 1) + 1);
+
+            Array.Resize(ref _gens, newSize);
+            Array.Resize(ref _componentCounts, newSize);
+            Array.Resize(ref _delEntBuffer, newSize);
+            Array.Resize(ref _entitiesComponentMasks, newSize);
+            for (int i = _entitesCapacity; i < newSize; i++)
                 _entitiesComponentMasks[i] = new int[_pools.Length / 32 + 1];
 
             _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
             ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitesCapacity);
-            _entitesCapacity = _gens.Length;
+            _entitesCapacity = newSize;
 
             for (int i = 0; i < _groups.Count; i++)
             {
                 if (_groups[i].TryGetTarget(out EcsGroup group))
                 {
-                    group.OnWorldResize(_gens.Length);
+                    group.OnWorldResize(newSize);
                 }
                 else
                 {
@@ -459,9 +481,11 @@ namespace DCFApixels.DragonECS
                 }
             }
             foreach (var item in _pools)
-                item.OnWorldResize(_gens.Length);
+            {
+                item.OnWorldResize(newSize);
+            }
 
-            _listeners.InvokeOnWorldResize(_gens.Length);
+            _listeners.InvokeOnWorldResize(newSize);
         }
         #endregion
 
@@ -536,6 +560,21 @@ namespace DCFApixels.DragonECS
                         break;
                 }
             }
+        }
+        #endregion
+
+        #region EmptyConfig
+        private class EmptyConfig : IEcsWorldConfig
+        {
+            public static readonly EmptyConfig Instance = new EmptyConfig();
+            private EmptyConfig() { }
+            public bool IsLocked => true;
+            public T Get<T>(string valueName) { return default; }
+            public bool Has(string valueName) { return false; }
+            public void Lock() { }
+            public void Remove(string valueName) { }
+            public void Set<T>(string valueName, T value) { }
+            public bool TryGet<T>(string valueName, out T value) { value = default; return false; }
         }
         #endregion
     }

@@ -81,6 +81,11 @@ namespace DCFApixels.DragonECS.Internal
             else
                 throw new EcsFrameworkException($"The {entity} is not alive.");
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void UndefinedException()
+        {
+            throw new Exception();
+        }
     }
 }
 

@@ -25,7 +25,7 @@ namespace DCFApixels.DragonECS
         public bool IsComponentTypeDeclared(Type type) => _componentIds.Contains(EcsTypeCode.Get(type));
         public bool IsComponentTypeDeclared(int componentTypeID)
         {
-            if(componentTypeID >= 0 && componentTypeID < _pools.Length)
+            if (componentTypeID >= 0 && componentTypeID < _pools.Length)
             {
                 return _pools[componentTypeID] != _nullPool;
             }

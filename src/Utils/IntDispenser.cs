@@ -14,12 +14,7 @@ namespace DCFApixels.DragonECS.Utils
         #endregion
 
         #region Constructor
-        public IntDispenser()
-        {
-            _freeInts = new ConcurrentQueue<int>();
-            _increment = 0;
-        }
-        public IntDispenser(int startIncrement)
+        public IntDispenser(int startIncrement = 0)
         {
             _freeInts = new ConcurrentQueue<int>();
             _increment = startIncrement;

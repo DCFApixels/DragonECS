@@ -74,7 +74,7 @@ namespace DCFApixels.DragonECS
         static EcsComponentCopyHandler()
         {
             T def = default;
-            if(def is IEcsComponentCopy<T> intrf)
+            if (def is IEcsComponentCopy<T> intrf)
             {
                 instance = intrf;
             }

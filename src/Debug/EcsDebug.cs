@@ -41,6 +41,11 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintWarning(object v) => Print(EcsConsts.DEBUG_WARNING_TAG, v);
         public static void PrintError(object v) => Print(EcsConsts.DEBUG_ERROR_TAG, v);
+        public static void PrintErrorAndBreak(object v)
+        {
+            Print(EcsConsts.DEBUG_ERROR_TAG, v);
+            Break();
+        }
         public static void PrintPass(object v) => Print(EcsConsts.DEBUG_PASS_TAG, v);
         public static void Print()
         {

@@ -143,12 +143,10 @@ namespace DCFApixels.DragonECS
             _componentTypeID = componentTypeID;
             _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
-            const int capacity = 512;
-
             _mapping = new int[world.Capacity];
-            _recycledItems = new int[128];
+            _recycledItems = new int[world.Config.Get_PoolRecycledComponentsCapacity()];
             _recycledItemsCount = 0;
-            _items = new T[capacity];
+            _items = new T[world.Config.Get_PoolComponentsCapacity()];
             _itemsCount = 0;
         }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
