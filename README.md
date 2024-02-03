@@ -14,9 +14,6 @@
 
 The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes. Without code generation and dependencies. Inspired by [LeoEcs](https://github.com/Leopotam/ecslite). 
 
-> [!IMPORTANT]
-> And a Happy New Year.
-
 > [!WARNING]
 > The project is a work in progress, API may change.
 > 
