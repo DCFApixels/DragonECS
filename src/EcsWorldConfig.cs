@@ -32,6 +32,10 @@ namespace DCFApixels.DragonECS
         }
         public void Remove(string valueName)
         {
+            if (_isLocked)
+            {
+                throw new InvalidOperationException();
+            }
             _storage.Remove(valueName);
         }
         public void Set<T>(string valueName, T value)
