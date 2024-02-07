@@ -3,7 +3,6 @@ using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using static Leopotam.EcsLite.EcsWorld;
 
 namespace DCFApixels.DragonECS
 {
@@ -114,12 +113,12 @@ namespace DCFApixels.DragonECS
             _poolsMediator = new PoolsMediator(this);
             _entityDispenser = new IntDispenser(0);
 
-            int poolsCapacity = config.Get_PoolsCapacity();
+            int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.Get_PoolsCapacity());
             _pools = new IEcsPoolImplementation[poolsCapacity];
             _poolComponentCounts = new int[poolsCapacity];
             ArrayUtility.Fill(_pools, _nullPool);
 
-            _entitesCapacity = config.Get_EntitiesCapacity();
+            _entitesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.Get_EntitiesCapacity());
             _gens = new short[_entitesCapacity];
             _componentCounts = new short[_entitesCapacity];
 
@@ -267,22 +266,20 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entity
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity()
         {
-            //if (_isEnableReleaseDelEntBuffer && _freeSpace <= 1 && _delEntBufferCount > _delEntBufferMinCount)
-            //    ReleaseDelEntityBufferAll();
-
             int entityID = _entityDispenser.GetFree();
             _freeSpace--;
             _entitiesCount++;
 
             if (_gens.Length <= entityID)
             {
-                Upsize(_gens.Length << 1);
+                Upsize_Internal(_gens.Length << 1);
             }
 
             _gens[entityID] &= GEN_BITS;
-            _allEntites.Add(entityID);
+            _allEntites.AddUnchecked(entityID);
             _entityListeners.InvokeOnNewEntity(entityID);
             return entityID;
         }
@@ -291,8 +288,23 @@ namespace DCFApixels.DragonECS
             int e = NewEntity();
             return GetEntityLong(e);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void TryDelEntity(int entityID)
+        {
+            if (IsUsed(entityID))
+            {
+                DelEntity(entityID);
+            }
+        }
         public void DelEntity(int entityID)
         {
+#if DEBUG
+            if(IsUsed(entityID) == false)
+            {
+                Throw.UndefinedException();
+            }
+#endif
             _allEntites.Remove(entityID);
             _delEntBuffer[_delEntBufferCount++] = entityID;
             _gens[entityID] |= DEATH_GEN_BIT;
@@ -446,16 +458,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Upsize
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public void Upsize(int minSize)
         {
-            if (minSize < Capacity)
-            {
-                return;
-            }
-
-            int newSize = 1 << (BitsUtility.GetHighBitNumber(minSize - 1) + 1);
-
+            Upsize_Internal(ArrayUtility.NormalizeSizeToPowerOfTwo(minSize));
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void Upsize_Internal(int newSize)
+        {
             Array.Resize(ref _gens, newSize);
             Array.Resize(ref _componentCounts, newSize);
             Array.Resize(ref _delEntBuffer, newSize);

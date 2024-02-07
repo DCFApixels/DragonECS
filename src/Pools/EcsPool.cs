@@ -1,3 +1,4 @@
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -54,6 +55,7 @@ namespace DCFApixels.DragonECS
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnAddAndGet(entityID);
+            _componentResetHandler.Reset(ref _items[itemIndex]);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -93,6 +95,7 @@ namespace DCFApixels.DragonECS
                 _listeners.InvokeOnAdd(entityID);
             }
             _listeners.InvokeOnGet(entityID);
+            _componentResetHandler.Reset(ref _items[itemIndex]);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -146,7 +149,7 @@ namespace DCFApixels.DragonECS
             _mapping = new int[world.Capacity];
             _recycledItems = new int[world.Config.Get_PoolRecycledComponentsCapacity()];
             _recycledItemsCount = 0;
-            _items = new T[world.Config.Get_PoolComponentsCapacity()];
+            _items = new T[ArrayUtility.NormalizeSizeToPowerOfTwo(world.Config.Get_PoolComponentsCapacity())];
             _itemsCount = 0;
         }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
@@ -157,7 +160,9 @@ namespace DCFApixels.DragonECS
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
         {
             foreach (var entityID in buffer)
+            {
                 TryDel(entityID);
+            }
         }
         #endregion
 
