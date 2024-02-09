@@ -21,7 +21,9 @@ namespace DCFApixels.DragonECS
         private int _recycledItemsCount;
 
         private IEcsComponentReset<T> _componentResetHandler = EcsComponentResetHandler<T>.instance;
+        private bool _isHasComponentResetHandler = EcsComponentResetHandler<T>.isHasHandler;
         private IEcsComponentCopy<T> _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
+        private bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
 
         private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
 
@@ -55,7 +57,7 @@ namespace DCFApixels.DragonECS
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnAddAndGet(entityID);
-            _componentResetHandler.Reset(ref _items[itemIndex]);
+            ResetComponent(ref _items[itemIndex]);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -95,7 +97,7 @@ namespace DCFApixels.DragonECS
                 _listeners.InvokeOnAdd(entityID);
             }
             _listeners.InvokeOnGet(entityID);
-            _componentResetHandler.Reset(ref _items[itemIndex]);
+            ResetComponent(ref _items[itemIndex]);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -109,9 +111,11 @@ namespace DCFApixels.DragonECS
             if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
 #endif
             ref int itemIndex = ref _mapping[entityID];
-            _componentResetHandler.Reset(ref _items[itemIndex]);
+            ResetComponent(ref _items[itemIndex]);
             if (_recycledItemsCount >= _recycledItems.Length)
+            {
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
+            }
             _recycledItems[_recycledItemsCount++] = itemIndex;
             _mapping[entityID] = 0;
             _itemsCount--;
@@ -127,14 +131,14 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(fromEntityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID);
 #endif
-            _componentCopyHandler.Copy(ref Get(fromEntityID), ref TryAddOrGet(toEntityID));
+            CopyComponent(ref Get(fromEntityID), ref TryAddOrGet(toEntityID));
         }
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(fromEntityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID);
 #endif
-            _componentCopyHandler.Copy(ref Get(fromEntityID), ref toWorld.GetPool<T>().TryAddOrGet(toEntityID));
+            CopyComponent(ref Get(fromEntityID), ref toWorld.GetPool<T>().TryAddOrGet(toEntityID));
         }
         #endregion
 
@@ -184,6 +188,33 @@ namespace DCFApixels.DragonECS
         {
             if (listener == null) { throw new ArgumentNullException("listener is null"); }
             _listeners.Remove(listener);
+        }
+        #endregion
+
+        #region Reset/Copy
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ResetComponent(ref T component)
+        {
+            if (_isHasComponentResetHandler)
+            {
+                _componentResetHandler.Reset(ref component);
+            }
+            else
+            {
+                component = default;
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CopyComponent(ref T from, ref T to)
+        {
+            if (_isHasComponentCopyHandler)
+            {
+                _componentCopyHandler.Copy(ref from, ref to);
+            }
+            else
+            {
+                to = from;
+            }
         }
         #endregion
 

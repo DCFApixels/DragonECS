@@ -17,10 +17,12 @@ namespace DCFApixels.DragonECS
             T def = default;
             if (def is IEcsWorldComponent<T> intrf)
             {
+                isHasHandler = true;
                 instance = intrf;
             }
             else
             {
+                isHasHandler = false;
                 instance = new DummyHandler();
             }
         }
@@ -47,10 +49,12 @@ namespace DCFApixels.DragonECS
             T def = default;
             if (def is IEcsComponentReset<T> intrf)
             {
+                isHasHandler = true;
                 instance = intrf;
             }
             else
             {
+                isHasHandler = false;
                 instance = new DummyHandler();
             }
         }
@@ -76,10 +80,12 @@ namespace DCFApixels.DragonECS
             T def = default;
             if (def is IEcsComponentCopy<T> intrf)
             {
+                isHasHandler = true;
                 instance = intrf;
             }
             else
             {
+                isHasHandler = false;
                 instance = new DummyHandler();
             }
         }
