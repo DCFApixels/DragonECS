@@ -9,6 +9,7 @@ namespace DCFApixels.DragonECS
     public abstract partial class EcsWorld
     {
         public readonly short id;
+        private IEcsWorldConfig _config;
 
         private bool _isDestroyed;
 
@@ -23,7 +24,7 @@ namespace DCFApixels.DragonECS
         private int _delEntBufferCount;
         private int _delEntBufferMinCount;
         private int _freeSpace;
-        private bool _isEnableReleaseDelEntBuffer = true;
+        private bool _isEnableAutoReleaseDelEntBuffer = true;
 
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
@@ -36,41 +37,88 @@ namespace DCFApixels.DragonECS
         private readonly PoolsMediator _poolsMediator;
 
         #region Properties
-        public bool IsDestroyed => _isDestroyed;
-        public int Count => _entitiesCount;
-        public int Capacity => _entitesCapacity; //_denseEntities.Length;
+        public IEcsWorldConfig Config
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _config; }
+        }
+        public bool IsDestroyed
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _isDestroyed; }
+        }
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _entitiesCount; }
+        }
+        public int Capacity
+        {
+            //_denseEntities.Length;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _entitesCapacity; }
+        }
+        public int DelEntBufferCount
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _delEntBufferCount; }
+        }
+        public bool IsEnableReleaseDelEntBuffer
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _isEnableAutoReleaseDelEntBuffer; }
+        }
 
-        public int DelEntBufferCount => _delEntBufferCount;
-        public bool IsEnableReleaseDelEntBuffer => _isEnableReleaseDelEntBuffer;
-
-        public EcsReadonlyGroup Entities => _allEntites.Readonly;
-        public ReadOnlySpan<IEcsPoolImplementation> AllPools => _pools;// new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
+        public EcsReadonlyGroup Entities
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if (_isEnableAutoReleaseDelEntBuffer)
+                {
+                    ReleaseDelEntityBufferAll();
+                }
+                return _allEntites.Readonly;
+            }
+        }
+        public ReadOnlySpan<IEcsPoolImplementation> AllPools
+        {
+            // new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pools; }
+        }
         #endregion
 
         #region Constructors/Destroy
-        public EcsWorld() : this(true) { }
-        internal EcsWorld(bool isIndexable)
+        public EcsWorld(IEcsWorldConfig config) : this(config, true) { }
+        private EcsWorld(IEcsWorldConfig config, bool isIndexable)
         {
-            const int POOLS_CAPACITY = 512;
-            _poolsMediator = new PoolsMediator(this);
-
-            _entitesCapacity = 512;
+            if (config == null)
+            {
+                config = EmptyConfig.Instance;
+            }
+            config.Lock();
+            _config = config;
 
             if (isIndexable)
             {
                 id = (short)_worldIdDispenser.UseFree();
                 if (id >= Worlds.Length)
+                {
                     Array.Resize(ref Worlds, Worlds.Length << 1);
+                }
                 Worlds[id] = this;
             }
 
+            _poolsMediator = new PoolsMediator(this);
             _entityDispenser = new IntDispenser(0);
-            _pools = new IEcsPoolImplementation[POOLS_CAPACITY];
-            _poolComponentCounts = new int[POOLS_CAPACITY];
-            //_sortedPoolIds = new int[POOLS_CAPACITY];
-            //_sortedPoolIdsMapping = new int[POOLS_CAPACITY];
+
+            int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.Get_PoolsCapacity());
+            _pools = new IEcsPoolImplementation[poolsCapacity];
+            _poolComponentCounts = new int[poolsCapacity];
             ArrayUtility.Fill(_pools, _nullPool);
 
+            _entitesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.Get_EntitiesCapacity());
             _gens = new short[_entitesCapacity];
             _componentCounts = new short[_entitesCapacity];
 
@@ -78,9 +126,11 @@ namespace DCFApixels.DragonECS
             _delEntBufferCount = 0;
             _delEntBuffer = new int[_entitesCapacity];
             _entitiesComponentMasks = new int[_entitesCapacity][];
+
+            int maskLength = _pools.Length / 32 + 1;
             for (int i = 0; i < _entitesCapacity; i++)
             {
-                _entitiesComponentMasks[i] = new int[_pools.Length / 32 + 1];
+                _entitiesComponentMasks[i] = new int[maskLength];
             }
 
             _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
@@ -142,7 +192,7 @@ namespace DCFApixels.DragonECS
         #region Where Query
         public EcsReadonlyGroup WhereToGroupFor<TAspect>(EcsSpan span, out TAspect aspect) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -152,7 +202,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsReadonlyGroup WhereToGroupFor<TAspect>(EcsSpan span) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -160,7 +210,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsReadonlyGroup WhereToGroup<TAspect>(out TAspect aspect) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -170,7 +220,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsReadonlyGroup WhereToGroup<TAspect>() where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -179,7 +229,7 @@ namespace DCFApixels.DragonECS
 
         public EcsSpan WhereFor<TAspect>(EcsSpan span, out TAspect aspect) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -189,7 +239,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsSpan WhereFor<TAspect>(EcsSpan span) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -197,7 +247,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsSpan Where<TAspect>(out TAspect aspect) where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -207,7 +257,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsSpan Where<TAspect>() where TAspect : EcsAspect
         {
-            if (_isEnableReleaseDelEntBuffer)
+            if (_isEnableAutoReleaseDelEntBuffer)
             {
                 ReleaseDelEntityBufferAll();
             }
@@ -216,20 +266,20 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entity
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity()
         {
-            //if (_isEnableReleaseDelEntBuffer && _freeSpace <= 1 && _delEntBufferCount > _delEntBufferMinCount)
-            //    ReleaseDelEntityBufferAll();
-
             int entityID = _entityDispenser.GetFree();
             _freeSpace--;
             _entitiesCount++;
 
             if (_gens.Length <= entityID)
-                Upsize();
+            {
+                Upsize_Internal(_gens.Length << 1);
+            }
 
             _gens[entityID] &= GEN_BITS;
-            _allEntites.Add(entityID);
+            _allEntites.AddUnchecked(entityID);
             _entityListeners.InvokeOnNewEntity(entityID);
             return entityID;
         }
@@ -238,8 +288,23 @@ namespace DCFApixels.DragonECS
             int e = NewEntity();
             return GetEntityLong(e);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void TryDelEntity(int entityID)
+        {
+            if (IsUsed(entityID))
+            {
+                DelEntity(entityID);
+            }
+        }
         public void DelEntity(int entityID)
         {
+#if DEBUG
+            if(IsUsed(entityID) == false)
+            {
+                Throw.UndefinedException();
+            }
+#endif
             _allEntites.Remove(entityID);
             _delEntBuffer[_delEntBufferCount++] = entityID;
             _gens[entityID] |= DEATH_GEN_BIT;
@@ -339,12 +404,12 @@ namespace DCFApixels.DragonECS
         #region DelEntBuffer
         public AutoReleaseDelEntBufferLonkUnloker DisableAutoReleaseDelEntBuffer()
         {
-            _isEnableReleaseDelEntBuffer = false;
+            _isEnableAutoReleaseDelEntBuffer = false;
             return new AutoReleaseDelEntBufferLonkUnloker(this);
         }
         public void EnableAutoReleaseDelEntBuffer()
         {
-            _isEnableReleaseDelEntBuffer = true;
+            _isEnableAutoReleaseDelEntBuffer = true;
         }
         public readonly struct AutoReleaseDelEntBufferLonkUnloker : IDisposable
         {
@@ -393,25 +458,29 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Upsize
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void Upsize()
+        public void Upsize(int minSize)
         {
-            Array.Resize(ref _gens, _gens.Length << 1);
-            Array.Resize(ref _componentCounts, _gens.Length);
-            Array.Resize(ref _delEntBuffer, _gens.Length);
-            Array.Resize(ref _entitiesComponentMasks, _gens.Length);
-            for (int i = _entitesCapacity; i < _gens.Length; i++)
+            Upsize_Internal(ArrayUtility.NormalizeSizeToPowerOfTwo(minSize));
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void Upsize_Internal(int newSize)
+        {
+            Array.Resize(ref _gens, newSize);
+            Array.Resize(ref _componentCounts, newSize);
+            Array.Resize(ref _delEntBuffer, newSize);
+            Array.Resize(ref _entitiesComponentMasks, newSize);
+            for (int i = _entitesCapacity; i < newSize; i++)
                 _entitiesComponentMasks[i] = new int[_pools.Length / 32 + 1];
 
             _delEntBufferMinCount = Math.Max(_delEntBuffer.Length >> DEL_ENT_BUFFER_SIZE_OFFSET, DEL_ENT_BUFFER_MIN_SIZE);
             ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitesCapacity);
-            _entitesCapacity = _gens.Length;
+            _entitesCapacity = newSize;
 
             for (int i = 0; i < _groups.Count; i++)
             {
                 if (_groups[i].TryGetTarget(out EcsGroup group))
                 {
-                    group.OnWorldResize(_gens.Length);
+                    group.OnWorldResize(newSize);
                 }
                 else
                 {
@@ -421,9 +490,11 @@ namespace DCFApixels.DragonECS
                 }
             }
             foreach (var item in _pools)
-                item.OnWorldResize(_gens.Length);
+            {
+                item.OnWorldResize(newSize);
+            }
 
-            _listeners.InvokeOnWorldResize(_gens.Length);
+            _listeners.InvokeOnWorldResize(newSize);
         }
         #endregion
 
@@ -498,6 +569,21 @@ namespace DCFApixels.DragonECS
                         break;
                 }
             }
+        }
+        #endregion
+
+        #region EmptyConfig
+        private class EmptyConfig : IEcsWorldConfig
+        {
+            public static readonly EmptyConfig Instance = new EmptyConfig();
+            private EmptyConfig() { }
+            public bool IsLocked => true;
+            public T Get<T>(string valueName) { return default; }
+            public bool Has(string valueName) { return false; }
+            public void Lock() { }
+            public void Remove(string valueName) { }
+            public void Set<T>(string valueName, T value) { }
+            public bool TryGet<T>(string valueName, out T value) { value = default; return false; }
         }
         #endregion
     }

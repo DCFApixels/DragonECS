@@ -49,6 +49,7 @@ namespace DCFApixels.DragonECS
         }
         private static string AutoToString(object target, Type type, bool isWriteName)
         {
+            //TODO сделать специальный вывод в виде названий констант для Enum-ов
             var fields = type.GetFields(RFL_FLAGS);
             string[] values = new string[fields.Length];
             for (int i = 0; i < fields.Length; i++)

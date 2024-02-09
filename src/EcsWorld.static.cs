@@ -22,13 +22,14 @@ namespace DCFApixels.DragonECS
         private const int DEL_ENT_BUFFER_MIN_SIZE = 64;
 
         private static EcsWorld[] Worlds = new EcsWorld[4];
-        private static IdDispenser _worldIdDispenser = new IdDispenser(0);
+        private static IdDispenser _worldIdDispenser = new IdDispenser(4);
 
         private static List<DataReleaser> _dataReleaseres = new List<DataReleaser>();
+        //public static int Copacity => Worlds.Length;
 
         static EcsWorld()
         {
-            Worlds[0] = new EcsNullWorld();
+            Worlds[0] = new NullWorld();
         }
         private static void ReleaseData(int worldID)
         {
@@ -41,7 +42,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetData<T>(int worldID) => ref WorldComponentPool<T>.GetForWorld(worldID);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T UncheckedGetData<T>(int worldID) => ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
+        public static ref T GetDataUnchecked<T>(int worldID) => ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
 
         private abstract class DataReleaser
         {
@@ -81,9 +82,7 @@ namespace DCFApixels.DragonECS
                 if (_mapping.Length < Worlds.Length)
                 {
                     Array.Resize(ref _mapping, Worlds.Length);
-
                 }
-
                 ref short itemIndex = ref _mapping[worldID];
                 if (itemIndex <= 0)
                 {
@@ -122,9 +121,9 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-    }
-    internal sealed class EcsNullWorld : EcsWorld
-    {
-        internal EcsNullWorld() : base(false) { }
+        private sealed class NullWorld : EcsWorld
+        {
+            internal NullWorld() : base(EmptyConfig.Instance, false) { }
+        }
     }
 }

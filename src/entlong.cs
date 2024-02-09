@@ -1,4 +1,5 @@
 ﻿#pragma warning disable IDE1006
+#pragma warning disable CS8981
 using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
@@ -154,9 +155,27 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator entlong(long a) => new entlong(a);
 
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator int(entlong a) => a.ID;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Deconstruct(out int id, out int gen, out int world)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
+#endif
+            id = this.id;
+            gen = this.gen;
+            world = this.world;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Deconstruct(out int id, out int world)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
+#endif
+            id = this.id;
+            world = this.world;
+        }
         #endregion
 
         #region Other
