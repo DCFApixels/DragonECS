@@ -146,7 +146,7 @@
         public static EcsSpan Where<TCollection, A0, A1>(this TCollection entities, out A0 a0, out A1 a1)
             where A0 : EcsAspect
             where A1 : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().Where(out a0, out a1);
         }
@@ -171,7 +171,7 @@
             where A0 : EcsAspect
             where A1 : EcsAspect
             where A2 : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().Where(out a0, out a1, out a2);
         }
@@ -199,7 +199,7 @@
             where A1 : EcsAspect
             where A2 : EcsAspect
             where A3 : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().Where(out a0, out a1, out a2, out a3);
         }
@@ -230,7 +230,7 @@
             where A2 : EcsAspect
             where A3 : EcsAspect
             where A4 : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().Where(out a0, out a1, out a2, out a3, out a4);
         }
@@ -264,7 +264,7 @@
             where A3 : EcsAspect
             where A4 : EcsAspect
             where A5 : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().Where(out a0, out a1, out a2, out a3, out a4, out a5);
         }
@@ -296,7 +296,7 @@
         public static EcsReadonlyGroup WhereToGroup<TCollection, A0, A1>(this TCollection entities, out A0 a0, out A1 a1)
             where A0 : EcsAspect
             where A1 : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().WhereToGroup(out a0, out a1);
         }
@@ -321,7 +321,7 @@
             where A0 : EcsAspect
             where A1 : EcsAspect
             where A2 : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().WhereToGroup(out a0, out a1, out a2);
         }
@@ -349,7 +349,7 @@
             where A1 : EcsAspect
             where A2 : EcsAspect
             where A3 : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().WhereToGroup(out a0, out a1, out a2, out a3);
         }
@@ -380,7 +380,7 @@
             where A2 : EcsAspect
             where A3 : EcsAspect
             where A4 : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().WhereToGroup(out a0, out a1, out a2, out a3, out a4);
         }
@@ -414,7 +414,7 @@
             where A3 : EcsAspect
             where A4 : EcsAspect
             where A5 : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().WhereToGroup(out a0, out a1, out a2, out a3, out a4, out a5);
         }

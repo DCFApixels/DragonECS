@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract partial class EcsWorld: IEntitiesCollection
+    public abstract partial class EcsWorld: IEntityStorage
     {
         public readonly short id;
         private IEcsWorldConfig _config;
@@ -25,6 +25,8 @@ namespace DCFApixels.DragonECS
         private int _delEntBufferMinCount;
         private int _freeSpace;
         private bool _isEnableAutoReleaseDelEntBuffer = true;
+
+        private long _version = 0;
 
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);

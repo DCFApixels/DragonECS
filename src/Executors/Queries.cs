@@ -1,6 +1,6 @@
 ﻿namespace DCFApixels.DragonECS
 {
-    public interface IEntitiesCollection
+    public interface IEntityStorage
     {
         EcsSpan ToSpan();
     }
@@ -9,7 +9,7 @@
         #region Where
         public static EcsSpan Where<TCollection, TAspect>(this TCollection entities, out TAspect aspect)
             where TAspect : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().Where(out aspect);
         }
@@ -58,7 +58,7 @@
         #region WhereToGroup
         public static EcsReadonlyGroup WhereToGroup<TCollection ,TAspect>(this TCollection entities, out TAspect aspect)
             where TAspect : EcsAspect
-            where TCollection : IEntitiesCollection
+            where TCollection : IEntityStorage
         {
             return entities.ToSpan().WhereToGroup(out aspect);
         }

@@ -144,7 +144,7 @@ namespace DCFApixels.DragonECS
     }
 
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public unsafe class EcsGroup : IDisposable, IEnumerable<int>, IEntitiesCollection
+    public unsafe class EcsGroup : IDisposable, IEnumerable<int>, IEntityStorage
     {
         private EcsWorld _source;
         private int[] _dense;
