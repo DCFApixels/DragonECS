@@ -97,7 +97,6 @@ namespace DCFApixels.DragonECS
             {
                 config = EmptyConfig.Instance;
             }
-            config.Lock();
             _config = config;
 
             if (isIndexable)
