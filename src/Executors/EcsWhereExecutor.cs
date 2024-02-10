@@ -49,7 +49,7 @@ namespace DCFApixels.DragonECS
             EcsSpan result;
             if (_lastWorldVersion != World.Version)
             {
-                 result = _aspect.GetIteratorFor(span).CopyToSpan(ref _filteredEntities);
+                result = _aspect.GetIteratorFor(span).CopyToSpan(ref _filteredEntities);
                 _lastWorldVersion = World.Version;
             }
             else

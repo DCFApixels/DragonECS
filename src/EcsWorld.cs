@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract partial class EcsWorld: IEntityStorage
+    public abstract partial class EcsWorld : IEntityStorage
     {
         public readonly short id;
         private IEcsWorldConfig _config;
@@ -195,7 +195,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Where Query
-        
+
         #endregion
 
         #region Entity
@@ -239,7 +239,7 @@ namespace DCFApixels.DragonECS
         public void DelEntity(int entityID)
         {
 #if DEBUG
-            if(IsUsed(entityID) == false)
+            if (IsUsed(entityID) == false)
             {
                 Throw.UndefinedException();
             }

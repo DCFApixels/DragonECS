@@ -33,7 +33,7 @@
         #endregion
 
         #region WhereToGroup
-        public static EcsReadonlyGroup WhereToGroup<TCollection ,TAspect>(this TCollection entities, out TAspect aspect)
+        public static EcsReadonlyGroup WhereToGroup<TCollection, TAspect>(this TCollection entities, out TAspect aspect)
             where TAspect : EcsAspect
             where TCollection : IEntityStorage
         {
@@ -44,7 +44,7 @@
         {
             return group.ToSpan().WhereToGroup(out aspect);
         }
-        public static EcsReadonlyGroup WhereToGroup<TAspect>(this EcsSpan span, out TAspect aspect) 
+        public static EcsReadonlyGroup WhereToGroup<TAspect>(this EcsSpan span, out TAspect aspect)
             where TAspect : EcsAspect
         {
             EcsWorld world = span.World;
