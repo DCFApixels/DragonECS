@@ -95,7 +95,7 @@ namespace DCFApixels.DragonECS
         {
             if (config == null)
             {
-                config = EmptyConfig.Instance;
+                config = EcsWorldConfig.Empty;
             }
             _config = config;
 
@@ -568,21 +568,6 @@ namespace DCFApixels.DragonECS
                         break;
                 }
             }
-        }
-        #endregion
-
-        #region EmptyConfig
-        private class EmptyConfig : IEcsWorldConfig
-        {
-            public static readonly EmptyConfig Instance = new EmptyConfig();
-            private EmptyConfig() { }
-            public bool IsLocked => true;
-            public T Get<T>(string valueName) { return default; }
-            public bool Has(string valueName) { return false; }
-            public void Lock() { }
-            public void Remove(string valueName) { }
-            public void Set<T>(string valueName, T value) { }
-            public bool TryGet<T>(string valueName, out T value) { value = default; return false; }
         }
         #endregion
     }

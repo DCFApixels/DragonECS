@@ -1,25 +1,48 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
 {
     public interface IEcsWorldConfig
     {
+        int Count { get; }
         bool Has(string valueName);
         T Get<T>(string valueName);
         bool TryGet<T>(string valueName, out T value);
+        IEnumerable<KeyValuePair<string, object>> GetAllConfigs();
     }
     public interface IEcsWorldConfigWriter
     {
+        int Count { get; }
         void Set<T>(string valueName, T value);
         bool Has(string valueName);
         T Get<T>(string valueName);
         bool TryGet<T>(string valueName, out T value);
         void Remove(string valueName);
+        IEnumerable<KeyValuePair<string, object>> GetAllConfigs();
     }
-    public class EcsWorldConfig : IEcsWorldConfigWriter, IEcsWorldConfig
+    [Serializable]
+    public class EcsWorldConfig : IEcsWorldConfigWriter, IEcsWorldConfig, IEnumerable<KeyValuePair<string, object>>
     {
+        public static readonly IEcsWorldConfig Empty = new EmptyConfig();
+
         private Dictionary<string, object> _storage = new Dictionary<string, object>();
 
+        public EcsWorldConfig() { }
+        public EcsWorldConfig(IEnumerable<KeyValuePair<string, object>> range)
+        {
+            _storage = new Dictionary<string, object>(range);
+        }
+        public EcsWorldConfig(params KeyValuePair<string, object>[] range)
+        {
+            _storage = new Dictionary<string, object>(range);
+        }
+
+        public int Count
+        {
+            get { return _storage.Count; }
+        }
         public T Get<T>(string valueName)
         {
             return (T)_storage[valueName];
@@ -36,11 +59,40 @@ namespace DCFApixels.DragonECS
         {
             _storage[valueName] = value;
         }
+        public void Add(string key, object value)
+        {
+            _storage.Add(key, value);
+        }
+        public void Add(KeyValuePair<string, object> pair)
+        {
+            _storage.Add(pair.Key, pair.Value);
+        }
         public bool TryGet<T>(string valueName, out T value)
         {
             bool result = _storage.TryGetValue(valueName, out object rawValue);
             value = rawValue == null ? default : (T)rawValue;
             return result;
+        }
+        public IEnumerable<KeyValuePair<string, object>> GetAllConfigs()
+        {
+            return _storage;
+        }
+        public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+        {
+            return GetAllConfigs().GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetAllConfigs().GetEnumerator();
+        }
+
+        private class EmptyConfig : IEcsWorldConfig
+        {
+            public int Count { get { return 0; } }
+            public T Get<T>(string valueName) { return default; }
+            public IEnumerable<KeyValuePair<string, object>> GetAllConfigs() { return Array.Empty<KeyValuePair<string, object>>(); }
+            public bool Has(string valueName) { return false; }
+            public bool TryGet<T>(string valueName, out T value) { value = default; return false; }
         }
     }
     public static class EcsWorldConfigExtensions
