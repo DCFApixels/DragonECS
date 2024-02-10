@@ -2,10 +2,10 @@
 
 namespace DCFApixels.DragonECS
 {
-    public sealed class EcsWhereExecutor<TAspect> : EcsQueryExecutor where TAspect : EcsAspect
+    public sealed class EcsWhereToGroupExecutor<TAspect> : EcsQueryExecutor where TAspect : EcsAspect
     {
         private TAspect _aspect;
-        private int[] _filteredEntities;
+        private EcsGroup _filteredGroup;
 
         private long _version;
 
@@ -30,16 +30,19 @@ namespace DCFApixels.DragonECS
         protected sealed override void OnInitialize()
         {
             _aspect = World.GetAspect<TAspect>();
-            _filteredEntities = new int[32];
+            _filteredGroup = EcsGroup.New(World);
         }
-        protected sealed override void OnDestroy() { }
+        protected sealed override void OnDestroy()
+        {
+            _filteredGroup.Dispose();
+        }
         #endregion
 
         #region Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan Execute() => ExecuteFor(_aspect.World.Entities);
+        public EcsReadonlyGroup Execute() => ExecuteFor(_aspect.World.Entities);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan ExecuteFor(EcsSpan span)
+        public EcsReadonlyGroup ExecuteFor(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _executeMarker.Begin();
@@ -47,11 +50,11 @@ namespace DCFApixels.DragonECS
             if (span.WorldID != WorldID) throw new System.ArgumentException();//TODO составить текст исключения. 
 #endif
             unchecked { _version++; }
-            EcsSpan result = _aspect.GetIteratorFor(span).CopyToSpan(ref _filteredEntities);
+            _aspect.GetIteratorFor(span).CopyTo(_filteredGroup);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _executeMarker.End();
 #endif
-            return result;
+            return _filteredGroup.Readonly;
         }
         #endregion
     }

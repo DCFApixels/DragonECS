@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract partial class EcsWorld
+    public abstract partial class EcsWorld: IEntitiesCollection
     {
         public readonly short id;
         private IEcsWorldConfig _config;
@@ -189,82 +189,15 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Where Query
-        public EcsReadonlyGroup WhereToGroupFor<TAspect>(EcsSpan span, out TAspect aspect) where TAspect : EcsAspect
-        {
-            if (_isEnableAutoReleaseDelEntBuffer)
-            {
-                ReleaseDelEntityBufferAll();
-            }
-            var executor = GetExecutor<EcsWhereExecutor<TAspect>>();
-            aspect = executor.Aspect;
-            return executor.ExecuteFor(span);
-        }
-        public EcsReadonlyGroup WhereToGroupFor<TAspect>(EcsSpan span) where TAspect : EcsAspect
-        {
-            if (_isEnableAutoReleaseDelEntBuffer)
-            {
-                ReleaseDelEntityBufferAll();
-            }
-            return GetExecutor<EcsWhereExecutor<TAspect>>().ExecuteFor(span);
-        }
-        public EcsReadonlyGroup WhereToGroup<TAspect>(out TAspect aspect) where TAspect : EcsAspect
-        {
-            if (_isEnableAutoReleaseDelEntBuffer)
-            {
-                ReleaseDelEntityBufferAll();
-            }
-            var executor = GetExecutor<EcsWhereExecutor<TAspect>>();
-            aspect = executor.Aspect;
-            return executor.Execute();
-        }
-        public EcsReadonlyGroup WhereToGroup<TAspect>() where TAspect : EcsAspect
-        {
-            if (_isEnableAutoReleaseDelEntBuffer)
-            {
-                ReleaseDelEntityBufferAll();
-            }
-            return GetExecutor<EcsWhereExecutor<TAspect>>().Execute();
-        }
-
-        public EcsSpan WhereFor<TAspect>(EcsSpan span, out TAspect aspect) where TAspect : EcsAspect
-        {
-            if (_isEnableAutoReleaseDelEntBuffer)
-            {
-                ReleaseDelEntityBufferAll();
-            }
-            var executor = GetExecutor<EcsWhereSpanExecutor<TAspect>>();
-            aspect = executor.Aspect;
-            return executor.ExecuteFor(span);
-        }
-        public EcsSpan WhereFor<TAspect>(EcsSpan span) where TAspect : EcsAspect
-        {
-            if (_isEnableAutoReleaseDelEntBuffer)
-            {
-                ReleaseDelEntityBufferAll();
-            }
-            return GetExecutor<EcsWhereSpanExecutor<TAspect>>().ExecuteFor(span);
-        }
-        public EcsSpan Where<TAspect>(out TAspect aspect) where TAspect : EcsAspect
-        {
-            if (_isEnableAutoReleaseDelEntBuffer)
-            {
-                ReleaseDelEntityBufferAll();
-            }
-            var executor = GetExecutor<EcsWhereSpanExecutor<TAspect>>();
-            aspect = executor.Aspect;
-            return executor.Execute();
-        }
-        public EcsSpan Where<TAspect>() where TAspect : EcsAspect
-        {
-            if (_isEnableAutoReleaseDelEntBuffer)
-            {
-                ReleaseDelEntityBufferAll();
-            }
-            return GetExecutor<EcsWhereSpanExecutor<TAspect>>().Execute();
-        }
+        
         #endregion
 
         #region Entity
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan ToSpan()
+        {
+            return _allEntites.ToSpan();
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity()
         {
@@ -424,7 +357,7 @@ namespace DCFApixels.DragonECS
         }
         public void ReleaseDelEntityBufferAll()
         {
-            ReleaseDelEntityBuffer(-1);
+            ReleaseDelEntityBuffer(_delEntBufferCount);
         }
         public void ReleaseDelEntityBuffer(int count)
         {
@@ -432,15 +365,7 @@ namespace DCFApixels.DragonECS
             {
                 return;
             }
-
-            if (count < 0)
-            {
-                count = _delEntBufferCount;
-            }
-            else if (count > _delEntBufferCount)
-            {
-                count = _delEntBufferCount;
-            }
+            count = Math.Clamp(count, 0, _delEntBufferCount);
             _delEntBufferCount -= count;
             ReadOnlySpan<int> buffser = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);
             for (int i = 0; i < _poolsCount; i++)
@@ -452,7 +377,7 @@ namespace DCFApixels.DragonECS
             {
                 _entityDispenser.Release(buffser[i]);
             }
-            _freeSpace += count;// _entitesCapacity - _entitiesCount;
+            _freeSpace += count;
         }
         #endregion
 
