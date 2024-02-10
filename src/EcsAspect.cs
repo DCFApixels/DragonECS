@@ -29,7 +29,7 @@ namespace DCFApixels.DragonECS
 
         #region Builder
         protected virtual void Init(Builder b) { }
-        public sealed class Builder : EcsAspectBuilderBase
+        public sealed class Builder
         {
             private EcsWorld _world;
             private EcsMask.Builder _maskBuilder;
@@ -87,17 +87,17 @@ namespace DCFApixels.DragonECS
             }
 
             #region Include/Exclude/Optional/Combine
-            public sealed override TPool Include<TPool>()
+            public TPool Include<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 IncludeImplicit(typeof(TPool).GetGenericArguments()[0]);
                 return _world.GetPool<TPool>();
             }
-            public sealed override TPool Exclude<TPool>()
+            public TPool Exclude<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 ExcludeImplicit(typeof(TPool).GetGenericArguments()[0]);
                 return _world.GetPool<TPool>();
             }
-            public sealed override TPool Optional<TPool>()
+            public TPool Optional<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 return _world.GetPool<TPool>();
             }
@@ -390,13 +390,4 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
-
-    #region BuilderBase
-    public abstract class EcsAspectBuilderBase
-    {
-        public abstract TPool Include<TPool>() where TPool : IEcsPoolImplementation, new();
-        public abstract TPool Exclude<TPool>() where TPool : IEcsPoolImplementation, new();
-        public abstract TPool Optional<TPool>() where TPool : IEcsPoolImplementation, new();
-    }
-    #endregion
 }

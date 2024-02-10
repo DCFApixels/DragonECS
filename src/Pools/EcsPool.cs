@@ -239,17 +239,17 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsPool<TComponent> Include<TComponent>(this EcsAspectBuilderBase self) where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> Include<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
         {
             return self.Include<EcsPool<TComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsPool<TComponent> Exclude<TComponent>(this EcsAspectBuilderBase self) where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> Exclude<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
         {
             return self.Exclude<EcsPool<TComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsPool<TComponent> Optional<TComponent>(this EcsAspectBuilderBase self) where TComponent : struct, IEcsComponent
+        public static EcsPool<TComponent> Optional<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
         {
             return self.Optional<EcsPool<TComponent>>();
         }

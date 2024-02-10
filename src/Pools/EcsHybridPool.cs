@@ -254,17 +254,17 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> Include<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> Include<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
         {
             return self.Include<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> Exclude<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> Exclude<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
         {
             return self.Exclude<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> Optional<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> Optional<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
         {
             return self.Optional<EcsHybridPool<T>>();
         }
@@ -283,17 +283,17 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> IncludeHybrid<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> IncludeHybrid<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
         {
             return self.Include<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> ExcludeHybrid<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> ExcludeHybrid<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
         {
             return self.Exclude<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> OptionalHybrid<T>(this EcsAspectBuilderBase self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> OptionalHybrid<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
         {
             return self.Optional<EcsHybridPool<T>>();
         }
