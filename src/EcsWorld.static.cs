@@ -123,7 +123,7 @@ namespace DCFApixels.DragonECS
         }
         private sealed class NullWorld : EcsWorld
         {
-            internal NullWorld() : base(EmptyConfig.Instance, false) { }
+            internal NullWorld() : base(EcsWorldConfig.Empty, false) { }
         }
     }
 }
