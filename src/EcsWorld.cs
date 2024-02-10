@@ -44,6 +44,11 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _config; }
         }
+        public long Version
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _version; }
+        }
         public bool IsDestroyed
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -56,7 +61,6 @@ namespace DCFApixels.DragonECS
         }
         public int Capacity
         {
-            //_denseEntities.Length;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _entitesCapacity; }
         }
@@ -203,6 +207,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity()
         {
+            unchecked { _version++; }
             int entityID = _entityDispenser.GetFree();
             _freeSpace--;
             _entitiesCount++;
@@ -367,6 +372,7 @@ namespace DCFApixels.DragonECS
             {
                 return;
             }
+            unchecked { _version++; }
             count = Math.Clamp(count, 0, _delEntBufferCount);
             _delEntBufferCount -= count;
             ReadOnlySpan<int> buffser = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);

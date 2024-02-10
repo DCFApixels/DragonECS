@@ -7,7 +7,7 @@ namespace DCFApixels.DragonECS
         private TAspect _aspect;
         private EcsGroup _filteredGroup;
 
-        private long _version;
+        private long _lastWorldVersion;
 
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
         private readonly EcsProfilerMarker _executeMarker = new EcsProfilerMarker("Where");
@@ -22,7 +22,7 @@ namespace DCFApixels.DragonECS
         public sealed override long Version
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _version;
+            get => _lastWorldVersion;
         }
         #endregion
 
@@ -49,8 +49,11 @@ namespace DCFApixels.DragonECS
             if (span.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
             if (span.WorldID != WorldID) throw new System.ArgumentException();//TODO составить текст исключения. 
 #endif
-            unchecked { _version++; }
-            _aspect.GetIteratorFor(span).CopyTo(_filteredGroup);
+            if (_lastWorldVersion != World.Version)
+            {
+                _aspect.GetIteratorFor(span).CopyTo(_filteredGroup);
+                _lastWorldVersion = World.Version;
+            }
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _executeMarker.End();
 #endif
