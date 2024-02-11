@@ -451,7 +451,9 @@ namespace DCFApixels.DragonECS
             _listeners.InvokeOnReleaseDelEntityBuffer(buffser);
             for (int i = 0; i < buffser.Length; i++)
             {
-                _entityDispenser.Release(buffser[i]);
+                int e = buffser[i];
+                _entityDispenser.Release(e);
+                unchecked{ _gens[e]--; }//up gen
             }
             _freeSpace += count;// _entitesCapacity - _entitiesCount;
         }
