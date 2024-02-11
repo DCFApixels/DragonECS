@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using static Leopotam.EcsLite.EcsWorld;
 
 
 namespace DCFApixels.DragonECS.Internal
@@ -72,6 +73,17 @@ namespace DCFApixels.DragonECS.Internal
         {
             throw new MethodAccessException("The Group does not belong in this world.");
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void World_MaskDoesntBelongWorld()
+        {
+            throw new EcsFrameworkException($"The mask doesn't belong in this world");
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void World_EntityIsNotContained(int entityID)
+        {
+            throw new EcsFrameworkException($"An entity with identifier {entityID} is not contained in this world");
+        }
+
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Ent_ThrowIsNotAlive(entlong entity)
