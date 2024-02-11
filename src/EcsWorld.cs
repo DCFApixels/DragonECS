@@ -385,7 +385,8 @@ namespace DCFApixels.DragonECS
             {
                 int e = buffser[i];
                 _entityDispenser.Release(e);
-                _gens[e]--;//up gen
+                unchecked { _gens[e]++; }//up gen
+                _gens[e] |= DEATH_GEN_BIT;
             }
             _freeSpace += count;
         }
