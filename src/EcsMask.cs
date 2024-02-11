@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DCFApixels.DragonECS
 {
@@ -74,6 +75,109 @@ namespace DCFApixels.DragonECS
                 result[i] = buffer[i];
             }
             return result;
+        }
+        #endregion
+
+        #region Checks
+        public bool IsSubmaskOf(EcsMask otherMask) //TODO протестить
+        {
+            return IsSubmask(otherMask, this);
+        }
+        public bool IsSupermaskOf(EcsMask otherMask) //TODO протестить
+        {
+            return IsSubmask(this, otherMask);
+        }
+        public bool IsConflictWith(EcsMask otherMask) //TODO протестить
+        {
+            return OverlapsArray(inc, otherMask.exc) || OverlapsArray(exc, otherMask.inc);
+        }
+
+        private static bool OverlapsArray(int[] l, int[] r)
+        {
+            int li = 0;
+            int ri = 0;
+            while (li < l.Length && ri < r.Length)
+            {
+                if (l[li] == r[ri])
+                {
+                    return true;
+                }
+                else if (l[li] < r[ri])
+                {
+                    li++;
+                }
+                else
+                {
+                    ri++;
+                }
+            }
+            return false;
+        }
+        private static bool IsSubmask(EcsMask super, EcsMask sub)
+        {
+            return IsSubarray(sub.inc, super.inc) && IsSuperarray(sub.exc, super.exc);
+        }
+        private static bool IsSubarray(int[] super, int[] sub)
+        {
+            //if (super.Length > sub.Length)
+            //{
+            //    return false;
+            //}
+            //for (int superI = 0, subI = 0; 
+            //    subI < sub.Length;
+            //    superI++, subI++)
+            //{
+            //    while (super[superI] < sub[subI])
+            //    {
+            //        superI++;
+            //    }
+            //    if (super[superI] != sub[subI])
+            //    {
+            //        return false;
+            //    }
+            //}
+            //return true;
+
+            if (super.Length < sub.Length)
+            {
+                return false;
+            }
+
+            int superI = 0;
+            int subI = 0;
+
+            while (superI < super.Length && subI < sub.Length)
+            {
+                if (super[superI] == sub[subI])
+                {
+                    superI++;
+                }
+                subI++;
+            }
+
+            return subI == sub.Length;
+        }
+
+        private static bool IsSuperarray(int[] super, int[] sub)
+        {
+            if (super.Length < sub.Length)
+            {
+                return false;
+            }
+
+            int superI = 0;
+            int subI = 0;
+
+            while (superI < super.Length && subI < sub.Length)
+            {
+                if (super[superI] == sub[subI])
+                {
+                    subI++;
+                }
+                superI++;
+            }
+
+            return subI == sub.Length;
         }
         #endregion
 
