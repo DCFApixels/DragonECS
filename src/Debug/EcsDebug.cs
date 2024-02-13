@@ -98,7 +98,7 @@ namespace DCFApixels.DragonECS
 
         public static Action<DebugService> OnServiceChanged = delegate { };
 
-        private IntDispenser _idDispenser = new IntDispenser(-1);
+        private IdDispenser _idDispenser = new IdDispenser(4, -1);
         private Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -110,7 +110,7 @@ namespace DCFApixels.DragonECS
             int id;
             if (!_nameIdTable.TryGetValue(name, out id))
             {
-                id = _idDispenser.GetFree();
+                id = _idDispenser.UseFree();
                 _nameIdTable.Add(name, id);
             }
             OnNewProfilerMark(id, name);
