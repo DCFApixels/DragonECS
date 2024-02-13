@@ -274,7 +274,6 @@ namespace DCFApixels.DragonECS
 
         public void DeleteEmptyEntites()
         {
-            throw new NotImplementedException();
             foreach (var e in Entities)
             {
                 if (_componentCounts[e] <= 0)

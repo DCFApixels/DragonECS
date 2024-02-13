@@ -142,15 +142,17 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
-//            _poolComponentCounts[componentTypeID]--;
-//            var count = --_componentCounts[entityID];
-//            _entitiesComponentMasks[entityID][maskBit.chankIndex] &= ~maskBit.mask;
-//
-//            if (count == 0 && _allEntites.Has(entityID))
-//                DelEntity(entityID);
-//#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-//            if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
-//#endif
+            _poolComponentCounts[componentTypeID]--;
+            var count = --_componentCounts[entityID];
+            _entitiesComponentMasks[entityID][maskBit.chankIndex] &= ~maskBit.mask;
+
+            if (count == 0 && IsUsed(entityID))
+            {
+                DelEntity(entityID);
+            }
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
+#endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool HasEntityComponent(int entityID, EcsMaskChunck maskBit)
