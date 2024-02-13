@@ -8,22 +8,26 @@ namespace DCFApixels.DragonECS.Internal
     public static class EcsTypeCode
     {
         private static readonly Dictionary<Type, int> _codes = new Dictionary<Type, int>();
-        private static int _incremetn = 1;
-        public static int Count => _codes.Count;
+        private static int _increment = 1;
+        public static int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _codes.Count; }
+        }
         public static int Get(Type type)
         {
             if (!_codes.TryGetValue(type, out int code))
             {
-                code = _incremetn++;
+                code = _increment++;
                 _codes.Add(type, code);
             }
             return code;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Get<T>() => EcsTypeCodeCache<T>.code;
-        public static bool Has(Type type) => _codes.ContainsKey(type);
-        public static bool Has<T>() => _codes.ContainsKey(typeof(T));
-        public static IEnumerable<TypeCodeInfo> GetDeclared() => _codes.Select(o => new TypeCodeInfo(o.Key, o.Value));
+        public static int Get<T>() { return EcsTypeCodeCache<T>.code; }
+        public static bool Has(Type type) { return _codes.ContainsKey(type); }
+        public static bool Has<T>() { return _codes.ContainsKey(typeof(T)); }
+        public static IEnumerable<TypeCodeInfo> GetDeclaredTypes() { return _codes.Select(o => new TypeCodeInfo(o.Key, o.Value)); }
     }
     public static class EcsTypeCodeCache<T>
     {
@@ -38,10 +42,9 @@ namespace DCFApixels.DragonECS.Internal
             this.type = type;
             this.code = code;
         }
-
         public override string ToString()
         {
-            return this.AutoToString(false) + "\n\r";
+            return this.AutoToString(false);
         }
     }
 }

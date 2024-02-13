@@ -3,11 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using static DCFApixels.BitsUtility;
+using static DCFApixels.DragonECS.Internal.BitsUtility;
 
-namespace DCFApixels
+namespace DCFApixels.DragonECS.Internal
 {
-    public unsafe static class BitsUtility
+    internal unsafe static class BitsUtility
     {
         private const char DEFAULT_SEPARATOR = '_';
         private const int BYTE_BITS = 8;

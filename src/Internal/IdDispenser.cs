@@ -1,11 +1,10 @@
-﻿using DCFApixels.DragonECS.Internal;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace DCFApixels.DragonECS.Utils
+namespace DCFApixels.DragonECS.Internal
 {
     [Serializable]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
@@ -164,7 +163,7 @@ namespace DCFApixels.DragonECS.Utils
             int freeIndex = _usedCount;
             for (int i = 0; i < _size; i++)
             {
-                if(_sparse[i] > 0)
+                if (_sparse[i] > 0)
                 {
                     _sparse[i] = usedIndex;
                     _dense[usedIndex++] = i;

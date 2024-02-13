@@ -1,4 +1,4 @@
-﻿using DCFApixels.DragonECS.Utils;
+﻿using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

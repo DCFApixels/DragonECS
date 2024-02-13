@@ -1,5 +1,4 @@
 ﻿using DCFApixels.DragonECS.Internal;
-using DCFApixels.DragonECS.Utils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -189,7 +188,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entity
-        
+
         #region New/Del
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity()

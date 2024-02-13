@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.Internal
 {
-    public readonly struct GenericEnumerable<T, TEnumerator> : IEnumerable<T> where TEnumerator : IEnumerator<T>
+    internal readonly struct GenericEnumerable<T, TEnumerator> : IEnumerable<T> where TEnumerator : IEnumerator<T>
     {
         public readonly TEnumerator _enumerator;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
