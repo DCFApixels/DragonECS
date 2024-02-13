@@ -24,7 +24,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
-        public bool IsMatches(int entityID) => _source.IsMatchesMask(_mask, entityID);
+        public bool IsMatches(int entityID)
+        {
+            return _source.IsMatchesMask(_mask, entityID);
+        }
         #endregion
 
         #region Builder

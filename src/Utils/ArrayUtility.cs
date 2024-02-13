@@ -44,7 +44,22 @@ namespace DCFApixels.DragonECS.Internal
         }
         public static int NormalizeSizeToPowerOfTwo(int minSize)
         {
-            return 1 << (GetHighBitNumber((uint)minSize - 1u) + 1);
+            unchecked
+            {
+                return 1 << (GetHighBitNumber((uint)minSize - 1u) + 1);
+            }
+        }
+        public static int NormalizeSizeToPowerOfTwo_ClampOverflow(int minSize)
+        {
+            unchecked
+            {
+                int hibit = (GetHighBitNumber((uint)minSize - 1u) + 1);
+                if (hibit >= 32)
+                {
+                    return int.MaxValue;
+                }
+                return 1 << hibit;
+            }
         }
         public static void Fill<T>(T[] array, T value, int startIndex = 0, int length = -1)
         {
