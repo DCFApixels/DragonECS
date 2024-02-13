@@ -13,12 +13,11 @@ namespace DCFApixels.DragonECS
 
         private bool _isDestroyed;
 
-        private IntDispenser _entityDispenser;
+        private IdDispenser _entityDispenser;
         private int _entitiesCount;
         private int _entitesCapacity;
         private short[] _gens; //старший бит указывает на то жива ли сущность
         private short[] _componentCounts;
-        private EcsGroup _allEntites;
 
         private int[] _delEntBuffer;
         private int _delEntBufferCount;
@@ -73,7 +72,7 @@ namespace DCFApixels.DragonECS
             get { return _isEnableAutoReleaseDelEntBuffer; }
         }
 
-        public EcsReadonlyGroup Entities
+        public EcsSpan Entities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -82,7 +81,7 @@ namespace DCFApixels.DragonECS
                 {
                     ReleaseDelEntityBufferAll();
                 }
-                return _allEntites.Readonly;
+                return _entityDispenser.UsedToEcsSpan(id);
             }
         }
         public ReadOnlySpan<IEcsPoolImplementation> AllPools
@@ -114,7 +113,6 @@ namespace DCFApixels.DragonECS
             }
 
             _poolsMediator = new PoolsMediator(this);
-            _entityDispenser = new IntDispenser(0);
 
             int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.Get_PoolsCapacity());
             _pools = new IEcsPoolImplementation[poolsCapacity];
@@ -122,6 +120,7 @@ namespace DCFApixels.DragonECS
             ArrayUtility.Fill(_pools, _nullPool);
 
             _entitesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.Get_EntitiesCapacity());
+            _entityDispenser = new IdDispenser(_entitesCapacity, 0);
             _gens = new short[_entitesCapacity];
             _componentCounts = new short[_entitesCapacity];
 
@@ -135,8 +134,6 @@ namespace DCFApixels.DragonECS
             {
                 _entitiesComponentMasks[i] = new int[maskLength];
             }
-
-            _allEntites = GetFreeGroup();
         }
         public void Destroy()
         {
@@ -195,13 +192,13 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan()
         {
-            return _allEntites.ToSpan();
+            return _entityDispenser.UsedToEcsSpan(id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity()
         {
             unchecked { _version++; }
-            int entityID = _entityDispenser.GetFree();
+            int entityID = _entityDispenser.UseFree();
             _entitiesCount++;
 
             if (_gens.Length <= entityID)
@@ -210,7 +207,6 @@ namespace DCFApixels.DragonECS
             }
 
             _gens[entityID] &= GEN_BITS;
-            _allEntites.AddUnchecked(entityID);
             _entityListeners.InvokeOnNewEntity(entityID);
             return entityID;
         }
@@ -237,7 +233,6 @@ namespace DCFApixels.DragonECS
                 Throw.World_EntityIsNotContained(entityID);
             }
 #endif
-            _allEntites.RemoveUnchecked(entityID);
             _delEntBuffer[_delEntBufferCount++] = entityID;
             _gens[entityID] |= DEATH_GEN_BIT;
             _entitiesCount--;
@@ -279,7 +274,8 @@ namespace DCFApixels.DragonECS
 
         public void DeleteEmptyEntites()
         {
-            foreach (var e in _allEntites)
+            throw new NotImplementedException();
+            foreach (var e in Entities)
             {
                 if (_componentCounts[e] <= 0)
                 {
