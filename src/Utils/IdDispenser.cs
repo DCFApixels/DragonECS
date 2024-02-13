@@ -13,14 +13,13 @@ namespace DCFApixels.DragonECS.Utils
     {
         private const int FREE_FLAG_BIT = ~INDEX_MASK;
         private const int INDEX_MASK = 0x7FFF_FFFF;
-
         private const int MIN_SIZE = 4;
 
         private int[] _dense = Array.Empty<int>();
         private int[] _sparse = Array.Empty<int>(); //hibit free flag
 
-        private int _usedCount;     //[|uuuu|      ]
-        private int _size;          //[|uuuu|ffffff]
+        private int _usedCount;     //[uuuu|      ]
+        private int _size;          //[uuuu|ffffff]
 
         private int _nullID;
 
@@ -312,27 +311,6 @@ namespace DCFApixels.DragonECS.Utils
         }
         #endregion
 
-        #region Spans
-        public readonly struct UsedSpan : IEnumerable<int>
-        {
-            private readonly IdDispenser _instance;
-            public int Count => _instance._usedCount;
-            internal UsedSpan(IdDispenser instance) => _instance = instance;
-            public Enumerator GetEnumerator() => new Enumerator(_instance._dense, 0, _instance._usedCount);
-            IEnumerator<int> IEnumerable<int>.GetEnumerator() => GetEnumerator();
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
-        public readonly struct FreeSpan : IEnumerable<int>
-        {
-            private readonly IdDispenser _instance;
-            public int Count => _instance._size - _instance._usedCount;
-            internal FreeSpan(IdDispenser instance) => _instance = instance;
-            public Enumerator GetEnumerator() => new Enumerator(_instance._dense, _instance._usedCount, Count);
-            IEnumerator<int> IEnumerable<int>.GetEnumerator() => GetEnumerator();
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
-        #endregion
-
         #region Utils
         private enum IDState : byte
         {
@@ -340,7 +318,6 @@ namespace DCFApixels.DragonECS.Utils
             Reserved = 1,
             Used = 2,
         }
-
         private static class ThrowHalper
         {
             [MethodImpl(MethodImplOptions.NoInlining)]
@@ -361,7 +338,7 @@ namespace DCFApixels.DragonECS.Utils
             public static void UndefinedException() { throw new Exception(); }
         }
 
-        internal class DebuggerProxy
+        private class DebuggerProxy
         {
             private IdDispenser _target;
             public DebuggerProxy(IdDispenser dispenser)
@@ -370,6 +347,7 @@ namespace DCFApixels.DragonECS.Utils
             }
 #if DEBUG
             public ReadOnlySpan<int> Used => new ReadOnlySpan<int>(_target._dense, 0, _target._usedCount);
+            public ReadOnlySpan<int> Free => new ReadOnlySpan<int>(_target._dense, _target._usedCount, _target._size - _target._usedCount);
             public Pair[] Pairs
             {
                 get

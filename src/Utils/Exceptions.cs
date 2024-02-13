@@ -83,7 +83,11 @@ namespace DCFApixels.DragonECS.Internal
         {
             throw new EcsFrameworkException($"An entity with identifier {entityID} is not contained in this world");
         }
-
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void World_EntityIsAlreadyСontained(int entityID)
+        {
+            throw new EcsFrameworkException($"An entity with identifier {entityID} is already contained in this world");
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Ent_ThrowIsNotAlive(entlong entity)
@@ -109,7 +113,6 @@ namespace DCFApixels.DragonECS
         public EcsFrameworkException() { }
         public EcsFrameworkException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
         public EcsFrameworkException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
-        protected EcsFrameworkException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
     [Serializable]
     public class EcsRunnerImplementationException : EcsFrameworkException
@@ -117,6 +120,5 @@ namespace DCFApixels.DragonECS
         public EcsRunnerImplementationException() { }
         public EcsRunnerImplementationException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
         public EcsRunnerImplementationException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
-        protected EcsRunnerImplementationException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 }

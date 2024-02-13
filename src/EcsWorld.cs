@@ -189,11 +189,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Entity
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan ToSpan()
-        {
-            return _entityDispenser.UsedToEcsSpan(id);
-        }
+        
+        #region New/Del
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity()
         {
@@ -201,15 +198,37 @@ namespace DCFApixels.DragonECS
             int entityID = _entityDispenser.UseFree();
             _entitiesCount++;
 
-            if (_gens.Length <= entityID)
+            if (_entitesCapacity <= entityID)
             {
                 Upsize_Internal(_gens.Length << 1);
             }
 
-            _gens[entityID] &= GEN_BITS;
+            _gens[entityID] &= GEN_MASK;
             _entityListeners.InvokeOnNewEntity(entityID);
             return entityID;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void NewEntity(int entityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+            if (IsUsed(entityID))
+            {
+                Throw.World_EntityIsAlreadyСontained(entityID);
+            }
+#endif
+            unchecked { _version++; }
+            _entityDispenser.Use(entityID);
+            _entitiesCount++;
+
+            if (_entitesCapacity <= entityID)
+            {
+                Upsize_Internal(_gens.Length << 1);
+            }
+
+            _gens[entityID] &= GEN_MASK;
+            _entityListeners.InvokeOnNewEntity(entityID);
+        }
+
         public entlong NewEntityLong()
         {
             int e = NewEntity();
@@ -237,6 +256,14 @@ namespace DCFApixels.DragonECS
             _gens[entityID] |= DEATH_GEN_BIT;
             _entitiesCount--;
             _entityListeners.InvokeOnDelEntity(entityID);
+        }
+        #endregion
+
+        #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan ToSpan()
+        {
+            return _entityDispenser.UsedToEcsSpan(id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe entlong GetEntityLong(int entityID)
@@ -282,6 +309,11 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
+        //public void Densify()
+        //{
+        //    _entityDispenser.Sort();
+        //}
+        #endregion
 
         #region Copy/Clone
         public void CopyEntity(int fromEntityID, int toEntityID)
@@ -374,6 +406,7 @@ namespace DCFApixels.DragonECS
                 unchecked { _gens[e]++; }//up gen
                 _gens[e] |= DEATH_GEN_BIT;
             }
+            _entityDispenser.Sort(); //уплотнение свободных айдишников
         }
         #endregion
 
