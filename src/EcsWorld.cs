@@ -115,6 +115,7 @@ namespace DCFApixels.DragonECS
                     Throw.UndefinedException();
                 }
             }
+            id = worldID;
             Worlds[worldID] = this;
 
             _poolsMediator = new PoolsMediator(this);

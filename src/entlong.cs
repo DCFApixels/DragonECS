@@ -199,7 +199,7 @@ namespace DCFApixels.DragonECS
             public int gen => _value.gen;
             public int world => _value.world;
             public EntState State => _value.IsNull ? EntState.Null : _value.IsAlive ? EntState.Alive : EntState.Dead;
-            public EcsWorld EcsWorld => _value.World;
+            public EcsWorld EcsWorld => EcsWorld.GetWorld(world);
             public IEnumerable<object> components
             {
                 get
