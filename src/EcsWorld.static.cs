@@ -22,7 +22,7 @@ namespace DCFApixels.DragonECS
         private const int DEL_ENT_BUFFER_MIN_SIZE = 64;
 
         private static EcsWorld[] Worlds = new EcsWorld[4];
-        private static IdDispenser _worldIdDispenser = new IdDispenser(4);
+        private static IdDispenser _worldIdDispenser = new IdDispenser(4, 0);
 
         private static List<DataReleaser> _dataReleaseres = new List<DataReleaser>();
         //public static int Copacity => Worlds.Length;
@@ -34,7 +34,9 @@ namespace DCFApixels.DragonECS
         private static void ReleaseData(int worldID)
         {
             for (int i = 0, iMax = _dataReleaseres.Count; i < iMax; i++)
+            {
                 _dataReleaseres[i].Release(worldID);
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsWorld GetWorld(int worldID) => Worlds[worldID];
@@ -123,7 +125,7 @@ namespace DCFApixels.DragonECS
         }
         private sealed class NullWorld : EcsWorld
         {
-            internal NullWorld() : base(EcsWorldConfig.Empty, false) { }
+            internal NullWorld() : base(EcsWorldConfig.Empty, 0) { }
         }
     }
 }

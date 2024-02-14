@@ -92,8 +92,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors/Destroy
-        public EcsWorld(IEcsWorldConfig config) : this(config, true) { }
-        private EcsWorld(IEcsWorldConfig config, bool isIndexable)
+        public EcsWorld(IEcsWorldConfig config = null, short worldID = -1)
         {
             if (config == null)
             {
@@ -101,15 +100,22 @@ namespace DCFApixels.DragonECS
             }
             _config = config;
 
-            if (isIndexable)
+            if (worldID < 0)
             {
-                id = (short)_worldIdDispenser.UseFree();
-                if (id >= Worlds.Length)
+                worldID = (short)_worldIdDispenser.UseFree();
+                if (worldID >= Worlds.Length)
                 {
                     Array.Resize(ref Worlds, Worlds.Length << 1);
                 }
-                Worlds[id] = this;
             }
+            else
+            {
+                if (Worlds[worldID] != null)
+                {
+                    Throw.UndefinedException();
+                }
+            }
+            Worlds[worldID] = this;
 
             _poolsMediator = new PoolsMediator(this);
 
