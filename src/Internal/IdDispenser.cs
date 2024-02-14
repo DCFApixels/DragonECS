@@ -156,7 +156,7 @@ namespace DCFApixels.DragonECS.Internal
         {
             int usedIndex = 0;
             int freeIndex = _usedCount;
-            for (int i = 1; i < _size; i++)
+            for (int i = 0; i < _size; i++)
             {
                 if (_sparse[i] < _usedCount)
                 {
@@ -193,7 +193,7 @@ namespace DCFApixels.DragonECS.Internal
                 Swap(nullID, _usedCount++);
             }
         }
-        private bool IsValid()
+        internal bool IsValid()
         {
             for (int i = 0; i < _usedCount; i++)
             {
@@ -328,7 +328,12 @@ namespace DCFApixels.DragonECS.Internal
                 {
                     Pair[] result = new Pair[_target.Size];
                     for (int i = 0; i < result.Length; i++)
-                        result[i] = new Pair(_target._dense[i], _target._sparse[i]);
+                    {
+                        result[i] = new Pair(
+                            _target._dense[i],
+                            _target._sparse[i],
+                            i < _target.Count);
+                    }
                     return result;
                 }
             }
@@ -356,12 +361,20 @@ namespace DCFApixels.DragonECS.Internal
                 public ID(int id, string state) { this.id = id; this.state = state; }
                 public override string ToString() => $"{id} - {state}";
             }
+            [DebuggerDisplay("{Separator} -> {sparse} - {dense}")]
             internal readonly struct Pair
             {
-                public readonly int dense;
                 public readonly int sparse;
-                public Pair(int dense, int sparse) { this.dense = dense; this.sparse = sparse; }
-                public override string ToString() => $"{dense} - {sparse}";
+                public readonly int dense;
+                public readonly bool isSeparator;
+                public int Separator => isSeparator ? 1 : 0;
+                public Pair(int dense, int sparse, bool isSeparator)
+                {
+                    this.dense = dense;
+                    this.sparse = sparse;
+                    this.isSeparator = isSeparator;
+                }
+                //public override string ToString() => $"{sparse} - {dense} { (isSeparator ? '>' : ' ') } ";
             }
 #endif
         }

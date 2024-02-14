@@ -405,7 +405,11 @@ namespace DCFApixels.DragonECS
                 unchecked { _gens[e]++; }//up gen
                 _gens[e] |= DEATH_GEN_BIT;
             }
-//            _entityDispenser.Sort(); //уплотнение свободных айдишников
+            Densify();
+        }
+        private void Densify() //уплотнение свободных айдишников
+        {
+            _entityDispenser.Sort(); 
         }
         #endregion
 
