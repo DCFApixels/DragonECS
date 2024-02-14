@@ -144,8 +144,8 @@ namespace DCFApixels.DragonECS
             ReleaseData(id);
             _worldIdDispenser.Release(id);
             _isDestroyed = true;
-            _poolIds = null;
-            _componentIds = null;
+            _poolTypeCode_2_CmpTypeIDs = null;
+            _componentTypeCode_2_CmpTypeIDs = null;
         }
         //public void Clear() { }
         #endregion

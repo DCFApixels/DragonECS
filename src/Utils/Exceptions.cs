@@ -105,6 +105,12 @@ namespace DCFApixels.DragonECS.Internal
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void World_PoolAlreadyCreated()
+        {
+            throw new EcsFrameworkException("The pool has already been created.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Ent_ThrowIsNotAlive(entlong entity)
         {
             if (entity.IsNull)

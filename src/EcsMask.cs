@@ -371,7 +371,7 @@ namespace DCFApixels.DragonECS
             #region Include/Exclude/Combine
             public Builder Include<T>()
             {
-                int id = _world.GetComponentID<T>();
+                int id = _world.GetComponentTypeID<T>();
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(typeof(T));
 #endif
@@ -380,7 +380,7 @@ namespace DCFApixels.DragonECS
             }
             public Builder Exclude<T>()
             {
-                int id = _world.GetComponentID<T>();
+                int id = _world.GetComponentTypeID<T>();
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(typeof(T));
 #endif
@@ -389,7 +389,7 @@ namespace DCFApixels.DragonECS
             }
             public Builder Include(Type type)
             {
-                int id = _world.GetComponentID(type);
+                int id = _world.GetComponentTypeID(type);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
 #endif
@@ -398,7 +398,7 @@ namespace DCFApixels.DragonECS
             }
             public Builder Exclude(Type type)
             {
-                int id = _world.GetComponentID(type);
+                int id = _world.GetComponentTypeID(type);
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (_inc.Contains(id) || _exc.Contains(id)) Throw.ConstraintIsAlreadyContainedInMask(type);
 #endif

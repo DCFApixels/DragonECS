@@ -7,31 +7,13 @@ namespace DCFApixels.DragonECS
 {
     public abstract partial class EcsWorld
     {
-        private SparseArray<int> _poolIds = new SparseArray<int>();
-        private SparseArray<int> _componentIds = new SparseArray<int>();
+        private SparseArray<int> _poolTypeCode_2_CmpTypeIDs = new SparseArray<int>();
+        private SparseArray<int> _componentTypeCode_2_CmpTypeIDs = new SparseArray<int>();
         private int _poolsCount;
         internal IEcsPoolImplementation[] _pools;
-        //private int[] _sortedPoolIds;
-        //private int[] _sortedPoolIdsMapping;
         internal int[] _poolComponentCounts;
 
         private static EcsNullPool _nullPool = EcsNullPool.instance;
-
-        #region ComponentInfo
-        public int GetComponentID<T>() => DeclareComponentType(EcsTypeCode.Get<T>());
-        public int GetComponentID(Type type) => DeclareComponentType(EcsTypeCode.Get(type));
-        public bool IsComponentTypeDeclared<T>() => _componentIds.Contains(EcsTypeCode.Get<T>());
-        public bool IsComponentTypeDeclared(Type type) => _componentIds.Contains(EcsTypeCode.Get(type));
-        public bool IsComponentTypeDeclared(int componentTypeID)
-        {
-            if (componentTypeID >= 0 && componentTypeID < _pools.Length)
-            {
-                return _pools[componentTypeID] != _nullPool;
-            }
-            return false;
-        }
-        public Type GetComponentType(int componentID) => _pools[componentID].ComponentType;
-        #endregion
 
         #region Getters
 
@@ -76,34 +58,67 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Declare/Create
-        private int DeclareComponentType(int typeCode)
+        #region ComponentInfo
+        public int GetComponentTypeID<TComponent>()
         {
-            if (!_componentIds.TryGetValue(typeCode, out int componentId))
+            return DeclareOrGetComponentTypeID(EcsTypeCode.Get<TComponent>());
+        }
+        public int GetComponentTypeID(Type componentType)
+        {
+            return DeclareOrGetComponentTypeID(EcsTypeCode.Get(componentType));
+        }
+        public bool IsComponentTypeDeclared<TComponent>()
+        {
+            return _componentTypeCode_2_CmpTypeIDs.Contains(EcsTypeCode.Get<TComponent>());
+        }
+        public bool IsComponentTypeDeclared(Type componentType)
+        {
+            return _componentTypeCode_2_CmpTypeIDs.Contains(EcsTypeCode.Get(componentType));
+        }
+        public bool IsComponentTypeDeclared(int componentTypeID)
+        {
+            if (componentTypeID >= 0 && componentTypeID < _pools.Length)
             {
-                componentId = _poolsCount++;
-                _componentIds.Add(typeCode, componentId);
+                return _pools[componentTypeID] != _nullPool;
             }
-            return componentId;
+            return false;
+        }
+        public Type GetComponentType(int componentTypeID)
+        {
+            return _pools[componentTypeID].ComponentType;
+        }
+        #endregion
+
+        #region Declare/Create
+        private int DeclareOrGetComponentTypeID(int componentTypeCode)
+        {
+            if (!_componentTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int ComponentTypeID))
+            {
+                ComponentTypeID = _poolsCount++;
+                _componentTypeCode_2_CmpTypeIDs.Add(componentTypeCode, ComponentTypeID);
+            }
+            return ComponentTypeID;
         }
         private TPool CreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
             int poolTypeCode = EcsTypeCode.Get<TPool>();
-            if (_poolIds.Contains(poolTypeCode))
-                throw new EcsFrameworkException("The pool has already been created.");
+            if (_poolTypeCode_2_CmpTypeIDs.Contains(poolTypeCode))
+            {
+                Throw.World_PoolAlreadyCreated();
+            }
 
             Type componentType = typeof(TPool).GetInterfaces().First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>)).GetGenericArguments()[0];
             int componentTypeCode = EcsTypeCode.Get(componentType);
 
-            if (_componentIds.TryGetValue(componentTypeCode, out int componentTypeID))
+            if (_componentTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int componentTypeID))
             {
-                _poolIds[poolTypeCode] = componentTypeID;
+                _poolTypeCode_2_CmpTypeIDs[poolTypeCode] = componentTypeID;
             }
             else
             {
                 componentTypeID = _poolsCount++;
-                _poolIds[poolTypeCode] = componentTypeID;
-                _componentIds[componentTypeCode] = componentTypeID;
+                _poolTypeCode_2_CmpTypeIDs[poolTypeCode] = componentTypeID;
+                _componentTypeCode_2_CmpTypeIDs[componentTypeCode] = componentTypeID;
             }
 
             if (_poolsCount >= _pools.Length)
@@ -111,12 +126,12 @@ namespace DCFApixels.DragonECS
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, _pools.Length << 1);
                 Array.Resize(ref _poolComponentCounts, _pools.Length);
-                //Array.Resize(ref _sortedPoolIds, _pools.Length);
-                //Array.Resize(ref _sortedPoolIdsMapping, _pools.Length);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
 
                 for (int i = 0; i < _entitesCapacity; i++)
+                {
                     Array.Resize(ref _entitiesComponentMasks[i], _pools.Length / 32 + 1);
+                }
             }
 
             if (_pools[componentTypeID] == _nullPool)
