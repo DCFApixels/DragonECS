@@ -10,8 +10,6 @@ namespace DCFApixels.DragonECS.Internal
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public class IdDispenser : IEnumerable<int>, IReadOnlyCollection<int>
     {
-        private const int FREE_FLAG_BIT = ~INDEX_MASK;
-        private const int INDEX_MASK = 0x7FFF_FFFF;
         private const int MIN_SIZE = 4;
 
         private int[] _dense = Array.Empty<int>();
@@ -59,7 +57,6 @@ namespace DCFApixels.DragonECS.Internal
             CheckOrResize(ptr);
             int id = _dense[ptr];
             Move_FromFree_ToUsed(id);
-            SetFlag_Used(id);
             return id;
         }
         /// <summary>Marks as used a free or reserved id, after this id cannot be retrieved via UseFree.</summary>
@@ -74,7 +71,6 @@ namespace DCFApixels.DragonECS.Internal
             }
 #endif
             Move_FromFree_ToUsed(id);
-            SetFlag_Used(id);
         }
 
         public void Release(int id)  //+
@@ -88,7 +84,6 @@ namespace DCFApixels.DragonECS.Internal
             }
 #endif
             Move_FromUsed_ToFree(id);
-            SetFlag_Free(id);
         }
         #endregion
 
@@ -130,7 +125,7 @@ namespace DCFApixels.DragonECS.Internal
             _usedCount = 0;
             for (int i = 0; i < _size; i++)
             {
-                _sparse[i] = SetFlag_Free_For(i);
+                _sparse[i] = i;
                 _dense[i] = i;
             }
             SetNullID(_nullID);
@@ -141,12 +136,12 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsFree(int id)
         {
-            return _sparse[id] < 0;
+            return _sparse[id] >= _usedCount;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsUsed(int id)
         {
-            return _sparse[id] >= 0;
+            return _sparse[id] < _usedCount;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsNullID(int id)
@@ -161,16 +156,16 @@ namespace DCFApixels.DragonECS.Internal
         {
             int usedIndex = 0;
             int freeIndex = _usedCount;
-            for (int i = 0; i < _size; i++)
+            for (int i = 1; i < _size; i++)
             {
-                if (_sparse[i] > 0)
+                if (_sparse[i] < _usedCount)
                 {
                     _sparse[i] = usedIndex;
                     _dense[usedIndex++] = i;
                 }
                 else
                 {
-                    _sparse[i] = SetFlag_Free_For(freeIndex);
+                    _sparse[i] = freeIndex;
                     _dense[freeIndex++] = i;
                 }
             }
@@ -189,32 +184,12 @@ namespace DCFApixels.DragonECS.Internal
         #endregion
 
         #region Internal
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int SetFlag_Used_For(int value)
-        {
-            return value & INDEX_MASK;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int SetFlag_Free_For(int value)
-        {
-            return value | FREE_FLAG_BIT;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetFlag_Used(int id)
-        {
-            _sparse[id] &= INDEX_MASK;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetFlag_Free(int id)
-        {
-            _sparse[id] |= FREE_FLAG_BIT;
-        }
         private void SetNullID(int nullID)
         {
             _nullID = nullID;
             if (nullID >= 0)
             {
+                CheckOrResize(nullID);
                 Swap(nullID, _usedCount++);
             }
         }
@@ -252,7 +227,7 @@ namespace DCFApixels.DragonECS.Internal
         private void Swap(int sparseIndex, int denseIndex)
         {
             int _dense_denseIndex_ = _dense[denseIndex];
-            int _sparse_sparseIndex_ = SetFlag_Used_For(_sparse[sparseIndex]);
+            int _sparse_sparseIndex_ = _sparse[sparseIndex];
             _dense[denseIndex] = _dense[_sparse_sparseIndex_];
             _dense[_sparse_sparseIndex_] = _dense_denseIndex_;
             _sparse[_dense_denseIndex_] = _sparse_sparseIndex_;
@@ -269,7 +244,7 @@ namespace DCFApixels.DragonECS.Internal
             Array.Resize(ref _sparse, newSize);
             for (int i = _size; i < newSize;)
             {
-                _sparse[i] = SetFlag_Free_For(i);
+                _sparse[i] = i;
                 _dense[i] = i++;
             }
             _size = newSize;
