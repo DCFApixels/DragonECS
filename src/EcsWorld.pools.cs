@@ -1,6 +1,5 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -106,8 +105,9 @@ namespace DCFApixels.DragonECS
             {
                 Throw.World_PoolAlreadyCreated();
             }
+            TPool newPool = new TPool();
 
-            Type componentType = typeof(TPool).GetInterfaces().First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>)).GetGenericArguments()[0];
+            Type componentType = newPool.ComponentType;
             int componentTypeCode = EcsTypeCode.Get(componentType);
 
             if (_componentTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int componentTypeID))
@@ -134,13 +134,14 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-            if (_pools[componentTypeID] == _nullPool)
+            if (_pools[componentTypeID] != _nullPool)
             {
-                var pool = new TPool();
-                _pools[componentTypeID] = pool;
-                pool.OnInit(this, _poolsMediator, componentTypeID);
+                Throw.UndefinedException();
             }
-            return (TPool)_pools[componentTypeID];
+
+            _pools[componentTypeID] = newPool;
+            newPool.OnInit(this, _poolsMediator, componentTypeID);
+            return newPool;
         }
         #endregion
 
