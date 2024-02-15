@@ -112,6 +112,7 @@ namespace DCFApixels.DragonECS
                 {
                     Throw.UndefinedException();
                 }
+                _worldIdDispenser.Use(worldID);
             }
             id = worldID;
             Worlds[worldID] = this;
