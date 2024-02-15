@@ -21,15 +21,15 @@ namespace DCFApixels.DragonECS
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 5;
         private const int DEL_ENT_BUFFER_MIN_SIZE = 64;
 
-        private static EcsWorld[] Worlds = new EcsWorld[4];
-        private static IdDispenser _worldIdDispenser = new IdDispenser(4, 0);
+        private static EcsWorld[] _worlds = Array.Empty<EcsWorld>();
+        private static IdDispenser _worldIdDispenser = new IdDispenser(4, 0, OnWorldIdDispenser);
 
         private static List<DataReleaser> _dataReleaseres = new List<DataReleaser>();
         //public static int Copacity => Worlds.Length;
 
         static EcsWorld()
         {
-            Worlds[0] = new NullWorld();
+            _worlds[0] = new NullWorld();
         }
         private static void ReleaseData(int worldID)
         {
@@ -38,8 +38,12 @@ namespace DCFApixels.DragonECS
                 _dataReleaseres[i].Release(worldID);
             }
         }
+        public static void OnWorldIdDispenser(int newSize)
+        {
+            Array.Resize(ref _worlds, newSize);
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsWorld GetWorld(int worldID) => Worlds[worldID];
+        public static EcsWorld GetWorld(int worldID) => _worlds[worldID];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetData<T>(int worldID) => ref WorldComponentPool<T>.GetForWorld(worldID);
@@ -81,9 +85,9 @@ namespace DCFApixels.DragonECS
             }
             public static int GetItemIndex(int worldID)
             {
-                if (_mapping.Length < Worlds.Length)
+                if (_mapping.Length < _worlds.Length)
                 {
-                    Array.Resize(ref _mapping, Worlds.Length);
+                    Array.Resize(ref _mapping, _worlds.Length);
                 }
                 ref short itemIndex = ref _mapping[worldID];
                 if (itemIndex <= 0)
@@ -101,7 +105,7 @@ namespace DCFApixels.DragonECS
                     {
                         Array.Resize(ref _items, _items.Length << 1);
                     }
-                    _interface.Init(ref _items[itemIndex], Worlds[worldID]);
+                    _interface.Init(ref _items[itemIndex], _worlds[worldID]);
                     _dataReleaseres.Add(new Releaser());
                 }
                 return itemIndex;
@@ -111,7 +115,7 @@ namespace DCFApixels.DragonECS
                 ref short itemIndex = ref _mapping[worldID];
                 if (itemIndex != 0)
                 {
-                    _interface.OnDestroy(ref _items[itemIndex], Worlds[worldID]);
+                    _interface.OnDestroy(ref _items[itemIndex], _worlds[worldID]);
                     _recycledItems[_recycledItemsCount++] = itemIndex;
                 }
             }

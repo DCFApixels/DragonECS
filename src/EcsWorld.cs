@@ -101,21 +101,21 @@ namespace DCFApixels.DragonECS
             if (worldID < 0)
             {
                 worldID = (short)_worldIdDispenser.UseFree();
-                if (worldID >= Worlds.Length)
-                {
-                    Array.Resize(ref Worlds, Worlds.Length << 1);
-                }
             }
             else
             {
-                if (Worlds[worldID] != null)
+                if (worldID != _worldIdDispenser.NullID)
                 {
+                    _worldIdDispenser.Use(worldID);
+                }
+                if (_worlds[worldID] != null)
+                {
+                    _worldIdDispenser.Release(worldID);
                     Throw.UndefinedException();
                 }
-                _worldIdDispenser.Use(worldID);
             }
             id = worldID;
-            Worlds[worldID] = this;
+            _worlds[worldID] = this;
 
             _poolsMediator = new PoolsMediator(this);
 
@@ -133,7 +133,7 @@ namespace DCFApixels.DragonECS
             _gens = null;
             _pools = null;
             _nullPool = null;
-            Worlds[id] = null;
+            _worlds[id] = null;
             ReleaseData(id);
             _worldIdDispenser.Release(id);
             _isDestroyed = true;
@@ -393,14 +393,14 @@ namespace DCFApixels.DragonECS
         }
         private void Densify() //уплотнение свободных айдишников
         {
-            _entityDispenser.Sort(); 
+            _entityDispenser.Sort();
         }
         #endregion
 
         #region Upsize
         public void Upsize(int minSize)
         {
-            _entityDispenser.UpSize(minSize);
+            _entityDispenser.Upsize(minSize);
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void OnEntityDispenserResized(int newSize)

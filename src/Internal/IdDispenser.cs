@@ -51,18 +51,18 @@ namespace DCFApixels.DragonECS.Internal
 
         #region Use/Reserve/Realese
         /// <summary>Marks as used and returns next free id.</summary>
-        public int UseFree()  //+
+        public int UseFree()
         {
             int ptr = _usedCount;
-            CheckOrResize(ptr);
+            CheckIDOrUpsize(ptr);
             int id = _dense[ptr];
             Move_FromFree_ToUsed(id);
             return id;
         }
         /// <summary>Marks as used a free or reserved id, after this id cannot be retrieved via UseFree.</summary>
-        public void Use(int id)  //+
+        public void Use(int id)
         {
-            CheckOrResize(id);
+            CheckIDOrUpsize(id);
 #if DEBUG
             if (IsUsed(id) || IsNullID(id))
             {
@@ -73,9 +73,9 @@ namespace DCFApixels.DragonECS.Internal
             Move_FromFree_ToUsed(id);
         }
 
-        public void Release(int id)  //+
+        public void Release(int id)
         {
-            CheckOrResize(id);
+            CheckIDOrUpsize(id);
 #if DEBUG
             if (IsFree(id) || IsNullID(id))
             {
@@ -172,13 +172,13 @@ namespace DCFApixels.DragonECS.Internal
         }
         #endregion
 
-        #region UpSize
+        #region Upsize
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public void UpSize(int minSize)
+        public void Upsize(int minSize)
         {
             if (minSize > _size)
             {
-                UpSize_Internal(minSize);
+                Upsize_Internal(minSize);
             }
         }
         #endregion
@@ -189,7 +189,7 @@ namespace DCFApixels.DragonECS.Internal
             _nullID = nullID;
             if (nullID >= 0)
             {
-                CheckOrResize(nullID);
+                CheckIDOrUpsize(nullID);
                 Swap(nullID, _usedCount++);
             }
         }
@@ -205,11 +205,11 @@ namespace DCFApixels.DragonECS.Internal
             return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void CheckOrResize(int id)
+        private void CheckIDOrUpsize(int id)
         {
             if (id >= _size)
             {
-                UpSize_Internal(id + 1);
+                Upsize_Internal(id + 1);
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -234,7 +234,7 @@ namespace DCFApixels.DragonECS.Internal
             _sparse[sparseIndex] = denseIndex;
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void UpSize_Internal(int minSize)
+        private void Upsize_Internal(int minSize)
         {
             Resize(ArrayUtility.NormalizeSizeToPowerOfTwo_ClampOverflow(minSize));
         }
