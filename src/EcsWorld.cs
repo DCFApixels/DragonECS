@@ -10,17 +10,19 @@ namespace DCFApixels.DragonECS
         public readonly short id;
         private IEcsWorldConfig _config;
 
-        private bool _isDestroyed;
+        private bool _isDestroyed = false;
 
         private IdDispenser _entityDispenser;
-        private int _entitiesCount;
-        private int _entitesCapacity;
-        private short[] _gens; //старший бит указывает на то жива ли сущность
-        private short[] _componentCounts;
+        private int _entitiesCount = 0;
+        private int _entitiesCapacity = 0;
+        private short[] _gens = Array.Empty<short>(); //старший бит указывает на то жива ли сущность
+        private short[] _componentCounts = Array.Empty<short>();
 
-        private int[] _delEntBuffer;
-        private int _delEntBufferCount;
+        private int[] _delEntBuffer = Array.Empty<int>();
+        private int _delEntBufferCount = 0;
         private bool _isEnableAutoReleaseDelEntBuffer = true;
+
+        internal int[][] _entitiesComponentMasks = Array.Empty<int[]>();
 
         private long _version = 0;
 
@@ -29,10 +31,6 @@ namespace DCFApixels.DragonECS
 
         private List<IEcsWorldEventListener> _listeners = new List<IEcsWorldEventListener>();
         private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
-
-        internal int[][] _entitiesComponentMasks;
-
-        private readonly PoolsMediator _poolsMediator;
 
         #region Properties
         public IEcsWorldConfig Config
@@ -58,7 +56,7 @@ namespace DCFApixels.DragonECS
         public int Capacity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _entitesCapacity; }
+            get { return _entitiesCapacity; }
         }
         public int DelEntBufferCount
         {
@@ -125,21 +123,8 @@ namespace DCFApixels.DragonECS
             _poolComponentCounts = new int[poolsCapacity];
             ArrayUtility.Fill(_pools, _nullPool);
 
-            _entitesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.Get_EntitiesCapacity());
-            _entityDispenser = new IdDispenser(_entitesCapacity, 0);
-            _gens = new short[_entitesCapacity];
-            _componentCounts = new short[_entitesCapacity];
-
-            ArrayUtility.Fill(_gens, DEATH_GEN_BIT);
-            _delEntBufferCount = 0;
-            _delEntBuffer = new int[_entitesCapacity];
-            _entitiesComponentMasks = new int[_entitesCapacity][];
-
-            int maskLength = _pools.Length / 32 + 1;
-            for (int i = 0; i < _entitesCapacity; i++)
-            {
-                _entitiesComponentMasks[i] = new int[maskLength];
-            }
+            int entitiesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.Get_EntitiesCapacity());
+            _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
         }
         public void Destroy()
         {
@@ -200,37 +185,28 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity()
         {
-            unchecked { _version++; }
             int entityID = _entityDispenser.UseFree();
-            _entitiesCount++;
-
-            if (_entitesCapacity <= entityID)
-            {
-                Upsize_Internal(_gens.Length << 1);
-            }
-
-            _gens[entityID] &= GEN_MASK;
-            _entityListeners.InvokeOnNewEntity(entityID);
+            CreateConcreteEntity(entityID);
             return entityID;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void NewEntity(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (IsUsed(entityID))
-            {
-                Throw.World_EntityIsAlreadyСontained(entityID);
-            }
+            if (IsUsed(entityID)) { Throw.World_EntityIsAlreadyСontained(entityID); }
 #endif
-            unchecked { _version++; }
             _entityDispenser.Use(entityID);
+            CreateConcreteEntity(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CreateConcreteEntity(int entityID)
+        {
+            unchecked { _version++; }
             _entitiesCount++;
-
-            if (_entitesCapacity <= entityID)
+            if (_entitiesCapacity <= entityID)
             {
-                Upsize_Internal(_gens.Length << 1);
+                OnEntityDispenserResized(_gens.Length << 1);
             }
-
             _gens[entityID] &= GEN_MASK;
             _entityListeners.InvokeOnNewEntity(entityID);
         }
@@ -423,20 +399,24 @@ namespace DCFApixels.DragonECS
         #region Upsize
         public void Upsize(int minSize)
         {
-            Upsize_Internal(ArrayUtility.NormalizeSizeToPowerOfTwo(minSize));
+            _entityDispenser.UpSize(minSize);
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void Upsize_Internal(int newSize)
+        private void OnEntityDispenserResized(int newSize)
         {
             Array.Resize(ref _gens, newSize);
             Array.Resize(ref _componentCounts, newSize);
             Array.Resize(ref _delEntBuffer, newSize);
             Array.Resize(ref _entitiesComponentMasks, newSize);
-            for (int i = _entitesCapacity; i < newSize; i++)
-                _entitiesComponentMasks[i] = new int[_pools.Length / 32 + 1];
 
-            ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitesCapacity);
-            _entitesCapacity = newSize;
+            ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitiesCapacity);
+            int maskLength = _pools.Length / 32 + 1;
+            for (int i = _entitiesCapacity; i < newSize; i++)
+            {
+                _entitiesComponentMasks[i] = new int[maskLength];
+            }
+
+            _entitiesCapacity = newSize;
 
             for (int i = 0; i < _groups.Count; i++)
             {

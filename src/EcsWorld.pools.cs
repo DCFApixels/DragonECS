@@ -12,6 +12,8 @@ namespace DCFApixels.DragonECS
         internal IEcsPoolImplementation[] _pools;
         internal int[] _poolComponentCounts;
 
+        private readonly PoolsMediator _poolsMediator;
+
         private static EcsNullPool _nullPool = EcsNullPool.instance;
 
         #region Getters
@@ -134,7 +136,7 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref _poolComponentCounts, _pools.Length);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
 
-                for (int i = 0; i < _entitesCapacity; i++)
+                for (int i = 0; i < _entitiesCapacity; i++)
                 {
                     Array.Resize(ref _entitiesComponentMasks[i], _pools.Length / 32 + 1);
                 }
