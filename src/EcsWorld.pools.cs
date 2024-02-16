@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS
 
         private readonly PoolsMediator _poolsMediator;
 
-        private static EcsNullPool _nullPool = EcsNullPool.instance;
+        private EcsNullPool _nullPool = EcsNullPool.instance;
 
         #region Getters
 
