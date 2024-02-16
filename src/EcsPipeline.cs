@@ -37,11 +37,30 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Runners
-        public T[] GetSystems<T>() where T : IEcsProcess
+        #region GetSystems
+        public T[] GetSystems<T>()
         {
-            return _allSystems.Where(o => o is T).Select(o => (T)o).ToArray();
+            return _allSystems.OfType<T>().ToArray();
         }
+        public int GetSystemsNoAllock<T>(ref T[] array)
+        {
+            int count = 0;
+            for (int i = 0; i < _allSystems.Length; i++)
+            {
+                if (_allSystems is T targetSystem)
+                {
+                    if (array.Length <= count)
+                    {
+                        Array.Resize(ref array, array.Length << 1);
+                    }
+                    array[count++] = targetSystem;
+                }
+            }
+            return count;
+        }
+        #endregion
+
+        #region Runners
         public T GetRunner<T>() where T : IEcsProcess
         {
             Type type = typeof(T);
