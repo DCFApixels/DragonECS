@@ -266,7 +266,7 @@ namespace DCFApixels.DragonECS
                 #endregion
 
                 private ReadOnlySpan<int>.Enumerator _span;
-                private readonly int[][] _entitiesComponentMasks;
+                private readonly int[] _entityComponentMasks;
 
                 private static EcsMaskChunck* _preSortedIncBuffer;
                 private static EcsMaskChunck* _preSortedExcBuffer;
@@ -274,15 +274,18 @@ namespace DCFApixels.DragonECS
                 private UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
                 private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
+                private readonly int _entityComponentMaskLength;
                 //private EcsAspect aspect;
 
                 public unsafe Enumerator(EcsSpan span, EcsAspect aspect)
                 {
                     //this.aspect = aspect;
                     _span = span.GetEnumerator();
-                    _entitiesComponentMasks = aspect.World._entitiesComponentMasks;
+                    _entityComponentMasks = aspect.World._entityComponentMasks;
                     _sortIncChunckBuffer = aspect._sortIncChunckBuffer;
                     _sortExcChunckBuffer = aspect._sortExcChunckBuffer;
+
+                    _entityComponentMaskLength = aspect.World._entityComponentMaskLength;
 
                     #region Sort
                     UnsafeArray<int> _sortIncBuffer = aspect._sortIncBuffer;
@@ -374,13 +377,13 @@ namespace DCFApixels.DragonECS
                         for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
                         {
                             var bit = _sortIncChunckBuffer.ptr[i];
-                            if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) != bit.mask)
+                            if ((_entityComponentMasks[e * _entityComponentMaskLength + bit.chankIndex] & bit.mask) != bit.mask)
                                 goto skip;
                         }
                         for (int i = 0; i < _sortExcChunckBuffer.Length; i++)
                         {
                             var bit = _sortExcChunckBuffer.ptr[i];
-                            if ((_entitiesComponentMasks[e][bit.chankIndex] & bit.mask) > 0)
+                            if ((_entityComponentMasks[e * _entityComponentMaskLength + bit.chankIndex] & bit.mask) > 0)
                                 goto skip;
                         }
                         return true;

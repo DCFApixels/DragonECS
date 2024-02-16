@@ -136,10 +136,35 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref _poolComponentCounts, _pools.Length);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
 
-                for (int i = 0; i < _entitiesCapacity; i++)
+                //for (int i = 0; i < _entitiesCapacity; i++)
+                //{
+                //    //Array.Resize(ref _entityComponentMasks[i], _pools.Length / 32 + 1);
+                //}
+
+                int newEntityComponentMaskLength = _pools.Length / COMPONENT_MATRIX_MASK_BITSIZE + 1;
+                int dif = newEntityComponentMaskLength - _entityComponentMaskLength;
+                if (dif > 0)
                 {
-                    Array.Resize(ref _entitiesComponentMasks[i], _pools.Length / 32 + 1);
+                    int[] newEntityComponentMasks = new int[_entitiesCapacity * newEntityComponentMaskLength];
+                    int indxMax = _entityComponentMaskLength * _entitiesCapacity;
+                    int indx = 0;
+                    int newIndx = 0;
+                    int nextIndx = _entityComponentMaskLength;
+                    while (indx < indxMax)
+                    {
+                        while (indx < nextIndx)
+                        {
+                            newEntityComponentMasks[newIndx] = _entityComponentMasks[indx];
+                            indx++;
+                            newIndx++;
+                        }
+                        newIndx += dif;
+                        nextIndx += _entityComponentMaskLength;
+                    }
+                    _entityComponentMaskLength = newEntityComponentMaskLength;
+                    _entityComponentMasks = newEntityComponentMasks;
                 }
+
             }
 
             if (_pools[componentTypeID] != _nullPool)
@@ -160,14 +185,14 @@ namespace DCFApixels.DragonECS
         {
             _poolComponentCounts[componentTypeID]++;
             _componentCounts[entityID]++;
-            _entitiesComponentMasks[entityID][maskBit.chankIndex] |= maskBit.mask;
+            _entityComponentMasks[entityID * _entityComponentMaskLength + maskBit.chankIndex] |= maskBit.mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
             _poolComponentCounts[componentTypeID]--;
             var count = --_componentCounts[entityID];
-            _entitiesComponentMasks[entityID][maskBit.chankIndex] &= ~maskBit.mask;
+            _entityComponentMasks[entityID * _entityComponentMaskLength + maskBit.chankIndex] &= ~maskBit.mask;
 
             if (count == 0 && IsUsed(entityID))
             {
@@ -180,7 +205,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool HasEntityComponent(int entityID, EcsMaskChunck maskBit)
         {
-            return (_entitiesComponentMasks[entityID][maskBit.chankIndex] & maskBit.mask) != maskBit.mask;
+            return (_entityComponentMasks[entityID * _entityComponentMaskLength + maskBit.chankIndex] & maskBit.mask) != maskBit.mask;
         }
         #endregion
 

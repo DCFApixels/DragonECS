@@ -22,7 +22,9 @@ namespace DCFApixels.DragonECS
         private int _delEntBufferCount = 0;
         private bool _isEnableAutoReleaseDelEntBuffer = true;
 
-        internal int[][] _entitiesComponentMasks = Array.Empty<int[]>();
+        internal int _entityComponentMaskLength;
+        internal int[] _entityComponentMasks = Array.Empty<int>();
+        private const int COMPONENT_MATRIX_MASK_BITSIZE = 32;
 
         private long _version = 0;
 
@@ -255,14 +257,25 @@ namespace DCFApixels.DragonECS
             return *(entlong*)&x;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsAlive(int entityID, short gen) { return _gens[entityID] == gen; }
-
+        public bool IsAlive(int entityID, short gen)
+        {
+            return _gens[entityID] == gen;
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsUsed(int entityID) { return _gens[entityID] >= 0; }
+        public bool IsUsed(int entityID)
+        {
+            return _gens[entityID] >= 0;
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public short GetGen(int entityID) { return _gens[entityID]; }
+        public short GetGen(int entityID)
+        {
+            return _gens[entityID];
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public short GetComponentsCount(int entityID) { return _componentCounts[entityID]; }
+        public short GetComponentsCount(int entityID)
+        {
+            return _componentCounts[entityID];
+        }
 
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
@@ -292,10 +305,6 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-        //public void Densify()
-        //{
-        //    _entityDispenser.Sort();
-        //}
         #endregion
 
         #region Copy/Clone
@@ -367,7 +376,8 @@ namespace DCFApixels.DragonECS
         {
             ReleaseDelEntityBuffer(_delEntBufferCount);
         }
-        public void ReleaseDelEntityBuffer(int count)
+        //private UnsafeArray<int> _delBufferFilter = new UnsafeArray<int>(8);
+        public unsafe void ReleaseDelEntityBuffer(int count)
         {
             if (_delEntBufferCount <= 0)
             {
@@ -376,15 +386,15 @@ namespace DCFApixels.DragonECS
             unchecked { _version++; }
             count = Math.Clamp(count, 0, _delEntBufferCount);
             _delEntBufferCount -= count;
-            ReadOnlySpan<int> buffser = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);
+            ReadOnlySpan<int> buffer = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);
             for (int i = 0; i < _poolsCount; i++)
             {
-                _pools[i].OnReleaseDelEntityBuffer(buffser);
+                _pools[i].OnReleaseDelEntityBuffer(buffer);
             }
-            _listeners.InvokeOnReleaseDelEntityBuffer(buffser);
-            for (int i = 0; i < buffser.Length; i++)
+            _listeners.InvokeOnReleaseDelEntityBuffer(buffer);
+            for (int i = 0; i < buffer.Length; i++)
             {
-                int e = buffser[i];
+                int e = buffer[i];
                 _entityDispenser.Release(e);
                 unchecked { _gens[e]++; }//up gen
                 _gens[e] |= DEATH_GEN_BIT;
@@ -408,14 +418,10 @@ namespace DCFApixels.DragonECS
             Array.Resize(ref _gens, newSize);
             Array.Resize(ref _componentCounts, newSize);
             Array.Resize(ref _delEntBuffer, newSize);
-            Array.Resize(ref _entitiesComponentMasks, newSize);
+            _entityComponentMaskLength = _pools.Length / COMPONENT_MATRIX_MASK_BITSIZE + 1;
+            Array.Resize(ref _entityComponentMasks, newSize * _entityComponentMaskLength);
 
             ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitiesCapacity);
-            int maskLength = _pools.Length / 32 + 1;
-            for (int i = _entitiesCapacity; i < newSize; i++)
-            {
-                _entitiesComponentMasks[i] = new int[maskLength];
-            }
 
             _entitiesCapacity = newSize;
 
