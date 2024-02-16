@@ -182,9 +182,9 @@ EcsPipelone pipeline = EcsPipeline.New()
 
 //...
 
-class SomeSystem : IInject<SomeData>, IEcsRunProcess
+class SomeSystem : IEcsInject<SomeData>, IEcsRunProcess
 {
-    // Для внедрения используется интерфейс IInject<T> и его метод Inject(T obj)
+    // Для внедрения используется интерфейс IEcsInject<T> и его метод Inject(T obj)
     SomeData _someData
     public void Inject(SomeData obj) => _someData = obj;
 
