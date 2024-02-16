@@ -9,6 +9,10 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    public interface IEcsPipelineMember
+    {
+        public EcsPipeline Pipeline { get; set; }
+    }
     public sealed class EcsPipeline
     {
         private IEcsProcess[] _allSystems;
@@ -87,9 +91,12 @@ namespace DCFApixels.DragonECS
                 return;
             }
 
-            var ecsPipelineInjectRunner = GetRunner<IEcsInject<EcsPipeline>>();
-            ecsPipelineInjectRunner.Inject(this);
-            EcsRunner.Destroy(ecsPipelineInjectRunner);
+            IEcsPipelineMember[] members = GetSystems<IEcsPipelineMember>();
+            foreach (var member in members)
+            {
+                member.Pipeline = this;
+            }
+
             var preInitRunner = GetRunner<IEcsPreInitProcess>();
             preInitRunner.PreInit();
             EcsRunner.Destroy(preInitRunner);

@@ -1,7 +1,6 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
-using System.Linq;
 
 namespace DCFApixels.DragonECS
 {
@@ -44,17 +43,20 @@ namespace DCFApixels.DragonECS
 
     namespace Internal
     {
-        internal class PreInitInjectController
+        internal class InitInjectController
         {
             private EcsPipeline _source;
-            private InjectSystemBase[] _injectSystems;
+            private InitInjectSystemBase[] _injectSystems;
             private int _injectCount;
-            public bool IsInjectionEnd => _injectCount >= _injectSystems.Length;
-            public PreInitInjectController(EcsPipeline source)
+            public bool IsInjectionEnd
+            {
+                get { return _injectCount >= _injectSystems.Length; }
+            }
+            public InitInjectController(EcsPipeline source)
             {
                 _injectCount = 0;
                 _source = source;
-                _injectSystems = _source.AllSystems.OfType<InjectSystemBase>().ToArray();
+                _injectSystems = _source.GetSystems<InitInjectSystemBase>();
             }
             public bool OnInject()
             {
@@ -133,47 +135,60 @@ namespace DCFApixels.DragonECS
                 foreach (var item in targets) item.OnPreInitInjectionBefore();
             }
         }
-        public abstract class InjectSystemBase { }
+        public abstract class InitInjectSystemBase { }
 
         [MetaTags(MetaTags.HIDDEN)]
         [MetaColor(MetaColor.Gray)]
-        public class InjectSystem<T> : InjectSystemBase, IEcsInject<EcsPipeline>, IEcsPreInitProcess, IEcsInject<PreInitInjectController>, IEcsPreInitInjectProcess
+        public class InitInjectSystem<T> : InitInjectSystemBase, IEcsPipelineMember, IEcsInject<InitInjectController>, IEcsPreInitInjectProcess
         {
             private EcsPipeline _pipeline;
-            void IEcsInject<EcsPipeline>.Inject(EcsPipeline obj) => _pipeline = obj;
-            private PreInitInjectController _injectController;
-            void IEcsInject<PreInitInjectController>.Inject(PreInitInjectController obj) => _injectController = obj;
+            public EcsPipeline Pipeline
+            {
+                get { return Pipeline; }
+                set
+                {
+                    _pipeline = value;
+
+                    if (_injectedData == null)
+                    {
+                        return;
+                    }
+                    if (_injectController == null)
+                    {
+                        var injectPipelineRunner = _pipeline.GetRunner<IEcsInject<EcsPipeline>>();
+                        injectPipelineRunner.Inject(_pipeline);
+                        EcsRunner.Destroy(injectPipelineRunner);
+
+                        _injectController = new InitInjectController(_pipeline);
+                        var injectMapRunner = _pipeline.GetRunner<IEcsInject<InitInjectController>>();
+                        _pipeline.GetRunner<IEcsPreInitInjectProcess>().OnPreInitInjectionBefore();
+                        injectMapRunner.Inject(_injectController);
+                        EcsRunner.Destroy(injectMapRunner);
+                    }
+                    var injectRunnerGeneric = _pipeline.GetRunner<IEcsInject<T>>();
+                    injectRunnerGeneric.Inject(_injectedData);
+                    if (_injectController.OnInject())
+                    {
+                        _injectController.Destroy();
+                        var injectCallbacksRunner = _pipeline.GetRunner<IEcsPreInitInjectProcess>();
+                        injectCallbacksRunner.OnPreInitInjectionAfter();
+                        EcsRunner.Destroy(injectCallbacksRunner);
+                    }
+                    _injectedData = default;
+                }
+            }
+
+            private InitInjectController _injectController;
+            void IEcsInject<InitInjectController>.Inject(InitInjectController obj) { _injectController = obj; }
 
             private T _injectedData;
-
-            public InjectSystem(T injectedData)
+            internal InitInjectSystem(T injectedData)
             {
                 if (injectedData == null) Throw.ArgumentNull();
                 _injectedData = injectedData;
             }
-            public void PreInit()
-            {
-                if (_injectedData == null) return;
-                if (_injectController == null)
-                {
-                    _injectController = new PreInitInjectController(_pipeline);
-                    var injectMapRunner = _pipeline.GetRunner<IEcsInject<PreInitInjectController>>();
-                    _pipeline.GetRunner<IEcsPreInitInjectProcess>().OnPreInitInjectionBefore();
-                    injectMapRunner.Inject(_injectController);
-                }
-                var injectRunnerGeneric = _pipeline.GetRunner<IEcsInject<T>>();
-                injectRunnerGeneric.Inject(_injectedData);
-                if (_injectController.OnInject())
-                {
-                    _injectController.Destroy();
-                    var injectCallbacksRunner = _pipeline.GetRunner<IEcsPreInitInjectProcess>();
-                    injectCallbacksRunner.OnPreInitInjectionAfter();
-                    EcsRunner.Destroy(injectCallbacksRunner);
-                }
-                _injectedData = default;
-            }
-            public void OnPreInitInjectionBefore() { }
-            public void OnPreInitInjectionAfter() => _injectController = null;
+            void IEcsPreInitInjectProcess.OnPreInitInjectionBefore() { }
+            void IEcsPreInitInjectProcess.OnPreInitInjectionAfter() { _injectController = null; }
         }
     }
 
@@ -189,7 +204,7 @@ namespace DCFApixels.DragonECS
         public static EcsPipeline.Builder Inject<T>(this EcsPipeline.Builder self, T data)
         {
             if (data == null) Throw.ArgumentNull();
-            self.Add(new InjectSystem<T>(data));
+            self.Add(new InitInjectSystem<T>(data));
             if (data is IEcsModule module)
                 self.AddModule(module);
             return self;
