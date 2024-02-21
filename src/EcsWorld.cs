@@ -26,6 +26,9 @@ namespace DCFApixels.DragonECS
         internal int[] _entityComponentMasks = Array.Empty<int>();
         private const int COMPONENT_MATRIX_MASK_BITSIZE = 32;
 
+        //"лениво" обновляется только для NewEntity
+        private long _deleteLeakedEntitesLastVersion = 0;
+        //обновляется в NewEntity и в DelEntity
         private long _version = 0;
 
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
@@ -237,6 +240,11 @@ namespace DCFApixels.DragonECS
                 Throw.World_EntityIsNotContained(entityID);
             }
 #endif
+            unchecked
+            {
+                _version++;
+                _deleteLeakedEntitesLastVersion++;
+            }
             _delEntBuffer[_delEntBufferCount++] = entityID;
             _gens[entityID] |= DEATH_GEN_BIT;
             _entitiesCount--;
@@ -295,15 +303,27 @@ namespace DCFApixels.DragonECS
             return true;
         }
 
-        public void DeleteEmptyEntites()
+        public bool DeleteLeakedEntites()
         {
+            if (_deleteLeakedEntitesLastVersion == _version)
+            {
+                return false;
+            }
+            int delCount = 0;
             foreach (var e in Entities)
             {
                 if (_componentCounts[e] <= 0)
                 {
                     DelEntity(e);
+                    delCount++;
                 }
             }
+            if(delCount > 0)
+            {
+                EcsDebug.PrintWarning($"Detected and deleted {delCount} leaking entities.");
+            }
+            _deleteLeakedEntitesLastVersion = _version;
+            return delCount > 0;
         }
         #endregion
 
