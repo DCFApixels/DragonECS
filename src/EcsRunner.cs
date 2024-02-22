@@ -173,7 +173,7 @@ namespace DCFApixels.DragonECS
             }
             public bool IsEmpty
             {
-                get { return _process.IsNullOrEmpty;}
+                get { return _process.IsNullOrEmpty; }
             }
             #endregion
 

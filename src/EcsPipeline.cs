@@ -15,7 +15,8 @@ namespace DCFApixels.DragonECS
     public sealed class EcsPipeline
     {
         private readonly IEcsPipelineConfig _config;
-        private readonly Injector _injector;
+        private Injector.Builder _injectorBuilder;
+        private Injector _injector;
 
         private IEcsProcess[] _allSystems;
         private Dictionary<Type, Array> _processes = new Dictionary<Type, Array>();
@@ -24,6 +25,8 @@ namespace DCFApixels.DragonECS
 
         private bool _isInit = false;
         private bool _isDestoryed = false;
+
+        private EcsProfilerMarker _initBarker = new EcsProfilerMarker("EcsPipeline.Init");
 
         #region Properties
         public IEcsPipelineConfig Config
@@ -42,22 +45,22 @@ namespace DCFApixels.DragonECS
         {
             get { return _runners; }
         }
-        public bool IsInit 
-        { 
-            get { return _isInit; } 
+        public bool IsInit
+        {
+            get { return _isInit; }
         }
-        public bool IsDestoryed 
-        { 
-            get { return _isDestoryed; } 
+        public bool IsDestoryed
+        {
+            get { return _isDestoryed; }
         }
         #endregion
 
         #region Constructors
-        private EcsPipeline(IEcsPipelineConfig config, Injector.Builder injector, IEcsProcess[] systems)
+        private EcsPipeline(IEcsPipelineConfig config, Injector.Builder injectorBuilder, IEcsProcess[] systems)
         {
             _config = config;
             _allSystems = systems;
-            _injector = injector.Build(this);
+            _injectorBuilder = injectorBuilder;
         }
         #endregion
 
@@ -66,7 +69,7 @@ namespace DCFApixels.DragonECS
         {
             Type type = typeof(T);
             T[] result;
-            if(_processes.TryGetValue(type, out Array array))
+            if (_processes.TryGetValue(type, out Array array))
             {
                 result = (T[])array;
             }
@@ -120,13 +123,14 @@ namespace DCFApixels.DragonECS
                 EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been initialized");
                 return;
             }
-
+            _initBarker.Begin();
             EcsProcess<IEcsPipelineMember> members = GetProcess<IEcsPipelineMember>();
             foreach (var member in members)
             {
                 member.Pipeline = this;
             }
-            Injector.Inject(this);
+            _injector = _injectorBuilder.Build(this);
+            _injectorBuilder = null;
 
             var preInitRunner = GetRunner<IEcsPreInit>();
             preInitRunner.PreInit();
@@ -139,6 +143,7 @@ namespace DCFApixels.DragonECS
             _isInit = true;
 
             GC.Collect();
+            _initBarker.End();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -179,7 +184,7 @@ namespace DCFApixels.DragonECS
             public readonly LayerList Layers;
             private readonly IEcsPipelineConfigWriter _config;
             private readonly Injector.Builder _injector;
-            private EcsProfilerMarker _buildBarker = new EcsProfilerMarker("Build Marker");
+            private EcsProfilerMarker _buildBarker = new EcsProfilerMarker("EcsPipeline.Build");
 
             public IEcsPipelineConfigWriter Config
             {

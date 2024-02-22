@@ -4,9 +4,16 @@ using System.Collections.Generic;
 namespace DCFApixels.DragonECS
 {
     [MetaName(nameof(Inject))]
+    [MetaColor(MetaColor.Orange)]
     public interface IEcsInject<T> : IEcsProcess
     {
         void Inject(T obj);
+    }
+    [MetaName(nameof(OnInitInjectionComplete))]
+    [MetaColor(MetaColor.Orange)]
+    public interface IOnInitInjectionComplete : IEcsProcess
+    {
+        void OnInitInjectionComplete();
     }
     public class Injector
     {
@@ -16,7 +23,7 @@ namespace DCFApixels.DragonECS
         private bool _isInit = false;
 
         private Injector() { }
-        
+
         public void Inject<T>(T obj)
         {
             Type type = typeof(T);
@@ -38,25 +45,25 @@ namespace DCFApixels.DragonECS
             }
             branch.Inject(obj);
         }
-//        public void InjectNoBoxing<T>(T data) where T : struct
-//        {
-//            foreach (var system in _pipeline.GetProcess<IEcsInject<T>>())
-//            {
-//                system.Inject(data);
-//            }
-//        }
-//#if !REFLECTION_DISABLED
-//        public void InjectRaw(object obj)
-//        {
-//            Type type = obj.GetType();
-//            if (_branches.TryGetValue(type, out InjectionBranch branch) == false)
-//            {
-//                branch = new InjectionBranch(this, type, false);
-//                InitBranch(branch);
-//            }
-//            branch.Inject(obj);
-//        }
-//#endif
+        //        public void InjectNoBoxing<T>(T data) where T : struct
+        //        {
+        //            foreach (var system in _pipeline.GetProcess<IEcsInject<T>>())
+        //            {
+        //                system.Inject(data);
+        //            }
+        //        }
+        //#if !REFLECTION_DISABLED
+        //        public void InjectRaw(object obj)
+        //        {
+        //            Type type = obj.GetType();
+        //            if (_branches.TryGetValue(type, out InjectionBranch branch) == false)
+        //            {
+        //                branch = new InjectionBranch(this, type, false);
+        //                InitBranch(branch);
+        //            }
+        //            branch.Inject(obj);
+        //        }
+        //#endif
 
         #region Internal
         private void InitBranch(InjectionBranch branch)
@@ -138,9 +145,10 @@ namespace DCFApixels.DragonECS
                 _instance.TryDeclare<T>();
                 return _source;
             }
-            public void Inject<T>(T obj)
+            public EcsPipeline.Builder Inject<T>(T obj)
             {
                 _initInjections.Add(new InitInject<T>(obj));
+                return _source;
             }
             public Injector Build(EcsPipeline pipeline)
             {
@@ -148,6 +156,10 @@ namespace DCFApixels.DragonECS
                 foreach (var item in _initInjections)
                 {
                     item.InjectTo(_instance);
+                }
+                foreach (var system in pipeline.GetProcess<IOnInitInjectionComplete>())
+                {
+                    system.OnInitInjectionComplete();
                 }
                 return _instance;
             }

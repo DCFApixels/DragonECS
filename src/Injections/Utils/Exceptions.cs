@@ -7,6 +7,6 @@ namespace DCFApixels.DragonECS.DI.Internal
         public static void ArgumentNull()
         {
             throw new ArgumentNullException();
-        } 
+        }
     }
 }

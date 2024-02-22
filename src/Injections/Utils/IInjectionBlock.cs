@@ -11,16 +11,16 @@
         {
             _injectionGraph.Inject(obj);
         }
-//        public void InjectNoBoxing<T>(T data) where T : struct
-//        {
-//            _injectionGraph.InjectNoBoxing(data);
-//        }
-//#if !REFLECTION_DISABLED
-//        public void InjectRaw(object obj)
-//        {
-//            _injectionGraph.InjectRaw(obj);
-//        }
-//#endif
+        //        public void InjectNoBoxing<T>(T data) where T : struct
+        //        {
+        //            _injectionGraph.InjectNoBoxing(data);
+        //        }
+        //#if !REFLECTION_DISABLED
+        //        public void InjectRaw(object obj)
+        //        {
+        //            _injectionGraph.InjectRaw(obj);
+        //        }
+        //#endif
     }
     public interface IInjectionBlock
     {

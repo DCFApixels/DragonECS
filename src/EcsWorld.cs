@@ -318,7 +318,7 @@ namespace DCFApixels.DragonECS
                     delCount++;
                 }
             }
-            if(delCount > 0)
+            if (delCount > 0)
             {
                 EcsDebug.PrintWarning($"Detected and deleted {delCount} leaking entities.");
             }
