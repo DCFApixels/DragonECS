@@ -1,29 +1,14 @@
 ﻿using DCFApixels.DragonECS.RunnersCore;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using static DCFApixels.DragonECS.EcsDebugUtility;
 
 namespace DCFApixels.DragonECS
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    sealed class EcsRunnerFilterAttribute : Attribute
-    {
-        public readonly Type interfaceType;
-        public readonly object filter;
-        public EcsRunnerFilterAttribute(Type interfaceType, object filter)
-        {
-            this.interfaceType = interfaceType;
-            this.filter = filter;
-        }
-        public EcsRunnerFilterAttribute(object filter) : this(null, filter) { }
-    }
 #if UNITY_2020_3_OR_NEWER
-        [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
+    [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
 #endif
     [AttributeUsage(AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
     public sealed class BindWithEcsRunnerAttribute : Attribute
@@ -33,22 +18,30 @@ namespace DCFApixels.DragonECS
         public BindWithEcsRunnerAttribute(Type runnerType)
         {
             if (runnerType == null)
+            {
                 throw new ArgumentNullException();
+            }
             if (!CheckSubclass(runnerType))
+            {
                 throw new ArgumentException();
+            }
             this.runnerType = runnerType;
         }
         private bool CheckSubclass(Type type)
         {
             if (type.IsGenericType && type.GetGenericTypeDefinition() == _baseType)
+            {
                 return true;
+            }
             if (type.BaseType != null)
+            {
                 return CheckSubclass(type.BaseType);
+            }
             return false;
         }
     }
 
-    public interface IEcsProcess { }
+    public interface IEcsSystem { }
 
     namespace RunnersCore
     {
@@ -56,9 +49,7 @@ namespace DCFApixels.DragonECS
         {
             EcsPipeline Pipeline { get; }
             Type Interface { get; }
-            IList TargetsRaw { get; }
-            object Filter { get; }
-            bool IsHasFilter { get; }
+            EcsProcessRaw ProcessRaw { get; }
             bool IsDestroyed { get; }
             bool IsEmpty { get; }
             void Destroy();
@@ -67,72 +58,39 @@ namespace DCFApixels.DragonECS
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
 #endif
-        public abstract class EcsRunner<TInterface> : IEcsProcess, IEcsRunner
-            where TInterface : IEcsProcess
+        public abstract class EcsRunner<TProcess> : IEcsSystem, IEcsRunner
+            where TProcess : IEcsSystem
         {
             #region Register
-            private static Type _subclass;
+            private static Type _runnerImplementationType;
             internal static void Register(Type subclass)
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_subclass != null)
+                if (_runnerImplementationType != null)
                 {
-                    throw new EcsRunnerImplementationException($"The Runner<{typeof(TInterface).FullName}> can have only one implementing subclass");
+                    throw new EcsRunnerImplementationException($"The Runner<{typeof(TProcess).FullName}> can have only one implementing subclass");
                 }
 
-                Type interfaceType = typeof(TInterface);
+                Type interfaceType = typeof(TProcess);
 
                 var interfaces = interfaceType.GetInterfaces();
                 if (interfaceType.IsInterface == false)
                 {
-                    throw new ArgumentException($"{typeof(TInterface).FullName} is not interface");
+                    throw new ArgumentException($"{typeof(TProcess).FullName} is not interface");
                 }
-                if (interfaces.Length != 1 || interfaces[0] != typeof(IEcsProcess))
+                if (interfaces.Length != 1 || interfaces[0] != typeof(IEcsSystem))
                 {
-                    throw new ArgumentException($"{typeof(TInterface).FullName} does not directly inherit the {nameof(IEcsProcess)} interface");
+                    throw new ArgumentException($"{typeof(TProcess).FullName} does not directly inherit the {nameof(IEcsSystem)} interface");
                 }
 #endif
-                _subclass = subclass;
-            }
-            #endregion
-
-            #region FilterSystems
-            private static TInterface[] FilterSystems(IEnumerable<IEcsProcess> targets)
-            {
-                return targets.Where(o => o is TInterface).Select(o => (TInterface)o).ToArray();
-            }
-            private static TInterface[] FilterSystems(IEnumerable<IEcsProcess> targets, object filter)
-            {
-                Type interfaceType = typeof(TInterface);
-
-                IEnumerable<IEcsProcess> newTargets;
-
-                if (filter != null)
-                {
-                    newTargets = targets.Where(o =>
-                    {
-                        if (o is TInterface == false) return false;
-                        var atr = o.GetType().GetCustomAttribute<EcsRunnerFilterAttribute>();
-                        return atr != null && atr.interfaceType == interfaceType && atr.filter.Equals(filter);
-                    });
-                }
-                else
-                {
-                    newTargets = targets.Where(o =>
-                    {
-                        if (o is TInterface == false) return false;
-                        var atr = o.GetType().GetCustomAttribute<EcsRunnerFilterAttribute>();
-                        return atr == null || atr.interfaceType == interfaceType && atr.filter == null;
-                    });
-                }
-                return newTargets.Select(o => (TInterface)o).ToArray();
+                _runnerImplementationType = subclass;
             }
             #endregion
 
             #region Instantiate
             private static void CheckRunnerValide(Type type) //TODO доработать проверку валидности реалиазации ранера
             {
-                Type targetInterface = typeof(TInterface);
+                Type targetInterface = typeof(TProcess);
                 if (type.IsAbstract)
                 {
                     throw new Exception();
@@ -160,91 +118,85 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-            private static TInterface Instantiate(EcsPipeline source, TInterface[] targets, bool isHasFilter, object filter)
+
+            public static TProcess Instantiate(EcsPipeline source)
             {
-                if (_subclass == null)
+                EcsProcess<TProcess> process = source.GetProcess<TProcess>();
+                if (_runnerImplementationType == null)
                 {
-                    Type interfaceType = typeof(TInterface);
+                    Type interfaceType = typeof(TProcess);
                     if (interfaceType.TryGetCustomAttribute(out BindWithEcsRunnerAttribute atr))
                     {
-                        Type runnerType = atr.runnerType;
+                        Type runnerImplementationType = atr.runnerType;
                         if (interfaceType.IsGenericType)
                         {
                             Type[] genericTypes = interfaceType.GetGenericArguments();
-                            runnerType = runnerType.MakeGenericType(genericTypes);
+                            runnerImplementationType = runnerImplementationType.MakeGenericType(genericTypes);
                         }
-                        CheckRunnerValide(runnerType);
-                        _subclass = runnerType;
+                        CheckRunnerValide(runnerImplementationType);
+                        _runnerImplementationType = runnerImplementationType;
                     }
                     else
                     {
                         throw new EcsFrameworkException("Процесс не связан с раннером, используйте атрибуут BindWithEcsRunner(Type runnerType)");
                     }
                 }
-
-                var instance = (EcsRunner<TInterface>)Activator.CreateInstance(_subclass);
-                return (TInterface)(IEcsProcess)instance.Set(source, targets, isHasFilter, filter);
-            }
-            public static TInterface Instantiate(EcsPipeline source)
-            {
-                return Instantiate(source, FilterSystems(source.AllSystems), false, null);
-            }
-            public static TInterface Instantiate(EcsPipeline source, object filter)
-            {
-                return Instantiate(source, FilterSystems(source.AllSystems, filter), true, filter);
+                var instance = (EcsRunner<TProcess>)Activator.CreateInstance(_runnerImplementationType);
+                return (TProcess)(IEcsSystem)instance.Set(source, process);
             }
             #endregion
 
             private EcsPipeline _source;
-            protected TInterface[] targets;
-            private ReadOnlyCollection<TInterface> _targetsSealed;
-            private object _filter;
-            private bool _isHasFilter;
+            private EcsProcess<TProcess> _process;
             private bool _isDestroyed;
 
             #region Properties
-            public EcsPipeline Pipeline => _source;
-            public Type Interface => typeof(TInterface);
-            public IList TargetsRaw => _targetsSealed;
-            public ReadOnlySpan<TInterface> Targets => targets;
-            public object Filter => _filter;
-            public bool IsHasFilter => _isHasFilter;
-            public bool IsDestroyed => _isDestroyed;
-            public bool IsEmpty => targets == null || targets.Length <= 0;
+            public EcsPipeline Pipeline
+            {
+                get { return _source; }
+            }
+            public Type Interface
+            {
+                get { return typeof(TProcess); }
+            }
+            public EcsProcessRaw ProcessRaw
+            {
+                get { return _process; }
+            }
+            public EcsProcess<TProcess> Process
+            {
+                get { return _process; }
+            }
+            public bool IsDestroyed
+            {
+                get { return _isDestroyed; }
+            }
+            public bool IsEmpty
+            {
+                get { return _process.IsNullOrEmpty;}
+            }
             #endregion
 
-            private EcsRunner<TInterface> Set(EcsPipeline source, TInterface[] targets, bool isHasFilter, object filter)
+            private EcsRunner<TProcess> Set(EcsPipeline source, EcsProcess<TProcess> process)
             {
                 _source = source;
-                this.targets = targets;
-                _targetsSealed = new ReadOnlyCollection<TInterface>(targets);
-                _filter = filter;
-                _isHasFilter = isHasFilter;
+                this._process = process;
                 OnSetup();
                 return this;
             }
             internal void Rebuild()
             {
-                if (_isHasFilter)
-                {
-                    Set(_source, FilterSystems(_source.AllSystems), _isHasFilter, _filter);
-                }
-                else
-                {
-                    Set(_source, FilterSystems(_source.AllSystems, _filter), _isHasFilter, _filter);
-                }
+                Set(_source, _source.GetProcess<TProcess>());
             }
             public void Destroy()
             {
                 _isDestroyed = true;
-                _source.OnRunnerDestroy(this);
+                _source.OnRunnerDestroy_Internal(this);
                 _source = null;
-                targets = null;
-                _targetsSealed = null;
-                _filter = null;
+                _process = EcsProcess<TProcess>.Empty;
                 OnDestroy();
             }
-            protected virtual void OnSetup() { } //rename to OnInitialize
+            protected virtual void OnSetup() { } //TODO rename to OnInitialize
             protected virtual void OnDestroy() { }
         }
     }
@@ -252,11 +204,11 @@ namespace DCFApixels.DragonECS
     #region Extensions
     public static class EcsRunner
     {
-        public static void Destroy(IEcsProcess runner) => ((IEcsRunner)runner).Destroy();
+        public static void Destroy(IEcsSystem runner) => ((IEcsRunner)runner).Destroy();
     }
     public static class IEcsSystemExtensions
     {
-        public static bool IsRunner(this IEcsProcess self)
+        public static bool IsRunner(this IEcsSystem self)
         {
             return self is IEcsRunner;
         }
@@ -280,13 +232,13 @@ namespace DCFApixels.DragonECS
 
         static EcsProcessUtility()
         {
-            Type processBasicInterface = typeof(IEcsProcess);
+            Type processBasicInterface = typeof(IEcsSystem);
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 var types = assembly.GetTypes();
                 foreach (var type in types)
                 {
-                    if (type.GetInterface(nameof(IEcsProcess)) != null || type == processBasicInterface)
+                    if (type.GetInterface(nameof(IEcsSystem)) != null || type == processBasicInterface)
                     {
                         if (type.IsInterface)
                         {

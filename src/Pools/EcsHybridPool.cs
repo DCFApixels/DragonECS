@@ -299,7 +299,7 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public abstract partial class EcsWorld
+    public partial class EcsWorld
     {
         private Dictionary<Type, HybridMapping> _hybridMapping = new Dictionary<Type, HybridMapping>();
         internal HybridMapping GetHybridMapping(Type type)

@@ -4,23 +4,10 @@ using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsWorldConfig
+    public interface IEcsWorldConfig : IConfig { }
+    public interface IEcsWorldConfigWriter : IConfigWriter
     {
-        int Count { get; }
-        bool Has(string valueName);
-        T Get<T>(string valueName);
-        bool TryGet<T>(string valueName, out T value);
-        IEnumerable<KeyValuePair<string, object>> GetAllConfigs();
-    }
-    public interface IEcsWorldConfigWriter
-    {
-        int Count { get; }
-        void Set<T>(string valueName, T value);
-        bool Has(string valueName);
-        T Get<T>(string valueName);
-        bool TryGet<T>(string valueName, out T value);
-        void Remove(string valueName);
-        IEnumerable<KeyValuePair<string, object>> GetAllConfigs();
+        IEcsWorldConfig GetWorldConfig();
     }
     [Serializable]
     public class EcsWorldConfig : IEcsWorldConfigWriter, IEcsWorldConfig, IEnumerable<KeyValuePair<string, object>>
@@ -84,6 +71,11 @@ namespace DCFApixels.DragonECS
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetAllConfigs().GetEnumerator();
+        }
+
+        public IEcsWorldConfig GetWorldConfig()
+        {
+            return this;
         }
 
         private class EmptyConfig : IEcsWorldConfig

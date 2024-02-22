@@ -5,231 +5,228 @@ using System;
 
 namespace DCFApixels.DragonECS
 {
-    #region Interfaces
     [MetaName(nameof(PreInit))]
     [MetaColor(MetaColor.Orange)]
-    [BindWithEcsRunner(typeof(EcsPreInitProcessRunner))]
-    public interface IEcsPreInitProcess : IEcsProcess
+    [BindWithEcsRunner(typeof(EcsPreInitRunner))]
+    public interface IEcsPreInit : IEcsSystem
     {
         void PreInit();
     }
     [MetaName(nameof(Init))]
     [MetaColor(MetaColor.Orange)]
-    [BindWithEcsRunner(typeof(EcsInitProcessRunner))]
-    public interface IEcsInitProcess : IEcsProcess
+    [BindWithEcsRunner(typeof(EcsInitRunner))]
+    public interface IEcsInit : IEcsSystem
     {
         void Init();
     }
     [MetaName(nameof(Run))]
     [MetaColor(MetaColor.Orange)]
-    [BindWithEcsRunner(typeof(EcsRunProcessRunner))]
-    public interface IEcsRunProcess : IEcsProcess
+    [BindWithEcsRunner(typeof(EcsRunRunner))]
+    public interface IEcsRun : IEcsSystem
     {
         void Run();
     }
     [MetaName(nameof(Destroy))]
     [MetaColor(MetaColor.Orange)]
-    [BindWithEcsRunner(typeof(EcsDestroyProcessRunner))]
-    public interface IEcsDestroyProcess : IEcsProcess
+    [BindWithEcsRunner(typeof(EcsDestroyRunner))]
+    public interface IEcsDestroy : IEcsSystem
     {
         void Destroy();
     }
+}
 
-    #endregion
-
-    namespace Internal
+namespace DCFApixels.DragonECS.Internal
+{
+    [MetaColor(MetaColor.Orange)]
+    public sealed class EcsPreInitRunner : EcsRunner<IEcsPreInit>, IEcsPreInit
     {
-        [MetaColor(MetaColor.Orange)]
-        public sealed class EcsPreInitProcessRunner : EcsRunner<IEcsPreInitProcess>, IEcsPreInitProcess
+#if DEBUG && !DISABLE_DEBUG
+        private EcsProfilerMarker[] _markers;
+        protected override void OnSetup()
         {
-#if DEBUG && !DISABLE_DEBUG
-            private EcsProfilerMarker[] _markers;
-            protected override void OnSetup()
+            _markers = new EcsProfilerMarker[Process.Length];
+            for (int i = 0; i < Process.Length; i++)
             {
-                _markers = new EcsProfilerMarker[targets.Length];
-                for (int i = 0; i < targets.Length; i++)
-                {
-                    _markers[i] = new EcsProfilerMarker($"{targets[i].GetType().Name}.{nameof(PreInit)}");
-                }
-            }
-#endif
-            public void PreInit()
-            {
-#if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
-                {
-                    _markers[i].Begin();
-                    try
-                    {
-                        targets[i].PreInit();
-                    }
-                    catch (Exception e)
-                    {
-#if DISABLE_CATH_EXCEPTIONS
-                        throw e;
-#endif
-                        EcsDebug.PrintError(e);
-                    }
-                    _markers[i].End();
-                }
-#else
-                foreach (var item in targets)
-                {
-                    try { item.PreInit(); }
-                    catch (Exception e)
-                    {
-#if DISABLE_CATH_EXCEPTIONS
-                        throw e;
-#endif
-                        EcsDebug.PrintError(e);
-                    }
-                }
-#endif
+                _markers[i] = new EcsProfilerMarker($"{Process[i].GetType().Name}.{nameof(PreInit)}");
             }
         }
-        [MetaColor(MetaColor.Orange)]
-        public sealed class EcsInitProcessRunner : EcsRunner<IEcsInitProcess>, IEcsInitProcess
+#endif
+        public void PreInit()
         {
 #if DEBUG && !DISABLE_DEBUG
-            private EcsProfilerMarker[] _markers;
-            protected override void OnSetup()
+            for (int i = 0, n = Process.Length < _markers.Length ? Process.Length : _markers.Length; i < n; i++)
             {
-                _markers = new EcsProfilerMarker[targets.Length];
-                for (int i = 0; i < targets.Length; i++)
+                _markers[i].Begin();
+                try
                 {
-                    _markers[i] = new EcsProfilerMarker($"{targets[i].GetType().Name}.{nameof(Init)}");
+                    Process[i].PreInit();
+                }
+                catch (Exception e)
+                {
+#if DISABLE_CATH_EXCEPTIONS
+                    throw;
+#endif
+                    EcsDebug.PrintError(e);
+                }
+                _markers[i].End();
+            }
+#else
+            foreach (var item in Process)
+            {
+                try { item.PreInit(); }
+                catch (Exception e)
+                {
+#if DISABLE_CATH_EXCEPTIONS
+                    throw;
+#endif
+                    EcsDebug.PrintError(e);
                 }
             }
 #endif
-            public void Init()
-            {
+        }
+    }
+    [MetaColor(MetaColor.Orange)]
+    public sealed class EcsInitRunner : EcsRunner<IEcsInit>, IEcsInit
+    {
 #if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
-                {
-                    _markers[i].Begin();
-                    try
-                    {
-                        targets[i].Init();
-                    }
-                    catch (Exception e)
-                    {
-#if DISABLE_CATH_EXCEPTIONS
-                        throw e;
-#endif
-                        EcsDebug.PrintError(e);
-                    }
-                    _markers[i].End();
-                }
-#else
-                foreach (var item in targets)
-                {
-                    try { item.Init(); }
-                    catch (Exception e)
-                    {
-#if DISABLE_CATH_EXCEPTIONS
-                        throw e;
-#endif
-                        EcsDebug.PrintError(e);
-                    }
-                }
-#endif
+        private EcsProfilerMarker[] _markers;
+        protected override void OnSetup()
+        {
+            _markers = new EcsProfilerMarker[Process.Length];
+            for (int i = 0; i < Process.Length; i++)
+            {
+                _markers[i] = new EcsProfilerMarker($"{Process[i].GetType().Name}.{nameof(Init)}");
             }
         }
-        [MetaColor(MetaColor.Orange)]
-        public sealed class EcsRunProcessRunner : EcsRunner<IEcsRunProcess>, IEcsRunProcess
+#endif
+        public void Init()
         {
 #if DEBUG && !DISABLE_DEBUG
-            private EcsProfilerMarker[] _markers;
-            protected override void OnSetup()
+            for (int i = 0, n = Process.Length < _markers.Length ? Process.Length : _markers.Length; i < n; i++)
             {
-                _markers = new EcsProfilerMarker[targets.Length];
-                for (int i = 0; i < targets.Length; i++)
+                _markers[i].Begin();
+                try
                 {
-                    _markers[i] = new EcsProfilerMarker($"{targets[i].GetType().Name}.{nameof(Run)}");
+                    Process[i].Init();
+                }
+                catch (Exception e)
+                {
+#if DISABLE_CATH_EXCEPTIONS
+                    throw;
+#endif
+                    EcsDebug.PrintError(e);
+                }
+                _markers[i].End();
+            }
+#else
+            foreach (var item in Process)
+            {
+                try { item.Init(); }
+                catch (Exception e)
+                {
+#if DISABLE_CATH_EXCEPTIONS
+                    throw;
+#endif
+                    EcsDebug.PrintError(e);
                 }
             }
 #endif
-            public void Run()
-            {
+        }
+    }
+    [MetaColor(MetaColor.Orange)]
+    public sealed class EcsRunRunner : EcsRunner<IEcsRun>, IEcsRun
+    {
 #if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
-                {
-                    _markers[i].Begin();
-                    try
-                    {
-                        targets[i].Run();
-                    }
-                    catch (Exception e)
-                    {
-#if DISABLE_CATH_EXCEPTIONS
-                        throw e;
-#endif
-                        EcsDebug.PrintError(e);
-                    }
-                    _markers[i].End();
-                }
-#else
-                foreach (var item in targets)
-                {
-                    try { item.Run(); }
-                    catch (Exception e)
-                    {
-#if DISABLE_CATH_EXCEPTIONS
-                        throw e;
-#endif
-                        EcsDebug.PrintError(e);
-                    }
-                }
-#endif
+        private EcsProfilerMarker[] _markers;
+        protected override void OnSetup()
+        {
+            _markers = new EcsProfilerMarker[Process.Length];
+            for (int i = 0; i < Process.Length; i++)
+            {
+                _markers[i] = new EcsProfilerMarker($"{Process[i].GetType().Name}.{nameof(Run)}");
             }
         }
-        [MetaColor(MetaColor.Orange)]
-        public sealed class EcsDestroyProcessRunner : EcsRunner<IEcsDestroyProcess>, IEcsDestroyProcess
+#endif
+        public void Run()
         {
 #if DEBUG && !DISABLE_DEBUG
-            private EcsProfilerMarker[] _markers;
-            protected override void OnSetup()
+            for (int i = 0, n = Process.Length < _markers.Length ? Process.Length : _markers.Length; i < n; i++)
             {
-                _markers = new EcsProfilerMarker[targets.Length];
-                for (int i = 0; i < targets.Length; i++)
+                _markers[i].Begin();
+                try
                 {
-                    _markers[i] = new EcsProfilerMarker($"{targets[i].GetType().Name}.{nameof(IEcsDestroyProcess.Destroy)}");
+                    Process[i].Run();
                 }
-            }
-#endif
-            void IEcsDestroyProcess.Destroy()
-            {
-#if DEBUG && !DISABLE_DEBUG
-                for (int i = 0; i < targets.Length && targets.Length <= _markers.Length; i++)
+                catch (Exception e)
                 {
-                    _markers[i].Begin();
-                    try
-                    {
-                        targets[i].Destroy();
-                    }
-                    catch (Exception e)
-                    {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw e;
+                    throw;
 #endif
-                        EcsDebug.PrintError(e);
-                    }
-                    _markers[i].End();
+                    EcsDebug.PrintError(e);
                 }
+                _markers[i].End();
+            }
 #else
-                foreach (var item in targets)
+            foreach (var item in Process)
+            {
+                try { item.Run(); }
+                catch (Exception e)
                 {
-                    try { item.Destroy(); }
-                    catch (Exception e)
-                    {
 #if DISABLE_CATH_EXCEPTIONS
-                        throw e;
+                    throw;
 #endif
-                        EcsDebug.PrintError(e);
-                    }
+                    EcsDebug.PrintError(e);
                 }
-#endif
             }
+#endif
+        }
+    }
+    [MetaColor(MetaColor.Orange)]
+    public sealed class EcsDestroyRunner : EcsRunner<IEcsDestroy>, IEcsDestroy
+    {
+#if DEBUG && !DISABLE_DEBUG
+        private EcsProfilerMarker[] _markers;
+        protected override void OnSetup()
+        {
+            _markers = new EcsProfilerMarker[Process.Length];
+            for (int i = 0; i < Process.Length; i++)
+            {
+                _markers[i] = new EcsProfilerMarker($"{Process[i].GetType().Name}.{nameof(IEcsDestroy.Destroy)}");
+            }
+        }
+#endif
+        void IEcsDestroy.Destroy()
+        {
+#if DEBUG && !DISABLE_DEBUG
+            for (int i = 0, n = Process.Length < _markers.Length ? Process.Length : _markers.Length; i < n; i++)
+            {
+                _markers[i].Begin();
+                try
+                {
+                    Process[i].Destroy();
+                }
+                catch (Exception e)
+                {
+#if DISABLE_CATH_EXCEPTIONS
+                    throw;
+#endif
+                    EcsDebug.PrintError(e);
+                }
+                _markers[i].End();
+            }
+#else
+            foreach (var item in Process)
+            {
+                try { item.Destroy(); }
+                catch (Exception e)
+                {
+#if DISABLE_CATH_EXCEPTIONS
+                    throw;
+#endif
+                    EcsDebug.PrintError(e);
+                }
+            }
+#endif
         }
     }
 }

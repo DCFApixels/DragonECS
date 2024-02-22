@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract partial class EcsWorld : IEntityStorage
+    public partial class EcsWorld : IEntityStorage
     {
         public readonly short id;
         private IEcsWorldConfig _config;

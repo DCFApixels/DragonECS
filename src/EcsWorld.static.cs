@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS
         public EcsWorld World => EcsWorld.GetWorld(_worldID);
         public ref T Value => ref EcsWorld.GetData<T>(_worldID);
     }
-    public abstract partial class EcsWorld
+    public partial class EcsWorld
     {
         private const short GEN_MASK = 0x7fff;
         private const short DEATH_GEN_BIT = short.MinValue;

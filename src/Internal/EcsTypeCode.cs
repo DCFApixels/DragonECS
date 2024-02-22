@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.Internal
 {
-    public static class EcsTypeCode
+    internal static class EcsTypeCode
     {
         private static readonly Dictionary<Type, int> _codes = new Dictionary<Type, int>();
         private static int _increment = 1;
@@ -29,11 +29,11 @@ namespace DCFApixels.DragonECS.Internal
         public static bool Has<T>() { return _codes.ContainsKey(typeof(T)); }
         public static IEnumerable<TypeCodeInfo> GetDeclaredTypes() { return _codes.Select(o => new TypeCodeInfo(o.Key, o.Value)); }
     }
-    public static class EcsTypeCodeCache<T>
+    internal static class EcsTypeCodeCache<T>
     {
         public static readonly int code = EcsTypeCode.Get(typeof(T));
     }
-    public struct TypeCodeInfo
+    internal struct TypeCodeInfo
     {
         public Type type;
         public int code;

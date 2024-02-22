@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract partial class EcsWorld
+    public partial class EcsWorld
     {
         private SparseArray<int> _poolTypeCode_2_CmpTypeIDs = new SparseArray<int>();
         private SparseArray<int> _componentTypeCode_2_CmpTypeIDs = new SparseArray<int>();
@@ -110,12 +110,12 @@ namespace DCFApixels.DragonECS
             TPool newPool = new TPool();
 
             Type componentType = newPool.ComponentType;
-//#if DEBUG //проверка соответсвия типов
-//            if(componentType != typeof(TPool).GetInterfaces().First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>)).GetGenericArguments()[0])
-//            {
-//                Throw.UndefinedException();
-//            }
-//#endif
+            //#if DEBUG //проверка соответсвия типов
+            //            if(componentType != typeof(TPool).GetInterfaces().First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>)).GetGenericArguments()[0])
+            //            {
+            //                Throw.UndefinedException();
+            //            }
+            //#endif
             int componentTypeCode = EcsTypeCode.Get(componentType);
 
             if (_componentTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int componentTypeID))

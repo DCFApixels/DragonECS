@@ -3,80 +3,104 @@ using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsPipelineMember
+    public interface IEcsPipelineMember : IEcsSystem
     {
         public EcsPipeline Pipeline { get; set; }
     }
     public sealed class EcsPipeline
     {
-        private IEcsProcess[] _allSystems;
-        private Dictionary<Type, IEcsRunner> _runners = new Dictionary<Type, IEcsRunner>();
-        private IEcsRunProcess _runRunnerCache;
+        private readonly IEcsPipelineConfig _config;
 
-        private ReadOnlyCollection<IEcsProcess> _allSystemsSealed;
-        private ReadOnlyDictionary<Type, IEcsRunner> _allRunnersSealed;
+        private IEcsSystem[] _allSystems;
+        private Dictionary<Type, Array> _processes = new Dictionary<Type, Array>();
+        private Dictionary<Type, IEcsRunner> _runners = new Dictionary<Type, IEcsRunner>();
+        private IEcsRun _runRunnerCache;
 
         private bool _isInit = false;
         private bool _isDestoryed = false;
 
         #region Properties
-        public ReadOnlyCollection<IEcsProcess> AllSystems => _allSystemsSealed;
-        public ReadOnlyDictionary<Type, IEcsRunner> AllRunners => _allRunnersSealed;
-        public bool IsInit => _isInit;
-        public bool IsDestoryed => _isDestoryed;
+        public IEcsPipelineConfig Config
+        {
+            get { return _config; }
+        }
+        public EcsProcess<IEcsSystem> AllSystems
+        {
+            get { return new EcsProcess<IEcsSystem>(_allSystems); }
+        }
+        public IReadOnlyDictionary<Type, IEcsRunner> AllRunners
+        {
+            get { return _runners; }
+        }
+        public bool IsInit 
+        { 
+            get { return _isInit; } 
+        }
+        public bool IsDestoryed 
+        { 
+            get { return _isDestoryed; } 
+        }
         #endregion
 
         #region Constructors
-        private EcsPipeline(IEcsProcess[] systems)
+        private EcsPipeline(IEcsPipelineConfig config, IEcsSystem[] systems)
         {
+            _config = config;
             _allSystems = systems;
-            _allSystemsSealed = new ReadOnlyCollection<IEcsProcess>(_allSystems);
-            _allRunnersSealed = new ReadOnlyDictionary<Type, IEcsRunner>(_runners);
         }
         #endregion
 
-        #region GetSystems
-        public T[] GetSystems<T>()
-        {
-            return _allSystems.OfType<T>().ToArray();
-        }
-        public int GetSystemsNoAllock<T>(ref T[] array)
-        {
-            int count = 0;
-            for (int i = 0; i < _allSystems.Length; i++)
-            {
-                if (_allSystems is T targetSystem)
-                {
-                    if (array.Length <= count)
-                    {
-                        Array.Resize(ref array, array.Length << 1);
-                    }
-                    array[count++] = targetSystem;
-                }
-            }
-            return count;
-        }
-        #endregion
-
-        #region Runners
-        public T GetRunner<T>() where T : IEcsProcess
+        #region Get Process/Runner
+        public EcsProcess<T> GetProcess<T>() where T : IEcsSystem
         {
             Type type = typeof(T);
-            if (_runners.TryGetValue(type, out IEcsRunner result))
+            T[] result;
+            if(_processes.TryGetValue(type, out Array array))
             {
-                return (T)result;
+                result = (T[])array;
             }
-            result = (IEcsRunner)EcsRunner<T>.Instantiate(this);
-            _runners.Add(type, result);
+            else
+            {
+                result = _allSystems.OfType<T>().ToArray();
+                _processes.Add(type, result);
+            }
+            return new EcsProcess<T>(result);
+        }
+#if !REFLECTION_DISABLED
+        public T GetRunner<T>() where T : IEcsSystem
+        {
+            Type interfaceType = typeof(T);
+            if (_runners.TryGetValue(interfaceType, out IEcsRunner result) == false)
+            {
+                result = (IEcsRunner)EcsRunner<T>.Instantiate(this);
+                _runners.Add(result.GetType(), result);
+                _runners.Add(interfaceType, result);
+            }
             return (T)result;
         }
-        internal void OnRunnerDestroy(IEcsRunner runner)
+#endif
+        public T GetRunnerInstance<T>() where T : IEcsRunner, new()
+        {
+            Type runnerType = typeof(T);
+            if (_runners.TryGetValue(runnerType, out IEcsRunner result) == false)
+            {
+                result = new T();
+                _runners.Add(runnerType, result);
+#if !REFLECTION_DISABLED
+                _runners.Add(result.Interface, result);
+#endif
+            }
+            return (T)result;
+        }
+        #endregion
+
+        #region Internal
+        internal void OnRunnerDestroy_Internal(IEcsRunner runner)
         {
             _runners.Remove(runner.Interface);
         }
@@ -91,20 +115,20 @@ namespace DCFApixels.DragonECS
                 return;
             }
 
-            IEcsPipelineMember[] members = GetSystems<IEcsPipelineMember>();
+            EcsProcess<IEcsPipelineMember> members = GetProcess<IEcsPipelineMember>();
             foreach (var member in members)
             {
                 member.Pipeline = this;
             }
 
-            var preInitRunner = GetRunner<IEcsPreInitProcess>();
+            var preInitRunner = GetRunner<IEcsPreInit>();
             preInitRunner.PreInit();
             EcsRunner.Destroy(preInitRunner);
-            var initRunner = GetRunner<IEcsInitProcess>();
+            var initRunner = GetRunner<IEcsInit>();
             initRunner.Init();
             EcsRunner.Destroy(initRunner);
 
-            _runRunnerCache = GetRunner<IEcsRunProcess>();
+            _runRunnerCache = GetRunner<IEcsRun>();
             _isInit = true;
             GC.Collect();
         }
@@ -129,34 +153,47 @@ namespace DCFApixels.DragonECS
                 return;
             }
             _isDestoryed = true;
-            GetRunner<IEcsDestroyProcess>().Destroy();
+            GetRunner<IEcsDestroy>().Destroy();
         }
         #endregion
 
         #region Builder
-        public static Builder New() => new Builder();
+        public static Builder New(IEcsPipelineConfigWriter config = null)
+        {
+            return new Builder(config);
+        }
         public class Builder
         {
             private const int KEYS_CAPACITY = 4;
             private HashSet<Type> _uniqueTypes;
-            private readonly Dictionary<string, List<IEcsProcess>> _systems;
+            private readonly Dictionary<string, List<IEcsSystem>> _systems;
             private readonly string _basicLayer;
             public readonly LayerList Layers;
-            public Builder()
+            private readonly IEcsPipelineConfigWriter _config;
+            public IEcsPipelineConfigWriter Config
             {
+                get { return _config; }
+            }
+            public Builder(IEcsPipelineConfigWriter config = null)
+            {
+                if (config == null)
+                {
+                    config = new EcsPipelineConfig();
+                }
+                _config = config;
                 _basicLayer = EcsConsts.BASIC_LAYER;
                 Layers = new LayerList(this, _basicLayer);
                 Layers.Insert(EcsConsts.BASIC_LAYER, EcsConsts.PRE_BEGIN_LAYER, EcsConsts.BEGIN_LAYER);
                 Layers.InsertAfter(EcsConsts.BASIC_LAYER, EcsConsts.END_LAYER, EcsConsts.POST_END_LAYER);
                 _uniqueTypes = new HashSet<Type>();
-                _systems = new Dictionary<string, List<IEcsProcess>>(KEYS_CAPACITY);
+                _systems = new Dictionary<string, List<IEcsSystem>>(KEYS_CAPACITY);
             }
-            public Builder Add(IEcsProcess system, string layerName = null)
+            public Builder Add(IEcsSystem system, string layerName = null)
             {
                 AddInternal(system, layerName, false);
                 return this;
             }
-            public Builder AddUnique(IEcsProcess system, string layerName = null)
+            public Builder AddUnique(IEcsSystem system, string layerName = null)
             {
                 AddInternal(system, layerName, true);
                 return this;
@@ -168,13 +205,13 @@ namespace DCFApixels.DragonECS
                     list.RemoveAll(o => o is TSystem);
                 return this;
             }
-            private void AddInternal(IEcsProcess system, string layerName, bool isUnique)
+            private void AddInternal(IEcsSystem system, string layerName, bool isUnique)
             {
                 if (layerName == null) layerName = _basicLayer;
-                List<IEcsProcess> list;
+                List<IEcsSystem> list;
                 if (!_systems.TryGetValue(layerName, out list))
                 {
-                    list = new List<IEcsProcess> { new SystemsLayerMarkerSystem(layerName.ToString()) };
+                    list = new List<IEcsSystem> { new SystemsLayerMarkerSystem(layerName.ToString()) };
                     _systems.Add(layerName, list);
                 }
                 if ((_uniqueTypes.Add(system.GetType()) == false && isUnique))
@@ -191,9 +228,8 @@ namespace DCFApixels.DragonECS
             }
             public EcsPipeline Build()
             {
-                Add(new EndFrameSystem(), EcsConsts.POST_END_LAYER);
-                List<IEcsProcess> result = new List<IEcsProcess>(32);
-                List<IEcsProcess> basicBlockList = _systems[_basicLayer];
+                List<IEcsSystem> result = new List<IEcsSystem>(32);
+                List<IEcsSystem> basicBlockList = _systems[_basicLayer];
                 foreach (var item in _systems)
                 {
                     if (!Layers.Contains(item.Key))
@@ -204,7 +240,7 @@ namespace DCFApixels.DragonECS
                     if (_systems.TryGetValue(item, out var list))
                         result.AddRange(list);
                 }
-                return new EcsPipeline(result.ToArray());
+                return new EcsPipeline(_config.GetPipelineConfig(), result.ToArray());
             }
             public class LayerList : IEnumerable<string>
             {
@@ -321,15 +357,24 @@ namespace DCFApixels.DragonECS
     #region Extensions
     public static partial class EcsPipelineExtensions
     {
-        public static bool IsNullOrDestroyed(this EcsPipeline self) => self == null || self.IsDestoryed;
-        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsProcess> range, string layerName = null)
+        public static bool IsNullOrDestroyed(this EcsPipeline self)
         {
-            foreach (var item in range) self.Add(item, layerName);
+            return self == null || self.IsDestoryed;
+        }
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsSystem> range, string layerName = null)
+        {
+            foreach (var item in range)
+            {
+                self.Add(item, layerName);
+            }
             return self;
         }
-        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEnumerable<IEcsProcess> range, string layerName = null)
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEnumerable<IEcsSystem> range, string layerName = null)
         {
-            foreach (var item in range) self.AddUnique(item, layerName);
+            foreach (var item in range)
+            {
+                self.AddUnique(item, layerName);
+            }
             return self;
         }
         public static EcsPipeline BuildAndInit(this EcsPipeline.Builder self)
@@ -337,6 +382,112 @@ namespace DCFApixels.DragonECS
             EcsPipeline result = self.Build();
             result.Init();
             return result;
+        }
+    }
+    #endregion
+
+    #region SystemsLayerMarkerSystem
+    [MetaTags(MetaTags.HIDDEN)]
+    [MetaColor(MetaColor.Black)]
+    public class SystemsLayerMarkerSystem : IEcsSystem
+    {
+        public readonly string name;
+        public SystemsLayerMarkerSystem(string name) => this.name = name;
+    }
+    #endregion
+
+    #region EcsProcess
+    public readonly struct EcsProcessRaw : IEnumerable
+    {
+        private readonly Array _systems;
+        public int Length
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _systems.Length; }
+        }
+        public IEcsSystem this[int index]
+        {
+            get { return (IEcsSystem)_systems.GetValue(index); }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal EcsProcessRaw(Array systems)
+        {
+            _systems = systems;
+        }
+        public IEnumerator GetEnumerator()
+        {
+            return _systems.GetEnumerator();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal T[] GetSystems_Internal<T>()
+        {
+            return (T[])_systems;
+        }
+    }
+    public readonly struct EcsProcess<TProcess> : IReadOnlyCollection<TProcess>
+        where TProcess : IEcsSystem
+    {
+        public readonly static EcsProcess<TProcess> Empty = new EcsProcess<TProcess>(Array.Empty<TProcess>());
+        private readonly TProcess[] _systems;
+        public bool IsNullOrEmpty
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _systems == null || _systems.Length <= 0; }
+        }
+        public int Length
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _systems.Length; }
+        }
+        int IReadOnlyCollection<TProcess>.Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _systems.Length; }
+        }
+        public TProcess this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _systems[index]; }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal EcsProcess(TProcess[] systems)
+        {
+            _systems = systems;
+        }
+        public static explicit operator EcsProcess<TProcess>(EcsProcessRaw raw)
+        {
+            return new EcsProcess<TProcess>(raw.GetSystems_Internal<TProcess>());
+        }
+        public static implicit operator EcsProcessRaw(EcsProcess<TProcess> process)
+        {
+            return new EcsProcessRaw(process._systems);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Enumerator GetEnumerator() { return new Enumerator(_systems); }
+        IEnumerator<TProcess> IEnumerable<TProcess>.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+        public struct Enumerator : IEnumerator<TProcess>
+        {
+            private readonly TProcess[] _systems;
+            private int _index;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Enumerator(TProcess[] systems)
+            {
+                _systems = systems;
+                _index = -1;
+            }
+            public TProcess Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get { return _systems[_index]; }
+            }
+            object IEnumerator.Current { get { return Current; } }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext() { return ++_index < _systems.Length; }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Reset() { _index = -1; }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Dispose() { }
         }
     }
     #endregion
