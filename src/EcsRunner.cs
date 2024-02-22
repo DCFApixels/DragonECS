@@ -41,7 +41,7 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public interface IEcsSystem { }
+    public interface IEcsProcess { }
 
     namespace RunnersCore
     {
@@ -58,8 +58,8 @@ namespace DCFApixels.DragonECS
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
 #endif
-        public abstract class EcsRunner<TProcess> : IEcsSystem, IEcsRunner
-            where TProcess : IEcsSystem
+        public abstract class EcsRunner<TProcess> : IEcsProcess, IEcsRunner
+            where TProcess : IEcsProcess
         {
             #region Register
             private static Type _runnerImplementationType;
@@ -78,9 +78,9 @@ namespace DCFApixels.DragonECS
                 {
                     throw new ArgumentException($"{typeof(TProcess).FullName} is not interface");
                 }
-                if (interfaces.Length != 1 || interfaces[0] != typeof(IEcsSystem))
+                if (interfaces.Length != 1 || interfaces[0] != typeof(IEcsProcess))
                 {
-                    throw new ArgumentException($"{typeof(TProcess).FullName} does not directly inherit the {nameof(IEcsSystem)} interface");
+                    throw new ArgumentException($"{typeof(TProcess).FullName} does not directly inherit the {nameof(IEcsProcess)} interface");
                 }
 #endif
                 _runnerImplementationType = subclass;
@@ -142,7 +142,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 var instance = (EcsRunner<TProcess>)Activator.CreateInstance(_runnerImplementationType);
-                return (TProcess)(IEcsSystem)instance.Set(source, process);
+                return (TProcess)(IEcsProcess)instance.Set(source, process);
             }
             #endregion
 
@@ -204,11 +204,11 @@ namespace DCFApixels.DragonECS
     #region Extensions
     public static class EcsRunner
     {
-        public static void Destroy(IEcsSystem runner) => ((IEcsRunner)runner).Destroy();
+        public static void Destroy(IEcsProcess runner) => ((IEcsRunner)runner).Destroy();
     }
     public static class IEcsSystemExtensions
     {
-        public static bool IsRunner(this IEcsSystem self)
+        public static bool IsRunner(this IEcsProcess self)
         {
             return self is IEcsRunner;
         }
@@ -232,13 +232,13 @@ namespace DCFApixels.DragonECS
 
         static EcsProcessUtility()
         {
-            Type processBasicInterface = typeof(IEcsSystem);
+            Type processBasicInterface = typeof(IEcsProcess);
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 var types = assembly.GetTypes();
                 foreach (var type in types)
                 {
-                    if (type.GetInterface(nameof(IEcsSystem)) != null || type == processBasicInterface)
+                    if (type.GetInterface(nameof(IEcsProcess)) != null || type == processBasicInterface)
                     {
                         if (type.IsInterface)
                         {

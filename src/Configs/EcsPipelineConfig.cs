@@ -19,11 +19,19 @@ namespace DCFApixels.DragonECS
         public EcsPipelineConfig() { }
         public EcsPipelineConfig(IEnumerable<KeyValuePair<string, object>> range)
         {
-            _storage = new Dictionary<string, object>(range);
+            _storage = new Dictionary<string, object>();
+            foreach (var item in range)
+            {
+                _storage.Add(item.Key, item.Value);
+            }
         }
         public EcsPipelineConfig(params KeyValuePair<string, object>[] range)
         {
-            _storage = new Dictionary<string, object>(range);
+            _storage = new Dictionary<string, object>();
+            foreach (var item in range)
+            {
+                _storage.Add(item.Key, item.Value);
+            }
         }
 
         public int Count

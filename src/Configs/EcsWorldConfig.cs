@@ -19,11 +19,19 @@ namespace DCFApixels.DragonECS
         public EcsWorldConfig() { }
         public EcsWorldConfig(IEnumerable<KeyValuePair<string, object>> range)
         {
-            _storage = new Dictionary<string, object>(range);
+            _storage = new Dictionary<string, object>();
+            foreach (var item in range)
+            {
+                _storage.Add(item.Key, item.Value);
+            }
         }
         public EcsWorldConfig(params KeyValuePair<string, object>[] range)
         {
-            _storage = new Dictionary<string, object>(range);
+            _storage = new Dictionary<string, object>();
+            foreach (var item in range)
+            {
+                _storage.Add(item.Key, item.Value);
+            }
         }
 
         public int Count

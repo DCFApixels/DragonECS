@@ -404,7 +404,8 @@ namespace DCFApixels.DragonECS
                 return;
             }
             unchecked { _version++; }
-            count = Math.Clamp(count, 0, _delEntBufferCount);
+            count = Math.Min(count, _delEntBufferCount);
+            count = Math.Max(count, 0);
             _delEntBufferCount -= count;
             ReadOnlySpan<int> buffer = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);
             for (int i = 0; i < _poolsCount; i++)

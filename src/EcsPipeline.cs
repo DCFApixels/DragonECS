@@ -8,15 +8,16 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsPipelineMember : IEcsSystem
+    public interface IEcsPipelineMember : IEcsProcess
     {
-        public EcsPipeline Pipeline { get; set; }
+        EcsPipeline Pipeline { get; set; }
     }
     public sealed class EcsPipeline
     {
         private readonly IEcsPipelineConfig _config;
+        private readonly Injector _injector;
 
-        private IEcsSystem[] _allSystems;
+        private IEcsProcess[] _allSystems;
         private Dictionary<Type, Array> _processes = new Dictionary<Type, Array>();
         private Dictionary<Type, IEcsRunner> _runners = new Dictionary<Type, IEcsRunner>();
         private IEcsRun _runRunnerCache;
@@ -29,9 +30,13 @@ namespace DCFApixels.DragonECS
         {
             get { return _config; }
         }
-        public EcsProcess<IEcsSystem> AllSystems
+        public Injector Injector
         {
-            get { return new EcsProcess<IEcsSystem>(_allSystems); }
+            get { return _injector; }
+        }
+        public EcsProcess<IEcsProcess> AllSystems
+        {
+            get { return new EcsProcess<IEcsProcess>(_allSystems); }
         }
         public IReadOnlyDictionary<Type, IEcsRunner> AllRunners
         {
@@ -48,15 +53,16 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        private EcsPipeline(IEcsPipelineConfig config, IEcsSystem[] systems)
+        private EcsPipeline(IEcsPipelineConfig config, Injector.Builder injector, IEcsProcess[] systems)
         {
             _config = config;
             _allSystems = systems;
+            _injector = injector.Build(this);
         }
         #endregion
 
         #region Get Process/Runner
-        public EcsProcess<T> GetProcess<T>() where T : IEcsSystem
+        public EcsProcess<T> GetProcess<T>() where T : IEcsProcess
         {
             Type type = typeof(T);
             T[] result;
@@ -72,7 +78,7 @@ namespace DCFApixels.DragonECS
             return new EcsProcess<T>(result);
         }
 #if !REFLECTION_DISABLED
-        public T GetRunner<T>() where T : IEcsSystem
+        public T GetRunner<T>() where T : IEcsProcess
         {
             Type interfaceType = typeof(T);
             if (_runners.TryGetValue(interfaceType, out IEcsRunner result) == false)
@@ -120,6 +126,7 @@ namespace DCFApixels.DragonECS
             {
                 member.Pipeline = this;
             }
+            Injector.Inject(this);
 
             var preInitRunner = GetRunner<IEcsPreInit>();
             preInitRunner.PreInit();
@@ -130,6 +137,7 @@ namespace DCFApixels.DragonECS
 
             _runRunnerCache = GetRunner<IEcsRun>();
             _isInit = true;
+
             GC.Collect();
         }
 
@@ -166,37 +174,47 @@ namespace DCFApixels.DragonECS
         {
             private const int KEYS_CAPACITY = 4;
             private HashSet<Type> _uniqueTypes;
-            private readonly Dictionary<string, List<IEcsSystem>> _systems;
+            private readonly Dictionary<string, List<IEcsProcess>> _systems;
             private readonly string _basicLayer;
             public readonly LayerList Layers;
             private readonly IEcsPipelineConfigWriter _config;
+            private readonly Injector.Builder _injector;
             private EcsProfilerMarker _buildBarker = new EcsProfilerMarker("Build Marker");
 
             public IEcsPipelineConfigWriter Config
             {
                 get { return _config; }
             }
+            public Injector.Builder Injector
+            {
+                get { return _injector; }
+            }
             public Builder(IEcsPipelineConfigWriter config = null)
             {
                 _buildBarker.Begin();
-                if (config == null)
-                {
-                    config = new EcsPipelineConfig();
-                }
+
+                if (config == null) { config = new EcsPipelineConfig(); }
                 _config = config;
+
+                _injector = new Injector.Builder(this);
+                _injector.Declare<object>();
+                _injector.Declare<EcsWorld>();
+                _injector.Declare<EcsAspect>();
+
                 _basicLayer = EcsConsts.BASIC_LAYER;
                 Layers = new LayerList(this, _basicLayer);
                 Layers.Insert(EcsConsts.BASIC_LAYER, EcsConsts.PRE_BEGIN_LAYER, EcsConsts.BEGIN_LAYER);
                 Layers.InsertAfter(EcsConsts.BASIC_LAYER, EcsConsts.END_LAYER, EcsConsts.POST_END_LAYER);
+
                 _uniqueTypes = new HashSet<Type>();
-                _systems = new Dictionary<string, List<IEcsSystem>>(KEYS_CAPACITY);
+                _systems = new Dictionary<string, List<IEcsProcess>>(KEYS_CAPACITY);
             }
-            public Builder Add(IEcsSystem system, string layerName = null)
+            public Builder Add(IEcsProcess system, string layerName = null)
             {
                 AddInternal(system, layerName, false);
                 return this;
             }
-            public Builder AddUnique(IEcsSystem system, string layerName = null)
+            public Builder AddUnique(IEcsProcess system, string layerName = null)
             {
                 AddInternal(system, layerName, true);
                 return this;
@@ -205,16 +223,18 @@ namespace DCFApixels.DragonECS
             {
                 _uniqueTypes.Remove(typeof(TSystem));
                 foreach (var list in _systems.Values)
+                {
                     list.RemoveAll(o => o is TSystem);
+                }
                 return this;
             }
-            private void AddInternal(IEcsSystem system, string layerName, bool isUnique)
+            private void AddInternal(IEcsProcess system, string layerName, bool isUnique)
             {
                 if (layerName == null) layerName = _basicLayer;
-                List<IEcsSystem> list;
+                List<IEcsProcess> list;
                 if (!_systems.TryGetValue(layerName, out list))
                 {
-                    list = new List<IEcsSystem> { new SystemsLayerMarkerSystem(layerName.ToString()) };
+                    list = new List<IEcsProcess> { new SystemsLayerMarkerSystem(layerName.ToString()) };
                     _systems.Add(layerName, list);
                 }
                 if ((_uniqueTypes.Add(system.GetType()) == false && isUnique))
@@ -231,8 +251,8 @@ namespace DCFApixels.DragonECS
             }
             public EcsPipeline Build()
             {
-                List<IEcsSystem> result = new List<IEcsSystem>(32);
-                List<IEcsSystem> basicBlockList = _systems[_basicLayer];
+                List<IEcsProcess> result = new List<IEcsProcess>(32);
+                List<IEcsProcess> basicBlockList = _systems[_basicLayer];
                 foreach (var item in _systems)
                 {
                     if (!Layers.Contains(item.Key))
@@ -244,8 +264,9 @@ namespace DCFApixels.DragonECS
                         result.AddRange(list);
                 }
                 _buildBarker.End();
-                return new EcsPipeline(_config.GetPipelineConfig(), result.ToArray());
+                return new EcsPipeline(_config.GetPipelineConfig(), _injector, result.ToArray());
             }
+
             public class LayerList : IEnumerable<string>
             {
                 private const string ADD_LAYER = nameof(ADD_LAYER); // автоматический слой нужный только для метода Add
@@ -365,7 +386,7 @@ namespace DCFApixels.DragonECS
         {
             return self == null || self.IsDestoryed;
         }
-        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsSystem> range, string layerName = null)
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsProcess> range, string layerName = null)
         {
             foreach (var item in range)
             {
@@ -373,7 +394,7 @@ namespace DCFApixels.DragonECS
             }
             return self;
         }
-        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEnumerable<IEcsSystem> range, string layerName = null)
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEnumerable<IEcsProcess> range, string layerName = null)
         {
             foreach (var item in range)
             {
@@ -393,7 +414,7 @@ namespace DCFApixels.DragonECS
     #region SystemsLayerMarkerSystem
     [MetaTags(MetaTags.HIDDEN)]
     [MetaColor(MetaColor.Black)]
-    public class SystemsLayerMarkerSystem : IEcsSystem
+    public class SystemsLayerMarkerSystem : IEcsProcess
     {
         public readonly string name;
         public SystemsLayerMarkerSystem(string name) => this.name = name;
@@ -409,9 +430,9 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _systems.Length; }
         }
-        public IEcsSystem this[int index]
+        public IEcsProcess this[int index]
         {
-            get { return (IEcsSystem)_systems.GetValue(index); }
+            get { return (IEcsProcess)_systems.GetValue(index); }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal EcsProcessRaw(Array systems)
@@ -429,7 +450,7 @@ namespace DCFApixels.DragonECS
         }
     }
     public readonly struct EcsProcess<TProcess> : IReadOnlyCollection<TProcess>
-        where TProcess : IEcsSystem
+        where TProcess : IEcsProcess
     {
         public readonly static EcsProcess<TProcess> Empty = new EcsProcess<TProcess>(Array.Empty<TProcess>());
         private readonly TProcess[] _systems;

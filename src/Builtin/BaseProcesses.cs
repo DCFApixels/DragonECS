@@ -8,28 +8,28 @@ namespace DCFApixels.DragonECS
     [MetaName(nameof(PreInit))]
     [MetaColor(MetaColor.Orange)]
     [BindWithEcsRunner(typeof(EcsPreInitRunner))]
-    public interface IEcsPreInit : IEcsSystem
+    public interface IEcsPreInit : IEcsProcess
     {
         void PreInit();
     }
     [MetaName(nameof(Init))]
     [MetaColor(MetaColor.Orange)]
     [BindWithEcsRunner(typeof(EcsInitRunner))]
-    public interface IEcsInit : IEcsSystem
+    public interface IEcsInit : IEcsProcess
     {
         void Init();
     }
     [MetaName(nameof(Run))]
     [MetaColor(MetaColor.Orange)]
     [BindWithEcsRunner(typeof(EcsRunRunner))]
-    public interface IEcsRun : IEcsSystem
+    public interface IEcsRun : IEcsProcess
     {
         void Run();
     }
     [MetaName(nameof(Destroy))]
     [MetaColor(MetaColor.Orange)]
     [BindWithEcsRunner(typeof(EcsDestroyRunner))]
-    public interface IEcsDestroy : IEcsSystem
+    public interface IEcsDestroy : IEcsProcess
     {
         void Destroy();
     }
