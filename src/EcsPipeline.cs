@@ -170,12 +170,15 @@ namespace DCFApixels.DragonECS
             private readonly string _basicLayer;
             public readonly LayerList Layers;
             private readonly IEcsPipelineConfigWriter _config;
+            private EcsProfilerMarker _buildBarker = new EcsProfilerMarker("Build Marker");
+
             public IEcsPipelineConfigWriter Config
             {
                 get { return _config; }
             }
             public Builder(IEcsPipelineConfigWriter config = null)
             {
+                _buildBarker.Begin();
                 if (config == null)
                 {
                     config = new EcsPipelineConfig();
@@ -240,6 +243,7 @@ namespace DCFApixels.DragonECS
                     if (_systems.TryGetValue(item, out var list))
                         result.AddRange(list);
                 }
+                _buildBarker.End();
                 return new EcsPipeline(_config.GetPipelineConfig(), result.ToArray());
             }
             public class LayerList : IEnumerable<string>
