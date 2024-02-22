@@ -2,7 +2,7 @@
 
 namespace DCFApixels.DragonECS
 {
-    public static partial class InjectorBuilderExtensions
+    public static partial class EcsPipelineBuilderExtensions
     {
         public static EcsPipeline.Builder Inject<T>(this EcsPipeline.Builder self, T data)
         {
