@@ -19,5 +19,31 @@
         public const string META_HIDDEN_TAG = "HiddenInDebagging";
 
         public const int MAGIC_PRIME = 314159;
+
+        /// defs
+        public const bool REFLECTION_DISABLED =
+#if REFLECTION_DISABLED
+            true;
+#else
+            false;
+#endif
+        public const bool DISABLE_DEBUG =
+#if DISABLE_DEBUG
+            true;
+#else
+            false;
+#endif
+        public const bool ENABLE_DRAGONECS_ASSERT_CHEKS =
+#if ENABLE_DRAGONECS_ASSERT_CHEKS
+            true;
+#else
+            false;
+#endif
+        public const bool ENABLE_DUMMY_SPAN =
+#if ENABLE_DUMMY_SPAN
+            true;
+#else
+            false;
+#endif
     }
 }
