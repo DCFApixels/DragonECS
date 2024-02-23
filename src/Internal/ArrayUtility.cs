@@ -119,6 +119,15 @@ namespace DCFApixels.DragonECS.Internal
     }
     internal static unsafe class UnmanagedArrayUtility
     {
+        private static class MetaCache<T>
+        {
+            public readonly static int Size;
+            static MetaCache()
+            {
+                T def = default;
+                Size = Marshal.SizeOf(def);
+            }
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T* New<T>(int capacity) where T : unmanaged
         {
@@ -133,7 +142,7 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T* NewAndInit<T>(int capacity) where T : unmanaged
         {
-            int newSize = Marshal.SizeOf(typeof(T)) * capacity;
+            int newSize = MetaCache<T>.Size * capacity;
             byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
 
             for (int i = 0; i < newSize; i++)
@@ -144,7 +153,7 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void NewAndInit<T>(out T* ptr, int capacity) where T : unmanaged
         {
-            int newSize = Marshal.SizeOf(typeof(T)) * capacity;
+            int newSize = MetaCache<T>.Size * capacity;
             byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
 
             for (int i = 0; i < newSize; i++)
@@ -182,7 +191,7 @@ namespace DCFApixels.DragonECS.Internal
         {
             return (T*)(Marshal.ReAllocHGlobal(
                 new IntPtr(oldPointer),
-                new IntPtr(Marshal.SizeOf(typeof(T)) * newCount))).ToPointer();
+                new IntPtr(MetaCache<T>.Size * newCount))).ToPointer();
         }
     }
 

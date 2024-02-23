@@ -45,5 +45,14 @@
 #else
             false;
 #endif
+        public const bool DISABLE_CATH_EXCEPTIONS =
+#if DISABLE_CATH_EXCEPTIONS
+            true;
+#else
+            false;
+#endif
     }
 }
+//#if UNITY_2020_3_OR_NEWER
+//        [UnityEngine.Scripting.RequireDerived, UnityEngine.Scripting.Preserve]
+//#endif

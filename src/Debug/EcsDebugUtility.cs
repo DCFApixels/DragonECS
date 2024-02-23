@@ -49,8 +49,11 @@ namespace DCFApixels.DragonECS
         }
         private static string AutoToString(object target, Type type, bool isWriteName)
         {
+#if !REFLECTION_DISABLED
             //TODO сделать специальный вывод в виде названий констант для Enum-ов
+#pragma warning disable IL2070 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.
             var fields = type.GetFields(RFL_FLAGS);
+#pragma warning restore IL2070
             string[] values = new string[fields.Length];
             for (int i = 0; i < fields.Length; i++)
                 values[i] = (fields[i].GetValue(target) ?? "NULL").ToString();
@@ -58,6 +61,9 @@ namespace DCFApixels.DragonECS
                 return $"{type.Name}({string.Join(", ", values)})";
             else
                 return $"({string.Join(", ", values)})";
+#endif
+            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(AutoToString)} method does not work.");
+            return string.Empty;
         }
         #endregion
 

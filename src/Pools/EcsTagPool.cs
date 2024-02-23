@@ -21,17 +21,21 @@ namespace DCFApixels.DragonECS
         private T _fakeComponent;
         private EcsWorld.PoolsMediator _mediator;
 
-        #region Constructors
+        #region CheckValide
+#if DEBUG
         private static bool _isInvalidType;
         static EcsTagPool()
         {
+#pragma warning disable IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
             _isInvalidType = typeof(T).GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Length > 0;
+#pragma warning restore IL2090
         }
         public EcsTagPool()
         {
             if (_isInvalidType)
                 throw new EcsFrameworkException($"{typeof(T).Name} type must not contain any data.");
         }
+#endif
         #endregion
 
         #region Properites

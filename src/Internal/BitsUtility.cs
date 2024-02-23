@@ -605,40 +605,6 @@ namespace DCFApixels.DragonECS.Internal
             }
         }
         #endregion
-
-        #region Other
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TEnum AllFlags<TEnum>() where TEnum : unmanaged, Enum
-        {
-            return EnumCache<TEnum>.allFlags;
-        }
-
-        private static class EnumCache<TEnum> where TEnum : unmanaged, Enum
-        {
-            public readonly static TEnum empty;
-            public readonly static TEnum allFlags;
-            public readonly static int valuesCount;
-            public readonly static int size;
-
-            static EnumCache()
-            {
-                Array values = Enum.GetValues(typeof(TEnum));
-                size = sizeof(TEnum);
-
-                long result = 0;
-                valuesCount = values.Length;
-                for (int i = 0; i < valuesCount; i++)
-                {
-                    result |= (long)values.GetValue(i);
-                }
-                ulong emptyBits = 0;
-
-                allFlags = *(TEnum*)&result;
-                empty = *(TEnum*)&emptyBits;
-                return;
-            }
-        }
-        #endregion
     }
 
     #region FindBitsResult removed

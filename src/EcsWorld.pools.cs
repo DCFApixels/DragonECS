@@ -1,5 +1,6 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -110,12 +111,16 @@ namespace DCFApixels.DragonECS
             TPool newPool = new TPool();
 
             Type componentType = newPool.ComponentType;
-            //#if DEBUG //проверка соответсвия типов
-            //            if(componentType != typeof(TPool).GetInterfaces().First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>)).GetGenericArguments()[0])
-            //            {
-            //                Throw.UndefinedException();
-            //            }
-            //#endif
+#if DEBUG //проверка соответсвия типов
+#pragma warning disable IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
+            if (componentType != typeof(TPool).GetInterfaces()
+                .First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>))
+                .GetGenericArguments()[0])
+            {
+                Throw.UndefinedException();
+            }
+#pragma warning restore IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
+#endif
             int componentTypeCode = EcsTypeCode.Get(componentType);
 
             if (_componentTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int componentTypeID))
@@ -135,11 +140,6 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref _pools, _pools.Length << 1);
                 Array.Resize(ref _poolComponentCounts, _pools.Length);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
-
-                //for (int i = 0; i < _entitiesCapacity; i++)
-                //{
-                //    //Array.Resize(ref _entityComponentMasks[i], _pools.Length / 32 + 1);
-                //}
 
                 int newEntityComponentMaskLength = _pools.Length / COMPONENT_MATRIX_MASK_BITSIZE + 1;
                 int dif = newEntityComponentMaskLength - _entityComponentMaskLength;

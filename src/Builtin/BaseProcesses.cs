@@ -1,5 +1,4 @@
 ﻿#pragma warning disable CS0162 // Обнаружен недостижимый код
-using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 
@@ -7,28 +6,24 @@ namespace DCFApixels.DragonECS
 {
     [MetaName(nameof(PreInit))]
     [MetaColor(MetaColor.Orange)]
-    [BindWithEcsRunner(typeof(EcsPreInitRunner))]
     public interface IEcsPreInit : IEcsProcess
     {
         void PreInit();
     }
     [MetaName(nameof(Init))]
     [MetaColor(MetaColor.Orange)]
-    [BindWithEcsRunner(typeof(EcsInitRunner))]
     public interface IEcsInit : IEcsProcess
     {
         void Init();
     }
     [MetaName(nameof(Run))]
     [MetaColor(MetaColor.Orange)]
-    [BindWithEcsRunner(typeof(EcsRunRunner))]
     public interface IEcsRun : IEcsProcess
     {
         void Run();
     }
     [MetaName(nameof(Destroy))]
     [MetaColor(MetaColor.Orange)]
-    [BindWithEcsRunner(typeof(EcsDestroyRunner))]
     public interface IEcsDestroy : IEcsProcess
     {
         void Destroy();
@@ -38,7 +33,7 @@ namespace DCFApixels.DragonECS
 namespace DCFApixels.DragonECS.Internal
 {
     [MetaColor(MetaColor.Orange)]
-    public sealed class EcsPreInitRunner : EcsRunner<IEcsPreInit>, IEcsPreInit
+    internal sealed class EcsPreInitRunner : EcsRunner<IEcsPreInit>, IEcsPreInit
     {
 #if DEBUG && !DISABLE_DEBUG
         private EcsProfilerMarker[] _markers;
@@ -73,7 +68,10 @@ namespace DCFApixels.DragonECS.Internal
 #else
             foreach (var item in Process)
             {
-                try { item.PreInit(); }
+                try 
+                { 
+                    item.PreInit(); 
+                }
                 catch (Exception e)
                 {
 #if DISABLE_CATH_EXCEPTIONS
@@ -86,7 +84,7 @@ namespace DCFApixels.DragonECS.Internal
         }
     }
     [MetaColor(MetaColor.Orange)]
-    public sealed class EcsInitRunner : EcsRunner<IEcsInit>, IEcsInit
+    internal sealed class EcsInitRunner : EcsRunner<IEcsInit>, IEcsInit
     {
 #if DEBUG && !DISABLE_DEBUG
         private EcsProfilerMarker[] _markers;
@@ -134,7 +132,7 @@ namespace DCFApixels.DragonECS.Internal
         }
     }
     [MetaColor(MetaColor.Orange)]
-    public sealed class EcsRunRunner : EcsRunner<IEcsRun>, IEcsRun
+    internal sealed class EcsRunRunner : EcsRunner<IEcsRun>, IEcsRun
     {
 #if DEBUG && !DISABLE_DEBUG
         private EcsProfilerMarker[] _markers;
@@ -182,7 +180,7 @@ namespace DCFApixels.DragonECS.Internal
         }
     }
     [MetaColor(MetaColor.Orange)]
-    public sealed class EcsDestroyRunner : EcsRunner<IEcsDestroy>, IEcsDestroy
+    internal sealed class EcsDestroyRunner : EcsRunner<IEcsDestroy>, IEcsDestroy
     {
 #if DEBUG && !DISABLE_DEBUG
         private EcsProfilerMarker[] _markers;
@@ -195,7 +193,7 @@ namespace DCFApixels.DragonECS.Internal
             }
         }
 #endif
-        void IEcsDestroy.Destroy()
+        public void Destroy()
         {
 #if DEBUG && !DISABLE_DEBUG
             for (int i = 0, n = Process.Length < _markers.Length ? Process.Length : _markers.Length; i < n; i++)

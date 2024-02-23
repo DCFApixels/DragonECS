@@ -21,12 +21,14 @@ namespace DCFApixels.DragonECS
         private IEcsProcess[] _allSystems;
         private Dictionary<Type, Array> _processes = new Dictionary<Type, Array>();
         private Dictionary<Type, IEcsRunner> _runners = new Dictionary<Type, IEcsRunner>();
-        private IEcsRun _runRunnerCache;
+        private EcsRunRunner _runRunnerCache;
 
         private bool _isInit = false;
         private bool _isDestoryed = false;
 
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
         private EcsProfilerMarker _initBarker = new EcsProfilerMarker("EcsPipeline.Init");
+#endif
 
         #region Properties
         public IEcsPipelineConfig Config
@@ -64,7 +66,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Get Process/Runner
+        #region Get Process
         public EcsProcess<T> GetProcess<T>() where T : IEcsProcess
         {
             Type type = typeof(T);
@@ -80,31 +82,43 @@ namespace DCFApixels.DragonECS
             }
             return new EcsProcess<T>(result);
         }
-#if !REFLECTION_DISABLED
+        #endregion
+
+        #region Declare/Get Runner
+        public TRunner DeclareRunner<TRunner>() where TRunner : EcsRunner, IEcsRunner, new()
+        {
+            Type runnerType = typeof(TRunner);
+            if (_runners.TryGetValue(runnerType, out IEcsRunner result))
+            {
+                return (TRunner)result;
+            }
+            TRunner instance = new TRunner();
+#if DEBUG
+            EcsRunner.CheckRunnerTypeIsValide(runnerType, instance.Interface);
+#endif
+            instance.Init_Internal(this);
+            _runners.Add(runnerType, instance);
+            _runners.Add(instance.Interface, instance);
+            return instance;
+        }
         public T GetRunner<T>() where T : IEcsProcess
         {
-            Type interfaceType = typeof(T);
-            if (_runners.TryGetValue(interfaceType, out IEcsRunner result) == false)
+            if (_runners.TryGetValue(typeof(T), out IEcsRunner result))
             {
-                result = (IEcsRunner)EcsRunner<T>.Instantiate(this);
-                _runners.Add(result.GetType(), result);
-                _runners.Add(interfaceType, result);
+                return (T)result;
             }
-            return (T)result;
+            Throw.UndefinedException();
+            return default;
         }
-#endif
-        public T GetRunnerInstance<T>() where T : IEcsRunner, new()
+        public bool TryGetRunner<T>(out T runner) where T : IEcsProcess
         {
-            Type runnerType = typeof(T);
-            if (_runners.TryGetValue(runnerType, out IEcsRunner result) == false)
+            if (_runners.TryGetValue(typeof(T), out IEcsRunner result))
             {
-                result = new T();
-                _runners.Add(runnerType, result);
-#if !REFLECTION_DISABLED
-                _runners.Add(result.Interface, result);
-#endif
+                runner = (T)result;
+                return true;
             }
-            return (T)result;
+            runner = default;
+            return false;
         }
         #endregion
 
@@ -123,7 +137,9 @@ namespace DCFApixels.DragonECS
                 EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been initialized");
                 return;
             }
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _initBarker.Begin();
+#endif
             EcsProcess<IEcsPipelineMember> members = GetProcess<IEcsPipelineMember>();
             foreach (var member in members)
             {
@@ -132,33 +148,31 @@ namespace DCFApixels.DragonECS
             _injector = _injectorBuilder.Build(this);
             _injectorBuilder = null;
 
-            var preInitRunner = GetRunner<IEcsPreInit>();
-            preInitRunner.PreInit();
-            EcsRunner.Destroy(preInitRunner);
-            var initRunner = GetRunner<IEcsInit>();
-            initRunner.Init();
-            EcsRunner.Destroy(initRunner);
+            DeclareRunner<EcsPreInitRunner>().PreInit();
+            DeclareRunner<EcsInitRunner>().Init();
+            _runRunnerCache = DeclareRunner<EcsRunRunner>();
 
-            _runRunnerCache = GetRunner<IEcsRun>();
             _isInit = true;
 
             GC.Collect();
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _initBarker.End();
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run));
-            if (_isDestoryed) Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run));
+            if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run)); }
+            if (_isDestoryed) { Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run)); }
 #endif
             _runRunnerCache.Run();
         }
         public void Destroy()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!_isInit) Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Destroy));
+            if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Destroy)); }
 #endif
             if (_isDestoryed)
             {
@@ -166,7 +180,7 @@ namespace DCFApixels.DragonECS
                 return;
             }
             _isDestoryed = true;
-            GetRunner<IEcsDestroy>().Destroy();
+            DeclareRunner<EcsDestroyRunner>().Destroy();
         }
         #endregion
 
@@ -184,7 +198,10 @@ namespace DCFApixels.DragonECS
             public readonly LayerList Layers;
             private readonly IEcsPipelineConfigWriter _config;
             private readonly Injector.Builder _injector;
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             private EcsProfilerMarker _buildBarker = new EcsProfilerMarker("EcsPipeline.Build");
+#endif
+            private List<InitDeclaredRunner> _initDeclaredRunners = new List<InitDeclaredRunner>(4);
 
             public IEcsPipelineConfigWriter Config
             {
@@ -196,8 +213,9 @@ namespace DCFApixels.DragonECS
             }
             public Builder(IEcsPipelineConfigWriter config = null)
             {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 _buildBarker.Begin();
-
+#endif
                 if (config == null) { config = new EcsPipelineConfig(); }
                 _config = config;
 
@@ -213,6 +231,11 @@ namespace DCFApixels.DragonECS
 
                 _uniqueTypes = new HashSet<Type>();
                 _systems = new Dictionary<string, List<IEcsProcess>>(KEYS_CAPACITY);
+            }
+            public Builder DeclareRunner<T>() where T : EcsRunner, IEcsRunner, new()
+            {
+                _initDeclaredRunners.Add(new InitDeclaredRunner<T>());
+                return this;
             }
             public Builder Add(IEcsProcess system, string layerName = null)
             {
@@ -268,10 +291,28 @@ namespace DCFApixels.DragonECS
                     if (_systems.TryGetValue(item, out var list))
                         result.AddRange(list);
                 }
+                EcsPipeline pipeline = new EcsPipeline(_config.GetPipelineConfig(), _injector, result.ToArray());
+                foreach (var item in _initDeclaredRunners)
+                {
+                    item.Declare(pipeline);
+                }
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 _buildBarker.End();
-                return new EcsPipeline(_config.GetPipelineConfig(), _injector, result.ToArray());
+#endif
+                return pipeline;
             }
 
+            private abstract class InitDeclaredRunner
+            {
+                public abstract void Declare(EcsPipeline pipeline);
+            }
+            private class InitDeclaredRunner<T> : InitDeclaredRunner where T : EcsRunner, IEcsRunner, new()
+            {
+                public override void Declare(EcsPipeline pipeline)
+                {
+                    pipeline.DeclareRunner<T>();
+                }
+            }
             public class LayerList : IEnumerable<string>
             {
                 private const string ADD_LAYER = nameof(ADD_LAYER); // автоматический слой нужный только для метода Add

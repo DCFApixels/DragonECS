@@ -48,15 +48,20 @@ namespace DCFApixels.DragonECS
             {
                 Builder builder = new Builder(world);
                 Type aspectType = typeof(TAspect);
-                ConstructorInfo constructorInfo = aspectType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
                 EcsAspect newAspect;
+                //TODO добавить оповещение что инициализация через конструктор не работает
+#if !REFLECTION_DISABLED
+                ConstructorInfo constructorInfo = aspectType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
                 if (constructorInfo != null)
                 {
                     newAspect = (EcsAspect)constructorInfo.Invoke(new object[] { builder });
                 }
                 else
+#endif
                 {
-                    newAspect = (EcsAspect)Activator.CreateInstance(typeof(TAspect));
+#pragma warning disable IL2091 // Target generic argument does not satisfy 'DynamicallyAccessedMembersAttribute' in target method or type. The generic parameter of the source method or type does not have matching annotations.
+                    newAspect = Activator.CreateInstance<TAspect>();
+#pragma warning restore IL2091
                     newAspect.Init(builder);
                 }
                 newAspect._source = world;
@@ -92,13 +97,15 @@ namespace DCFApixels.DragonECS
             #region Include/Exclude/Optional/Combine
             public TPool Include<TPool>() where TPool : IEcsPoolImplementation, new()
             {
-                IncludeImplicit(typeof(TPool).GetGenericArguments()[0]);
-                return _world.GetPool<TPool>();
+                var pool = _world.GetPool<TPool>();
+                IncludeImplicit(pool.ComponentType);
+                return pool;
             }
             public TPool Exclude<TPool>() where TPool : IEcsPoolImplementation, new()
             {
-                ExcludeImplicit(typeof(TPool).GetGenericArguments()[0]);
-                return _world.GetPool<TPool>();
+                var pool = _world.GetPool<TPool>();
+                ExcludeImplicit(pool.ComponentType);
+                return pool;
             }
             public TPool Optional<TPool>() where TPool : IEcsPoolImplementation, new()
             {

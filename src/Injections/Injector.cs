@@ -124,7 +124,9 @@ namespace DCFApixels.DragonECS
                 return false;
             }
             InitNode(new InjectionNode<T>(type));
+#if !REFLECTION_DISABLED
             if (IsCanInstantiated(type))
+#endif
             {
                 InitBranch(new InjectionBranch(this, type, true));
             }
@@ -184,3 +186,4 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 }
+
