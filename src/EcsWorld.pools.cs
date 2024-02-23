@@ -100,7 +100,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Declare/Create
+        #region Declare
         private int DeclareOrGetComponentTypeID(int componentTypeCode)
         {
             if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int ComponentTypeID) == false)
@@ -120,6 +120,9 @@ namespace DCFApixels.DragonECS
             }
             return false;
         }
+        #endregion
+
+        #region Create
         private TPool CreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
             int poolTypeCode = EcsTypeCode.Get<TPool>();
@@ -186,7 +189,13 @@ namespace DCFApixels.DragonECS
 
             }
 
-            if (_pools[componentTypeID] != _nullPool)
+            var oldPool = _pools[componentTypeID];
+            if (oldPool is EcsVirtualPool virtualPool)
+            {
+                var data = virtualPool.GetDevirtualizationData();
+                newPool.OnDevirtualize(data);
+            }
+            if (oldPool.IsNullOrDummy() == false)
             {
                 Throw.UndefinedException();
             }
@@ -196,7 +205,6 @@ namespace DCFApixels.DragonECS
             return newPool;
         }
         #endregion
-
 
         #region Pools mediation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

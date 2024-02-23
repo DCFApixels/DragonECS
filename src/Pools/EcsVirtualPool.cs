@@ -22,6 +22,8 @@ public class EcsVirtualPool : IEcsPoolImplementation, IEnumerable
 
     private EcsWorld.PoolsMediator _mediator;
 
+    private bool _isDevirtualized = false;
+
     #region Properties
     public int ComponentID
     {
@@ -42,6 +44,10 @@ public class EcsVirtualPool : IEcsPoolImplementation, IEnumerable
     public int Capacity
     {
         get { return _mapping.Length; }
+    }
+    public bool IsDevirtualized
+    {
+        get { return _isDevirtualized; }
     }
     #endregion
 
@@ -187,6 +193,10 @@ public class EcsVirtualPool : IEcsPoolImplementation, IEnumerable
     #endregion
 
     #region Devirtualization
+    public Data GetDevirtualizationData()
+    {
+        return new Data(this);
+    }
     public readonly ref struct Data
     {
         private readonly EcsVirtualPool _target;
