@@ -205,7 +205,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool HasEntityComponent(int entityID, EcsMaskChunck maskBit)
         {
-            return (_entityComponentMasks[entityID * _entityComponentMaskLength + maskBit.chankIndex] & maskBit.mask) != maskBit.mask;
+            return (_entityComponentMasks[entityID * _entityComponentMaskLength + maskBit.chankIndex] & maskBit.mask) == maskBit.mask; 
         }
         #endregion
 
