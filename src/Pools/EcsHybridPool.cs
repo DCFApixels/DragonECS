@@ -1,3 +1,4 @@
+using DCFApixels.DragonECS;
 using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections;
@@ -17,7 +18,7 @@ namespace DCFApixels.DragonECS
     }
     /// <summary>Pool for IEcsHybridComponent components</summary>
     public sealed class EcsHybridPool<T> : IEcsPoolImplementation<T>, IEcsHybridPool<T>, IEcsHybridPoolInternal, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
-        where T : IEcsHybridComponent
+        where T : class, IEcsHybridComponent
     {
         private EcsWorld _source;
         private int _componentTypeID;
@@ -36,11 +37,26 @@ namespace DCFApixels.DragonECS
         private EcsWorld.PoolsMediator _mediator;
 
         #region Properites
-        public int Count => _itemsCount;
-        public int Capacity => _items.Length;
-        public int ComponentID => _componentTypeID;
-        public Type ComponentType => typeof(T);
-        public EcsWorld World => _source;
+        public int Count
+        {
+            get { return _itemsCount; }
+        }
+        public int Capacity
+        {
+            get { return _items.Length; }
+        }
+        public int ComponentID
+        {
+            get { return _componentTypeID; }
+        }
+        public Type ComponentType
+        {
+            get { return typeof(T); }
+        }
+        public EcsWorld World
+        {
+            get { return _source; }
+        }
         #endregion
 
         #region Methods
@@ -243,28 +259,28 @@ namespace DCFApixels.DragonECS
         public static bool IsNullOrNotAlive(this IEcsHybridComponent self) => self == null || self.IsAlive;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> GetPool<T>(this EcsWorld self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> GetPool<T>(this EcsWorld self) where T : class, IEcsHybridComponent
         {
             return self.GetPool<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> GetPoolUnchecked<T>(this EcsWorld self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> GetPoolUnchecked<T>(this EcsWorld self) where T : class, IEcsHybridComponent
         {
             return self.GetPoolUnchecked<EcsHybridPool<T>>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> Include<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> Include<T>(this EcsAspect.Builder self) where T : class, IEcsHybridComponent
         {
             return self.Include<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> Exclude<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> Exclude<T>(this EcsAspect.Builder self) where T : class, IEcsHybridComponent
         {
             return self.Exclude<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> Optional<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> Optional<T>(this EcsAspect.Builder self) where T : class, IEcsHybridComponent
         {
             return self.Optional<EcsHybridPool<T>>();
         }
@@ -272,28 +288,28 @@ namespace DCFApixels.DragonECS
         //-------------------------------------------------
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> GetHybridPool<T>(this EcsWorld self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> GetHybridPool<T>(this EcsWorld self) where T : class, IEcsHybridComponent
         {
             return self.GetPool<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> GetHybridPoolUnchecked<T>(this EcsWorld self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> GetHybridPoolUnchecked<T>(this EcsWorld self) where T : class, IEcsHybridComponent
         {
             return self.GetPoolUnchecked<EcsHybridPool<T>>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> IncludeHybrid<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> IncludeHybrid<T>(this EcsAspect.Builder self) where T : class, IEcsHybridComponent
         {
             return self.Include<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> ExcludeHybrid<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> ExcludeHybrid<T>(this EcsAspect.Builder self) where T : class, IEcsHybridComponent
         {
             return self.Exclude<EcsHybridPool<T>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsHybridPool<T> OptionalHybrid<T>(this EcsAspect.Builder self) where T : IEcsHybridComponent
+        public static EcsHybridPool<T> OptionalHybrid<T>(this EcsAspect.Builder self) where T : class, IEcsHybridComponent
         {
             return self.Optional<EcsHybridPool<T>>();
         }
@@ -372,9 +388,6 @@ namespace DCFApixels.DragonECS
         }
         private IEcsHybridPoolInternal CreateHybridPool(Type componentType)
         {
-            //var x = (IEcsHybridPoolInternal)getHybridPoolMethod.MakeGenericMethod(componentType).Invoke(null, _sourceForReflection);
-            //Debug.Log("_" + x.ComponentID + "_" +x.ComponentType.Name);
-            //return x;
             return (IEcsHybridPoolInternal)getHybridPoolMethod.MakeGenericMethod(componentType).Invoke(null, _sourceForReflection);
         }
 
