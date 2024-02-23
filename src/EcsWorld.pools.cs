@@ -8,7 +8,7 @@ namespace DCFApixels.DragonECS
     public partial class EcsWorld
     {
         private SparseArray<int> _poolTypeCode_2_CmpTypeIDs = new SparseArray<int>();
-        private SparseArray<int> _componentTypeCode_2_CmpTypeIDs = new SparseArray<int>();
+        private SparseArray<int> _cmpTypeCode_2_CmpTypeIDs = new SparseArray<int>();
         private int _poolsCount;
         internal IEcsPoolImplementation[] _pools;
         internal int[] _poolComponentCounts;
@@ -20,11 +20,20 @@ namespace DCFApixels.DragonECS
         #region Getters
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TPool TestGetPool<TPool>() where TPool : IEcsPoolImplementation, new()
+        public IEcsPool GetPool(Type componentType)
+        //TODO. Есть проблема, возврат виртуального пула и последующая девиртуализация сделает ссылку невалидной. Одно из решений возвращать обертку
         {
-            return Get<PoolCache<TPool>>().instance;
+#if DEBUG
+#endif
+            int componentTypeID = GetComponentTypeID(componentType);
+            ref var pool = ref _pools[componentTypeID];
+            if (pool == _nullPool)
+            {
+                pool = new EcsVirtualPool();
+                pool.OnInit(this, _poolsMediator, componentTypeID);
+            }
+            return pool;
         }
-
 
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.Preserve]
@@ -71,11 +80,11 @@ namespace DCFApixels.DragonECS
         }
         public bool IsComponentTypeDeclared<TComponent>()
         {
-            return _componentTypeCode_2_CmpTypeIDs.Contains(EcsTypeCode.Get<TComponent>());
+            return _cmpTypeCode_2_CmpTypeIDs.Contains(EcsTypeCode.Get<TComponent>());
         }
         public bool IsComponentTypeDeclared(Type componentType)
         {
-            return _componentTypeCode_2_CmpTypeIDs.Contains(EcsTypeCode.Get(componentType));
+            return _cmpTypeCode_2_CmpTypeIDs.Contains(EcsTypeCode.Get(componentType));
         }
         public bool IsComponentTypeDeclared(int componentTypeID)
         {
@@ -94,12 +103,22 @@ namespace DCFApixels.DragonECS
         #region Declare/Create
         private int DeclareOrGetComponentTypeID(int componentTypeCode)
         {
-            if (!_componentTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int ComponentTypeID))
+            if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int ComponentTypeID) == false)
             {
                 ComponentTypeID = _poolsCount++;
-                _componentTypeCode_2_CmpTypeIDs.Add(componentTypeCode, ComponentTypeID);
+                _cmpTypeCode_2_CmpTypeIDs.Add(componentTypeCode, ComponentTypeID);
             }
             return ComponentTypeID;
+        }
+        private bool TryDeclareComponentTypeID(int componentTypeCode, out int componentTypeID)
+        {
+            if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out componentTypeID) == false)
+            {
+                componentTypeID = _poolsCount++;
+                _cmpTypeCode_2_CmpTypeIDs.Add(componentTypeCode, componentTypeID);
+                return true;
+            }
+            return false;
         }
         private TPool CreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
@@ -123,7 +142,7 @@ namespace DCFApixels.DragonECS
 #endif
             int componentTypeCode = EcsTypeCode.Get(componentType);
 
-            if (_componentTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int componentTypeID))
+            if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int componentTypeID))
             {
                 _poolTypeCode_2_CmpTypeIDs[poolTypeCode] = componentTypeID;
             }
@@ -131,7 +150,7 @@ namespace DCFApixels.DragonECS
             {
                 componentTypeID = _poolsCount++;
                 _poolTypeCode_2_CmpTypeIDs[poolTypeCode] = componentTypeID;
-                _componentTypeCode_2_CmpTypeIDs[componentTypeCode] = componentTypeID;
+                _cmpTypeCode_2_CmpTypeIDs[componentTypeCode] = componentTypeID;
             }
 
             if (_poolsCount >= _pools.Length)

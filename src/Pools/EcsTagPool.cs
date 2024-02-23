@@ -1,3 +1,4 @@
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -157,6 +158,18 @@ namespace DCFApixels.DragonECS
 
             _mapping = new bool[world.Capacity];
             _count = 0;
+        }
+        void IEcsPoolImplementation.OnDevirtualize(EcsVirtualPool.Data data)
+        {
+            _count = data.ComponentsCount;
+            foreach (var item in data.RawComponents)
+            {
+                _mapping[item.EntityID] = true;
+            }
+            foreach (var item in data.Listeners)
+            {
+                _listeners.Add(item);
+            }
         }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {

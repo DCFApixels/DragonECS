@@ -210,6 +210,22 @@ namespace DCFApixels.DragonECS
             _entities = new int[capacity];
             _itemsCount = 0;
         }
+        void IEcsPoolImplementation.OnDevirtualize(EcsVirtualPool.Data data)
+        {
+            if (_items.Length < data.ComponentsCount)
+            {
+                Array.Resize(ref _items, ArrayUtility.NormalizeSizeToPowerOfTwo(data.ComponentsCount));
+            }
+            foreach (var item in data.RawComponents)
+            {
+                _mapping[item.EntityID] = ++_itemsCount;
+                _items[_itemsCount] = (T)item.RawData;
+            }
+            foreach (var item in data.Listeners)
+            {
+                _listeners.Add(item);
+            }
+        }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);
@@ -401,3 +417,54 @@ namespace DCFApixels.DragonECS
         }
     }
 }
+
+
+public class HybridTypeMapping
+{
+    private EcsWorld _world;
+    private Dictionary<Type, IEcsHybridPoolInternal> _declared = new Dictionary<Type, IEcsHybridPoolInternal>();
+
+    private HashSet<Type> _canInstantiatedTypes = new HashSet<Type>();
+
+    public void AddIntsanceType(object instance)
+    {
+        _canInstantiatedTypes.Add(instance.GetType());
+    }
+
+    public void Declare<T>()
+    {
+
+    }
+
+
+    private void Init()
+    {
+
+    }
+}
+
+
+//public abstract class HybridBranchBase { }
+//public class HybridBranch<T> : HybridBranchBase
+//    where T : IEcsHybridComponent
+//{
+//    private EcsHybridPool<T> _targetTypePool;
+//    public HybridBranch(EcsWorld source)
+//    {
+//        source.GetHybridPool<T>();
+//    }
+//}
+//
+//
+//
+//
+//public abstract class HybridNodeBase { }
+//public class HybridNode<T> : HybridNodeBase
+//    where T : IEcsHybridComponent
+//{
+//    private EcsHybridPool<T> _targetTypePool;
+//    public HybridNode(EcsWorld source)
+//    {
+//        source.GetHybridPool<T>();
+//    }
+//}
