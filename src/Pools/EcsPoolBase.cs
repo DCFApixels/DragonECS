@@ -12,7 +12,7 @@ namespace DCFApixels.DragonECS
         Type ComponentType { get; }
         EcsWorld World { get; }
         int Count { get; }
-        int Capacity { get; }
+        int Capacity { get; } //TODO удалить. не во всех реализация нужен, проще привести к типу
         #endregion
 
         #region Methods
@@ -30,18 +30,21 @@ namespace DCFApixels.DragonECS
         void RemoveListener(IEcsPoolEventListener listener);
         #endregion
     }
-    public interface IEcsStructPool<T> : IEcsPool
+    /// <summary>A pool for struct components.</summary>
+    public interface IEcsStructPool<T> : IEcsPool where T: struct
     {
         ref T Add(int entityID);
         ref readonly T Read(int entityID);
         ref T Get(int entityID);
     }
-    public interface IEcsClassPool<T> : IEcsPool
+    /// <summary>A pool for reference components of type T that instantiates components itself.</summary>
+    public interface IEcsClassPool<T> : IEcsPool where T: class
     {
         T Add(int entityID);
         T Get(int entityID);
     }
-    public interface IEcsHybridPool<T> : IEcsPool
+    /// <summary>A pool for reference components of type T, which does not instantiate components itself but receives components from external sources..</summary>
+    public interface IEcsHybridPool<T> : IEcsPool where T: class
     {
         void Add(int entityID, T component);
         T Get(int entityID);
@@ -67,6 +70,14 @@ namespace DCFApixels.DragonECS
         public static void ThrowNotHaveComponent<T>(int entityID)
         {
             throw new EcsFrameworkException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName<T>()}.");
+        }
+        public static void ThrowAlreadyHasComponent(Type type, int entityID)
+        {
+            throw new EcsFrameworkException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName(type)}.");
+        }
+        public static void ThrowNotHaveComponent(Type type, int entityID)
+        {
+            throw new EcsFrameworkException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName(type)}.");
         }
     }
     public static class IEcsPoolImplementationExtensions

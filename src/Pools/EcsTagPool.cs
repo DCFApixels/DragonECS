@@ -33,24 +33,41 @@ namespace DCFApixels.DragonECS
         public EcsTagPool()
         {
             if (_isInvalidType)
+            {
                 throw new EcsFrameworkException($"{typeof(T).Name} type must not contain any data.");
+            }
         }
 #endif
         #endregion
 
         #region Properites
-        public int Count => _count;
-        int IEcsPool.Capacity => -1;
-        public int ComponentID => _componentTypeID;
-        public Type ComponentType => typeof(T);
-        public EcsWorld World => _source;
+        public int Count
+        {
+            get { return _count; }
+        }
+        int IEcsPool.Capacity
+        {
+            get { return -1; }
+        }
+        public int ComponentID
+        {
+            get { return _componentTypeID; }
+        }
+        public Type ComponentType
+        {
+            get { return typeof(T); }
+        }
+        public EcsWorld World
+        {
+            get { return _source; }
+        }
         #endregion
 
         #region Method
         public void Add(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (Has(entityID)) EcsPoolThrowHalper.ThrowAlreadyHasComponent<T>(entityID);
+            if (Has(entityID)) { EcsPoolThrowHalper.ThrowAlreadyHasComponent<T>(entityID); }
 #endif
             _count++;
             _mapping[entityID] = true;
@@ -59,12 +76,9 @@ namespace DCFApixels.DragonECS
         }
         public void TryAdd(int entityID)
         {
-            if (!_mapping[entityID])
+            if (Has(entityID) == false)
             {
-                _count++;
-                _mapping[entityID] = true;
-                _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-                _listeners.InvokeOnAdd(entityID);
+                Add(entityID);
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -75,7 +89,7 @@ namespace DCFApixels.DragonECS
         public void Del(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
+            if (!Has(entityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             _mapping[entityID] = false;
             _count--;
@@ -84,19 +98,22 @@ namespace DCFApixels.DragonECS
         }
         public void TryDel(int entityID)
         {
-            if (Has(entityID)) Del(entityID);
+            if (Has(entityID))
+            {
+                Del(entityID);
+            }
         }
         public void Copy(int fromEntityID, int toEntityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(fromEntityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID);
+            if (!Has(fromEntityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID); }
 #endif
             TryAdd(toEntityID);
         }
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(fromEntityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID);
+            if (!Has(fromEntityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID); }
 #endif
             toWorld.GetPool<T>().TryAdd(toEntityID);
         }
@@ -105,20 +122,28 @@ namespace DCFApixels.DragonECS
             if (isHas)
             {
                 if (!Has(entityID))
+                {
                     Add(entityID);
+                }
             }
             else
             {
                 if (Has(entityID))
+                {
                     Del(entityID);
+                }
             }
         }
         public void Toggle(int entityID)
         {
             if (Has(entityID))
+            {
                 Del(entityID);
+            }
             else
+            {
                 Add(entityID);
+            }
         }
         #endregion
 
@@ -142,11 +167,27 @@ namespace DCFApixels.DragonECS
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
         {
             foreach (var entityID in buffer)
+            {
                 TryDel(entityID);
+            }
         }
         #endregion
 
         #region Other
+        void IEcsPool.AddRaw(int entityID, object dataRaw) { Add(entityID); }
+        object IEcsPool.GetRaw(int entityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (Has(entityID) == false) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
+#endif
+            return _fakeComponent;
+        }
+        void IEcsPool.SetRaw(int entityID, object dataRaw)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (Has(entityID) == false) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
+#endif
+        }
         ref T IEcsStructPool<T>.Add(int entityID)
         {
             Add(entityID);
@@ -155,30 +196,16 @@ namespace DCFApixels.DragonECS
         ref readonly T IEcsStructPool<T>.Read(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
+            if (Has(entityID) == false) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             return ref _fakeComponent;
         }
         ref T IEcsStructPool<T>.Get(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
+            if (Has(entityID) == false) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             return ref _fakeComponent;
-        }
-        void IEcsPool.AddRaw(int entityID, object dataRaw) => Add(entityID);
-        object IEcsPool.GetRaw(int entityID)
-        {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
-#endif
-            return _fakeComponent;
-        }
-        void IEcsPool.SetRaw(int entityID, object dataRaw)
-        {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
-#endif
         }
         #endregion
 

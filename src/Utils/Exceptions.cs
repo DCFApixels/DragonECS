@@ -123,6 +123,11 @@ namespace DCFApixels.DragonECS.Internal
         {
             throw new Exception();
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void Exception(string message)
+        {
+            throw new Exception(message);
+        }
     }
 }
 

@@ -30,11 +30,26 @@ namespace DCFApixels.DragonECS
         private EcsWorld.PoolsMediator _mediator;
 
         #region Properites
-        public int Count => _itemsCount;
-        public int Capacity => _items.Length;
-        public int ComponentID => _componentTypeID;
-        public Type ComponentType => typeof(T);
-        public EcsWorld World => _source;
+        public int Count
+        {
+            get { return _itemsCount; }
+        }
+        public int Capacity
+        {
+            get { return _items.Length; }
+        }
+        public int ComponentID
+        {
+            get { return _componentTypeID; }
+        }
+        public Type ComponentType
+        {
+            get { return typeof(T); }
+        }
+        public EcsWorld World
+        {
+            get { return _source; }
+        }
         #endregion
 
         #region Methods
@@ -42,7 +57,7 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (itemIndex > 0) EcsPoolThrowHalper.ThrowAlreadyHasComponent<T>(entityID);
+            if (itemIndex > 0) { EcsPoolThrowHalper.ThrowAlreadyHasComponent<T>(entityID); }
 #endif
             if (_recycledItemsCount > 0)
             {
@@ -53,7 +68,9 @@ namespace DCFApixels.DragonECS
             {
                 itemIndex = ++_itemsCount;
                 if (itemIndex >= _items.Length)
+                {
                     Array.Resize(ref _items, _items.Length << 1);
+                }
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnAddAndGet(entityID);
@@ -64,7 +81,7 @@ namespace DCFApixels.DragonECS
         public ref T Get(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
+            if (!Has(entityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             _listeners.InvokeOnGet(entityID);
             return ref _items[_mapping[entityID]];
@@ -73,7 +90,7 @@ namespace DCFApixels.DragonECS
         public ref readonly T Read(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
+            if (!Has(entityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             return ref _items[_mapping[entityID]];
         }
@@ -91,7 +108,9 @@ namespace DCFApixels.DragonECS
                 {
                     itemIndex = ++_itemsCount;
                     if (itemIndex >= _items.Length)
+                    {
                         Array.Resize(ref _items, _items.Length << 1);
+                    }
                 }
                 _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
                 _listeners.InvokeOnAdd(entityID);
@@ -107,36 +126,39 @@ namespace DCFApixels.DragonECS
         }
         public void Del(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID);
-#endif
             ref int itemIndex = ref _mapping[entityID];
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (itemIndex <= 0) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
+#endif
             ResetComponent(ref _items[itemIndex]);
             if (_recycledItemsCount >= _recycledItems.Length)
             {
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
             }
             _recycledItems[_recycledItemsCount++] = itemIndex;
-            _mapping[entityID] = 0;
+            itemIndex = 0;
             _itemsCount--;
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnDel(entityID);
         }
         public void TryDel(int entityID)
         {
-            if (Has(entityID)) Del(entityID);
+            if (Has(entityID))
+            {
+                Del(entityID);
+            }
         }
         public void Copy(int fromEntityID, int toEntityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(fromEntityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID);
+            if (!Has(fromEntityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID); }
 #endif
             CopyComponent(ref Get(fromEntityID), ref TryAddOrGet(toEntityID));
         }
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(fromEntityID)) EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID);
+            if (!Has(fromEntityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID); }
 #endif
             CopyComponent(ref Get(fromEntityID), ref toWorld.GetPool<T>().TryAddOrGet(toEntityID));
         }
@@ -171,11 +193,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
-        void IEcsPool.AddRaw(int entityID, object dataRaw) => Add(entityID) = (T)dataRaw;
-        object IEcsPool.GetRaw(int entityID) => Read(entityID);
-        void IEcsPool.SetRaw(int entityID, object dataRaw) => Get(entityID) = (T)dataRaw;
-        ref readonly T IEcsStructPool<T>.Read(int entityID) => ref Read(entityID);
-        ref T IEcsStructPool<T>.Get(int entityID) => ref Get(entityID);
+        void IEcsPool.AddRaw(int entityID, object dataRaw) { Add(entityID) = (T)dataRaw; }
+        object IEcsPool.GetRaw(int entityID) { return Get(entityID); }
+        void IEcsPool.SetRaw(int entityID, object dataRaw) { Get(entityID) = (T)dataRaw; }
         #endregion
 
         #region Listeners
@@ -219,8 +239,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IEnumerator - IntelliSense hack
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => throw new NotImplementedException();
-        IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() { throw new NotImplementedException(); }
+        IEnumerator IEnumerable.GetEnumerator() { throw new NotImplementedException(); }
         #endregion
     }
     /// <summary>Standard component</summary>
