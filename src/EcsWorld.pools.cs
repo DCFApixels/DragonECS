@@ -29,7 +29,7 @@ namespace DCFApixels.DragonECS
             ref var pool = ref _pools[componentTypeID];
             if (pool == _nullPool)
             {
-                pool = new EcsVirtualPool();
+                pool = new EcsAnonymousPool();
                 pool.OnInit(this, _poolsMediator, componentTypeID);
             }
             return pool;
@@ -190,18 +190,19 @@ namespace DCFApixels.DragonECS
             }
 
             var oldPool = _pools[componentTypeID];
-            if (oldPool is EcsVirtualPool virtualPool)
+
+            //if (oldPool.IsNullOrDummy() == false)
+            //{
+            //    Throw.UndefinedException();
+            //}
+
+            _pools[componentTypeID] = newPool;
+            newPool.OnInit(this, _poolsMediator, componentTypeID);
+            if (oldPool is EcsAnonymousPool virtualPool)
             {
                 var data = virtualPool.GetDevirtualizationData();
                 newPool.OnDevirtualize(data);
             }
-            if (oldPool.IsNullOrDummy() == false)
-            {
-                Throw.UndefinedException();
-            }
-
-            _pools[componentTypeID] = newPool;
-            newPool.OnInit(this, _poolsMediator, componentTypeID);
             return newPool;
         }
         #endregion

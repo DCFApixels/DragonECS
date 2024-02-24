@@ -159,7 +159,7 @@ namespace DCFApixels.DragonECS
             _mapping = new bool[world.Capacity];
             _count = 0;
         }
-        void IEcsPoolImplementation.OnDevirtualize(EcsVirtualPool.Data data)
+        void IEcsPoolImplementation.OnDevirtualize(EcsAnonymousPool.Data data)
         {
             _count = data.ComponentsCount;
             foreach (var item in data.RawComponents)

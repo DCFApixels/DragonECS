@@ -178,7 +178,7 @@ namespace DCFApixels.DragonECS
             _items = new T[ArrayUtility.NormalizeSizeToPowerOfTwo(world.Config.Get_PoolComponentsCapacity())];
             _itemsCount = 0;
         }
-        void IEcsPoolImplementation.OnDevirtualize(EcsVirtualPool.Data data)
+        void IEcsPoolImplementation.OnDevirtualize(EcsAnonymousPool.Data data)
         {
             if(_items.Length < data.ComponentsCount)
             {

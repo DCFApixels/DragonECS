@@ -5,7 +5,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-public class EcsVirtualPool : IEcsPoolImplementation, IEnumerable
+//EcsAnonymousPool > EcsVirtualPool<T> > EcsPool<T>
+public class EcsAnonymousPool : IEcsPoolImplementation, IEnumerable
 {
     private EcsWorld _source;
     private Type _componentType;
@@ -199,7 +200,7 @@ public class EcsVirtualPool : IEcsPoolImplementation, IEnumerable
     }
     public readonly ref struct Data
     {
-        private readonly EcsVirtualPool _target;
+        private readonly EcsAnonymousPool _target;
         
         public int ComponentsCount
         {
@@ -215,16 +216,16 @@ public class EcsVirtualPool : IEcsPoolImplementation, IEnumerable
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Data(EcsVirtualPool target)
+        public Data(EcsAnonymousPool target)
         {
             _target = target;
         }
 
         public readonly ref struct ListenersIterator
         {
-            private readonly EcsVirtualPool _target;
+            private readonly EcsAnonymousPool _target;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ListenersIterator(EcsVirtualPool target)
+            public ListenersIterator(EcsAnonymousPool target)
             {
                 _target = target;
             }
@@ -234,9 +235,9 @@ public class EcsVirtualPool : IEcsPoolImplementation, IEnumerable
 
         public readonly ref struct RawDataIterator
         {
-            private readonly EcsVirtualPool _target;
+            private readonly EcsAnonymousPool _target;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public RawDataIterator(EcsVirtualPool target)
+            public RawDataIterator(EcsAnonymousPool target)
             {
                 _target = target;
             }
@@ -248,6 +249,7 @@ public class EcsVirtualPool : IEcsPoolImplementation, IEnumerable
                 private readonly object[] _items;
                 private readonly int _entitesCount;
                 private int _entityID;
+                private int _itemIndex;
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public Enumerator(RawDataIterator devirtualizator)
                 {
@@ -263,14 +265,15 @@ public class EcsVirtualPool : IEcsPoolImplementation, IEnumerable
                 public EntityRawDataPair Current
                 {
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    get { return new EntityRawDataPair(_entityID, _items[_entityID]); }
+                    get { return new EntityRawDataPair(_entityID, _items[_itemIndex]); }
                 }
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public bool MoveNext()
                 {
                     while (_entityID++ < _entitesCount)
                     {
-                        if (_mapping[_entityID] != 0)
+                        _itemIndex = _mapping[_entityID];
+                        if (_itemIndex != 0)
                         {
                             return true;
                         }
@@ -306,6 +309,6 @@ public static class VirtualPoolExtensions
 {
     public static bool IsVirtual(this IEcsPool self)
     {
-        return self is EcsVirtualPool;
+        return self is EcsAnonymousPool;
     }
 }

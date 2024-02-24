@@ -210,7 +210,7 @@ namespace DCFApixels.DragonECS
             _entities = new int[capacity];
             _itemsCount = 0;
         }
-        void IEcsPoolImplementation.OnDevirtualize(EcsVirtualPool.Data data)
+        void IEcsPoolImplementation.OnDevirtualize(EcsAnonymousPool.Data data)
         {
             if (_items.Length < data.ComponentsCount)
             {
@@ -424,7 +424,7 @@ public class HybridTypeMapping
     private EcsWorld _world;
     private Dictionary<Type, IEcsHybridPoolInternal> _declared = new Dictionary<Type, IEcsHybridPoolInternal>();
 
-    private HashSet<Type> _canInstantiatedTypes = new HashSet<Type>();
+    private Dictionary<Type, IEcsPool> _canInstantiatedTypes = new Dictionary<Type, IEcsPool>();
 
     public void AddIntsanceType(object instance)
     {
