@@ -178,22 +178,6 @@ namespace DCFApixels.DragonECS
             _items = new T[ArrayUtility.NormalizeSizeToPowerOfTwo(world.Config.Get_PoolComponentsCapacity())];
             _itemsCount = 0;
         }
-        void IEcsPoolImplementation.OnDevirtualize(EcsAnonymousPool.Data data)
-        {
-            if(_items.Length < data.ComponentsCount)
-            {
-                Array.Resize(ref _items, ArrayUtility.NormalizeSizeToPowerOfTwo(data.ComponentsCount));
-            }
-            foreach (var item in data.RawComponents)
-            {
-                _mapping[item.EntityID] = ++_itemsCount;
-                _items[_itemsCount] = (T)item.RawData;
-            }
-            foreach (var item in data.Listeners)
-            {
-                _listeners.Add(item);
-            }
-        }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);

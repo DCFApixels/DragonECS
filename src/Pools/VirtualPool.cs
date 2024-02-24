@@ -5,8 +5,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-//EcsAnonymousPool > EcsVirtualPool<T> > EcsPool<T>
-public class EcsAnonymousPool : IEcsPoolImplementation, IEnumerable
+
+internal class VirtualPool : IEcsPoolImplementation, IEnumerable
 {
     private EcsWorld _source;
     private Type _componentType;
@@ -200,7 +200,7 @@ public class EcsAnonymousPool : IEcsPoolImplementation, IEnumerable
     }
     public readonly ref struct Data
     {
-        private readonly EcsAnonymousPool _target;
+        private readonly VirtualPool _target;
         
         public int ComponentsCount
         {
@@ -216,16 +216,16 @@ public class EcsAnonymousPool : IEcsPoolImplementation, IEnumerable
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Data(EcsAnonymousPool target)
+        public Data(VirtualPool target)
         {
             _target = target;
         }
 
         public readonly ref struct ListenersIterator
         {
-            private readonly EcsAnonymousPool _target;
+            private readonly VirtualPool _target;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ListenersIterator(EcsAnonymousPool target)
+            public ListenersIterator(VirtualPool target)
             {
                 _target = target;
             }
@@ -235,9 +235,9 @@ public class EcsAnonymousPool : IEcsPoolImplementation, IEnumerable
 
         public readonly ref struct RawDataIterator
         {
-            private readonly EcsAnonymousPool _target;
+            private readonly VirtualPool _target;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public RawDataIterator(EcsAnonymousPool target)
+            public RawDataIterator(VirtualPool target)
             {
                 _target = target;
             }
@@ -309,6 +309,6 @@ public static class VirtualPoolExtensions
 {
     public static bool IsVirtual(this IEcsPool self)
     {
-        return self is EcsAnonymousPool;
+        return self is VirtualPool;
     }
 }

@@ -23,14 +23,11 @@ namespace DCFApixels.DragonECS
         public IEcsPool GetPool(Type componentType)
         //TODO. Есть проблема, возврат виртуального пула и последующая девиртуализация сделает ссылку невалидной. Одно из решений возвращать обертку
         {
-#if DEBUG
-#endif
             int componentTypeID = GetComponentTypeID(componentType);
             ref var pool = ref _pools[componentTypeID];
             if (pool == _nullPool)
             {
-                pool = new EcsAnonymousPool();
-                pool.OnInit(this, _poolsMediator, componentTypeID);
+                return null;
             }
             return pool;
         }
@@ -191,18 +188,13 @@ namespace DCFApixels.DragonECS
 
             var oldPool = _pools[componentTypeID];
 
-            //if (oldPool.IsNullOrDummy() == false)
-            //{
-            //    Throw.UndefinedException();
-            //}
+            if (oldPool != _nullPool)
+            {
+                Throw.UndefinedException();
+            }
 
             _pools[componentTypeID] = newPool;
             newPool.OnInit(this, _poolsMediator, componentTypeID);
-            if (oldPool is EcsAnonymousPool virtualPool)
-            {
-                var data = virtualPool.GetDevirtualizationData();
-                newPool.OnDevirtualize(data);
-            }
             return newPool;
         }
         #endregion

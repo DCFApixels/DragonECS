@@ -53,7 +53,6 @@ namespace DCFApixels.DragonECS
     public interface IEcsPoolImplementation : IEcsPool
     {
         void OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID);
-        void OnDevirtualize(EcsAnonymousPool.Data data);
         void OnWorldResize(int newSize);
         void OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer);
         void OnWorldDestroy();
@@ -114,10 +113,6 @@ namespace DCFApixels.DragonECS
             void IEcsPool.SetRaw(int entity, object dataRaw) => throw new NotImplementedException();
             void IEcsPool.Copy(int fromEntityID, int toEntityID) => throw new NotImplementedException();
             void IEcsPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID) => throw new NotImplementedException();
-            void IEcsPoolImplementation.OnDevirtualize(EcsAnonymousPool.Data virtualPoolData)
-            {
-                Throw.UndefinedException();
-            }
             #endregion
 
             #region Callbacks
