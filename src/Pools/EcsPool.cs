@@ -38,7 +38,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _items.Length; }
         }
-        public int ComponentID
+        public int ComponentTypeID
         {
             get { return _componentTypeID; }
         }
@@ -49,6 +49,10 @@ namespace DCFApixels.DragonECS
         public EcsWorld World
         {
             get { return _source; }
+        }
+        public bool IReadOnly
+        {
+            get { return false; }
         }
         #endregion
 
@@ -194,7 +198,7 @@ namespace DCFApixels.DragonECS
 
         #region Other
         void IEcsPool.AddRaw(int entityID, object dataRaw) { Add(entityID) = (T)dataRaw; }
-        object IEcsPool.GetRaw(int entityID) { return Get(entityID); }
+        object IEcsReadonlyPool.GetRaw(int entityID) { return Get(entityID); }
         void IEcsPool.SetRaw(int entityID, object dataRaw) { Get(entityID) = (T)dataRaw; }
         #endregion
 

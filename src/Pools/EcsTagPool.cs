@@ -46,11 +46,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _count; }
         }
-        int IEcsPool.Capacity
-        {
-            get { return -1; }
-        }
-        public int ComponentID
+        public int ComponentTypeID
         {
             get { return _componentTypeID; }
         }
@@ -61,6 +57,10 @@ namespace DCFApixels.DragonECS
         public EcsWorld World
         {
             get { return _source; }
+        }
+        public bool IReadOnly
+        {
+            get { return false; }
         }
         #endregion
 
@@ -176,7 +176,7 @@ namespace DCFApixels.DragonECS
 
         #region Other
         void IEcsPool.AddRaw(int entityID, object dataRaw) { Add(entityID); }
-        object IEcsPool.GetRaw(int entityID)
+        object IEcsReadonlyPool.GetRaw(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (Has(entityID) == false) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }

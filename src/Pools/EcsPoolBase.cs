@@ -5,22 +5,19 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsPool
+    public interface IEcsReadonlyPool
     {
         #region Properties
-        int ComponentID { get; }
+        int ComponentTypeID { get; }
         Type ComponentType { get; }
         EcsWorld World { get; }
         int Count { get; }
-        int Capacity { get; } //TODO удалить. не во всех реализация нужен, проще привести к типу
+        bool IReadOnly { get; }
         #endregion
 
         #region Methods
         bool Has(int entityID);
-        void Del(int entityID);
-        void AddRaw(int entityID, object dataRaw);
         object GetRaw(int entityID);
-        void SetRaw(int entityID, object dataRaw);
         void Copy(int fromEntityID, int toEntityID);
         void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID);
         #endregion
@@ -28,6 +25,14 @@ namespace DCFApixels.DragonECS
         #region Add/Remove Listeners
         void AddListener(IEcsPoolEventListener listener);
         void RemoveListener(IEcsPoolEventListener listener);
+        #endregion
+    }
+    public interface IEcsPool : IEcsReadonlyPool
+    {
+        #region Methods
+        void AddRaw(int entityID, object dataRaw);
+        void SetRaw(int entityID, object dataRaw);
+        void Del(int entityID);
         #endregion
     }
     /// <summary>A pool for struct components.</summary>
@@ -98,21 +103,21 @@ namespace DCFApixels.DragonECS
             public static readonly EcsNullPool instance = new EcsNullPool();
 
             #region Properties
-            int IEcsPool.ComponentID => -1;
-            Type IEcsPool.ComponentType => typeof(NullComponent);
-            EcsWorld IEcsPool.World => throw new NotImplementedException();
+            int IEcsReadonlyPool.ComponentTypeID => -1;
+            Type IEcsReadonlyPool.ComponentType => typeof(NullComponent);
+            EcsWorld IEcsReadonlyPool.World => throw new NotImplementedException();
             public int Count => -1;
-            public int Capacity => -1;
+            public bool IReadOnly { get { return true; } }
             #endregion
 
             #region Methods
-            bool IEcsPool.Has(int index) => false;
+            bool IEcsReadonlyPool.Has(int index) => false;
             void IEcsPool.Del(int entityID) => throw new NotImplementedException();
             void IEcsPool.AddRaw(int entityID, object dataRaw) => throw new NotImplementedException();
-            object IEcsPool.GetRaw(int entityID) => throw new NotImplementedException();
+            object IEcsReadonlyPool.GetRaw(int entityID) => throw new NotImplementedException();
             void IEcsPool.SetRaw(int entity, object dataRaw) => throw new NotImplementedException();
-            void IEcsPool.Copy(int fromEntityID, int toEntityID) => throw new NotImplementedException();
-            void IEcsPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID) => throw new NotImplementedException();
+            void IEcsReadonlyPool.Copy(int fromEntityID, int toEntityID) => throw new NotImplementedException();
+            void IEcsReadonlyPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID) => throw new NotImplementedException();
             #endregion
 
             #region Callbacks
@@ -123,8 +128,8 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Listeners
-            void IEcsPool.AddListener(IEcsPoolEventListener listener) { }
-            void IEcsPool.RemoveListener(IEcsPoolEventListener listener) { }
+            void IEcsReadonlyPool.AddListener(IEcsPoolEventListener listener) { }
+            void IEcsReadonlyPool.RemoveListener(IEcsPoolEventListener listener) { }
             #endregion
         }
     }

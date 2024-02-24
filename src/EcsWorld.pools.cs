@@ -18,10 +18,16 @@ namespace DCFApixels.DragonECS
         private EcsNullPool _nullPool = EcsNullPool.instance;
 
         #region Getters
+        public IEcsPool GetPool(int componentTypeID)
+        {
+#if DEBUG
+            if (_pools[componentTypeID].ComponentTypeID != componentTypeID) { Throw.UndefinedException(); }
+#endif
+            return _pools[componentTypeID];
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IEcsPool GetPool(Type componentType)
-        //TODO. Есть проблема, возврат виртуального пула и последующая девиртуализация сделает ссылку невалидной. Одно из решений возвращать обертку
         {
             int componentTypeID = GetComponentTypeID(componentType);
             ref var pool = ref _pools[componentTypeID];
@@ -276,45 +282,45 @@ namespace DCFApixels.DragonECS
         #region PoolsMediator
         public readonly struct PoolsMediator
         {
-            private readonly EcsWorld _world;
+            public readonly EcsWorld World;
             internal PoolsMediator(EcsWorld world)
             {
-                if (world == null || world._poolsMediator._world != null)
+                if (world == null || world._poolsMediator.World != null)
                 {
                     throw new InvalidOperationException();
                 }
-                _world = world;
+                World = world;
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void RegisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
             {
-                _world.RegisterEntityComponent(entityID, componentTypeID, maskBit);
+                World.RegisterEntityComponent(entityID, componentTypeID, maskBit);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void UnregisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
             {
-                _world.UnregisterEntityComponent(entityID, componentTypeID, maskBit);
+                World.UnregisterEntityComponent(entityID, componentTypeID, maskBit);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool TryRegisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
             {
-                return _world.TryRegisterEntityComponent(entityID, componentTypeID, maskBit);
+                return World.TryRegisterEntityComponent(entityID, componentTypeID, maskBit);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool TryUnregisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
             {
-                return _world.TryUnregisterEntityComponent(entityID, componentTypeID, maskBit);
+                return World.TryUnregisterEntityComponent(entityID, componentTypeID, maskBit);
             }
   
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int GetComponentCount(int componentTypeID)
             {
-                return _world.GetPoolComponentCount(componentTypeID);
+                return World.GetPoolComponentCount(componentTypeID);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool HasComponent(int entityID, EcsMaskChunck maskBit)
             {
-                return _world.HasEntityComponent(entityID, maskBit);
+                return World.HasEntityComponent(entityID, maskBit);
             }
         }
         #endregion
