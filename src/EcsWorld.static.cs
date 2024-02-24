@@ -117,6 +117,7 @@ namespace DCFApixels.DragonECS
                 {
                     _interface.OnDestroy(ref _items[itemIndex], _worlds[worldID]);
                     _recycledItems[_recycledItemsCount++] = itemIndex;
+                    itemIndex = 0;
                 }
             }
             private sealed class Releaser : DataReleaser
