@@ -12,7 +12,7 @@ namespace DCFApixels.DragonECS
         Type ComponentType { get; }
         EcsWorld World { get; }
         int Count { get; }
-        bool IReadOnly { get; }
+        bool IsReadOnly { get; }
         #endregion
 
         #region Methods
@@ -107,7 +107,7 @@ namespace DCFApixels.DragonECS
             Type IEcsReadonlyPool.ComponentType => typeof(NullComponent);
             EcsWorld IEcsReadonlyPool.World => throw new NotImplementedException();
             public int Count => -1;
-            public bool IReadOnly { get { return true; } }
+            public bool IsReadOnly { get { return true; } }
             #endregion
 
             #region Methods

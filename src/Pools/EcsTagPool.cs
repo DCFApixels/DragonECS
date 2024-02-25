@@ -58,7 +58,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _source; }
         }
-        public bool IReadOnly
+        public bool IsReadOnly
         {
             get { return false; }
         }
