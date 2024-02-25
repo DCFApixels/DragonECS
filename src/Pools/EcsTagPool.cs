@@ -167,6 +167,10 @@ namespace DCFApixels.DragonECS
 
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
         {
+            if (_count <= 0)
+            {
+                return;
+            }
             foreach (var entityID in buffer)
             {
                 TryDel(entityID);

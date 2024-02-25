@@ -189,6 +189,10 @@ namespace DCFApixels.DragonECS
         void IEcsPoolImplementation.OnWorldDestroy() { }
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
         {
+            if (_itemsCount <= 0)
+            {
+                return;
+            }
             foreach (var entityID in buffer)
             {
                 TryDel(entityID);
