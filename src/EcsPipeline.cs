@@ -27,7 +27,7 @@ namespace DCFApixels.DragonECS
         private bool _isDestoryed = false;
 
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-        private EcsProfilerMarker _initBarker = new EcsProfilerMarker("EcsPipeline.Init");
+        private EcsProfilerMarker _initMarker = new EcsProfilerMarker("EcsPipeline.Init");
 #endif
 
         #region Properties
@@ -63,6 +63,7 @@ namespace DCFApixels.DragonECS
             _config = config;
             _allSystems = systems;
             _injectorBuilder = injectorBuilder;
+            _injectorBuilder.Inject(this);
         }
         #endregion
 
@@ -138,13 +139,8 @@ namespace DCFApixels.DragonECS
                 return;
             }
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            _initBarker.Begin();
+            _initMarker.Begin();
 #endif
-            EcsProcess<IEcsPipelineMember> members = GetProcess<IEcsPipelineMember>();
-            foreach (var member in members)
-            {
-                member.Pipeline = this;
-            }
             _injector = _injectorBuilder.Build(this);
             _injectorBuilder = null;
 
@@ -156,7 +152,7 @@ namespace DCFApixels.DragonECS
 
             GC.Collect();
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            _initBarker.End();
+            _initMarker.End();
 #endif
         }
 
@@ -223,6 +219,7 @@ namespace DCFApixels.DragonECS
                 _injector.Declare<object>();
                 _injector.Declare<EcsWorld>();
                 _injector.Declare<EcsAspect>();
+                _injector.CustomDeclare(new PipelinePropertyInjectionNode());
 
                 _basicLayer = EcsConsts.BASIC_LAYER;
                 Layers = new LayerList(this, _basicLayer);
@@ -562,4 +559,14 @@ namespace DCFApixels.DragonECS
         }
     }
     #endregion
+}
+namespace DCFApixels.DragonECS.Internal
+{
+    internal sealed class PipelinePropertyInjectionNode : CustomInjectionNode<IEcsPipelineMember, EcsPipeline>
+    {
+        public sealed override void InjectTo(IEcsPipelineMember system, EcsPipeline obj)
+        {
+            system.Pipeline = obj;
+        }
+    }
 }

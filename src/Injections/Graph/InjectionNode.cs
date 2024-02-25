@@ -16,15 +16,15 @@ namespace DCFApixels.DragonECS
         public abstract void Inject(object obj);
         public abstract void Init(EcsPipeline pipeline);
     }
-    public class InjectionNode<T> : InjectionNodeBase
+    public sealed class InjectionNode<T> : InjectionNodeBase
     {
         private EcsProcess<IEcsInject<T>> _process;
         public InjectionNode(Type type) : base(type) { }
-        public override void Init(EcsPipeline pipeline)
+        public sealed override void Init(EcsPipeline pipeline)
         {
             _process = pipeline.GetProcess<IEcsInject<T>>();
         }
-        public override void Inject(object obj)
+        public sealed override void Inject(object obj)
         {
             for (int i = 0; i < _process.Length; i++)
             {
