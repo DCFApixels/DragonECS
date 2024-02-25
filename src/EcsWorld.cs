@@ -509,6 +509,17 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AggressiveUpVersion()
+        {
+            unchecked
+            {
+                _version++;
+            }
+        }
+        #endregion
+
         #region Debug
         public void GetComponents(int entityID, List<object> list)
         {
