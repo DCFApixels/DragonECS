@@ -40,7 +40,10 @@ namespace DCFApixels.DragonECS
 
         #region Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsReadonlyGroup Execute() => ExecuteFor(_aspect.World.Entities);
+        public EcsReadonlyGroup Execute()
+        {
+            return ExecuteFor(_aspect.World.Entities);
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup ExecuteFor(EcsSpan span)
         {

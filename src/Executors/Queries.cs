@@ -26,7 +26,7 @@
             {
                 world.ReleaseDelEntityBufferAll();
             }
-            var executor = world.GetExecutor<EcsWhereToGroupExecutor<TAspect>>();
+            var executor = world.GetExecutor<EcsWhereExecutor<TAspect>>();
             aspect = executor.Aspect;
             return executor.ExecuteFor(span);
         }
