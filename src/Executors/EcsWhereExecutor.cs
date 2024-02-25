@@ -6,6 +6,7 @@ namespace DCFApixels.DragonECS
     {
         private TAspect _aspect;
         private int[] _filteredEntities;
+        private int _filteredEntitiesCount;
 
         private long _lastWorldVersion;
 
@@ -53,11 +54,12 @@ namespace DCFApixels.DragonECS
             if (_lastWorldVersion != World.Version)
             {
                 result = _aspect.GetIteratorFor(span).CopyToSpan(ref _filteredEntities);
+                _filteredEntitiesCount = result.Length;
                 _lastWorldVersion = World.Version;
             }
             else
             {
-                result = new EcsSpan(WorldID, _filteredEntities);
+                result = new EcsSpan(WorldID, _filteredEntities, _filteredEntitiesCount);
             }
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _executeMarker.End();
