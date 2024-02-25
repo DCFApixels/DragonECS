@@ -26,44 +26,23 @@ namespace DCFApixels.DragonECS
 
         public void Inject<T>(T obj)
         {
-            Type type = typeof(T);
-#if DEBUG
-            if (obj.GetType() != type)
-            {
-                throw new ArgumentException();
-            }
-            if (IsCanInstantiated(type) == false)
-            {
-                throw new Exception();
-            }
-#endif
+            Type type = obj.GetType();
             if (_branches.TryGetValue(type, out InjectionBranch branch) == false)
             {
-                InitNode(new InjectionNode<T>(type));
-                branch = new InjectionBranch(this, type, true);
-                InitBranch(branch);
+                if (typeof(T) == type)
+                {
+                    InitNode(new InjectionNode<T>(type));
+                    branch = new InjectionBranch(this, type, true);
+                    InitBranch(branch);
+                }
+                else
+                {
+                    branch = new InjectionBranch(this, type, false);
+                    InitBranch(branch);
+                }
             }
             branch.Inject(obj);
         }
-        //        public void InjectNoBoxing<T>(T data) where T : struct
-        //        {
-        //            foreach (var system in _pipeline.GetProcess<IEcsInject<T>>())
-        //            {
-        //                system.Inject(data);
-        //            }
-        //        }
-        //#if !REFLECTION_DISABLED
-        //        public void InjectRaw(object obj)
-        //        {
-        //            Type type = obj.GetType();
-        //            if (_branches.TryGetValue(type, out InjectionBranch branch) == false)
-        //            {
-        //                branch = new InjectionBranch(this, type, false);
-        //                InitBranch(branch);
-        //            }
-        //            branch.Inject(obj);
-        //        }
-        //#endif
 
         #region Internal
         private void InitBranch(InjectionBranch branch)
