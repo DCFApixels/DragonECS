@@ -132,13 +132,8 @@ namespace DCFApixels.DragonECS
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override int GetHashCode() => throw new NotSupportedException();
 #pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsSpan(EcsReadonlyGroup a) => a.ToSpan();
-        //internal class DebuggerProxy : EcsGroup.DebuggerProxy
-        //{
-        //    public DebuggerProxy(EcsReadonlyGroup group) : base(group._source) { }
-        //}
         #endregion
     }
 
@@ -327,16 +322,22 @@ namespace DCFApixels.DragonECS
         {
             entities.Clear();
             foreach (var e in this)
+            {
                 entities.Add(e);
+            }
         }
         public EcsSpan ToSpan()
         {
-            return new EcsSpan(WorldID, _dense);
+            return new EcsSpan(WorldID, _dense, 1, _count);
         }
         public EcsSpan ToSpan(int start, int length)
         {
+            start -= 1;
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (start + length > _count) Throw.ArgumentOutOfRange();
+            if (start < 0 || start + length > _count)
+            {
+                Throw.ArgumentOutOfRange();
+            }
 #endif
             return new EcsSpan(WorldID, _dense, start, length);
         }
