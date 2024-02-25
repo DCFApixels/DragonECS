@@ -407,11 +407,30 @@ namespace DCFApixels.DragonECS
             count = Math.Min(count, _delEntBufferCount);
             count = Math.Max(count, 0);
             _delEntBufferCount -= count;
-            ReadOnlySpan<int> buffer = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);
-            for (int i = 0; i < _poolsCount; i++)
+            int slisedCount = count;
+
+            for (int i = 0; i < slisedCount; i++)
             {
-                _pools[i].OnReleaseDelEntityBuffer(buffer);
+                int e = _delEntBuffer[i];
+                if (_componentCounts[e] <= 0)
+                {
+                    int tmp = _delEntBuffer[i];
+                    _delEntBuffer[i] = _delEntBuffer[--slisedCount];
+                    _delEntBuffer[slisedCount] = tmp;
+                    i--;
+                }
             }
+
+            ReadOnlySpan<int> buffer = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);
+            if (slisedCount > 0)
+            {
+                ReadOnlySpan<int> bufferSlised = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, slisedCount);
+                for (int i = 0; i < _poolsCount; i++)
+                {
+                    _pools[i].OnReleaseDelEntityBuffer(bufferSlised);
+                }
+            }
+
             _listeners.InvokeOnReleaseDelEntityBuffer(buffer);
             for (int i = 0; i < buffer.Length; i++)
             {
