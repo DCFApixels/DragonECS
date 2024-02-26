@@ -216,10 +216,10 @@ namespace DCFApixels.DragonECS
                 _config = config;
 
                 _injector = new Injector.Builder(this);
-                _injector.Declare<object>();
-                _injector.Declare<EcsWorld>();
-                _injector.Declare<EcsAspect>();
-                _injector.CustomDeclare(new PipelinePropertyInjectionNode());
+                _injector.AddNode<object>();
+                _injector.AddNode<EcsWorld>();
+                _injector.AddNode<EcsAspect>();
+                _injector.AddCustomNode(new PipelinePropertyInjectionNode());
 
                 _basicLayer = EcsConsts.BASIC_LAYER;
                 Layers = new LayerList(this, _basicLayer);

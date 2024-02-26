@@ -139,12 +139,12 @@ namespace DCFApixels.DragonECS
                 _source = source;
                 _instance = new Injector();
             }
-            public EcsPipeline.Builder Declare<T>()
+            public EcsPipeline.Builder AddNode<T>()
             {
                 _instance.TryDeclare<T>();
                 return _source;
             }
-            public EcsPipeline.Builder CustomDeclare(CustomInjectionNodeBase injectionProperty)
+            public EcsPipeline.Builder AddCustomNode(CustomInjectionNodeBase injectionProperty)
             {
                 _instance.TryDeclareProperty(injectionProperty);
                 return _source;
