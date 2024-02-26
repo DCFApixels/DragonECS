@@ -422,8 +422,6 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-
-
     [Serializable]
     public sealed class TypeMetaData
     {
@@ -443,9 +441,6 @@ namespace DCFApixels.DragonECS
             this.tags = tags; 
         }
     }
-
-
-
 
     public class TypeMetaDataCached
     {
@@ -570,37 +565,5 @@ namespace DCFApixels.DragonECS
             Tags = 1 << 4,
             All = Name | Group | Color | Description | Tags
         }
-    }
-}
-
-
-namespace DCFApixels.DragonECS.Internal
-{
-    internal static class EcsTypeMeta
-    {
-        private static readonly Dictionary<Type, int> _codes = new Dictionary<Type, int>();
-        private static int _increment = 1;
-        public static int Count
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _codes.Count; }
-        }
-        public static int Get(Type type)
-        {
-            if (!_codes.TryGetValue(type, out int code))
-            {
-                code = _increment++;
-                _codes.Add(type, code);
-            }
-            return code;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Get<T>() { return EcsTypeCodeCache<T>.code; }
-        public static bool Has(Type type) { return _codes.ContainsKey(type); }
-        public static bool Has<T>() { return _codes.ContainsKey(typeof(T)); }
-    }
-    internal static class EcsTypeMetaCache<T>
-    {
-        public static readonly int code = EcsTypeMeta.Get(typeof(T));
     }
 }
