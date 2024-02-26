@@ -9,14 +9,14 @@ namespace DCFApixels.DragonECS
     public readonly struct EcsProfilerMarker
     {
         public readonly int id;
-        internal EcsProfilerMarker(int id) => this.id = id;
-        public EcsProfilerMarker(string name) => id = DebugService.Instance.RegisterMark(name);
+        internal EcsProfilerMarker(int id) { this.id = id; }
+        public EcsProfilerMarker(string name) { id = DebugService.Instance.RegisterMark(name); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Begin() => DebugService.Instance.ProfilerMarkBegin(id);
+        public void Begin() { DebugService.Instance.ProfilerMarkBegin(id); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void End() => DebugService.Instance.ProfilerMarkEnd(id);
+        public void End() { DebugService.Instance.ProfilerMarkEnd(id); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AutoScope Auto() => new AutoScope(id);
+        public AutoScope Auto() { return new AutoScope(id); }
         public readonly ref struct AutoScope
         {
             private readonly int _id;
@@ -25,7 +25,10 @@ namespace DCFApixels.DragonECS
                 _id = id;
                 DebugService.Instance.ProfilerMarkBegin(id);
             }
-            public void Dispose() => DebugService.Instance.ProfilerMarkEnd(_id);
+            public void Dispose()
+            {
+                DebugService.Instance.ProfilerMarkEnd(_id);
+            }
         }
     }
 
@@ -35,24 +38,51 @@ namespace DCFApixels.DragonECS
         public const string ERROR_TAG = EcsConsts.DEBUG_ERROR_TAG;
         public const string PASS_TAG = EcsConsts.DEBUG_PASS_TAG;
 
-        public static void Set<T>() where T : DebugService, new() => DebugService.Set<T>();
-        public static void Set(DebugService service) => DebugService.Set(service);
+        public static void Set<T>() where T : DebugService, new()
+        {
+            DebugService.Set<T>();
+        }
+        public static void Set(DebugService service)
+        {
+            DebugService.Set(service);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PrintWarning(object v) => Print(EcsConsts.DEBUG_WARNING_TAG, v);
-        public static void PrintError(object v) => Print(EcsConsts.DEBUG_ERROR_TAG, v);
+        public static void PrintWarning(object v)
+        {
+#if !DISABLE_DRAGONECS_DEBUGGER
+            DebugService.Instance.PrintWarning(v);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PrintError(object v)
+        {
+#if !DISABLE_DRAGONECS_DEBUGGER
+            DebugService.Instance.PrintError(v);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintErrorAndBreak(object v)
         {
-            Print(EcsConsts.DEBUG_ERROR_TAG, v);
-            Break();
+#if !DISABLE_DRAGONECS_DEBUGGER
+            DebugService.Instance.PrintErrorAndBreak(v);
+#endif
         }
-        public static void PrintPass(object v) => Print(EcsConsts.DEBUG_PASS_TAG, v);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PrintPass(object v)
+        {
+#if !DISABLE_DRAGONECS_DEBUGGER
+            DebugService.Instance.PrintPass(v);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print()
         {
 #if !DISABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.Print("");
+            DebugService.Instance.Print();
 #endif
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(object v)
         {
 #if !DISABLE_DRAGONECS_DEBUGGER
@@ -66,13 +96,12 @@ namespace DCFApixels.DragonECS
             DebugService.Instance.Print(tag, v);
 #endif
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Break()
         {
-            {
 #if !DISABLE_DRAGONECS_DEBUGGER
-                DebugService.Instance.Break();
+            DebugService.Instance.Break();
 #endif
-            }
         }
     }
 
@@ -84,12 +113,17 @@ namespace DCFApixels.DragonECS
             get
             {
                 if (_instance == null)
+                {
                     _instance = new DefaultDebugService();
+                }
                 return _instance;
             }
         }
 
-        public static void Set<T>() where T : DebugService, new() => Set(new T());
+        public static void Set<T>() where T : DebugService, new()
+        {
+            Set(new T());
+        }
         public static void Set(DebugService service)
         {
             _instance = service;
@@ -100,9 +134,6 @@ namespace DCFApixels.DragonECS
 
         private IdDispenser _idDispenser = new IdDispenser(4, -1);
         private Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Print(object v) => Print(null, v);
         public abstract void Print(string tag, object v);
         public abstract void Break();
         public int RegisterMark(string name)
@@ -122,7 +153,6 @@ namespace DCFApixels.DragonECS
             _nameIdTable.Remove(name);
             _idDispenser.Release(id);
             OnDelProfilerMark(id);
-
         }
 
         protected abstract void OnNewProfilerMark(int id, string name);
@@ -131,7 +161,34 @@ namespace DCFApixels.DragonECS
         public abstract void ProfilerMarkBegin(int id);
         public abstract void ProfilerMarkEnd(int id);
     }
-
+    public static class DebugServiceExtensions
+    {
+        public static void PrintWarning(this DebugService self, object v)
+        {
+            self.Print(EcsConsts.DEBUG_WARNING_TAG, v);
+        }
+        public static void PrintError(this DebugService self, object v)
+        {
+            self.Print(EcsConsts.DEBUG_ERROR_TAG, v);
+        }
+        public static void PrintErrorAndBreak(this DebugService self, object v)
+        {
+            self.Print(EcsConsts.DEBUG_ERROR_TAG, v);
+            self.Break();
+        }
+        public static void PrintPass(this DebugService self, object v)
+        {
+            self.Print(EcsConsts.DEBUG_PASS_TAG, v);
+        }
+        public static void Print(this DebugService self, object v)
+        {
+            self.Print(null, v);
+        }
+        public static void Print(this DebugService self)
+        {
+            self.Print("");
+        }
+    }
     public sealed class DefaultDebugService : DebugService
     {
         private Stopwatch[] _stopwatchs;
