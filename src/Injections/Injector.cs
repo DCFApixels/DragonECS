@@ -118,7 +118,7 @@ namespace DCFApixels.DragonECS
             if (_nodes.TryGetValue(type, out InjectionNodeBase oldNode))
             {
                 Throw.Exception("Already declared");
-            } 
+            }
             InitNode(injectionProperty);
 #if !REFLECTION_DISABLED
             if (IsCanInstantiated(type))

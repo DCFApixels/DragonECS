@@ -1,9 +1,7 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using static DCFApixels.DragonECS.EcsDebugUtility;
 
 namespace DCFApixels.DragonECS

@@ -36,20 +36,20 @@ namespace DCFApixels.DragonECS
         #endregion
     }
     /// <summary>A pool for struct components.</summary>
-    public interface IEcsStructPool<T> : IEcsPool where T: struct
+    public interface IEcsStructPool<T> : IEcsPool where T : struct
     {
         ref T Add(int entityID);
         ref readonly T Read(int entityID);
         ref T Get(int entityID);
     }
     /// <summary>A pool for reference components of type T that instantiates components itself.</summary>
-    public interface IEcsClassPool<T> : IEcsPool where T: class
+    public interface IEcsClassPool<T> : IEcsPool where T : class
     {
         T Add(int entityID);
         T Get(int entityID);
     }
     /// <summary>A pool for reference components of type T, which does not instantiate components itself but receives components from external sources..</summary>
-    public interface IEcsHybridPool<T> : IEcsPool where T: class
+    public interface IEcsHybridPool<T> : IEcsPool where T : class
     {
         void Add(int entityID, T component);
         T Get(int entityID);
