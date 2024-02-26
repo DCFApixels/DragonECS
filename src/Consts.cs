@@ -51,6 +51,12 @@
 #else
             false;
 #endif
+        public const bool DISABLE_DRAGONECS_DEBUGGER =
+#if DISABLE_DRAGONECS_DEBUGGER
+            true;
+#else
+    false;
+#endif
     }
 }
 //#if UNITY_2020_3_OR_NEWER
