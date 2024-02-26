@@ -207,7 +207,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CreateConcreteEntity(int entityID)
         {
-            unchecked { _version++; }
+            UpVersionLeaked();
             _entitiesCount++;
             if (_entitiesCapacity <= entityID)
             {
@@ -235,16 +235,9 @@ namespace DCFApixels.DragonECS
         public void DelEntity(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (IsUsed(entityID) == false)
-            {
-                Throw.World_EntityIsNotContained(entityID);
-            }
+            if (IsUsed(entityID) == false) { Throw.World_EntityIsNotContained(entityID); }
 #endif
-            unchecked
-            {
-                _version++;
-                _deleteLeakedEntitesLastVersion++;
-            }
+            UpVersion();
             _delEntBuffer[_delEntBufferCount++] = entityID;
             _gens[entityID] |= DEATH_GEN_BIT;
             _entitiesCount--;
@@ -293,12 +286,16 @@ namespace DCFApixels.DragonECS
             for (int i = 0, iMax = mask.incChunckMasks.Length; i < iMax; i++)
             {
                 if (!_pools[mask.inc[i]].Has(entityID))
+                {
                     return false;
+                }
             }
             for (int i = 0, iMax = mask.excChunckMasks.Length; i < iMax; i++)
             {
                 if (_pools[mask.exc[i]].Has(entityID))
+                {
                     return false;
+                }
             }
             return true;
         }
@@ -333,7 +330,9 @@ namespace DCFApixels.DragonECS
             foreach (var pool in _pools)
             {
                 if (pool.Has(fromEntityID))
+                {
                     pool.Copy(fromEntityID, toEntityID);
+                }
             }
         }
         public void CopyEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
@@ -341,7 +340,9 @@ namespace DCFApixels.DragonECS
             foreach (var pool in _pools)
             {
                 if (pool.Has(fromEntityID))
+                {
                     pool.Copy(fromEntityID, toWorld, toEntityID);
+                }
             }
         }
         public int CloneEntity(int fromEntityID)
@@ -362,7 +363,9 @@ namespace DCFApixels.DragonECS
             foreach (var pool in _pools)
             {
                 if (!pool.Has(fromEntityID) && pool.Has(toEntityID))
+                {
                     pool.Del(toEntityID);
+                }
             }
         }
         //public void CloneEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
@@ -396,7 +399,6 @@ namespace DCFApixels.DragonECS
         {
             ReleaseDelEntityBuffer(_delEntBufferCount);
         }
-        //private UnsafeArray<int> _delBufferFilter = new UnsafeArray<int>(8);
         public unsafe void ReleaseDelEntityBuffer(int count)
         {
             if (_delEntBufferCount <= 0)
@@ -501,7 +503,7 @@ namespace DCFApixels.DragonECS
         internal void ReleaseGroup(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (group.World != this) Throw.World_GroupDoesNotBelongWorld();
+            if (group.World != this) { Throw.World_GroupDoesNotBelongWorld(); }
 #endif
             group._isReleased = true;
             group.Clear();
@@ -530,7 +532,18 @@ namespace DCFApixels.DragonECS
 
         #region Other
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AggressiveUpVersion()
+        public void AggressiveUpVersion() { UpVersion(); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpVersion()
+        {
+            unchecked
+            {
+                _version++;
+                _deleteLeakedEntitesLastVersion++;
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpVersionLeaked()
         {
             unchecked
             {
@@ -551,7 +564,9 @@ namespace DCFApixels.DragonECS
                     itemsCount--;
                     list.Add(_pools[i].GetRaw(entityID));
                     if (itemsCount <= 0)
+                    {
                         break;
+                    }
                 }
             }
         }
@@ -566,7 +581,9 @@ namespace DCFApixels.DragonECS
                     itemsCount--;
                     typeSet.Add(_pools[i].ComponentType);
                     if (itemsCount <= 0)
+                    {
                         break;
+                    }
                 }
             }
         }
@@ -590,27 +607,42 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnWorldResize(this List<IEcsWorldEventListener> self, int newSize)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnWorldResize(newSize);
+            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            {
+                self[i].OnWorldResize(newSize);
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnReleaseDelEntityBuffer(this List<IEcsWorldEventListener> self, ReadOnlySpan<int> buffer)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnReleaseDelEntityBuffer(buffer);
+            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            {
+                self[i].OnReleaseDelEntityBuffer(buffer);
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnWorldDestroy(this List<IEcsWorldEventListener> self)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnWorldDestroy();
+            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            {
+                self[i].OnWorldDestroy();
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnNewEntity(this List<IEcsEntityEventListener> self, int entityID)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnNewEntity(entityID);
+            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            {
+                self[i].OnNewEntity(entityID);
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnDelEntity(this List<IEcsEntityEventListener> self, int entityID)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnDelEntity(entityID);
+            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            {
+                self[i].OnDelEntity(entityID);
+            }
         }
     }
     #endregion
@@ -619,7 +651,10 @@ namespace DCFApixels.DragonECS
     public static class IntExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static entlong ToEntityLong(this int self, EcsWorld world) => world.GetEntityLong(self);
+        public static entlong ToEntityLong(this int self, EcsWorld world)
+        {
+            return world.GetEntityLong(self);
+        }
     }
     #endregion
 }

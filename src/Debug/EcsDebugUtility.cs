@@ -61,9 +61,10 @@ namespace DCFApixels.DragonECS
                 return $"{type.Name}({string.Join(", ", values)})";
             else
                 return $"({string.Join(", ", values)})";
-#endif
+#else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(AutoToString)} method does not work.");
             return string.Empty;
+#endif
         }
         #endregion
 
