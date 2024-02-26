@@ -229,9 +229,9 @@ namespace DCFApixels.DragonECS
                 _uniqueTypes = new HashSet<Type>();
                 _systems = new Dictionary<string, List<IEcsProcess>>(KEYS_CAPACITY);
             }
-            public Builder DeclareRunner<T>() where T : EcsRunner, IEcsRunner, new()
+            public Builder AddRunner<TRunner>() where TRunner : EcsRunner, IEcsRunner, new()
             {
-                _initDeclaredRunners.Add(new InitDeclaredRunner<T>());
+                _initDeclaredRunners.Add(new InitDeclaredRunner<TRunner>());
                 return this;
             }
             public Builder Add(IEcsProcess system, string layerName = null)
