@@ -25,9 +25,25 @@ namespace DCFApixels.DragonECS
     {
         public static readonly MetaGroup Empty = new MetaGroup(MetaGroupAttribute.Empty);
         private readonly MetaGroupAttribute _source;
-        public string Name => _source.name;
-        public string RootCategory => _source.rootCategory;
-        public MetaGroup(MetaGroupAttribute source) => _source = source;
-        public string[] SplitCategories() => _source.SplitCategories();
+        public string Name
+        {
+            get { return _source.name; }
+        }
+        public string RootCategory
+        {
+            get { return _source.rootCategory; }
+        }
+        public bool IsNull
+        {
+            get { return _source == null; }
+        }
+        public MetaGroup(MetaGroupAttribute source)
+        {
+            _source = source;
+        }
+        public string[] SplitCategories()
+        {
+            return _source.SplitCategories();
+        }
     }
 }

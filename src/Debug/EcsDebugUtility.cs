@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -56,11 +57,17 @@ namespace DCFApixels.DragonECS
 #pragma warning restore IL2070
             string[] values = new string[fields.Length];
             for (int i = 0; i < fields.Length; i++)
+            {
                 values[i] = (fields[i].GetValue(target) ?? "NULL").ToString();
+            }
             if (isWriteName)
+            {
                 return $"{type.Name}({string.Join(", ", values)})";
+            }
             else
+            {
                 return $"({string.Join(", ", values)})";
+            }
 #else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(AutoToString)} method does not work.");
             return string.Empty;
@@ -153,7 +160,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetColor
-        private static Random random = new Random(100100100);
+
+        #region Auto Color
         private static Dictionary<string, WordColor> _words = new Dictionary<string, WordColor>();
         private class WordColor
         {
@@ -171,7 +179,10 @@ namespace DCFApixels.DragonECS
                     {
                         color = new WordColor();
                         _words.Add(word, color);
-                        color.color = new MetaColor((byte)random.Next(), (byte)random.Next(), (byte)random.Next()).UpContrastColor() / 2;
+
+                        MetaColor newColor = new MetaColor(BitsUtility.NextXorShiftState(word.GetHashCode()));
+                        newColor = new MetaColor(newColor.r, newColor.g, newColor.b);
+                        color.color = newColor.UpContrastColor() / 2;
                     }
                     color.wordsCount++;
                     colors.Add(color);
@@ -223,15 +234,20 @@ namespace DCFApixels.DragonECS
                 {
                     subs = s.Substring(start, i - start);
                     if (subs.Length > 2 && subs.ToLower() != "system")
+                    {
                         words.Add(subs);
+                    }
                     start = i;
                 }
             }
             subs = s.Substring(start);
             if (subs.Length > 2 && subs.ToLower() != "system")
+            {
                 words.Add(subs);
+            }
             return words;
         }
+        #endregion
 
         public static MetaColor GetColor(object obj)
         {
@@ -239,7 +255,10 @@ namespace DCFApixels.DragonECS
                 GetColor(intr.MetaSource) :
                 GetColor(type: obj.GetType());
         }
-        public static MetaColor GetColor<T>() => GetColor(typeof(T));
+        public static MetaColor GetColor<T>()
+        {
+            return GetColor(typeof(T));
+        }
         public static MetaColor GetColor(Type type)
         {
             var atr = type.GetCustomAttribute<MetaColorAttribute>();
@@ -256,7 +275,10 @@ namespace DCFApixels.DragonECS
                 TryGetColor(intr.MetaSource, out color) :
                 TryGetColor(type: obj.GetType(), out color);
         }
-        public static bool TryGetColor<T>(out MetaColor color) => TryGetColor(typeof(T), out color);
+        public static bool TryGetColor<T>(out MetaColor color)
+        {
+            return TryGetColor(typeof(T), out color);
+        }
         public static bool TryGetColor(Type type, out MetaColor color)
         {
             var atr = type.GetCustomAttribute<MetaColorAttribute>();
@@ -277,7 +299,10 @@ namespace DCFApixels.DragonECS
                 GetTags(intr.MetaSource) :
                 GetTags(type: obj.GetType());
         }
-        public static IReadOnlyCollection<string> GetTags<T>() => GetTags(typeof(T));
+        public static IReadOnlyCollection<string> GetTags<T>()
+        {
+            return GetTags(typeof(T));
+        }
         public static IReadOnlyCollection<string> GetTags(Type type)
         {
             var atr = type.GetCustomAttribute<MetaTagsAttribute>();
@@ -290,7 +315,10 @@ namespace DCFApixels.DragonECS
                 TryGetTags(intr.MetaSource, out tags) :
                 TryGetTags(type: obj.GetType(), out tags);
         }
-        public static bool TryGetTags<T>(out IReadOnlyCollection<string> tags) => TryGetTags(typeof(T), out tags);
+        public static bool TryGetTags<T>(out IReadOnlyCollection<string> tags)
+        {
+            return TryGetTags(typeof(T), out tags);
+        }
         public static bool TryGetTags(Type type, out IReadOnlyCollection<string> tags)
         {
             var atr = type.GetCustomAttribute<MetaTagsAttribute>();
@@ -311,8 +339,14 @@ namespace DCFApixels.DragonECS
                 IsHidden(intr.MetaSource) :
                 IsHidden(type: obj.GetType());
         }
-        public static bool IsHidden<T>() => IsHidden(typeof(T));
-        public static bool IsHidden(Type type) => type.TryGetCustomAttribute(out MetaTagsAttribute atr) && atr.Tags.Contains(MetaTags.HIDDEN);
+        public static bool IsHidden<T>()
+        {
+            return IsHidden(typeof(T));
+        }
+        public static bool IsHidden(Type type)
+        {
+            return type.TryGetCustomAttribute(out MetaTagsAttribute atr) && atr.Tags.Contains(MetaTags.HIDDEN);
+        }
         #endregion
 
         #region MetaSource
@@ -326,15 +360,18 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region GenerateTypeDebugData
-        public static TypeMetaData GenerateTypeDebugData(object obj)
+        #region GenerateTypeMeta
+        public static TypeMetaData GenerateTypeMeta(object obj)
         {
             return obj is IEcsMetaProvider intr ?
-                GenerateTypeDebugData(intr.MetaSource) :
-                GenerateTypeDebugData(type: obj.GetType());
+                GenerateTypeMeta(intr.MetaSource) :
+                GenerateTypeMeta(type: obj.GetType());
         }
-        public static TypeMetaData GenerateTypeDebugData<T>() => GenerateTypeDebugData(typeof(T));
-        public static TypeMetaData GenerateTypeDebugData(Type type)
+        public static TypeMetaData GenerateTypeMeta<T>()
+        {
+            return GenerateTypeMeta(typeof(T));
+        }
+        public static TypeMetaData GenerateTypeMeta(Type type)
         {
             return new TypeMetaData(
                 type,
@@ -342,7 +379,30 @@ namespace DCFApixels.DragonECS
                 GetGroup(type),
                 GetColor(type),
                 GetDescription(type),
-                GetTags(type).ToArray());
+                GetTags(type));
+        }
+        #endregion
+
+        #region GetCachedTypeMeta
+        private static readonly Dictionary<Type, TypeMetaDataCached> _metaCache = new Dictionary<Type, TypeMetaDataCached>();
+        public static TypeMetaDataCached GetCachedTypeMeta(object obj)
+        {
+            return obj is IEcsMetaProvider intr ?
+                GetCachedTypeMeta(intr.MetaSource) :
+                GetCachedTypeMeta(type: obj.GetType());
+        }
+        public static TypeMetaDataCached GetCachedTypeMeta<T>()
+        {
+            return GetCachedTypeMeta(typeof(T));
+        }
+        public static TypeMetaDataCached GetCachedTypeMeta(Type type)
+        {
+            if(_metaCache.TryGetValue(type, out TypeMetaDataCached result) == false)
+            {
+                result = new TypeMetaDataCached(type);
+                _metaCache.Add(type, result);
+            }
+            return result;
         }
         #endregion
 
@@ -362,6 +422,8 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+
+
     [Serializable]
     public sealed class TypeMetaData
     {
@@ -370,15 +432,175 @@ namespace DCFApixels.DragonECS
         public readonly MetaGroup group;
         public readonly MetaColor color;
         public readonly string description;
-        public readonly string[] tags;
-        public TypeMetaData(Type type, string name, MetaGroup group, MetaColor color, string description, string[] tags)
+        public readonly IReadOnlyCollection<string> tags;
+        public TypeMetaData(Type type, string name, MetaGroup group, MetaColor color, string description, IReadOnlyCollection<string> tags)
         {
             this.type = type;
             this.name = name;
             this.group = group;
             this.color = color;
             this.description = description;
-            this.tags = tags;
+            this.tags = tags; 
         }
+    }
+
+
+
+
+    public class TypeMetaDataCached
+    {
+        internal readonly Type _type;
+
+        internal string _name;
+        internal MetaGroup _group;
+        internal MetaColor? _color;
+        internal string _description;
+        internal IReadOnlyCollection<string> _tags;
+
+        private TypeMetaData _typeMetaData = null;
+        private InitFlag _initFlags = InitFlag.None;
+
+        public TypeMetaDataCached(Type type)
+        {
+            _type = type;
+        }
+
+        public Type Type
+        {
+            get { return _type; }
+        }
+        public string Name
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_name))
+                {
+                    _name = EcsDebugUtility.GetName(_type);
+                    _initFlags |= InitFlag.Name;
+                }
+                return _name;
+            }
+        }
+        public MetaGroup Group
+        {
+            get
+            {
+                if (_group.IsNull)
+                {
+                    _group = EcsDebugUtility.GetGroup(_type);
+                    _initFlags |= InitFlag.Group;
+                }
+                return _group;
+            }
+        }
+        public MetaColor Color
+        {
+            get
+            {
+                if (_color.HasValue == false)
+                {
+                    _color = EcsDebugUtility.GetColor(_type);
+                    _initFlags |= InitFlag.Color;
+                }
+                return _color.Value;
+            }
+        }
+        public string Description
+        {
+            get
+            {
+                if (_description == null)
+                {
+                    _description = EcsDebugUtility.GetDescription(_type);
+                    _initFlags |= InitFlag.Description;
+                }
+                return _description;
+            }
+        }
+        public IReadOnlyCollection<string> Tags
+        {
+            get
+            {
+                if (_tags == null)
+                {
+                    _tags = EcsDebugUtility.GetTags(_type);
+                    _initFlags |= InitFlag.Tags;
+                }
+                return _tags;
+            }
+        }
+        public TypeMetaData AllData
+        {
+            get
+            {
+                if(_typeMetaData == null)
+                {
+                    _typeMetaData = new TypeMetaData(
+                        Type,
+                        Name,
+                        Group,
+                        Color,
+                        Description,
+                        Tags);
+                }
+                return _typeMetaData;
+            }
+        }
+
+        public void InitializeAll()
+        {
+            if (_initFlags == InitFlag.All)
+            {
+                return;
+            }
+            _ = Name;
+            _ = Group;
+            _ = Color;
+            _ = Description;
+            _ = Tags;
+        }
+
+        private enum InitFlag : byte
+        {
+            None = 0,
+            Name = 1 << 0,
+            Group = 1 << 1,
+            Color = 1 << 2,
+            Description = 1 << 3,
+            Tags = 1 << 4,
+            All = Name | Group | Color | Description | Tags
+        }
+    }
+}
+
+
+namespace DCFApixels.DragonECS.Internal
+{
+    internal static class EcsTypeMeta
+    {
+        private static readonly Dictionary<Type, int> _codes = new Dictionary<Type, int>();
+        private static int _increment = 1;
+        public static int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _codes.Count; }
+        }
+        public static int Get(Type type)
+        {
+            if (!_codes.TryGetValue(type, out int code))
+            {
+                code = _increment++;
+                _codes.Add(type, code);
+            }
+            return code;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Get<T>() { return EcsTypeCodeCache<T>.code; }
+        public static bool Has(Type type) { return _codes.ContainsKey(type); }
+        public static bool Has<T>() { return _codes.ContainsKey(typeof(T)); }
+    }
+    internal static class EcsTypeMetaCache<T>
+    {
+        public static readonly int code = EcsTypeMeta.Get(typeof(T));
     }
 }

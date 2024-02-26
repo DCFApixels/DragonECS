@@ -97,7 +97,9 @@ namespace DCFApixels.DragonECS
             byte minChannel = Math.Min(Math.Min(r, g), b);
             byte maxChannel = Math.Max(Math.Max(r, g), b);
             if (maxChannel == minChannel)
+            {
                 return default;
+            }
             float factor = 255f / (maxChannel - minChannel);
             return new MetaColor((byte)((r - minChannel) * factor), (byte)((g - minChannel) * factor), (byte)((b - minChannel) * factor));
         }

@@ -521,24 +521,42 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int NextXorShiftState(int state)
         {
-            unchecked { return (state << 13) ^ (state >> 17) ^ (state << 5); };
+            unchecked
+            {
+                return (int)NextXorShiftState((uint)state);
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint NextXorShiftState(uint state)
         {
-            unchecked { return (state << 13) ^ (state >> 17) ^ (state << 5); };
+            unchecked
+            {
+                state ^= state << 13;
+                state ^= state >> 17;
+                state ^= state << 5;
+                return state;
+            };
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long NextXorShiftState(long state)
         {
-            const long m = 0x2545F491_4F6CDD1D;
-            unchecked { return ((state >> 13) ^ (state << 25) ^ (state >> 27)) * m; };
+            unchecked
+            {
+                return (long)NextXorShiftState((ulong)state);
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ulong NextXorShiftState(ulong state)
         {
-            const ulong m = 0x2545F491_4F6CDD1D;
-            unchecked { return ((state >> 13) ^ (state << 25) ^ (state >> 27)) * m; };
+            unchecked
+            {
+                const ulong m = 0x2545F491_4F6CDD1D;
+                state ^= state >> 13;
+                state ^= state << 25;
+                state ^= state >> 27;
+                state *= m;
+                return state;
+            }
         }
         #endregion
 
