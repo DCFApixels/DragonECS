@@ -54,6 +54,15 @@
 </br>
 
 # Установка
+Семантика версионирования - [Открыть](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
+## Окружение
+Обязательные требования:
++ Минимальная версия C# 7.3;
+
+Опционально:
++ Минимальная версия Unity 2020.1.0;
+
+## Установка для Unity
 * ### Unity-модуль
 Поддерживается установка в виде Unity-модуля в  при помощи добавления git-URL [в PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) или ручного добавления в `Packages/manifest.json`: 
 ```
@@ -61,9 +70,6 @@ https://github.com/DCFApixels/DragonECS.git
 ```
 * ### В виде иходников
 Фреймворк так же может быть добавлен в проект в виде исходников.
-
-### Версионирование
-В DragonECS применяется следующая семантика версионирования: [Открыть](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
 
 </br>
 
