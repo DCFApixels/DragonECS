@@ -67,7 +67,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Get Process
+        #region GetProcess
         public EcsProcess<T> GetProcess<T>() where T : IEcsProcess
         {
             Type type = typeof(T);
@@ -85,8 +85,8 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Declare/Get Runner
-        public TRunner DeclareRunner<TRunner>() where TRunner : EcsRunner, IEcsRunner, new()
+        #region GetRunner
+        public TRunner GetRunnerInstance<TRunner>() where TRunner : EcsRunner, IEcsRunner, new()
         {
             Type runnerType = typeof(TRunner);
             if (_runners.TryGetValue(runnerType, out IEcsRunner result))
@@ -144,9 +144,9 @@ namespace DCFApixels.DragonECS
             _injector = _injectorBuilder.Build(this);
             _injectorBuilder = null;
 
-            DeclareRunner<EcsPreInitRunner>().PreInit();
-            DeclareRunner<EcsInitRunner>().Init();
-            _runRunnerCache = DeclareRunner<EcsRunRunner>();
+            GetRunnerInstance<EcsPreInitRunner>().PreInit();
+            GetRunnerInstance<EcsInitRunner>().Init();
+            _runRunnerCache = GetRunnerInstance<EcsRunRunner>();
 
             _isInit = true;
 
@@ -176,7 +176,7 @@ namespace DCFApixels.DragonECS
                 return;
             }
             _isDestoryed = true;
-            DeclareRunner<EcsDestroyRunner>().Destroy();
+            GetRunnerInstance<EcsDestroyRunner>().Destroy();
         }
         #endregion
 
@@ -307,7 +307,7 @@ namespace DCFApixels.DragonECS
             {
                 public override void Declare(EcsPipeline pipeline)
                 {
-                    pipeline.DeclareRunner<T>();
+                    pipeline.GetRunnerInstance<T>();
                 }
             }
             public class LayerList : IEnumerable<string>
