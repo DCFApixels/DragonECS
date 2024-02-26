@@ -397,7 +397,7 @@ namespace DCFApixels.DragonECS
         }
         public static TypeMetaDataCached GetCachedTypeMeta(Type type)
         {
-            if(_metaCache.TryGetValue(type, out TypeMetaDataCached result) == false)
+            if (_metaCache.TryGetValue(type, out TypeMetaDataCached result) == false)
             {
                 result = new TypeMetaDataCached(type);
                 _metaCache.Add(type, result);
@@ -438,7 +438,7 @@ namespace DCFApixels.DragonECS
             this.group = group;
             this.color = color;
             this.description = description;
-            this.tags = tags; 
+            this.tags = tags;
         }
     }
 
@@ -528,7 +528,7 @@ namespace DCFApixels.DragonECS
         {
             get
             {
-                if(_typeMetaData == null)
+                if (_typeMetaData == null)
                 {
                     _typeMetaData = new TypeMetaData(
                         Type,
