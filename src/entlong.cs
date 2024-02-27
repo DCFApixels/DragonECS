@@ -30,12 +30,12 @@ namespace DCFApixels.DragonECS
         public bool IsAlive
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => EcsWorld.GetWorld(world).IsAlive(id, gen);
+            get { return EcsWorld.GetWorld(world).IsAlive(id, gen); }
         }
         public bool IsNull
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => full == 0L;
+            get { return full == 0L; }
         }
         public int ID
         {
@@ -43,7 +43,7 @@ namespace DCFApixels.DragonECS
             get
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
+                if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
                 return id;
             }
@@ -54,7 +54,7 @@ namespace DCFApixels.DragonECS
             get
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
+                if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
                 return gen;
             }
@@ -65,7 +65,7 @@ namespace DCFApixels.DragonECS
             get
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
+                if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
                 return EcsWorld.GetWorld(world);
             }
@@ -76,7 +76,7 @@ namespace DCFApixels.DragonECS
             get
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
+                if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
                 return world;
             }
@@ -144,24 +144,38 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region operators
+        #region Operators
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(entlong a, entlong b) => a.full == b.full;
+        public static bool operator ==(entlong a, entlong b) { return a.full == b.full; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(entlong a, entlong b) => a.full != b.full;
+        public static bool operator !=(entlong a, entlong b) { return a.full != b.full; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator long(entlong a) => a.full;
+        public static explicit operator long(entlong a) { return a.full; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator entlong(long a) => new entlong(a);
+        public static explicit operator entlong(long a) { return new entlong(a); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator int(entlong a) => a.ID;
+        public static explicit operator int(entlong a) { return a.ID; }
+        #endregion
+
+        #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode() { return unchecked((int)full) ^ (int)(full >> 32); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override string ToString() { return $"entity(id:{id} g:{gen} w:{world} {(IsNull ? "null" : IsAlive ? "alive" : "not alive")})"; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override bool Equals(object obj) { return obj is entlong other && full == other.full; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(entlong other) { return full == other.full; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(long other) { return full == other; }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deconstruct(out int id, out int gen, out int world)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
+            if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
             id = this.id;
             gen = this.gen;
@@ -171,35 +185,22 @@ namespace DCFApixels.DragonECS
         public void Deconstruct(out int id, out int world)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!IsAlive) Throw.Ent_ThrowIsNotAlive(this);
+            if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
             id = this.id;
             world = this.world;
         }
-        #endregion
 
-        #region Other
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() => unchecked((int)full) ^ (int)(full >> 32);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override string ToString() => $"entity(id:{id} g:{gen} w:{world} {(IsNull ? "null" : IsAlive ? "alive" : "not alive")})";
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool Equals(object obj) => obj is entlong other && full == other.full;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(entlong other) => full == other.full;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(long other) => full == other;
-
-        internal class DebuggerProxy
+        private class DebuggerProxy
         {
             private List<object> _componentsList;
             private entlong _value;
-            public long full => _value.full;
-            public int id => _value.id;
-            public int gen => _value.gen;
-            public int world => _value.world;
-            public EntState State => _value.IsNull ? EntState.Null : _value.IsAlive ? EntState.Alive : EntState.Dead;
-            public EcsWorld EcsWorld => EcsWorld.GetWorld(world);
+            public long full { get { return _value.full; } }
+            public int id { get { return _value.id; } }
+            public int gen { get { return _value.gen; } }
+            public int world { get { return _value.world; } }
+            public EntState State { get { return _value.IsNull ? EntState.Null : _value.IsAlive ? EntState.Alive : EntState.Dead; } }
+            public EcsWorld EcsWorld { get { return EcsWorld.GetWorld(world); } }
             public IEnumerable<object> components
             {
                 get
