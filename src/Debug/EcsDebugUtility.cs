@@ -384,6 +384,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetCachedTypeMeta
+        public static TypeMetaDataCached GetMeta(this object self)
+        {
+            return GetCachedTypeMeta(self);
+        }
         private static readonly Dictionary<Type, TypeMetaDataCached> _metaCache = new Dictionary<Type, TypeMetaDataCached>();
         public static TypeMetaDataCached GetCachedTypeMeta(object obj)
         {

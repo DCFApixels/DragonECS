@@ -5,9 +5,9 @@ using System.Linq;
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
-    public sealed class MetaTagsAttribute : Attribute
+    public sealed class MetaTagsAttribute : EcsMetaAttribute
     {
-        private readonly string[] _tags;
+        private readonly string[] _tags = Array.Empty<string>();
         public IReadOnlyCollection<string> Tags => _tags;
 
         [Obsolete("With empty parameters, this attribute makes no sense.", true)]

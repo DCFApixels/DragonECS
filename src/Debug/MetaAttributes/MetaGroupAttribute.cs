@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
-    public sealed class MetaGroupAttribute : Attribute
+    public sealed class MetaGroupAttribute : EcsMetaAttribute
     {
         public static readonly MetaGroupAttribute Empty = new MetaGroupAttribute("");
         public readonly string name;

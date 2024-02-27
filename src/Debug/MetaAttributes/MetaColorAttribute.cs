@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
-    public sealed class MetaColorAttribute : Attribute
+    public sealed class MetaColorAttribute : EcsMetaAttribute
     {
         public readonly MetaColor color;
         public byte R => color.r;
