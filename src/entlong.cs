@@ -191,9 +191,9 @@ namespace DCFApixels.DragonECS
             world = this.world;
         }
 
-        private class DebuggerProxy
+        internal class DebuggerProxy
         {
-            private List<object> _componentsList;
+            private List<object> _componentsList = new List<object>();
             private entlong _value;
             public long full { get { return _value.full; } }
             public int id { get { return _value.id; } }
@@ -212,9 +212,72 @@ namespace DCFApixels.DragonECS
             public DebuggerProxy(entlong value)
             {
                 _value = value;
-                _componentsList = new List<object>();
+            }
+            public DebuggerProxy(EntitySlotInfo value)
+            {
+                _value = new entlong(value.id, value.gen, value.world);
             }
             public enum EntState { Null, Dead, Alive, }
+        }
+        #endregion
+    }
+
+
+    [DebuggerTypeProxy(typeof(entlong.DebuggerProxy))]
+    public readonly struct EntitySlotInfo : IEquatable<EntitySlotInfo>
+    {
+        public readonly int id;
+        public readonly short gen;
+        public readonly short world;
+
+        #region Constructors
+        public EntitySlotInfo(int id, short gen, short world)
+        {
+            this.id = id;
+            this.gen = gen;
+            this.world = world;
+        }
+        #endregion
+
+        #region Operators
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(EntitySlotInfo a, EntitySlotInfo b)
+        {
+            return a.id == b.id &&
+                a.gen == b.gen &&
+                a.world == b.world;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(EntitySlotInfo a, EntitySlotInfo b)
+        {
+            return a.id != b.id ||
+                a.gen != b.gen ||
+                a.world != b.world;
+        }
+        #endregion
+
+        #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode() { return unchecked(id ^ gen ^ (world * EcsConsts.MAGIC_PRIME)); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override string ToString() { return $"slot(id:{id} g:{gen} w:{world})"; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override bool Equals(object obj) { return obj is EntitySlotInfo other && this == other; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(EntitySlotInfo other) { return this == other; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Deconstruct(out int id, out int gen, out int world)
+        {
+            id = this.id;
+            gen = this.gen;
+            world = this.world;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Deconstruct(out int id, out int world)
+        {
+            id = this.id;
+            world = this.world;
         }
         #endregion
     }

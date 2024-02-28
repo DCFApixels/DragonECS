@@ -254,23 +254,39 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe entlong GetEntityLong(int entityID)
         {
-            long x = (long)id << 48 | (long)_gens[entityID] << 32 | (long)entityID;
+            long x = (long)id << 48 | (long)GetGen(entityID) << 32 | (long)entityID;
             return *(entlong*)&x;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe EntitySlotInfo GetEntitySlotInfoDebug(int entityID)
+        {
+            return new EntitySlotInfo(entityID, _gens[entityID], id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(int entityID, short gen)
         {
-            return _gens[entityID] == gen;
+            ref short slotGen = ref _gens[entityID];
+            return slotGen == gen && slotGen >= 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsUsed(int entityID)
         {
-            return _gens[entityID] >= 0;
+            return _entityDispenser.IsUsed(entityID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetGen(int entityID)
         {
-            return _gens[entityID];
+            unchecked
+            {
+                ref short slotGen = ref _gens[entityID];
+                if (slotGen < 0)
+                { //up gen
+                    slotGen++;
+                    slotGen &= GEN_MASK; 
+                }
+                return slotGen;
+            }
+
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetComponentsCount(int entityID)
@@ -299,7 +315,9 @@ namespace DCFApixels.DragonECS
             }
             return true;
         }
+        #endregion
 
+        #region Leaked
         public bool DeleteLeakedEntites()
         {
             if (_deleteLeakedEntitesLastVersion == _version)
@@ -321,6 +339,22 @@ namespace DCFApixels.DragonECS
             }
             _deleteLeakedEntitesLastVersion = _version;
             return delCount > 0;
+        }
+        public int CountLeakedEntitesDebug()
+        {
+            if (_deleteLeakedEntitesLastVersion == _version)
+            {
+                return 0;
+            }
+            int delCount = 0;
+            foreach (var e in Entities)
+            {
+                if (_componentCounts[e] <= 0)
+                {
+                    delCount++;
+                }
+            }
+            return delCount;
         }
         #endregion
 
@@ -438,8 +472,8 @@ namespace DCFApixels.DragonECS
             {
                 int e = buffer[i];
                 _entityDispenser.Release(e);
-                unchecked { _gens[e]++; }//up gen
-                _gens[e] |= DEATH_GEN_BIT;
+                //unchecked { _gens[e]++; }//up gen
+                //_gens[e] |= DEATH_GEN_BIT;
             }
             Densify();
         }
