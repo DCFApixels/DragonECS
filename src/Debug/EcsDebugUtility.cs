@@ -1,5 +1,4 @@
-﻿using DCFApixels.DragonECS.Internal;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -173,19 +172,21 @@ namespace DCFApixels.DragonECS
             public List<WordColor> colors = new List<WordColor>();
             public NameColor(IEnumerable<string> nameWords)
             {
+                int i = 0;
                 foreach (var word in nameWords)
                 {
-                    if (!_words.TryGetValue(word, out WordColor color))
+                    if (_words.TryGetValue(word, out WordColor color) == false)
                     {
-                        color = new WordColor();
-                        _words.Add(word, color);
-
-                        MetaColor newColor = new MetaColor(BitsUtility.NextXorShiftState(word.GetHashCode()));
-                        newColor = new MetaColor(newColor.r, newColor.g, newColor.b);
-                        color.color = newColor.UpContrastColor() / 2;
+                        unchecked
+                        {
+                            color = new WordColor();
+                            color.color = new MetaColor(word).UpContrastColor();
+                            _words.Add(word, color);
+                        }
                     }
                     color.wordsCount++;
                     colors.Add(color);
+                    i++;
                 }
             }
             private int CalcTotalWordsColor()
@@ -199,17 +200,31 @@ namespace DCFApixels.DragonECS
             }
             public MetaColor CalcColor()
             {
-                float r = 0, g = 0, b = 0;
-                int totalWordsCount = CalcTotalWordsColor();
+                float r = 0;
+                float g = 0;
+                float b = 0;
+                float totalWordsCount = CalcTotalWordsColor();
                 for (int i = 0, iMax = colors.Count; i < iMax; i++)
                 {
                     var color = colors[i];
-                    float m = (float)color.wordsCount / totalWordsCount;
-                    r += m * color.color.r;
-                    g += m * color.color.g;
-                    b += m * color.color.b;
+                    float m = color.wordsCount / totalWordsCount;
+                    r = m * color.color.r;
+                    g = m * color.color.g;
+                    b = m * color.color.b;
                 }
-                return new MetaColor((byte)r, (byte)g, (byte)b);
+                return UpContrastColor(r, g, b);
+            }
+
+            public MetaColor UpContrastColor(float r, float g, float b)
+            {
+                float minChannel = Math.Min(Math.Min(r, g), b);
+                float maxChannel = Math.Max(Math.Max(r, g), b);
+                if (maxChannel == minChannel)
+                {
+                    return default;
+                }
+                float factor = 255f / (maxChannel - minChannel);
+                return new MetaColor((byte)((r - minChannel) * factor), (byte)((g - minChannel) * factor), (byte)((b - minChannel) * factor));
             }
         }
         private static Dictionary<Type, NameColor> _names = new Dictionary<Type, NameColor>();
@@ -226,6 +241,7 @@ namespace DCFApixels.DragonECS
         private static List<string> SplitString(string s)
         {
             string subs;
+
             List<string> words = new List<string>();
             int start = 0;
             for (int i = 1; i < s.Length; i++)
@@ -384,10 +400,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetCachedTypeMeta
-        public static TypeMetaDataCached GetMeta(this object self)
-        {
-            return GetCachedTypeMeta(self);
-        }
         private static readonly Dictionary<Type, TypeMetaDataCached> _metaCache = new Dictionary<Type, TypeMetaDataCached>();
         public static TypeMetaDataCached GetCachedTypeMeta(object obj)
         {
@@ -446,13 +458,20 @@ namespace DCFApixels.DragonECS
         }
     }
 
+    public static class TypeMetaDataCachedExtensions
+    {
+        public static TypeMetaDataCached GetMeta(this object self)
+        {
+            return EcsDebugUtility.GetCachedTypeMeta(self);
+        }
+    }
     public class TypeMetaDataCached
     {
         internal readonly Type _type;
 
         internal string _name;
         internal MetaGroup _group;
-        internal MetaColor? _color;
+        internal MetaColor _color;
         internal string _description;
         internal IReadOnlyCollection<string> _tags;
 
@@ -472,7 +491,7 @@ namespace DCFApixels.DragonECS
         {
             get
             {
-                if (string.IsNullOrEmpty(_name))
+                if (_initFlags.HasFlag(InitFlag.Name) == false)
                 {
                     _name = EcsDebugUtility.GetName(_type);
                     _initFlags |= InitFlag.Name;
@@ -484,7 +503,7 @@ namespace DCFApixels.DragonECS
         {
             get
             {
-                if (_group.IsNull)
+                if (_initFlags.HasFlag(InitFlag.Group) == false)
                 {
                     _group = EcsDebugUtility.GetGroup(_type);
                     _initFlags |= InitFlag.Group;
@@ -496,19 +515,19 @@ namespace DCFApixels.DragonECS
         {
             get
             {
-                if (_color.HasValue == false)
+                if (_initFlags.HasFlag(InitFlag.Color) == false)
                 {
                     _color = EcsDebugUtility.GetColor(_type);
-                    _initFlags |= InitFlag.Color;
+                    //_initFlags |= InitFlag.Color;
                 }
-                return _color.Value;
+                return _color;
             }
         }
         public string Description
         {
             get
             {
-                if (_description == null)
+                if (_initFlags.HasFlag(InitFlag.Description) == false)
                 {
                     _description = EcsDebugUtility.GetDescription(_type);
                     _initFlags |= InitFlag.Description;
@@ -520,7 +539,7 @@ namespace DCFApixels.DragonECS
         {
             get
             {
-                if (_tags == null)
+                if (_initFlags.HasFlag(InitFlag.Tags) == false)
                 {
                     _tags = EcsDebugUtility.GetTags(_type);
                     _initFlags |= InitFlag.Tags;
