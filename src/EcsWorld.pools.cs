@@ -210,14 +210,16 @@ namespace DCFApixels.DragonECS
         private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
             _poolComponentCounts[componentTypeID]++;
-            _componentCounts[entityID]++;
+            //_componentCounts[entityID]++;
+            _entities[entityID].componentsCount++;
             _entityComponentMasks[entityID * _entityComponentMaskLength + maskBit.chankIndex] |= maskBit.mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
             _poolComponentCounts[componentTypeID]--;
-            var count = --_componentCounts[entityID];
+            //var count = --_componentCounts[entityID];
+            var count = --_entities[entityID].componentsCount;
             _entityComponentMasks[entityID * _entityComponentMaskLength + maskBit.chankIndex] &= ~maskBit.mask;
 
             if (count == 0 && IsUsed(entityID))
@@ -239,7 +241,8 @@ namespace DCFApixels.DragonECS
             {
                 chunk = newChunk;
                 _poolComponentCounts[componentTypeID]++;
-                _componentCounts[entityID]++;
+                //_componentCounts[entityID]++;
+                _entities[entityID].componentsCount++;
                 return true;
             }
             return false;
@@ -252,7 +255,8 @@ namespace DCFApixels.DragonECS
             if (chunk != newChunk)
             {
                 _poolComponentCounts[componentTypeID]--;
-                var count = --_componentCounts[entityID];
+                //var count = --_componentCounts[entityID];
+                var count = --_entities[entityID].componentsCount;
                 chunk = newChunk;
 
                 if (count == 0 && IsUsed(entityID))

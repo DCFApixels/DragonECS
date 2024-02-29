@@ -2,11 +2,29 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld : IEntityStorage
     {
+        [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 4 * 3)]
+        private struct EntitySlot
+        {
+            public static readonly EntitySlot Empty = new EntitySlot(SLEEPING_GEN_FLAG, 0, false);
+            [FieldOffset(0)]
+            public short gen;
+            [FieldOffset(2)]
+            public short componentsCount;
+            [FieldOffset(4)]
+            public bool isUsed;
+            public EntitySlot(short gen, short componentsCount, bool isUsed)
+            {
+                this.gen = gen;
+                this.componentsCount = componentsCount;
+                this.isUsed = isUsed;
+            }
+        }
         public readonly short id;
         private IEcsWorldConfig _config;
 
@@ -15,8 +33,9 @@ namespace DCFApixels.DragonECS
         private IdDispenser _entityDispenser;
         private int _entitiesCount = 0;
         private int _entitiesCapacity = 0;
-        private short[] _gens = Array.Empty<short>(); //старший бит указывает на то жива ли сущность
-        private short[] _componentCounts = Array.Empty<short>();
+        //private short[] _gens = Array.Empty<short>(); //старший бит указывает на то жива ли сущность
+        //private short[] _componentCounts = Array.Empty<short>();
+        private EntitySlot[] _entities = Array.Empty<EntitySlot>();
 
         private int[] _delEntBuffer = Array.Empty<int>();
         private int _delEntBufferCount = 0;
@@ -135,7 +154,8 @@ namespace DCFApixels.DragonECS
         public void Destroy()
         {
             _entityDispenser = null;
-            _gens = null;
+            //_gens = null;
+            //_componentCounts = null;
             _pools = null;
             _nullPool = null;
             _worlds[id] = null;
@@ -211,9 +231,12 @@ namespace DCFApixels.DragonECS
             _entitiesCount++;
             if (_entitiesCapacity <= entityID)
             {
-                OnEntityDispenserResized(_gens.Length << 1);
+                //OnEntityDispenserResized(_gens.Length << 1);
+                OnEntityDispenserResized(_entities.Length << 1);
             }
-            _gens[entityID] &= GEN_MASK;
+            //_gens[entityID] &= GEN_MASK;
+            //_entities[entityID].gen &= GEN_MASK;
+            _entities[entityID].isUsed = true;
             _entityListeners.InvokeOnNewEntity(entityID);
         }
 
@@ -239,7 +262,8 @@ namespace DCFApixels.DragonECS
 #endif
             UpVersion();
             _delEntBuffer[_delEntBufferCount++] = entityID;
-            _gens[entityID] |= DEATH_GEN_BIT;
+            //_gens[entityID] |= DEATH_GEN_BIT;
+            _entities[entityID].isUsed = false;
             _entitiesCount--;
             _entityListeners.InvokeOnDelEntity(entityID);
         }
@@ -249,6 +273,10 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan()
         {
+            if (_isEnableAutoReleaseDelEntBuffer)
+            {
+                ReleaseDelEntityBufferAll();
+            }
             return _entityDispenser.UsedToEcsSpan(id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -260,29 +288,33 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe EntitySlotInfo GetEntitySlotInfoDebug(int entityID)
         {
-            return new EntitySlotInfo(entityID, _gens[entityID], id);
+            //return new EntitySlotInfo(entityID, _gens[entityID], id);
+            return new EntitySlotInfo(entityID, _entities[entityID].gen, id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(int entityID, short gen)
         {
-            ref short slotGen = ref _gens[entityID];
-            return slotGen == gen && slotGen >= 0;
+            //ref short slotGen = ref _gens[entityID];
+            ref var slot = ref _entities[entityID];
+            return slot.gen == gen && slot.isUsed;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsUsed(int entityID)
         {
-            return _entityDispenser.IsUsed(entityID);
+            //return _entityDispenser.IsUsed(entityID);
+            return _entities[entityID].isUsed;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetGen(int entityID)
         {
             unchecked
             {
-                ref short slotGen = ref _gens[entityID];
+                //ref short slotGen = ref _gens[entityID];
+                ref short slotGen = ref _entities[entityID].gen;
                 if (slotGen < 0)
                 { //up gen
                     slotGen++;
-                    slotGen &= GEN_MASK; 
+                    slotGen &= GEN_MASK;
                 }
                 return slotGen;
             }
@@ -291,7 +323,8 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetComponentsCount(int entityID)
         {
-            return _componentCounts[entityID];
+            //return _componentCounts[entityID];
+            return _entities[entityID].componentsCount;
         }
 
         public bool IsMatchesMask(EcsMask mask, int entityID)
@@ -327,7 +360,8 @@ namespace DCFApixels.DragonECS
             int delCount = 0;
             foreach (var e in Entities)
             {
-                if (_componentCounts[e] <= 0)
+                //if (_componentCounts[e] <= 0)
+                if (_entities[e].componentsCount <= 0)
                 {
                     DelEntity(e);
                     delCount++;
@@ -349,7 +383,8 @@ namespace DCFApixels.DragonECS
             int delCount = 0;
             foreach (var e in Entities)
             {
-                if (_componentCounts[e] <= 0)
+                //if (_componentCounts[e] <= 0)
+                if (_entities[e].componentsCount <= 0)
                 {
                     delCount++;
                 }
@@ -448,7 +483,8 @@ namespace DCFApixels.DragonECS
             for (int i = 0; i < slisedCount; i++)
             {
                 int e = _delEntBuffer[i];
-                if (_componentCounts[e] <= 0)
+                //if (_componentCounts[e] <= 0)
+                if (_entities[e].componentsCount <= 0)
                 {
                     int tmp = _delEntBuffer[i];
                     _delEntBuffer[i] = _delEntBuffer[--slisedCount];
@@ -474,6 +510,7 @@ namespace DCFApixels.DragonECS
                 _entityDispenser.Release(e);
                 //unchecked { _gens[e]++; }//up gen
                 //_gens[e] |= DEATH_GEN_BIT;
+                _entities[e].gen |= SLEEPING_GEN_FLAG;
             }
             Densify();
         }
@@ -491,13 +528,15 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void OnEntityDispenserResized(int newSize)
         {
-            Array.Resize(ref _gens, newSize);
-            Array.Resize(ref _componentCounts, newSize);
+            //Array.Resize(ref _gens, newSize);
+            //Array.Resize(ref _componentCounts, newSize);
+            Array.Resize(ref _entities, newSize);
             Array.Resize(ref _delEntBuffer, newSize);
             _entityComponentMaskLength = _pools.Length / COMPONENT_MATRIX_MASK_BITSIZE + 1;
             Array.Resize(ref _entityComponentMasks, newSize * _entityComponentMaskLength);
 
-            ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitiesCapacity);
+            //ArrayUtility.Fill(_gens, DEATH_GEN_BIT, _entitiesCapacity);
+            ArrayUtility.Fill(_entities, EntitySlot.Empty, _entitiesCapacity);
 
             _entitiesCapacity = newSize;
 

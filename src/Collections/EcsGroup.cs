@@ -749,14 +749,16 @@ namespace DCFApixels.DragonECS
             private EcsGroup _group;
             public EcsWorld World => _group.World;
             public bool IsReleased => _group.IsReleased;
-            public entlong[] Entities
+            public EntitySlotInfo[] Entities
             {
                 get
                 {
-                    entlong[] result = new entlong[_group.Count];
+                    EntitySlotInfo[] result = new EntitySlotInfo[_group.Count];
                     int i = 0;
                     foreach (var e in _group)
-                        result[i++] = _group.World.GetEntityLong(e);
+                    {
+                        result[i++] = _group.World.GetEntitySlotInfoDebug(e);
+                    }
                     return result;
                 }
             }

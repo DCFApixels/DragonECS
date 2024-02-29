@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
     public partial class EcsWorld
     {
         private const short GEN_MASK = 0x7fff;
-        private const short DEATH_GEN_BIT = short.MinValue;
+        private const short SLEEPING_GEN_FLAG = short.MinValue;
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 5;
         private const int DEL_ENT_BUFFER_MIN_SIZE = 64;
 
