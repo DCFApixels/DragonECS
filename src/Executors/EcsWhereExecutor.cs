@@ -54,7 +54,7 @@ namespace DCFApixels.DragonECS
             if (_lastWorldVersion != World.Version)
             {
                 result = _aspect.GetIteratorFor(span).CopyToSpan(ref _filteredEntities);
-                _filteredEntitiesCount = result.Length;
+                _filteredEntitiesCount = result.Count;
                 _lastWorldVersion = World.Version;
             }
             else

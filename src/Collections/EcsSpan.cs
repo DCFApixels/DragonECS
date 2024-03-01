@@ -28,7 +28,7 @@ namespace DCFApixels.DragonECS
         {
             get { return EcsWorld.GetWorld(_worldID); }
         }
-        public int Length //TODO rename to Count
+        public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _values.Length; }
@@ -145,7 +145,7 @@ namespace DCFApixels.DragonECS
             public int Count { get { return _values.Length; } }
             public DebuggerProxy(EcsSpan span)
             {
-                _values = new int[span.Length];
+                _values = new int[span.Count];
                 span._values.CopyTo(_values);
                 _worldID = span._worldID;
             }

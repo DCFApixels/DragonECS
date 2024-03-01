@@ -44,11 +44,6 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.CapacityDense; }
         }
-        public int CapacitySparce //TODO remove
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _source.CapacitySparce; }
-        }
         public bool IsReleazed
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -173,11 +168,6 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _dense.Length;
-        }
-        public int CapacitySparce //TODO remove
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _sparse.Length;
         }
         public EcsReadonlyGroup Readonly
         {
@@ -336,7 +326,7 @@ namespace DCFApixels.DragonECS
             {
                 Clear();
             }
-            for (int i = 0; i < span.Length; i++)
+            for (int i = 0; i < span.Count; i++)
             {
                 Add_Internal(span[i]);
             }
@@ -539,7 +529,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            if (span.Length != Count)
+            if (span.Count != Count)
                 return false;
             foreach (var item in span)
                 if (!Has(item))
