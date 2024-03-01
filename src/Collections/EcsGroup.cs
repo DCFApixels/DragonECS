@@ -785,7 +785,6 @@ namespace DCFApixels.DragonECS
             }
             public int Count { get { return _group.Count; } }
             public int CapacityDense { get { return _group.CapacityDense; } }
-            public int CapacitySparce { get { return _group.CapacitySparce; } }
             public override string ToString() { return _group.ToString(); }
             public DebuggerProxy(EcsGroup group) { _group = group; }
             public DebuggerProxy(EcsReadonlyGroup group) : this(group.GetSource_Internal()) { }
