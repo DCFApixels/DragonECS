@@ -269,7 +269,7 @@ namespace DCFApixels.DragonECS
         internal void Remove_Internal(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) { Throw.Group_DoesNotContain(entityID); }
+            if (Has(entityID) == false) { Throw.Group_DoesNotContain(entityID); }
 #endif
             _dense[_sparse[entityID]] = _dense[_count];
             _sparse[_dense[_count--]] = _sparse[entityID];
@@ -278,11 +278,11 @@ namespace DCFApixels.DragonECS
 
         public void RemoveUnusedEntityIDs()
         {
-            foreach (var e in this)
+            foreach (var entityID in this)
             {
-                if (!_source.IsUsed(e))
+                if (_source.IsUsed(entityID) == false)
                 {
-                    Remove_Internal(e);
+                    Remove_Internal(entityID);
                 }
             }
         }
@@ -291,6 +291,10 @@ namespace DCFApixels.DragonECS
         #region Clear
         public void Clear()
         {
+            if(_count == 0)
+            {
+                return;
+            }
             _count = 0;
             for (int i = 0; i < _sparse.Length; i++)
             {
@@ -378,169 +382,190 @@ namespace DCFApixels.DragonECS
 
         #region UnionWith
         /// <summary>as Union sets</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UnionWith(EcsReadonlyGroup group) => UnionWith(group.GetSource_Internal());
-        /// <summary>as Union sets</summary>
         public void UnionWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            foreach (var item in group)
-                if (!Has(item))
-                    Add_Internal(item);
+            foreach (var entityID in group)
+            {
+                if (Has(entityID) == false)
+                {
+                    Add_Internal(entityID);
+                }
+            }
         }
+        /// <summary>as Union sets</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnionWith(EcsReadonlyGroup group) => UnionWith(group.GetSource_Internal());
+        /// <summary>as Union sets</summary>
         public void UnionWith(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            foreach (var item in span)
+            foreach (var entityID in span)
             {
-                if (!Has(item))
-                    Add_Internal(item);
+                if (Has(entityID) == false)
+                {
+                    Add_Internal(entityID);
+                }
             }
         }
         #endregion
 
         #region ExceptWith
         /// <summary>as Except sets</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ExceptWith(EcsReadonlyGroup group) => ExceptWith(group.GetSource_Internal());
-        /// <summary>as Except sets</summary>
         public void ExceptWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source != group.World) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
-            //if (group.Count > Count) // вариант 1. есть итерация по this
-            //{
-            //    foreach (var item in this)
-            //        if (group.Has(item))
-            //            RemoveInternal(item);
-            //}
-            //else
-            //{
-            //    foreach (var item in group)
-            //        if (Has(item))
-            //            RemoveInternal(item);
-            //}
-
-            //foreach (var item in group) // вариант 2
-            //    if (Has(item))
-            //        RemoveInternal(item);
-
             if (group.Count > Count)
             {
                 for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
                 {
-                    int item = _dense[i];
-                    if (group.Has(item))
-                        Remove_Internal(item);
+                    int entityID = _dense[i];
+                    if (group.Has(entityID))
+                    {
+                        Remove_Internal(entityID);
+                    }
                 }
             }
             else
             {
-                foreach (var item in group)
+                foreach (var entityID in group)
                 {
-                    if (Has(item))
-                        Remove_Internal(item);
+                    if (Has(entityID))
+                    {
+                        Remove_Internal(entityID);
+                    }
                 }
             }
         }
+        /// <summary>as Except sets</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ExceptWith(EcsReadonlyGroup group) { ExceptWith(group.GetSource_Internal()); }
+        /// <summary>as Except sets</summary>
         public void ExceptWith(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.id != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
-            foreach (var item in span)
+            foreach (var entityID in span)
             {
-                if (Has(item))
-                    Remove_Internal(item);
+                if (Has(entityID))
+                {
+                    Remove_Internal(entityID);
+                }
             }
         }
         #endregion
 
         #region IntersectWith
         /// <summary>as Intersect sets</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void IntersectWith(EcsReadonlyGroup group) => IntersectWith(group.GetSource_Internal());
-        /// <summary>as Intersect sets</summary>
         public void IntersectWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (World != group.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (World != group.World) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
             {
-                int item = _dense[i];
-                if (!group.Has(item))
-                    Remove_Internal(item);
+                int entityID = _dense[i];
+                if (group.Has(entityID) == false)
+                {
+                    Remove_Internal(entityID);
+                }
             }
         }
+        /// <summary>as Intersect sets</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void IntersectWith(EcsReadonlyGroup group) { IntersectWith(group.GetSource_Internal()); }
         #endregion
 
         #region SymmetricExceptWith
         /// <summary>as Symmetric Except sets</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SymmetricExceptWith(EcsReadonlyGroup group) => SymmetricExceptWith(group.GetSource_Internal());
-        /// <summary>as Symmetric Except sets</summary>
         public void SymmetricExceptWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source != group.World) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
-            foreach (var item in group)
-                if (Has(item))
-                    Remove_Internal(item);
+            foreach (var entityID in group)
+            {
+                if (Has(entityID))
+                {
+                    Remove_Internal(entityID);
+                }
                 else
-                    Add_Internal(item);
+                {
+                    Add_Internal(entityID);
+                }
+            }
         }
+        /// <summary>as Symmetric Except sets</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SymmetricExceptWith(EcsReadonlyGroup group) { SymmetricExceptWith(group.GetSource_Internal()); }
         #endregion
 
         #region Inverse
         public void Inverse()
         {
-            foreach (var item in _source.Entities)
-                if (Has(item))
-                    Remove_Internal(item);
+            foreach (var entityID in _source.Entities)
+            {
+                if (Has(entityID))
+                {
+                    Remove_Internal(entityID);
+                }
                 else
-                    Add_Internal(item);
+                {
+                    Add_Internal(entityID);
+                }
+            }
         }
         #endregion
 
         #region SetEquals
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool SetEquals(EcsReadonlyGroup group) => SetEquals(group.GetSource_Internal());
         public bool SetEquals(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source != group.World) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             if (group.Count != Count)
+            {
                 return false;
-            foreach (var item in group)
-                if (!Has(item))
+            }
+            foreach (var entityID in group)
+            {
+                if (Has(entityID) == false)
+                {
                     return false;
+                }
+            }
             return true;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetEquals(EcsReadonlyGroup group) { return SetEquals(group.GetSource_Internal()); }
         public bool SetEquals(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.id != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             if (span.Count != Count)
+            {
                 return false;
-            foreach (var item in span)
-                if (!Has(item))
+            }
+            foreach (var entityID in span)
+            {
+                if (Has(entityID) == false)
+                {
                     return false;
+                }
+            }
             return true;
         }
         #endregion
 
         #region Overlaps
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Overlaps(EcsReadonlyGroup group) => Overlaps(group.GetSource_Internal());
         public bool Overlaps(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
@@ -548,62 +573,88 @@ namespace DCFApixels.DragonECS
 #endif
             if (group.Count > Count)
             {
-                foreach (var item in this)
-                    if (group.Has(item))
+                foreach (var entityID in this)
+                {
+                    if (group.Has(entityID))
+                    {
                         return true;
+                    }
+                }
             }
             else
             {
-                foreach (var item in group)
-                    if (Has(item))
+                foreach (var entityID in group)
+                {
+                    if (Has(entityID))
+                    {
                         return true;
+                    }
+                }
             }
             return false;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Overlaps(EcsReadonlyGroup group) { return Overlaps(group.GetSource_Internal()); }
         public bool Overlaps(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            foreach (var item in span)
-                if (Has(item))
+            foreach (var entityID in span)
+            {
+                if (Has(entityID))
+                {
                     return true;
+                }
+            }
             return false;
         }
         #endregion
 
         #region IsSubsetOf
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSubsetOf(EcsReadonlyGroup group) => IsSubsetOf(group.GetSource_Internal());
         public bool IsSubsetOf(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             if (group.Count < Count)
+            {
                 return false;
-            foreach (var item in this)
-                if (!group.Has(item))
+            }
+            foreach (var entityID in this)
+            {
+                if (group.Has(entityID) == false)
+                {
                     return false;
+                }
+            }
             return true;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSubsetOf(EcsReadonlyGroup group) { return IsSubsetOf(group.GetSource_Internal()); }
         #endregion
 
         #region IsSupersetOf
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSupersetOf(EcsReadonlyGroup group) => IsSupersetOf(group.GetSource_Internal());
         public bool IsSupersetOf(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             if (group.Count > Count)
+            {
                 return false;
-            foreach (var item in group)
-                if (!Has(item))
+            }
+            foreach (var entityID in group)
+            {
+                if (Has(entityID) == false)
+                {
                     return false;
+                }
+            }
             return true;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSupersetOf(EcsReadonlyGroup group) { return IsSupersetOf(group.GetSource_Internal()); }
         #endregion
 
         #endregion
@@ -614,40 +665,66 @@ namespace DCFApixels.DragonECS
         public static EcsGroup Union(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) Throw.Group_ArgumentDifferentWorldsException();
+            if (a._source != b._source) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             EcsGroup result = a._source.GetFreeGroup();
-            foreach (var item in a)
-                result.Add_Internal(item);
-            foreach (var item in b)
-                result.Add(item);
+            foreach (var entityID in a)
+            {
+                result.Add_Internal(entityID);
+            }
+            foreach (var entityID in b)
+            {
+                result.Add(entityID);
+            }
             return result;
         }
+        public static EcsGroup Union(EcsReadonlyGroup a, EcsReadonlyGroup b)
+        {
+            return Union(a.GetSource_Internal(), b.GetSource_Internal());
+        }
+
         /// <summary>as Except sets</summary>
         /// <returns>new group from pool</returns>
         public static EcsGroup Except(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) Throw.Group_ArgumentDifferentWorldsException();
+            if (a._source != b._source) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             EcsGroup result = a._source.GetFreeGroup();
-            foreach (var item in a)
-                if (!b.Has(item))
-                    result.Add_Internal(item);
+            foreach (var entityID in a)
+            {
+                if (b.Has(entityID) == false)
+                {
+                    result.Add_Internal(entityID);
+                }
+            }
             return result;
         }
+        public static EcsGroup Except(EcsReadonlyGroup a, EcsReadonlyGroup b)
+        {
+            return Except(a.GetSource_Internal(), b.GetSource_Internal());
+        }
+
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
         public static EcsGroup Intersect(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) Throw.Group_ArgumentDifferentWorldsException();
+            if (a._source != b._source) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             EcsGroup result = a._source.GetFreeGroup();
-            foreach (var item in a)
-                if (b.Has(item))
-                    result.Add_Internal(item);
+            foreach (var entityID in a)
+            {
+                if (b.Has(entityID))
+                {
+                    result.Add_Internal(entityID);
+                }
+            }
             return result;
+        }
+        public static EcsGroup Intersect(EcsReadonlyGroup a, EcsReadonlyGroup b)
+        {
+            return Intersect(a.GetSource_Internal(), b.GetSource_Internal());
         }
 
         /// <summary>as Symmetric Except sets</summary>
@@ -655,25 +732,45 @@ namespace DCFApixels.DragonECS
         public static EcsGroup SymmetricExcept(EcsGroup a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (a._source != b._source) Throw.Group_ArgumentDifferentWorldsException();
+            if (a._source != b._source) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             EcsGroup result = a._source.GetFreeGroup();
-            foreach (var item in a)
-                if (!b.Has(item))
-                    result.Add_Internal(item);
-            foreach (var item in b)
-                if (!a.Has(item))
-                    result.Add_Internal(item);
+            foreach (var entityID in a)
+            {
+                if (!b.Has(entityID))
+                {
+                    result.Add_Internal(entityID);
+                }
+            }
+            foreach (var entityID in b)
+            {
+                if (!a.Has(entityID))
+                {
+                    result.Add_Internal(entityID);
+                }
+            }
             return result;
+        }
+        public static EcsGroup SymmetricExcept(EcsReadonlyGroup a, EcsReadonlyGroup b)
+        {
+            return SymmetricExcept(a.GetSource_Internal(), b.GetSource_Internal());
         }
 
         public static EcsGroup Inverse(EcsGroup a)
         {
             EcsGroup result = a._source.GetFreeGroup();
             foreach (var item in a._source.Entities)
-                if (!a.Has(item))
+            {
+                if (a.Has(item) == false)
+                {
                     result.Add_Internal(item);
+                }
+            }
             return result;
+        }
+        public static EcsGroup Inverse(EcsReadonlyGroup a)
+        {
+            return Inverse(a.GetSource_Internal());
         }
         #endregion
 
