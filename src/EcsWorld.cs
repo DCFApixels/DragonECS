@@ -18,6 +18,8 @@ namespace DCFApixels.DragonECS
             public short componentsCount;
             [FieldOffset(4)]
             public bool isUsed;
+            //[FieldOffset(5)]
+            //public bool isLocked;
             public EntitySlot(short gen, short componentsCount, bool isUsed)
             {
                 this.gen = gen;

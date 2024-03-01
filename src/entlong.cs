@@ -223,7 +223,7 @@ namespace DCFApixels.DragonECS
     }
 
 
-    [DebuggerTypeProxy(typeof(entlong.DebuggerProxy))]
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly struct EntitySlotInfo : IEquatable<EntitySlotInfo>
     {
         public readonly int id;
@@ -280,5 +280,31 @@ namespace DCFApixels.DragonECS
             world = this.world;
         }
         #endregion
+
+
+        internal class DebuggerProxy
+        {
+            private List<object> _componentsList = new List<object>();
+            private entlong _value;
+            public long full { get { return _value.full; } }
+            public int id { get { return _value.id; } }
+            public int gen { get { return _value.gen; } }
+            public int world { get { return _value.world; } }
+            public EntState State { get { return _value.IsNull ? EntState.Null : _value.IsAlive ? EntState.Alive : EntState.Dead; } }
+            public EcsWorld EcsWorld { get { return EcsWorld.GetWorld(world); } }
+            public IEnumerable<object> components
+            {
+                get
+                {
+                    _value.World.GetComponents(_value.ID, _componentsList);
+                    return _componentsList;
+                }
+            }
+            public DebuggerProxy(EntitySlotInfo value)
+            {
+                _value = new entlong(value.id, value.gen, value.world);
+            }
+            public enum EntState { Null, Dead, Alive, }
+        }
     }
 }

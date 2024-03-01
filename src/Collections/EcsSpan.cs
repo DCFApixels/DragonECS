@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS
         public bool IsNull
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _values.IsEmpty;
+            get => _worldID == 0;
         }
         #endregion
 

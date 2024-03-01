@@ -209,6 +209,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
+            UpVersion();
             _poolComponentCounts[componentTypeID]++;
             _entities[entityID].componentsCount++;
             _entityComponentMasks[entityID * _entityComponentMaskLength + maskBit.chankIndex] |= maskBit.mask;
@@ -216,6 +217,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
+            UpVersion();
             _poolComponentCounts[componentTypeID]--;
             var count = --_entities[entityID].componentsCount;
             _entityComponentMasks[entityID * _entityComponentMaskLength + maskBit.chankIndex] &= ~maskBit.mask;
