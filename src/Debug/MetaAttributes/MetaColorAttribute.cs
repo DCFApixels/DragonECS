@@ -7,14 +7,14 @@ namespace DCFApixels.DragonECS
     public interface IMetaColor
     {
         #region Properties
-        public byte R { get; }
-        public byte G { get; }
-        public byte B { get; }
-        public byte A { get; }
-        public float FloatR { get; }
-        public float FloatG { get; }
-        public float FloatB { get; }
-        public float FloatA { get; }
+        byte R { get; }
+        byte G { get; }
+        byte B { get; }
+        byte A { get; }
+        float FloatR { get; }
+        float FloatG { get; }
+        float FloatB { get; }
+        float FloatA { get; }
         #endregion
     }
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
