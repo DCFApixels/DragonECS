@@ -200,7 +200,7 @@ namespace DCFApixels.DragonECS
                 group.Clear();
                 var enumerator = GetEnumerator();
                 while (enumerator.MoveNext())
-                    group.AddInternal(enumerator.Current);
+                    group.Add_Internal(enumerator.Current);
             }
             public int CopyTo(ref int[] array)
             {

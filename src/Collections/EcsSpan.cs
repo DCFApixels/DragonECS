@@ -14,29 +14,29 @@ namespace DCFApixels.DragonECS
         private readonly ReadOnlySpan<int> _values;
 
         #region Properties
+        public bool IsNull
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _worldID == 0; }
+        }
         public int WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _worldID;
+            get { return _worldID; }
         }
         public EcsWorld World
         {
-            get => EcsWorld.GetWorld(_worldID);
+            get { return EcsWorld.GetWorld(_worldID); }
         }
-        public int Length
+        public int Length //TODO rename to Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _values.Length;
+            get { return _values.Length; }
         }
         public int this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _values[index];
-        }
-        public bool IsNull
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _worldID == 0;
+            get { return _values[index]; }
         }
         #endregion
 
@@ -51,7 +51,7 @@ namespace DCFApixels.DragonECS
         internal EcsSpan(int worldID, int[] array)
         {
             _worldID = worldID;
-            _values = array;
+            _values = new ReadOnlySpan<int>(array);
         }
         internal EcsSpan(int worldID, int[] array, int length)
         {
@@ -70,15 +70,15 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int[] Bake()
         {
-            int[] result = new int[_values.Length];
-            _values.CopyTo(result);
-            return result;
+            return _values.ToArray();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Bake(ref int[] entities)
         {
             if (entities.Length < _values.Length)
+            {
                 Array.Resize(ref entities, _values.Length);
+            }
             int[] result = new int[_values.Length];
             _values.CopyTo(result);
             return _values.Length;
@@ -95,42 +95,40 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region operators
-        public static bool operator ==(EcsSpan left, EcsSpan right) => left._values == right._values;
-        public static bool operator !=(EcsSpan left, EcsSpan right) => left._values != right._values;
+        public static bool operator ==(EcsSpan left, EcsSpan right) { return left._values == right._values; }
+        public static bool operator !=(EcsSpan left, EcsSpan right) { return left._values != right._values; }
         #endregion
 
         #region Enumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ReadOnlySpan<int>.Enumerator GetEnumerator() => _values.GetEnumerator();
+        public ReadOnlySpan<int>.Enumerator GetEnumerator() { return _values.GetEnumerator(); }
         #endregion
 
         #region Other
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan Slice(int start) => new EcsSpan(_worldID, _values.Slice(start));
+        public EcsSpan Slice(int start) { return new EcsSpan(_worldID, _values.Slice(start)); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan Slice(int start, int length) => new EcsSpan(_worldID, _values.Slice(start, length));
+        public EcsSpan Slice(int start, int length) { return new EcsSpan(_worldID, _values.Slice(start, length)); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int[] ToArray() => _values.ToArray();
-
-#pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
-        [Obsolete("Equals() on EcsSpan will always throw an exception. Use the equality operator instead.")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool Equals(object obj) => throw new NotSupportedException();
-        [Obsolete("GetHashCode() on EcsSpan will always throw an exception.")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public override int GetHashCode() => throw new NotSupportedException();
-#pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
+        public int[] ToArray() { return _values.ToArray(); }
         public override string ToString()
         {
             return CollectionUtility.EntitiesToString(_values.ToArray(), "span");
-            //return $"span({_values.Length}) {{{string.Join(", ", _values.ToArray().OrderBy(o => o))}}}";
         }
+#pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
+        [Obsolete("Equals() on EcsSpan will always throw an exception. Use the equality operator instead.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override bool Equals(object obj) { throw new NotSupportedException(); }
+        [Obsolete("GetHashCode() on EcsSpan will always throw an exception.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override int GetHashCode() { throw new NotSupportedException(); }
+#pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
 
         internal class DebuggerProxy
         {
             private int[] _values;
             private int _worldID;
-            public EcsWorld World => EcsWorld.GetWorld(_worldID);
+            public EcsWorld World { get { return EcsWorld.GetWorld(_worldID); } }
             public EntitySlotInfo[] Entities
             {
                 get
@@ -144,7 +142,7 @@ namespace DCFApixels.DragonECS
                     return result;
                 }
             }
-            public int Count => _values.Length;
+            public int Count { get { return _values.Length; } }
             public DebuggerProxy(EcsSpan span)
             {
                 _values = new int[span.Length];
