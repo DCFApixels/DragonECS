@@ -44,6 +44,11 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.CapacityDense; }
         }
+        public EcsLongsSpan Longs
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _source.Longs; }
+        }
         public bool IsReleazed
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,19 +75,21 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID) { return _source.IndexOf(entityID); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsGroup.Enumerator GetEnumerator() { return _source.GetEnumerator(); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone() { return _source.Clone(); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int[] Bake() { return _source.Bake(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Bake(ref int[] entities) { return _source.Bake(ref entities); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Bake(List<int> entities) { _source.Bake(entities); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan Slice(int start) { return _source.Slice(start); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan Slice(int start, int length) { return _source.Slice(start, length); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan() { return _source.ToSpan(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan ToSpan(int start, int length) { return _source.ToSpan(start, length); }
+        public int[] ToArray() { return _source.ToArray(); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsGroup.Enumerator GetEnumerator() { return _source.GetEnumerator(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup.LongsIterator GetLongs() { return _source.GetLongs(); }
 
@@ -118,7 +125,7 @@ namespace DCFApixels.DragonECS
 
         #region Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal EcsGroup GetSource_Internal() => _source;
+        internal EcsGroup GetSource_Internal() { return _source; }
         #endregion
 
         #region Other
@@ -173,6 +180,11 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new EcsReadonlyGroup(this); }
+        }
+        public EcsLongsSpan Longs
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return new EcsLongsSpan(this); }
         }
         public bool IsReleased
         {
@@ -291,7 +303,7 @@ namespace DCFApixels.DragonECS
         #region Clear
         public void Clear()
         {
-            if(_count == 0)
+            if (_count == 0)
             {
                 return;
             }
@@ -303,7 +315,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region CopyFrom/Clone/Bake/ToSpan
+        #region CopyFrom/Clone/Bake/Slice/ToSpan/ToArray
         public void CopyFrom(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
@@ -335,18 +347,14 @@ namespace DCFApixels.DragonECS
                 Add_Internal(span[i]);
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone()
         {
             EcsGroup result = _source.GetFreeGroup();
             result.CopyFrom(this);
             return result;
         }
-        public int[] Bake()
-        {
-            int[] result = new int[_count];
-            Array.Copy(_dense, 1, result, 0, _count);
-            return result;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Bake(ref int[] entities)
         {
             if (entities.Length < _count)
@@ -356,6 +364,7 @@ namespace DCFApixels.DragonECS
             Array.Copy(_dense, 1, entities, 0, _count);
             return _count;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Bake(List<int> entities)
         {
             entities.Clear();
@@ -364,17 +373,31 @@ namespace DCFApixels.DragonECS
                 entities.Add(e);
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan Slice(int start)
+        {
+            return Slice(start, _count - start + 1);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan Slice(int start, int length)
+        {
+            start++;
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (start < 1 || start + length > _count) { Throw.ArgumentOutOfRange(); }
+#endif
+            return new EcsSpan(WorldID, _dense, start, length);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan()
         {
             return new EcsSpan(WorldID, _dense, 1, _count);
         }
-        public EcsSpan ToSpan(int start, int length)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int[] ToArray()
         {
-            start -= 1;
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (start < 0 || start + length > _count) { Throw.ArgumentOutOfRange(); }
-#endif
-            return new EcsSpan(WorldID, _dense, start, length);
+            int[] result = new int[_count];
+            Array.Copy(_dense, 1, result, 0, _count);
+            return result;
         }
         #endregion
 
@@ -848,16 +871,16 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
-        public override string ToString()
-        {
-            return CollectionUtility.EntitiesToString(_dense.Skip(1).Take(_count), "group");
-        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _dense[1]; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _dense[_count]; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void OnWorldResize(int newSize) { Array.Resize(ref _sparse, newSize); }
+        public override string ToString()
+        {
+            return CollectionUtility.EntitiesToString(_dense.Skip(1).Take(_count), "group");
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsReadonlyGroup(EcsGroup a) { return a.Readonly; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -888,58 +911,4 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
-
-#if false
-    public static class EcsGroupAliases
-    {
-        /// <summary>Alias for UnionWith</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Add(this EcsGroup self, EcsGroup group)
-        {
-            self.UnionWith(group);
-        }
-        /// <summary>Alias for UnionWith</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Add(this EcsGroup self, EcsReadonlyGroup group)
-        {
-            self.UnionWith(group);
-        }
-        /// <summary>Alias for ExceptWith</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Remove(this EcsGroup self, EcsGroup group)
-        {
-            self.ExceptWith(group);
-        }
-        /// <summary>Alias for ExceptWith</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Remove(this EcsGroup self, EcsReadonlyGroup group)
-        {
-            self.ExceptWith(group);
-        }
-        /// <summary>Alias for SymmetricExceptWith</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Xor(this EcsGroup self, EcsGroup group)
-        {
-            self.SymmetricExceptWith(group);
-        }
-        /// <summary>Alias for SymmetricExceptWith</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Xor(this EcsGroup self, EcsReadonlyGroup group)
-        {
-            self.SymmetricExceptWith(group);
-        }
-        /// <summary>Alias for IntersectWith</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void And(this EcsGroup self, EcsGroup group)
-        {
-            self.IntersectWith(group);
-        }
-        /// <summary>Alias for IntersectWith</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void And(this EcsGroup self, EcsReadonlyGroup group)
-        {
-            self.IntersectWith(group);
-        }
-    }
-#endif
 }

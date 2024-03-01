@@ -33,6 +33,11 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _values.Length; }
         }
+        public EcsLongsSpan Longs
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return new EcsLongsSpan(this); }
+        }
         public int this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -66,12 +71,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Methdos
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int[] Bake()
-        {
-            return _values.ToArray();
-        }
+        #region Bake/Slice/ToArry
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Bake(ref int[] entities)
         {
@@ -79,8 +79,7 @@ namespace DCFApixels.DragonECS
             {
                 Array.Resize(ref entities, _values.Length);
             }
-            int[] result = new int[_values.Length];
-            _values.CopyTo(result);
+            _values.CopyTo(entities);
             return _values.Length;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -92,6 +91,12 @@ namespace DCFApixels.DragonECS
                 entities.Add(e);
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan Slice(int start) { return new EcsSpan(_worldID, _values.Slice(start)); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan Slice(int start, int length) { return new EcsSpan(_worldID, _values.Slice(start, length)); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int[] ToArray() { return _values.ToArray(); }
         #endregion
 
         #region operators
@@ -106,11 +111,9 @@ namespace DCFApixels.DragonECS
 
         #region Other
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan Slice(int start) { return new EcsSpan(_worldID, _values.Slice(start)); }
+        public int First() { return _values[0]; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan Slice(int start, int length) { return new EcsSpan(_worldID, _values.Slice(start, length)); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int[] ToArray() { return _values.ToArray(); }
+        public int Last() { return _values[_values.Length - 1]; }
         public override string ToString()
         {
             return CollectionUtility.EntitiesToString(_values.ToArray(), "span");
@@ -149,7 +152,132 @@ namespace DCFApixels.DragonECS
                 span._values.CopyTo(_values);
                 _worldID = span._worldID;
             }
+            public DebuggerProxy(EcsLongsSpan span) : this(span.ToSpan()) { }
         }
+        #endregion
+    }
+
+    [DebuggerTypeProxy(typeof(EcsSpan.DebuggerProxy))]
+    public readonly ref struct EcsLongsSpan
+    {
+        private readonly EcsSpan _source;
+
+        #region Properties
+        public bool IsNull
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _source.IsNull; }
+        }
+        public int WorldID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _source.WorldID; }
+        }
+        public EcsWorld World
+        {
+            get { return _source.World; }
+        }
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _source.Count; }
+        }
+        public int this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _source[index]; }
+        }
+        #endregion
+
+        #region Constructors
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal EcsLongsSpan(EcsSpan span)
+        {
+            _source = span;
+        }
+        #endregion
+
+        #region Bake/Slice/ToArry
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Bake(ref entlong[] entities)
+        {
+            EcsWorld world = World;
+            if (entities.Length < _source.Count)
+            {
+                Array.Resize(ref entities, _source.Count);
+            }
+            for (int i = 0; i < _source.Count; i++)
+            {
+                entities[i] = world.GetEntityLong(_source[i]);
+            }
+            return _source.Count;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Bake(List<entlong> entities)
+        {
+            entities.Clear();
+            foreach (var e in this)
+            {
+                entities.Add(e);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsLongsSpan Slice(int start) { return new EcsLongsSpan(_source.Slice(start)); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsLongsSpan Slice(int start, int length) { return new EcsLongsSpan(_source.Slice(start, length)); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan ToSpan() { return _source; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int[] ToArray() { return _source.ToArray(); }
+        #endregion
+
+        #region operators
+        public static bool operator ==(EcsLongsSpan left, EcsLongsSpan right) { return left._source == right._source; }
+        public static bool operator !=(EcsLongsSpan left, EcsLongsSpan right) { return left._source != right._source; }
+        #endregion
+
+        #region Enumerator
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Enumerator GetEnumerator() { return new Enumerator(_source.World, _source.GetEnumerator()); }
+        public ref struct Enumerator
+        {
+            private readonly EcsWorld _world;
+            private ReadOnlySpan<int>.Enumerator _enumerator;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Enumerator(EcsWorld world, ReadOnlySpan<int>.Enumerator enumerator)
+            {
+                _world = world;
+                _enumerator = enumerator;
+            }
+            public entlong Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get { return _world.GetEntityLong(_enumerator.Current); }
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext() { return _enumerator.MoveNext(); }
+        }
+        #endregion
+
+        #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public entlong First() { return _source.World.GetEntityLong(_source.First()); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public entlong Last() { return _source.World.GetEntityLong(_source.Last()); }
+        public override string ToString()
+        {
+            return CollectionUtility.EntitiesToString(_source.ToArray(), "longs_span");
+        }
+#pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
+        [Obsolete("Equals() on EcsLongSpan will always throw an exception. Use the equality operator instead.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override bool Equals(object obj) { throw new NotSupportedException(); }
+        [Obsolete("GetHashCode() on EcsLongSpan will always throw an exception.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override int GetHashCode() { throw new NotSupportedException(); }
+#pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator EcsSpan(EcsLongsSpan a) { return a.ToSpan(); }
         #endregion
     }
 }
