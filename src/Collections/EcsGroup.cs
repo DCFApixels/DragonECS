@@ -152,32 +152,32 @@ namespace DCFApixels.DragonECS
         public int WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _source.id;
+            get { return _source.id; }
         }
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _source;
+            get { return _source; }
         }
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _count;
+            get { return _count; }
         }
         public int CapacityDense
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _dense.Length;
+            get { return _dense.Length; }
         }
         public EcsReadonlyGroup Readonly
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => new EcsReadonlyGroup(this);
+            get { return new EcsReadonlyGroup(this); }
         }
         public bool IsReleased
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _isReleased;
+            get { return _isReleased; }
         }
         public int this[int index]
         {
