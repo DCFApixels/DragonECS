@@ -628,7 +628,10 @@ namespace DCFApixels.DragonECS
         {
             list.Clear();
             var itemsCount = GetComponentsCount(entityID);
-
+            if (itemsCount <= 0)
+            {
+                return;
+            }
             int poolIndex = entityID;
             uint bit;
             for (int chunkIndex = 0; chunkIndex < _entityComponentMaskLength; chunkIndex++)
@@ -663,7 +666,10 @@ namespace DCFApixels.DragonECS
         {
             typeSet.Clear();
             var itemsCount = GetComponentsCount(entityID);
-
+            if(itemsCount <= 0)
+            {
+                return;
+            }
             int poolIndex = entityID;
             uint bit;
             for (int chunkIndex = 0; chunkIndex < _entityComponentMaskLength; chunkIndex++)
