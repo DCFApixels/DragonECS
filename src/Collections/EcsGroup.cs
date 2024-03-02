@@ -853,7 +853,25 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _dense[_count]; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void OnWorldResize(int newSize) { Array.Resize(ref _sparse, newSize); }
+        internal void OnWorldResize_Internal(int newSize)
+        {
+            Array.Resize(ref _sparse, newSize);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void OnReleaseDelEntityBuffer_Internal(ReadOnlySpan<int> buffer)
+        {
+            if (_count <= 0)
+            {
+                return;
+            }
+            foreach (var entityID in buffer)
+            {
+                if (Has(entityID))
+                {
+                    Remove_Internal(entityID);
+                }
+            }
+        }
         public override string ToString()
         {
             return CollectionUtility.EntitiesToString(_dense.Skip(1).Take(_count), "group");

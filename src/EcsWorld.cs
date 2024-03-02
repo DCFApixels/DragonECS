@@ -462,8 +462,7 @@ namespace DCFApixels.DragonECS
                 return;
             }
             unchecked { _version++; }
-            count = Math.Min(count, _delEntBufferCount);
-            count = Math.Max(count, 0);
+            count = Math.Max(0, Math.Min(count, _delEntBufferCount));
             _delEntBufferCount -= count;
             int slisedCount = count;
 
@@ -486,6 +485,17 @@ namespace DCFApixels.DragonECS
                 for (int i = 0; i < _poolsCount; i++)
                 {
                     _pools[i].OnReleaseDelEntityBuffer(bufferSlised);
+                }
+            }
+            for (int i = 0; i < _groups.Count; i++)
+            {
+                if (_groups[i].TryGetTarget(out EcsGroup group) && group.IsReleased)
+                {
+                    group.OnReleaseDelEntityBuffer_Internal(buffer);
+                }
+                else
+                {
+                    RemoveGroupAt(i--);
                 }
             }
 
@@ -525,25 +535,28 @@ namespace DCFApixels.DragonECS
             {
                 if (_groups[i].TryGetTarget(out EcsGroup group))
                 {
-                    group.OnWorldResize(newSize);
+                    group.OnWorldResize_Internal(newSize);
                 }
                 else
                 {
-                    int last = _groups.Count - 1;
-                    _groups[i--] = _groups[last];
-                    _groups.RemoveAt(last);
+                    RemoveGroupAt(i--);
                 }
             }
             foreach (var item in _pools)
             {
                 item.OnWorldResize(newSize);
             }
-
             _listeners.InvokeOnWorldResize(newSize);
         }
         #endregion
 
         #region Groups Pool
+        private void RemoveGroupAt(int index)
+        {
+            int last = _groups.Count - 1;
+            _groups[index] = _groups[last];
+            _groups.RemoveAt(last);
+        }
         internal void RegisterGroup(EcsGroup group)
         {
             _groups.Add(new WeakReference<EcsGroup>(group));
