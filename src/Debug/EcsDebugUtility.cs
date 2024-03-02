@@ -176,7 +176,7 @@ namespace DCFApixels.DragonECS
         }
         private static MetaColor AutoColor(Type type)
         {
-            return new MetaColor(type.Name).Desaturate(0.45f) / 1.15f;
+            return new MetaColor(type.Name).Desaturate(0.75f) / 1.15f;
         }
         public static bool TryGetColor(object obj, out MetaColor color)
         {
