@@ -160,111 +160,6 @@ namespace DCFApixels.DragonECS
 
         #region GetColor
 
-        #region Auto Color
-        private static Dictionary<string, WordColor> _words = new Dictionary<string, WordColor>();
-        private class WordColor
-        {
-            public int wordsCount;
-            public MetaColor color;
-        }
-        private class NameColor
-        {
-            public List<WordColor> colors = new List<WordColor>();
-            public NameColor(IEnumerable<string> nameWords)
-            {
-                int i = 0;
-                foreach (var word in nameWords)
-                {
-                    if (_words.TryGetValue(word, out WordColor color) == false)
-                    {
-                        unchecked
-                        {
-                            color = new WordColor();
-                            color.color = new MetaColor(word).UpContrastColor();
-                            _words.Add(word, color);
-                        }
-                    }
-                    color.wordsCount++;
-                    colors.Add(color);
-                    i++;
-                }
-            }
-            private int CalcTotalWordsColor()
-            {
-                int result = 0;
-                for (int i = 0, iMax = colors.Count; i < iMax; i++)
-                {
-                    result += colors[i].wordsCount;
-                }
-                return result;
-            }
-            public MetaColor CalcColor()
-            {
-                float r = 0;
-                float g = 0;
-                float b = 0;
-                float totalWordsCount = CalcTotalWordsColor();
-                for (int i = 0, iMax = colors.Count; i < iMax; i++)
-                {
-                    var color = colors[i];
-                    float m = color.wordsCount / totalWordsCount;
-                    r = m * color.color.r;
-                    g = m * color.color.g;
-                    b = m * color.color.b;
-                }
-                return UpContrastColor(r, g, b);
-            }
-
-            public MetaColor UpContrastColor(float r, float g, float b)
-            {
-                float minChannel = Math.Min(Math.Min(r, g), b);
-                float maxChannel = Math.Max(Math.Max(r, g), b);
-                if (maxChannel == minChannel)
-                {
-                    return default;
-                }
-                float factor = 255f / (maxChannel - minChannel);
-                return new MetaColor((byte)((r - minChannel) * factor), (byte)((g - minChannel) * factor), (byte)((b - minChannel) * factor));
-            }
-        }
-        private static Dictionary<Type, NameColor> _names = new Dictionary<Type, NameColor>();
-        private static MetaColor CalcNameColorFor(Type type)
-        {
-            Type targetType = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
-            if (!_names.TryGetValue(targetType, out NameColor nameColor))
-            {
-                nameColor = new NameColor(SplitString(targetType.Name));
-                _names.Add(targetType, nameColor);
-            }
-            return nameColor.CalcColor();
-        }
-        private static List<string> SplitString(string s)
-        {
-            string subs;
-
-            List<string> words = new List<string>();
-            int start = 0;
-            for (int i = 1; i < s.Length; i++)
-            {
-                if (char.IsUpper(s[i]))
-                {
-                    subs = s.Substring(start, i - start);
-                    if (subs.Length > 2 && subs.ToLower() != "system")
-                    {
-                        words.Add(subs);
-                    }
-                    start = i;
-                }
-            }
-            subs = s.Substring(start);
-            if (subs.Length > 2 && subs.ToLower() != "system")
-            {
-                words.Add(subs);
-            }
-            return words;
-        }
-        #endregion
-
         public static MetaColor GetColor(object obj)
         {
             return obj is IEcsMetaProvider intr ?
@@ -280,7 +175,7 @@ namespace DCFApixels.DragonECS
             var atr = type.GetCustomAttribute<MetaColorAttribute>();
             return atr != null ? atr.color
 #if DEBUG //optimization for release build
-                : CalcNameColorFor(type);
+                : new MetaColor(type.Name);
 #else
                 : MetaColor.BlackColor;
 #endif
