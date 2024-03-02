@@ -120,25 +120,38 @@ namespace DCFApixels.DragonECS
             worldID = world;
             return IsAlive;
         }
-        public void Unpack(out EcsWorld world, out int id)
+        public void Unpack(out int id, out EcsWorld world)
         {
             world = EcsWorld.GetWorld(this.world);
             id = this.id;
         }
-        public void Unpack(out int worldID, out int id)
+        public void Unpack(out int id, out int worldID)
         {
             worldID = world;
             id = this.id;
         }
-        public bool TryUnpack(out EcsWorld world, out int id)
+        public void Unpack(out int id, out short gen, out short worldID)
+        {
+            worldID = world;
+            gen = this.gen;
+            id = this.id;
+        }
+        public bool TryUnpack(out int id, out EcsWorld world)
         {
             world = EcsWorld.GetWorld(this.world);
             id = this.id;
             return IsAlive;
         }
-        public bool TryUnpack(out int worldID, out int id)
+        public bool TryUnpack(out int id, out int worldID)
         {
             worldID = world;
+            id = this.id;
+            return IsAlive;
+        }
+        public bool TryUnpack(out int id, out short gen, out short worldID)
+        {
+            worldID = world;
+            gen = this.gen;
             id = this.id;
             return IsAlive;
         }
