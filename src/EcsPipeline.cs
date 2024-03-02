@@ -141,6 +141,11 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _initMarker.Begin();
 #endif
+            var members = GetProcess<IEcsPipelineMember>();
+            for (int i = 0; i < members.Length; i++)
+            {
+                members[i].Pipeline = this;
+            }
             _injector = _injectorBuilder.Build(this);
             _injectorBuilder = null;
 
@@ -219,7 +224,7 @@ namespace DCFApixels.DragonECS
                 _injector.AddNode<object>();
                 _injector.AddNode<EcsWorld>();
                 _injector.AddNode<EcsAspect>();
-                _injector.AddCustomNode(new PipelinePropertyInjectionNode());
+                _injector.AddNode<EcsPipeline>();
 
                 _basicLayer = EcsConsts.BASIC_LAYER;
                 Layers = new LayerList(this, _basicLayer);
@@ -559,14 +564,4 @@ namespace DCFApixels.DragonECS
         }
     }
     #endregion
-}
-namespace DCFApixels.DragonECS.Internal
-{
-    internal sealed class PipelinePropertyInjectionNode : CustomInjectionNode<IEcsPipelineMember, EcsPipeline>
-    {
-        public sealed override void InjectTo(IEcsPipelineMember system, EcsPipeline obj)
-        {
-            system.Pipeline = obj;
-        }
-    }
 }

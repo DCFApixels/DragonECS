@@ -112,22 +112,6 @@ namespace DCFApixels.DragonECS
             }
             return true;
         }
-        private bool TryDeclareProperty(CustomInjectionNodeBase injectionProperty)
-        {
-            Type type = injectionProperty.Type;
-            if (_nodes.TryGetValue(type, out InjectionNodeBase oldNode))
-            {
-                Throw.Exception("Already declared");
-            }
-            InitNode(injectionProperty);
-#if !REFLECTION_DISABLED
-            if (IsCanInstantiated(type))
-#endif
-            {
-                InitBranch(new InjectionBranch(this, type, true));
-            }
-            return true;
-        }
 
         public class Builder
         {
@@ -142,11 +126,6 @@ namespace DCFApixels.DragonECS
             public EcsPipeline.Builder AddNode<T>()
             {
                 _instance.TryDeclare<T>();
-                return _source;
-            }
-            public EcsPipeline.Builder AddCustomNode(CustomInjectionNodeBase injectionProperty)
-            {
-                _instance.TryDeclareProperty(injectionProperty);
                 return _source;
             }
             public EcsPipeline.Builder Inject<T>(T obj)
