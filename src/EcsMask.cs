@@ -18,13 +18,28 @@ namespace DCFApixels.DragonECS
         internal readonly int[] exc;
 
         #region Properties
-        public int ID => id;
-        public int WorldID => worldID;
-        public EcsWorld World => EcsWorld.GetWorld(worldID);
+        public int ID
+        {
+            get { return id; }
+        }
+        public int WorldID
+        {
+            get { return worldID; }
+        }
+        public EcsWorld World
+        {
+            get { return EcsWorld.GetWorld(worldID); }
+        }
         /// <summary>Including constraints</summary>
-        public ReadOnlySpan<int> Inc => inc;
+        public ReadOnlySpan<int> Inc
+        {
+            get { return inc; }
+        }
         /// <summary>Excluding constraints</summary>
-        public ReadOnlySpan<int> Exc => exc;
+        public ReadOnlySpan<int> Exc
+        {
+            get { return exc; }
+        }
         #endregion
 
         #region Constructors
@@ -118,30 +133,10 @@ namespace DCFApixels.DragonECS
         }
         private static bool IsSubarray(int[] super, int[] sub)
         {
-            //if (super.Length > sub.Length)
-            //{
-            //    return false;
-            //}
-            //for (int superI = 0, subI = 0; 
-            //    subI < sub.Length;
-            //    superI++, subI++)
-            //{
-            //    while (super[superI] < sub[subI])
-            //    {
-            //        superI++;
-            //    }
-            //    if (super[superI] != sub[subI])
-            //    {
-            //        return false;
-            //    }
-            //}
-            //return true;
-
             if (super.Length < sub.Length)
             {
                 return false;
             }
-
             int superI = 0;
             int subI = 0;
 
@@ -153,7 +148,6 @@ namespace DCFApixels.DragonECS
                 }
                 subI++;
             }
-
             return subI == sub.Length;
         }
 
@@ -163,7 +157,6 @@ namespace DCFApixels.DragonECS
             {
                 return false;
             }
-
             int superI = 0;
             int subI = 0;
 
@@ -175,13 +168,15 @@ namespace DCFApixels.DragonECS
                 }
                 superI++;
             }
-
             return subI == sub.Length;
         }
         #endregion
 
         #region Object
-        public override string ToString() => CreateLogString(worldID, inc, exc);
+        public override string ToString()
+        {
+            return CreateLogString(worldID, inc, exc);
+        }
         public bool Equals(EcsMask mask)
         {
             return id == mask.id && worldID == mask.worldID;
@@ -203,11 +198,11 @@ namespace DCFApixels.DragonECS
         {
             lock (_dummyHashSet)
             {
-                if (CheckRepeats(inc)) throw new EcsFrameworkException("The values in the Include constraints are repeated.");
-                if (CheckRepeats(exc)) throw new EcsFrameworkException("The values in the Exclude constraints are repeated.");
+                if (CheckRepeats(inc)) { throw new EcsFrameworkException("The values in the Include constraints are repeated."); }
+                if (CheckRepeats(exc)) { throw new EcsFrameworkException("The values in the Exclude constraints are repeated."); }
                 _dummyHashSet.Clear();
                 _dummyHashSet.UnionWith(inc);
-                if (_dummyHashSet.Overlaps(exc)) throw new EcsFrameworkException("Conflicting Include and Exclude constraints.");
+                if (_dummyHashSet.Overlaps(exc)) { throw new EcsFrameworkException("Conflicting Include and Exclude constraints."); }
             }
         }
         private bool CheckRepeats(int[] array)
@@ -215,7 +210,10 @@ namespace DCFApixels.DragonECS
             _dummyHashSet.Clear();
             foreach (var item in array)
             {
-                if (_dummyHashSet.Contains(item)) return true;
+                if (_dummyHashSet.Contains(item))
+                {
+                    return true;
+                }
                 _dummyHashSet.Add(item);
             }
             return false;
@@ -224,7 +222,7 @@ namespace DCFApixels.DragonECS
         private static string CreateLogString(int worldID, int[] inc, int[] exc)
         {
 #if (DEBUG && !DISABLE_DEBUG)
-            string converter(int o) => EcsDebugUtility.GetGenericTypeName(EcsWorld.GetWorld(worldID).AllPools[o].ComponentType, 1);
+            string converter(int o) { return EcsDebugUtility.GetGenericTypeName(EcsWorld.GetWorld(worldID).AllPools[o].ComponentType, 1); }
             return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
 #else
             return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
@@ -252,11 +250,14 @@ namespace DCFApixels.DragonECS
                 excludedChunkMasks = mask.excChunckMasks;
                 included = mask.inc;
                 excluded = mask.exc;
-                Type converter(int o) => world.GetComponentType(o);
+                Type converter(int o) { return world.GetComponentType(o); }
                 includedTypes = included.Select(converter).ToArray();
                 excludedTypes = excluded.Select(converter).ToArray();
             }
-            public override string ToString() => CreateLogString(_worldID, included, excluded);
+            public override string ToString()
+            {
+                return CreateLogString(_worldID, included, excluded);
+            }
         }
         #endregion
 

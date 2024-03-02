@@ -508,7 +508,7 @@ namespace DCFApixels.DragonECS
         #region Inverse
         public void Inverse()
         {
-            if(_count == 0)
+            if (_count == 0)
             {
                 foreach (var entityID in _source.Entities)
                 {

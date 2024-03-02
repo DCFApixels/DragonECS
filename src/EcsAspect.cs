@@ -10,7 +10,7 @@ namespace DCFApixels.DragonECS
     {
         internal EcsWorld _source;
         internal EcsMask _mask;
-        private bool _isInit;
+        private bool _isInit = false;
 
         private UnsafeArray<int> _sortIncBuffer;
         private UnsafeArray<int> _sortExcBuffer;
@@ -18,9 +18,18 @@ namespace DCFApixels.DragonECS
         private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
         #region Properties
-        public EcsMask Mask => _mask;
-        public EcsWorld World => _source;
-        public bool IsInit => _isInit;
+        public EcsMask Mask
+        {
+            get { return _mask; }
+        }
+        public EcsWorld World
+        {
+            get { return _source; }
+        }
+        public bool IsInit
+        {
+            get { return _isInit; }
+        }
         #endregion
 
         #region Methods
@@ -148,7 +157,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Destructor
+        #region Finalizator
         unsafe ~EcsAspect()
         {
             _sortIncBuffer.Dispose();
@@ -200,34 +209,31 @@ namespace DCFApixels.DragonECS
                 group.Clear();
                 var enumerator = GetEnumerator();
                 while (enumerator.MoveNext())
+                {
                     group.Add_Internal(enumerator.Current);
+                }
             }
             public int CopyTo(ref int[] array)
             {
-                var enumerator = GetEnumerator();
                 int count = 0;
+                var enumerator = GetEnumerator();
                 while (enumerator.MoveNext())
                 {
                     if (array.Length <= count)
+                    {
                         Array.Resize(ref array, array.Length << 1);
+                    }
                     array[count++] = enumerator.Current;
                 }
                 return count;
             }
             public EcsSpan CopyToSpan(ref int[] array)
             {
-                var enumerator = GetEnumerator();
-                int count = 0;
-                while (enumerator.MoveNext())
-                {
-                    if (array.Length <= count)
-                        Array.Resize(ref array, array.Length << 1);
-                    array[count++] = enumerator.Current;
-                }
+                int count = CopyTo(ref array);
                 return new EcsSpan(worldID, array, count);
             }
 
-            #region object
+            #region Other
             public override string ToString()
             {
                 List<int> ints = new List<int>();
@@ -241,7 +247,7 @@ namespace DCFApixels.DragonECS
 
             #region Enumerator
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Enumerator GetEnumerator() => new Enumerator(_span, aspect);
+            public Enumerator GetEnumerator() { return new Enumerator(_span, aspect); }
 
             public unsafe ref struct Enumerator
             {
@@ -282,11 +288,9 @@ namespace DCFApixels.DragonECS
                 private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
                 private readonly int _entityComponentMaskLength;
-                //private EcsAspect aspect;
 
                 public unsafe Enumerator(EcsSpan span, EcsAspect aspect)
                 {
-                    //this.aspect = aspect;
                     _span = span.GetEnumerator();
                     _entityComponentMasks = aspect.World._entityComponentMasks;
                     _sortIncChunckBuffer = aspect._sortIncChunckBuffer;
@@ -368,13 +372,8 @@ namespace DCFApixels.DragonECS
                 public int Current
                 {
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    get => _span.Current;
+                    get { return _span.Current; }
                 }
-                //public entlong CurrentLong
-                //{
-                //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                //    get => aspect.World.GetEntityLong(_span.Current);
-                //}
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public bool MoveNext()
                 {
@@ -385,13 +384,17 @@ namespace DCFApixels.DragonECS
                         {
                             var bit = _sortIncChunckBuffer.ptr[i];
                             if ((_entityComponentMasks[e * _entityComponentMaskLength + bit.chankIndex] & bit.mask) != bit.mask)
+                            {
                                 goto skip;
+                            }
                         }
                         for (int i = 0; i < _sortExcChunckBuffer.Length; i++)
                         {
                             var bit = _sortExcChunckBuffer.ptr[i];
                             if ((_entityComponentMasks[e * _entityComponentMaskLength + bit.chankIndex] & bit.mask) > 0)
+                            {
                                 goto skip;
+                            }
                         }
                         return true;
                         skip: continue;
