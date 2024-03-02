@@ -309,6 +309,18 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+
+        #region Upsize
+        public void Upsize(int minSize)
+        {
+            if (minSize >= _dense.Length)
+            {
+                Array.Resize(ref _dense, ArrayUtility.NormalizeSizeToPowerOfTwo_ClampOverflow(minSize));
+            }
+        }
+        
+        #endregion
+
         #region CopyFrom/Clone/Slice/ToSpan/ToArray
         public void CopyFrom(EcsGroup group)
         {
