@@ -776,10 +776,9 @@ namespace DCFApixels.DragonECS
 
         #region Enumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(this);
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        IEnumerator<int> IEnumerable<int>.GetEnumerator() => GetEnumerator();
-        public LongsIterator GetLongs() => new LongsIterator(this);
+        public Enumerator GetEnumerator() { return new Enumerator(this); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator<int> IEnumerable<int>.GetEnumerator() { return GetEnumerator(); }
         public struct Enumerator : IEnumerator<int>
         {
             private readonly int[] _dense;
@@ -788,6 +787,7 @@ namespace DCFApixels.DragonECS
             public Enumerator(EcsGroup group)
             {
                 _dense = group._dense;
+                //для оптимизации компилятором
                 _index = (uint)(group._count > _dense.Length ? _dense.Length : group._count) + 1;
             }
             public int Current
@@ -795,55 +795,17 @@ namespace DCFApixels.DragonECS
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _dense[_index];
             }
-            object IEnumerator.Current => Current;
+            object IEnumerator.Current { get { return Current; } }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() => --_index > 0; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
+            public bool MoveNext()
+            {
+                // проверка с учтом что отсчет начинается с индекса 1 
+                return --_index > 0;
+            }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose() { }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset() { }
-        }
-        public readonly struct LongsIterator : IEnumerable<entlong>
-        {
-            private readonly EcsGroup _group;
-            public LongsIterator(EcsGroup group) => _group = group;
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Enumerator GetEnumerator() => new Enumerator(_group);
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                for (int i = 0; i < _group._count; i++)
-                    yield return _group.World.GetEntityLong(_group._dense[i]);
-            }
-            IEnumerator<entlong> IEnumerable<entlong>.GetEnumerator()
-            {
-                for (int i = 0; i < _group._count; i++)
-                    yield return _group.World.GetEntityLong(_group._dense[i]);
-            }
-            public struct Enumerator : IEnumerator<entlong>
-            {
-                private readonly EcsWorld world;
-                private readonly int[] _dense;
-                private uint _index;
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public Enumerator(EcsGroup group)
-                {
-                    world = group.World;
-                    _dense = group._dense;
-                    _index = (uint)(group._count > _dense.Length ? _dense.Length : group._count) + 1;
-                }
-                public entlong Current
-                {
-                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    get => world.GetEntityLong(_dense[_index]);
-                }
-                object IEnumerator.Current => Current;
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public bool MoveNext() => --_index > 0; // <= потму что отсчет начинается с индекса 1 //_count < _dense.Length дает среде понять что проверки на выход за границы не нужны
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void Dispose() { }
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void Reset() { }
-            }
         }
         #endregion
 
