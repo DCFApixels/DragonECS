@@ -301,7 +301,7 @@ namespace DCFApixels.DragonECS
             {
                 return;
             }
-            for (int i = 0; i < _count; i++)
+            for (int i = 1; i <= _count; i++)
             {
                 _sparse[_dense[i]] = 0;
             }
