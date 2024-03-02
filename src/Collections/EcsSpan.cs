@@ -1,6 +1,5 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -178,7 +177,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Bake/Slice/ToArry
+        #region Slice/ToSpan/ToArry
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsLongsSpan Slice(int start) { return new EcsLongsSpan(_source.Slice(start)); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
