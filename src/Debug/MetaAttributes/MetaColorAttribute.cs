@@ -192,7 +192,7 @@ namespace DCFApixels.DragonECS
                 colorCode ^= MAGIC_CONST;
                 colorCode = BitsUtility.NextXorShiftState(colorCode);
                 this.colorCode = (int)colorCode | 255;
-                this.colorCode = UpContrastColor().colorCode;
+                this.colorCode = UpContrast().colorCode;
             }
         }
         #endregion
@@ -214,7 +214,18 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
-        public MetaColor UpContrastColor()
+        public MetaColor Desaturate(float t)
+        {
+            byte r = this.r;
+            byte g = this.g;
+            byte b = this.b;
+            byte gray = (byte)(r * 0.299 + g * 0.587 + b * 0.114);
+            r = (byte)(r + (gray - r) * (1 - t));
+            g = (byte)(g + (gray - g) * (1 - t));
+            b = (byte)(b + (gray - b) * (1 - t));
+            return new MetaColor(r, g, b);
+        }
+        public MetaColor UpContrast()
         {
             byte minChannel = Math.Min(Math.Min(r, g), b);
             byte maxChannel = Math.Max(Math.Max(r, g), b);

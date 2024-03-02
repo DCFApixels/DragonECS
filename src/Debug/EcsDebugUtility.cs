@@ -172,12 +172,11 @@ namespace DCFApixels.DragonECS
         public static MetaColor GetColor(Type type)
         {
             var atr = type.GetCustomAttribute<MetaColorAttribute>();
-            return atr != null ? atr.color
-#if DEBUG //optimization for release build
-                : new MetaColor(type.Name);
-#else
-                : MetaColor.BlackColor;
-#endif
+            return atr != null ? atr.color : AutoColor(type);
+        }
+        private static MetaColor AutoColor(Type type)
+        {
+            return new MetaColor(type.Name).Desaturate(0.45f) / 1.15f;
         }
         public static bool TryGetColor(object obj, out MetaColor color)
         {
