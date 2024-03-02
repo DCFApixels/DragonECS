@@ -86,8 +86,6 @@ namespace DCFApixels.DragonECS
         public int[] ToArray() { return _source.ToArray(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup.Enumerator GetEnumerator() { return _source.GetEnumerator(); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsGroup.LongsIterator GetLongs() { return _source.GetLongs(); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _source.First(); }
