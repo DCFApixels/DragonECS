@@ -303,11 +303,11 @@ namespace DCFApixels.DragonECS
             {
                 return;
             }
-            _count = 0;
-            for (int i = 0; i < _sparse.Length; i++)
+            for (int i = 0; i < _count; i++)
             {
-                _sparse[i] = 0;
+                _sparse[_dense[i]] = 0;
             }
+            _count = 0;
         }
         #endregion
 
@@ -510,6 +510,14 @@ namespace DCFApixels.DragonECS
         #region Inverse
         public void Inverse()
         {
+            if(_count == 0)
+            {
+                foreach (var entityID in _source.Entities)
+                {
+                    Add_Internal(entityID);
+                }
+                return;
+            }
             foreach (var entityID in _source.Entities)
             {
                 if (Has(entityID))
