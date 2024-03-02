@@ -163,10 +163,10 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.Count; }
         }
-        public int this[int index]
+        public entlong this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _source[index]; }
+            get { return World.GetEntityLong(_source[index]); }
         }
         #endregion
 
