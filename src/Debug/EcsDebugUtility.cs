@@ -159,7 +159,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetColor
-
         public static MetaColor GetColor(object obj)
         {
             return obj is IEcsMetaProvider intr ?
@@ -413,7 +412,7 @@ namespace DCFApixels.DragonECS
                 if (_initFlags.HasFlag(InitFlag.Color) == false)
                 {
                     _color = EcsDebugUtility.GetColor(_type);
-                    //_initFlags |= InitFlag.Color;
+                    _initFlags |= InitFlag.Color;
                 }
                 return _color;
             }
