@@ -129,6 +129,20 @@ namespace DCFApixels.DragonECS
         //    return self.GetOrDefault(RECYCLED_ENTITIES_CAPACITY, self.Get_EntitiesCapacity() / 2);
         //}
 
+        private const string GROUP_CAPACITY = nameof(GROUP_CAPACITY);
+        private const int GROUP_CAPACITY_DEFAULT = 512;
+        public static TConfig Set_GroupCapacity<TConfig>(this TConfig self, int value)
+            where TConfig : IEcsWorldConfigWriter
+        {
+            self.Set(GROUP_CAPACITY, value);
+            return self;
+        }
+        public static int Get_GroupCapacity(this IEcsWorldConfig self)
+        {
+            return self.GetOrDefault(GROUP_CAPACITY, GROUP_CAPACITY_DEFAULT);
+        }
+
+
         private const string POOLS_CAPACITY = nameof(POOLS_CAPACITY);
         private const int POOLS_CAPACITY_DEFAULT = 512;
         public static TConfig Set_PoolsCapacity<TConfig>(this TConfig self, int value)

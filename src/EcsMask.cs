@@ -93,15 +93,15 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Checks
-        public bool IsSubmaskOf(EcsMask otherMask) //TODO протестить
+        public bool IsSubmaskOf(EcsMask otherMask)
         {
             return IsSubmask(otherMask, this);
         }
-        public bool IsSupermaskOf(EcsMask otherMask) //TODO протестить
+        public bool IsSupermaskOf(EcsMask otherMask)
         {
             return IsSubmask(this, otherMask);
         }
-        public bool IsConflictWith(EcsMask otherMask) //TODO протестить
+        public bool IsConflictWith(EcsMask otherMask)
         {
             return OverlapsArray(inc, otherMask.exc) || OverlapsArray(exc, otherMask.inc);
         }

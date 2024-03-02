@@ -563,7 +563,7 @@ namespace DCFApixels.DragonECS
         }
         internal EcsGroup GetFreeGroup()
         {
-            EcsGroup result = _groupsPool.Count <= 0 ? new EcsGroup(this) : _groupsPool.Pop();
+            EcsGroup result = _groupsPool.Count <= 0 ? new EcsGroup(this, _config.Get_GroupCapacity()) : _groupsPool.Pop();
             result._isReleased = false;
             return result;
         }

@@ -204,11 +204,11 @@ namespace DCFApixels.DragonECS
         {
             return world.GetFreeGroup();
         }
-        internal EcsGroup(EcsWorld world, int denseCapacity = 64)
+        internal EcsGroup(EcsWorld world, int denseCapacity)
         {
             _source = world;
             _source.RegisterGroup(this);
-            _dense = new int[denseCapacity]; //TODO добавить в конфиг мира значение
+            _dense = new int[denseCapacity];
             _sparse = new int[world.Capacity];
         }
         public void Dispose()
