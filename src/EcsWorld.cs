@@ -628,15 +628,12 @@ namespace DCFApixels.DragonECS
         {
             list.Clear();
             var itemsCount = GetComponentsCount(entityID);
-            if (itemsCount <= 0)
-            {
-                return;
-            }
-            int poolIndex = entityID;
+            if (itemsCount <= 0) { return; }
+            int poolIndex = 0;
             uint bit;
-            for (int chunkIndex = 0; chunkIndex < _entityComponentMaskLength; chunkIndex++)
+            for (int chunkIndex = entityID * _entityComponentMaskLength, chunkIndexMax = chunkIndex + _entityComponentMaskLength; chunkIndex < chunkIndexMax; chunkIndex++)
             {
-                bit = 0x8000_0000;
+                bit = 0x0000_0001;
                 int chunk = _entityComponentMasks[chunkIndex];
                 if (chunk == 0)
                 {
@@ -650,12 +647,9 @@ namespace DCFApixels.DragonECS
                         {
                             itemsCount--;
                             list.Add(_pools[poolIndex].GetRaw(entityID));
-                            if (itemsCount <= 0)
-                            {
-                                goto exit;
-                            }
+                            if (itemsCount <= 0) { goto exit; }
                         }
-                        bit >>= 1;
+                        bit <<= 1;
                         poolIndex++;
                     }
                 }
@@ -666,15 +660,12 @@ namespace DCFApixels.DragonECS
         {
             typeSet.Clear();
             var itemsCount = GetComponentsCount(entityID);
-            if(itemsCount <= 0)
-            {
-                return;
-            }
-            int poolIndex = entityID;
+            if(itemsCount <= 0) { return; }
+            int poolIndex = 0;
             uint bit;
-            for (int chunkIndex = 0; chunkIndex < _entityComponentMaskLength; chunkIndex++)
+            for (int chunkIndex = entityID * _entityComponentMaskLength, chunkIndexMax = chunkIndex + _entityComponentMaskLength; chunkIndex < chunkIndexMax; chunkIndex++)
             {
-                bit = 0x8000_0000;
+                bit = 0x0000_0001;
                 int chunk = _entityComponentMasks[chunkIndex];
                 if (chunk == 0)
                 {
@@ -688,12 +679,9 @@ namespace DCFApixels.DragonECS
                         {
                             itemsCount--;
                             typeSet.Add(_pools[poolIndex].ComponentType);
-                            if (itemsCount <= 0)
-                            {
-                                goto exit;
-                            }
+                            if (itemsCount <= 0) { goto exit; }
                         }
-                        bit >>= 1;
+                        bit <<= 1;
                         poolIndex++;
                     }
                 }
