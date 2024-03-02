@@ -43,7 +43,7 @@ namespace DCFApixels.DragonECS
 
         internal int _entityComponentMaskLength;
         internal int[] _entityComponentMasks = Array.Empty<int>();
-        private const int COMPONENT_MATRIX_MASK_BITSIZE = 32;
+        private const int COMPONENT_MASK_CHUNK_SIZE = 32;
 
         //"лениво" обновляется только для NewEntity
         private long _deleteLeakedEntitesLastVersion = 0;
@@ -528,7 +528,7 @@ namespace DCFApixels.DragonECS
         {
             Array.Resize(ref _entities, newSize);
             Array.Resize(ref _delEntBuffer, newSize);
-            _entityComponentMaskLength = _pools.Length / COMPONENT_MATRIX_MASK_BITSIZE + 1;
+            _entityComponentMaskLength = _pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
             Array.Resize(ref _entityComponentMasks, newSize * _entityComponentMaskLength);
 
             ArrayUtility.Fill(_entities, EntitySlot.Empty, _entitiesCapacity);
@@ -623,40 +623,76 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Debug
+        #region Debug Components
         public void GetComponents(int entityID, List<object> list)
         {
             list.Clear();
             var itemsCount = GetComponentsCount(entityID);
-            for (var i = 0; i < _poolsCount; i++)
+
+            int poolIndex = entityID;
+            uint bit;
+            for (int chunkIndex = 0; chunkIndex < _entityComponentMaskLength; chunkIndex++)
             {
-                if (_pools[i].Has(entityID))
+                bit = 0x8000_0000;
+                int chunk = _entityComponentMasks[chunkIndex];
+                if (chunk == 0)
                 {
-                    itemsCount--;
-                    list.Add(_pools[i].GetRaw(entityID));
-                    if (itemsCount <= 0)
+                    poolIndex += COMPONENT_MASK_CHUNK_SIZE;
+                }
+                else
+                {
+                    while (bit != 0)
                     {
-                        break;
+                        if ((chunk & bit) != 0)
+                        {
+                            itemsCount--;
+                            list.Add(_pools[poolIndex].GetRaw(entityID));
+                            if (itemsCount <= 0)
+                            {
+                                goto exit;
+                            }
+                        }
+                        bit >>= 1;
+                        poolIndex++;
                     }
                 }
             }
+            exit:;
         }
         public void GetComponentTypes(int entityID, HashSet<Type> typeSet)
         {
             typeSet.Clear();
             var itemsCount = GetComponentsCount(entityID);
-            for (var i = 0; i < _poolsCount; i++)
+
+            int poolIndex = entityID;
+            uint bit;
+            for (int chunkIndex = 0; chunkIndex < _entityComponentMaskLength; chunkIndex++)
             {
-                if (_pools[i].Has(entityID))
+                bit = 0x8000_0000;
+                int chunk = _entityComponentMasks[chunkIndex];
+                if (chunk == 0)
                 {
-                    itemsCount--;
-                    typeSet.Add(_pools[i].ComponentType);
-                    if (itemsCount <= 0)
+                    poolIndex += COMPONENT_MASK_CHUNK_SIZE;
+                }
+                else
+                {
+                    while (bit != 0)
                     {
-                        break;
+                        if ((chunk & bit) != 0)
+                        {
+                            itemsCount--;
+                            typeSet.Add(_pools[poolIndex].ComponentType);
+                            if (itemsCount <= 0)
+                            {
+                                goto exit;
+                            }
+                        }
+                        bit >>= 1;
+                        poolIndex++;
                     }
                 }
             }
+            exit:;
         }
         #endregion
     }
