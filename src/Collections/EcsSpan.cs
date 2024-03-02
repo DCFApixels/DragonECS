@@ -71,26 +71,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Bake/Slice/ToArry
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Bake(ref int[] entities)
-        {
-            if (entities.Length < _values.Length)
-            {
-                Array.Resize(ref entities, _values.Length);
-            }
-            _values.CopyTo(entities);
-            return _values.Length;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Bake(List<int> entities)
-        {
-            entities.Clear();
-            foreach (var e in _values)
-            {
-                entities.Add(e);
-            }
-        }
+        #region Slice/ToArry
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start) { return new EcsSpan(_worldID, _values.Slice(start)); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -198,29 +179,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Bake/Slice/ToArry
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Bake(ref entlong[] entities)
-        {
-            EcsWorld world = World;
-            if (entities.Length < _source.Count)
-            {
-                Array.Resize(ref entities, _source.Count);
-            }
-            for (int i = 0; i < _source.Count; i++)
-            {
-                entities[i] = world.GetEntityLong(_source[i]);
-            }
-            return _source.Count;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Bake(List<entlong> entities)
-        {
-            entities.Clear();
-            foreach (var e in this)
-            {
-                entities.Add(e);
-            }
-        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsLongsSpan Slice(int start) { return new EcsLongsSpan(_source.Slice(start)); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

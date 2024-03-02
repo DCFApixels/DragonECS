@@ -77,10 +77,6 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone() { return _source.Clone(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Bake(ref int[] entities) { return _source.Bake(ref entities); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Bake(List<int> entities) { _source.Bake(entities); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start) { return _source.Slice(start); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start, int length) { return _source.Slice(start, length); }
@@ -315,7 +311,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region CopyFrom/Clone/Bake/Slice/ToSpan/ToArray
+        #region CopyFrom/Clone/Slice/ToSpan/ToArray
         public void CopyFrom(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
@@ -353,25 +349,6 @@ namespace DCFApixels.DragonECS
             EcsGroup result = _source.GetFreeGroup();
             result.CopyFrom(this);
             return result;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Bake(ref int[] entities)
-        {
-            if (entities.Length < _count)
-            {
-                entities = new int[_count];
-            }
-            Array.Copy(_dense, 1, entities, 0, _count);
-            return _count;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Bake(List<int> entities)
-        {
-            entities.Clear();
-            foreach (var e in this)
-            {
-                entities.Add(e);
-            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start)
