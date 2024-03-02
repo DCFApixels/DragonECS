@@ -153,6 +153,10 @@ namespace DCFApixels.DragonECS
         }
         public void Destroy()
         {
+            if (_isDestroyed)
+            {
+                return;
+            }
             _entityDispenser = null;
             _pools = null;
             _nullPool = null;
