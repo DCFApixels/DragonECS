@@ -1,6 +1,5 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -671,7 +670,7 @@ namespace DCFApixels.DragonECS
                         if ((chunk & bit) != 0)
                         {
                             itemsCount--;
-                            if(count > componentIDs.Length)
+                            if (count > componentIDs.Length)
                             {
                                 Array.Resize(ref componentIDs, count << 1);
                             }

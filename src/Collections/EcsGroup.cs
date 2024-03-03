@@ -318,7 +318,7 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref _dense, ArrayUtility.NormalizeSizeToPowerOfTwo_ClampOverflow(minSize));
             }
         }
-        
+
         #endregion
 
         #region CopyFrom/Clone/Slice/ToSpan/ToArray
