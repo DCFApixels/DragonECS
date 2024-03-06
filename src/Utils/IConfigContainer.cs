@@ -21,32 +21,23 @@ namespace DCFApixels.DragonECS
         bool TryGet<T>(out T value);
         void Remove<T>();
         IEnumerable<object> GetAllConfigs();
+        IConfigContainer GetContainer();
     }
-    public static class ConfigContainerExtensions
+    public sealed class ConfigContainer : IConfigContainer, IConfigContainerWriter, IEnumerable<object>
     {
-        public static T GetOrDefault<T>(this IConfigContainer self, T defaultValue)
-        {
-            if (self.TryGet(out T value))
-            {
-                return value;
-            }
-            return defaultValue;
-        }
-    }
+        public static readonly ConfigContainer Empty = new ConfigContainer();
 
-    public class DefaultConfigContainerBase : IConfigContainer, IConfigContainerWriter, IEnumerable<object>
-    {
         private Dictionary<Type, object> _storage = new Dictionary<Type, object>();
 
-        public DefaultConfigContainerBase() { }
-        public DefaultConfigContainerBase(IEnumerable<object> range)
+        public ConfigContainer() { }
+        public ConfigContainer(IEnumerable<object> range)
         {
             foreach (var item in range)
             {
                 _storage.Add(item.GetType(), item);
             }
         }
-        public DefaultConfigContainerBase(params object[] range)
+        public ConfigContainer(params object[] range)
         {
             foreach (var item in range)
             {
@@ -70,19 +61,24 @@ namespace DCFApixels.DragonECS
         {
             _storage.Remove(typeof(T));
         }
-        protected void SetInternal<T>(T value)
+        public ConfigContainer Set<T>(T value)
         {
             _storage[typeof(T)] = value;
+            return this;
         }
         void IConfigContainerWriter.Set<T>(T value)
         {
-            SetInternal(value);
+            Set(value);
         }
         public bool TryGet<T>(out T value)
         {
             bool result = _storage.TryGetValue(typeof(T), out object rawValue);
             value = rawValue == null ? default : (T)rawValue;
             return result;
+        }
+        public IConfigContainer GetContainer()
+        {
+            return this;
         }
         public IEnumerable<object> GetAllConfigs()
         {
@@ -97,14 +93,19 @@ namespace DCFApixels.DragonECS
             return GetAllConfigs().GetEnumerator();
         }
     }
-
-    public static class DefaultConfigContainerBaseExtensions
+    public static class ConfigContainerExtensions
     {
-        public static TContainer Set<TContainer, T>(this TContainer self, T value)
-            where TContainer : IConfigContainerWriter
+        public static T GetOrDefault<T>(this IConfigContainer self, T defaultValue)
         {
-            self.Set(value);
-            return self;
+            if (self.TryGet(out T value))
+            {
+                return value;
+            }
+            return defaultValue;
+        }
+        public static EcsWorldConfig GetWorldConfigOrDefault(this IConfigContainer self)
+        {
+            return self.GetOrDefault(EcsWorldConfig.Default);
         }
     }
 }

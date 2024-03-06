@@ -6,10 +6,27 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
+    public class EcsWorldConfig
+    {
+        public static readonly EcsWorldConfig Default = new EcsWorldConfig();
+        public readonly int EntitiesCapacity;
+        public readonly int GroupCapacity;
+        public readonly int PoolsCapacity;
+        public readonly int PoolComponentsCapacity;
+        public readonly int PoolRecycledComponentsCapacity;
+        public EcsWorldConfig(int entitiesCapacity = 512, int groupCapacity = 512, int poolsCapacity = 512, int poolComponentsCapacity = 512, int poolRecycledComponentsCapacity = 512 / 2)
+        {
+            EntitiesCapacity = entitiesCapacity;
+            GroupCapacity = groupCapacity;
+            PoolsCapacity = poolsCapacity;
+            PoolComponentsCapacity = poolComponentsCapacity;
+            PoolRecycledComponentsCapacity = poolRecycledComponentsCapacity;
+        }
+    }
     public partial class EcsWorld : IEntityStorage
     {
         public readonly short id;
-        private IEcsWorldConfigContainer _configs;
+        private IConfigContainer _configs;
 
         private bool _isDestroyed = false;
 
@@ -38,7 +55,7 @@ namespace DCFApixels.DragonECS
         private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
 
         #region Properties
-        public IEcsWorldConfigContainer Configs
+        public IConfigContainer Configs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _configs; }
@@ -95,19 +112,17 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors/Destroy
-        public EcsWorld(IEcsWorldConfigContainer configs = null, short worldID = -1)
+        public EcsWorld(EcsWorldConfig config, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), worldID) { }
+        public EcsWorld(IConfigContainer configs = null, short worldID = -1)
         {
-            if (configs == null)
-            {
-                configs = EcsWorldConfigContainer.Defaut;
-            }
+            if (configs == null) { configs = ConfigContainer.Empty; }
             bool nullWorld = this is NullWorld;
             if(nullWorld == false && worldID == NULL_WORLD_ID)
             {
                 EcsDebug.PrintWarning($"The world identifier cannot be {NULL_WORLD_ID}");
             }
             _configs = configs;
-            EcsWorldConfig config = configs.Get<EcsWorldConfig>();
+            EcsWorldConfig config = configs.GetWorldConfigOrDefault();
 
             if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
             {
@@ -554,7 +569,7 @@ namespace DCFApixels.DragonECS
         }
         internal EcsGroup GetFreeGroup()
         {
-            EcsGroup result = _groupsPool.Count <= 0 ? new EcsGroup(this, _configs.Get<EcsWorldConfig>().GroupCapacity) : _groupsPool.Pop();
+            EcsGroup result = _groupsPool.Count <= 0 ? new EcsGroup(this, _configs.GetWorldConfigOrDefault().GroupCapacity) : _groupsPool.Pop();
             result._isReleased = false;
             return result;
         }

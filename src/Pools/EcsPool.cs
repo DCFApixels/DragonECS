@@ -177,8 +177,8 @@ namespace DCFApixels.DragonECS
             _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
             _mapping = new int[world.Capacity];
-            _items = new T[ArrayUtility.NormalizeSizeToPowerOfTwo(world.Configs.Get<EcsWorldConfig>().PoolComponentsCapacity)];
-            _recycledItems = new int[world.Configs.Get<EcsWorldConfig>().PoolRecycledComponentsCapacity];
+            _items = new T[ArrayUtility.NormalizeSizeToPowerOfTwo(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity)];
+            _recycledItems = new int[world.Configs.GetWorldConfigOrDefault().PoolRecycledComponentsCapacity];
         }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
