@@ -309,11 +309,11 @@ namespace DCFApixels.DragonECS
 
     public interface ITypeMeta
     {
-        public string Name { get; }
-        public MetaColor Color { get; }
-        public string Description { get; }
-        public MetaGroup Group { get; }
-        public IReadOnlyCollection<string> Tags { get; }
+        string Name { get; }
+        MetaColor Color { get; }
+        string Description { get; }
+        MetaGroup Group { get; }
+        IReadOnlyCollection<string> Tags { get; }
     }
     public sealed class TypeMeta : ITypeMeta
     {
