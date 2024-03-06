@@ -6,15 +6,15 @@ namespace DCFApixels.DragonECS
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
     public sealed class MetaGroupAttribute : EcsMetaAttribute
     {
-        public readonly MetaGroup Data;
+        public readonly MetaGroupRef Data;
         public MetaGroupAttribute(string name)
         {
-            Data = new MetaGroup(name);
+            Data = new MetaGroupRef(name);
         }
     }
-    public class MetaGroup
+    public class MetaGroupRef
     {
-        public static readonly MetaGroup Empty = new MetaGroup("");
+        public static readonly MetaGroupRef Empty = new MetaGroupRef("");
 
         public readonly string Name;
         private string[] path = null;
@@ -29,7 +29,7 @@ namespace DCFApixels.DragonECS
                 return path;
             }
         }
-        public MetaGroup(string name)
+        public MetaGroupRef(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -45,10 +45,10 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    public readonly struct ReadonlyMetaGroup
+    public readonly struct MetaGroup
     {
-        public static readonly ReadonlyMetaGroup Empty = new ReadonlyMetaGroup(MetaGroup.Empty);
-        private readonly MetaGroup _source;
+        public static readonly MetaGroup Empty = new MetaGroup(MetaGroupRef.Empty);
+        private readonly MetaGroupRef _source;
         public string Name
         {
             get { return _source.Name; }
@@ -61,14 +61,14 @@ namespace DCFApixels.DragonECS
         {
             get { return _source == null; }
         }
-        public ReadonlyMetaGroup(MetaGroup source)
+        public MetaGroup(MetaGroupRef source)
         {
             _source = source;
         }
 
-        public static implicit operator ReadonlyMetaGroup(MetaGroup group)
+        public static implicit operator MetaGroup(MetaGroupRef group)
         {
-            return new ReadonlyMetaGroup(group);
+            return new MetaGroup(group);
         }
     }
 }
