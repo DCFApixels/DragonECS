@@ -7,7 +7,7 @@
         public readonly TPool pool;
         public SingleAspect(Builder b)
         {
-            pool = b.Include<TPool>();
+            pool = b.IncludePool<TPool>();
         }
     }
     public sealed class CombinedAspect<A0, A1> : EcsAspect

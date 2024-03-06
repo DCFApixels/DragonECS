@@ -250,17 +250,17 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Include<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.Include<EcsTagPool<TTagComponent>>();
+            return self.IncludePool<EcsTagPool<TTagComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Exclude<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.Exclude<EcsTagPool<TTagComponent>>();
+            return self.ExcludePool<EcsTagPool<TTagComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Optional<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.Optional<EcsTagPool<TTagComponent>>();
+            return self.OptionalPool<EcsTagPool<TTagComponent>>();
         }
 
         //---------------------------------------------------
@@ -279,17 +279,17 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> IncludeTag<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.Include<EcsTagPool<TTagComponent>>();
+            return self.IncludePool<EcsTagPool<TTagComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> ExcludeTag<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.Exclude<EcsTagPool<TTagComponent>>();
+            return self.ExcludePool<EcsTagPool<TTagComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> OptionalTag<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.Optional<EcsTagPool<TTagComponent>>();
+            return self.OptionalPool<EcsTagPool<TTagComponent>>();
         }
     }
 }

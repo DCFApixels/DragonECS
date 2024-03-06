@@ -104,19 +104,19 @@ namespace DCFApixels.DragonECS
             }
 
             #region Include/Exclude/Optional/Combine
-            public TPool Include<TPool>() where TPool : IEcsPoolImplementation, new()
+            public TPool IncludePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = _world.GetPoolInstance<TPool>();
                 IncludeImplicit(pool.ComponentType);
                 return pool;
             }
-            public TPool Exclude<TPool>() where TPool : IEcsPoolImplementation, new()
+            public TPool ExcludePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = _world.GetPoolInstance<TPool>();
                 ExcludeImplicit(pool.ComponentType);
                 return pool;
             }
-            public TPool Optional<TPool>() where TPool : IEcsPoolImplementation, new()
+            public TPool OptionalPool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 return _world.GetPoolInstance<TPool>();
             }
@@ -147,9 +147,9 @@ namespace DCFApixels.DragonECS
 #endif
             private void SupportReflectionHack<TPool>() where TPool : IEcsPoolImplementation, new()
             {
-                Include<TPool>();
-                Exclude<TPool>();
-                Optional<TPool>();
+                IncludePool<TPool>();
+                ExcludePool<TPool>();
+                OptionalPool<TPool>();
                 IncludeImplicit(null);
                 ExcludeImplicit(null);
             }
