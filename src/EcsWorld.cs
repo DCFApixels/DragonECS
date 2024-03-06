@@ -8,25 +8,6 @@ namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld : IEntityStorage
     {
-        [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 4 * 3)]
-        private struct EntitySlot
-        {
-            public static readonly EntitySlot Empty = new EntitySlot(SLEEPING_GEN_FLAG, 0, false);
-            [FieldOffset(0)]
-            public short gen;
-            [FieldOffset(2)]
-            public short componentsCount;
-            [FieldOffset(4)]
-            public bool isUsed;
-            //[FieldOffset(5)]
-            //public bool isLocked;
-            public EntitySlot(short gen, short componentsCount, bool isUsed)
-            {
-                this.gen = gen;
-                this.componentsCount = componentsCount;
-                this.isUsed = isUsed;
-            }
-        }
         public readonly short id;
         private IEcsWorldConfig _config;
 
@@ -120,9 +101,14 @@ namespace DCFApixels.DragonECS
             {
                 config = EcsWorldConfig.Empty;
             }
+            bool nullWorld = this is NullWorld;
+            if(nullWorld == false && worldID == NULL_WORLD_ID)
+            {
+                EcsDebug.PrintWarning($"The world identifier cannot be {NULL_WORLD_ID}");
+            }
             _config = config;
 
-            if (worldID < 0)
+            if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
             {
                 worldID = (short)_worldIdDispenser.UseFree();
             }
@@ -684,6 +670,28 @@ namespace DCFApixels.DragonECS
             }
             exit:;
             return count;
+        }
+        #endregion
+
+        #region EntitySlot
+        [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 4 * 3)]
+        private struct EntitySlot
+        {
+            public static readonly EntitySlot Empty = new EntitySlot(SLEEPING_GEN_FLAG, 0, false);
+            [FieldOffset(0)]
+            public short gen;
+            [FieldOffset(2)]
+            public short componentsCount;
+            [FieldOffset(4)]
+            public bool isUsed;
+            //[FieldOffset(5)]
+            //public bool isLocked;
+            public EntitySlot(short gen, short componentsCount, bool isUsed)
+            {
+                this.gen = gen;
+                this.componentsCount = componentsCount;
+                this.isUsed = isUsed;
+            }
         }
         #endregion
     }

@@ -305,7 +305,6 @@ namespace DCFApixels.DragonECS
             return obj is IEcsTypeMetaProvider intr ? intr.MetaSource : obj;
         }
         #endregion
-
     }
 
     public interface ITypeMeta

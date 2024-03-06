@@ -16,6 +16,8 @@ namespace DCFApixels.DragonECS
     }
     public partial class EcsWorld
     {
+        private const short NULL_WORLD_ID = 0;
+
         private const short GEN_MASK = 0x7fff;
         private const short SLEEPING_GEN_FLAG = short.MinValue;
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 5;
@@ -29,7 +31,7 @@ namespace DCFApixels.DragonECS
 
         static EcsWorld()
         {
-            _worlds[0] = new NullWorld();
+            _worlds[NULL_WORLD_ID] = new NullWorld();
         }
         private static void ReleaseData(int worldID)
         {
@@ -78,8 +80,7 @@ namespace DCFApixels.DragonECS
             public static ref T GetForWorldUnchecked(int worldID)
             {
 #if (DEBUG && !DISABLE_DEBUG)
-                if (_mapping[worldID] <= 0)
-                    throw new Exception();
+                if (_mapping[worldID] <= 0) { Throw.UndefinedException(); }
 #endif
                 return ref _items[_mapping[worldID]];
             }

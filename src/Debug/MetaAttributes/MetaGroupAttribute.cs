@@ -33,7 +33,7 @@ namespace DCFApixels.DragonECS
         {
             if (string.IsNullOrEmpty(name))
             {
-                Name = string.Empty; 
+                Name = string.Empty;
                 return;
             }
             name = name.Replace('\\', '/');
