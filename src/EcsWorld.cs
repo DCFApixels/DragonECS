@@ -611,30 +611,30 @@ namespace DCFApixels.DragonECS
 
         #region Debug Components
         private static int[] _componentIDsBuffer = new int[64];
-        public ReadOnlySpan<int> GetComponentTypeIDs(int entityID)
+        public ReadOnlySpan<int> GetComponentTypeIDsFor(int entityID)
         {
-            int count = GetComponentTypeIDs(entityID, ref _componentIDsBuffer);
+            int count = GetComponentTypeIDsFor(entityID, ref _componentIDsBuffer);
             return new ReadOnlySpan<int>(_componentIDsBuffer, 0, count);
         }
-        public void GetComponents(int entityID, List<object> list)
+        public void GetComponentsFor(int entityID, List<object> list)
         {
             list.Clear();
-            int count = GetComponentTypeIDs(entityID, ref _componentIDsBuffer);
+            int count = GetComponentTypeIDsFor(entityID, ref _componentIDsBuffer);
             for (int i = 0; i < count; i++)
             {
                 list.Add(_pools[_componentIDsBuffer[i]].GetRaw(entityID));
             }
         }
-        public void GetComponentTypes(int entityID, HashSet<Type> typeSet)
+        public void GetComponentTypesFor(int entityID, HashSet<Type> typeSet)
         {
             typeSet.Clear();
-            int count = GetComponentTypeIDs(entityID, ref _componentIDsBuffer);
+            int count = GetComponentTypeIDsFor(entityID, ref _componentIDsBuffer);
             for (int i = 0; i < count; i++)
             {
                 typeSet.Add(_pools[_componentIDsBuffer[i]].ComponentType);
             }
         }
-        private int GetComponentTypeIDs(int entityID, ref int[] componentIDs)
+        private int GetComponentTypeIDsFor(int entityID, ref int[] componentIDs)
         {
             int count = 0;
             var itemsCount = GetComponentsCount(entityID);

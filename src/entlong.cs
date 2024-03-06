@@ -231,7 +231,7 @@ namespace DCFApixels.DragonECS
             {
                 get
                 {
-                    _value.World.GetComponents(_value.ID, _componentsList);
+                    _value.World.GetComponentsFor(_value.ID, _componentsList);
                     return _componentsList;
                 }
             }
@@ -322,7 +322,7 @@ namespace DCFApixels.DragonECS
             {
                 get
                 {
-                    _value.World.GetComponents(_value.ID, _componentsList);
+                    _value.World.GetComponentsFor(_value.ID, _componentsList);
                     return _componentsList;
                 }
             }

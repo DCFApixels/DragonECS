@@ -239,12 +239,12 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> GetPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.GetPool<EcsTagPool<TTagComponent>>();
+            return self.GetPoolInstance<EcsTagPool<TTagComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> GetPoolUnchecked<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.GetPoolUnchecked<EcsTagPool<TTagComponent>>();
+            return self.GetPoolInstanceUnchecked<EcsTagPool<TTagComponent>>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -268,12 +268,12 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> GetTagPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.GetPool<EcsTagPool<TTagComponent>>();
+            return self.GetPoolInstance<EcsTagPool<TTagComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> GetTagPoolUnchecked<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
-            return self.GetPoolUnchecked<EcsTagPool<TTagComponent>>();
+            return self.GetPoolInstanceUnchecked<EcsTagPool<TTagComponent>>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

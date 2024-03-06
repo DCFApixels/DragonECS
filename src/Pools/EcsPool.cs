@@ -258,12 +258,12 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPool<TComponent> GetPool<TComponent>(this EcsWorld self) where TComponent : struct, IEcsComponent
         {
-            return self.GetPool<EcsPool<TComponent>>();
+            return self.GetPoolInstance<EcsPool<TComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPool<TComponent> GetPoolUnchecked<TComponent>(this EcsWorld self) where TComponent : struct, IEcsComponent
         {
-            return self.GetPoolUnchecked<EcsPool<TComponent>>();
+            return self.GetPoolInstanceUnchecked<EcsPool<TComponent>>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
