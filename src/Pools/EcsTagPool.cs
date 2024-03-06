@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS
         private EcsMaskChunck _maskBit;
 
         private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
-        private int _count;
+        private int _count = 0;
 
         private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
 
@@ -156,7 +156,6 @@ namespace DCFApixels.DragonECS
             _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
             _mapping = new bool[world.Capacity];
-            _count = 0;
         }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {

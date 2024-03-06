@@ -9,7 +9,7 @@ namespace DCFApixels.DragonECS
     public partial class EcsWorld : IEntityStorage
     {
         public readonly short id;
-        private IEcsWorldConfig _config;
+        private IEcsWorldConfigContainer _configs;
 
         private bool _isDestroyed = false;
 
@@ -38,10 +38,10 @@ namespace DCFApixels.DragonECS
         private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
 
         #region Properties
-        public IEcsWorldConfig Config
+        public IEcsWorldConfigContainer Configs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _config; }
+            get { return _configs; }
         }
         public long Version
         {
@@ -95,18 +95,19 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors/Destroy
-        public EcsWorld(IEcsWorldConfig config = null, short worldID = -1)
+        public EcsWorld(IEcsWorldConfigContainer configs = null, short worldID = -1)
         {
-            if (config == null)
+            if (configs == null)
             {
-                config = EcsWorldConfig.Empty;
+                configs = EcsWorldConfigContainer.Defaut;
             }
             bool nullWorld = this is NullWorld;
             if(nullWorld == false && worldID == NULL_WORLD_ID)
             {
                 EcsDebug.PrintWarning($"The world identifier cannot be {NULL_WORLD_ID}");
             }
-            _config = config;
+            _configs = configs;
+            EcsWorldConfig config = configs.Get<EcsWorldConfig>();
 
             if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
             {
@@ -129,12 +130,12 @@ namespace DCFApixels.DragonECS
 
             _poolsMediator = new PoolsMediator(this);
 
-            int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.Get_PoolsCapacity());
+            int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.PoolsCapacity);
             _pools = new IEcsPoolImplementation[poolsCapacity];
             _poolComponentCounts = new int[poolsCapacity];
             ArrayUtility.Fill(_pools, _nullPool);
 
-            int entitiesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.Get_EntitiesCapacity());
+            int entitiesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.EntitiesCapacity);
             _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
         }
         public void Destroy()
@@ -553,7 +554,7 @@ namespace DCFApixels.DragonECS
         }
         internal EcsGroup GetFreeGroup()
         {
-            EcsGroup result = _groupsPool.Count <= 0 ? new EcsGroup(this, _config.Get_GroupCapacity()) : _groupsPool.Pop();
+            EcsGroup result = _groupsPool.Count <= 0 ? new EcsGroup(this, _configs.Get<EcsWorldConfig>().GroupCapacity) : _groupsPool.Pop();
             result._isReleased = false;
             return result;
         }

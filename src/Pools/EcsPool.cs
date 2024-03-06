@@ -16,9 +16,9 @@ namespace DCFApixels.DragonECS
 
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
-        private int _itemsCount;
+        private int _itemsCount = 0;
         private int[] _recycledItems;
-        private int _recycledItemsCount;
+        private int _recycledItemsCount = 0;
 
         private IEcsComponentReset<T> _componentResetHandler = EcsComponentResetHandler<T>.instance;
         private bool _isHasComponentResetHandler = EcsComponentResetHandler<T>.isHasHandler;
@@ -177,10 +177,8 @@ namespace DCFApixels.DragonECS
             _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
             _mapping = new int[world.Capacity];
-            _recycledItems = new int[world.Config.Get_PoolRecycledComponentsCapacity()];
-            _recycledItemsCount = 0;
-            _items = new T[ArrayUtility.NormalizeSizeToPowerOfTwo(world.Config.Get_PoolComponentsCapacity())];
-            _itemsCount = 0;
+            _items = new T[ArrayUtility.NormalizeSizeToPowerOfTwo(world.Configs.Get<EcsWorldConfig>().PoolComponentsCapacity)];
+            _recycledItems = new int[world.Configs.Get<EcsWorldConfig>().PoolRecycledComponentsCapacity];
         }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {

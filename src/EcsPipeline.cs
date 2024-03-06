@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS
     }
     public sealed class EcsPipeline
     {
-        private readonly IEcsPipelineConfig _config;
+        private readonly IEcsPipelineConfigContainer _config;
         private Injector.Builder _injectorBuilder;
         private Injector _injector;
 
@@ -31,7 +31,7 @@ namespace DCFApixels.DragonECS
 #endif
 
         #region Properties
-        public IEcsPipelineConfig Config
+        public IEcsPipelineConfigContainer Config
         {
             get { return _config; }
         }
@@ -58,7 +58,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        private EcsPipeline(IEcsPipelineConfig config, Injector.Builder injectorBuilder, IEcsProcess[] systems)
+        private EcsPipeline(IEcsPipelineConfigContainer config, Injector.Builder injectorBuilder, IEcsProcess[] systems)
         {
             _config = config;
             _allSystems = systems;
@@ -186,7 +186,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Builder
-        public static Builder New(IEcsPipelineConfigWriter config = null)
+        public static Builder New(IEcsPipelineConfigContainerWriter config = null)
         {
             return new Builder(config);
         }
@@ -197,14 +197,14 @@ namespace DCFApixels.DragonECS
             private readonly Dictionary<string, List<IEcsProcess>> _systems;
             private readonly string _basicLayer;
             public readonly LayerList Layers;
-            private readonly IEcsPipelineConfigWriter _config;
+            private readonly IEcsPipelineConfigContainerWriter _config;
             private readonly Injector.Builder _injector;
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             private EcsProfilerMarker _buildBarker = new EcsProfilerMarker("EcsPipeline.Build");
 #endif
             private List<InitDeclaredRunner> _initDeclaredRunners = new List<InitDeclaredRunner>(4);
 
-            public IEcsPipelineConfigWriter Config
+            public IEcsPipelineConfigContainerWriter Config
             {
                 get { return _config; }
             }
@@ -212,12 +212,12 @@ namespace DCFApixels.DragonECS
             {
                 get { return _injector; }
             }
-            public Builder(IEcsPipelineConfigWriter config = null)
+            public Builder(IEcsPipelineConfigContainerWriter config = null)
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 _buildBarker.Begin();
 #endif
-                if (config == null) { config = new EcsPipelineConfig(); }
+                if (config == null) { config = new EcsPipelineConfigContainer(); }
                 _config = config;
 
                 _injector = new Injector.Builder(this);
@@ -293,7 +293,7 @@ namespace DCFApixels.DragonECS
                     if (_systems.TryGetValue(item, out var list))
                         result.AddRange(list);
                 }
-                EcsPipeline pipeline = new EcsPipeline(_config.GetPipelineConfig(), _injector, result.ToArray());
+                EcsPipeline pipeline = new EcsPipeline(_config.GetPipelineConfigs(), _injector, result.ToArray());
                 foreach (var item in _initDeclaredRunners)
                 {
                     item.Declare(pipeline);
