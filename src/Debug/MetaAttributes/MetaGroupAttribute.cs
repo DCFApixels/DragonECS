@@ -1,14 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
     public sealed class MetaGroupAttribute : EcsMetaAttribute
     {
-        public static readonly MetaGroupAttribute Empty = new MetaGroupAttribute("");
-        public readonly string name;
+        public readonly MetaGroup Data;
+        public MetaGroupAttribute(string name)
+        {
+            Data = new MetaGroup(name);
+        }
+    }
+    public class MetaGroup
+    {
+        public static readonly MetaGroup Empty = new MetaGroup("");
+
+        public readonly string Name;
         private string[] path = null;
         public IReadOnlyCollection<string> Splited
         {
@@ -16,28 +24,34 @@ namespace DCFApixels.DragonECS
             {
                 if (path == null)
                 {
-                    path = Regex.Split(name, @"[/|\\]");
+                    path = Name.Split('/', StringSplitOptions.RemoveEmptyEntries);
                 }
                 return path;
             }
         }
-        public MetaGroupAttribute(string name)
+        public MetaGroup(string name)
         {
-            name = Regex.Replace(name, @"^[/|\\]+|[/|\\]+$", "");
-            this.name = name;
-        }
-        public MetaGroup GetData()
-        {
-            return new MetaGroup(this);
+            if (string.IsNullOrEmpty(name))
+            {
+                Name = string.Empty; 
+                return;
+            }
+            name = name.Replace('\\', '/');
+            if (name[name.Length - 1] != '/')
+            {
+                name += '/';
+            }
+            Name = name;
         }
     }
-    public readonly struct MetaGroup
+
+    public readonly struct ReadonlyMetaGroup
     {
-        public static readonly MetaGroup Empty = new MetaGroup(MetaGroupAttribute.Empty);
-        private readonly MetaGroupAttribute _source;
+        public static readonly ReadonlyMetaGroup Empty = new ReadonlyMetaGroup(MetaGroup.Empty);
+        private readonly MetaGroup _source;
         public string Name
         {
-            get { return _source.name; }
+            get { return _source.Name; }
         }
         public IReadOnlyCollection<string> Splited
         {
@@ -47,9 +61,14 @@ namespace DCFApixels.DragonECS
         {
             get { return _source == null; }
         }
-        public MetaGroup(MetaGroupAttribute source)
+        public ReadonlyMetaGroup(MetaGroup source)
         {
             _source = source;
+        }
+
+        public static implicit operator ReadonlyMetaGroup(MetaGroup group)
+        {
+            return new ReadonlyMetaGroup(group);
         }
     }
 }

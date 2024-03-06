@@ -193,32 +193,32 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetGroup
-        public static MetaGroup GetGroup(object obj)
+        public static ReadonlyMetaGroup GetGroup(object obj)
         {
             return GetTypeMeta(obj).Group;
         }
-        public static MetaGroup GetGroup<T>()
+        public static ReadonlyMetaGroup GetGroup<T>()
         {
             return GetTypeMeta<T>().Group;
         }
-        public static MetaGroup GetGroup(Type type)
+        public static ReadonlyMetaGroup GetGroup(Type type)
         {
             return GetTypeMeta(type).Group;
         }
 
-        public static bool TryGetGroup(object obj, out MetaGroup group)
+        public static bool TryGetGroup(object obj, out ReadonlyMetaGroup group)
         {
             TypeMeta meta = GetTypeMeta(obj);
             group = meta.Group;
             return group.IsNull;
         }
-        public static bool TryGetGroup<T>(out MetaGroup group)
+        public static bool TryGetGroup<T>(out ReadonlyMetaGroup group)
         {
             TypeMeta meta = GetTypeMeta<T>();
             group = meta.Group;
             return group.IsNull;
         }
-        public static bool TryGetGroup(Type type, out MetaGroup group)
+        public static bool TryGetGroup(Type type, out ReadonlyMetaGroup group)
         {
             TypeMeta meta = GetTypeMeta(type);
             group = meta.Group;
@@ -308,7 +308,15 @@ namespace DCFApixels.DragonECS
 
     }
 
-    public sealed class TypeMeta
+    public interface ITypeMeta
+    {
+        public string Name { get; }
+        public MetaColor Color { get; }
+        public string Description { get; }
+        public ReadonlyMetaGroup Group { get; }
+        public IReadOnlyCollection<string> Tags { get; }
+    }
+    public sealed class TypeMeta : ITypeMeta
     {
         internal readonly Type _type;
 
@@ -319,7 +327,7 @@ namespace DCFApixels.DragonECS
         private string _name;
         private MetaColor _color;
         private string _description;
-        private MetaGroup _group;
+        private ReadonlyMetaGroup _group;
         private IReadOnlyCollection<string> _tags;
         private int _typeCode;
 
@@ -409,7 +417,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Group
-        public MetaGroup Group
+        public ReadonlyMetaGroup Group
         {
             get
             {
@@ -539,9 +547,9 @@ namespace DCFApixels.DragonECS.Internal
         #endregion
 
         #region GetGroup
-        public static MetaGroup GetGroup(Type type)
+        public static ReadonlyMetaGroup GetGroup(Type type)
         {
-            return type.TryGetCustomAttribute(out MetaGroupAttribute atr) ? atr.GetData() : MetaGroup.Empty;
+            return type.TryGetCustomAttribute(out MetaGroupAttribute atr) ? atr.Data : ReadonlyMetaGroup.Empty;
         }
         #endregion
 
