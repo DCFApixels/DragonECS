@@ -1,42 +1,58 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
     public static class EcsDebugUtility
     {
         private const BindingFlags RFL_FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        private static readonly Dictionary<Type, TypeMeta> _metaCache = new Dictionary<Type, TypeMeta>();
 
         #region GetGenericTypeName
-        public static string GetGenericTypeFullName<T>(int maxDepth = 2) => GetGenericTypeFullName(typeof(T), maxDepth);
-        public static string GetGenericTypeFullName(Type type, int maxDepth = 2) => GetGenericTypeNameInternal(type, maxDepth, true);
-        public static string GetGenericTypeName<T>(int maxDepth = 2) => GetGenericTypeName(typeof(T), maxDepth);
-        public static string GetGenericTypeName(Type type, int maxDepth = 2) => GetGenericTypeNameInternal(type, maxDepth, false);
+        public static string GetGenericTypeFullName<T>(int maxDepth = 2)
+        {
+            return GetGenericTypeFullName(typeof(T), maxDepth);
+        }
+        public static string GetGenericTypeFullName(Type type, int maxDepth = 2)
+        {
+            return GetGenericTypeNameInternal(type, maxDepth, true);
+        }
+        public static string GetGenericTypeName<T>(int maxDepth = 2)
+        {
+            return GetGenericTypeName(typeof(T), maxDepth);
+        }
+        public static string GetGenericTypeName(Type type, int maxDepth = 2)
+        {
+            return GetGenericTypeNameInternal(type, maxDepth, false);
+        }
         private static string GetGenericTypeNameInternal(Type type, int maxDepth, bool isFull)
         {
 #if (DEBUG && !DISABLE_DEBUG)
-            string result = isFull ? type.FullName : type.Name;
+            string typeName = isFull ? type.FullName : type.Name;
             if (!type.IsGenericType || maxDepth == 0)
-                return result;
+            {
+                return typeName;
+            }
+            int genericInfoIndex = typeName.LastIndexOf('`');
+            if (genericInfoIndex > 0)
+            {
+                typeName = typeName.Remove(genericInfoIndex);
+            }
 
-            int iBacktick = result.IndexOf('`');
-            if (iBacktick > 0)
-                result = result.Remove(iBacktick);
-
-            result += "<";
+            string genericParams = "";
             Type[] typeParameters = type.GetGenericArguments();
             for (int i = 0; i < typeParameters.Length; ++i)
             {
-                string typeParamName = GetGenericTypeNameInternal(typeParameters[i], maxDepth - 1, false);//чтобы строка не была слишком длинной, используются сокращенные имена для типов аргументов
-                result += (i == 0 ? typeParamName : "," + typeParamName);
+                //чтобы строка не была слишком длинной, используются сокращенные имена для типов аргументов
+                string paramTypeName = GetGenericTypeNameInternal(typeParameters[i], maxDepth - 1, false);
+                genericParams += (i == 0 ? paramTypeName : $", {paramTypeName}");
             }
-            result += ">";
-            return result;
+            return $"{typeName}<{genericParams}>";
 #else //optimization for release build
-            return type.Name;
+            return isFull ? type.FullName : type.Name;
 #endif
         }
         #endregion
@@ -75,389 +91,382 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetName
-        public static string GetName(object obj, int maxGenericDepth = 2)
+        public static string GetMetaName(object obj)
         {
-            return obj is IEcsMetaProvider intr ?
-                GetName(intr.MetaSource, maxGenericDepth) :
-                GetName(type: obj.GetType(), maxGenericDepth);
+            return GetTypeMeta(obj).Name;
         }
-        public static string GetName<T>(int maxGenericDepth = 2) => GetName(typeof(T), maxGenericDepth);
-        public static string GetName(Type type, int maxGenericDepth = 2) => type.TryGetCustomAttribute(out MetaNameAttribute atr) ? atr.name : GetGenericTypeName(type, maxGenericDepth);
-        public static bool TryGetCustomName(object obj, out string name)
+        public static string GetMetaName<T>()
         {
-            return obj is IEcsMetaProvider intr ?
-                TryGetCustomName(intr.MetaSource, out name) :
-                TryGetCustomName(type: obj.GetType(), out name);
+            return GetTypeMeta<T>().Name;
         }
-        public static bool TryGetCustomName<T>(out string name) => TryGetCustomName(type: typeof(T), out name);
-        public static bool TryGetCustomName(Type type, out string name)
+        public static string GetMetaName(Type type)
         {
-            if (type.TryGetCustomAttribute(out MetaNameAttribute atr))
-            {
-                name = atr.name;
-                return true;
-            }
-            name = string.Empty;
-            return false;
+            return GetTypeMeta(type).Name;
         }
-        #endregion
 
-        #region GetGroup
-        public static MetaGroup GetGroup(object obj)
+        public static bool TryGetMetaName(object obj, out string name)
         {
-            return obj is IEcsMetaProvider intr ?
-                GetGroup(intr.MetaSource) :
-                GetGroup(type: obj.GetType());
+            TypeMeta meta = GetTypeMeta(obj);
+            name = meta.Name;
+            return meta.IsCustomName;
         }
-        public static MetaGroup GetGroup<T>() => GetGroup(typeof(T));
-        public static MetaGroup GetGroup(Type type) => type.TryGetCustomAttribute(out MetaGroupAttribute atr) ? atr.GetData() : MetaGroup.Empty;
-        public static bool TryGetGroup(object obj, out MetaGroup group)
+        public static bool TryGetMetaName<T>(out string name)
         {
-            return obj is IEcsMetaProvider intr ?
-                TryGetGroup(intr.MetaSource, out group) :
-                TryGetGroup(type: obj.GetType(), out group);
+            TypeMeta meta = GetTypeMeta<T>();
+            name = meta.Name;
+            return meta.IsCustomName;
         }
-        public static bool TryGetGroup<T>(out MetaGroup text) => TryGetGroup(typeof(T), out text);
-        public static bool TryGetGroup(Type type, out MetaGroup group)
+        public static bool TryGetMetaName(Type type, out string name)
         {
-            if (type.TryGetCustomAttribute(out MetaGroupAttribute atr))
-            {
-                group = atr.GetData();
-                return true;
-            }
-            group = MetaGroup.Empty;
-            return false;
-        }
-        #endregion
-
-        #region GetDescription
-        public static string GetDescription(object obj)
-        {
-            return obj is IEcsMetaProvider intr ?
-                GetDescription(intr.MetaSource) :
-                GetDescription(type: obj.GetType());
-        }
-        public static string GetDescription<T>() => GetDescription(typeof(T));
-        public static string GetDescription(Type type) => type.TryGetCustomAttribute(out MetaDescriptionAttribute atr) ? atr.description : string.Empty;
-        public static bool TryGetDescription(object obj, out string text)
-        {
-            return obj is IEcsMetaProvider intr ?
-                TryGetDescription(intr.MetaSource, out text) :
-                TryGetDescription(type: obj.GetType(), out text);
-        }
-        public static bool TryGetDescription<T>(out string text) => TryGetDescription(typeof(T), out text);
-        public static bool TryGetDescription(Type type, out string text)
-        {
-            if (type.TryGetCustomAttribute(out MetaDescriptionAttribute atr))
-            {
-                text = atr.description;
-                return true;
-            }
-            text = string.Empty;
-            return false;
+            TypeMeta meta = GetTypeMeta(type);
+            name = meta.Name;
+            return meta.IsCustomName;
         }
         #endregion
 
         #region GetColor
         public static MetaColor GetColor(object obj)
         {
-            return obj is IEcsMetaProvider intr ?
-                GetColor(intr.MetaSource) :
-                GetColor(type: obj.GetType());
+            return GetTypeMeta(obj).Color;
         }
         public static MetaColor GetColor<T>()
         {
-            return GetColor(typeof(T));
+            return GetTypeMeta<T>().Color;
         }
         public static MetaColor GetColor(Type type)
         {
-            var atr = type.GetCustomAttribute<MetaColorAttribute>();
-            return atr != null ? atr.color : AutoColor(type);
+            return GetTypeMeta(type).Color;
         }
-        private static MetaColor AutoColor(Type type)
-        {
-            return new MetaColor(type.Name).Desaturate(0.75f) / 1.15f;
-        }
+
         public static bool TryGetColor(object obj, out MetaColor color)
         {
-            return obj is IEcsMetaProvider intr ?
-                TryGetColor(intr.MetaSource, out color) :
-                TryGetColor(type: obj.GetType(), out color);
+            TypeMeta meta = GetTypeMeta(obj);
+            color = meta.Color;
+            return meta.IsCustomColor;
         }
         public static bool TryGetColor<T>(out MetaColor color)
         {
-            return TryGetColor(typeof(T), out color);
+            TypeMeta meta = GetTypeMeta<T>();
+            color = meta.Color;
+            return meta.IsCustomColor;
         }
         public static bool TryGetColor(Type type, out MetaColor color)
         {
-            var atr = type.GetCustomAttribute<MetaColorAttribute>();
-            if (atr != null)
-            {
-                color = atr.color;
-                return true;
-            }
-            color = MetaColor.BlackColor;
-            return false;
+            TypeMeta meta = GetTypeMeta(type);
+            color = meta.Color;
+            return meta.IsCustomColor;
+        }
+        #endregion
+
+        #region GetDescription
+        public static string GetDescription(object obj)
+        {
+            return GetTypeMeta(obj).Description;
+        }
+        public static string GetDescription<T>()
+        {
+            return GetTypeMeta<T>().Description;
+        }
+        public static string GetDescription(Type type)
+        {
+            return GetTypeMeta(type).Description;
+        }
+
+        public static bool TryGetDescription(object obj, out string description)
+        {
+            TypeMeta meta = GetTypeMeta(obj);
+            description = meta.Description;
+            return string.IsNullOrEmpty(description);
+        }
+        public static bool TryGetDescription<T>(out string description)
+        {
+            TypeMeta meta = GetTypeMeta<T>();
+            description = meta.Description;
+            return string.IsNullOrEmpty(description);
+        }
+        public static bool TryGetDescription(Type type, out string description)
+        {
+            TypeMeta meta = GetTypeMeta(type);
+            description = meta.Description;
+            return string.IsNullOrEmpty(description);
+        }
+        #endregion
+
+        #region GetGroup
+        public static MetaGroup GetGroup(object obj)
+        {
+            return GetTypeMeta(obj).Group;
+        }
+        public static MetaGroup GetGroup<T>()
+        {
+            return GetTypeMeta<T>().Group;
+        }
+        public static MetaGroup GetGroup(Type type)
+        {
+            return GetTypeMeta(type).Group;
+        }
+
+        public static bool TryGetGroup(object obj, out MetaGroup group)
+        {
+            TypeMeta meta = GetTypeMeta(obj);
+            group = meta.Group;
+            return group.IsNull;
+        }
+        public static bool TryGetGroup<T>(out MetaGroup group)
+        {
+            TypeMeta meta = GetTypeMeta<T>();
+            group = meta.Group;
+            return group.IsNull;
+        }
+        public static bool TryGetGroup(Type type, out MetaGroup group)
+        {
+            TypeMeta meta = GetTypeMeta(type);
+            group = meta.Group;
+            return group.IsNull;
         }
         #endregion
 
         #region GetTags
         public static IReadOnlyCollection<string> GetTags(object obj)
         {
-            return obj is IEcsMetaProvider intr ?
-                GetTags(intr.MetaSource) :
-                GetTags(type: obj.GetType());
+            return GetTypeMeta(obj).Tags;
         }
         public static IReadOnlyCollection<string> GetTags<T>()
         {
-            return GetTags(typeof(T));
+            return GetTypeMeta<T>().Tags;
         }
         public static IReadOnlyCollection<string> GetTags(Type type)
         {
-            var atr = type.GetCustomAttribute<MetaTagsAttribute>();
-            return atr != null ? atr.Tags : Array.Empty<string>();
+            return GetTypeMeta(type).Tags;
         }
 
         public static bool TryGetTags(object obj, out IReadOnlyCollection<string> tags)
         {
-            return obj is IEcsMetaProvider intr ?
-                TryGetTags(intr.MetaSource, out tags) :
-                TryGetTags(type: obj.GetType(), out tags);
+            TypeMeta meta = GetTypeMeta(obj);
+            tags = meta.Tags;
+            return tags.Count <= 0;
         }
         public static bool TryGetTags<T>(out IReadOnlyCollection<string> tags)
         {
-            return TryGetTags(typeof(T), out tags);
+            TypeMeta meta = GetTypeMeta<T>();
+            tags = meta.Tags;
+            return tags.Count <= 0;
         }
         public static bool TryGetTags(Type type, out IReadOnlyCollection<string> tags)
         {
-            var atr = type.GetCustomAttribute<MetaTagsAttribute>();
-            if (atr != null)
-            {
-                tags = atr.Tags;
-                return true;
-            }
-            tags = Array.Empty<string>();
-            return false;
+            TypeMeta meta = GetTypeMeta(type);
+            tags = meta.Tags;
+            return tags.Count <= 0;
         }
         #endregion
 
         #region IsHidden
         public static bool IsHidden(object obj)
         {
-            return obj is IEcsMetaProvider intr ?
-                IsHidden(intr.MetaSource) :
-                IsHidden(type: obj.GetType());
+            return GetTypeMeta(obj).IsHidden;
         }
         public static bool IsHidden<T>()
         {
-            return IsHidden(typeof(T));
+            return GetTypeMeta<T>().IsHidden;
         }
         public static bool IsHidden(Type type)
         {
-            return type.TryGetCustomAttribute(out MetaTagsAttribute atr) && atr.Tags.Contains(MetaTags.HIDDEN);
+            return GetTypeMeta(type).IsHidden;
         }
         #endregion
 
-        #region MetaSource
-        public static bool IsMetaSourceProvided(object obj)
+        #region GetTypeMeta
+        public static TypeMeta GetTypeMeta(object obj)
         {
-            return obj is IEcsMetaProvider;
+            return GetTypeMeta(GetTypeMetaSource(obj).GetType());
         }
-        public static object GetMetaSource(object obj)
+        public static TypeMeta GetTypeMeta<T>()
         {
-            return obj is IEcsMetaProvider intr ? intr.MetaSource : obj;
+            return GetTypeMeta(typeof(T));
         }
-        #endregion
-
-        #region GenerateTypeMeta
-        public static TypeMetaData GenerateTypeMeta(object obj)
+        public static TypeMeta GetTypeMeta(Type type)
         {
-            return obj is IEcsMetaProvider intr ?
-                GenerateTypeMeta(intr.MetaSource) :
-                GenerateTypeMeta(type: obj.GetType());
-        }
-        public static TypeMetaData GenerateTypeMeta<T>()
-        {
-            return GenerateTypeMeta(typeof(T));
-        }
-        public static TypeMetaData GenerateTypeMeta(Type type)
-        {
-            return new TypeMetaData(
-                type,
-                GetName(type),
-                GetGroup(type),
-                GetColor(type),
-                GetDescription(type),
-                GetTags(type));
-        }
-        #endregion
-
-        #region GetCachedTypeMeta
-        private static readonly Dictionary<Type, TypeMetaDataCached> _metaCache = new Dictionary<Type, TypeMetaDataCached>();
-        public static TypeMetaDataCached GetCachedTypeMeta(object obj)
-        {
-            return obj is IEcsMetaProvider intr ?
-                GetCachedTypeMeta(intr.MetaSource) :
-                GetCachedTypeMeta(type: obj.GetType());
-        }
-        public static TypeMetaDataCached GetCachedTypeMeta<T>()
-        {
-            return GetCachedTypeMeta(typeof(T));
-        }
-        public static TypeMetaDataCached GetCachedTypeMeta(Type type)
-        {
-            if (_metaCache.TryGetValue(type, out TypeMetaDataCached result) == false)
+            if (_metaCache.TryGetValue(type, out TypeMeta result) == false)
             {
-                result = new TypeMetaDataCached(type);
+                result = new TypeMeta(type);
                 _metaCache.Add(type, result);
             }
             return result;
         }
         #endregion
 
-        #region ReflectionExtensions
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetCustomAttribute<T>(this Type self, out T attribute) where T : Attribute
+        #region TypeMetaSource
+        public static bool IsTypeMetaProvided(object obj)
         {
-            attribute = self.GetCustomAttribute<T>();
-            return attribute != null;
+            return obj is IEcsTypeMetaProvider;
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetCustomAttribute<T>(this MemberInfo self, out T attribute) where T : Attribute
+        public static object GetTypeMetaSource(object obj)
         {
-            attribute = self.GetCustomAttribute<T>();
-            return attribute != null;
+            return obj is IEcsTypeMetaProvider intr ? intr.MetaSource : obj;
         }
         #endregion
+
     }
 
-    [Serializable]
-    public sealed class TypeMetaData
-    {
-        public readonly Type type;
-        public readonly string name;
-        public readonly MetaGroup group;
-        public readonly MetaColor color;
-        public readonly string description;
-        public readonly IReadOnlyCollection<string> tags;
-        public TypeMetaData(Type type, string name, MetaGroup group, MetaColor color, string description, IReadOnlyCollection<string> tags)
-        {
-            this.type = type;
-            this.name = name;
-            this.group = group;
-            this.color = color;
-            this.description = description;
-            this.tags = tags;
-        }
-    }
-
-    public static class TypeMetaDataCachedExtensions
-    {
-        public static TypeMetaDataCached GetMeta(this object self)
-        {
-            return EcsDebugUtility.GetCachedTypeMeta(self);
-        }
-    }
-    public class TypeMetaDataCached
+    public sealed class TypeMeta
     {
         internal readonly Type _type;
 
-        internal string _name;
-        internal MetaGroup _group;
-        internal MetaColor _color;
-        internal string _description;
-        internal IReadOnlyCollection<string> _tags;
+        private bool _isCustomName;
+        private bool _isCustomColor;
+        private bool _isHidden;
 
-        private TypeMetaData _typeMetaData = null;
+        private string _name;
+        private MetaColor _color;
+        private string _description;
+        private MetaGroup _group;
+        private IReadOnlyCollection<string> _tags;
+        private int _typeCode;
+
         private InitFlag _initFlags = InitFlag.None;
 
-        public TypeMetaDataCached(Type type)
+        #region Constructors
+        public TypeMeta(Type type)
         {
             _type = type;
         }
+        #endregion
 
+        #region Type
         public Type Type
         {
             get { return _type; }
+        }
+        #endregion
+
+        #region Name
+        private void InitName()
+        {
+            if (_initFlags.HasFlag(InitFlag.Name) == false)
+            {
+                (_name, _isCustomName) = MetaCacheGenerator.GetName(_type);
+                _initFlags |= InitFlag.Name;
+            }
+        }
+        public bool IsCustomName
+        {
+            get
+            {
+                InitName();
+                return _isCustomName;
+            }
         }
         public string Name
         {
             get
             {
-                if (_initFlags.HasFlag(InitFlag.Name) == false)
-                {
-                    _name = EcsDebugUtility.GetName(_type);
-                    _initFlags |= InitFlag.Name;
-                }
+                InitName();
                 return _name;
             }
         }
-        public MetaGroup Group
+        #endregion
+
+        #region Color
+        private void InitColor()
+        {
+            if (_initFlags.HasFlag(InitFlag.Color) == false)
+            {
+                (_color, _isCustomColor) = MetaCacheGenerator.GetColor(_type);
+                _initFlags |= InitFlag.Color;
+            }
+        }
+        public bool IsCustomColor
         {
             get
             {
-                if (_initFlags.HasFlag(InitFlag.Group) == false)
-                {
-                    _group = EcsDebugUtility.GetGroup(_type);
-                    _initFlags |= InitFlag.Group;
-                }
-                return _group;
+                InitColor();
+                return _isCustomColor;
             }
         }
         public MetaColor Color
         {
             get
             {
-                if (_initFlags.HasFlag(InitFlag.Color) == false)
-                {
-                    _color = EcsDebugUtility.GetColor(_type);
-                    _initFlags |= InitFlag.Color;
-                }
+                InitColor();
                 return _color;
             }
         }
+        #endregion
+
+        #region Description
         public string Description
         {
             get
             {
                 if (_initFlags.HasFlag(InitFlag.Description) == false)
                 {
-                    _description = EcsDebugUtility.GetDescription(_type);
+                    _description = MetaCacheGenerator.GetDescription(_type);
                     _initFlags |= InitFlag.Description;
                 }
                 return _description;
+            }
+        }
+        #endregion
+
+        #region Group
+        public MetaGroup Group
+        {
+            get
+            {
+                if (_initFlags.HasFlag(InitFlag.Group) == false)
+                {
+                    _group = MetaCacheGenerator.GetGroup(_type);
+                    _initFlags |= InitFlag.Group;
+                }
+                return _group;
+            }
+        }
+        #endregion
+
+        #region Tags
+        private void InitTags()
+        {
+            if (_initFlags.HasFlag(InitFlag.Tags) == false)
+            {
+                _tags = MetaCacheGenerator.GetTags(_type);
+                _initFlags |= InitFlag.Tags;
+                _isHidden = _tags.Contains(MetaTags.HIDDEN);
             }
         }
         public IReadOnlyCollection<string> Tags
         {
             get
             {
-                if (_initFlags.HasFlag(InitFlag.Tags) == false)
-                {
-                    _tags = EcsDebugUtility.GetTags(_type);
-                    _initFlags |= InitFlag.Tags;
-                }
+                InitTags();
                 return _tags;
             }
         }
-        public TypeMetaData AllData
+        public bool IsHidden
         {
             get
             {
-                if (_typeMetaData == null)
-                {
-                    _typeMetaData = new TypeMetaData(
-                        Type,
-                        Name,
-                        Group,
-                        Color,
-                        Description,
-                        Tags);
-                }
-                return _typeMetaData;
+                InitTags();
+                return _isHidden;
             }
         }
+        #endregion
 
+        #region TypeCode
+        public int TypeCode
+        {
+            get
+            {
+                if (_initFlags.HasFlag(InitFlag.TypeCode) == false)
+                {
+                    _typeCode = EcsTypeCode.Get(_type);
+                    _initFlags |= InitFlag.TypeCode;
+                }
+                return _typeCode;
+            }
+        }
+        #endregion
+
+        #region InitializeAll
         public void InitializeAll()
         {
             if (_initFlags == InitFlag.All)
@@ -469,8 +478,12 @@ namespace DCFApixels.DragonECS
             _ = Color;
             _ = Description;
             _ = Tags;
+            _ = TypeCode;
         }
+        #endregion
 
+        #region InitFlag
+        [Flags]
         private enum InitFlag : byte
         {
             None = 0,
@@ -479,7 +492,73 @@ namespace DCFApixels.DragonECS
             Color = 1 << 2,
             Description = 1 << 3,
             Tags = 1 << 4,
-            All = Name | Group | Color | Description | Tags
+            TypeCode = 1 << 5,
+
+            All = Name | Group | Color | Description | Tags | TypeCode
         }
+        #endregion
+    }
+
+    public static class TypeMetaDataCachedExtensions
+    {
+        public static TypeMeta GetMeta(this object self)
+        {
+            return EcsDebugUtility.GetTypeMeta(self);
+        }
+        public static TypeMeta ToMeta(this Type self)
+        {
+            return EcsDebugUtility.GetTypeMeta(self);
+        }
+    }
+}
+
+namespace DCFApixels.DragonECS.Internal
+{
+    internal static class MetaCacheGenerator
+    {
+        private const int GENERIC_NAME_DEPTH = 2;
+
+        #region GetName
+        public static (string, bool) GetName(Type type)
+        {
+            bool isCustom = type.TryGetCustomAttribute(out MetaNameAttribute atr) && string.IsNullOrEmpty(atr.name) == false;
+            return (isCustom ? atr.name : EcsDebugUtility.GetGenericTypeName(type, GENERIC_NAME_DEPTH), isCustom);
+        }
+        #endregion
+
+        #region GetColor
+        private static MetaColor AutoColor(Type type)
+        {
+            return new MetaColor(type.Name).Desaturate(0.48f) / 1.18f;
+        }
+        public static (MetaColor, bool) GetColor(Type type)
+        {
+            bool isCustom = type.TryGetCustomAttribute(out MetaColorAttribute atr);
+            return (isCustom ? atr.color : AutoColor(type), isCustom);
+        }
+        #endregion
+
+        #region GetGroup
+        public static MetaGroup GetGroup(Type type)
+        {
+            return type.TryGetCustomAttribute(out MetaGroupAttribute atr) ? atr.GetData() : MetaGroup.Empty;
+        }
+        #endregion
+
+        #region GetDescription
+        public static string GetDescription(Type type)
+        {
+            bool isCustom = type.TryGetCustomAttribute(out MetaDescriptionAttribute atr);
+            return isCustom ? atr.description : string.Empty;
+        }
+        #endregion
+
+        #region GetTags
+        public static IReadOnlyCollection<string> GetTags(Type type)
+        {
+            var atr = type.GetCustomAttribute<MetaTagsAttribute>();
+            return atr != null ? atr.Tags : Array.Empty<string>();
+        }
+        #endregion
     }
 }

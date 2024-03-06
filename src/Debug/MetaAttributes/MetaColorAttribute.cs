@@ -219,7 +219,8 @@ namespace DCFApixels.DragonECS
             byte r = this.r;
             byte g = this.g;
             byte b = this.b;
-            byte gray = (byte)(r * 0.299 + g * 0.587 + b * 0.114);
+            //byte gray = (byte)(r * 0.299 + g * 0.587 + b * 0.114);
+            byte gray = (byte)(r * 0.333333 + g * 0.333333 + b * 0.333333);
             r = (byte)(r + (gray - r) * (1 - t));
             g = (byte)(g + (gray - g) * (1 - t));
             b = (byte)(b + (gray - b) * (1 - t));

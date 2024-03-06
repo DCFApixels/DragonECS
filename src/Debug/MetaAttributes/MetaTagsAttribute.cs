@@ -8,9 +8,12 @@ namespace DCFApixels.DragonECS
     public sealed class MetaTagsAttribute : EcsMetaAttribute
     {
         private readonly string[] _tags = Array.Empty<string>();
-        public IReadOnlyCollection<string> Tags => _tags;
+        public IReadOnlyCollection<string> Tags
+        {
+            get { return _tags; }
+        }
 
-        [Obsolete("With empty parameters, this attribute makes no sense.", true)]
+        [Obsolete("With empty parameters, this attribute makes no sense.")]
         public MetaTagsAttribute() { }
         public MetaTagsAttribute(params string[] tags)
         {

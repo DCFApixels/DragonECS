@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace DCFApixels.DragonECS
@@ -8,18 +9,27 @@ namespace DCFApixels.DragonECS
     {
         public static readonly MetaGroupAttribute Empty = new MetaGroupAttribute("");
         public readonly string name;
-        public readonly string rootCategory;
+        private string[] path = null;
+        public IReadOnlyCollection<string> Splited
+        {
+            get
+            {
+                if (path == null)
+                {
+                    path = Regex.Split(name, @"[/|\\]");
+                }
+                return path;
+            }
+        }
         public MetaGroupAttribute(string name)
         {
             name = Regex.Replace(name, @"^[/|\\]+|[/|\\]+$", "");
-            rootCategory = Regex.Match(name, @"^(.*?)[/\\]").Groups[1].Value;
             this.name = name;
         }
-        public string[] SplitCategories()
+        public MetaGroup GetData()
         {
-            return Regex.Split(name, @"[/|\\]");
+            return new MetaGroup(this);
         }
-        public MetaGroup GetData() => new MetaGroup(this);
     }
     public readonly struct MetaGroup
     {
@@ -29,9 +39,9 @@ namespace DCFApixels.DragonECS
         {
             get { return _source.name; }
         }
-        public string RootCategory
+        public IReadOnlyCollection<string> Splited
         {
-            get { return _source.rootCategory; }
+            get { return _source.Splited; }
         }
         public bool IsNull
         {
@@ -40,10 +50,6 @@ namespace DCFApixels.DragonECS
         public MetaGroup(MetaGroupAttribute source)
         {
             _source = source;
-        }
-        public string[] SplitCategories()
-        {
-            return _source.SplitCategories();
         }
     }
 }

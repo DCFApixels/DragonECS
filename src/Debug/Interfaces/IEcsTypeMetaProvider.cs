@@ -1,6 +1,6 @@
 ﻿namespace DCFApixels.DragonECS
 {
-    public interface IEcsMetaProvider
+    public interface IEcsTypeMetaProvider
     {
         object MetaSource { get; }
     }
