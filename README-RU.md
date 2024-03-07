@@ -733,8 +733,9 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 
 # Расширения
 * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
-* [Поддержка классической C# многопоточности](https://github.com/DCFApixels/DragonECS-ClassicThreads)
-* Отношения (Work in progress)
+* [Классическоя C# многопоточность](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+* [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
+* Графы (Work in progress)
 * Интеграция с движком Unity (Work in progress)
 <!--* Твое расширение? Если разрабатываешь свои расширения для DragonECS, дай знать и они будут добавлены сюда-->
 
