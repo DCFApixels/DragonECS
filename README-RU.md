@@ -645,7 +645,7 @@ using (marker.Auto())
 Для большей расширемости фреймворкеа есть дополнительные инструменты.
 
 ## Конфиги
-Конструкторы классов `EcsWorld` и `EcsPipeline` могут принимать контейнеры конфигов реализующие интерфейс `IConfigContainer` или `IConfigContainerWriter`. С помощью этих контейнеров можно передавать данные и зависимости. Встроенная реализация контейнера - `ConfigContainer`</br>
+Конструкторы классов `EcsWorld` и `EcsPipeline` могут принимать контейнеры конфигов реализующие интерфейс `IConfigContainer` или `IConfigContainerWriter`. С помощью этих контейнеров можно передавать данные и зависимости. Встроенная реализация контейнера - `ConfigContainer`, но можно так же использовать свою реализацию.</br>
 Пример использования конфигов для мира:
 ``` c#
 var configs = new ConfigContainer()
@@ -653,6 +653,9 @@ var configs = new ConfigContainer()
     .Set(new SomeDataA(/* ... */))
     .Set(new SomeDataB(/* ... */)));
 EcsDefaultWorld _world = new EcsDefaultWorld(configs);
+//...
+var _someDataA = _world.Configs.Get<SomeDataA>();
+var _someDataB = _world.Configs.Get<SomeDataB>();
 ```
 Пример использования конфигов для пайплайна:
 ``` c#
@@ -663,11 +666,13 @@ _pipeline = EcsPipeline.New()// аналогично _pipeline = EcsPipeline.New
     .BuildAndInit();
 //...
 var _someDataA = _pipeline.Configs.Get<SomeDataA>();
+var _someDataB = _pipeline.Configs.Get<SomeDataB>();
 ```
 
 ## Компоненты Миры
-С помощью компонентов можно прикреплять дополнительные данные к мирам. В качестве компонентов используются `struct` типы.
+С помощью компонентов можно прикреплять дополнительные данные к мирам. В качестве компонентов используются `struct` типы. Доступ к компонентам через `Get` оптимизирован, скорость почти такая же как доступ к полям класса.
 ``` c#
+// Получить компонент.
 ref WorldComponent component = ref _world.Get<WorldComponent>();
 ```
 Реализация компонента:
@@ -684,7 +689,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
     // Данные.
     void IEcsWorldComponent<WorldComponent>.Init(ref WorldComponent component, EcsWorld world)
     {
-        // Действия при инициализации компонента. Вызывается до первого возвращения из EcsWorld.Get
+        // Действия при инициализации компонента. Вызывается до первого возвращения из EcsWorld.Get .
     }
     void IEcsWorldComponent<WorldComponent>.OnDestroy(ref WorldComponent component, EcsWorld world)
     {
