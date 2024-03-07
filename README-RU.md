@@ -131,10 +131,10 @@ struct PlayerTag : IEcsTagComponent {}
 ```c#
 class SomeSystem : IEcsPreInit, IEcsInit, IEcsRun, IEcsDestroy
 {
-    // Будет вызван один раз в момент работы EcsPipeline.Init() и до срабатывания IEcsInitProcess.Init()
+    // Будет вызван один раз в момент работы EcsPipeline.Init() и до срабатывания IEcsInit.Init()
     public void PreInit () { }
     
-    // Будет вызван один раз в момент работы EcsPipeline.Init() и после срабатывания IEcsPreInitProcess.PreInit()
+    // Будет вызван один раз в момент работы EcsPipeline.Init() и после срабатывания IEcsPreInit.PreInit()
     public void Init ()  { }
     
     // Будет вызван один раз в момент работы EcsPipeline.Run().
@@ -187,11 +187,16 @@ EcsPipelone pipeline = EcsPipeline.New()
 
 //...
 // Для внедрения используется интерфейс IEcsInject<T> и его метод Inject(T obj)
-class SomeSystem : IEcsInject<SomeDataA>, IEcsRunProcess
+class SomeSystem : IEcsInject<SomeDataA>, IEcsRun
 {
     SomeDataA _someDataA
     //obj будет экземпляром типа SomeDataB
     public void Inject(SomeDataA obj) => _someDataA = obj;
+
+    public void Run () 
+    {
+        _someDataA.DoSomething();
+    }
 }
 ```
 ### Модули
@@ -480,18 +485,18 @@ public class EcsRoot : MonoBehaviour
 
             // Завершение построения пайплайна.
             .Build();
-        //Иницивлизация пайплайна и запуск IEcsPreInitProcess.PreInit
-        //и IEcsInitProcess.Init у всех добавленных систем
+        //Иницивлизация пайплайна и запуск IEcsPreInit.PreInit
+        //и IEcsInit.Init у всех добавленных систем
         _pipeline.Init();
     }
     private void Update()
     {
-        //Запуск IEcsRunProcess.Run у всех добавленных систем
+        //Запуск IEcsRun.Run у всех добавленных систем
         _pipeline.Run();
     }
     private void OnDestroy()
     {
-        //Запускает IEcsDestroyInitProcess.Destroy у всех добавленных систем
+        //Запускает IEcsDestroyInit.Destroy у всех добавленных систем
         _pipeline.Destroy();
         _pipeline = null;
         //Обязательно удалять миры которые больше не будут использованы 
@@ -526,22 +531,22 @@ public class EcsRoot
 
             // Завершение построения пайплайна.
             .Build();
-        // Иницивлизация пайплайна и запуск IEcsPreInitProcess.PreInit
-        // и IEcsInitProcess.Init у всех добавленных систем.
+        // Иницивлизация пайплайна и запуск IEcsPreInit.PreInit
+        // и IEcsInit.Init у всех добавленных систем.
         _pipeline.Init();
     }
 
     // Update-цикл движка.
     public void Update()
     {
-        // Запуск IEcsRunProcess.Run у всех добавленных систем.
+        // Запуск IEcsRun.Run у всех добавленных систем.
         _pipeline.Run();
     }
 
     // Очистка окружения.
     public void Destroy()
     {
-        // Запускает IEcsDestroyInitProcess.Destroy у всех добавленных систем.
+        // Запускает IEcsDestroyInit.Destroy у всех добавленных систем.
         _pipeline.Destroy();
         _pipeline = null;
         // Обязательно удалять миры которые больше не будут использованы.
@@ -747,7 +752,7 @@ The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing 
 Напряму - никак. </br>
 Обычно потребность выключить/включить систему появляется когда поменялось общее состояние игры, это может так же значить что нужно переключить сразу группу систем, все это в совокупности можно рассматривать как измннеия процессов. Есть 2 решения：</br>
 + Если измненеия процесса глобальные, то создать новый `EcsPipeline` и в цикле обновления движка запускать соотвествующий пайплайн.
-+ Разделить `IEcsRunProcess` на несколько процессов и в цикле обновления движка запускать соотвествующий процесс. Для этого создайте новый интерфейс процесса, раннер для запуска этого интерфейса и получайте раннер через `EcsPipeline.GetRunner<T>()`.
++ Разделить `IEcsRun` на несколько процессов и в цикле обновления движка запускать соотвествующий процесс. Для этого создайте новый интерфейс процесса, раннер для запуска этого интерфейса и получайте раннер через `EcsPipeline.GetRunner<T>()`.
 </br>
 
 # Обратная связь
