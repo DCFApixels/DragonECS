@@ -401,7 +401,36 @@ class Aspect : EcsAspect
  
 
 ## Запросы
-Используйте метод-запрос `EcsWorld.Where<TAspcet>(out TAspcet aspect)` для получения необходимого системе набора сущностей. Запросы работают в связке с аспектами, аспекты определяют ограничения запросов, результатом запроса становится группа сущностей удовлетворяющая условиям аспекта. По умолчанию запрос делает выборку из всех сущностей в мире, но так же можно сделать выборку из определенной группы сущностей, для этого используйте `EcsWorld.WhereFor<TAspcet>(EcsReadonlyGroup sourceGroup, out TAspcet aspect)`
+Используйте метод-запрос `EcsWorld.Where<TAspcet>(out TAspcet aspect)` для получения необходимого системе набора сущностей. Запросы работают в связке с аспектами, аспекты определяют ограничения запросов, результатом запроса становится группа сущностей удовлетворяющая условиям аспекта. По умолчанию запрос делает выборку из всех сущностей в мире, но так же запросы можно применять и к коллекциям фреймворка(в этом плане это чемто похоже на Where из Linq).
+Пример:
+``` c#
+public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
+{
+    class Aspect : EcsAspect
+    {
+        public EcsPool<Health> healths; 
+        public EcsPool<Damage> damages; 
+        public EcsTagPool<IsInvulnerable> isInvulnerables;
+        protected override void Init(Builder b)
+        {
+            healths = b.Include<Health>();
+            damages = b.Include<Damage>();
+            isInvulnerables = b.Include<IsInvulnerable>();
+        }
+    }
+    EcsDefaultWorld _world;
+    public void Inject(EcsDefaultWorld world) => _world = world;
+
+    public void Run()
+    {
+        foreach (var e in _world.Where(out Aspect a))
+        {
+            // Сюда попадают сущности с компонентами Health, Damage и без IsInvulnerable
+            a.healths.Get(e).points -= a.damages.Get(e).points;
+        }
+    }
+}
+```
  
 ## Группа
 Группы это структуры данных для хранения множества сущностей с O(1) операциями добавления/удаления/проверки наличия и т.д. Реализованы классом `EcsGroup` и структурой `EcsReadonlyGroup`. 
