@@ -103,7 +103,12 @@ namespace DCFApixels.DragonECS
                 return _entityDispenser.UsedToEcsSpan(id);
             }
         }
-        public ReadOnlySpan<IEcsPoolImplementation> AllPools
+        public int PoolsCount
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _poolsCount; }
+        }
+        public ReadOnlySpan<IEcsPool> AllPools
         {
             // new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -117,7 +122,7 @@ namespace DCFApixels.DragonECS
         {
             if (configs == null) { configs = ConfigContainer.Empty; }
             bool nullWorld = this is NullWorld;
-            if(nullWorld == false && worldID == NULL_WORLD_ID)
+            if (nullWorld == false && worldID == NULL_WORLD_ID)
             {
                 EcsDebug.PrintWarning($"The world identifier cannot be {NULL_WORLD_ID}");
             }
