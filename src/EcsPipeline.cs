@@ -197,16 +197,16 @@ namespace DCFApixels.DragonECS
             private readonly Dictionary<string, List<IEcsProcess>> _systems;
             private readonly string _basicLayer;
             public readonly LayerList Layers;
-            private readonly IConfigContainerWriter _configs;
+            private readonly Configurator _configurator;
             private readonly Injector.Builder _injector;
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             private EcsProfilerMarker _buildBarker = new EcsProfilerMarker("EcsPipeline.Build");
 #endif
             private List<InitDeclaredRunner> _initDeclaredRunners = new List<InitDeclaredRunner>(4);
 
-            public IConfigContainerWriter Configs
+            public Configurator Configs
             {
-                get { return _configs; }
+                get { return _configurator; }
             }
             public Injector.Builder Injector
             {
@@ -217,8 +217,8 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 _buildBarker.Begin();
 #endif
-                if (config == null) { config = ConfigContainer.Empty; }
-                _configs = config;
+                if (config == null) { config = new ConfigContainer(); }
+                _configurator = new Configurator(config, this);
 
                 _injector = new Injector.Builder(this);
                 _injector.AddNode<object>();
@@ -293,7 +293,7 @@ namespace DCFApixels.DragonECS
                     if (_systems.TryGetValue(item, out var list))
                         result.AddRange(list);
                 }
-                EcsPipeline pipeline = new EcsPipeline(_configs.GetContainer(), _injector, result.ToArray());
+                EcsPipeline pipeline = new EcsPipeline(_configurator.Instance.GetContainer(), _injector, result.ToArray());
                 foreach (var item in _initDeclaredRunners)
                 {
                     item.Declare(pipeline);
@@ -313,6 +313,25 @@ namespace DCFApixels.DragonECS
                 public override void Declare(EcsPipeline pipeline)
                 {
                     pipeline.GetRunnerInstance<T>();
+                }
+            }
+            public class Configurator
+            {
+                private readonly IConfigContainerWriter _configs;
+                private readonly Builder _builder;
+                public Configurator(IConfigContainerWriter configs, Builder builder)
+                {
+                    _configs = configs;
+                    _builder = builder;
+                }
+                public IConfigContainerWriter Instance
+                {
+                    get { return _configs; }
+                }
+                public Builder Set<T>(T value)
+                {
+                    _configs.Set(value);
+                    return _builder;
                 }
             }
             public class LayerList : IEnumerable<string>
