@@ -129,12 +129,15 @@ struct PlayerTag : IEcsTagComponent {}
 ## System
 **Системы** - это основная логика, тут задается поведение сущностей. Существуют в виде пользовательских классов, реализующих как минимум один из интерфейсов процессов. Основные процессы:
 ```c#
-class SomeSystem : IEcsPreInit, IEcsInit, IEcsRun, IEcsDestroy
+class SomeSystem : IEcsPreInit, IEcsInit, IEcsRun, IEcsDestroy, IEcsPipelineMember
 {
-    // Будет вызван один раз в момент работы EcsPipeline.Init() и до срабатывания IEcsInit.Init()
+    // Получить экземпляр пайплайна к которому принадлежит система.
+    public EcsPipeline Pipeline { get ; set; }
+
+    // Будет вызван один раз в момент работы EcsPipeline.Init() и до срабатывания IEcsInit.Init().
     public void PreInit () { }
     
-    // Будет вызван один раз в момент работы EcsPipeline.Init() и после срабатывания IEcsPreInit.PreInit()
+    // Будет вызван один раз в момент работы EcsPipeline.Init() и после срабатывания IEcsPreInit.PreInit().
     public void Init ()  { }
     
     // Будет вызван один раз в момент работы EcsPipeline.Run().
