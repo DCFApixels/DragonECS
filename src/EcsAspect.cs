@@ -46,6 +46,19 @@ namespace DCFApixels.DragonECS
             private EcsWorld _world;
             private EcsMask.Builder _maskBuilder;
 
+            public IncludeMarker Inc
+            {
+                get { return new IncludeMarker(this); }
+            }
+            public ExcludeMarker Exc
+            {
+                get { return new ExcludeMarker(this); }
+            }
+            public OptionalMarker Opt
+            {
+                get { return new OptionalMarker(this); }
+            }
+
             public EcsWorld World => _world;
 
             private Builder(EcsWorld world)
@@ -405,5 +418,44 @@ namespace DCFApixels.DragonECS
             #endregion
         }
         #endregion
+    }
+    public readonly ref struct IncludeMarker
+    {
+        private readonly EcsAspect.Builder _builder;
+        public IncludeMarker(EcsAspect.Builder builder)
+        {
+            _builder = builder;
+        }
+        public T GetInstance<T>() 
+            where T : IEcsPoolImplementation, new()
+        {
+            return _builder.IncludePool<T>();
+        }
+    }
+    public readonly ref struct ExcludeMarker
+    {
+        private readonly EcsAspect.Builder _builder;
+        public ExcludeMarker(EcsAspect.Builder builder)
+        {
+            _builder = builder;
+        }
+        public T GetInstance<T>()
+            where T : IEcsPoolImplementation, new()
+        {
+            return _builder.ExcludePool<T>();
+        }
+    }
+    public readonly ref struct OptionalMarker
+    {
+        private readonly EcsAspect.Builder _builder;
+        public OptionalMarker(EcsAspect.Builder builder)
+        {
+            _builder = builder;
+        }
+        public T GetInstance<T>()
+            where T : IEcsPoolImplementation, new()
+        {
+            return _builder.OptionalPool<T>();
+        }
     }
 }

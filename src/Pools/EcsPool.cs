@@ -248,6 +248,12 @@ namespace DCFApixels.DragonECS
         IEnumerator<T> IEnumerable<T>.GetEnumerator() { throw new NotImplementedException(); }
         IEnumerator IEnumerable.GetEnumerator() { throw new NotImplementedException(); }
         #endregion
+
+        #region MarkersConverter
+        public static implicit operator EcsPool<T>(IncludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        public static implicit operator EcsPool<T>(ExcludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        public static implicit operator EcsPool<T>(OptionalMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        #endregion
     }
     /// <summary>Standard component</summary>
     public interface IEcsComponent { }
