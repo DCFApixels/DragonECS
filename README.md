@@ -25,11 +25,14 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 Versioning semantics - [Open](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
 ## Environment
 Requirements:
-+ Minimum C# version 7.3;
-
++ Minimum version of C# 7.3;
+  
 Optional:
-+ NativeAOT support;
-+ Minimum Unity version 2020.1.0;
++ Support for NativeAOT
++ Game engines with C#: Unity, Godot, MonoGame, etc.
+  
+Tested with:
++ **Unity:** Minimum version 2020.1.0;
 
 ## Unity Installation
 * ### Unity Package
