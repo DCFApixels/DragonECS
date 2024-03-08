@@ -369,6 +369,23 @@ class Aspect : EcsAspect
     }
 }
 ```
+Упрощенный синтаксис. Пример ниже, это аналог примера выше
+``` c#
+using DCFApixels.DragonECS;
+...
+class Aspect : EcsAspect
+{
+    public EcsPool<Pose> poses;
+    public EcsPool<Velocity> velocities;
+    public EcsTagPool<FreezedTag> freezedTags;
+    public Aspect(Builder b) 
+    {
+        poses = b.Inc;
+        velocities = b.Inc;
+        freezedTags = b.Exc;
+    }
+}
+```
 В аспекты можно добавлять другие аспекты, тем самым комбинируя их. Ограничения так же будут скомбинированы
 ``` c#
 using DCFApixels.DragonECS;
