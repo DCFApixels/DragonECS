@@ -129,11 +129,8 @@ struct PlayerTag : IEcsTagComponent {}
 ## System
 **Системы** - это основная логика, тут задается поведение сущностей. Существуют в виде пользовательских классов, реализующих как минимум один из интерфейсов процессов. Основные процессы:
 ```c#
-class SomeSystem : IEcsPreInit, IEcsInit, IEcsRun, IEcsDestroy, IEcsPipelineMember
+class SomeSystem : IEcsPreInit, IEcsInit, IEcsRun, IEcsDestroy
 {
-    // Получить экземпляр пайплайна к которому принадлежит система.
-    public EcsPipeline Pipeline { get ; set; }
-
     // Будет вызван один раз в момент работы EcsPipeline.Init() и до срабатывания IEcsInit.Init().
     public void PreInit () { }
     
@@ -167,6 +164,16 @@ EcsPipelone pipeline = EcsPipeline.New() //Создает Builder пайплай
     // Завершает построение пайплайна и возвращает его экземпляр 
     .Build(); 
 pipeline.Init(); // Инициализация пайплайна
+```
+
+```c#
+class SomeSystem : IEcsRun, IEcsPipelineMember
+{
+    // Получить экземпляр пайплайна к которому принадлежит система.
+    public EcsPipeline Pipeline { get ; set; }
+
+    public void Run () { }
+}
 ```
 > Для одновременного построения и инициализации есть метод Builder.BuildAndInit();
 ### Внедрение зависимостей
