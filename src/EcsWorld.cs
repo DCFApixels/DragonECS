@@ -360,7 +360,8 @@ namespace DCFApixels.DragonECS
             int delCount = 0;
             foreach (var e in Entities)
             {
-                if (_entities[e].componentsCount <= 0)
+                ref var ent = ref _entities[e];
+                if (ent.componentsCount <= 0 && ent.isUsed)
                 {
                     DelEntity(e);
                     delCount++;
