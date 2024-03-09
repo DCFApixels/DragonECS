@@ -283,7 +283,11 @@ namespace DCFApixels.DragonECS
             public EcsPipeline Build()
             {
                 List<IEcsProcess> result = new List<IEcsProcess>(32);
-                List<IEcsProcess> basicBlockList = _systems[_basicLayer];
+                List<IEcsProcess> basicBlockList;
+                if (_systems.TryGetValue(_basicLayer, out basicBlockList) == false)
+                {
+                    basicBlockList = new List<IEcsProcess>();
+                }
                 foreach (var item in _systems)
                 {
                     if (!Layers.Contains(item.Key))
