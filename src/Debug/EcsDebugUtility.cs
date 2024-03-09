@@ -1,6 +1,7 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -315,6 +316,8 @@ namespace DCFApixels.DragonECS
         MetaGroup Group { get; }
         IReadOnlyCollection<string> Tags { get; }
     }
+
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class TypeMeta : ITypeMeta
     {
         internal readonly Type _type;
@@ -509,6 +512,34 @@ namespace DCFApixels.DragonECS
         public override string ToString()
         {
             return Name;
+        }
+        private class DebuggerProxy : ITypeMeta
+        {
+            private readonly TypeMeta _meta;
+            public string Name
+            {
+                get { return _meta.Name; }
+            }
+            public MetaColor Color
+            {
+                get { return _meta.Color; }
+            }
+            public string Description
+            {
+                get { return _meta.Description; }
+            }
+            public MetaGroup Group
+            {
+                get { return _meta.Group; }
+            }
+            public IReadOnlyCollection<string> Tags
+            {
+                get { return _meta.Tags; }
+            }
+            public DebuggerProxy(TypeMeta meta)
+            {
+                _meta = meta;
+            }
         }
         #endregion
     }
