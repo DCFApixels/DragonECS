@@ -538,7 +538,7 @@ namespace DCFApixels.DragonECS
             {
                 get
                 {
-                    return _process._systems.Cast<IEcsProcess>().Select(o => o.GetMeta());
+                    return _process._systems.Cast<IEcsProcess>().Select(o => o.GetMeta()).ToArray();
                 }
             }
             public int Count
@@ -640,7 +640,7 @@ namespace DCFApixels.DragonECS
             {
                 get
                 {
-                    return _process._systems.Select(o => o.GetMeta());
+                    return _process._systems.Select(o => o.GetMeta()).ToArray();
                 }
             }
             public int Count
