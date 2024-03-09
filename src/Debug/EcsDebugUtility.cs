@@ -504,6 +504,13 @@ namespace DCFApixels.DragonECS
             All = Name | Group | Color | Description | Tags | TypeCode
         }
         #endregion
+
+        #region Other
+        public override string ToString()
+        {
+            return Name;
+        }
+        #endregion
     }
 
     public static class TypeMetaDataCachedExtensions
