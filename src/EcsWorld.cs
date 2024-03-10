@@ -162,7 +162,12 @@ namespace DCFApixels.DragonECS
         {
             if (_isDestroyed)
             {
+                EcsDebug.PrintWarning("The world is already destroyed");
                 return;
+            }
+            if(id == NULL_WORLD_ID)
+            {
+                Throw.World_WorldCantBeDestroyed();
             }
             _listeners.InvokeOnWorldDestroy();
             _entityDispenser = null;

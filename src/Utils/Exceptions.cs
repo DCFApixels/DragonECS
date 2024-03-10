@@ -103,11 +103,14 @@ namespace DCFApixels.DragonECS.Internal
         {
             throw new EcsFrameworkException($"An entity with identifier {entityID} is already contained in this world");
         }
-
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void World_PoolAlreadyCreated()
         {
             throw new EcsFrameworkException("The pool has already been created.");
+        }
+        public static void World_WorldCantBeDestroyed()
+        {
+            throw new EcsFrameworkException("This world can't be destroyed");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
