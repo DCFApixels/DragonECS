@@ -167,7 +167,10 @@ namespace DCFApixels.DragonECS
             }
             if(id == NULL_WORLD_ID)
             {
+#if (DEBUG && !DISABLE_DEBUG)
                 Throw.World_WorldCantBeDestroyed();
+#endif
+                return;
             }
             _listeners.InvokeOnWorldDestroy();
             _entityDispenser = null;
