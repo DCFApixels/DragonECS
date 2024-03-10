@@ -46,11 +46,11 @@ The framework can also be added to the project as source code.
 </br>
 
 # Extensions
+* [Unity integration](https://github.com/DCFApixels/DragonECS-Unity)
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * [Classic C# multithreading](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
 * Graphs (Work in progress)
-* Unity integration (Work in progress)
 
 # Feedback
 Discord for discussions [https://discord.gg/kqmJjExuCf](https://discord.gg/kqmJjExuCf)
