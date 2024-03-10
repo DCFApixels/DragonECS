@@ -426,7 +426,7 @@ namespace DCFApixels.DragonECS
         {
             _builder = builder;
         }
-        public T GetInstance<T>() 
+        public T GetInstance<T>()
             where T : IEcsPoolImplementation, new()
         {
             return _builder.IncludePool<T>();

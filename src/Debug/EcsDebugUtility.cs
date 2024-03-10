@@ -1,6 +1,7 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -30,7 +31,6 @@ namespace DCFApixels.DragonECS
         }
         private static string GetGenericTypeNameInternal(Type type, int maxDepth, bool isFull)
         {
-#if (DEBUG && !DISABLE_DEBUG)
             string typeName = isFull ? type.FullName : type.Name;
             if (!type.IsGenericType || maxDepth == 0)
             {
@@ -51,9 +51,6 @@ namespace DCFApixels.DragonECS
                 genericParams += (i == 0 ? paramTypeName : $", {paramTypeName}");
             }
             return $"{typeName}<{genericParams}>";
-#else //optimization for release build
-            return isFull ? type.FullName : type.Name;
-#endif
         }
         #endregion
 
@@ -315,6 +312,8 @@ namespace DCFApixels.DragonECS
         MetaGroup Group { get; }
         IReadOnlyCollection<string> Tags { get; }
     }
+
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class TypeMeta : ITypeMeta
     {
         internal readonly Type _type;
@@ -351,7 +350,7 @@ namespace DCFApixels.DragonECS
         {
             if (_initFlags.HasFlag(InitFlag.Name) == false)
             {
-                (_name, _isCustomName) = MetaCacheGenerator.GetName(_type);
+                (_name, _isCustomName) = MetaGenerator.GetMetaName(_type);
                 _initFlags |= InitFlag.Name;
             }
         }
@@ -378,7 +377,7 @@ namespace DCFApixels.DragonECS
         {
             if (_initFlags.HasFlag(InitFlag.Color) == false)
             {
-                (_color, _isCustomColor) = MetaCacheGenerator.GetColor(_type);
+                (_color, _isCustomColor) = MetaGenerator.GetColor(_type);
                 _initFlags |= InitFlag.Color;
             }
         }
@@ -407,7 +406,7 @@ namespace DCFApixels.DragonECS
             {
                 if (_initFlags.HasFlag(InitFlag.Description) == false)
                 {
-                    _description = MetaCacheGenerator.GetDescription(_type);
+                    _description = MetaGenerator.GetDescription(_type);
                     _initFlags |= InitFlag.Description;
                 }
                 return _description;
@@ -422,7 +421,7 @@ namespace DCFApixels.DragonECS
             {
                 if (_initFlags.HasFlag(InitFlag.Group) == false)
                 {
-                    _group = MetaCacheGenerator.GetGroup(_type);
+                    _group = MetaGenerator.GetGroup(_type);
                     _initFlags |= InitFlag.Group;
                 }
                 return _group;
@@ -435,7 +434,7 @@ namespace DCFApixels.DragonECS
         {
             if (_initFlags.HasFlag(InitFlag.Tags) == false)
             {
-                _tags = MetaCacheGenerator.GetTags(_type);
+                _tags = MetaGenerator.GetTags(_type);
                 _initFlags |= InitFlag.Tags;
                 _isHidden = _tags.Contains(MetaTags.HIDDEN);
             }
@@ -504,6 +503,106 @@ namespace DCFApixels.DragonECS
             All = Name | Group | Color | Description | Tags | TypeCode
         }
         #endregion
+
+        #region Other
+        public override string ToString()
+        {
+            return Name;
+        }
+        private class DebuggerProxy : ITypeMeta
+        {
+            private readonly TypeMeta _meta;
+            public string Name
+            {
+                get { return _meta.Name; }
+            }
+            public MetaColor Color
+            {
+                get { return _meta.Color; }
+            }
+            public string Description
+            {
+                get { return _meta.Description; }
+            }
+            public MetaGroup Group
+            {
+                get { return _meta.Group; }
+            }
+            public IReadOnlyCollection<string> Tags
+            {
+                get { return _meta.Tags; }
+            }
+            public DebuggerProxy(TypeMeta meta)
+            {
+                _meta = meta;
+            }
+        }
+        #endregion
+
+        #region MetaGenerator
+        private static class MetaGenerator
+        {
+            private const int GENERIC_NAME_DEPTH = 3;
+
+            #region GetMetaName
+            public static (string, bool) GetMetaName(Type type)
+            {
+                bool isCustom = type.TryGetCustomAttribute(out MetaNameAttribute atr) && string.IsNullOrEmpty(atr.name) == false;
+                if (isCustom)
+                {
+                    if ((type.IsGenericType && atr.isHideGeneric == false) == false)
+                    {
+                        return (atr.name, isCustom);
+                    }
+                    string genericParams = "";
+                    Type[] typeParameters = type.GetGenericArguments();
+                    for (int i = 0; i < typeParameters.Length; ++i)
+                    {
+                        string paramTypeName = EcsDebugUtility.GetGenericTypeName(typeParameters[i], GENERIC_NAME_DEPTH);
+                        genericParams += (i == 0 ? paramTypeName : $", {paramTypeName}");
+                    }
+                    return ($"{atr.name}<{genericParams}>", isCustom);
+                }
+                return (EcsDebugUtility.GetGenericTypeName(type, GENERIC_NAME_DEPTH), isCustom);
+            }
+            #endregion
+
+            #region GetColor
+            private static MetaColor AutoColor(Type type)
+            {
+                return new MetaColor(type.Name).Desaturate(0.48f) / 1.18f;
+            }
+            public static (MetaColor, bool) GetColor(Type type)
+            {
+                bool isCustom = type.TryGetCustomAttribute(out MetaColorAttribute atr);
+                return (isCustom ? atr.color : AutoColor(type), isCustom);
+            }
+            #endregion
+
+            #region GetGroup
+            public static MetaGroup GetGroup(Type type)
+            {
+                return type.TryGetCustomAttribute(out MetaGroupAttribute atr) ? atr.Data : MetaGroup.Empty;
+            }
+            #endregion
+
+            #region GetDescription
+            public static string GetDescription(Type type)
+            {
+                bool isCustom = type.TryGetCustomAttribute(out MetaDescriptionAttribute atr);
+                return isCustom ? atr.description : string.Empty;
+            }
+            #endregion
+
+            #region GetTags
+            public static IReadOnlyCollection<string> GetTags(Type type)
+            {
+                var atr = type.GetCustomAttribute<MetaTagsAttribute>();
+                return atr != null ? atr.Tags : Array.Empty<string>();
+            }
+            #endregion
+        }
+        #endregion
     }
 
     public static class TypeMetaDataCachedExtensions
@@ -516,56 +615,5 @@ namespace DCFApixels.DragonECS
         {
             return EcsDebugUtility.GetTypeMeta(self);
         }
-    }
-}
-
-namespace DCFApixels.DragonECS.Internal
-{
-    internal static class MetaCacheGenerator
-    {
-        private const int GENERIC_NAME_DEPTH = 2;
-
-        #region GetName
-        public static (string, bool) GetName(Type type)
-        {
-            bool isCustom = type.TryGetCustomAttribute(out MetaNameAttribute atr) && string.IsNullOrEmpty(atr.name) == false;
-            return (isCustom ? atr.name : EcsDebugUtility.GetGenericTypeName(type, GENERIC_NAME_DEPTH), isCustom);
-        }
-        #endregion
-
-        #region GetColor
-        private static MetaColor AutoColor(Type type)
-        {
-            return new MetaColor(type.Name).Desaturate(0.48f) / 1.18f;
-        }
-        public static (MetaColor, bool) GetColor(Type type)
-        {
-            bool isCustom = type.TryGetCustomAttribute(out MetaColorAttribute atr);
-            return (isCustom ? atr.color : AutoColor(type), isCustom);
-        }
-        #endregion
-
-        #region GetGroup
-        public static MetaGroup GetGroup(Type type)
-        {
-            return type.TryGetCustomAttribute(out MetaGroupAttribute atr) ? atr.Data : MetaGroup.Empty;
-        }
-        #endregion
-
-        #region GetDescription
-        public static string GetDescription(Type type)
-        {
-            bool isCustom = type.TryGetCustomAttribute(out MetaDescriptionAttribute atr);
-            return isCustom ? atr.description : string.Empty;
-        }
-        #endregion
-
-        #region GetTags
-        public static IReadOnlyCollection<string> GetTags(Type type)
-        {
-            var atr = type.GetCustomAttribute<MetaTagsAttribute>();
-            return atr != null ? atr.Tags : Array.Empty<string>();
-        }
-        #endregion
     }
 }

@@ -3,6 +3,7 @@ using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -282,7 +283,11 @@ namespace DCFApixels.DragonECS
             public EcsPipeline Build()
             {
                 List<IEcsProcess> result = new List<IEcsProcess>(32);
-                List<IEcsProcess> basicBlockList = _systems[_basicLayer];
+                List<IEcsProcess> basicBlockList;
+                if (_systems.TryGetValue(_basicLayer, out basicBlockList) == false)
+                {
+                    basicBlockList = new List<IEcsProcess>();
+                }
                 foreach (var item in _systems)
                 {
                     if (!Layers.Contains(item.Key))
@@ -489,9 +494,12 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region EcsProcess
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly struct EcsProcessRaw : IEnumerable
     {
         private readonly Array _systems;
+
+        #region Properties
         public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -501,26 +509,62 @@ namespace DCFApixels.DragonECS
         {
             get { return (IEcsProcess)_systems.GetValue(index); }
         }
+        #endregion
+
+        #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal EcsProcessRaw(Array systems)
         {
             _systems = systems;
         }
+        #endregion
+
+        #region Enumerator
         public IEnumerator GetEnumerator()
         {
             return _systems.GetEnumerator();
         }
+        #endregion
+
+        #region Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal T[] GetSystems_Internal<T>()
         {
             return (T[])_systems;
         }
+        #endregion
+
+        #region DebuggerProxy
+        internal class DebuggerProxy
+        {
+            private EcsProcessRaw _process;
+            public IEnumerable<TypeMeta> Systems
+            {
+                get
+                {
+                    return _process._systems.Cast<IEcsProcess>().Select(o => o.GetMeta()).ToArray();
+                }
+            }
+            public int Count
+            {
+                get { return _process.Length; }
+            }
+            public DebuggerProxy(EcsProcessRaw process)
+            {
+                _process = process;
+            }
+        }
+        #endregion
     }
+
+    [DebuggerTypeProxy(typeof(EcsProcess<>.DebuggerProxy))]
     public readonly struct EcsProcess<TProcess> : IReadOnlyCollection<TProcess>
         where TProcess : IEcsProcess
     {
         public readonly static EcsProcess<TProcess> Empty = new EcsProcess<TProcess>(Array.Empty<TProcess>());
         private readonly TProcess[] _systems;
+
+        #region Properties
         public bool IsNullOrEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -541,11 +585,17 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _systems[index]; }
         }
+        #endregion
+
+        #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal EcsProcess(TProcess[] systems)
         {
             _systems = systems;
         }
+        #endregion
+
+        #region Converts
         public static explicit operator EcsProcess<TProcess>(EcsProcessRaw raw)
         {
             return new EcsProcess<TProcess>(raw.GetSystems_Internal<TProcess>());
@@ -554,6 +604,9 @@ namespace DCFApixels.DragonECS
         {
             return new EcsProcessRaw(process._systems);
         }
+        #endregion
+
+        #region Enumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator() { return new Enumerator(_systems); }
         IEnumerator<TProcess> IEnumerable<TProcess>.GetEnumerator() { return GetEnumerator(); }
@@ -581,6 +634,29 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose() { }
         }
+        #endregion
+
+        #region DebuggerProxy
+        internal class DebuggerProxy
+        {
+            private EcsProcess<TProcess> _process;
+            public IEnumerable<TypeMeta> Systems
+            {
+                get
+                {
+                    return _process._systems.Select(o => o.GetMeta()).ToArray();
+                }
+            }
+            public int Count
+            {
+                get { return _process.Length; }
+            }
+            public DebuggerProxy(EcsProcess<TProcess> process)
+            {
+                _process = process;
+            }
+        }
+        #endregion
     }
     #endregion
 }

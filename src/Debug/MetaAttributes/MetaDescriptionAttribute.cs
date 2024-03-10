@@ -6,6 +6,9 @@ namespace DCFApixels.DragonECS
     public sealed class MetaDescriptionAttribute : EcsMetaAttribute
     {
         public readonly string description;
-        public MetaDescriptionAttribute(string description) => this.description = description;
+        public MetaDescriptionAttribute(string description)
+        {
+            this.description = description;
+        }
     }
 }

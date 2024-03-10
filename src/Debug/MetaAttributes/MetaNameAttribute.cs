@@ -6,6 +6,11 @@ namespace DCFApixels.DragonECS
     public sealed class MetaNameAttribute : EcsMetaAttribute
     {
         public readonly string name;
-        public MetaNameAttribute(string name) => this.name = name;
+        public readonly bool isHideGeneric;
+        public MetaNameAttribute(string name, bool isHideGeneric = false)
+        {
+            this.name = name;
+            this.isHideGeneric = isHideGeneric;
+        }
     }
 }

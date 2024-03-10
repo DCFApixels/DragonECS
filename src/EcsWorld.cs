@@ -162,8 +162,17 @@ namespace DCFApixels.DragonECS
         {
             if (_isDestroyed)
             {
+                EcsDebug.PrintWarning("The world is already destroyed");
                 return;
             }
+            if(id == NULL_WORLD_ID)
+            {
+#if (DEBUG && !DISABLE_DEBUG)
+                Throw.World_WorldCantBeDestroyed();
+#endif
+                return;
+            }
+            _listeners.InvokeOnWorldDestroy();
             _entityDispenser = null;
             _pools = null;
             _nullPool = null;
@@ -173,6 +182,7 @@ namespace DCFApixels.DragonECS
             _isDestroyed = true;
             _poolTypeCode_2_CmpTypeIDs = null;
             _cmpTypeCode_2_CmpTypeIDs = null;
+            //_entities - не обнуляется для работы entlong.IsAlive
         }
         //public void Clear() { }
         #endregion

@@ -36,18 +36,19 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region IEcsComponentReset
-    public interface IEcsComponentReset<T>
+    public interface IEcsComponentLifecycle<T>
     {
-        void Reset(ref T component);
+        void Enable(ref T component);
+        void Disable(ref T component);
     }
     public static class EcsComponentResetHandler<T>
     {
-        public static readonly IEcsComponentReset<T> instance;
+        public static readonly IEcsComponentLifecycle<T> instance;
         public static readonly bool isHasHandler;
         static EcsComponentResetHandler()
         {
             T def = default;
-            if (def is IEcsComponentReset<T> intrf)
+            if (def is IEcsComponentLifecycle<T> intrf)
             {
                 isHasHandler = true;
                 instance = intrf;
@@ -58,10 +59,12 @@ namespace DCFApixels.DragonECS
                 instance = new DummyHandler();
             }
         }
-        private sealed class DummyHandler : IEcsComponentReset<T>
+        private sealed class DummyHandler : IEcsComponentLifecycle<T>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Reset(ref T component) => component = default;
+            public void Enable(ref T component) => component = default;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Disable(ref T component) => component = default;
         }
     }
     #endregion
