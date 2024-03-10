@@ -38,7 +38,7 @@ Tested with:
 * ### Unity Package
 The framework can be installed as a Unity package by adding the Git URL [in the PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) or manually adding it to `Packages/manifest.json`: 
 ```
-https://github.com/DCFApixels/DragonECS.git 
+https://github.com/DCFApixels/DragonECS.git
 ```
 * ### Source Code
 The framework can also be added to the project as source code.

@@ -67,7 +67,7 @@
 * ### Unity-модуль
 Поддерживается установка в виде Unity-модуля в  при помощи добавления git-URL [в PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) или ручного добавления в `Packages/manifest.json`: 
 ```
-https://github.com/DCFApixels/DragonECS.git 
+https://github.com/DCFApixels/DragonECS.git
 ```
 * ### В виде иходников
 Фреймворк так же может быть добавлен в проект в виде исходников.
