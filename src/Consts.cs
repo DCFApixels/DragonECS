@@ -2,6 +2,7 @@
 {
     public class EcsConsts
     {
+        public const string AUTHOR = "DCFApixels";
         public const string FRAMEWORK_NAME = "DragonECS";
 
         public const string EXCEPTION_MESSAGE_PREFIX = "[" + FRAMEWORK_NAME + "] ";
@@ -55,7 +56,7 @@
 #if DISABLE_DRAGONECS_DEBUGGER
             true;
 #else
-    false;
+            false;
 #endif
     }
 }
