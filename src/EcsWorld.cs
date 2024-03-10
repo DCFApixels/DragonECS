@@ -165,7 +165,7 @@ namespace DCFApixels.DragonECS
                 EcsDebug.PrintWarning("The world is already destroyed");
                 return;
             }
-            if(id == NULL_WORLD_ID)
+            if (id == NULL_WORLD_ID)
             {
 #if (DEBUG && !DISABLE_DEBUG)
                 Throw.World_WorldCantBeDestroyed();
