@@ -20,8 +20,8 @@ namespace DCFApixels.DragonECS
         private int[] _recycledItems;
         private int _recycledItemsCount = 0;
 
-        private IEcsComponentReset<T> _componentResetHandler = EcsComponentResetHandler<T>.instance;
-        private bool _isHasComponentResetHandler = EcsComponentResetHandler<T>.isHasHandler;
+        private IEcsComponentLifecycle<T> _componentLifecycleHandler = EcsComponentResetHandler<T>.instance;
+        private bool _isHasComponentLifecycleHandler = EcsComponentResetHandler<T>.isHasHandler;
         private IEcsComponentCopy<T> _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
         private bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
 
@@ -78,7 +78,7 @@ namespace DCFApixels.DragonECS
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnAddAndGet(entityID);
-            ResetComponent(ref _items[itemIndex]);
+            EnableComponent(ref _items[itemIndex]);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -120,7 +120,7 @@ namespace DCFApixels.DragonECS
                 _listeners.InvokeOnAdd(entityID);
             }
             _listeners.InvokeOnGet(entityID);
-            ResetComponent(ref _items[itemIndex]);
+            EnableComponent(ref _items[itemIndex]);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -134,7 +134,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (itemIndex <= 0) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
 #endif
-            ResetComponent(ref _items[itemIndex]);
+            DisableComponent(ref _items[itemIndex]);
             if (_recycledItemsCount >= _recycledItems.Length)
             {
                 Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
@@ -217,13 +217,25 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Reset/Copy
+        #region Enable/Disable/Copy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ResetComponent(ref T component)
+        private void EnableComponent(ref T component)
         {
-            if (_isHasComponentResetHandler)
+            if (_isHasComponentLifecycleHandler)
             {
-                _componentResetHandler.Reset(ref component);
+                _componentLifecycleHandler.Enable(ref component);
+            }
+            else
+            {
+                component = default;
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void DisableComponent(ref T component)
+        {
+            if (_isHasComponentLifecycleHandler)
+            {
+                _componentLifecycleHandler.Disable(ref component);
             }
             else
             {
