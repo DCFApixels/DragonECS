@@ -42,7 +42,7 @@ namespace DCFApixels.DragonECS.Internal
             _markers = new EcsProfilerMarker[Process.Length];
             for (int i = 0; i < Process.Length; i++)
             {
-                _markers[i] = new EcsProfilerMarker($"{Process[i].GetType().Name}.{nameof(PreInit)}");
+                _markers[i] = new EcsProfilerMarker($"{Process[i].GetMeta().Name}.{nameof(PreInit)}");
             }
         }
 #endif
@@ -93,7 +93,7 @@ namespace DCFApixels.DragonECS.Internal
             _markers = new EcsProfilerMarker[Process.Length];
             for (int i = 0; i < Process.Length; i++)
             {
-                _markers[i] = new EcsProfilerMarker($"{Process[i].GetType().Name}.{nameof(Init)}");
+                _markers[i] = new EcsProfilerMarker($"{Process[i].GetMeta().Name}.{nameof(Init)}");
             }
         }
 #endif
@@ -141,7 +141,7 @@ namespace DCFApixels.DragonECS.Internal
             _markers = new EcsProfilerMarker[Process.Length];
             for (int i = 0; i < Process.Length; i++)
             {
-                _markers[i] = new EcsProfilerMarker($"{Process[i].GetType().Name}.{nameof(Run)}");
+                _markers[i] = new EcsProfilerMarker($"{Process[i].GetMeta().Name}.{nameof(Run)}");
             }
         }
 #endif
@@ -189,7 +189,7 @@ namespace DCFApixels.DragonECS.Internal
             _markers = new EcsProfilerMarker[Process.Length];
             for (int i = 0; i < Process.Length; i++)
             {
-                _markers[i] = new EcsProfilerMarker($"{Process[i].GetType().Name}.{nameof(IEcsDestroy.Destroy)}");
+                _markers[i] = new EcsProfilerMarker($"{Process[i].GetMeta().Name}.{nameof(IEcsDestroy.Destroy)}");
             }
         }
 #endif
