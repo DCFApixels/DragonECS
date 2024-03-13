@@ -4,8 +4,8 @@ namespace DCFApixels.DragonECS
 {
     public class InjectionBranch
     {
-        private Injector _source;
-        private Type _type;
+        private readonly Injector _source;
+        private readonly Type _type;
         private InjectionNodeBase[] _nodes = new InjectionNodeBase[2];
         private int _nodesCount = 0;
         private bool _isDeclared = false;

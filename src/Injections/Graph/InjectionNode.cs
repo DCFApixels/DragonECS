@@ -24,11 +24,12 @@ namespace DCFApixels.DragonECS
         {
             _process = pipeline.GetProcess<IEcsInject<T>>();
         }
-        public sealed override void Inject(object obj)
+        public sealed override void Inject(object raw)
         {
+            T obj = (T)raw;
             for (int i = 0; i < _process.Length; i++)
             {
-                _process[i].Inject((T)obj);
+                _process[i].Inject(obj);
             }
         }
     }

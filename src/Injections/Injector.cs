@@ -26,6 +26,7 @@ namespace DCFApixels.DragonECS
 
         public void Inject<T>(T obj)
         {
+            object raw = obj;
             Type type = obj.GetType();
             if (_branches.TryGetValue(type, out InjectionBranch branch) == false)
             {
@@ -41,7 +42,7 @@ namespace DCFApixels.DragonECS
                     InitBranch(branch);
                 }
             }
-            branch.Inject(obj);
+            branch.Inject(raw);
         }
 
         #region Internal
@@ -69,7 +70,7 @@ namespace DCFApixels.DragonECS
             {
                 var type = item.Key;
                 var branch = item.Value;
-                if (type.IsAssignableFrom(branch.Type))
+                if (node.Type.IsAssignableFrom(branch.Type))
                 {
                     branch.AddNode(node);
                 }
