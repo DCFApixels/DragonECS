@@ -112,6 +112,8 @@ namespace DCFApixels.DragonECS
                 {
 #if (DEBUG && !DISABLE_DEBUG)
                     throw new NullInstanceException();
+#else
+                    return EcsWorld.GetWorld(0);
 #endif
                 }
             }
@@ -140,6 +142,8 @@ namespace DCFApixels.DragonECS
             {
 #if (DEBUG && !DISABLE_DEBUG)
                 throw new NullInstanceException();
+#else
+                return null;
 #endif
             }
             void IEcsPool.SetRaw(int entity, object dataRaw)
