@@ -157,6 +157,8 @@ namespace DCFApixels.DragonECS
 
             int entitiesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.EntitiesCapacity);
             _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
+
+            GetComponentTypeID<NullComponent>();
         }
         public void Destroy()
         {

@@ -33,6 +33,7 @@ namespace DCFApixels.DragonECS
         void AddRaw(int entityID, object dataRaw);
         void SetRaw(int entityID, object dataRaw);
         void Del(int entityID);
+        void ClearAll();
         #endregion
     }
     /// <summary>A pool for struct components.</summary>
@@ -103,21 +104,68 @@ namespace DCFApixels.DragonECS
             public static readonly EcsNullPool instance = new EcsNullPool();
 
             #region Properties
-            int IEcsReadonlyPool.ComponentTypeID => -1;
-            Type IEcsReadonlyPool.ComponentType => typeof(NullComponent);
-            EcsWorld IEcsReadonlyPool.World => throw new NotImplementedException();
-            public int Count => -1;
+            int IEcsReadonlyPool.ComponentTypeID { get { return 0; } }//TODO Првоерить что NullComponent всегда имеет id 0 
+            Type IEcsReadonlyPool.ComponentType { get { return typeof(NullComponent); } }
+            EcsWorld IEcsReadonlyPool.World
+            {
+                get
+                {
+#if (DEBUG && !DISABLE_DEBUG)
+                    throw new NullInstanceException();
+#endif
+                }
+            }
+            public int Count { get { return 0; } }
             public bool IsReadOnly { get { return true; } }
             #endregion
 
             #region Methods
-            bool IEcsReadonlyPool.Has(int index) => false;
-            void IEcsPool.Del(int entityID) => throw new NotImplementedException();
-            void IEcsPool.AddRaw(int entityID, object dataRaw) => throw new NotImplementedException();
-            object IEcsReadonlyPool.GetRaw(int entityID) => throw new NotImplementedException();
-            void IEcsPool.SetRaw(int entity, object dataRaw) => throw new NotImplementedException();
-            void IEcsReadonlyPool.Copy(int fromEntityID, int toEntityID) => throw new NotImplementedException();
-            void IEcsReadonlyPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID) => throw new NotImplementedException();
+            bool IEcsReadonlyPool.Has(int index)
+            {
+                return false;
+            }
+            void IEcsPool.Del(int entityID)
+            {
+#if (DEBUG && !DISABLE_DEBUG)
+                throw new NullInstanceException();
+#endif
+            }
+            void IEcsPool.AddRaw(int entityID, object dataRaw)
+            {
+#if (DEBUG && !DISABLE_DEBUG)
+                throw new NullInstanceException();
+#endif
+            }
+            object IEcsReadonlyPool.GetRaw(int entityID)
+            {
+#if (DEBUG && !DISABLE_DEBUG)
+                throw new NullInstanceException();
+#endif
+            }
+            void IEcsPool.SetRaw(int entity, object dataRaw)
+            {
+#if (DEBUG && !DISABLE_DEBUG)
+                throw new NullInstanceException();
+#endif
+            }
+            void IEcsReadonlyPool.Copy(int fromEntityID, int toEntityID)
+            {
+#if (DEBUG && !DISABLE_DEBUG)
+                throw new NullInstanceException();
+#endif
+            }
+            void IEcsReadonlyPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
+            {
+#if (DEBUG && !DISABLE_DEBUG)
+                throw new NullInstanceException();
+#endif
+            }
+            void IEcsPool.ClearAll()
+            {
+#if (DEBUG && !DISABLE_DEBUG)
+                throw new NullInstanceException();
+#endif
+            }
             #endregion
 
             #region Callbacks

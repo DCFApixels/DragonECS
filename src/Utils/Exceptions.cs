@@ -11,6 +11,13 @@ namespace DCFApixels.DragonECS
         public EcsFrameworkException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
     }
     [Serializable]
+    public class NullInstanceException : EcsFrameworkException
+    {
+        public NullInstanceException() { }
+        public NullInstanceException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
+        public NullInstanceException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
+    }
+    [Serializable]
     public class EcsRunnerImplementationException : EcsFrameworkException
     {
         public EcsRunnerImplementationException() { }

@@ -166,6 +166,21 @@ namespace DCFApixels.DragonECS
 #endif
             CopyComponent(ref Get(fromEntityID), ref toWorld.GetPool<T>().TryAddOrGet(toEntityID));
         }
+
+        public void ClearAll()
+        {
+            var span = _source.Where(out SingleAspect<EcsPool<T>> _);
+            _itemsCount = 0;
+            _recycledItemsCount = 0;
+            foreach (var entityID in span)
+            {
+                ref int itemIndex = ref _mapping[entityID];
+                DisableComponent(ref _items[itemIndex]);
+                itemIndex = 0;
+                _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
+                _listeners.InvokeOnDel(entityID);
+            }
+        }
         #endregion
 
         #region Callbacks
@@ -199,9 +214,15 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
-        void IEcsPool.AddRaw(int entityID, object dataRaw) { Add(entityID) = (T)dataRaw; }
+        void IEcsPool.AddRaw(int entityID, object dataRaw)
+        {
+            Add(entityID) = dataRaw == null ? default : (T)dataRaw;
+        }
         object IEcsReadonlyPool.GetRaw(int entityID) { return Get(entityID); }
-        void IEcsPool.SetRaw(int entityID, object dataRaw) { Get(entityID) = (T)dataRaw; }
+        void IEcsPool.SetRaw(int entityID, object dataRaw)
+        {
+            Get(entityID) = dataRaw == null ? default : (T)dataRaw;
+        }
         #endregion
 
         #region Listeners
