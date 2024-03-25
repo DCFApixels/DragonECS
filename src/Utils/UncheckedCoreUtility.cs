@@ -7,6 +7,12 @@ namespace DCFApixels.DragonECS.UncheckedCore
     public static class UncheckedCoreUtility
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsSpan CreateSpan(short worldID, ReadOnlySpan<int> entitesArray)
+        {
+            return new EcsSpan(worldID, entitesArray);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsSpan CreateSpan(short worldID, int[] entitesArray, int startIndex, int length)
         {
             return new EcsSpan(worldID, entitesArray, startIndex, length);
