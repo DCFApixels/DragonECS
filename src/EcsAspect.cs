@@ -91,8 +91,6 @@ namespace DCFApixels.DragonECS
         protected virtual void Init(Builder b) { }
         public sealed class Builder
         {
-            private static int incr = 0;
-            public int id = incr++;
             private EcsWorld _world;
             private EcsMask.Builder _maskBuilder;
             private bool _isBuilt = false;
