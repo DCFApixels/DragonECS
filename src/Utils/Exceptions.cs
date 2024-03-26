@@ -31,28 +31,10 @@ namespace DCFApixels.DragonECS.Internal
     internal static class Throw
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ArgumentNull()
-        {
-            throw new ArgumentNullException();
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ConstraintIsAlreadyContainedInMask(Type type)
         {
             throw new EcsFrameworkException($"The {EcsDebugUtility.GetGenericTypeName(type)} constraint is already contained in the mask.");
         }
-
-        //[MethodImpl(MethodImplOptions.NoInlining)]
-        //public static void ArgumentDifferentWorldsException()
-        //{
-        //    throw new ArgumentException("The groups belong to different worlds.");
-        //}
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ArgumentOutOfRange()
-        {
-            throw new ArgumentOutOfRangeException($"index is less than 0 or is equal to or greater than Count.");
-        }
-
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Group_AlreadyContains(int entityID)
         {
@@ -127,6 +109,18 @@ namespace DCFApixels.DragonECS.Internal
                 throw new EcsFrameworkException($"The {entity} is null.");
             else
                 throw new EcsFrameworkException($"The {entity} is not alive.");
+        }
+
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentNull()
+        {
+            throw new ArgumentNullException();
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentOutOfRange()
+        {
+            throw new ArgumentOutOfRangeException($"index is less than 0 or is equal to or greater than Count.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void UndefinedException()

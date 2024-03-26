@@ -40,6 +40,10 @@ namespace DCFApixels.DragonECS
         {
             get { return exc; }
         }
+        public bool IsEmpty
+        {
+            get { return inc.Length == 0 && exc.Length == 0; }
+        }
         #endregion
 
         #region Constructors

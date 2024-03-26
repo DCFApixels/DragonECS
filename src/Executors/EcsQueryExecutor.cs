@@ -5,15 +5,15 @@ namespace DCFApixels.DragonECS
     public abstract class EcsQueryExecutor
     {
         private EcsWorld _source;
-        public int WorldID
+        public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _source.id;
+            get { return _source.id; }
         }
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _source;
+            get { return _source; }
         }
         public abstract long Version { get; }
         internal void Initialize(EcsWorld world)
