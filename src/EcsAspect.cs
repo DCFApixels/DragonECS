@@ -13,41 +13,50 @@ namespace DCFApixels.DragonECS
         private bool _isBuilt = false;
 
         [ThreadStatic]
-        private static bool _isConstructorStream;
-        [ThreadStatic]
-        private static Builder _constructorStreamBuilder;
+        private static Stack<Builder> _constructorBuildersStack = null;
+        private static Stack<Builder> GetBuildersStack()
+        {
+            if(_constructorBuildersStack == null)
+            {
+                _constructorBuildersStack = new Stack<Builder>();
+            }
+            return _constructorBuildersStack;
+        }
 
         protected static IncludeMarker Inc
         {
             get
             {
-                if(_isConstructorStream == false)
+                var buildersStack = GetBuildersStack();
+                if (buildersStack.Count <= 0)
                 { //TODO перевести
                     throw new InvalidOperationException($"{nameof(Inc)} можно использовать только во время инициализации полей и в конструкторе");//TODO Перевести
                 }
-                return _constructorStreamBuilder.Inc;
+                return buildersStack.Peek().Inc;
             }
         }
         protected static ExcludeMarker Exc
         {
             get
             {
-                if (_isConstructorStream == false)
+                var buildersStack = GetBuildersStack();
+                if (buildersStack.Count <= 0)
                 { //TODO перевести
                     throw new InvalidOperationException($"{nameof(Exc)} можно использовать только во время инициализации полей и в конструкторе");//TODO Перевести
                 }
-                return _constructorStreamBuilder.Exc;
+                return buildersStack.Peek().Exc;
             }
         }
         protected static OptionalMarker Opt
         {
             get
             {
-                if (_isConstructorStream == false)
+                var buildersStack = GetBuildersStack();
+                if (buildersStack.Count <= 0)
                 { //TODO перевести
                     throw new InvalidOperationException($"{nameof(Opt)} можно использовать только во время инициализации полей и в конструкторе");//TODO Перевести
                 }
-                return _constructorStreamBuilder.Opt;
+                return buildersStack.Peek().Opt;
             }
         }
 
@@ -82,10 +91,11 @@ namespace DCFApixels.DragonECS
         protected virtual void Init(Builder b) { }
         public sealed class Builder
         {
+            private static int incr = 0;
+            public int id = incr++;
             private EcsWorld _world;
             private EcsMask.Builder _maskBuilder;
             private bool _isBuilt = false;
-
             public IncludeMarker Inc
             {
                 get { return new IncludeMarker(this); }
@@ -115,17 +125,11 @@ namespace DCFApixels.DragonECS
 #if !REFLECTION_DISABLED
                 ConstructorInfo constructorInfo = aspectType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
 
-                if (_isConstructorStream == true)
-                {
-                    throw new InvalidOperationException("Нельзя рекурсивно вызывать конструктор аспекта");//TODO Перевести
-                }
-                _constructorStreamBuilder = builder;
-                _isConstructorStream = true;
+                var buildersStack = GetBuildersStack();
+                buildersStack.Push(builder);
                 if (constructorInfo != null)
                 {
                     newAspect = (EcsAspect)constructorInfo.Invoke(new object[] { builder });
-                    _constructorStreamBuilder = null;
-                    _isConstructorStream = false;
                 }
                 else
 #endif
@@ -133,10 +137,9 @@ namespace DCFApixels.DragonECS
 #pragma warning disable IL2091 // Target generic argument does not satisfy 'DynamicallyAccessedMembersAttribute' in target method or type. The generic parameter of the source method or type does not have matching annotations.
                     newAspect = Activator.CreateInstance<TAspect>();
 #pragma warning restore IL2091
-                    _constructorStreamBuilder = null;
-                    _isConstructorStream = false;
-                    newAspect.Init(builder);
                 }
+                newAspect.Init(builder);
+                buildersStack.Pop();
                 newAspect._source = world;
                 builder.Build(out newAspect._mask);
                 newAspect._isBuilt = true;
