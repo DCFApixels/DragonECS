@@ -10,7 +10,46 @@ namespace DCFApixels.DragonECS
     {
         internal EcsWorld _source;
         internal EcsMask _mask;
-        private bool _isInit = false;
+        private bool _isBuilt = false;
+
+        [ThreadStatic]
+        private static bool _isConstructorStream;
+        [ThreadStatic]
+        private static Builder _constructorStreamBuilder;
+
+        protected static IncludeMarker Inc
+        {
+            get
+            {
+                if(_isConstructorStream == false)
+                { //TODO перевести
+                    throw new InvalidOperationException($"{nameof(Inc)} можно использовать только во время инициализации полей и в конструкторе");//TODO Перевести
+                }
+                return _constructorStreamBuilder.Inc;
+            }
+        }
+        protected static ExcludeMarker Exc
+        {
+            get
+            {
+                if (_isConstructorStream == false)
+                { //TODO перевести
+                    throw new InvalidOperationException($"{nameof(Exc)} можно использовать только во время инициализации полей и в конструкторе");//TODO Перевести
+                }
+                return _constructorStreamBuilder.Exc;
+            }
+        }
+        protected static OptionalMarker Opt
+        {
+            get
+            {
+                if (_isConstructorStream == false)
+                { //TODO перевести
+                    throw new InvalidOperationException($"{nameof(Opt)} можно использовать только во время инициализации полей и в конструкторе");//TODO Перевести
+                }
+                return _constructorStreamBuilder.Opt;
+            }
+        }
 
         private UnsafeArray<int> _sortIncBuffer;
         private UnsafeArray<int> _sortExcBuffer;
@@ -28,7 +67,7 @@ namespace DCFApixels.DragonECS
         }
         public bool IsInit
         {
-            get { return _isInit; }
+            get { return _isBuilt; }
         }
         #endregion
 
@@ -45,6 +84,7 @@ namespace DCFApixels.DragonECS
         {
             private EcsWorld _world;
             private EcsMask.Builder _maskBuilder;
+            private bool _isBuilt = false;
 
             public IncludeMarker Inc
             {
@@ -74,9 +114,18 @@ namespace DCFApixels.DragonECS
                 //TODO добавить оповещение что инициализация через конструктор не работает
 #if !REFLECTION_DISABLED
                 ConstructorInfo constructorInfo = aspectType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
+
+                if (_isConstructorStream == true)
+                {
+                    throw new InvalidOperationException("Нельзя рекурсивно вызывать конструктор аспекта");//TODO Перевести
+                }
+                _constructorStreamBuilder = builder;
+                _isConstructorStream = true;
                 if (constructorInfo != null)
                 {
                     newAspect = (EcsAspect)constructorInfo.Invoke(new object[] { builder });
+                    _constructorStreamBuilder = null;
+                    _isConstructorStream = false;
                 }
                 else
 #endif
@@ -84,11 +133,13 @@ namespace DCFApixels.DragonECS
 #pragma warning disable IL2091 // Target generic argument does not satisfy 'DynamicallyAccessedMembersAttribute' in target method or type. The generic parameter of the source method or type does not have matching annotations.
                     newAspect = Activator.CreateInstance<TAspect>();
 #pragma warning restore IL2091
+                    _constructorStreamBuilder = null;
+                    _isConstructorStream = false;
                     newAspect.Init(builder);
                 }
                 newAspect._source = world;
                 builder.Build(out newAspect._mask);
-                newAspect._isInit = true;
+                newAspect._isBuilt = true;
 
                 newAspect._sortIncBuffer = new UnsafeArray<int>(newAspect._mask.inc.Length, true);
                 newAspect._sortExcBuffer = new UnsafeArray<int>(newAspect._mask.exc.Length, true);
@@ -152,6 +203,7 @@ namespace DCFApixels.DragonECS
             private void Build(out EcsMask mask)
             {
                 mask = _maskBuilder.Build();
+                _isBuilt = true;
             }
 
             #region SupportReflectionHack

@@ -13,6 +13,10 @@ namespace DCFApixels.DragonECS
     {
         EcsPipeline Pipeline { get; set; }
     }
+    public interface IEcsSystemDefaultLayer : IEcsProcess
+    {
+        string Layer { get; }
+    }
     public sealed class EcsPipeline
     {
         private readonly IConfigContainer _configs;
@@ -261,19 +265,26 @@ namespace DCFApixels.DragonECS
             }
             private void AddInternal(IEcsProcess system, string layerName, bool isUnique)
             {
-                if (layerName == null) layerName = _basicLayer;
+                if (string.IsNullOrEmpty(layerName))
+                {
+                    layerName = system is IEcsSystemDefaultLayer defaultLayer ? defaultLayer.Layer : _basicLayer;
+                }
                 List<IEcsProcess> list;
                 if (!_systems.TryGetValue(layerName, out list))
                 {
-                    list = new List<IEcsProcess> { new SystemsLayerMarkerSystem(layerName.ToString()) };
+                    list = new List<IEcsProcess> { new SystemsLayerMarkerSystem(layerName) };
                     _systems.Add(layerName, list);
                 }
-                if ((_uniqueTypes.Add(system.GetType()) == false && isUnique))
+                if (_uniqueTypes.Add(system.GetType()) == false && isUnique)
+                {
                     return;
+                }
                 list.Add(system);
 
                 if (system is IEcsModule module)//если система одновременно явялется и системой и модулем то за один Add будет вызван Add и AddModule
+                {
                     AddModule(module);
+                }
             }
             public Builder AddModule(IEcsModule module)
             {
