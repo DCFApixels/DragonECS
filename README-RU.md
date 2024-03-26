@@ -359,7 +359,24 @@ poses.Del(entityID);
 > эта функция будет описана в ближайшее время
  
 ## Аспект
-Это пользовательские классы наследуемые от `EcsAspect`, которые используются как посредник для взаимодействия с сущностями. Аспекты одновременно являются кешем пулов и маской для фильтрации сущностей.
+Это пользовательские классы наследуемые от `EcsAspect`, которые используются для взаимодействия с сущностями. Аспекты одновременно являются кешем пулов и маской для фильтрации сущностей.
+Можно расматривать аспекты как описание того какие сущности нужны системе. 
+Упрощенный синтаксис:
+``` c#
+using DCFApixels.DragonECS;
+...
+class Aspect : EcsAspect
+{
+    // Кешируется пул и Pose добавляется во включающее ограничение.
+    public EcsPool<Pose> poses = Inc;
+    // Кешируется пул и Velocity добавляется во включающее ограничение.
+    public EcsPool<Velocity> velocities = Inc;
+    // Кешируется пул и FreezedTag добавляется в исключающее ограничение.
+    public EcsTagPool<FreezedTag> freezedTags = Exc;
+}
+```
+
+Явный синтаксис (результат идентичен примеру выше):
 ``` c#
 using DCFApixels.DragonECS;
 ...
@@ -367,38 +384,16 @@ class Aspect : EcsAspect
 {
     public EcsPool<Pose> poses;
     public EcsPool<Velocity> velocities;
- 
-    // вместо конструктора можно использовать виртуальную функцию Init(Builder b)
-    public Aspect(Builder b) 
+    // вместо виртуальной функции, можно использовать конструктор Aspect(Builder b) 
+    protected override void Init(Builder b)
     {
-        // кешируется пул и Pose добавляется во включающее ограничение.
         poses = b.Include<Pose>();
- 
-        // кешируется пул и Velocity добавляется во включающее ограничение.
         velocities = b.Include<Velocity>();
- 
-        // FreezedTag добавляется в исключающее ограничение.
         b.Exclude<FreezedTag>();
     }
 }
 ```
-Упрощенный синтаксис. Пример ниже, это аналог примера выше
-``` c#
-using DCFApixels.DragonECS;
-...
-class Aspect : EcsAspect
-{
-    public EcsPool<Pose> poses;
-    public EcsPool<Velocity> velocities;
-    public EcsTagPool<FreezedTag> freezedTags;
-    public Aspect(Builder b) 
-    {
-        poses = b.Inc;
-        velocities = b.Inc;
-        freezedTags = b.Exc;
-    }
-}
-```
+
 В аспекты можно добавлять другие аспекты, тем самым комбинируя их. Ограничения так же будут скомбинированы
 ``` c#
 using DCFApixels.DragonECS;
