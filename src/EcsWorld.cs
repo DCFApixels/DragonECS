@@ -731,6 +731,14 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    public static class EcsWorldExtenssions
+    {
+        public static bool IsNullOrDetroyed(this EcsWorld self)
+        {
+            return self == null || self.IsDestroyed;
+        }
+    }
+
     #region Callbacks Interface
     public interface IEcsWorldEventListener
     {
