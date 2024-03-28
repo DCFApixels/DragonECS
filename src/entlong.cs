@@ -105,49 +105,72 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region TryGetters
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetID(out int id)
         {
             id = this.id;
             return IsAlive;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetWorld(out EcsWorld world)
         {
             world = EcsWorld.GetWorld(this.world);
             return IsAlive;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetWorldID(out short worldID)
         {
             worldID = world;
             return IsAlive;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(out int id, out EcsWorld world)
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
+#endif
             world = EcsWorld.GetWorld(this.world);
             id = this.id;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(out int id, out short gen, out EcsWorld world)
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
+#endif
             world = EcsWorld.GetWorld(this.world);
             gen = this.gen;
             id = this.id;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(out int id, out short worldID)
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
+#endif
             worldID = world;
             id = this.id;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(out int id, out short gen, out short worldID)
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
+#endif
             worldID = world;
             gen = this.gen;
             id = this.id;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUnpack(out int id, out EcsWorld world)
         {
             world = EcsWorld.GetWorld(this.world);
             id = this.id;
             return IsAlive;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUnpack(out int id, out short gen, out EcsWorld world)
         {
             world = EcsWorld.GetWorld(this.world);
@@ -155,18 +178,63 @@ namespace DCFApixels.DragonECS
             id = this.id;
             return IsAlive;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUnpack(out int id, out short worldID)
         {
             worldID = world;
             id = this.id;
             return IsAlive;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUnpack(out int id, out short gen, out short worldID)
         {
             worldID = world;
             gen = this.gen;
             id = this.id;
             return IsAlive;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetIDUnchecked()
+        {
+            return id;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsWorld GetWorldUnchecked()
+        {
+            return EcsWorld.GetWorld(world);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public short GetWorldIDUnchecked()
+        {
+            return world;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnpackUnchecked(out int id, out EcsWorld world)
+        {
+            world = EcsWorld.GetWorld(this.world);
+            id = this.id;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnpackUnchecked(out int id, out short gen, out EcsWorld world)
+        {
+            world = EcsWorld.GetWorld(this.world);
+            gen = this.gen;
+            id = this.id;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnpackUnchecked(out int id, out short worldID)
+        {
+            worldID = world;
+            id = this.id;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnpackUnchecked(out int id, out short gen, out short worldID)
+        {
+            worldID = world;
+            gen = this.gen;
+            id = this.id;
         }
         #endregion
 
