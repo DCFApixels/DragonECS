@@ -353,16 +353,16 @@ namespace DCFApixels.DragonECS
                 private UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
                 private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
-                private readonly int _entityComponentMaskLength;
+                private readonly int _entityComponentMaskBitShift;
 
                 public unsafe Enumerator(EcsSpan span, EcsAspect aspect)
                 {
-                    _span = span.GetEnumerator();
                     _entityComponentMasks = aspect.World._entityComponentMasks;
                     _sortIncChunckBuffer = aspect._sortIncChunckBuffer;
                     _sortExcChunckBuffer = aspect._sortExcChunckBuffer;
 
-                    _entityComponentMaskLength = aspect.World._entityComponentMaskLength;
+                    _entityComponentMaskBitShift = aspect.World._entityComponentMaskLength;
+                    _entityComponentMaskBitShift = BitsUtility.GetHighBitNumber(_entityComponentMaskBitShift);
 
                     #region Sort
                     UnsafeArray<int> _sortIncBuffer = aspect._sortIncBuffer;
@@ -403,7 +403,11 @@ namespace DCFApixels.DragonECS
                             }
                         }
                     }
-
+                    if (_sortIncChunckBuffer.Length > 0 && counts[_sortIncBuffer.ptr[0]] <= 0)
+                    {
+                        _span = span.Slice(0, 0).GetEnumerator();
+                        return;
+                    }
                     if (_sortExcChunckBuffer.Length > 1)
                     {
                         ExcCountComparer excComparer = new ExcCountComparer(counts);
@@ -434,6 +438,7 @@ namespace DCFApixels.DragonECS
                         }
                     }
                     #endregion
+                    _span = span.GetEnumerator();
                 }
                 public int Current
                 {
@@ -445,11 +450,11 @@ namespace DCFApixels.DragonECS
                 {
                     while (_span.MoveNext())
                     {
-                        int e = _span.Current;
+                        int chunck = _span.Current << _entityComponentMaskBitShift;
                         for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
                         {
                             var bit = _sortIncChunckBuffer.ptr[i];
-                            if ((_entityComponentMasks[e * _entityComponentMaskLength + bit.chankIndex] & bit.mask) != bit.mask)
+                            if ((_entityComponentMasks[chunck + bit.chankIndex] & bit.mask) != bit.mask)
                             {
                                 goto skip;
                             }
@@ -457,7 +462,7 @@ namespace DCFApixels.DragonECS
                         for (int i = 0; i < _sortExcChunckBuffer.Length; i++)
                         {
                             var bit = _sortExcChunckBuffer.ptr[i];
-                            if ((_entityComponentMasks[e * _entityComponentMaskLength + bit.chankIndex] & bit.mask) > 0)
+                            if ((_entityComponentMasks[chunck + bit.chankIndex] & bit.mask) != 0)
                             {
                                 goto skip;
                             }
