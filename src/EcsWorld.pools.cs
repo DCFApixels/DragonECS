@@ -166,7 +166,7 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref _poolComponentCounts, _pools.Length);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
 
-                int newEntityComponentMaskLength = _pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
+                int newEntityComponentMaskLength = CalcEntityComponentMaskLastIndex(); //_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
                 int dif = newEntityComponentMaskLength - _entityComponentMaskLength;
                 if (dif > 0)
                 {

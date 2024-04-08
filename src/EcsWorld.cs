@@ -544,12 +544,17 @@ namespace DCFApixels.DragonECS
         {
             _entityDispenser.Upsize(minSize);
         }
+        private int CalcEntityComponentMaskLastIndex()
+        {
+            int result = _pools.Length / COMPONENT_MASK_CHUNK_SIZE;
+            return (result < 2 ? 2 : result);
+        }
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void OnEntityDispenserResized(int newSize)
         {
             Array.Resize(ref _entities, newSize);
             Array.Resize(ref _delEntBuffer, newSize);
-            _entityComponentMaskLength = _pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
+            _entityComponentMaskLength = CalcEntityComponentMaskLastIndex();//_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
             Array.Resize(ref _entityComponentMasks, newSize * _entityComponentMaskLength);
 
             ArrayUtility.Fill(_entities, EntitySlot.Empty, _entitiesCapacity);
