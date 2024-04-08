@@ -457,7 +457,7 @@ namespace DCFApixels.DragonECS
                         for (int i = 0; i < _sortExcChunckBuffer.Length; i++)
                         {
                             var bit = _sortExcChunckBuffer.ptr[i];
-                            if ((_entityComponentMasks[e * _entityComponentMaskLength + bit.chankIndex] & bit.mask) > 0)
+                            if ((_entityComponentMasks[e * _entityComponentMaskLength + bit.chankIndex] & bit.mask) != 0)
                             {
                                 goto skip;
                             }
