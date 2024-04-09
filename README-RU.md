@@ -13,7 +13,7 @@
 | Languages: | [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [English(WIP)](https://github.com/DCFApixels/DragonECS) |
 | :--- | :--- | :--- |
 
-Данный [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Фреймворк нацелен на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Без генерации кода и зависимостей. Вднохновлен [LeoEcs](https://github.com/Leopotam/ecslite).
+DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) фреймворк нацеленный на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Разработан на чистом C#, без зависимостей и генерации кода. Вднохновлен [LeoEcs](https://github.com/Leopotam/ecslite).
 
 > [!WARNING]
 > Проект в стадии разработки. API может меняться.  
@@ -65,6 +65,7 @@
 + **Unity:** Минимальная версия 2020.1.0;
 
 ## Установка для Unity
+> Рекомендуется так же установить расширение [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
 * ### Unity-модуль
 Поддерживается установка в виде Unity-модуля в  при помощи добавления git-URL [в PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) или ручного добавления в `Packages/manifest.json`: 
 ```
@@ -72,7 +73,6 @@ https://github.com/DCFApixels/DragonECS.git
 ```
 * ### В виде иходников
 Фреймворк так же может быть добавлен в проект в виде исходников.
-
 </br>
 
 # Основные концепции
