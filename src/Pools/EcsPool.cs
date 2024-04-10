@@ -77,8 +77,8 @@ namespace DCFApixels.DragonECS
                 }
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-            _listeners.InvokeOnAddAndGet(entityID);
             EnableComponent(ref _items[itemIndex]);
+            _listeners.InvokeOnAddAndGet(entityID);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -117,10 +117,10 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
+                EnableComponent(ref _items[itemIndex]);
                 _listeners.InvokeOnAdd(entityID);
             }
             _listeners.InvokeOnGet(entityID);
-            EnableComponent(ref _items[itemIndex]);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
