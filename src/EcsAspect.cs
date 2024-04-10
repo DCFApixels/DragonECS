@@ -16,7 +16,7 @@ namespace DCFApixels.DragonECS
         private static Stack<Builder> _constructorBuildersStack = null;
         private static Stack<Builder> GetBuildersStack()
         {
-            if(_constructorBuildersStack == null)
+            if (_constructorBuildersStack == null)
             {
                 _constructorBuildersStack = new Stack<Builder>();
             }

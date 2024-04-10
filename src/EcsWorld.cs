@@ -1,6 +1,7 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -23,6 +24,7 @@ namespace DCFApixels.DragonECS
             PoolRecycledComponentsCapacity = poolRecycledComponentsCapacity;
         }
     }
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public partial class EcsWorld : IEntityStorage
     {
         public readonly short id;
@@ -544,6 +546,7 @@ namespace DCFApixels.DragonECS
         {
             _entityDispenser.Upsize(minSize);
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         private int CalcEntityComponentMaskLastIndex()
         {
             int result = _pools.Length / COMPONENT_MASK_CHUNK_SIZE;
@@ -554,7 +557,7 @@ namespace DCFApixels.DragonECS
         {
             Array.Resize(ref _entities, newSize);
             Array.Resize(ref _delEntBuffer, newSize);
-            _entityComponentMaskLength = CalcEntityComponentMaskLastIndex();//_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
+            _entityComponentMaskLength = CalcEntityComponentMaskLastIndex(); //_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
             Array.Resize(ref _entityComponentMasks, newSize * _entityComponentMaskLength);
 
             ArrayUtility.Fill(_entities, EntitySlot.Empty, _entitiesCapacity);
@@ -731,6 +734,34 @@ namespace DCFApixels.DragonECS
                 this.gen = gen;
                 this.componentsCount = componentsCount;
                 this.isUsed = isUsed;
+            }
+        }
+        #endregion
+
+        #region DebuggerProxy
+        private EcsSpan GetSpan_Debug()
+        {
+            return _entityDispenser.UsedToEcsSpan(id);
+        }
+        protected class DebuggerProxy
+        {
+            private EcsWorld _world;
+            public EntitySlotInfo[] Entities
+            {
+                get
+                {
+                    EntitySlotInfo[] result = new EntitySlotInfo[_world.Count];
+                    int i = 0;
+                    foreach (var e in _world.ToSpan())
+                    {
+                        result[i++] = _world.GetEntitySlotInfoDebug(e);
+                    }
+                    return result;
+                }
+            }
+            public DebuggerProxy(EcsWorld world)
+            {
+                _world = world;
             }
         }
         #endregion

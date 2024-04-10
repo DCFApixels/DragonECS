@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace DCFApixels.DragonECS
 {
@@ -7,9 +8,16 @@ namespace DCFApixels.DragonECS
     public sealed class MetaGroupAttribute : EcsMetaAttribute
     {
         public readonly MetaGroupRef Data;
+
+        [Obsolete("With empty parameters, this attribute makes no sense.")]
+        public MetaGroupAttribute() { }
         public MetaGroupAttribute(string name)
         {
             Data = new MetaGroupRef(name);
+        }
+        public MetaGroupAttribute(params string[] path)
+        {
+            Data = new MetaGroupRef(string.Join('/', path));
         }
     }
     public class MetaGroupRef
@@ -18,6 +26,7 @@ namespace DCFApixels.DragonECS
 
         public readonly string Name;
         private string[] path = null;
+        private static string pattern = @"Module(?=/)";
         public IReadOnlyCollection<string> Splited
         {
             get
@@ -41,7 +50,7 @@ namespace DCFApixels.DragonECS
             {
                 name += '/';
             }
-            Name = name;
+            Name = Regex.Replace(name, pattern, ""); ;
         }
     }
 
