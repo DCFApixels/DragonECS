@@ -17,7 +17,7 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
 
 > [!WARNING]
 > Проект в стадии разработки. API может меняться.  
-> Readme еще не завершен
+> Readme еще не завершен, если есть не ястные моменты, вопросы можно задать тут [Discord](https://discord.gg/kqmJjExuCf)
 
 ## Оглавление
 - [Установка](#установка)
