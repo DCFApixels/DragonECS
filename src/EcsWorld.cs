@@ -457,25 +457,35 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region DelEntBuffer
-        public AutoReleaseDelEntBufferLonkUnloker DisableAutoReleaseDelEntBuffer()
+        public IsEnableAutoReleaseDelEntBufferScope DisableAutoReleaseDelEntBuffer()
         {
-            _isEnableAutoReleaseDelEntBuffer = false;
-            return new AutoReleaseDelEntBufferLonkUnloker(this);
+            return new IsEnableAutoReleaseDelEntBufferScope(this, false);
         }
-        public void EnableAutoReleaseDelEntBuffer()
+        public IsEnableAutoReleaseDelEntBufferScope EnableAutoReleaseDelEntBuffer()
         {
-            _isEnableAutoReleaseDelEntBuffer = true;
+            return new IsEnableAutoReleaseDelEntBufferScope(this, true);
         }
-        public readonly struct AutoReleaseDelEntBufferLonkUnloker : IDisposable
+        private void SetEnableAutoReleaseDelEntBuffer(bool value)
+        {
+            _isEnableAutoReleaseDelEntBuffer = value;
+        }
+        public readonly struct IsEnableAutoReleaseDelEntBufferScope : IDisposable
         {
             private readonly EcsWorld _source;
-            public AutoReleaseDelEntBufferLonkUnloker(EcsWorld source)
+            private readonly bool _lastValue;
+            public IsEnableAutoReleaseDelEntBufferScope(EcsWorld source, bool value)
             {
+                _lastValue = source._isEnableAutoReleaseDelEntBuffer;
+                source.SetEnableAutoReleaseDelEntBuffer(value);
                 _source = source;
             }
-            public void Dispose()
+            public void End()
             {
-                _source.EnableAutoReleaseDelEntBuffer();
+                _source.SetEnableAutoReleaseDelEntBuffer(_lastValue);
+            }
+            void IDisposable.Dispose()
+            {
+                End();
             }
         }
         public void ReleaseDelEntityBufferAll()
