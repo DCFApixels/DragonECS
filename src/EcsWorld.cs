@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS
         public readonly short id;
         private IConfigContainer _configs;
 
-        private bool _isDestroyed = false;
+        private bool _isDestroyed = false; 
 
         private IdDispenser _entityDispenser;
         private int _entitiesCount = 0;
@@ -44,6 +44,10 @@ namespace DCFApixels.DragonECS
         internal int _entityComponentMaskLength;
         internal int[] _entityComponentMasks = Array.Empty<int>();
         private const int COMPONENT_MASK_CHUNK_SIZE = 32;
+
+        private bool[] _isDirtyEntitiesMapping = Array.Empty<bool>();
+        private int[] _dirtyEntitiesDense = Array.Empty<int>();
+        private int _dirtyEntitiesDenseCount = 0;
 
         //"лениво" обновляется только для NewEntity
         private long _deleteLeakedEntitesLastVersion = 0;
@@ -565,6 +569,9 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void OnEntityDispenserResized(int newSize)
         {
+            Array.Resize(ref _dirtyEntitiesDense, newSize);
+            Array.Resize(ref _isDirtyEntitiesMapping, newSize);
+
             Array.Resize(ref _entities, newSize);
             Array.Resize(ref _delEntBuffer, newSize);
             _entityComponentMaskLength = CalcEntityComponentMaskLastIndex(); //_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
@@ -772,6 +779,22 @@ namespace DCFApixels.DragonECS
             public DebuggerProxy(EcsWorld world)
             {
                 _world = world;
+            }
+        }
+        #endregion
+
+        #region DirtyEntities
+        public EcsSpan GetDirtyEntities()
+        {
+            return new EcsSpan(id, _dirtyEntitiesDense, _dirtyEntitiesDenseCount);
+        }
+        public void SetEntityDirty(int entityID)
+        {
+            bool lastValue = _isDirtyEntitiesMapping[entityID];
+            if (lastValue)
+            {
+                _isDirtyEntitiesMapping[entityID] = true;
+                _dirtyEntitiesDense[_dirtyEntitiesDenseCount++] = entityID;
             }
         }
         #endregion
