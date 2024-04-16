@@ -9,8 +9,8 @@ namespace DCFApixels.DragonECS
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly ref struct EcsSpan
     {
-        private readonly int _worldID;
         private readonly ReadOnlySpan<int> _values;
+        private readonly short _worldID;
 
         #region Properties
         public bool IsNull
@@ -46,24 +46,24 @@ namespace DCFApixels.DragonECS
 
         #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal EcsSpan(int worldID, ReadOnlySpan<int> span)
+        internal EcsSpan(short worldID, ReadOnlySpan<int> span)
         {
             _worldID = worldID;
             _values = span;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal EcsSpan(int worldID, int[] array)
+        internal EcsSpan(short worldID, int[] array)
         {
             _worldID = worldID;
             _values = new ReadOnlySpan<int>(array);
         }
-        internal EcsSpan(int worldID, int[] array, int length)
+        internal EcsSpan(short worldID, int[] array, int length)
         {
             _worldID = worldID;
             _values = new ReadOnlySpan<int>(array, 0, length);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal EcsSpan(int worldID, int[] array, int start, int length)
+        internal EcsSpan(short worldID, int[] array, int start, int length)
         {
             _worldID = worldID;
             _values = new ReadOnlySpan<int>(array, start, length);
@@ -110,7 +110,7 @@ namespace DCFApixels.DragonECS
         internal class DebuggerProxy
         {
             private int[] _values;
-            private int _worldID;
+            private short _worldID;
             public EcsWorld World { get { return EcsWorld.GetWorld(_worldID); } }
             public EntitySlotInfo[] Entities
             {

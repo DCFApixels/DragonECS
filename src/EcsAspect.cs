@@ -260,7 +260,7 @@ namespace DCFApixels.DragonECS
         #region Iterator
         public ref struct Iterator
         {
-            public readonly int worldID;
+            public readonly short worldID;
             public readonly EcsAspect aspect;
             private EcsSpan _span;
 

@@ -239,31 +239,39 @@ namespace DCFApixels.DragonECS
             return entityID;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void NewEntity(int entityID)
+        public int NewEntity(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (IsUsed(entityID)) { Throw.World_EntityIsAlreadyСontained(entityID); }
 #endif
             _entityDispenser.Use(entityID);
             CreateConcreteEntity(entityID);
+            return entityID;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CreateConcreteEntity(int entityID)
         {
             UpVersionLeaked();
             _entitiesCount++;
-            if (_entitiesCapacity <= entityID)
-            {
-                OnEntityDispenserResized(_entities.Length << 1);
+            ref var slot = ref _entities[entityID];
+            slot.isUsed = true;
+            if(slot.gen >= 0)
+            { //если gen был пробужен у не мертвой сущности, то для отличия от мертвой, нужно инкрементировать и усыпить
+                slot.gen++;
+                slot.gen &= SLEEP_GEN_MASK;
             }
-            _entities[entityID].isUsed = true;
             _entityListeners.InvokeOnNewEntity(entityID);
         }
 
         public entlong NewEntityLong()
         {
-            int e = NewEntity();
-            return GetEntityLong(e);
+            int entityID = NewEntity();
+            return GetEntityLong(entityID);
+        }
+        public entlong NewEntityLong(int entityID)
+        {
+            NewEntity(entityID);
+            return GetEntityLong(entityID);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -273,6 +281,11 @@ namespace DCFApixels.DragonECS
             {
                 DelEntity(entityID);
             }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void DelEntity(entlong entity)
+        {
+            DelEntity(entity.ID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DelEntity(int entityID)
@@ -325,15 +338,14 @@ namespace DCFApixels.DragonECS
         {
             unchecked
             {
-                ref short slotGen = ref _entities[entityID].gen;
+                ref var slotGen = ref _entities[entityID].gen;
                 if (slotGen < 0)
-                { //up gen
+                { //если gen меньше 0 значит он спящий, спящие нужно инкремировать
                     slotGen++;
-                    slotGen &= GEN_MASK;
+                    slotGen &= WAKE_UP_GEN_MASK;
                 }
                 return slotGen;
             }
-
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetComponentsCount(int entityID)

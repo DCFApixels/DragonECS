@@ -150,7 +150,7 @@ namespace DCFApixels.DragonECS
         internal bool _isReleased = true;
 
         #region Properties
-        public int WorldID
+        public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.id; }

@@ -9,8 +9,8 @@ namespace DCFApixels.DragonECS
     [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 4)]
     public struct EcsWorldCmp<T> where T : struct
     {
-        private int _worldID;
-        public EcsWorldCmp(int worldID) => _worldID = worldID;
+        private short _worldID;
+        public EcsWorldCmp(short worldID) => _worldID = worldID;
         public EcsWorld World => EcsWorld.GetWorld(_worldID);
         public ref T Value => ref EcsWorld.GetData<T>(_worldID);
     }
@@ -18,7 +18,9 @@ namespace DCFApixels.DragonECS
     {
         private const short NULL_WORLD_ID = 0;
 
-        private const short GEN_MASK = 0x7fff;
+        private const short WAKE_UP_GEN_MASK = 0x7fff;
+        private const short SLEEP_GEN_MASK = ~WAKE_UP_GEN_MASK;
+
         private const short SLEEPING_GEN_FLAG = short.MinValue;
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 5;
         private const int DEL_ENT_BUFFER_MIN_SIZE = 64;
@@ -45,12 +47,21 @@ namespace DCFApixels.DragonECS
             Array.Resize(ref _worlds, newSize);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsWorld GetWorld(int worldID) => _worlds[worldID];
+        public static EcsWorld GetWorld(short worldID)
+        {
+            return _worlds[worldID];
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T GetData<T>(int worldID) => ref WorldComponentPool<T>.GetForWorld(worldID);
+        public static ref T GetData<T>(int worldID)
+        {
+            return ref WorldComponentPool<T>.GetForWorld(worldID);
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T GetDataUnchecked<T>(int worldID) => ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
+        public static ref T GetDataUnchecked<T>(int worldID)
+        {
+            return ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
+        }
 
         private abstract class DataReleaser
         {

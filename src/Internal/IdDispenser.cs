@@ -279,7 +279,7 @@ namespace DCFApixels.DragonECS.Internal
         #endregion
 
         #region UsedToEcsSpan
-        public EcsSpan UsedToEcsSpan(int worldID)
+        public EcsSpan UsedToEcsSpan(short worldID)
         {
             return new EcsSpan(worldID, _dense, 1, _usedCount - 1);
         }

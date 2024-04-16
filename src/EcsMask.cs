@@ -11,7 +11,7 @@ namespace DCFApixels.DragonECS
     public sealed class EcsMask : IEquatable<EcsMask>
     {
         internal readonly int id;
-        internal readonly int worldID;
+        internal readonly short worldID;
         internal readonly EcsMaskChunck[] incChunckMasks;
         internal readonly EcsMaskChunck[] excChunckMasks;
         internal readonly int[] inc; //Sorted
@@ -22,7 +22,7 @@ namespace DCFApixels.DragonECS
         {
             get { return id; }
         }
-        public int WorldID
+        public short WorldID
         {
             get { return worldID; }
         }
@@ -51,7 +51,7 @@ namespace DCFApixels.DragonECS
         {
             return new Builder(world);
         }
-        internal EcsMask(int id, int worldID, int[] inc, int[] exc)
+        internal EcsMask(int id, short worldID, int[] inc, int[] exc)
         {
 #if DEBUG
             CheckConstraints(inc, exc);
@@ -223,7 +223,7 @@ namespace DCFApixels.DragonECS
             return false;
         }
 #endif
-        private static string CreateLogString(int worldID, int[] inc, int[] exc)
+        private static string CreateLogString(short worldID, int[] inc, int[] exc)
         {
 #if (DEBUG && !DISABLE_DEBUG)
             string converter(int o) { return EcsDebugUtility.GetGenericTypeName(EcsWorld.GetWorld(worldID).AllPools[o].ComponentType, 1); }
@@ -237,7 +237,7 @@ namespace DCFApixels.DragonECS
         {
             public readonly int ID;
             public readonly EcsWorld world;
-            private readonly int _worldID;
+            private readonly short _worldID;
             public readonly EcsMaskChunck[] includedChunkMasks;
             public readonly EcsMaskChunck[] excludedChunkMasks;
             public readonly int[] included;
