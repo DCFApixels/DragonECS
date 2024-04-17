@@ -51,6 +51,7 @@ The framework can also be added to the project as source code.
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * [Classic C# multithreading](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
+* [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
 * Graphs (Work in progress)
 
 # Feedback
