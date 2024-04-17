@@ -270,6 +270,8 @@ namespace DCFApixels.DragonECS
                 _span = span;
                 this.aspect = aspect;
             }
+
+            #region CopyTo
             public void CopyTo(EcsGroup group)
             {
                 group.Clear();
@@ -298,6 +300,7 @@ namespace DCFApixels.DragonECS
                 int count = CopyTo(ref array);
                 return new EcsSpan(worldID, array, count);
             }
+            #endregion
 
             #region Other
             public override string ToString()
@@ -353,7 +356,7 @@ namespace DCFApixels.DragonECS
                 private UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
                 private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
-                private readonly int _entityComponentMaskBitShift;
+                private readonly int _entityComponentMaskLengthBitShift;
 
                 public unsafe Enumerator(EcsSpan span, EcsAspect aspect)
                 {
@@ -361,8 +364,8 @@ namespace DCFApixels.DragonECS
                     _sortIncChunckBuffer = aspect._sortIncChunckBuffer;
                     _sortExcChunckBuffer = aspect._sortExcChunckBuffer;
 
-                    _entityComponentMaskBitShift = aspect.World._entityComponentMaskLength;
-                    _entityComponentMaskBitShift = BitsUtility.GetHighBitNumber(_entityComponentMaskBitShift);
+                    //_entityComponentMaskBitShift = BitsUtility.GetHighBitNumber(aspect.World._entityComponentMaskLength);
+                    _entityComponentMaskLengthBitShift = aspect.World._entityComponentMaskLengthBitShift;
 
                     #region Sort
                     UnsafeArray<int> _sortIncBuffer = aspect._sortIncBuffer;
@@ -438,6 +441,7 @@ namespace DCFApixels.DragonECS
                         }
                     }
                     #endregion
+
                     _span = span.GetEnumerator();
                 }
                 public int Current
@@ -450,7 +454,7 @@ namespace DCFApixels.DragonECS
                 {
                     while (_span.MoveNext())
                     {
-                        int chunck = _span.Current << _entityComponentMaskBitShift;
+                        int chunck = _span.Current << _entityComponentMaskLengthBitShift;
                         for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
                         {
                             var bit = _sortIncChunckBuffer.ptr[i];

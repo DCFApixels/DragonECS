@@ -42,6 +42,7 @@ namespace DCFApixels.DragonECS
         private bool _isEnableAutoReleaseDelEntBuffer = true;
 
         internal int _entityComponentMaskLength;
+        internal int _entityComponentMaskLengthBitShift;
         internal int[] _entityComponentMasks = Array.Empty<int>();
         private const int COMPONENT_MASK_CHUNK_SIZE = 32;
 
@@ -569,17 +570,22 @@ namespace DCFApixels.DragonECS
             _entityDispenser.Upsize(minSize);
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private int CalcEntityComponentMaskLastIndex()
+        private int CalcEntityComponentMaskLength()
         {
             int result = _pools.Length / COMPONENT_MASK_CHUNK_SIZE;
             return (result < 2 ? 2 : result);
         }
+        private void SetEntityComponentMaskLength(int value)
+        {
+            _entityComponentMaskLength = value;
+            _entityComponentMaskLengthBitShift = BitsUtility.GetHighBitNumber(value);
+        }
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void OnEntityDispenserResized(int newSize)
         {
+            SetEntityComponentMaskLength(CalcEntityComponentMaskLength()); //_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
             Array.Resize(ref _entities, newSize);
             Array.Resize(ref _delEntBuffer, newSize);
-            _entityComponentMaskLength = CalcEntityComponentMaskLastIndex(); //_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
             Array.Resize(ref _entityComponentMasks, newSize * _entityComponentMaskLength);
 
             ArrayUtility.Fill(_entities, EntitySlot.Empty, _entitiesCapacity);
