@@ -367,50 +367,64 @@ namespace DCFApixels.DragonECS
                 int operation = OpMaskKey.EXCEPT_OP;
                 if (_opMasks.TryGetValue(new OpMaskKey(a.id, b.id, operation), out EcsMask result) == false)
                 {
-                    var builder = New(a.World);
                     if (a.IsConflictWith(b))
                     {
                         return a.World.Get<WorldMaskComponent>().BrokenMask;
                     }
-                    ExceptMaskConstraint(builder, a.inc, b.inc, true);
-                    ExceptMaskConstraint(builder, a.exc, b.exc, false);
-                    result = builder.Build();
+                    result = New(a.World).Combine(a).Except(b).Build();
                     _opMasks.Add(new OpMaskKey(a.id, b.id, operation), result);
                 }
                 return result;
             }
-            private void ExceptMaskConstraint(Builder b, int[] acnstrs, int[] bcnstrs, bool isInc)
-            {
-                for (int i = 0, ii = 0; i < acnstrs.Length; i++)
-                {
-                    int acnst = acnstrs[i];
-                    while (ii < bcnstrs.Length && acnst > bcnstrs[ii])
-                    {
-                        ii++;
-                    }
-                    if (ii >= bcnstrs.Length)
-                    {
-                        break;
-                    }
-                    int binc = bcnstrs[ii];
-                    if (acnst == binc)
-                    {
-                        if (isInc)
-                        {
-                            b.Include(acnst);
-                        }
-                        else
-                        {
-                            b.Exclude(acnst);
-                        }
-                    }
-                }
-            }
+            //internal EcsMask ExceptMask(EcsMask a, EcsMask b)
+            //{
+            //    int operation = OpMaskKey.EXCEPT_OP;
+            //    if (_opMasks.TryGetValue(new OpMaskKey(a.id, b.id, operation), out EcsMask result) == false)
+            //    {
+            //        var builder = New(a.World);
+            //        if (a.IsConflictWith(b))
+            //        {
+            //            return a.World.Get<WorldMaskComponent>().BrokenMask;
+            //        }
+            //        ExceptMaskConstraint(builder, a.inc, b.inc, true);
+            //        ExceptMaskConstraint(builder, a.exc, b.exc, false);
+            //        result = builder.Build();
+            //        _opMasks.Add(new OpMaskKey(a.id, b.id, operation), result);
+            //    }
+            //    return result;
+            //}
+            //private void ExceptMaskConstraint(Builder b, int[] acnstrs, int[] bcnstrs, bool isInc)
+            //{
+            //    for (int i = 0, ii = 0; i < acnstrs.Length; i++)
+            //    {
+            //        int acnst = acnstrs[i];
+            //        while (ii < bcnstrs.Length && acnst > bcnstrs[ii])
+            //        {
+            //            ii++;
+            //        }
+            //        if (ii >= bcnstrs.Length)
+            //        {
+            //            break;
+            //        }
+            //        int binc = bcnstrs[ii];
+            //        if (acnst == binc)
+            //        {
+            //            if (isInc)
+            //            {
+            //                b.Include(acnst);
+            //            }
+            //            else
+            //            {
+            //                b.Exclude(acnst);
+            //            }
+            //        }
+            //    }
+            //}
             internal EcsMask GetMask(Key maskKey)
             {
                 if (!_masks.TryGetValue(maskKey, out EcsMask result))
                 {
-                    result = EcsMask.New(_masks.Count, _world.id, maskKey.inc, maskKey.exc);
+                    result = New(_masks.Count, _world.id, maskKey.inc, maskKey.exc);
                     _masks.Add(maskKey, result);
                 }
                 return result;
