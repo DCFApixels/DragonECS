@@ -168,7 +168,7 @@ namespace DCFApixels.DragonECS
                 return (TAspect)newAspect;
             }
 
-            #region Include/Exclude/Optional/Combine
+            #region Include/Exclude/Optional/Combine/Except
             public TPool IncludePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = _world.GetPoolInstance<TPool>();
@@ -197,6 +197,12 @@ namespace DCFApixels.DragonECS
             {
                 var result = _world.GetAspect<TOtherAspect>();
                 _maskBuilder.Combine(result.Mask);
+                return result;
+            }
+            public TOtherAspect Except<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect
+            {
+                var result = _world.GetAspect<TOtherAspect>();
+                _maskBuilder.Except(result.Mask);
                 return result;
             }
             #endregion
@@ -364,8 +370,13 @@ namespace DCFApixels.DragonECS
                     _sortIncChunckBuffer = aspect._sortIncChunckBuffer;
                     _sortExcChunckBuffer = aspect._sortExcChunckBuffer;
 
-                    //_entityComponentMaskBitShift = BitsUtility.GetHighBitNumber(aspect.World._entityComponentMaskLength);
                     _entityComponentMaskLengthBitShift = aspect.World._entityComponentMaskLengthBitShift;
+
+                    if (aspect.Mask.IsBroken)
+                    {
+                        _span = span.Slice(0, 0).GetEnumerator();
+                        return;
+                    }
 
                     #region Sort
                     UnsafeArray<int> _sortIncBuffer = aspect._sortIncBuffer;
@@ -388,9 +399,9 @@ namespace DCFApixels.DragonECS
                         }
                         for (int i = 0, ii = 0; ii < _sortIncChunckBuffer.Length; ii++)
                         {
-                            EcsMaskChunck bas = _preSortedIncBuffer[i];
-                            int chankIndexX = bas.chankIndex;
-                            int maskX = bas.mask;
+                            EcsMaskChunck chunkX = _preSortedIncBuffer[i];
+                            int chankIndexX = chunkX.chankIndex;
+                            int maskX = chunkX.mask;
 
                             for (int j = i + 1; j < _sortIncBuffer.Length; j++)
                             {

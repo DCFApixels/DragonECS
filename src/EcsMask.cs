@@ -44,6 +44,10 @@ namespace DCFApixels.DragonECS
         {
             get { return inc.Length == 0 && exc.Length == 0; }
         }
+        public bool IsBroken
+        {
+            get { return (inc.Length & exc.Length) == 1 && inc[0] == exc[0]; }
+        }
         #endregion
 
         #region Constructors
@@ -51,11 +55,24 @@ namespace DCFApixels.DragonECS
         {
             return new Builder(world);
         }
-        internal EcsMask(int id, short worldID, int[] inc, int[] exc)
+
+        internal static EcsMask New(int id, short worldID, int[] inc, int[] exc)
         {
 #if DEBUG
             CheckConstraints(inc, exc);
 #endif
+            return new EcsMask(id, worldID, inc, exc);
+        }
+        internal static EcsMask NewEmpty(int id, short worldID)
+        {
+            return new EcsMask(id, worldID, new int[0], new int[0]);
+        }
+        internal static EcsMask NewBroken(int id, short worldID)
+        {
+            return new EcsMask(id, worldID, new int[1] { 1 }, new int[1] { 1 });
+        }
+        private EcsMask(int id, short worldID, int[] inc, int[] exc)
+        {
             this.id = id;
             this.inc = inc;
             this.exc = exc;
@@ -198,7 +215,7 @@ namespace DCFApixels.DragonECS
         #region Debug utils
 #if DEBUG
         private static HashSet<int> _dummyHashSet = new HashSet<int>();
-        private void CheckConstraints(int[] inc, int[] exc)
+        private static void CheckConstraints(int[] inc, int[] exc)
         {
             lock (_dummyHashSet)
             {
@@ -209,7 +226,7 @@ namespace DCFApixels.DragonECS
                 if (_dummyHashSet.Overlaps(exc)) { throw new EcsFrameworkException("Conflicting Include and Exclude constraints."); }
             }
         }
-        private bool CheckRepeats(int[] array)
+        private static bool CheckRepeats(int[] array)
         {
             _dummyHashSet.Clear();
             foreach (var item in array)
@@ -235,6 +252,8 @@ namespace DCFApixels.DragonECS
 
         internal class DebuggerProxy
         {
+            private EcsMask _source;
+
             public readonly int ID;
             public readonly EcsWorld world;
             private readonly short _worldID;
@@ -245,8 +264,13 @@ namespace DCFApixels.DragonECS
             public readonly Type[] includedTypes;
             public readonly Type[] excludedTypes;
 
+            public bool IsEmpty { get { return _source.IsEmpty; } }
+            public bool IsBroken { get { return _source.IsBroken; } }
+
             public DebuggerProxy(EcsMask mask)
             {
+                _source = mask;
+
                 ID = mask.id;
                 world = EcsWorld.GetWorld(mask.worldID);
                 _worldID = mask.worldID;
@@ -308,16 +332,26 @@ namespace DCFApixels.DragonECS
             private readonly Dictionary<Key, EcsMask> _masks;
             private readonly Dictionary<OpMaskKey, EcsMask> _opMasks;
 
+            public readonly EcsMask EmptyMask;
+            public readonly EcsMask BrokenMask;
+
             #region Constructor/Destructor
-            public WorldMaskComponent(EcsWorld world, Dictionary<Key, EcsMask> masks, Dictionary<OpMaskKey, EcsMask> opMasks)
+            public WorldMaskComponent(EcsWorld world, Dictionary<Key, EcsMask> masks, Dictionary<OpMaskKey, EcsMask> opMasks, EcsMask emptyMask, EcsMask brokenMask)
             {
                 _world = world;
                 _masks = masks;
                 _opMasks = opMasks;
+                EmptyMask = emptyMask;
+                BrokenMask = brokenMask;
             }
             public void Init(ref WorldMaskComponent component, EcsWorld world)
             {
-                component = new WorldMaskComponent(world, new Dictionary<Key, EcsMask>(256), new Dictionary<OpMaskKey, EcsMask>(256));
+                var masks = new Dictionary<Key, EcsMask>(256);
+                EcsMask emptyMask = NewEmpty(0, world.id);
+                EcsMask brokenMask = NewBroken(1, world.id);
+                masks.Add(new Key(emptyMask.inc, emptyMask.exc), emptyMask);
+                masks.Add(new Key(brokenMask.inc, brokenMask.exc), brokenMask);
+                component = new WorldMaskComponent(world, masks, new Dictionary<OpMaskKey, EcsMask>(256), emptyMask, brokenMask);
             }
             public void OnDestroy(ref WorldMaskComponent component, EcsWorld world)
             {
@@ -336,7 +370,7 @@ namespace DCFApixels.DragonECS
                     var builder = New(a.World);
                     if (a.IsConflictWith(b))
                     {
-                        return a.World.GetAspect<EmptyAspect>().Mask;
+                        return a.World.Get<WorldMaskComponent>().BrokenMask;
                     }
                     ExceptMaskConstraint(builder, a.inc, b.inc, true);
                     ExceptMaskConstraint(builder, a.exc, b.exc, false);
@@ -376,7 +410,7 @@ namespace DCFApixels.DragonECS
             {
                 if (!_masks.TryGetValue(maskKey, out EcsMask result))
                 {
-                    result = new EcsMask(_masks.Count, _world.id, maskKey.inc, maskKey.exc);
+                    result = EcsMask.New(_masks.Count, _world.id, maskKey.inc, maskKey.exc);
                     _masks.Add(maskKey, result);
                 }
                 return result;
@@ -447,7 +481,8 @@ namespace DCFApixels.DragonECS
             private readonly EcsWorld _world;
             private readonly HashSet<int> _inc = new HashSet<int>();
             private readonly HashSet<int> _exc = new HashSet<int>();
-            private readonly List<Combined> _combined = new List<Combined>();
+            private readonly List<Combined> _combineds = new List<Combined>();
+            private readonly List<Excepted> _excepteds = new List<Excepted>();
 
             #region Constrcutors
             internal Builder(EcsWorld world)
@@ -493,7 +528,13 @@ namespace DCFApixels.DragonECS
 
             public Builder Combine(EcsMask mask, int order = 0)
             {
-                _combined.Add(new Combined(mask, order));
+                _combineds.Add(new Combined(mask, order));
+                return this;
+            }
+
+            public Builder Except(EcsMask mask, int order = 0)
+            {
+                _excepteds.Add(new Excepted(mask, order));
                 return this;
             }
             #endregion
@@ -503,12 +544,12 @@ namespace DCFApixels.DragonECS
             {
                 HashSet<int> combinedInc;
                 HashSet<int> combinedExc;
-                if (_combined.Count > 0)
+                if (_combineds.Count > 0)
                 {
                     combinedInc = new HashSet<int>();
                     combinedExc = new HashSet<int>();
-                    _combined.Sort((a, b) => a.order - b.order);
-                    foreach (var item in _combined)
+                    _combineds.Sort((a, b) => a.order - b.order);
+                    foreach (var item in _combineds)
                     {
                         EcsMask submask = item.mask;
                         combinedInc.ExceptWith(submask.exc);//удаляю конфликтующие ограничения
@@ -526,15 +567,28 @@ namespace DCFApixels.DragonECS
                     combinedInc = _inc;
                     combinedExc = _exc;
                 }
+                if (_excepteds.Count > 0)
+                {
+                    foreach (var item in _excepteds)
+                    {
+                        if(combinedInc.Overlaps(item.mask.exc) || combinedExc.Overlaps(item.mask.inc))
+                        {
+                            _combineds.Clear();
+                            _excepteds.Clear();
+                            return _world.Get<WorldMaskComponent>().BrokenMask;
+                        }
+                        combinedInc.ExceptWith(item.mask.inc);
+                        combinedExc.ExceptWith(item.mask.exc);
+                    }
+                }
 
                 var inc = combinedInc.ToArray();
                 Array.Sort(inc);
-                _inc.Clear();
                 var exc = combinedExc.ToArray();
                 Array.Sort(exc);
-                _exc.Clear();
 
-                _combined.Clear();
+                _combineds.Clear();
+                _excepteds.Clear();
 
                 return _world.Get<WorldMaskComponent>().GetMask(new Key(inc, exc));
             }
@@ -546,6 +600,16 @@ namespace DCFApixels.DragonECS
             public readonly EcsMask mask;
             public readonly int order;
             public Combined(EcsMask mask, int order)
+            {
+                this.mask = mask;
+                this.order = order;
+            }
+        }
+        private readonly struct Excepted
+        {
+            public readonly EcsMask mask;
+            public readonly int order;
+            public Excepted(EcsMask mask, int order)
             {
                 this.mask = mask;
                 this.order = order;
