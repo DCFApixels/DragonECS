@@ -29,8 +29,8 @@ namespace DCFApixels.DragonECS
             {
                 var buildersStack = GetBuildersStack();
                 if (buildersStack.Count <= 0)
-                { //TODO перевести
-                    throw new InvalidOperationException($"{nameof(Inc)} можно использовать только во время инициализации полей и в конструкторе");//TODO Перевести
+                {
+                    Throw.Aspect_CanOnlyBeUsedDuringInitialization(nameof(Inc));
                 }
                 return buildersStack.Peek().Inc;
             }
@@ -41,8 +41,8 @@ namespace DCFApixels.DragonECS
             {
                 var buildersStack = GetBuildersStack();
                 if (buildersStack.Count <= 0)
-                { //TODO перевести
-                    throw new InvalidOperationException($"{nameof(Exc)} можно использовать только во время инициализации полей и в конструкторе");//TODO Перевести
+                {
+                    Throw.Aspect_CanOnlyBeUsedDuringInitialization(nameof(Exc));
                 }
                 return buildersStack.Peek().Exc;
             }
@@ -53,8 +53,8 @@ namespace DCFApixels.DragonECS
             {
                 var buildersStack = GetBuildersStack();
                 if (buildersStack.Count <= 0)
-                { //TODO перевести
-                    throw new InvalidOperationException($"{nameof(Opt)} можно использовать только во время инициализации полей и в конструкторе");//TODO Перевести
+                {
+                    Throw.Aspect_CanOnlyBeUsedDuringInitialization(nameof(Opt));
                 }
                 return buildersStack.Peek().Opt;
             }

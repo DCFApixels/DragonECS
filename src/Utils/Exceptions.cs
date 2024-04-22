@@ -132,6 +132,13 @@ namespace DCFApixels.DragonECS.Internal
         {
             throw new Exception(message);
         }
+
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void Aspect_CanOnlyBeUsedDuringInitialization(string methodName)
+        {
+            throw new InvalidOperationException($"{methodName} can only be used during field initialization and in the constructor.");
+        }
     }
 }
 
