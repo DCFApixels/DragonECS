@@ -6,17 +6,18 @@
 <img alt="Version" src="https://img.shields.io/github/package-json/v/DCFApixels/DragonECS?color=%23ff4e85&style=for-the-badge">
 <img alt="License" src="https://img.shields.io/github/license/DCFApixels/DragonECS?color=ff4e85&style=for-the-badge">
 <a href="https://discord.gg/kqmJjExuCf"><img alt="Discord" src="https://img.shields.io/discord/1111696966208999525?color=%2300b269&label=Discord&logo=Discord&logoColor=%23ffffff&style=for-the-badge"></a>
+<a href="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=IbDcH43vhfArb30luGMP1TMXB3GCHzxm&authKey=s%2FJfqvv46PswFq68irnGhkLrMR6y9tf%2FUn2mogYizSOGiS%2BmB%2B8Ar9I%2Fnr%2Bs4oS%2B&noverify=0&group_code=949562781"><img alt="QQ" src="https://img.shields.io/badge/QQ-JOIN-00b269?logo=tencentqq&style=for-the-badge"></a>
 </p>
 
 # DragonECS - C# Entity Component System Framework
 | Languages: | [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [English(WIP)](https://github.com/DCFApixels/DragonECS) |
 | :--- | :--- | :--- |
 
-Данный [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Фреймворк нацелен на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Без генерации кода и зависимостей. Вднохновлен [LeoEcs](https://github.com/Leopotam/ecslite).
+DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) фреймворк нацеленный на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Разработан на чистом C#, без зависимостей и генерации кода. Вднохновлен [LeoEcs](https://github.com/Leopotam/ecslite).
 
 > [!WARNING]
 > Проект в стадии разработки. API может меняться.  
-> Readme еще не завершен
+> Readme еще не завершен, если есть не ястные моменты, вопросы можно задать тут [Discord](https://discord.gg/kqmJjExuCf)
 
 ## Оглавление
 - [Установка](#установка)
@@ -64,6 +65,7 @@
 + **Unity:** Минимальная версия 2020.1.0;
 
 ## Установка для Unity
+> Рекомендуется так же установить расширение [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
 * ### Unity-модуль
 Поддерживается установка в виде Unity-модуля в  при помощи добавления git-URL [в PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) или ручного добавления в `Packages/manifest.json`: 
 ```
@@ -71,7 +73,6 @@ https://github.com/DCFApixels/DragonECS.git
 ```
 * ### В виде иходников
 Фреймворк так же может быть добавлен в проект в виде исходников.
-
 </br>
 
 # Основные концепции
@@ -359,7 +360,28 @@ poses.Del(entityID);
 > эта функция будет описана в ближайшее время
  
 ## Аспект
-Это пользовательские классы наследуемые от `EcsAspect`, которые используются как посредник для взаимодействия с сущностями. Аспекты одновременно являются кешем пулов и маской для фильтрации сущностей.
+Это пользовательские классы наследуемые от `EcsAspect` и используемые для взаимодействия с сущностями. Аспекты одновременно являются кешем пулов и маской компонентов для фильтрации сущностей. Можно рассматривать аспекты как описание того какие сущности запрашивает система.
+
+Упрощенный синтаксис:
+``` c#
+using DCFApixels.DragonECS;
+...
+class Aspect : EcsAspect
+{
+    // Кешируется пул и Pose добавляется во включающее ограничение.
+    public EcsPool<Pose> poses = Inc;
+    // Кешируется пул и Velocity добавляется во включающее ограничение.
+    public EcsPool<Velocity> velocities = Inc;
+    // Кешируется пул и FreezedTag добавляется в исключающее ограничение.
+    public EcsTagPool<FreezedTag> freezedTags = Exc;
+
+    // При запросах будет проверяться наличие компонентов
+    // из включающего ограничения маски и отсутсвие из исключющего.
+    // Так же есть Opt - только кеширует пул, не влияя на маску. 
+}
+```
+
+Явный синтаксис (результат идентичен примеру выше):
 ``` c#
 using DCFApixels.DragonECS;
 ...
@@ -367,39 +389,20 @@ class Aspect : EcsAspect
 {
     public EcsPool<Pose> poses;
     public EcsPool<Velocity> velocities;
- 
-    // вместо конструктора можно использовать виртуальную функцию Init(Builder b)
-    public Aspect(Builder b) 
+    // вместо виртуальной функции, можно использовать конструктор Aspect(Builder b) 
+    protected override void Init(Builder b)
     {
-        // кешируется пул и Pose добавляется во включающее ограничение.
         poses = b.Include<Pose>();
- 
-        // кешируется пул и Velocity добавляется во включающее ограничение.
         velocities = b.Include<Velocity>();
- 
-        // FreezedTag добавляется в исключающее ограничение.
         b.Exclude<FreezedTag>();
     }
 }
 ```
-Упрощенный синтаксис. Пример ниже, это аналог примера выше
-``` c#
-using DCFApixels.DragonECS;
-...
-class Aspect : EcsAspect
-{
-    public EcsPool<Pose> poses;
-    public EcsPool<Velocity> velocities;
-    public EcsTagPool<FreezedTag> freezedTags;
-    public Aspect(Builder b) 
-    {
-        poses = b.Inc;
-        velocities = b.Inc;
-        freezedTags = b.Exc;
-    }
-}
-```
-В аспекты можно добавлять другие аспекты, тем самым комбинируя их. Ограничения так же будут скомбинированы
+
+<details>
+<summary>Комбинирование аспектов</summary>
+
+В аспекты можно добавлять другие аспекты, тем самым комбинируя их. Ограничения так же будут скомбинированы.
 ``` c#
 using DCFApixels.DragonECS;
 ...
@@ -428,7 +431,8 @@ class Aspect : EcsAspect
 | OtherAspect1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | Для `cmp2` будет выбрано :heavy_check_mark: |
 | Aspect | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | Для `cmp1` будет выбрано :x: |
 | Итоговые ограничения | :x: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_check_mark: | |
- 
+
+</details>
 
 ## Запросы
 Используйте метод-запрос `EcsWorld.Where<TAspcet>(out TAspcet aspect)` для получения необходимого системе набора сущностей. Запросы работают в связке с аспектами, аспекты определяют ограничения запросов, результатом запроса становится группа сущностей удовлетворяющая условиям аспекта. По умолчанию запрос делает выборку из всех сущностей в мире, но так же запросы можно применять и к коллекциям фреймворка(в этом плане это чемто похоже на Where из Linq).
@@ -628,7 +632,7 @@ using DCFApixels.DragonECS;
 [MetaName("SomeComponent")]
 
 // Используется для группировки типов.
-[MetaGroup("Abilities/Passive/")]
+[MetaGroup("Abilities/Passive/")] // или [MetaGroup("Abilities", "Passive")]
 
 // Задает цвет типа в системе rgb, где каждый канал принимает значение от 0 до 255, по умолчанию белый. 
 [MetaColor(MetaColor.Red)] // или [MetaColor(255, 0, 0)]
@@ -800,6 +804,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
 * [Классическоя C# многопоточность](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
+* [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
 * Графы (Work in progress)
 <!--* Твое расширение? Если разрабатываешь свои расширения для DragonECS, дай знать и они будут добавлены сюда-->
 
@@ -818,9 +823,11 @@ The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing 
 Обычно потребность выключить/включить систему появляется когда поменялось общее состояние игры, это может так же значить что нужно переключить сразу группу систем, все это в совокупности можно рассматривать как измннеия процессов. Есть 2 решения：</br>
 + Если измненеия процесса глобальные, то создать новый `EcsPipeline` и в цикле обновления движка запускать соотвествующий пайплайн.
 + Разделить `IEcsRun` на несколько процессов и в цикле обновления движка запускать соотвествующий процесс. Для этого создайте новый интерфейс процесса, раннер для запуска этого интерфейса и получайте раннер через `EcsPipeline.GetRunner<T>()`.
+## Перечень рекомендаций [DragonECS-Vault](https://github.com/DCFApixels/DragonECS-Vault)
 </br>
 
 # Обратная связь
-Discord для дискуссий [https://discord.gg/kqmJjExuCf](https://discord.gg/kqmJjExuCf)
++ Discord (RU-EN) [https://discord.gg/kqmJjExuCf](https://discord.gg/kqmJjExuCf)
++ QQ (中文) [949562781](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=IbDcH43vhfArb30luGMP1TMXB3GCHzxm&authKey=s%2FJfqvv46PswFq68irnGhkLrMR6y9tf%2FUn2mogYizSOGiS%2BmB%2B8Ar9I%2Fnr%2Bs4oS%2B&noverify=0&group_code=949562781)
 
 </br></br></br>
