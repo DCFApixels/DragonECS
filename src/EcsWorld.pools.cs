@@ -147,7 +147,7 @@ namespace DCFApixels.DragonECS
                 .First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>))
                 .GetGenericArguments()[0])
             {
-                Throw.UndefinedException();
+                Throw.Exception("A custom pool must implement the interface IEcsPoolImplementation<T> where T is the type that stores the pool.");
             }
 #pragma warning restore IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
 #endif

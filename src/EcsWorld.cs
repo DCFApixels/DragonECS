@@ -145,7 +145,7 @@ namespace DCFApixels.DragonECS
                 if (_worlds[worldID] != null)
                 {
                     _worldIdDispenser.Release(worldID);
-                    Throw.UndefinedException();
+                    Throw.Exception("The world with the specified ID has already been created\r\n");
                 }
             }
             id = worldID;

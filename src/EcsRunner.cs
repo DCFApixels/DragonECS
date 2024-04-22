@@ -96,7 +96,7 @@ namespace DCFApixels.DragonECS
             {
                 if (_isInit)
                 {
-                    Throw.UndefinedException();
+                    Throw.Exception("Reinitialization.");
                 }
                 _isInit = true;
                 _source = source;

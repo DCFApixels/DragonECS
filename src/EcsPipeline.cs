@@ -113,7 +113,7 @@ namespace DCFApixels.DragonECS
             {
                 return (T)result;
             }
-            Throw.UndefinedException();
+            Throw.Exception("No matching runner found.");
             return default;
         }
         public bool TryGetRunner<T>(out T runner) where T : IEcsProcess
