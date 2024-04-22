@@ -497,11 +497,20 @@ namespace DCFApixels.DragonECS
             foreach (var incTypeID in _mask.inc)
             {
                 var pool = world.GetPoolInstance(incTypeID);
-                if (pool != null && pool.Has(entityID) == false)
+                if (pool != null)
                 {
-                    pool.AddRaw(entityID, null);
+                    if (pool.Has(entityID) == false)
+                    {
+                        pool.AddRaw(entityID, null);
+                    }
+                }
+#if DEBUG
+                else
+                {
+                    EcsDebug.PrintWarning("Component has not been added because the pool has not been initialized yet.");
                 }
             }
+#endif
             foreach (var excTypeID in _mask.exc)
             {
                 var pool = world.GetPoolInstance(excTypeID);
