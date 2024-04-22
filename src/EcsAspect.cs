@@ -141,27 +141,27 @@ namespace DCFApixels.DragonECS
                 builder.Build(out newAspect._mask);
                 newAspect._isBuilt = true;
 
-                newAspect._sortIncBuffer = new UnsafeArray<int>(newAspect._mask.inc.Length, true);
-                newAspect._sortExcBuffer = new UnsafeArray<int>(newAspect._mask.exc.Length, true);
-                newAspect._sortIncChunckBuffer = new UnsafeArray<EcsMaskChunck>(newAspect._mask.incChunckMasks.Length, true);
-                newAspect._sortExcChunckBuffer = new UnsafeArray<EcsMaskChunck>(newAspect._mask.excChunckMasks.Length, true);
+                newAspect._sortIncBuffer = new UnsafeArray<int>(newAspect._mask._inc.Length, true);
+                newAspect._sortExcBuffer = new UnsafeArray<int>(newAspect._mask._exc.Length, true);
+                newAspect._sortIncChunckBuffer = new UnsafeArray<EcsMaskChunck>(newAspect._mask._incChunckMasks.Length, true);
+                newAspect._sortExcChunckBuffer = new UnsafeArray<EcsMaskChunck>(newAspect._mask._excChunckMasks.Length, true);
 
                 for (int i = 0; i < newAspect._sortIncBuffer.Length; i++)
                 {
-                    newAspect._sortIncBuffer.ptr[i] = newAspect._mask.inc[i];
+                    newAspect._sortIncBuffer.ptr[i] = newAspect._mask._inc[i];
                 }
                 for (int i = 0; i < newAspect._sortExcBuffer.Length; i++)
                 {
-                    newAspect._sortExcBuffer.ptr[i] = newAspect._mask.exc[i];
+                    newAspect._sortExcBuffer.ptr[i] = newAspect._mask._exc[i];
                 }
 
                 for (int i = 0; i < newAspect._sortIncChunckBuffer.Length; i++)
                 {
-                    newAspect._sortIncChunckBuffer.ptr[i] = newAspect._mask.incChunckMasks[i];
+                    newAspect._sortIncChunckBuffer.ptr[i] = newAspect._mask._incChunckMasks[i];
                 }
                 for (int i = 0; i < newAspect._sortExcChunckBuffer.Length; i++)
                 {
-                    newAspect._sortExcChunckBuffer.ptr[i] = newAspect._mask.excChunckMasks[i];
+                    newAspect._sortExcChunckBuffer.ptr[i] = newAspect._mask._excChunckMasks[i];
                 }
 
                 return (TAspect)newAspect;
@@ -494,7 +494,7 @@ namespace DCFApixels.DragonECS
         public virtual void Apply(short worldID, int entityID)
         {
             EcsWorld world = EcsWorld.GetWorld(worldID);
-            foreach (var incTypeID in _mask.inc)
+            foreach (var incTypeID in _mask._inc)
             {
                 var pool = world.GetPoolInstance(incTypeID);
                 if (pool != null)
@@ -511,7 +511,7 @@ namespace DCFApixels.DragonECS
                 }
             }
 #endif
-            foreach (var excTypeID in _mask.exc)
+            foreach (var excTypeID in _mask._exc)
             {
                 var pool = world.GetPoolInstance(excTypeID);
                 if (pool != null && pool.Has(entityID))

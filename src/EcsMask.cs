@@ -10,43 +10,43 @@ namespace DCFApixels.DragonECS
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsMask : IEquatable<EcsMask>
     {
-        internal readonly int id;
-        internal readonly short worldID;
-        internal readonly EcsMaskChunck[] incChunckMasks;
-        internal readonly EcsMaskChunck[] excChunckMasks;
-        internal readonly int[] inc; //Sorted
-        internal readonly int[] exc; //Sorted
+        internal readonly int _id;
+        internal readonly short _worldID;
+        internal readonly EcsMaskChunck[] _incChunckMasks;
+        internal readonly EcsMaskChunck[] _excChunckMasks;
+        internal readonly int[] _inc; //Sorted
+        internal readonly int[] _exc; //Sorted
 
         #region Properties
         public int ID
         {
-            get { return id; }
+            get { return _id; }
         }
         public short WorldID
         {
-            get { return worldID; }
+            get { return _worldID; }
         }
         public EcsWorld World
         {
-            get { return EcsWorld.GetWorld(worldID); }
+            get { return EcsWorld.GetWorld(_worldID); }
         }
         /// <summary>Including constraints</summary>
         public ReadOnlySpan<int> Inc
         {
-            get { return inc; }
+            get { return _inc; }
         }
         /// <summary>Excluding constraints</summary>
         public ReadOnlySpan<int> Exc
         {
-            get { return exc; }
+            get { return _exc; }
         }
         public bool IsEmpty
         {
-            get { return inc.Length == 0 && exc.Length == 0; }
+            get { return _inc.Length == 0 && _exc.Length == 0; }
         }
         public bool IsBroken
         {
-            get { return (inc.Length & exc.Length) == 1 && inc[0] == exc[0]; }
+            get { return (_inc.Length & _exc.Length) == 1 && _inc[0] == _exc[0]; }
         }
         #endregion
 
@@ -73,13 +73,13 @@ namespace DCFApixels.DragonECS
         }
         private EcsMask(int id, short worldID, int[] inc, int[] exc)
         {
-            this.id = id;
-            this.inc = inc;
-            this.exc = exc;
-            this.worldID = worldID;
+            this._id = id;
+            this._inc = inc;
+            this._exc = exc;
+            this._worldID = worldID;
 
-            incChunckMasks = MakeMaskChuncsArray(inc);
-            excChunckMasks = MakeMaskChuncsArray(exc);
+            _incChunckMasks = MakeMaskChuncsArray(inc);
+            _excChunckMasks = MakeMaskChuncsArray(exc);
         }
 
         private unsafe EcsMaskChunck[] MakeMaskChuncsArray(int[] sortedArray)
@@ -124,7 +124,7 @@ namespace DCFApixels.DragonECS
         }
         public bool IsConflictWith(EcsMask otherMask)
         {
-            return OverlapsArray(inc, otherMask.exc) || OverlapsArray(exc, otherMask.inc);
+            return OverlapsArray(_inc, otherMask._exc) || OverlapsArray(_exc, otherMask._inc);
         }
 
         private static bool OverlapsArray(int[] l, int[] r)
@@ -150,7 +150,7 @@ namespace DCFApixels.DragonECS
         }
         private static bool IsSubmask(EcsMask super, EcsMask sub)
         {
-            return IsSubarray(sub.inc, super.inc) && IsSuperarray(sub.exc, super.exc);
+            return IsSubarray(sub._inc, super._inc) && IsSuperarray(sub._exc, super._exc);
         }
         private static bool IsSubarray(int[] super, int[] sub)
         {
@@ -196,19 +196,19 @@ namespace DCFApixels.DragonECS
         #region Object
         public override string ToString()
         {
-            return CreateLogString(worldID, inc, exc);
+            return CreateLogString(_worldID, _inc, _exc);
         }
         public bool Equals(EcsMask mask)
         {
-            return id == mask.id && worldID == mask.worldID;
+            return _id == mask._id && _worldID == mask._worldID;
         }
         public override bool Equals(object obj)
         {
-            return obj is EcsMask mask && id == mask.id && Equals(mask);
+            return obj is EcsMask mask && _id == mask._id && Equals(mask);
         }
         public override int GetHashCode()
         {
-            return unchecked(id ^ (worldID * EcsConsts.MAGIC_PRIME));
+            return unchecked(_id ^ (_worldID * EcsConsts.MAGIC_PRIME));
         }
         #endregion
 
@@ -271,13 +271,13 @@ namespace DCFApixels.DragonECS
             {
                 _source = mask;
 
-                ID = mask.id;
-                world = EcsWorld.GetWorld(mask.worldID);
-                _worldID = mask.worldID;
-                includedChunkMasks = mask.incChunckMasks;
-                excludedChunkMasks = mask.excChunckMasks;
-                included = mask.inc;
-                excluded = mask.exc;
+                ID = mask._id;
+                world = EcsWorld.GetWorld(mask._worldID);
+                _worldID = mask._worldID;
+                includedChunkMasks = mask._incChunckMasks;
+                excludedChunkMasks = mask._excChunckMasks;
+                included = mask._inc;
+                excluded = mask._exc;
                 Type converter(int o) { return world.GetComponentType(o); }
                 includedTypes = included.Select(converter).ToArray();
                 excludedTypes = excluded.Select(converter).ToArray();
@@ -349,8 +349,8 @@ namespace DCFApixels.DragonECS
                 var masks = new Dictionary<Key, EcsMask>(256);
                 EcsMask emptyMask = NewEmpty(0, world.id);
                 EcsMask brokenMask = NewBroken(1, world.id);
-                masks.Add(new Key(emptyMask.inc, emptyMask.exc), emptyMask);
-                masks.Add(new Key(brokenMask.inc, brokenMask.exc), brokenMask);
+                masks.Add(new Key(emptyMask._inc, emptyMask._exc), emptyMask);
+                masks.Add(new Key(brokenMask._inc, brokenMask._exc), brokenMask);
                 component = new WorldMaskComponent(world, masks, new Dictionary<OpMaskKey, EcsMask>(256), emptyMask, brokenMask);
             }
             public void OnDestroy(ref WorldMaskComponent component, EcsWorld world)
@@ -365,14 +365,14 @@ namespace DCFApixels.DragonECS
             internal EcsMask ExceptMask(EcsMask a, EcsMask b)
             {
                 int operation = OpMaskKey.EXCEPT_OP;
-                if (_opMasks.TryGetValue(new OpMaskKey(a.id, b.id, operation), out EcsMask result) == false)
+                if (_opMasks.TryGetValue(new OpMaskKey(a._id, b._id, operation), out EcsMask result) == false)
                 {
                     if (a.IsConflictWith(b))
                     {
                         return a.World.Get<WorldMaskComponent>().BrokenMask;
                     }
                     result = New(a.World).Combine(a).Except(b).Build();
-                    _opMasks.Add(new OpMaskKey(a.id, b.id, operation), result);
+                    _opMasks.Add(new OpMaskKey(a._id, b._id, operation), result);
                 }
                 return result;
             }
@@ -566,10 +566,10 @@ namespace DCFApixels.DragonECS
                     foreach (var item in _combineds)
                     {
                         EcsMask submask = item.mask;
-                        combinedInc.ExceptWith(submask.exc);//удаляю конфликтующие ограничения
-                        combinedExc.ExceptWith(submask.inc);//удаляю конфликтующие ограничения
-                        combinedInc.UnionWith(submask.inc);
-                        combinedExc.UnionWith(submask.exc);
+                        combinedInc.ExceptWith(submask._exc);//удаляю конфликтующие ограничения
+                        combinedExc.ExceptWith(submask._inc);//удаляю конфликтующие ограничения
+                        combinedInc.UnionWith(submask._inc);
+                        combinedExc.UnionWith(submask._exc);
                     }
                     combinedInc.ExceptWith(_exc);//удаляю конфликтующие ограничения
                     combinedExc.ExceptWith(_inc);//удаляю конфликтующие ограничения
@@ -585,14 +585,14 @@ namespace DCFApixels.DragonECS
                 {
                     foreach (var item in _excepteds)
                     {
-                        if(combinedInc.Overlaps(item.mask.exc) || combinedExc.Overlaps(item.mask.inc))
+                        if(combinedInc.Overlaps(item.mask._exc) || combinedExc.Overlaps(item.mask._inc))
                         {
                             _combineds.Clear();
                             _excepteds.Clear();
                             return _world.Get<WorldMaskComponent>().BrokenMask;
                         }
-                        combinedInc.ExceptWith(item.mask.inc);
-                        combinedExc.ExceptWith(item.mask.exc);
+                        combinedInc.ExceptWith(item.mask._inc);
+                        combinedExc.ExceptWith(item.mask._exc);
                     }
                 }
 
