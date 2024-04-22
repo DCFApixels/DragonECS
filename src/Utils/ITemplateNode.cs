@@ -2,7 +2,7 @@ namespace DCFApixels.DragonECS
 {
     public interface ITemplateNode
     {
-        void Apply(int worldID, int entityID);
+        void Apply(short worldID, int entityID);
     }
     public static class ITemplateNodeExtensions
     {
