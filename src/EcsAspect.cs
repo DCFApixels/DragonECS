@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract class EcsAspect
+    public abstract class EcsAspect : ITemplateNode
     {
         internal EcsWorld _source;
         internal EcsMask _mask;
@@ -489,6 +489,29 @@ namespace DCFApixels.DragonECS
                 }
             }
             #endregion
+        }
+        #endregion
+
+        #region Template
+        public virtual void Apply(short worldID, int entityID)
+        {
+            EcsWorld world = EcsWorld.GetWorld(worldID);
+            foreach (var incTypeID in _mask.inc)
+            {
+                var pool = world.GetPoolInstance(incTypeID);
+                if (pool.Has(entityID) == false)
+                {
+                    pool.AddRaw(entityID, null);
+                }
+            }
+            foreach (var excTypeID in _mask.exc)
+            {
+                var pool = world.GetPoolInstance(excTypeID);
+                if (pool.Has(entityID))
+                {
+                    pool.Del(entityID);
+                }
+            }
         }
         #endregion
     }
