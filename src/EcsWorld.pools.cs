@@ -20,10 +20,15 @@ namespace DCFApixels.DragonECS
         #region Getters
         public IEcsPool GetPoolInstance(int componentTypeID)
         {
+            if (IsComponentTypeDeclared(componentTypeID))
+            {
+                var resuult = _pools[componentTypeID];
 #if DEBUG
-            if (_pools[componentTypeID].ComponentTypeID != componentTypeID) { Throw.UndefinedException(); }
+                if (resuult != _nullPool && resuult.ComponentTypeID != componentTypeID) { Throw.UndefinedException(); }
 #endif
-            return _pools[componentTypeID];
+                return resuult;
+            }
+            return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

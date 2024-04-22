@@ -93,7 +93,6 @@ namespace DCFApixels.DragonECS
         {
             private EcsWorld _world;
             private EcsMask.Builder _maskBuilder;
-            private bool _isBuilt = false;
             public IncludeMarker Inc
             {
                 get { return new IncludeMarker(this); }
@@ -210,7 +209,6 @@ namespace DCFApixels.DragonECS
             private void Build(out EcsMask mask)
             {
                 mask = _maskBuilder.Build();
-                _isBuilt = true;
             }
 
             #region SupportReflectionHack
@@ -499,7 +497,7 @@ namespace DCFApixels.DragonECS
             foreach (var incTypeID in _mask.inc)
             {
                 var pool = world.GetPoolInstance(incTypeID);
-                if (pool.Has(entityID) == false)
+                if (pool != null && pool.Has(entityID) == false)
                 {
                     pool.AddRaw(entityID, null);
                 }
@@ -507,7 +505,7 @@ namespace DCFApixels.DragonECS
             foreach (var excTypeID in _mask.exc)
             {
                 var pool = world.GetPoolInstance(excTypeID);
-                if (pool.Has(entityID))
+                if (pool != null && pool.Has(entityID))
                 {
                     pool.Del(entityID);
                 }
