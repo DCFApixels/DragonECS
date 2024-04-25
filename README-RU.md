@@ -463,7 +463,7 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
 ## Коллекции
 
 ### EcsSpan
-Коллекция сущностей, доступная только для чтения и выделяемая только в стеке. Аналог `ReadOnlySpan<int>`.
+Коллекция сущностей, доступная только для чтения и выделяемая только в стеке. Состоит из ссылки на массив, длинны и идентификатора мира. Аналог `ReadOnlySpan<int>`.
 ``` c#
 //Запрос Where возвращает сущности в виде EcsSpan
 EcsSpan es = _world.Where(out Aspect a);
