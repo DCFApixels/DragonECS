@@ -498,6 +498,8 @@ group.Has(entityID);
 group.Remove(entityID);
 ```
 ``` c#
+//Запрос WhereToGroup возвращает сущности в виде группы только для чтения EcsReadonlyGroup
+EcsReadonlyGroup group = _world.WhereToGroup(out Aspect a);
 //Итерироваться можно по foreach и for
 foreach (var e in group) 
 { 
@@ -532,7 +534,6 @@ EcsGroup newGroup = EcsGroup.SymmetricExcept(groupA, groupB);
 groupA.Inverse();
 EcsGroup newGroup = EcsGroup.Inverse(groupA);
 ```
-> Так же есть версия доступная только для чтения `EcsReadonlyGroup`.
 
 ## Корень ECS
 Это пользовательский класс который явялестя точкой входа для ECS. Основное назначение инициализация, запуск систем на каждый Update движка и очистка по окончанию сипользования.
