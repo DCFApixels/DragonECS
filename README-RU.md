@@ -453,8 +453,8 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
     {
         foreach (var e in _world.Where(out Aspect a))
         {
-            // Сюда попадают сущности с компонентами Health, Damage и без IsInvulnerable
-            a.healths.Get(e).points -= a.damages.Get(e).points;
+            // Сюда попадают сущности с компонентами Health, DamageSignal и без IsInvulnerable
+            a.healths.Get(e).points -= a.damageSignals.Get(e).points;
         }
     }
 }
