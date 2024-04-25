@@ -36,7 +36,7 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
   - [Пул](#пул)
   - [Аспект](#аспект)
   - [Запросы](#запросы)
-  - [Группа](#группа)
+  - [Коллекции](#Коллекции)
   - [Корень ECS](#корень-ecs)
 - [Debug](#debug)
   - [Мета-Атрибуты](#мета-атрибуты)
@@ -360,7 +360,7 @@ poses.Del(entityID);
 > эта функция будет описана в ближайшее время
  
 ## Аспект
-Это пользовательские классы наследуемые от `EcsAspect` и используемые для взаимодействия с сущностями. Аспекты одновременно являются кешем пулов и маской компонентов для фильтрации сущностей. Можно рассматривать аспекты как описание того какие сущности запрашивает система.
+Это пользовательские классы наследуемые от `EcsAspect` и используемые для взаимодействия с сущностями. Аспекты одновременно являются кешем пулов и маской компонентов для фильтрации сущностей. Можно рассматривать аспекты как описание того с какими сущностями работает система.
 
 Упрощенный синтаксис:
 ``` c#
@@ -435,22 +435,16 @@ class Aspect : EcsAspect
 </details>
 
 ## Запросы
-Используйте метод-запрос `EcsWorld.Where<TAspcet>(out TAspcet aspect)` для получения необходимого системе набора сущностей. Запросы работают в связке с аспектами, аспекты определяют ограничения запросов, результатом запроса становится группа сущностей удовлетворяющая условиям аспекта. По умолчанию запрос делает выборку из всех сущностей в мире, но так же запросы можно применять и к коллекциям фреймворка(в этом плане это чемто похоже на Where из Linq).
+Что бы получить необходимый набор сущностей используется метод-запрос `EcsWorld.Where<TAspcet>(out TAspcet aspect)`. В качестве `TAspcet` указывается аспект, сущности будут отфильтрованны по маске указанного аспекта. Запрос `Where` применим как к `EcsWorld` так и коллекциям фреймворка (в этом плане Where чемто похож на аналогичный из Linq).
 Пример:
 ``` c#
 public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
 {
     class Aspect : EcsAspect
     {
-        public EcsPool<Health> healths; 
-        public EcsPool<Damage> damages; 
-        public EcsTagPool<IsInvulnerable> isInvulnerables;
-        protected override void Init(Builder b)
-        {
-            healths = b.Include<Health>();
-            damages = b.Include<Damage>();
-            isInvulnerables = b.Include<IsInvulnerable>();
-        }
+        public EcsPool<Health> healths = Inc; 
+        public EcsPool<DamageSignal> damageSignals = Inc; 
+        public EcsTagPool<IsInvulnerable> isInvulnerables = Exc;
     }
     EcsDefaultWorld _world;
     public void Inject(EcsDefaultWorld world) => _world = world;
@@ -466,8 +460,14 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
 }
 ```
  
-## Группа
-Группы это структуры данных для хранения множества сущностей с O(1) операциями добавления/удаления/проверки наличия и т.д. Реализованы классом `EcsGroup` и структурой `EcsReadonlyGroup`. 
+## Коллекции
+
+### EcsSpan
+Аналог `ReadOnlySpan<int>` для перечня сущностей. Запросы `Where` возвращают наборы сущностей в виде `EcsSpan`. Поддерживается только чтение и итерация.
+> Хотя `EcsSpan` является просто массивом, в нем не допускается дублирование сущностей.
+
+### EcsGroup
+Вспомогательная коллекция основаная на spase set для хранения множества сущностей с O(1) операциями добавления/удаления/проверки и т.д.
 
 ``` c#
 //Получем новую группу. EcsWorld содержит в себе пул групп,
@@ -485,7 +485,7 @@ group.Has(entityID);
 group.Remove(entityID);
 ```
 ``` c#
-//Итерируемся через foreach или for.
+//Итерироваться можно по foreach и for
 foreach (var e in group) 
 { 
     //...
@@ -519,7 +519,8 @@ EcsGroup newGroup = EcsGroup.SymmetricExcept(groupA, groupB);
 groupA.Inverse();
 EcsGroup newGroup = EcsGroup.Inverse(groupA);
 ```
- 
+> Так же есть версия доступная только для чтения `EcsReadonlyGroup`.
+
 ## Корень ECS
 Это пользовательский класс который явялестя точкой входа для ECS. Основное назначение инициализация, запуск систем на каждый Update движка и очистка по окончанию сипользования.
 ### Пример для Unity
