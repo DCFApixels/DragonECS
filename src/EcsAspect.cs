@@ -509,8 +509,8 @@ namespace DCFApixels.DragonECS
                 {
                     EcsDebug.PrintWarning("Component has not been added because the pool has not been initialized yet.");
                 }
-            }
 #endif
+            }
             foreach (var excTypeID in _mask._exc)
             {
                 var pool = world.GetPoolInstance(excTypeID);
