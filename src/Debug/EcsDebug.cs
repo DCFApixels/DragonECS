@@ -50,56 +50,57 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintWarning(object v)
         {
-#if !DISABLE_DRAGONECS_DEBUGGER
+
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
             DebugService.Instance.PrintWarning(v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintError(object v)
         {
-#if !DISABLE_DRAGONECS_DEBUGGER
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
             DebugService.Instance.PrintError(v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintErrorAndBreak(object v)
         {
-#if !DISABLE_DRAGONECS_DEBUGGER
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
             DebugService.Instance.PrintErrorAndBreak(v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintPass(object v)
         {
-#if !DISABLE_DRAGONECS_DEBUGGER
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
             DebugService.Instance.PrintPass(v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print()
         {
-#if !DISABLE_DRAGONECS_DEBUGGER
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
             DebugService.Instance.Print();
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(object v)
         {
-#if !DISABLE_DRAGONECS_DEBUGGER
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
             DebugService.Instance.Print(v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(string tag, object v)
         {
-#if !DISABLE_DRAGONECS_DEBUGGER
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
             DebugService.Instance.Print(tag, v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Break()
         {
-#if !DISABLE_DRAGONECS_DEBUGGER
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
             DebugService.Instance.Break();
 #endif
         }
@@ -191,15 +192,26 @@ namespace DCFApixels.DragonECS
     }
     public sealed class DefaultDebugService : DebugService
     {
-        private Stopwatch[] _stopwatchs;
-        private string[] _stopwatchsNames;
+        private const string PROFILER_MARKER = "ProfilerMark";
+        private struct MarkerData
+        {
+            public Stopwatch stopwatch;
+            public string name;
+            public MarkerData(Stopwatch stopwatch, string name)
+            {
+                this.stopwatch = stopwatch;
+                this.name = name;
+            }
+        }
+        private MarkerData[] _stopwatchs;
+        [ThreadStatic]
+        private static char[] _buffer;
         public DefaultDebugService()
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.BackgroundColor = ConsoleColor.Black;
 #if !DISABLE_DRAGONECS_DEBUGGER
-            _stopwatchs = new Stopwatch[64];
-            _stopwatchsNames = new string[64];
+            _stopwatchs = new MarkerData[64];
 #endif
         }
 
@@ -236,37 +248,109 @@ namespace DCFApixels.DragonECS
             Console.ReadKey();
             Console.ForegroundColor = color;
         }
+
+        private const string PROFILER_MARKER_CACHE = "[" + PROFILER_MARKER + "] ";
         public override void ProfilerMarkBegin(int id)
         {
+#if !UNITY_EDITOR
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            _stopwatchs[id].Start();
-            Print("ProfilerMark", $"{_stopwatchsNames[id]} start <");
+            _stopwatchs[id].stopwatch.Start();
+
+            Console.Write(PROFILER_MARKER_CACHE);
+            Console.Write(_stopwatchs[id].name);
+            Console.WriteLine("> ");
+
             Console.ForegroundColor = color;
+#endif
         }
         public override void ProfilerMarkEnd(int id)
         {
+#if !UNITY_EDITOR
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            _stopwatchs[id].Stop();
-            var time = _stopwatchs[id].Elapsed;
-            _stopwatchs[id].Reset();
-            Print("ProfilerMark", $"> {_stopwatchsNames[id]} s:{time.TotalSeconds}");
+            _stopwatchs[id].stopwatch.Stop();
+            var time = _stopwatchs[id].stopwatch.Elapsed;
+            _stopwatchs[id].stopwatch.Reset();
+
+            Console.Write(PROFILER_MARKER_CACHE);
+            Console.Write("> ");
+            Console.Write(_stopwatchs[id].name);
+            Console.Write(" s:");
+
+            int written = 0;
+            if (_buffer == null) { _buffer = new char[128]; }
+            ConvertDoubleToText(time.TotalSeconds, _buffer, ref written);
+            Console.WriteLine(_buffer, 0, written);
+
             Console.ForegroundColor = color;
+#endif
         }
+
         protected override void OnDelProfilerMark(int id)
         {
-            _stopwatchs[id] = null;
+            _stopwatchs[id] = default;
         }
         protected override void OnNewProfilerMark(int id, string name)
         {
             if (id >= _stopwatchs.Length)
             {
                 Array.Resize(ref _stopwatchs, _stopwatchs.Length << 1);
-                Array.Resize(ref _stopwatchsNames, _stopwatchsNames.Length << 1);
             }
-            _stopwatchs[id] = new Stopwatch();
-            _stopwatchsNames[id] = name;
+            _stopwatchs[id] = new MarkerData(new Stopwatch(), name);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void ConvertDoubleToText(double value, char[] stringBuffer, ref int written)
+        {
+            int bufferLength = stringBuffer.Length - 1;
+
+            decimal decimalValue = (decimal)value;
+            int intValue = (int)decimalValue;
+            decimal decimalPartValue = decimalValue - intValue;
+
+            int index = written;
+
+            if (intValue == 0)
+            {
+                stringBuffer[index++] = '0';
+            }
+            else
+            {
+                while (intValue > 0)
+                {
+                    int digit = intValue % 10;
+                    stringBuffer[index++] = (char)('0' + digit);
+                    intValue /= 10;
+                }
+
+                Array.Reverse(stringBuffer, 0, index);
+            }
+
+            if (decimalPartValue != 0)
+            {
+                stringBuffer[index++] = '.';
+            }
+
+            int pathBufferLength = bufferLength - index;
+            int zeroPartLength = 0;
+            for (int i = 0; i < pathBufferLength; i++)
+            {
+                decimalPartValue = 10 * decimalPartValue;
+                int digit = (int)decimalPartValue;
+                if (digit == 0)
+                {
+                    zeroPartLength++;
+                }
+                else
+                {
+                    zeroPartLength = 0;
+                }
+                stringBuffer[index++] = (char)('0' + digit);
+                decimalPartValue -= digit;
+            }
+
+            written = bufferLength - zeroPartLength;
         }
     }
 }

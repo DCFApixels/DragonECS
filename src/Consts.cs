@@ -22,6 +22,20 @@
         public const int MAGIC_PRIME = 314159;
 
         /// defs
+
+        public const bool ENABLE_DRAGONECS_DEBUGGER =
+#if ENABLE_DRAGONECS_DEBUGGER
+            true;
+#else
+            false;
+#endif
+        public const bool ENABLE_DRAGONECS_ASSERT_CHEKS =
+#if ENABLE_DRAGONECS_ASSERT_CHEKS
+            true;
+#else
+            false;
+#endif
+
         public const bool REFLECTION_DISABLED =
 #if REFLECTION_DISABLED
             true;
@@ -34,12 +48,7 @@
 #else
             false;
 #endif
-        public const bool ENABLE_DRAGONECS_ASSERT_CHEKS =
-#if ENABLE_DRAGONECS_ASSERT_CHEKS
-            true;
-#else
-            false;
-#endif
+
         public const bool ENABLE_DUMMY_SPAN =
 #if ENABLE_DUMMY_SPAN
             true;
