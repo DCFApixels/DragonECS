@@ -26,6 +26,7 @@ namespace DCFApixels.DragonECS
         private bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
 
         private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
+        private int _listenersCachedCount = 0;
 
         private EcsWorld.PoolsMediator _mediator;
 
@@ -78,7 +79,7 @@ namespace DCFApixels.DragonECS
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             EnableComponent(ref _items[itemIndex]);
-            _listeners.InvokeOnAddAndGet(entityID);
+            _listeners.InvokeOnAddAndGet(entityID, _listenersCachedCount);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -87,7 +88,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
 #endif
-            _listeners.InvokeOnGet(entityID);
+            _listeners.InvokeOnGet(entityID, _listenersCachedCount);
             return ref _items[_mapping[entityID]];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -118,9 +119,9 @@ namespace DCFApixels.DragonECS
                 }
                 _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
                 EnableComponent(ref _items[itemIndex]);
-                _listeners.InvokeOnAdd(entityID);
+                _listeners.InvokeOnAdd(entityID, _listenersCachedCount);
             }
-            _listeners.InvokeOnGet(entityID);
+            _listeners.InvokeOnGet(entityID, _listenersCachedCount);
             return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -143,7 +144,7 @@ namespace DCFApixels.DragonECS
             itemIndex = 0;
             _itemsCount--;
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
-            _listeners.InvokeOnDel(entityID);
+            _listeners.InvokeOnDel(entityID, _listenersCachedCount);
         }
         public void TryDel(int entityID)
         {
@@ -178,7 +179,7 @@ namespace DCFApixels.DragonECS
                 DisableComponent(ref _items[itemIndex]);
                 itemIndex = 0;
                 _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
-                _listeners.InvokeOnDel(entityID);
+                _listeners.InvokeOnDel(entityID, _listenersCachedCount);
             }
         }
         #endregion
@@ -230,11 +231,15 @@ namespace DCFApixels.DragonECS
         {
             if (listener == null) { throw new ArgumentNullException("listener is null"); }
             _listeners.Add(listener);
+            _listenersCachedCount++;
         }
         public void RemoveListener(IEcsPoolEventListener listener)
         {
             if (listener == null) { throw new ArgumentNullException("listener is null"); }
-            _listeners.Remove(listener);
+            if (_listeners.Remove(listener))
+            {
+                _listenersCachedCount--;
+            }
         }
         #endregion
 

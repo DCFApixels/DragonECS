@@ -202,26 +202,49 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnAdd(this List<IEcsPoolEventListener> self, int entityID)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnAdd(entityID);
+            self.InvokeOnAdd(entityID, self.Count);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnAdd(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        {
+            for (int i = 0; i < cachedCount; i++) self[i].OnAdd(entityID);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnAddAndGet(this List<IEcsPoolEventListener> self, int entityID)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            self.InvokeOnAddAndGet(entityID, self.Count);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnAddAndGet(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        {
+            for (int i = 0; i < cachedCount; i++)
             {
                 self[i].OnAdd(entityID);
                 self[i].OnGet(entityID);
             }
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnGet(entityID);
+            self.InvokeOnGet(entityID, self.Count);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        {
+            for (int i = 1; i < cachedCount; i++) self[i].OnGet(entityID);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnDel(this List<IEcsPoolEventListener> self, int entityID)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++) self[i].OnDel(entityID);
+            self.InvokeOnDel(entityID, self.Count);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnDel(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        {
+            for (int i = 0; i < cachedCount; i++) self[i].OnDel(entityID);
         }
     }
     #endregion
