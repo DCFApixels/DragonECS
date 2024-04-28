@@ -1,32 +1,22 @@
 ﻿using System;
 
-namespace DCFApixels.DragonECS
+namespace DCFApixels.DragonECS.Internal
 {
-    public class InjectionBranch
+    internal class InjectionBranch
     {
         private readonly Injector _source;
         private readonly Type _type;
         private InjectionNodeBase[] _nodes = new InjectionNodeBase[2];
         private int _nodesCount = 0;
-        private bool _isDeclared = false;
 
         public Type Type
         {
             get { return _type; }
         }
-        public bool IsDeclared
-        {
-            get { return _isDeclared; }
-        }
-        public InjectionBranch(Injector source, Type type, bool isDeclared)
+        public InjectionBranch(Injector source, Type type)
         {
             _source = source;
-            _isDeclared = isDeclared;
             _type = type;
-        }
-        public void SetDeclaredTrue()
-        {
-            _isDeclared = true;
         }
         public void Inject(object obj)
         {
@@ -34,9 +24,9 @@ namespace DCFApixels.DragonECS
             {
                 _nodes[i].Inject(obj);
             }
-            if (obj is IInjectionBlock container)
+            if (obj is IInjectionBlock block)
             {
-                container.InjectTo(new BlockInjector(_source));
+                block.InjectTo(_source);
             }
         }
         public void AddNode(InjectionNodeBase node)

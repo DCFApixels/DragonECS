@@ -24,6 +24,13 @@ namespace DCFApixels.DragonECS
         public EcsRunnerImplementationException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
         public EcsRunnerImplementationException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
     }
+    [Serializable]
+    public class EcsInjectionException : Exception
+    {
+        public EcsInjectionException() { }
+        public EcsInjectionException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
+        public EcsInjectionException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
+    }
 }
 
 namespace DCFApixels.DragonECS.Internal

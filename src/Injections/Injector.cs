@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Internal;
+using System;
 using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
@@ -22,8 +23,11 @@ namespace DCFApixels.DragonECS
         private Dictionary<Type, InjectionNodeBase> _nodes = new Dictionary<Type, InjectionNodeBase>(32);
         private bool _isInit = false;
 
+        public EcsPipeline Pipelie { get { return _pipeline; } }
+
         private Injector() { }
 
+        #region Inject/AddNode
         public void Inject<T>(T obj)
         {
             object raw = obj;
@@ -32,18 +36,43 @@ namespace DCFApixels.DragonECS
             {
                 if (typeof(T) == type)
                 {
-                    InitNode(new InjectionNode<T>(type));
-                    branch = new InjectionBranch(this, type, true);
+                    if (_nodes.ContainsKey(type) == false)
+                    {
+                        InitNode(new InjectionNode<T>(type));
+                    }
+                    branch = new InjectionBranch(this, type);
                     InitBranch(branch);
                 }
                 else
                 {
-                    branch = new InjectionBranch(this, type, false);
-                    InitBranch(branch);
+                    bool hasNode = _nodes.ContainsKey(type);
+                    if (hasNode == false && obj is IInjectionUnit unit)
+                    {
+                        unit.OnInitInjectionBranch(new InjectionBranchIniter(this));
+                        hasNode = _nodes.ContainsKey(type);
+                    }
+                    if (hasNode)
+                    {
+                        branch = new InjectionBranch(this, type);
+                        InitBranch(branch);
+                    }
+                    else
+                    {
+                        throw new EcsInjectionException($"To create an injection branch, no injection node of {type.Name} was found. To create a node, use the AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
+                    }
                 }
             }
             branch.Inject(raw);
         }
+        public void AddNode<T>()
+        {
+            Type type = typeof(T);
+            if (_nodes.ContainsKey(type) == false)
+            {
+                InitNode(new InjectionNode<T>(type));
+            }
+        }
+        #endregion
 
         #region Internal
         private void InitBranch(InjectionBranch branch)
@@ -68,7 +97,7 @@ namespace DCFApixels.DragonECS
             _nodes.Add(node.Type, node);
             foreach (var item in _branches)
             {
-                var type = item.Key;
+                //var type = item.Key;
                 var branch = item.Value;
                 if (node.Type.IsAssignableFrom(branch.Type))
                 {
@@ -108,7 +137,7 @@ namespace DCFApixels.DragonECS
             if (IsCanInstantiated(type))
 #endif
             {
-                InitBranch(new InjectionBranch(this, type, true));
+                InitBranch(new InjectionBranch(this, type));
             }
             return true;
         }
