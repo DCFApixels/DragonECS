@@ -8,6 +8,11 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS.Internal
 {
+#if ENABLE_IL2CPP
+    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     public class SparseArray<TValue>
     {
         public const int MIN_CAPACITY_BITS_OFFSET = 4;

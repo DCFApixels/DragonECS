@@ -7,6 +7,9 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
+#if ENABLE_IL2CPP
+    using Unity.IL2CPP.CompilerServices;
+#endif
     public class EcsWorldConfig
     {
         public static readonly EcsWorldConfig Default = new EcsWorldConfig();
@@ -24,6 +27,10 @@ namespace DCFApixels.DragonECS
             PoolRecycledComponentsCapacity = poolRecycledComponentsCapacity;
         }
     }
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public partial class EcsWorld : IEntityStorage
     {

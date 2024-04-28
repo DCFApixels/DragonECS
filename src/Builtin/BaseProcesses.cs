@@ -32,6 +32,11 @@ namespace DCFApixels.DragonECS
 
 namespace DCFApixels.DragonECS.Internal
 {
+#if ENABLE_IL2CPP
+    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     [MetaColor(MetaColor.Orange)]
     internal sealed class EcsPreInitRunner : EcsRunner<IEcsPreInit>, IEcsPreInit
     {
@@ -83,6 +88,10 @@ namespace DCFApixels.DragonECS.Internal
 #endif
         }
     }
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     [MetaColor(MetaColor.Orange)]
     internal sealed class EcsInitRunner : EcsRunner<IEcsInit>, IEcsInit
     {
@@ -131,6 +140,10 @@ namespace DCFApixels.DragonECS.Internal
 #endif
         }
     }
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     [MetaColor(MetaColor.Orange)]
     internal sealed class EcsRunRunner : EcsRunner<IEcsRun>, IEcsRun
     {
@@ -179,6 +192,10 @@ namespace DCFApixels.DragonECS.Internal
 #endif
         }
     }
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     [MetaColor(MetaColor.Orange)]
     internal sealed class EcsDestroyRunner : EcsRunner<IEcsDestroy>, IEcsDestroy
     {

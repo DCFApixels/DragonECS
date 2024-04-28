@@ -7,6 +7,11 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.Internal
 {
+#if ENABLE_IL2CPP
+    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     [DebuggerTypeProxy(typeof(UnsafeArray<>.DebuggerProxy))]
     internal unsafe struct UnsafeArray<T> : IDisposable, IEnumerable<T>
         where T : unmanaged

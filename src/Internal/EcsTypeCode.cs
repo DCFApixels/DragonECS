@@ -7,6 +7,11 @@ namespace DCFApixels.DragonECS.Internal
 {
     //TODO разработать возможность ручного устанавливания ID типам.
     //это нужно для упрощения разработки сетевух
+#if ENABLE_IL2CPP
+    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     internal static class EcsTypeCode
     {
         private static readonly Dictionary<Type, int> _codes = new Dictionary<Type, int>();
@@ -31,10 +36,18 @@ namespace DCFApixels.DragonECS.Internal
         public static bool Has<T>() { return _codes.ContainsKey(typeof(T)); }
         public static IEnumerable<TypeCodeInfo> GetDeclaredTypes() { return _codes.Select(o => new TypeCodeInfo(o.Key, o.Value)); }
     }
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     internal static class EcsTypeCodeCache<T>
     {
         public static readonly int code = EcsTypeCode.Get(typeof(T));
     }
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     internal struct TypeCodeInfo
     {
         public Type type;

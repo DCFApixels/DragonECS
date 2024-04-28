@@ -10,6 +10,11 @@ using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
+#if ENABLE_IL2CPP
+    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     //_dense заполняется с индекса 1
     //в операциях изменяющих состояние группы нельзя итерироваться по this, либо осторожно учитывать этот момент
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
@@ -140,6 +145,10 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+#if ENABLE_IL2CPP
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public class EcsGroup : IDisposable, IEnumerable<int>, IEntityStorage
     {

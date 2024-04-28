@@ -6,6 +6,11 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+#if ENABLE_IL2CPP
+    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly ref struct EcsSpan
     {
@@ -37,6 +42,9 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new EcsLongsSpan(this); }
         }
+#if ENABLE_IL2CPP
+        [Il2CppSetOption(Option.ArrayBoundsChecks, true)]
+#endif
         public int this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -137,6 +145,10 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+#if ENABLE_IL2CPP
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     [DebuggerTypeProxy(typeof(EcsSpan.DebuggerProxy))]
     public readonly ref struct EcsLongsSpan
     {
@@ -162,6 +174,9 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.Count; }
         }
+#if ENABLE_IL2CPP
+        [Il2CppSetOption(Option.ArrayBoundsChecks, true)]
+#endif
         public entlong this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

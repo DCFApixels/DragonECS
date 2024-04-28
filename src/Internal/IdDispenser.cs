@@ -6,9 +6,14 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.Internal
 {
+#if ENABLE_IL2CPP
+    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     [Serializable]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public class IdDispenser : IEnumerable<int>, IReadOnlyCollection<int>
+    internal class IdDispenser : IEnumerable<int>, IReadOnlyCollection<int>
     {
         private const int MIN_SIZE = 4;
 
@@ -24,14 +29,17 @@ namespace DCFApixels.DragonECS.Internal
         /// <summary> Used Count </summary>
         public int Count
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _usedCount; }
         }
         public int Size
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _size; }
         }
         public int NullID
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _nullID; }
         }
         #endregion

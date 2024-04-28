@@ -6,6 +6,10 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+#if ENABLE_IL2CPP
+    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption (Option.NullChecks, false)]
+#endif
     public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {
