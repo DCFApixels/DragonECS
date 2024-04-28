@@ -5,6 +5,8 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.Internal
 {
+    //TODO разработать возможность ручного устанавливания ID типам.
+    //это нужно для упрощения разработки сетевух
     internal static class EcsTypeCode
     {
         private static readonly Dictionary<Type, int> _codes = new Dictionary<Type, int>();

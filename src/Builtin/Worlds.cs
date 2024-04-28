@@ -3,15 +3,23 @@
 namespace DCFApixels.DragonECS
 {
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public sealed class EcsDefaultWorld : EcsWorld
+    public sealed class EcsDefaultWorld : EcsWorld, IInjectionUnit
     {
         public EcsDefaultWorld(EcsWorldConfig config, short worldID = -1) : base(config, worldID) { }
         public EcsDefaultWorld(IConfigContainer configs = null, short worldID = -1) : base(configs, worldID) { }
+        void IInjectionUnit.OnInitInjectionBranch(InjectionBranchIniter initer)
+        {
+            initer.AddNode<EcsDefaultWorld>();
+        }
     }
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public sealed class EcsEventWorld : EcsWorld
+    public sealed class EcsEventWorld : EcsWorld, IInjectionUnit
     {
         public EcsEventWorld(EcsWorldConfig config, short worldID = -1) : base(config, worldID) { }
         public EcsEventWorld(IConfigContainer configs = null, short worldID = -1) : base(configs, worldID) { }
+        void IInjectionUnit.OnInitInjectionBranch(InjectionBranchIniter initer)
+        {
+            initer.AddNode<EcsDefaultWorld>();
+        }
     }
 }

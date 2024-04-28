@@ -6,10 +6,7 @@ namespace DCFApixels.DragonECS
     {
         public static EcsPipeline.Builder Inject<T>(this EcsPipeline.Builder self, T data)
         {
-            if (data == null)
-            {
-                Throw.ArgumentNull();
-            }
+            if (data == null) { Throw.ArgumentNull(); }
             self.Injector.Inject(data);
             if (data is IEcsModule module)
             {

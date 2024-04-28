@@ -85,6 +85,10 @@ namespace DCFApixels.DragonECS
         {
             throw new EcsFrameworkException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName(type)}.");
         }
+        public static void ThrowNullListener()
+        {
+            throw new ArgumentNullException("listener is null");
+        }
     }
     public static class IEcsPoolImplementationExtensions
     {

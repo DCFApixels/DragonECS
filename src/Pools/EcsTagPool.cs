@@ -97,6 +97,7 @@ namespace DCFApixels.DragonECS
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
             _listeners.InvokeOnDel(entityID, _listenersCachedCount);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TryDel(int entityID)
         {
             if (Has(entityID))
@@ -120,16 +121,13 @@ namespace DCFApixels.DragonECS
         }
         public void Set(int entityID, bool isHas)
         {
-            if (isHas)
+            if (isHas != Has(entityID))
             {
-                if (!Has(entityID))
+                if (isHas)
                 {
                     Add(entityID);
                 }
-            }
-            else
-            {
-                if (Has(entityID))
+                else
                 {
                     Del(entityID);
                 }
@@ -228,13 +226,13 @@ namespace DCFApixels.DragonECS
         #region Listeners
         public void AddListener(IEcsPoolEventListener listener)
         {
-            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            if (listener == null) { EcsPoolThrowHalper.ThrowNullListener(); }
             _listeners.Add(listener);
             _listenersCachedCount++;
         }
         public void RemoveListener(IEcsPoolEventListener listener)
         {
-            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            if (listener == null) { EcsPoolThrowHalper.ThrowNullListener(); }
             if (_listeners.Remove(listener))
             {
                 _listenersCachedCount--;

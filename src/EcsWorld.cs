@@ -256,7 +256,7 @@ namespace DCFApixels.DragonECS
             _entitiesCount++;
             ref var slot = ref _entities[entityID];
             slot.isUsed = true;
-            if(slot.gen >= 0)
+            if (slot.gen >= 0)
             { //если gen был пробужен у не мертвой сущности, то для отличия от мертвой, нужно инкрементировать и усыпить
                 slot.gen++;
                 slot.gen &= SLEEP_GEN_MASK;

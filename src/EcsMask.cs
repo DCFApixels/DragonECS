@@ -313,8 +313,8 @@ namespace DCFApixels.DragonECS
             }
             public bool Equals(OpMaskKey other)
             {
-                return leftMaskID == other.leftMaskID && 
-                    rightMaskID == other.rightMaskID && 
+                return leftMaskID == other.leftMaskID &&
+                    rightMaskID == other.rightMaskID &&
                     operation == other.operation;
             }
             public override int GetHashCode()
@@ -585,7 +585,7 @@ namespace DCFApixels.DragonECS
                 {
                     foreach (var item in _excepteds)
                     {
-                        if(combinedInc.Overlaps(item.mask._exc) || combinedExc.Overlaps(item.mask._inc))
+                        if (combinedInc.Overlaps(item.mask._exc) || combinedExc.Overlaps(item.mask._inc))
                         {
                             _combineds.Clear();
                             _excepteds.Clear();

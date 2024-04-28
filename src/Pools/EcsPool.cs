@@ -229,13 +229,13 @@ namespace DCFApixels.DragonECS
         #region Listeners
         public void AddListener(IEcsPoolEventListener listener)
         {
-            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            if (listener == null) { EcsPoolThrowHalper.ThrowNullListener(); }
             _listeners.Add(listener);
             _listenersCachedCount++;
         }
         public void RemoveListener(IEcsPoolEventListener listener)
         {
-            if (listener == null) { throw new ArgumentNullException("listener is null"); }
+            if (listener == null) { EcsPoolThrowHalper.ThrowNullListener(); }
             if (_listeners.Remove(listener))
             {
                 _listenersCachedCount--;
