@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
         }
         public MetaGroupAttribute(params string[] path)
         {
-            Data = new MetaGroupRef(string.Join('/', path));
+            Data = new MetaGroupRef(string.Join("/", path));
         }
     }
     public class MetaGroupRef
@@ -27,13 +27,14 @@ namespace DCFApixels.DragonECS
         public readonly string Name;
         private string[] path = null;
         private static string pattern = @"Module(?=/)";
+        private static char[] separatpor = new char[] { '/' };
         public IReadOnlyCollection<string> Splited
         {
             get
             {
                 if (path == null)
                 {
-                    path = Name.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                    path = Name.Split(separatpor, StringSplitOptions.RemoveEmptyEntries);
                 }
                 return path;
             }

@@ -34,7 +34,7 @@ namespace DCFApixels.DragonECS.UncheckedCore
         }
         public static bool CheckSpanValideDebug(EcsSpan span)
         {
-            HashSet<int> set = new HashSet<int>(span.Count);
+            HashSet<int> set = new HashSet<int>();
             foreach (var e in span)
             {
                 if (set.Add(e) == false)
