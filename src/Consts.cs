@@ -81,14 +81,14 @@
 namespace Unity.IL2CPP.CompilerServices 
 {
     using System;
-    public enum Option 
+    internal enum Option 
     {
         NullChecks = 1,
         ArrayBoundsChecks = 2,
         DivideByZeroChecks = 3,
     }
     [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Delegate, Inherited = false, AllowMultiple = true)]
-    public class Il2CppSetOptionAttribute : Attribute
+    internal class Il2CppSetOptionAttribute : Attribute
     {
         public Option Option { get; private set; }
         public object Value { get; private set; }
