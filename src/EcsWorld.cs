@@ -796,7 +796,7 @@ namespace DCFApixels.DragonECS
             }
             public long Version { get { return _world.Version; } }
             public IEcsPool[] Pools { get { return _world._pools; } }
-            public TypeMeta _TypeMeta { get { return _world.GetMeta(); } }
+            public TypeMeta __META { get { return _world.GetMeta(); } }
             public DebuggerProxy(EcsWorld world)
             {
                 _world = world;
