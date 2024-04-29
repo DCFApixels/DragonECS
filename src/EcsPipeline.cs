@@ -497,6 +497,7 @@ namespace DCFApixels.DragonECS
     #region SystemsLayerMarkerSystem
     [MetaTags(MetaTags.HIDDEN)]
     [MetaColor(MetaColor.Black)]
+    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     public class SystemsLayerMarkerSystem : IEcsProcess
     {
         public readonly string name;

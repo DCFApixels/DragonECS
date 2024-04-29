@@ -6,12 +6,14 @@ namespace DCFApixels.DragonECS
 {
     [MetaName(nameof(Inject))]
     [MetaColor(MetaColor.Orange)]
+    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     public interface IEcsInject<T> : IEcsProcess
     {
         void Inject(T obj);
     }
     [MetaName(nameof(OnInitInjectionComplete))]
     [MetaColor(MetaColor.Orange)]
+    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     public interface IOnInitInjectionComplete : IEcsProcess
     {
         void OnInitInjectionComplete();
