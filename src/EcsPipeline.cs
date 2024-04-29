@@ -662,6 +662,7 @@ namespace DCFApixels.DragonECS
             {
                 get { return _process.Length; }
             }
+            public TypeMeta __META { get { return typeof(TProcess).ToMeta(); } }
             public DebuggerProxy(EcsProcess<TProcess> process)
             {
                 _process = process;
