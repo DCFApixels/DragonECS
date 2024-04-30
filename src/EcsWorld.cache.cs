@@ -1,4 +1,6 @@
-﻿namespace DCFApixels.DragonECS
+﻿using DCFApixels.DragonECS.PoolsCore;
+
+namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {

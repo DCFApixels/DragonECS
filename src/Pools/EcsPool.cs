@@ -1,4 +1,5 @@
 using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,6 +7,8 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    /// <summary>Standard component</summary>
+    public interface IEcsComponent : IEcsComponentType { }
 #if ENABLE_IL2CPP
     using Unity.IL2CPP.CompilerServices;
     [Il2CppSetOption (Option.NullChecks, false)]
@@ -297,8 +300,6 @@ namespace DCFApixels.DragonECS
         public static implicit operator EcsPool<T>(OptionalMarker a) { return a.GetInstance<EcsPool<T>>(); }
         #endregion
     }
-    /// <summary>Standard component</summary>
-    public interface IEcsComponent { }
     public static class EcsPoolExt
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

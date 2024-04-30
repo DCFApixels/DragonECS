@@ -1,4 +1,5 @@
 ﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

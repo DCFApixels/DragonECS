@@ -1,3 +1,4 @@
+using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,6 +7,8 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    /// <summary>Component without data</summary>
+    public interface IEcsTagComponent : IEcsComponentType { }
 #if ENABLE_IL2CPP
     using Unity.IL2CPP.CompilerServices;
     [Il2CppSetOption (Option.NullChecks, false)]
@@ -255,9 +258,6 @@ namespace DCFApixels.DragonECS
         public static implicit operator EcsTagPool<T>(OptionalMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         #endregion
     }
-
-    /// <summary>Component without data</summary>
-    public interface IEcsTagComponent { }
     public static class EcsTagPoolExt
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
