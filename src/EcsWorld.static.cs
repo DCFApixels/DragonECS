@@ -124,6 +124,10 @@ namespace DCFApixels.DragonECS
             }
             private static void Release(int worldID)
             {
+                if (_mapping.Length < _worlds.Length)
+                {
+                    Array.Resize(ref _mapping, _worlds.Length);
+                }
                 ref short itemIndex = ref _mapping[worldID];
                 if (itemIndex != 0)
                 {
