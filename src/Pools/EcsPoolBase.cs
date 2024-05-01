@@ -130,8 +130,10 @@ namespace DCFApixels.DragonECS.Internal
         #endregion
 
         #region Listeners
+#if !DISABLE_POOLS_EVENTS
         void IEcsReadonlyPool.AddListener(IEcsPoolEventListener listener) { }
         void IEcsReadonlyPool.RemoveListener(IEcsPoolEventListener listener) { }
+#endif
         #endregion
     }
 }
