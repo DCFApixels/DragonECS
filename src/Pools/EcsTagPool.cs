@@ -9,10 +9,14 @@ namespace DCFApixels.DragonECS
 {
     /// <summary>Component without data</summary>
     public interface IEcsTagComponent : IEcsComponentType { }
+
 #if ENABLE_IL2CPP
     using Unity.IL2CPP.CompilerServices;
     [Il2CppSetOption (Option.NullChecks, false)]
 #endif
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
+    /// <summary>Pool for IEcsTagComponent components</summary>
     public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {

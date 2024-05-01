@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 //using System.Runtime.Serialization;
 
 namespace DCFApixels.DragonECS
@@ -408,7 +407,7 @@ namespace DCFApixels.DragonECS
             {
                 get
                 {
-                    if(State == EntState.Alive)
+                    if (State == EntState.Alive)
                     {
                         World.GetComponentsFor(id, _componentsList);
                         return _componentsList;
