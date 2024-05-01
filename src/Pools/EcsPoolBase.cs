@@ -156,10 +156,12 @@ namespace DCFApixels.DragonECS
         void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID);
         #endregion
 
+#if !DISABLE_POOLS_EVENTS
         #region Add/Remove Listeners
         void AddListener(IEcsPoolEventListener listener);
         void RemoveListener(IEcsPoolEventListener listener);
         #endregion
+#endif
     }
     public interface IEcsPool : IEcsReadonlyPool
     {
@@ -218,6 +220,7 @@ namespace DCFApixels.DragonECS
         /// <summary>Called after deleting an entity from the pool</summary>
         void OnDel(int entityID);
     }
+#if !DISABLE_POOLS_EVENTS
     public static class PoolEventListExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -268,5 +271,6 @@ namespace DCFApixels.DragonECS
             for (int i = 0; i < cachedCount; i++) self[i].OnDel(entityID);
         }
     }
+#endif
     #endregion
 }

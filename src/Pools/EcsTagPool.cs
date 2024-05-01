@@ -29,8 +29,10 @@ namespace DCFApixels.DragonECS
         private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private int _count = 0;
 
+#if !DISABLE_POOLS_EVENTS
         private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
         private int _listenersCachedCount = 0;
+#endif
 
         private T _fakeComponent;
         private EcsWorld.PoolsMediator _mediator;
@@ -86,7 +88,9 @@ namespace DCFApixels.DragonECS
             _count++;
             _mapping[entityID] = true;
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
+#if !DISABLE_POOLS_EVENTS
             _listeners.InvokeOnAdd(entityID, _listenersCachedCount);
+#endif
         }
         public void TryAdd(int entityID)
         {
@@ -108,7 +112,9 @@ namespace DCFApixels.DragonECS
             _mapping[entityID] = false;
             _count--;
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
+#if !DISABLE_POOLS_EVENTS
             _listeners.InvokeOnDel(entityID, _listenersCachedCount);
+#endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TryDel(int entityID)
@@ -166,7 +172,9 @@ namespace DCFApixels.DragonECS
             {
                 _mapping[entityID] = false;
                 _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
+#if !DISABLE_POOLS_EVENTS
                 _listeners.InvokeOnDel(entityID, _listenersCachedCount);
+#endif
             }
         }
         #endregion
@@ -237,6 +245,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Listeners
+#if !DISABLE_POOLS_EVENTS
         public void AddListener(IEcsPoolEventListener listener)
         {
             if (listener == null) { EcsPoolThrowHalper.ThrowNullListener(); }
@@ -251,6 +260,7 @@ namespace DCFApixels.DragonECS
                 _listenersCachedCount--;
             }
         }
+#endif
         #endregion
 
         #region IEnumerator - IntelliSense hack

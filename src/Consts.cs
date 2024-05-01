@@ -22,7 +22,13 @@
         public const int MAGIC_PRIME = 314159;
 
         /// defs
-
+        
+        public const bool DISABLE_POOLS_EVENTS =
+#if DISABLE_POOLS_EVENTS
+            true;
+#else
+    false;
+#endif
         public const bool ENABLE_DRAGONECS_DEBUGGER =
 #if ENABLE_DRAGONECS_DEBUGGER
             true;
