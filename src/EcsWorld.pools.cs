@@ -245,6 +245,7 @@ namespace DCFApixels.DragonECS
             int newChunk = chunk | maskBit.mask;
             if (chunk != newChunk)
             {
+                UpVersion();
                 chunk = newChunk;
                 _poolComponentCounts[componentTypeID]++;
                 _entities[entityID].componentsCount++;
@@ -259,6 +260,7 @@ namespace DCFApixels.DragonECS
             int newChunk = chunk & ~maskBit.mask;
             if (chunk != newChunk)
             {
+                UpVersion();
                 _poolComponentCounts[componentTypeID]--;
                 var count = --_entities[entityID].componentsCount;
                 chunk = newChunk;
