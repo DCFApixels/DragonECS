@@ -2,6 +2,8 @@
 
 namespace DCFApixels.DragonECS
 {
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsDefaultWorld : EcsWorld, IInjectionUnit
     {
@@ -12,6 +14,8 @@ namespace DCFApixels.DragonECS
             initer.AddNode<EcsDefaultWorld>();
         }
     }
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsEventWorld : EcsWorld, IInjectionUnit
     {

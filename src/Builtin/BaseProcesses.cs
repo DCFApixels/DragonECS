@@ -5,28 +5,28 @@ using System;
 namespace DCFApixels.DragonECS
 {
     [MetaName(nameof(PreInit))]
-    [MetaColor(MetaColor.Orange)]
+    [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     public interface IEcsPreInit : IEcsProcess
     {
         void PreInit();
     }
     [MetaName(nameof(Init))]
-    [MetaColor(MetaColor.Orange)]
+    [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     public interface IEcsInit : IEcsProcess
     {
         void Init();
     }
     [MetaName(nameof(Run))]
-    [MetaColor(MetaColor.Orange)]
+    [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     public interface IEcsRun : IEcsProcess
     {
         void Run();
     }
     [MetaName(nameof(Destroy))]
-    [MetaColor(MetaColor.Orange)]
+    [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     public interface IEcsDestroy : IEcsProcess
     {
@@ -41,7 +41,7 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    [MetaColor(MetaColor.Orange)]
+    [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     internal sealed class EcsPreInitRunner : EcsRunner<IEcsPreInit>, IEcsPreInit
     {
@@ -97,7 +97,7 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    [MetaColor(MetaColor.Orange)]
+    [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     internal sealed class EcsInitRunner : EcsRunner<IEcsInit>, IEcsInit
     {
@@ -150,7 +150,7 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    [MetaColor(MetaColor.Orange)]
+    [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     internal sealed class EcsRunRunner : EcsRunner<IEcsRun>, IEcsRun
     {
@@ -203,7 +203,7 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    [MetaColor(MetaColor.Orange)]
+    [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
     internal sealed class EcsDestroyRunner : EcsRunner<IEcsDestroy>, IEcsDestroy
     {

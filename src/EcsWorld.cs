@@ -28,6 +28,9 @@ namespace DCFApixels.DragonECS
             PoolRecycledComponentsCapacity = poolRecycledComponentsCapacity;
         }
     }
+
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -797,7 +800,6 @@ namespace DCFApixels.DragonECS
             }
             public long Version { get { return _world.Version; } }
             public IEcsPool[] Pools { get { return _world._pools; } }
-            public TypeMeta __META { get { return _world.GetMeta(); } }
             public DebuggerProxy(EcsWorld world)
             {
                 _world = world;

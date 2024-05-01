@@ -156,36 +156,36 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetDescription
-        public static string GetDescription(object obj)
+        public static MetaDescription GetDescription(object obj)
         {
             return GetTypeMeta(obj).Description;
         }
-        public static string GetDescription<T>()
+        public static MetaDescription GetDescription<T>()
         {
             return GetTypeMeta<T>().Description;
         }
-        public static string GetDescription(Type type)
+        public static MetaDescription GetDescription(Type type)
         {
             return GetTypeMeta(type).Description;
         }
 
-        public static bool TryGetDescription(object obj, out string description)
+        public static bool TryGetDescription(object obj, out MetaDescription description)
         {
             TypeMeta meta = GetTypeMeta(obj);
             description = meta.Description;
-            return string.IsNullOrEmpty(description);
+            return description != MetaDescription.Empty;
         }
-        public static bool TryGetDescription<T>(out string description)
+        public static bool TryGetDescription<T>(out MetaDescription description)
         {
             TypeMeta meta = GetTypeMeta<T>();
             description = meta.Description;
-            return string.IsNullOrEmpty(description);
+            return description != MetaDescription.Empty;
         }
-        public static bool TryGetDescription(Type type, out string description)
+        public static bool TryGetDescription(Type type, out MetaDescription description)
         {
             TypeMeta meta = GetTypeMeta(type);
             description = meta.Description;
-            return string.IsNullOrEmpty(description);
+            return description != MetaDescription.Empty;
         }
         #endregion
 
@@ -207,19 +207,19 @@ namespace DCFApixels.DragonECS
         {
             TypeMeta meta = GetTypeMeta(obj);
             group = meta.Group;
-            return group.IsNull;
+            return group != MetaGroup.Empty;
         }
         public static bool TryGetGroup<T>(out MetaGroup group)
         {
             TypeMeta meta = GetTypeMeta<T>();
             group = meta.Group;
-            return group.IsNull;
+            return group != MetaGroup.Empty;
         }
         public static bool TryGetGroup(Type type, out MetaGroup group)
         {
             TypeMeta meta = GetTypeMeta(type);
             group = meta.Group;
-            return group.IsNull;
+            return group != MetaGroup.Empty;
         }
         #endregion
 
@@ -308,7 +308,7 @@ namespace DCFApixels.DragonECS
     {
         string Name { get; }
         MetaColor Color { get; }
-        string Description { get; }
+        MetaDescription Description { get; }
         MetaGroup Group { get; }
         IReadOnlyCollection<string> Tags { get; }
     }
@@ -324,7 +324,7 @@ namespace DCFApixels.DragonECS
 
         private string _name;
         private MetaColor _color;
-        private string _description;
+        private MetaDescription _description;
         private MetaGroup _group;
         private IReadOnlyCollection<string> _tags;
         private int _typeCode;
@@ -400,7 +400,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Description
-        public string Description
+        public MetaDescription Description
         {
             get
             {
@@ -520,7 +520,7 @@ namespace DCFApixels.DragonECS
             {
                 get { return _meta.Color; }
             }
-            public string Description
+            public MetaDescription Description
             {
                 get { return _meta.Description; }
             }
@@ -587,10 +587,10 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetDescription
-            public static string GetDescription(Type type)
+            public static MetaDescription GetDescription(Type type)
             {
                 bool isCustom = type.TryGetCustomAttribute(out MetaDescriptionAttribute atr);
-                return isCustom ? atr.description : string.Empty;
+                return isCustom ? atr.Data : MetaDescription.Empty;
             }
             #endregion
 

@@ -1,14 +1,44 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
     public sealed class MetaDescriptionAttribute : EcsMetaAttribute
     {
-        public readonly string description;
-        public MetaDescriptionAttribute(string description)
+        public readonly MetaDescription Data;
+        public MetaDescriptionAttribute(string text)
         {
-            this.description = description;
+            Data = new MetaDescription(null, text);
         }
+        public MetaDescriptionAttribute(string author, string text)
+        {
+            Data = new MetaDescription(author, text);
+        }
+    }
+    public class MetaDescription
+    {
+        public static readonly MetaDescription Empty = new MetaDescription(null, null);
+        public readonly string Author;
+        public readonly string Text;
+        public MetaDescription(string author, string text)
+        {
+            if (author == null) { author = string.Empty; }
+            if (text == null) { text = string.Empty; }
+            Author = author;
+            Text = text;
+        }
+        public override string ToString()
+        {
+            if (string.IsNullOrEmpty(Author))
+            {
+                return Text;
+            }
+            else
+            {
+                return $"[{Author}] Text";
+            }
+        }
+
     }
 }

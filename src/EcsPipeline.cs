@@ -550,11 +550,11 @@ namespace DCFApixels.DragonECS
         internal class DebuggerProxy
         {
             private EcsProcessRaw _process;
-            public IEnumerable<TypeMeta> Systems
+            public IEnumerable<IEcsProcess> Systems
             {
                 get
                 {
-                    return _process._systems.Cast<IEcsProcess>().Select(o => o.GetMeta()).ToArray();
+                    return _process._systems.Cast<IEcsProcess>().ToArray();
                 }
             }
             public int Count
@@ -652,35 +652,20 @@ namespace DCFApixels.DragonECS
         internal class DebuggerProxy
         {
             private EcsProcess<TProcess> _process;
-            public IEnumerable<SystemInfoWrapper> Systems
+            public IEnumerable<IEcsProcess> Systems
             {
                 get
                 {
-                    return _process._systems.Select(o => new SystemInfoWrapper(o)).ToArray();
+                    return _process._systems.Cast<IEcsProcess>().ToArray();
                 }
             }
             public int Count
             {
                 get { return _process.Length; }
             }
-            public TypeMeta __META { get { return typeof(TProcess).ToMeta(); } }
             public DebuggerProxy(EcsProcess<TProcess> process)
             {
                 _process = process;
-            }
-
-            public readonly struct SystemInfoWrapper
-            {
-                public readonly TProcess System;
-                public SystemInfoWrapper(TProcess system)
-                {
-                    System = system;
-                }
-                public TypeMeta __META { get { return System.GetMeta(); } }
-                public override string ToString()
-                {
-                    return System.GetMeta().Name;
-                }
             }
 
         }

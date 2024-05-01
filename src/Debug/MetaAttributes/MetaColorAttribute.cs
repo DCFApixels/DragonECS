@@ -1,6 +1,8 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Xml.Linq;
 
 namespace DCFApixels.DragonECS
 {
@@ -117,6 +119,12 @@ namespace DCFApixels.DragonECS
         public const int White = -1;
         /// <summary> color code Black. RGB is (0, 0, 0)</summary>
         public const int Black = 0;
+
+
+        /// <summary> RGB is (255, 78, 133) color code </summary>
+        public const int DragonRose = (255 << 24) | (78 << 16) | (133 << 8) | 255;
+        /// <summary> RGB is (0, 255, 156) color code </summary>
+        public const int DragonCyan = (0 << 24) | (255 << 16) | (156 << 8) | 255;
         #endregion
 
         [FieldOffset(0)] public readonly int colorCode;
@@ -329,5 +337,7 @@ namespace DCFApixels.DragonECS
                 (byte)(a.b - b.b));
         }
         #endregion
+
+        public override string ToString() { return $"({r}, {g}, {b})"; }
     }
 }
