@@ -210,7 +210,7 @@ namespace DCFApixels.DragonECS
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.BackgroundColor = ConsoleColor.Black;
-#if !DISABLE_DRAGONECS_DEBUGGER
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
             _stopwatchs = new MarkerData[64];
 #endif
         }
@@ -252,7 +252,8 @@ namespace DCFApixels.DragonECS
         private const string PROFILER_MARKER_CACHE = "[" + PROFILER_MARKER + "] ";
         public override void ProfilerMarkBegin(int id)
         {
-#if !UNITY_EDITOR
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER) && !UNITY_5_3_OR_NEWER
+
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
             _stopwatchs[id].stopwatch.Start();
@@ -266,7 +267,7 @@ namespace DCFApixels.DragonECS
         }
         public override void ProfilerMarkEnd(int id)
         {
-#if !UNITY_EDITOR
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER) && !UNITY_5_3_OR_NEWER
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
             _stopwatchs[id].stopwatch.Stop();

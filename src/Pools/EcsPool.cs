@@ -4,6 +4,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+#if ENABLE_IL2CPP
+using Unity.IL2CPP.CompilerServices;
+#endif
 
 namespace DCFApixels.DragonECS
 {
@@ -11,7 +14,6 @@ namespace DCFApixels.DragonECS
     public interface IEcsComponent : IEcsComponentType { }
 
 #if ENABLE_IL2CPP
-    using Unity.IL2CPP.CompilerServices;
     [Il2CppSetOption (Option.NullChecks, false)]
 #endif
     [MetaColor(MetaColor.DragonRose)]
