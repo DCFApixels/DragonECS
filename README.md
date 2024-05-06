@@ -46,6 +46,11 @@ The framework can also be added to the project as source code.
 
 </br>
 
+# Projects powered by DragonECS
+* [3D Platformer (Example)](https://github.com/DCFApixels/3D-Platformer-DragonECS)
+
+</br>
+
 # Extensions
 * [Unity integration](https://github.com/DCFApixels/DragonECS-Unity)
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
