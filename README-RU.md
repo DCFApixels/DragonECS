@@ -45,6 +45,7 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
 - [Расширение фреймворка](#расширение-фреймворка)
   - [Компоненты мира](#компоненты-мира)
   - [Конфиги](#конфиги)
+- [Проекты на DragonECS](#Проекты-на-DragonECS)
 - [Расширения](#расширения)
 - [FAQ](#faq)
 - [Обратная связь](#обратная-связь)
@@ -811,6 +812,12 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 }
 ```
 </details>
+
+</br>
+
+# Проекты на DragonECS
+* [3D Platformer (Example)](https://github.com/DCFApixels/3D-Platformer-DragonECS)
+![alt text](https://i.ibb.co/hm7Lrm4/Platformer.png)
 
 </br>
 
