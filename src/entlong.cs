@@ -16,12 +16,23 @@ namespace DCFApixels.DragonECS
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     //[DataContract]
     [Serializable]
-    public readonly struct entlong : IEquatable<long>, IEquatable<entlong>
+#if UNITY_EDITOR
+    public
+#else
+    public readonly
+#endif
+        struct entlong : IEquatable<long>, IEquatable<entlong>
     {
         public static readonly entlong NULL = default;
         //[DataMember]
         [FieldOffset(0)]
-        internal readonly long _full; //Union
+#if UNITY_EDITOR
+        [UnityEngine.SerializeField]
+        internal
+#else
+        internal readonly
+#endif
+            long _full; //Union
         [FieldOffset(0), NonSerialized]
         internal readonly int _id;
         [FieldOffset(4), NonSerialized]
@@ -343,6 +354,17 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
+        public EntitySlotInfo(long full)
+        {
+            unchecked
+            {
+                ulong ufull = (ulong)full;
+                id = (int)((ufull >> 0) & 0x0000_0000_FFFF_FFFF);
+                gen = (short)((ufull >> 32) & 0x0000_0000_0000_FFFF);
+                world = (short)((ufull >> 48) & 0x0000_0000_0000_FFFF);
+                _full = full;
+            }
+        }
         public EntitySlotInfo(int id, short gen, short world)
         {
             this.id = id;
