@@ -22,7 +22,7 @@
         public const int MAGIC_PRIME = 314159;
 
         /// defs
-        
+
         public const bool DISABLE_POOLS_EVENTS =
 #if DISABLE_POOLS_EVENTS
             true;

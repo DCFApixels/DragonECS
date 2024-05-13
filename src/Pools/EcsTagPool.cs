@@ -54,7 +54,7 @@ namespace DCFApixels.DragonECS
             }
         }
 #endif
-#endregion
+        #endregion
 
         #region Properites
         public int Count
