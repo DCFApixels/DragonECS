@@ -306,6 +306,7 @@ namespace DCFApixels.DragonECS
 
     public interface ITypeMeta
     {
+        Type Type { get; }
         string Name { get; }
         MetaColor Color { get; }
         MetaDescription Description { get; }
@@ -512,6 +513,10 @@ namespace DCFApixels.DragonECS
         private class DebuggerProxy : ITypeMeta
         {
             private readonly TypeMeta _meta;
+            public Type Type
+            {
+                get { return _meta.Type; }
+            }
             public string Name
             {
                 get { return _meta.Name; }
@@ -570,7 +575,7 @@ namespace DCFApixels.DragonECS
             #region GetColor
             private static MetaColor AutoColor(Type type)
             {
-                return new MetaColor(type.Name).Desaturate(0.48f) / 1.18f;
+                return new MetaColor(type.Name).UpContrast();//.Desaturate(0.48f) / 1.18f;
             }
             public static (MetaColor, bool) GetColor(Type type)
             {

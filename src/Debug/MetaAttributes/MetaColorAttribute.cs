@@ -70,7 +70,7 @@ namespace DCFApixels.DragonECS
     }
 
     [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 4)]
-    public readonly struct MetaColor : IMetaColor
+    public readonly struct MetaColor : IMetaColor, IEquatable<MetaColor>
     {
         #region Consts
         public static readonly MetaColor BlackColor = new MetaColor(Black);
@@ -246,6 +246,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Operators
+        public static bool operator ==(MetaColor a, MetaColor b) { return a.colorCode == b.colorCode; }
+        public static bool operator !=(MetaColor a, MetaColor b) { return a.colorCode != b.colorCode; }
+
         public static MetaColor operator /(MetaColor a, float b)
         {
             return new MetaColor(
@@ -337,5 +340,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         public override string ToString() { return $"({r}, {g}, {b})"; }
+        public bool Equals(MetaColor other) { return colorCode == other.colorCode; }
+        public override bool Equals(object obj) { return obj is MetaColor other && Equals(other); }
+        public override int GetHashCode() { return colorCode; }
     }
 }
