@@ -16,7 +16,7 @@ namespace DCFApixels.DragonECS
         private long _lastWorldVersion;
 
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-        private readonly EcsProfilerMarker _executeMarker = new EcsProfilerMarker("Where");
+        //private readonly EcsProfilerMarker _executeMarker = new EcsProfilerMarker("Where");
 #endif
 
         #region Properties
@@ -51,7 +51,7 @@ namespace DCFApixels.DragonECS
         public EcsSpan ExecuteFor(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            _executeMarker.Begin();
+            //_executeMarker.Begin();
             if (span.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
             if (span.WorldID != WorldID) throw new System.ArgumentException();//TODO составить текст исключения. 
 #endif
@@ -67,7 +67,7 @@ namespace DCFApixels.DragonECS
                 result = new EcsSpan(WorldID, _filteredEntities, _filteredEntitiesCount);
             }
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            _executeMarker.End();
+            //_executeMarker.End();
 #endif
             return result;
         }
