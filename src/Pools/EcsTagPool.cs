@@ -11,7 +11,7 @@ using Unity.IL2CPP.CompilerServices;
 namespace DCFApixels.DragonECS
 {
     /// <summary>Component without data</summary>
-    public interface IEcsTagComponent : IEcsComponentType { }
+    public interface IEcsTagComponent : IEcsMember { }
 
 #if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]

@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public partial class EcsWorld : IEntityStorage
+    public partial class EcsWorld : IEntityStorage, IEcsMember
     {
         public readonly short id;
         private IConfigContainer _configs;

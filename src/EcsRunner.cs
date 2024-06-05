@@ -1,4 +1,5 @@
 ﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.PoolsCore;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Linq;
@@ -6,7 +7,7 @@ using static DCFApixels.DragonECS.EcsDebugUtility;
 
 namespace DCFApixels.DragonECS
 {
-    public interface IEcsProcess { }
+    public interface IEcsProcess : IEcsMember { }
 
     namespace RunnersCore
     {

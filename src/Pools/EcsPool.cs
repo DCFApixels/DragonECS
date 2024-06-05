@@ -11,7 +11,7 @@ using Unity.IL2CPP.CompilerServices;
 namespace DCFApixels.DragonECS
 {
     /// <summary>Standard component</summary>
-    public interface IEcsComponent : IEcsComponentType { }
+    public interface IEcsComponent : IEcsMember { }
 
 #if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]

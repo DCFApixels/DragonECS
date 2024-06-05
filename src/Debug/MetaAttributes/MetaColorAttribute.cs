@@ -1,5 +1,6 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
@@ -339,7 +340,61 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        public override string ToString() { return $"({r}, {g}, {b})"; }
+        public override string ToString() { return $"({r}, {g}, {b}, {a})"; }
+        public unsafe static MetaColor Parse(string input)
+        {
+            if (input == null) { throw new ArgumentNullException(nameof(input)); }
+            int length = input.Length;
+            fixed (char* f = input)
+            {
+                return Parse(f, length);
+            }
+        }
+        public unsafe static MetaColor Parse(char* ptr, int length)
+        {
+            if (ptr == null) { throw new ArgumentNullException(nameof(ptr)); }
+            byte r, g, b, a;
+            Trim(ref ptr, ref length);
+            r = ParseByte(ref ptr, ref length);
+            g = ParseByte(ref ptr, ref length);
+            b = ParseByte(ref ptr, ref length);
+            a = ParseByte(ref ptr, ref length, true);
+            return new MetaColor(r, g, b, a);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private unsafe static void Trim(ref char* span, ref int length)
+        {
+            if (!char.IsWhiteSpace(span[0]) && !char.IsWhiteSpace(span[length - 1])) { return; }
+            while (char.IsWhiteSpace(span[0])) { span++; length--; }
+            while (char.IsWhiteSpace(span[--length])) { }
+            length++;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private unsafe static byte ParseByte(ref char* ptr, ref int length, bool isAplha = false)
+        {
+            if (length <= 0) { return isAplha ? byte.MaxValue : byte.MinValue; }
+            while (char.IsDigit(*ptr) == false)
+            {
+                ptr++; length--;
+                if (length <= 0) { return isAplha ? byte.MaxValue : byte.MinValue; }
+            }
+
+            int value = 0;
+            while (char.IsDigit(*ptr))
+            {
+                value = value * 10 + (*ptr - '0');
+                ptr++; length--;
+                if (length <= 0) { break; }
+            }
+
+            if (value < 0 || value > 255)
+            {
+                throw new FormatException("Color component value should be between 0 and 255.");
+            }
+            return (byte)value;
+        }
+
+
         public bool Equals(MetaColor other) { return colorCode == other.colorCode; }
         public override bool Equals(object obj) { return obj is MetaColor other && Equals(other); }
         public override int GetHashCode() { return colorCode; }
