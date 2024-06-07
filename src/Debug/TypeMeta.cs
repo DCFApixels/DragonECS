@@ -14,9 +14,12 @@ namespace DCFApixels.DragonECS
         MetaColor Color { get; }
         MetaDescription Description { get; }
         MetaGroup Group { get; }
-        IReadOnlyCollection<string> Tags { get; }
+        IReadOnlyList<string> Tags { get; }
     }
 
+    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaDescription(EcsConsts.AUTHOR, "Basic class of the framework, intended for extending meta information of types, for customization of type display in the editor.")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class TypeMeta : ITypeMeta
     {
@@ -32,7 +35,7 @@ namespace DCFApixels.DragonECS
         private MetaColor _color;
         private MetaDescription _description;
         private MetaGroup _group;
-        private IReadOnlyCollection<string> _tags;
+        private IReadOnlyList<string> _tags;
         private int _typeCode;
 
         private InitFlag _initFlags = InitFlag.None;
@@ -154,7 +157,7 @@ namespace DCFApixels.DragonECS
                 _isHidden = _tags.Contains(MetaTags.HIDDEN);
             }
         }
-        public IReadOnlyCollection<string> Tags
+        public IReadOnlyList<string> Tags
         {
             get
             {
@@ -224,6 +227,10 @@ namespace DCFApixels.DragonECS
         {
             return Name;
         }
+        public override int GetHashCode()
+        {
+            return _color.GetHashCode() ^ _name[0].GetHashCode() ^ _name[_name.Length - 1].GetHashCode();
+        }
         private class DebuggerProxy : ITypeMeta
         {
             private readonly TypeMeta _meta;
@@ -247,7 +254,7 @@ namespace DCFApixels.DragonECS
             {
                 get { return _meta.Group; }
             }
-            public IReadOnlyCollection<string> Tags
+            public IReadOnlyList<string> Tags
             {
                 get { return _meta.Tags; }
             }
@@ -314,7 +321,7 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetTags
-            public static IReadOnlyCollection<string> GetTags(Type type)
+            public static IReadOnlyList<string> GetTags(Type type)
             {
                 var atr = type.GetCustomAttribute<MetaTagsAttribute>();
                 return atr != null ? atr.Tags : Array.Empty<string>();

@@ -20,7 +20,7 @@ namespace DCFApixels.DragonECS.Docs
         [DataMember] public readonly string Description = string.Empty;
 
         [DataMember] public readonly string Group = string.Empty;
-        [DataMember] public readonly string Tags = string.Empty;
+        [DataMember] public readonly string[] Tags = Array.Empty<string>();
 
         public DragonDocsMeta(TypeMeta meta)
         {
@@ -35,7 +35,11 @@ namespace DCFApixels.DragonECS.Docs
             Description = meta.Description.Text;
 
             Group = meta.Group.Name;
-            Tags = string.Join(", ", meta.Tags);
+            Tags = new string[meta.Tags.Count];
+            for (int i = 0, n = meta.Tags.Count; i < n; i++)
+            {
+                Tags[i] = meta.Tags[i];
+            }
         }
 
         public bool TryGetSourceType(out Type type)

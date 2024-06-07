@@ -20,16 +20,20 @@ namespace DCFApixels.DragonECS
         public readonly ref struct AutoScope
         {
             private readonly int _id;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public AutoScope(int id)
             {
                 _id = id;
                 DebugService.Instance.ProfilerMarkBegin(id);
             }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
             {
                 DebugService.Instance.ProfilerMarkEnd(_id);
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator EcsProfilerMarker(string markerName) { return new EcsProfilerMarker(markerName); }
     }
 
     public static class EcsDebug

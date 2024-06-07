@@ -9,13 +9,48 @@ namespace DCFApixels.DragonECS.Docs
     [DataContract]
     public class DragonDocs
     {
-        [DataMember]
+        [DataMember] 
         private readonly DragonDocsMeta[] _metas;
+        [NonSerialized]
+        private DragonDocsMetaGroup[] _mapping = null;
+
         public ReadOnlySpan<DragonDocsMeta> Meta
         {
             get { return new ReadOnlySpan<DragonDocsMeta>(_metas); }
         }
+        public ReadOnlySpan<DragonDocsMetaGroup> Mapping
+        {
+            get
+            {
+                Init();
+                return new ReadOnlySpan<DragonDocsMetaGroup>(_mapping); ;
+            }
+        }
+        private bool _isInit = false;
+        private void Init()
+        {
+            if (_isInit) { return; }
 
+            if (_metas.Length < 0)
+            {
+                _mapping = Array.Empty<DragonDocsMetaGroup>();
+            }
+            List<DragonDocsMetaGroup> groups = new List<DragonDocsMetaGroup>();
+            string name = _metas[0].Name;
+            int startIndex = 0;
+            for (int i = 1; i < _metas.Length; i++)
+            {
+                var meta = _metas[i];
+                if (name != meta.Name)
+                {
+                    groups.Add(new DragonDocsMetaGroup(name, startIndex, i - startIndex));
+                    name = meta.Name;
+                    startIndex = i;
+                }
+            }
+            groups.Add(new DragonDocsMetaGroup(name, startIndex, _metas.Length - startIndex));
+            _mapping = groups.ToArray();
+        }
         private DragonDocs(DragonDocsMeta[] metas)
         {
             _metas = metas;
@@ -50,4 +85,17 @@ namespace DCFApixels.DragonECS.Docs
             return result;
         }
     }
+    public struct DragonDocsMetaGroup
+    {
+        public readonly string Name;
+        public readonly int StartIndex;
+        public readonly int Length;
+        public DragonDocsMetaGroup(string name, int startIndex, int length)
+        {
+            Name = name;
+            StartIndex = startIndex;
+            Length = length;
+        }
+    }
+
 }

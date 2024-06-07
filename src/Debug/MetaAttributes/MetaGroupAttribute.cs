@@ -23,20 +23,20 @@ namespace DCFApixels.DragonECS
     public class MetaGroup
     {
         public static readonly MetaGroup Empty = new MetaGroup("");
-        private static string pattern = @"Module(?=/)";
-        private static char[] separatpor = new char[] { '/' };
+        private static string _pattern = @"Module(?=/)";
+        private static char[] _separatpor = new char[] { '/' };
 
         public readonly string Name;
-        private string[] path = null;
+        private string[] _path = null;
         public IReadOnlyCollection<string> Splited
         {
             get
             {
-                if (path == null)
+                if (_path == null)
                 {
-                    path = Name.Split(separatpor, StringSplitOptions.RemoveEmptyEntries);
+                    _path = Name.Split(_separatpor, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 }
-                return path;
+                return _path;
             }
         }
         public MetaGroup(string name)
@@ -51,7 +51,8 @@ namespace DCFApixels.DragonECS
             {
                 name += '/';
             }
-            Name = Regex.Replace(name, pattern, ""); ;
+            Name = Regex.Replace(name, _pattern, "");
+            Name = string.Intern(Name);
         }
         public override string ToString() { return Name; }
     }
