@@ -20,6 +20,10 @@ namespace DCFApixels.DragonECS
         public static readonly MetaDescription Empty = new MetaDescription(null, null);
         public readonly string Author;
         public readonly string Text;
+        public bool IsHasAutor
+        {
+            get { return string.IsNullOrEmpty(Author) == false; }
+        }
         public MetaDescription(string author, string text)
         {
             if (author == null) { author = string.Empty; }

@@ -30,7 +30,8 @@ namespace DCFApixels.DragonECS
     }
 
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
+    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, EcsConsts.WORLDS_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "It is a container for entities and components.")]
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]

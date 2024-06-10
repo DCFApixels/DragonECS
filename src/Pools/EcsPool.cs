@@ -17,7 +17,8 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption (Option.NullChecks, false)]
 #endif
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
+    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, EcsConsts.POOLS_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsComponent components.")]
     /// <summary>Pool for IEcsComponent components</summary>
     public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent

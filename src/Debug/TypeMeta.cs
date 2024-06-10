@@ -1,4 +1,6 @@
 ﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.PoolsCore;
+using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,10 +19,11 @@ namespace DCFApixels.DragonECS
         IReadOnlyList<string> Tags { get; }
     }
 
-    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
+    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
     [MetaColor(MetaColor.DragonRose)]
-    [MetaDescription(EcsConsts.AUTHOR, "Basic class of the framework, intended for extending meta information of types, for customization of type display in the editor.")]
+    [MetaDescription(EcsConsts.AUTHOR, "Intended for extending meta information of types, for customization of type display in the editor. You can get it by using the object.GetMeta() or Type.ToMeta() extension method.")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
+    /// <summary> Expanding meta information over Type. </summary>
     public sealed class TypeMeta : ITypeMeta
     {
         private static readonly Dictionary<Type, TypeMeta> _metaCache = new Dictionary<Type, TypeMeta>();
@@ -40,6 +43,8 @@ namespace DCFApixels.DragonECS
 
         private InitFlag _initFlags = InitFlag.None;
 
+        private EcsMemberType _memberType;
+
         #region Constructors
         public static TypeMeta Get(Type type)
         {
@@ -53,6 +58,17 @@ namespace DCFApixels.DragonECS
         private TypeMeta(Type type)
         {
             _type = type;
+
+            Type runnerType = typeof(EcsRunner<>);
+            Type processMember = typeof(IEcsProcess);
+
+            if (type.IsInterface == false && processMember.IsAssignableFrom(type) && runnerType.IsAssignableFrom(type) == false)
+            {
+                _memberType = EcsMemberType.System;
+                return;
+            }
+
+            _memberType = EcsMemberType.Other;
         }
         #endregion
 
@@ -60,6 +76,13 @@ namespace DCFApixels.DragonECS
         public Type Type
         {
             get { return _type; }
+        }
+        #endregion
+
+        #region EcsMemberType
+        public EcsMemberType EcsMemberType
+        {
+            get { return _memberType; }
         }
         #endregion
 
@@ -217,8 +240,9 @@ namespace DCFApixels.DragonECS
             Description = 1 << 3,
             Tags = 1 << 4,
             TypeCode = 1 << 5,
+            MemberType = 1 << 6,
 
-            All = Name | Group | Color | Description | Tags | TypeCode
+            All = Name | Group | Color | Description | Tags | TypeCode | MemberType
         }
         #endregion
 
@@ -269,6 +293,15 @@ namespace DCFApixels.DragonECS
         private static class MetaGenerator
         {
             private const int GENERIC_NAME_DEPTH = 3;
+
+            //private static HashSet<Type> _;
+
+            #region GetMemberType
+            public static EcsMemberType GetMemberType(Type type)
+            {
+                throw new NotImplementedException();
+            }
+            #endregion
 
             #region GetMetaName
             public static (string, bool) GetMetaName(Type type)
@@ -329,5 +362,14 @@ namespace DCFApixels.DragonECS
             #endregion
         }
         #endregion
+    }
+
+    public enum EcsMemberType : byte
+    {
+        Undefined = 0,
+
+        Component = 1,
+        System = 2,
+        Other = 3,
     }
 }

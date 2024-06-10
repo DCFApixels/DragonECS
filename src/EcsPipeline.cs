@@ -497,7 +497,8 @@ namespace DCFApixels.DragonECS
     #region SystemsLayerMarkerSystem
     [MetaTags(MetaTags.HIDDEN)]
     [MetaColor(MetaColor.Black)]
-    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
+    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "An auxiliary type of system for dividing a pipeline into layers. This system is automatically added to the EcsPipeline.")]
     public class SystemsLayerMarkerSystem : IEcsProcess
     {
         public readonly string name;

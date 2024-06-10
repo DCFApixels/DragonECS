@@ -21,6 +21,13 @@
 
         public const int MAGIC_PRIME = 314159;
 
+        /// meta subgroups
+
+        public const string WORLDS_GROUP = "Worlds";
+        public const string DI_GROUP = "DI";
+        public const string POOLS_GROUP = "Pools";
+        public const string FRAMEWORK_GROUP = "_" + FRAMEWORK_NAME;
+
         /// defs
 
         public const bool DISABLE_POOLS_EVENTS =

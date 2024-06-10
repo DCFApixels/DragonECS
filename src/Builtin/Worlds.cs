@@ -3,7 +3,8 @@
 namespace DCFApixels.DragonECS
 {
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
+    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, "Worlds")]
+    [MetaDescription(EcsConsts.AUTHOR, "...")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsDefaultWorld : EcsWorld, IInjectionUnit
     {
@@ -15,7 +16,8 @@ namespace DCFApixels.DragonECS
         }
     }
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
+    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, "Worlds")]
+    [MetaDescription(EcsConsts.AUTHOR, "...")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsEventWorld : EcsWorld, IInjectionUnit
     {

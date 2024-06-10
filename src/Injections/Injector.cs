@@ -5,15 +5,17 @@ using System.Collections.Generic;
 namespace DCFApixels.DragonECS
 {
     [MetaName(nameof(Inject))]
-    [MetaColor(MetaColor.Orange)]
-    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, EcsConsts.DI_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "...")]
     public interface IEcsInject<T> : IEcsProcess
     {
         void Inject(T obj);
     }
     [MetaName(nameof(OnInitInjectionComplete))]
-    [MetaColor(MetaColor.Orange)]
-    [MetaGroup(EcsConsts.FRAMEWORK_NAME)]
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, EcsConsts.DI_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "...")]
     public interface IOnInitInjectionComplete : IEcsProcess
     {
         void OnInitInjectionComplete();
