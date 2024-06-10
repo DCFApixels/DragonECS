@@ -34,7 +34,7 @@ namespace DCFApixels.DragonECS
             {
                 if (_path == null)
                 {
-                    _path = Name.Split(_separatpor, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    _path = Name.Split(_separatpor, StringSplitOptions.RemoveEmptyEntries); //TODO добавить ручное StringSplitOptions.TrimEntries
                 }
                 return _path;
             }

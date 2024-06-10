@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
         public MetaTagsAttribute() { }
         public MetaTagsAttribute(string tags)
         {
-            _tags = tags.Split(_separatpor, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            _tags = tags.Split(_separatpor, StringSplitOptions.RemoveEmptyEntries); //TODO добавить ручное StringSplitOptions.TrimEntries
             for (int i = 0; i < _tags.Length; i++)
             {
                 _tags[i] = string.Intern(_tags[i]);
