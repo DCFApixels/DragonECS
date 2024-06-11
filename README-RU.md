@@ -102,14 +102,16 @@ int newEntityID = _world.CloneEntity(entityID);
 // Конвертация int в entlong.
 entlong entity = _world.GetEntityLong(entityID);
 // или
-entlong entity = entityID.ToEntityLong(_world);
+entlong entity = (_world, entityID);
 
 // Проверка что сущность еще жива.
 if (entity.IsAlive) { }
 
 // Конвертация entlong в int. Если сущность уже не существует, будет брошено исключение. 
 int entityID = entity.ID;
-
+// или
+var (entityID, world) = entity;
+ 
 // Конвертация entlong в int. Вернет true и ее int идентификатор, если сущность еще жива.
 if (entity.TryGetID(out int entityID)) { }
 ```
