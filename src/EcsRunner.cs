@@ -7,6 +7,10 @@ using static DCFApixels.DragonECS.EcsDebugUtility;
 
 namespace DCFApixels.DragonECS
 {
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaTags(MetaTags.HIDDEN)]
     public interface IEcsProcess : IEcsMember { }
 
     namespace RunnersCore
@@ -53,6 +57,11 @@ namespace DCFApixels.DragonECS
             }
             #endregion
         }
+
+        [MetaColor(MetaColor.DragonRose)]
+        [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
+        [MetaDescription(EcsConsts.AUTHOR, "...")]
+        [MetaTags(MetaTags.HIDDEN)]
         public interface IEcsRunner : IEcsProcess
         {
             EcsPipeline Pipeline { get; }
@@ -61,6 +70,10 @@ namespace DCFApixels.DragonECS
             bool IsEmpty { get; }
         }
 
+        [MetaColor(MetaColor.DragonRose)]
+        [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
+        [MetaDescription(EcsConsts.AUTHOR, "...")]
+        [MetaTags(MetaTags.HIDDEN)]
         public abstract class EcsRunner<TProcess> : EcsRunner, IEcsRunner, IEcsProcess
             where TProcess : IEcsProcess
         {

@@ -10,6 +10,8 @@ namespace DCFApixels.DragonECS
 {
 #if ENABLE_IL2CPP
     using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     public class EcsWorldConfig
     {
@@ -29,13 +31,13 @@ namespace DCFApixels.DragonECS
         }
     }
 
-    [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, EcsConsts.WORLDS_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "It is a container for entities and components.")]
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.WORLDS_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "It is a container for entities and components.")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public partial class EcsWorld : IEntityStorage, IEcsMember
     {

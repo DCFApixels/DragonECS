@@ -23,10 +23,16 @@
 
         /// meta subgroups
 
+        public const string PACK_GROUP = "_" + FRAMEWORK_NAME + "/_Core";
         public const string WORLDS_GROUP = "Worlds";
         public const string DI_GROUP = "DI";
         public const string POOLS_GROUP = "Pools";
-        public const string FRAMEWORK_GROUP = "_" + FRAMEWORK_NAME;
+        public const string PROCESSES_GROUP = "Processes";
+        public const string DEBUG_GROUP = "Debug";
+        public const string OTHER_GROUP = "Other";
+
+        public const string COMPONENTS_GROUP = "Components";
+        public const string SYSTEMS_GROUP = "Systems";
 
         /// defs
 

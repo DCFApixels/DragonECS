@@ -1,5 +1,4 @@
 ﻿using DCFApixels.DragonECS.Internal;
-using DCFApixels.DragonECS.PoolsCore;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections.Generic;
@@ -19,11 +18,11 @@ namespace DCFApixels.DragonECS
         IReadOnlyList<string> Tags { get; }
     }
 
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
-    [MetaColor(MetaColor.DragonRose)]
-    [MetaDescription(EcsConsts.AUTHOR, "Intended for extending meta information of types, for customization of type display in the editor. You can get it by using the object.GetMeta() or Type.ToMeta() extension method.")]
-    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     /// <summary> Expanding meta information over Type. </summary>
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DEBUG_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "Intended for extending meta information of types, for customization of type display in the editor. You can get it by using the object.GetMeta() or Type.ToMeta() extension method. Meta information is collected from meta attributes.")]
+    [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class TypeMeta : ITypeMeta
     {
         private static readonly Dictionary<Type, TypeMeta> _metaCache = new Dictionary<Type, TypeMeta>();
@@ -35,6 +34,8 @@ namespace DCFApixels.DragonECS
         private bool _isHidden;
 
         private string _name;
+        private string _typeName;
+
         private MetaColor _color;
         private MetaDescription _description;
         private MetaGroup _group;
@@ -43,7 +44,7 @@ namespace DCFApixels.DragonECS
 
         private InitFlag _initFlags = InitFlag.None;
 
-        private EcsMemberType _memberType;
+        //private EcsMemberType _memberType;
 
         #region Constructors
         public static TypeMeta Get(Type type)
@@ -58,17 +59,6 @@ namespace DCFApixels.DragonECS
         private TypeMeta(Type type)
         {
             _type = type;
-
-            Type runnerType = typeof(EcsRunner<>);
-            Type processMember = typeof(IEcsProcess);
-
-            if (type.IsInterface == false && processMember.IsAssignableFrom(type) && runnerType.IsAssignableFrom(type) == false)
-            {
-                _memberType = EcsMemberType.System;
-                return;
-            }
-
-            _memberType = EcsMemberType.Other;
         }
         #endregion
 
@@ -79,12 +69,12 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region EcsMemberType
-        public EcsMemberType EcsMemberType
-        {
-            get { return _memberType; }
-        }
-        #endregion
+        //#region EcsMemberType
+        //public EcsMemberType EcsMemberType
+        //{
+        //    get { return _memberType; }
+        //}
+        //#endregion
 
         #region Name
         private void InitName()
@@ -92,6 +82,14 @@ namespace DCFApixels.DragonECS
             if (_initFlags.HasFlag(InitFlag.Name) == false)
             {
                 (_name, _isCustomName) = MetaGenerator.GetMetaName(_type);
+                if (_isCustomName)
+                {
+                    _typeName = MetaGenerator.GetTypeName(_type);
+                }
+                else
+                {
+                    _typeName = _name;
+                }
                 _initFlags |= InitFlag.Name;
             }
         }
@@ -109,6 +107,14 @@ namespace DCFApixels.DragonECS
             {
                 InitName();
                 return _name;
+            }
+        }
+        public string TypeName
+        {
+            get
+            {
+                InitName();
+                return _typeName;
             }
         }
         #endregion
@@ -303,7 +309,11 @@ namespace DCFApixels.DragonECS
             }
             #endregion
 
-            #region GetMetaName
+            #region GetMetaName/GetTypeName
+            public static string GetTypeName(Type type)
+            {
+                return EcsDebugUtility.GetGenericTypeName(type, GENERIC_NAME_DEPTH);
+            }
             public static (string, bool) GetMetaName(Type type)
             {
                 bool isCustom = type.TryGetCustomAttribute(out MetaNameAttribute atr) && string.IsNullOrEmpty(atr.name) == false;

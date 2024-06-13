@@ -6,32 +6,32 @@ namespace DCFApixels.DragonECS
 {
     [MetaName(nameof(PreInit))]
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "The process to run when EcsPipeline.Init() is called. Before Init")]
     public interface IEcsPreInit : IEcsProcess
     {
         void PreInit();
     }
     [MetaName(nameof(Init))]
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "The process to run when EcsPipeline.Init() is called. After PreInit")]
     public interface IEcsInit : IEcsProcess
     {
         void Init();
     }
     [MetaName(nameof(Run))]
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "The process to run when EcsPipeline.Run() is called.")]
     public interface IEcsRun : IEcsProcess
     {
         void Run();
     }
     [MetaName(nameof(Destroy))]
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "The process to run when EcsPipeline.Destroy() is called.")]
     public interface IEcsDestroy : IEcsProcess
     {
         void Destroy();
@@ -46,8 +46,9 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaTags(MetaTags.HIDDEN)]
     internal sealed class EcsPreInitRunner : EcsRunner<IEcsPreInit>, IEcsPreInit
     {
 #if DEBUG && !DISABLE_DEBUG
@@ -103,8 +104,9 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaTags(MetaTags.HIDDEN)]
     internal sealed class EcsInitRunner : EcsRunner<IEcsInit>, IEcsInit
     {
 #if DEBUG && !DISABLE_DEBUG
@@ -157,8 +159,9 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaTags(MetaTags.HIDDEN)]
     internal sealed class EcsRunRunner : EcsRunner<IEcsRun>, IEcsRun
     {
 #if DEBUG && !DISABLE_DEBUG
@@ -211,8 +214,9 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaTags(MetaTags.HIDDEN)]
     internal sealed class EcsDestroyRunner : EcsRunner<IEcsDestroy>, IEcsDestroy
     {
 #if DEBUG && !DISABLE_DEBUG

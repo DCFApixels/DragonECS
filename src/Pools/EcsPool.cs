@@ -11,15 +11,18 @@ using Unity.IL2CPP.CompilerServices;
 namespace DCFApixels.DragonECS
 {
     /// <summary>Standard component</summary>
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "Standard component.")]
     public interface IEcsComponent : IEcsMember { }
 
+    /// <summary>Pool for IEcsComponent components</summary>
 #if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]
 #endif
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, EcsConsts.POOLS_GROUP)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsComponent components.")]
-    /// <summary>Pool for IEcsComponent components</summary>
     public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
     {

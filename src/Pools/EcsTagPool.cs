@@ -10,16 +10,19 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    /// <summary>Component without data</summary>
+    /// <summary> Component without data. </summary>
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "Tag component or component without data.")]
     public interface IEcsTagComponent : IEcsMember { }
 
+    /// <summary> Pool for IEcsTagComponent components. </summary>
 #if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]
 #endif
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, EcsConsts.POOLS_GROUP)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsTagComponent components. EcsTagPool is optimized for storing tag components or components without data.")]
-    /// <summary>Pool for IEcsTagComponent components</summary>
     public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {

@@ -2,9 +2,10 @@
 
 namespace DCFApixels.DragonECS
 {
+    /// <summary> EcsWrold for store regular game entities. </summary>
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, "Worlds")]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.WORLDS_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "Inherits EcsWorld without extending its functionality and is used for specific injections. Can be used to store regular game entities, can also be used as a single world in the game for all entities.")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsDefaultWorld : EcsWorld, IInjectionUnit
     {
@@ -15,9 +16,10 @@ namespace DCFApixels.DragonECS
             initer.AddNode<EcsDefaultWorld>();
         }
     }
+    /// <summary> EcsWrold for store event entities. </summary>
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP, "Worlds")]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.WORLDS_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "Inherits EcsWorld without extending its functionality and is used for specific injections. Can be used to store event entities.")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsEventWorld : EcsWorld, IInjectionUnit
     {

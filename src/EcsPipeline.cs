@@ -9,14 +9,23 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "...")]
     public interface IEcsPipelineMember : IEcsProcess
     {
         EcsPipeline Pipeline { get; set; }
     }
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "...")]
     public interface IEcsSystemDefaultLayer : IEcsProcess
     {
         string Layer { get; }
     }
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "Container and engine for systems. Responsible for configuring the execution order of systems, providing a mechanism for messaging between systems, and a dependency injection mechanism.")]
     public sealed class EcsPipeline
     {
         private readonly IConfigContainer _configs;
@@ -497,7 +506,7 @@ namespace DCFApixels.DragonECS
     #region SystemsLayerMarkerSystem
     [MetaTags(MetaTags.HIDDEN)]
     [MetaColor(MetaColor.Black)]
-    [MetaGroup(EcsConsts.FRAMEWORK_GROUP)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "An auxiliary type of system for dividing a pipeline into layers. This system is automatically added to the EcsPipeline.")]
     public class SystemsLayerMarkerSystem : IEcsProcess
     {

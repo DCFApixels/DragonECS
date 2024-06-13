@@ -36,6 +36,9 @@ namespace DCFApixels.DragonECS
         public static explicit operator EcsProfilerMarker(string markerName) { return new EcsProfilerMarker(markerName); }
     }
 
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DEBUG_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "Debugging utility. To modify or change the behavior, create a new class inherited from DebugService and set this service using DebugService.Set<T>().")]
     public static class EcsDebug
     {
         public const string WARNING_TAG = EcsConsts.DEBUG_WARNING_TAG;

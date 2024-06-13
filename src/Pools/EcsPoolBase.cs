@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 namespace DCFApixels.DragonECS.PoolsCore
 {
     public interface IEcsMember { }
+
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
     public interface IEcsPoolImplementation : IEcsPool
     {
@@ -17,6 +18,7 @@ namespace DCFApixels.DragonECS.PoolsCore
         void OnWorldDestroy();
         #endregion
     }
+
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
     /// <typeparam name="T">Component type</typeparam>
     public interface IEcsPoolImplementation<T> : IEcsPoolImplementation { }
@@ -48,7 +50,10 @@ namespace DCFApixels.DragonECS.PoolsCore
 
 namespace DCFApixels.DragonECS.Internal
 {
-    public struct NullComponent { }
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
+    [MetaDescription(EcsConsts.AUTHOR, "A placeholder type, an instance of this type replaces the null ref.")]
+    [MetaTags(MetaTags.HIDDEN)]
     public sealed class EcsNullPool : IEcsPoolImplementation<NullComponent>
     {
         public static readonly EcsNullPool instance = new EcsNullPool();
@@ -136,12 +141,13 @@ namespace DCFApixels.DragonECS.Internal
 #endif
         #endregion
     }
+    public struct NullComponent { }
 }
 
 namespace DCFApixels.DragonECS
 {
     #region Interfaces
-    public interface IEcsReadonlyPool
+    public interface IEcsReadonlyPool : IEcsMember
     {
         #region Properties
         int ComponentTypeID { get; }
@@ -165,6 +171,7 @@ namespace DCFApixels.DragonECS
         #endregion
 #endif
     }
+
     public interface IEcsPool : IEcsReadonlyPool
     {
         #region Methods
@@ -174,7 +181,8 @@ namespace DCFApixels.DragonECS
         void ClearAll();
         #endregion
     }
-    /// <summary>A pool for struct components.</summary>
+
+    /// <summary> A pool for struct components. </summary>
     public interface IEcsStructPool<T> : IEcsPool where T : struct
     {
         #region Methods
@@ -183,7 +191,8 @@ namespace DCFApixels.DragonECS
         ref T Get(int entityID);
         #endregion
     }
-    /// <summary>A pool for reference components of type T that instantiates components itself.</summary>
+
+    /// <summary> A pool for reference components of type T that instantiates components itself. </summary>
     public interface IEcsClassPool<T> : IEcsPool where T : class
     {
         #region Methods
@@ -191,7 +200,8 @@ namespace DCFApixels.DragonECS
         T Get(int entityID);
         #endregion
     }
-    /// <summary>A pool for reference components of type T, which does not instantiate components itself but receives components from external sources..</summary>
+
+    /// <summary> A pool for reference components of type T, which does not instantiate components itself but receives components from external sources. </summary>
     public interface IEcsHybridPool<T> : IEcsPool where T : class
     {
         #region Methods
