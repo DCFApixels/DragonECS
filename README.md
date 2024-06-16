@@ -59,6 +59,7 @@ The framework can also be added to the project as source code.
 * [Classic C# multithreading](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
 * [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
+* [Code Templates for IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) and [for  Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
 * Graphs (Work in progress)
 
 # Feedback
