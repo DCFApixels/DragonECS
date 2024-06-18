@@ -24,7 +24,6 @@ namespace DCFApixels.DragonECS
     {
         public static readonly MetaGroup Empty = new MetaGroup("");
         private static string _pattern = @"Module(?=/)";
-        private static char[] _separatpor = new char[] { '/' };
 
         public readonly string Name;
         private string[] _path = null;
@@ -34,7 +33,7 @@ namespace DCFApixels.DragonECS
             {
                 if (_path == null)
                 {
-                    _path = Name.Split(_separatpor, StringSplitOptions.RemoveEmptyEntries); //TODO добавить ручное StringSplitOptions.TrimEntries
+                    _path = EcsMetaAttributeHalper.Split('/', Name);
                 }
                 return _path;
             }

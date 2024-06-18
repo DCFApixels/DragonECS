@@ -7,7 +7,6 @@ namespace DCFApixels.DragonECS
     public sealed class MetaTagsAttribute : EcsMetaAttribute
     {
         private readonly string[] _tags = Array.Empty<string>();
-        private static char[] _separatpor = new char[] { ',' };
         public IReadOnlyList<string> Tags
         {
             get { return _tags; }
@@ -17,7 +16,7 @@ namespace DCFApixels.DragonECS
         public MetaTagsAttribute() { }
         public MetaTagsAttribute(string tags)
         {
-            _tags = tags.Split(_separatpor, StringSplitOptions.RemoveEmptyEntries); //TODO добавить ручное StringSplitOptions.TrimEntries
+            _tags = EcsMetaAttributeHalper.Split(',', tags);
             for (int i = 0; i < _tags.Length; i++)
             {
                 _tags[i] = string.Intern(_tags[i]);
