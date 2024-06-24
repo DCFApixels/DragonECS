@@ -179,6 +179,13 @@ namespace DCFApixels.DragonECS
                 }
                 return _instance;
             }
+            public void Add(Builder other)
+            {
+                foreach (var item in other._initInjections)
+                {
+                    _initInjections.Add(item);
+                }
+            }
 
             private abstract class InitInjectBase
             {

@@ -10,20 +10,21 @@ namespace DCFApixels.DragonECS
         bool Has<T>();
         T Get<T>();
         bool TryGet<T>(out T value);
-        IEnumerable<object> GetAllConfigs();
+        IEnumerable<KeyValuePair<Type, object>> GetAllConfigs();
     }
     public interface IConfigContainerWriter
     {
         int Count { get; }
         void Set<T>(T value);
+        void Set(Type type, object value);
         bool Has<T>();
         T Get<T>();
         bool TryGet<T>(out T value);
         void Remove<T>();
-        IEnumerable<object> GetAllConfigs();
+        IEnumerable<KeyValuePair<Type, object>> GetAllConfigs();
         IConfigContainer GetContainer();
     }
-    public sealed class ConfigContainer : IConfigContainer, IConfigContainerWriter, IEnumerable<object>
+    public sealed class ConfigContainer : IConfigContainer, IConfigContainerWriter, IEnumerable<KeyValuePair<Type, object>>
     {
         public static readonly ConfigContainer Empty = new ConfigContainer();
 
@@ -66,6 +67,15 @@ namespace DCFApixels.DragonECS
             _storage[typeof(T)] = value;
             return this;
         }
+        public ConfigContainer Set(Type type, object value)
+        {
+            _storage[type] = value;
+            return this;
+        }
+        void IConfigContainerWriter.Set(Type type, object value)
+        {
+            Set(type, value);
+        }
         void IConfigContainerWriter.Set<T>(T value)
         {
             Set(value);
@@ -76,17 +86,14 @@ namespace DCFApixels.DragonECS
             value = rawValue == null ? default : (T)rawValue;
             return result;
         }
-        public IConfigContainer GetContainer()
+        public IConfigContainer GetContainer() { return this; }
+        public IEnumerable<KeyValuePair<Type, object>> GetAllConfigs()
         {
-            return this;
+            return _storage;
         }
-        public IEnumerable<object> GetAllConfigs()
+        public IEnumerator<KeyValuePair<Type, object>> GetEnumerator()
         {
-            return _storage.Values;
-        }
-        public IEnumerator<object> GetEnumerator()
-        {
-            return _storage.Values.GetEnumerator();
+            return _storage.GetEnumerator();
         }
         IEnumerator IEnumerable.GetEnumerator()
         {
