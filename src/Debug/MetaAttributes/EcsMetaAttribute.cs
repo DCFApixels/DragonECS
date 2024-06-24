@@ -7,11 +7,12 @@ namespace DCFApixels.DragonECS
 
     internal unsafe static class EcsMetaAttributeHalper
     {
+        internal const string EMPTY_NO_SENSE_MESSAGE = "With empty parameters, this attribute makes no sense.";
         [ThreadStatic]
         private static string[] _splitBuffer;
         public static string[] Split(char separator, string value)
         {
-            if(_splitBuffer == null)
+            if (_splitBuffer == null)
             {
                 _splitBuffer = new string[128];
             }
@@ -24,7 +25,7 @@ namespace DCFApixels.DragonECS
                 {
                     if (reader.current != null)
                     {
-                        if(_splitBuffer.Length == bufferIndex)
+                        if (_splitBuffer.Length == bufferIndex)
                         {
                             Array.Resize(ref _splitBuffer, _splitBuffer.Length << 1);
                         }
@@ -33,7 +34,7 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-            string[] result = new string[bufferIndex]; 
+            string[] result = new string[bufferIndex];
             for (int i = 0; i < bufferIndex; i++)
             {
                 result[i] = _splitBuffer[i];

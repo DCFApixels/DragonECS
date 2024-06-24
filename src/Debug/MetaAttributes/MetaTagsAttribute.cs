@@ -13,7 +13,7 @@ namespace DCFApixels.DragonECS
             get { return _tags; }
         }
 
-        [Obsolete("With empty parameters, this attribute makes no sense.")]
+        [Obsolete(EcsMetaAttributeHalper.EMPTY_NO_SENSE_MESSAGE)]
         public MetaTagsAttribute() { }
         public MetaTagsAttribute(string tags)
         {

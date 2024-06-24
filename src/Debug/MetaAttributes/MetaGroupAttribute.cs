@@ -12,7 +12,7 @@ namespace DCFApixels.DragonECS
         public const char SEPARATOR = '/';
         public readonly MetaGroup Data;
 
-        [Obsolete("With empty parameters, this attribute makes no sense.")]
+        [Obsolete(EcsMetaAttributeHalper.EMPTY_NO_SENSE_MESSAGE)]
         public MetaGroupAttribute() { }
         public MetaGroupAttribute(string name)
         {
