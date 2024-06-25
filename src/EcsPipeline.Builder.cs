@@ -84,7 +84,7 @@ namespace DCFApixels.DragonECS
                 {
                     return this;
                 }
-                list.Add(system, order);
+                list.Add(system, order, isUnique);
 
                 if (system is IEcsModule module)//если система одновременно явялется и системой и модулем то за один Add будет вызван Add и AddModule
                 {
@@ -130,12 +130,16 @@ namespace DCFApixels.DragonECS
                         selfList = new SystemsList(otherPair.Key);
                         _systems.Add(otherPair.Key, selfList);
                     }
-                    selfList.AddList(otherPair.Value);
+                    //selfList.AddList(otherPair.Value);
+                    foreach (var otherSystem in otherPair.Value.Records)
+                    {
+                        AddInternal(otherSystem.system, otherPair.Key, otherSystem.order, otherSystem.isUnique);
+                    }
                 }
 
                 //TODO добавить проверку уникальных систем
                 //сливать множество уникальных нужно после слияния систем
-                _uniqueTypes.UnionWith(other._uniqueTypes);
+                //_uniqueTypes.UnionWith(other._uniqueTypes);
 
             }
             #endregion
@@ -438,33 +442,49 @@ namespace DCFApixels.DragonECS
                 public ReadOnlySpan<SystemRecord> Records { get { return new ReadOnlySpan<SystemRecord>(records, 1, recordsCount - 1); } }
                 public SystemsList(string layerName)
                 {
-                    Add(new SystemsLayerMarkerSystem(layerName), int.MinValue);
+                    Add(new SystemsLayerMarkerSystem(layerName), int.MinValue, false);
                 }
                 public void AddList(SystemsList other)
                 {
                     for (int i = 1; i < other.recordsCount; i++)
                     {
                         var otherRecord = other.records[i];
-                        Add(otherRecord.system, otherRecord.order);
+                        Add(otherRecord.system, otherRecord.order, otherRecord.isUnique);
                     }
                 }
-                public void Add(IEcsProcess system, int order)
+                public void Add(IEcsProcess system, int order, bool isUnique)
                 {
                     if (records.Length <= recordsCount)
                     {
                         Array.Resize(ref records, recordsCount << 1);
                     }
-                    records[recordsCount++] = new SystemRecord(system, order);
+                    records[recordsCount++] = new SystemRecord(system, order, isUnique);
                 }
                 public void RemoveAll<T>()
                 {
-                    for (int i = 0; i < recordsCount; i++)
+                    //for (int i = 0; i < recordsCount; i++)
+                    //{
+                    //    if (records[i].system is T)
+                    //    {
+                    //        records[i] = records[--recordsCount];
+                    //    }
+                    //}
+
+                    int freeIndex = 0;
+
+                    while (freeIndex < recordsCount && (records[freeIndex].system is T) == false) { freeIndex++; }
+                    if (freeIndex >= recordsCount) { return; }
+
+                    int current = freeIndex + 1;
+                    while (current < recordsCount)
                     {
-                        if (records[i].system is T)
+                        while (current < recordsCount && (records[current].system is T)) { current++; }
+                        if (current < recordsCount)
                         {
-                            records[i] = records[--recordsCount];
+                            records[freeIndex++] = records[current++];
                         }
                     }
+                    recordsCount = freeIndex;
                 }
                 public void Sort()
                 {
@@ -476,10 +496,12 @@ namespace DCFApixels.DragonECS
             {
                 public readonly IEcsProcess system;
                 public readonly int order;
-                public SystemRecord(IEcsProcess system, int order)
+                public readonly bool isUnique;
+                public SystemRecord(IEcsProcess system, int order, bool isUnique)
                 {
                     this.system = system;
                     this.order = order;
+                    this.isUnique = isUnique;
                 }
                 public int CompareTo(SystemRecord other) { return order - other.order; }
             }
