@@ -307,10 +307,9 @@ namespace DCFApixels.DragonECS
                 private List<string> _layers;
                 private string _basicLayerName;
 
-                public int Count
-                {
-                    get { return _layers.Count; }
-                }
+                public int Count { get { return _layers.Count; } }
+                public object this[int index] { get { return _layers[index]; } }
+
                 public LayerList(Builder source, string basicLayerName)
                 {
                     _source = source;
@@ -492,7 +491,8 @@ namespace DCFApixels.DragonECS
                 public Item[] records = null;
                 public int recordsCount = 0;
 
-                private int _lastSortingOrder;
+                private int _lastSortOrder;
+                private int _lastAddOrder;
                 private bool _isSorted = true;
 
                 private string _layerName;
@@ -516,20 +516,34 @@ namespace DCFApixels.DragonECS
                         AddItemInternal(otherRecord);
                     }
                 }
-                public void Add(IEcsProcess system, int addOrder, int sortingOrder, bool isUnique)
+                public void Add(IEcsProcess system, int addOrder, int sortOrder, bool isUnique)
                 {
-                    if (recordsCount <= 1)
-                    {
-                        _lastSortingOrder = sortingOrder;
-                    }
-                    else if (_lastSortingOrder != sortingOrder)
-                    {
-                        _isSorted = false;
-                    }
-                    AddItemInternal(new Item(system, addOrder, sortingOrder, isUnique));
+                    AddItemInternal(new Item(system, addOrder, sortOrder, isUnique));
                 }
                 private void AddItemInternal(Item item)
                 {
+                    if (_isSorted)
+                    {
+                        if (recordsCount <= 1)
+                        {
+                            _lastSortOrder = item.sortOrder;
+                        }
+                        else if (_lastSortOrder != item.sortOrder)
+                        {
+                            _isSorted = false;
+                        }
+
+                        if (recordsCount <= 1)
+                        {
+                            _lastAddOrder = item.addOrder;
+                        }
+                        else if (_lastAddOrder != item.addOrder)
+                        {
+                            _isSorted = false;
+                        }
+                    }
+
+
                     if (records.Length <= recordsCount)
                     {
                         Array.Resize(ref records, recordsCount << 1);
@@ -576,8 +590,25 @@ namespace DCFApixels.DragonECS
             }
             #endregion
 
+            #region SerializableTemplate
+            public EcsPipelineTemplate GenerateSerializableTemplate()
+            {
+                Array.Sort(_systemRecords, 0, _systemRecordsCount);
+                var records = SystemRecords;
+                EcsPipelineTemplate result = new EcsPipelineTemplate();
+                result.layers = new string[Layers.Count];
+                result.systems = new EcsPipelineTemplate.SystemRecord[records.Length];
+                for (int i = 0; i < records.Length; i++)
+                {
+                    var r = records[i];
+                    result.systems[i] = new EcsPipelineTemplate.SystemRecord(r.system, r.layer, r.sortOrder, r.isUnique);
+                }
 
-            private readonly struct SystemRecord
+                return result;
+            }
+            #endregion
+
+            private readonly struct SystemRecord : IComparable<SystemRecord>
             {
                 public readonly IEcsProcess system;
                 public readonly string layer;
@@ -591,6 +622,11 @@ namespace DCFApixels.DragonECS
                     this.addOrder = addOrder;
                     this.sortOrder = sortOrder;
                     this.isUnique = isUnique;
+                }
+                public int CompareTo(SystemRecord other)
+                {
+                    int c = sortOrder - other.sortOrder;
+                    return c == 0 ? addOrder - other.addOrder : c;
                 }
             }
         }
