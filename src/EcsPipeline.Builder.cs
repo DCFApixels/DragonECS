@@ -18,7 +18,7 @@ namespace DCFApixels.DragonECS
             private int _systemRecordsCount = 0;
             private int _systemRecordsInrement = 0;
 
-            private Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>();
+            private Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>(KEYS_CAPACITY);
 
             private readonly List<InitDeclaredRunner> _initDeclaredRunners = new List<InitDeclaredRunner>(4);
 
@@ -75,7 +75,7 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
-                    sortOrder = system is IEcsSystemDefaultSortingOrder defaultSortingOrder ? defaultSortingOrder.SortingOrder : 0;
+                    sortOrder = system is IEcsSystemDefaultSortOrder defaultSortOrder ? defaultSortOrder.SortOrder : 0;
                 }
                 if (string.IsNullOrEmpty(layerName))
                 {

@@ -26,9 +26,9 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "...")]
-    public interface IEcsSystemDefaultSortingOrder : IEcsProcess
+    public interface IEcsSystemDefaultSortOrder : IEcsProcess
     {
-        int SortingOrder { get; }
+        int SortOrder { get; }
     }
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
