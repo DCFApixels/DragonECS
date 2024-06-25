@@ -4,18 +4,18 @@
     {
         public const string AUTHOR = "DCFApixels";
         public const string FRAMEWORK_NAME = "DragonECS";
-
+        public const string NAME_SPACE = AUTHOR + "." + FRAMEWORK_NAME + ".";
         public const string EXCEPTION_MESSAGE_PREFIX = "[" + FRAMEWORK_NAME + "] ";
         public const string DEBUG_PREFIX = "[DEBUG] ";
         public const string DEBUG_WARNING_TAG = "WARNING";
         public const string DEBUG_ERROR_TAG = "ERROR";
         public const string DEBUG_PASS_TAG = "PASS";
 
-        public const string PRE_BEGIN_LAYER = AUTHOR + "." + FRAMEWORK_NAME + "." + nameof(PRE_BEGIN_LAYER);
-        public const string BEGIN_LAYER = AUTHOR + "." + FRAMEWORK_NAME + "." + nameof(BEGIN_LAYER);
-        public const string BASIC_LAYER = AUTHOR + "." + FRAMEWORK_NAME + "." + nameof(BASIC_LAYER);
-        public const string END_LAYER = AUTHOR + "." + FRAMEWORK_NAME + "." + nameof(END_LAYER);
-        public const string POST_END_LAYER = AUTHOR + "." + FRAMEWORK_NAME + "." + nameof(POST_END_LAYER);
+        public const string PRE_BEGIN_LAYER = NAME_SPACE + nameof(PRE_BEGIN_LAYER);
+        public const string BEGIN_LAYER = NAME_SPACE + nameof(BEGIN_LAYER);
+        public const string BASIC_LAYER = NAME_SPACE + nameof(BASIC_LAYER);
+        public const string END_LAYER = NAME_SPACE + nameof(END_LAYER);
+        public const string POST_END_LAYER = NAME_SPACE + nameof(POST_END_LAYER);
 
         public const string META_HIDDEN_TAG = "HiddenInDebagging";
 
