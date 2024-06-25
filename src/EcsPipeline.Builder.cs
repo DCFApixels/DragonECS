@@ -50,21 +50,21 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Add
-            public Builder Add(IEcsProcess system, int? sortingOrder = null)
+            public Builder Add(IEcsProcess system, int? sortOrder = null)
             {
-                return AddInternal(system, string.Empty, sortingOrder, false);
+                return AddInternal(system, string.Empty, sortOrder, false);
             }
-            public Builder Add(IEcsProcess system, string layerName, int? sortingOrder = null)
+            public Builder Add(IEcsProcess system, string layerName, int? sortOrder = null)
             {
-                return AddInternal(system, layerName, sortingOrder, false);
+                return AddInternal(system, layerName, sortOrder, false);
             }
-            public Builder AddUnique(IEcsProcess system, int? sortingOrder = null)
+            public Builder AddUnique(IEcsProcess system, int? sortOrder = null)
             {
-                return AddInternal(system, string.Empty, sortingOrder, true);
+                return AddInternal(system, string.Empty, sortOrder, true);
             }
-            public Builder AddUnique(IEcsProcess system, string layerName, int? sortingOrder = null)
+            public Builder AddUnique(IEcsProcess system, string layerName, int? sortOrder = null)
             {
-                return AddInternal(system, layerName, sortingOrder, true);
+                return AddInternal(system, layerName, sortOrder, true);
             }
             private Builder AddInternal(IEcsProcess system, string layerName, int? settedSortOrder, bool isUnique)
             {
@@ -427,14 +427,13 @@ namespace DCFApixels.DragonECS
                     }
                     return InsertAfter(targetLayer, movingLayers);
                 }
-
-                public void MergeWith(LayerList other)
+                public void MergeWith(IReadOnlyList<string> other)
                 {
                     HashSet<string> seen = new HashSet<string>();
                     List<string> result = new List<string>();
 
                     List<string> listA = _layers;
-                    List<string> listB = other._layers;
+                    IReadOnlyList<string> listB = other;
 
                     foreach (string item in listA)
                     {
@@ -471,6 +470,10 @@ namespace DCFApixels.DragonECS
                     }
 
                     _layers = result;
+                }
+                public void MergeWith(LayerList other)
+                {
+                    MergeWith(other._layers);
                 }
 
                 public bool Contains(string layer) { return _layers.Contains(layer); }
