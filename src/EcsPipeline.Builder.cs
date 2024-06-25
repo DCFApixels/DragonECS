@@ -1,8 +1,10 @@
-﻿using DCFApixels.DragonECS.RunnersCore;
+﻿using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using static DCFApixels.DragonECS.EcsPipeline.Builder;
 
 namespace DCFApixels.DragonECS
 {
@@ -13,16 +15,22 @@ namespace DCFApixels.DragonECS
             private const int KEYS_CAPACITY = 4;
             private const string BASIC_LAYER = EcsConsts.BASIC_LAYER;
 
-            private readonly HashSet<Type> _uniqueTypes = new HashSet<Type>(32);
-            private readonly Dictionary<string, SystemsList> _systems = new Dictionary<string, SystemsList>(KEYS_CAPACITY);
+            private SystemRecord[] _systemRecords = new SystemRecord[256];
+            private int _systemRecordsCount = 0;
+            private int _systemRecordsInrement = 0;
+
+            private Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>();  
+
             private readonly List<InitDeclaredRunner> _initDeclaredRunners = new List<InitDeclaredRunner>(4);
+
             public readonly LayerList Layers;
             public readonly Injector.Builder Injector;
             public readonly Configurator Configs;
 
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            private EcsProfilerMarker _buildBarker = new EcsProfilerMarker("EcsPipeline.Build");
-#endif
+            private ReadOnlySpan<SystemRecord> SystemRecords
+            {
+                get { return new ReadOnlySpan<SystemRecord>(_systemRecords, 0, _systemRecordsCount); }
+            }
 
             #region Constructors
             public Builder(IConfigContainerWriter config = null)
@@ -59,32 +67,22 @@ namespace DCFApixels.DragonECS
             {
                 return AddInternal(system, layerName, sortingOrder, true);
             }
-            private Builder AddInternal(IEcsProcess system, string layerName, int? settedSortingOrder, bool isUnique)
+            private Builder AddInternal(IEcsProcess system, string layerName, int? settedSortOrder, bool isUnique)
             {
-                int sortingOrder;
-                if (settedSortingOrder.HasValue)
+                int sortOrder;
+                if (settedSortOrder.HasValue)
                 {
-                    sortingOrder = settedSortingOrder.Value;
+                    sortOrder = settedSortOrder.Value;
                 }
                 else
                 {
-                    sortingOrder = system is IEcsSystemDefaultSortingOrder defaultSortingOrder ? defaultSortingOrder.SortingOrder : 0;
+                    sortOrder = system is IEcsSystemDefaultSortingOrder defaultSortingOrder ? defaultSortingOrder.SortingOrder : 0;
                 }
-
                 if (string.IsNullOrEmpty(layerName))
                 {
                     layerName = system is IEcsSystemDefaultLayer defaultLayer ? defaultLayer.Layer : BASIC_LAYER;
                 }
-                if (!_systems.TryGetValue(layerName, out SystemsList list))
-                {
-                    list = new SystemsList(layerName);
-                    _systems.Add(layerName, list);
-                }
-                if (_uniqueTypes.Add(system.GetType()) == false && isUnique)
-                {
-                    return this;
-                }
-                list.Add(system, sortingOrder, isUnique);
+                AddRecordInternal(system, layerName, _systemRecordsInrement++, sortOrder, isUnique);
 
                 if (system is IEcsModule module)//если система одновременно явялется и системой и модулем то за один Add будет вызван Add и AddModule
                 {
@@ -93,6 +91,22 @@ namespace DCFApixels.DragonECS
 
                 return this;
             }
+            private void AddRecordInternal(IEcsProcess system, string layer, int addOrder, int sortOrder, bool isUnique)
+            {
+                SystemRecord record = new SystemRecord(system, layer, addOrder, sortOrder, isUnique);
+                if(_layerLists.TryGetValue(layer, out LayerSystemsList list) == false)
+                {
+                    list = new LayerSystemsList(layer);
+                    _layerLists.Add(layer, list);
+                }
+                list.lasyInitSystemsCount++;
+                if (_systemRecords.Length <= _systemRecordsCount)
+                {
+                    Array.Resize(ref _systemRecords, _systemRecordsCount << 1);
+                }
+                _systemRecords[_systemRecordsCount++] = record;
+            }
+
             #endregion
 
             #region Add other
@@ -123,78 +137,112 @@ namespace DCFApixels.DragonECS
                 }
                 Layers.MergeWith(other.Layers);
 
-                foreach (var otherPair in other._systems)
+                //_systemRecordsInrement + otherRecord.addOrder смещает порядок так что новые системы встают в конец очереди, но сохраняют порядок addOrder
+                foreach (var otherRecord in other.SystemRecords)
                 {
-                    //if (_systems.TryGetValue(otherPair.Key, out SystemsList selfList) == false)
-                    //{
-                    //    selfList = new SystemsList(otherPair.Key);
-                    //    _systems.Add(otherPair.Key, selfList);
-                    //}
-                    //selfList.AddList(otherPair.Value);
-                    foreach (var otherSystem in otherPair.Value.Records)
-                    {
-                        AddInternal(otherSystem.system, otherPair.Key, otherSystem.sortOrder, otherSystem.isUnique);
-                    }
+                    AddRecordInternal(otherRecord.system, otherRecord.layer, _systemRecordsInrement + otherRecord.addOrder, otherRecord.sortOrder, otherRecord.isUnique);
                 }
-
-                //TODO добавить проверку уникальных систем
-                //сливать множество уникальных нужно после слияния систем
-                //_uniqueTypes.UnionWith(other._uniqueTypes);
-
+                _systemRecordsInrement += other._systemRecordsInrement;
             }
             #endregion
 
             #region Remove
+            private void RemoveAt(int index)
+            {
+                ref var slot = ref _systemRecords[index];
+                _layerLists[slot.layer].lasyInitSystemsCount--;
+                slot = _systemRecords[--_systemRecordsCount];
+            }
             public Builder Remove<TSystem>()
             {
-                _uniqueTypes.Remove(typeof(TSystem));
-                foreach (var list in _systems.Values)
+                for (int i = 0; i < _systemRecordsCount; i++)
                 {
-                    list.RemoveAll<TSystem>();
+                    if (_systemRecords[i].system is TSystem)
+                    {
+                        RemoveAt(i--);
+                    }
                 }
                 return this;
             }
             #endregion
 
             #region Build
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            private EcsProfilerMarker _buildBarker = new EcsProfilerMarker("EcsPipeline.Build");
+#endif
             public EcsPipeline Build()
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 _buildBarker.Begin();
 #endif
-                SystemsList basicBlockList;
-                if (_systems.TryGetValue(BASIC_LAYER, out basicBlockList) == false)
+                LayerSystemsList basicLayerList;
+                if (_layerLists.TryGetValue(BASIC_LAYER, out basicLayerList) == false)
                 {
-                    basicBlockList = new SystemsList(BASIC_LAYER);
-                    _systems.Add(BASIC_LAYER, basicBlockList);
+                    basicLayerList = new LayerSystemsList(BASIC_LAYER);
+                    _layerLists.Add(BASIC_LAYER, basicLayerList);
                 }
+                //int allSystemsLength = 0;
+                //foreach (var item in _layerLists)
+                //{
+                //    if (item.Key == BASIC_LAYER)
+                //    {
+                //        continue;
+                //    }
+                //    if (!Layers.Contains(item.Key))
+                //    {
+                //        basicBlockList.AddList(item.Value);
+                //    }
+                //    else
+                //    {
+                //        allSystemsLength += item.Value.recordsCount;
+                //    }
+                //    item.Value.Sort();
+                //}
+                //allSystemsLength += basicBlockList.recordsCount;
+                //basicBlockList.Sort();
+
+                HashSet<Type> uniqueSystemsSet = new HashSet<Type>();
+
                 int allSystemsLength = 0;
-                foreach (var item in _systems)
+                foreach (var item in _layerLists)
                 {
-                    if (item.Key == BASIC_LAYER)
-                    {
-                        continue;
-                    }
+                    if (item.Key == BASIC_LAYER) { continue; }
                     if (!Layers.Contains(item.Key))
                     {
-                        basicBlockList.AddList(item.Value);
+                        basicLayerList.lasyInitSystemsCount += item.Value.lasyInitSystemsCount;
                     }
                     else
                     {
-                        allSystemsLength += item.Value.recordsCount;
+                        item.Value.Init();
+                        allSystemsLength += item.Value.lasyInitSystemsCount + 1;
                     }
-                    item.Value.Sort();
                 }
-                allSystemsLength += basicBlockList.recordsCount;
-                basicBlockList.Sort();
+                allSystemsLength += basicLayerList.lasyInitSystemsCount + 1;
+                basicLayerList.Init();
+
+                for (int i = 0, iMax = _systemRecordsCount; i < iMax; i++)
+                {
+                    ref var record = ref _systemRecords[i];
+                    var list = _layerLists[record.layer];
+                    if(list.IsInit == false)
+                    {
+                        list = basicLayerList;
+                    }
+                    if(record.isUnique == false || uniqueSystemsSet.Add(record.system.GetType()))
+                    {
+                        list.Add(record.system, record.addOrder, record.sortOrder, record.isUnique);
+                    }
+                }
+
 
                 IEcsProcess[] allSystems = new IEcsProcess[allSystemsLength];
                 {
                     int i = 0;
                     foreach (var item in Layers)
                     {
-                        if (_systems.TryGetValue(item, out var list))
+                        if (_layerLists.TryGetValue(item, out var list) && list.IsInit)
                         {
+                            list.Sort();
                             for (int j = 0; j < list.recordsCount; j++)
                             {
                                 allSystems[i++] = list.records[j].system;
@@ -435,27 +483,38 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region SystemsList
-            private class SystemsList
+            private class LayerSystemsList
             {
-                public SystemRecord[] records = new SystemRecord[32];
+                public int lasyInitSystemsCount = 0;
+
+                public Item[] records = null;
                 public int recordsCount = 0;
 
                 private int _lastSortingOrder;
-                public bool isSorted = true;
-                public ReadOnlySpan<SystemRecord> Records { get { return new ReadOnlySpan<SystemRecord>(records, 1, recordsCount - 1); } }
-                public SystemsList(string layerName)
+                private bool _isSorted = true;
+
+                private string _layerName;
+
+                public bool IsInit { get { return records != null; } }
+                public bool IsSorted { get { return _isSorted; } }
+                public ReadOnlySpan<Item> Records { get { return new ReadOnlySpan<Item>(records, 1, recordsCount - 1); } }
+                public LayerSystemsList(string layerName) { _layerName = layerName; }
+                public void Init()
                 {
-                    Add(new SystemsLayerMarkerSystem(layerName), int.MinValue, false);
+                    if (IsInit) { Throw.UndefinedException(); }
+
+                    records = new Item[lasyInitSystemsCount + 1];
+                    Add(new SystemsLayerMarkerSystem(_layerName), int.MinValue, int.MinValue, false);
                 }
-                public void AddList(SystemsList other)
+                public void AddList(LayerSystemsList other)
                 {
                     for (int i = 1; i < other.recordsCount; i++)
                     {
                         var otherRecord = other.records[i];
-                        Add(otherRecord.system, otherRecord.sortOrder, otherRecord.isUnique);
+                        AddItemInternal(otherRecord);
                     }
                 }
-                public void Add(IEcsProcess system, int sortingOrder, bool isUnique)
+                public void Add(IEcsProcess system, int addOrder, int sortingOrder, bool isUnique)
                 {
                     if(recordsCount <= 1)
                     {
@@ -463,66 +522,75 @@ namespace DCFApixels.DragonECS
                     }
                     else if(_lastSortingOrder != sortingOrder)
                     {
-                        isSorted = false;
+                        _isSorted = false;
                     }
-
+                    AddItemInternal(new Item(system, addOrder, sortingOrder, isUnique));
+                }
+                private void AddItemInternal(Item item)
+                {
                     if (records.Length <= recordsCount)
                     {
                         Array.Resize(ref records, recordsCount << 1);
                     }
-                    records[recordsCount++] = new SystemRecord(system, sortingOrder, isUnique);
+                    records[recordsCount++] = item;
                 }
                 public void RemoveAll<T>()
                 {
-                    //for (int i = 0; i < recordsCount; i++)
-                    //{
-                    //    if (records[i].system is T)
-                    //    {
-                    //        records[i] = records[--recordsCount];
-                    //    }
-                    //}
-
-                    int freeIndex = 0;
-
-                    while (freeIndex < recordsCount && (records[freeIndex].system is T) == false) { freeIndex++; }
-                    if (freeIndex >= recordsCount) { return; }
-
-                    int current = freeIndex + 1;
-                    while (current < recordsCount)
+                    for (int i = 0; i < recordsCount; i++)
                     {
-                        while (current < recordsCount && (records[current].system is T)) { current++; }
-                        if (current < recordsCount)
+                        if (records[i].system is T)
                         {
-                            records[freeIndex++] = records[current++];
+                            records[i] = records[--recordsCount];
                         }
                     }
-                    recordsCount = freeIndex;
+                    _isSorted = false;
                 }
                 public void Sort()
                 {
+                    if (_isSorted) { return; }
                     //Игнорирую первую систему, так как это чисто система с названием слоя
                     Array.Sort(records, 1, recordsCount - 1);
-                    isSorted = true;
+                    _isSorted = true;
                 }
             }
-            private readonly struct SystemRecord : IComparable<SystemRecord>
+            private readonly struct Item : IComparable<Item>
             {
                 public readonly IEcsProcess system;
+                public readonly int addOrder;
                 public readonly int sortOrder;
                 public readonly bool isUnique;
-                public SystemRecord(IEcsProcess system, int sortOrder, bool isUnique)
+                public Item(IEcsProcess system, int addOrder, int sortOrder, bool isUnique)
                 {
                     this.system = system;
+                    this.addOrder = addOrder;
                     this.sortOrder = sortOrder;
                     this.isUnique = isUnique;
                 }
-                public int CompareTo(SystemRecord other)
+                public int CompareTo(Item other)
                 {
                     int c = sortOrder - other.sortOrder;
-                    return c == 0 ? 0 : c;
+                    return c == 0 ? addOrder - other.addOrder : c;
                 }
             }
             #endregion
+
+
+            private readonly struct SystemRecord
+            {
+                public readonly IEcsProcess system;
+                public readonly string layer;
+                public readonly int addOrder;
+                public readonly int sortOrder;
+                public readonly bool isUnique;
+                public SystemRecord(IEcsProcess system, string layer, int addOrder, int sortOrder, bool isUnique)
+                {
+                    this.system = system;
+                    this.layer = layer;
+                    this.addOrder = addOrder;
+                    this.sortOrder = sortOrder;
+                    this.isUnique = isUnique;
+                }
+            }
         }
     }
 }
