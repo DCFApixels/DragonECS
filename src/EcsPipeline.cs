@@ -259,7 +259,23 @@ namespace DCFApixels.DragonECS
     public class SystemsLayerMarkerSystem : IEcsProcess
     {
         public readonly string name;
-        public SystemsLayerMarkerSystem(string name) { this.name = name; }
+        public readonly string layerNameSpace;
+        public readonly string layerName;
+        public SystemsLayerMarkerSystem(string name)
+        {
+            this.name = name;
+            int indexof = name.LastIndexOf('.');
+            if(indexof > 0)
+            {
+                layerNameSpace = name.Substring(0, indexof + 1);
+                layerName = name.Substring(indexof + 1);
+            }
+            else
+            {
+                layerNameSpace = string.Empty;
+                layerName = name;
+            }
+        }
         public override string ToString() { return name; }
     }
     #endregion
