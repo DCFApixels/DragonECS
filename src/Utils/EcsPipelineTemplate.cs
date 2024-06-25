@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace DCFApixels.DragonECS.Serializable
+namespace DCFApixels.DragonECS
 {
     [Serializable]
     [DataContract]
