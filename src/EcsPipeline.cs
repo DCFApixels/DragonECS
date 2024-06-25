@@ -265,7 +265,7 @@ namespace DCFApixels.DragonECS
         {
             this.name = name;
             int indexof = name.LastIndexOf('.');
-            if(indexof > 0)
+            if (indexof > 0)
             {
                 layerNameSpace = name.Substring(0, indexof + 1);
                 layerName = name.Substring(indexof + 1);

@@ -4,7 +4,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using static DCFApixels.DragonECS.EcsPipeline.Builder;
 
 namespace DCFApixels.DragonECS
 {
@@ -19,7 +18,7 @@ namespace DCFApixels.DragonECS
             private int _systemRecordsCount = 0;
             private int _systemRecordsInrement = 0;
 
-            private Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>();  
+            private Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>();
 
             private readonly List<InitDeclaredRunner> _initDeclaredRunners = new List<InitDeclaredRunner>(4);
 
@@ -94,7 +93,7 @@ namespace DCFApixels.DragonECS
             private void AddRecordInternal(IEcsProcess system, string layer, int addOrder, int sortOrder, bool isUnique)
             {
                 SystemRecord record = new SystemRecord(system, layer, addOrder, sortOrder, isUnique);
-                if(_layerLists.TryGetValue(layer, out LayerSystemsList list) == false)
+                if (_layerLists.TryGetValue(layer, out LayerSystemsList list) == false)
                 {
                     list = new LayerSystemsList(layer);
                     _layerLists.Add(layer, list);
@@ -224,11 +223,11 @@ namespace DCFApixels.DragonECS
                 {
                     ref var record = ref _systemRecords[i];
                     var list = _layerLists[record.layer];
-                    if(list.IsInit == false)
+                    if (list.IsInit == false)
                     {
                         list = basicLayerList;
                     }
-                    if(record.isUnique == false || uniqueSystemsSet.Add(record.system.GetType()))
+                    if (record.isUnique == false || uniqueSystemsSet.Add(record.system.GetType()))
                     {
                         list.Add(record.system, record.addOrder, record.sortOrder, record.isUnique);
                     }
@@ -516,11 +515,11 @@ namespace DCFApixels.DragonECS
                 }
                 public void Add(IEcsProcess system, int addOrder, int sortingOrder, bool isUnique)
                 {
-                    if(recordsCount <= 1)
+                    if (recordsCount <= 1)
                     {
                         _lastSortingOrder = sortingOrder;
                     }
-                    else if(_lastSortingOrder != sortingOrder)
+                    else if (_lastSortingOrder != sortingOrder)
                     {
                         _isSorted = false;
                     }
