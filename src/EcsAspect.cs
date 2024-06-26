@@ -119,12 +119,13 @@ namespace DCFApixels.DragonECS
                 Builder builder = new Builder(world);
                 Type aspectType = typeof(TAspect);
                 EcsAspect newAspect;
-                //TODO добавить оповещение что инициализация через конструктор не работает
-#if !REFLECTION_DISABLED
-                ConstructorInfo constructorInfo = aspectType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
 
                 var buildersStack = GetBuildersStack();
                 buildersStack.Push(builder);
+
+                //TODO добавить оповещение что инициализация через конструктор не работает
+#if !REFLECTION_DISABLED 
+                ConstructorInfo constructorInfo = aspectType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
                 if (constructorInfo != null)
                 {
                     newAspect = (EcsAspect)constructorInfo.Invoke(new object[] { builder });
