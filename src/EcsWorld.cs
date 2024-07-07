@@ -211,7 +211,7 @@ namespace DCFApixels.DragonECS
         [UnityEngine.Scripting.Preserve]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TAspect GetAspect<TAspect>() where TAspect : EcsAspect
+        public TAspect GetAspect<TAspect>() where TAspect : EcsAspect, new()
         {
             return Get<AspectCache<TAspect>>().instance;
         }

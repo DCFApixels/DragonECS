@@ -8,18 +8,18 @@
     {
         #region Where
         public static EcsSpan Where<TCollection, TAspect>(this TCollection entities, out TAspect aspect)
-            where TAspect : EcsAspect
+            where TAspect : EcsAspect, new()
             where TCollection : IEntityStorage
         {
             return entities.ToSpan().Where(out aspect);
         }
         public static EcsSpan Where<TAspect>(this EcsReadonlyGroup group, out TAspect aspect)
-            where TAspect : EcsAspect
+            where TAspect : EcsAspect, new()
         {
             return group.ToSpan().Where(out aspect);
         }
         public static EcsSpan Where<TAspect>(this EcsSpan span, out TAspect aspect)
-            where TAspect : EcsAspect
+            where TAspect : EcsAspect, new()
         {
             EcsWorld world = span.World;
             if (world.IsEnableReleaseDelEntBuffer)
@@ -34,18 +34,18 @@
 
         #region WhereToGroup
         public static EcsReadonlyGroup WhereToGroup<TCollection, TAspect>(this TCollection entities, out TAspect aspect)
-            where TAspect : EcsAspect
+            where TAspect : EcsAspect, new()
             where TCollection : IEntityStorage
         {
             return entities.ToSpan().WhereToGroup(out aspect);
         }
         public static EcsReadonlyGroup WhereToGroup<TAspect>(this EcsReadonlyGroup group, out TAspect aspect)
-            where TAspect : EcsAspect
+            where TAspect : EcsAspect, new()
         {
             return group.ToSpan().WhereToGroup(out aspect);
         }
         public static EcsReadonlyGroup WhereToGroup<TAspect>(this EcsSpan span, out TAspect aspect)
-            where TAspect : EcsAspect
+            where TAspect : EcsAspect, new()
         {
             EcsWorld world = span.World;
             if (world.IsEnableReleaseDelEntBuffer)

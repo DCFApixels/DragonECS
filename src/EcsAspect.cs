@@ -2,7 +2,6 @@
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -23,7 +22,18 @@ namespace DCFApixels.DragonECS
             }
             return _constructorBuildersStack;
         }
-
+        protected static Builder CurrentBuilder
+        {
+            get
+            {
+                var buildersStack = GetBuildersStack();
+                if (buildersStack.Count <= 0)
+                {
+                    Throw.Aspect_CanOnlyBeUsedDuringInitialization(nameof(CurrentBuilder));
+                }
+                return buildersStack.Peek();
+            }
+        }
         protected static IncludeMarker Inc
         {
             get
@@ -94,6 +104,7 @@ namespace DCFApixels.DragonECS
         {
             private EcsWorld _world;
             private EcsMask.Builder _maskBuilder;
+
             public IncludeMarker Inc
             {
                 get { return new IncludeMarker(this); }
@@ -114,28 +125,16 @@ namespace DCFApixels.DragonECS
                 _world = world;
                 _maskBuilder = EcsMask.New(world);
             }
-            internal static unsafe TAspect New<TAspect>(EcsWorld world) where TAspect : EcsAspect
+            internal static unsafe TAspect New<TAspect>(EcsWorld world) where TAspect : EcsAspect, new()
             {
                 Builder builder = new Builder(world);
                 Type aspectType = typeof(TAspect);
                 EcsAspect newAspect;
-                //TODO добавить оповещение что инициализация через конструктор не работает
-#if !REFLECTION_DISABLED
-                ConstructorInfo constructorInfo = aspectType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(Builder) }, null);
 
                 var buildersStack = GetBuildersStack();
                 buildersStack.Push(builder);
-                if (constructorInfo != null)
-                {
-                    newAspect = (EcsAspect)constructorInfo.Invoke(new object[] { builder });
-                }
-                else
-#endif
-                {
-#pragma warning disable IL2091 // Target generic argument does not satisfy 'DynamicallyAccessedMembersAttribute' in target method or type. The generic parameter of the source method or type does not have matching annotations.
-                    newAspect = Activator.CreateInstance<TAspect>();
-#pragma warning restore IL2091
-                }
+
+                newAspect = new TAspect();
                 newAspect.Init(builder);
                 buildersStack.Pop();
                 newAspect._source = world;
@@ -193,13 +192,13 @@ namespace DCFApixels.DragonECS
             {
                 _maskBuilder.Exclude(type);
             }
-            public TOtherAspect Combine<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect
+            public TOtherAspect Combine<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect, new()
             {
                 var result = _world.GetAspect<TOtherAspect>();
                 _maskBuilder.Combine(result.Mask);
                 return result;
             }
-            public TOtherAspect Except<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect
+            public TOtherAspect Except<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect, new()
             {
                 var result = _world.GetAspect<TOtherAspect>();
                 _maskBuilder.Except(result.Mask);

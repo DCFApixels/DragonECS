@@ -19,7 +19,7 @@ namespace DCFApixels.DragonECS
             }
         }
         internal readonly struct AspectCache<T> : IEcsWorldComponent<AspectCache<T>>
-            where T : EcsAspect
+            where T : EcsAspect, new()
         {
             public readonly T instance;
             public AspectCache(T instance) => this.instance = instance;
