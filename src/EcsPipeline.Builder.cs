@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using static DCFApixels.DragonECS.EcsConsts;
 
 namespace DCFApixels.DragonECS
 {
@@ -11,25 +12,26 @@ namespace DCFApixels.DragonECS
     {
         public class Builder : IEcsModule
         {
-            private const int KEYS_CAPACITY = 4;
-            private const string BASIC_LAYER = EcsConsts.BASIC_LAYER;
-
             private SystemRecord[] _systemRecords = new SystemRecord[256];
             private int _systemRecordsCount = 0;
             private int _systemRecordsInrement = 0;
 
-            private Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>(KEYS_CAPACITY);
-
+            private readonly Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>(8);
             private readonly List<InitDeclaredRunner> _initDeclaredRunners = new List<InitDeclaredRunner>(4);
 
             public readonly LayerList Layers;
             public readonly Injector.Builder Injector;
             public readonly Configurator Configs;
 
+            private string _defaultLayer = BASIC_LAYER;
+            private int _defaultOrder = 0;
+
+            #region Properties
             private ReadOnlySpan<SystemRecord> SystemRecords
             {
                 get { return new ReadOnlySpan<SystemRecord>(_systemRecords, 0, _systemRecordsCount); }
             }
+            #endregion
 
             #region Constructors
             public Builder(IConfigContainerWriter config = null)
@@ -43,9 +45,7 @@ namespace DCFApixels.DragonECS
                 Injector.AddNode<EcsAspect>();
                 Injector.AddNode<EcsPipeline>();
 
-                Layers = new LayerList(this, BASIC_LAYER);
-                Layers.Insert(EcsConsts.BASIC_LAYER, EcsConsts.PRE_BEGIN_LAYER, EcsConsts.BEGIN_LAYER);
-                Layers.InsertAfter(EcsConsts.BASIC_LAYER, EcsConsts.END_LAYER, EcsConsts.POST_END_LAYER);
+                Layers = new LayerList(this, PRE_BEGIN_LAYER, BEGIN_LAYER, BASIC_LAYER, END_LAYER, POST_END_LAYER);
             }
             #endregion
 
@@ -75,11 +75,11 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
-                    sortOrder = system is IEcsSystemDefaultSortOrder defaultSortOrder ? defaultSortOrder.SortOrder : 0;
+                    sortOrder = system is IEcsSystemDefaultSortOrder defaultSortOrder ? defaultSortOrder.SortOrder : _defaultOrder;
                 }
                 if (string.IsNullOrEmpty(layerName))
                 {
-                    layerName = system is IEcsSystemDefaultLayer defaultLayer ? defaultLayer.Layer : BASIC_LAYER;
+                    layerName = system is IEcsSystemDefaultLayer defaultLayer ? defaultLayer.Layer : _defaultLayer;
                 }
                 AddRecordInternal(system, layerName, _systemRecordsInrement++, sortOrder, isUnique);
 
@@ -108,12 +108,45 @@ namespace DCFApixels.DragonECS
 
             #endregion
 
-            #region Add other
-            public Builder AddModule(IEcsModule module)
+            #region AddModule
+            public Builder AddModule(IEcsModule module, int? sortOrder = null)
             {
+                return AddModuleInternal(module, string.Empty, sortOrder);
+            }
+            public Builder AddModule(IEcsModule module, string layerName, int? sortOrder = null)
+            {
+                return AddModuleInternal(module, layerName, sortOrder);
+            }
+            public Builder AddModuleInternal(IEcsModule module, string layerName, int? settedSortOrder)
+            {
+                string prevLayer = _defaultLayer;
+                int prevSortOrder = _defaultOrder;
+
+                if (settedSortOrder.HasValue)
+                {
+                    _defaultOrder = settedSortOrder.Value;
+                }
+                else
+                {
+                    _defaultOrder = module is IEcsSystemDefaultSortOrder defaultSortOrder ? defaultSortOrder.SortOrder : 0;
+                }
+                if (string.IsNullOrEmpty(layerName))
+                {
+                    _defaultLayer = module is IEcsSystemDefaultLayer defaultLayer ? defaultLayer.Layer : BASIC_LAYER;
+                }
+                else
+                {
+                    _defaultLayer = layerName;
+                }
+
                 module.Import(this);
+                _defaultLayer = prevLayer;
+                _defaultOrder = prevSortOrder;
                 return this;
             }
+            #endregion
+
+            #region Add other
             public Builder AddRunner<TRunner>() where TRunner : EcsRunner, IEcsRunner, new()
             {
                 _initDeclaredRunners.Add(new InitDeclaredRunner<TRunner>());
@@ -180,25 +213,6 @@ namespace DCFApixels.DragonECS
                     basicLayerList = new LayerSystemsList(BASIC_LAYER);
                     _layerLists.Add(BASIC_LAYER, basicLayerList);
                 }
-                //int allSystemsLength = 0;
-                //foreach (var item in _layerLists)
-                //{
-                //    if (item.Key == BASIC_LAYER)
-                //    {
-                //        continue;
-                //    }
-                //    if (!Layers.Contains(item.Key))
-                //    {
-                //        basicBlockList.AddList(item.Value);
-                //    }
-                //    else
-                //    {
-                //        allSystemsLength += item.Value.recordsCount;
-                //    }
-                //    item.Value.Sort();
-                //}
-                //allSystemsLength += basicBlockList.recordsCount;
-                //basicBlockList.Sort();
 
                 HashSet<Type> uniqueSystemsSet = new HashSet<Type>();
 
@@ -315,6 +329,12 @@ namespace DCFApixels.DragonECS
                     _source = source;
                     _layers = new List<string>(16) { basicLayerName, ADD_LAYER };
                     _basicLayerName = basicLayerName;
+                }
+                public LayerList(Builder source, string preBeginlayer, string beginlayer, string basicLayer, string endLayer, string postEndLayer)
+                {
+                    _source = source;
+                    _layers = new List<string>(16) { preBeginlayer, beginlayer, basicLayer, ADD_LAYER, endLayer, postEndLayer };
+                    _basicLayerName = basicLayer;
                 }
 
                 public Builder Add(string newLayer) { return Insert(ADD_LAYER, newLayer); }
