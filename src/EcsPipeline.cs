@@ -99,10 +99,37 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                result = _allSystems.OfType<T>().ToArray();
+                result = CreateProcess<T>();
                 _processes.Add(type, result);
             }
             return new EcsProcess<T>(result);
+        }
+        [ThreadStatic]
+        private static IEcsProcess[] _buffer;
+        private T[] CreateProcess<T>() where T : IEcsProcess
+        {
+            if(_buffer == null || _buffer.Length < _allSystems.Length)
+            {
+                if(_buffer == null)
+                {
+                    _buffer = new IEcsProcess[_allSystems.Length];
+                }
+                else
+                {
+                    Array.Resize(ref _buffer, _allSystems.Length);
+                }
+            }
+            int l = 0;
+            for (int i = 0, iMax = _allSystems.Length; i < iMax; i++)
+            {
+                if (_allSystems[i] is T)
+                {
+                    _buffer[l++] = _allSystems[i];
+                }
+            }
+            T[] result = new T[l];
+            Array.Copy(_buffer, result, l);
+            return result;
         }
         #endregion
 
