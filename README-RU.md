@@ -9,9 +9,9 @@
 <a href="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=IbDcH43vhfArb30luGMP1TMXB3GCHzxm&authKey=s%2FJfqvv46PswFq68irnGhkLrMR6y9tf%2FUn2mogYizSOGiS%2BmB%2B8Ar9I%2Fnr%2Bs4oS%2B&noverify=0&group_code=949562781"><img alt="QQ" src="https://img.shields.io/badge/QQ-JOIN-00b269?logo=tencentqq&logoColor=%23ffffff&style=for-the-badge"></a>
 </p>
 
-# DragonECS - C# Entity Component System Framework
-| Languages: | [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [English(WIP)](https://github.com/DCFApixels/DragonECS) |
-| :--- | :--- | :--- |
+# DragonECS - C# Entity Component System Фреймворк
+| Languages: | [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [English(WIP)](https://github.com/DCFApixels/DragonECS) | [中文](https://github.com/DCFApixels/DragonECS/blob/main/README-ZN.md) |
+| :--- | :--- | :--- | :--- |
 
 DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) фреймворк нацеленный на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Разработан на чистом C#, без зависимостей и генерации кода. Вдохновлен [LeoEcs](https://github.com/Leopotam/ecslite).
 
@@ -148,7 +148,7 @@ class SomeSystem : IEcsPreInit, IEcsInit, IEcsRun, IEcsDestroy
     // Будет вызван один раз в момент работы EcsPipeline.Run().
     public void Run () { }
     
-    // Будет вызван один раз в момент работы EcsPipeline.Destroy()
+    // Будет вызван один раз в момент работы EcsPipeline.Destroy().
     public void Destroy () { }
 }
 ```
@@ -162,16 +162,16 @@ class SomeSystem : IEcsPreInit, IEcsInit, IEcsRun, IEcsDestroy
 ### Построение
 За построение пайплайна отвечает Builder. В Builder добавляются системы, а в конце строится пайплайн. Пример:
 ```c#
-EcsPipelone pipeline = EcsPipeline.New() //Создает Builder пайплайна
-    // Добавляет систему System1 в очередь систем
+EcsPipeline pipeline = EcsPipeline.New() // Создает Builder пайплайна.
+    // Добавляет систему System1 в очередь систем.
     .Add(new System1())
-    // Добавляет System2 в очередь после System1
+    // Добавляет System2 в очередь после System1.
     .Add(new System2())
-    // Добавляет System3 в очередь после System2, но в единичном экземпляре
+    // Добавляет System3 в очередь после System2, но в единичном экземпляре.
     .AddUnique(new System3())
-    // Завершает построение пайплайна и возвращает его экземпляр 
+    // Завершает построение пайплайна и возвращает его экземпляр.
     .Build(); 
-pipeline.Init(); // Инициализация пайплайна
+pipeline.Init(); // Инициализация пайплайна.
 ```
 
 ```c#
@@ -188,27 +188,29 @@ class SomeSystem : IEcsRun, IEcsPipelineMember
 Фреймворк реализует внедрение зависимостей для систем. это процесс который запускается вместе с инициализацией пайплайна и внедряет данные переданные в Builder.
 > Использование встроенного внедрения зависимостей опционально. 
 ``` c#
-class SomeDataA { /*...*/ }
-class SomeDataB : SomeDataA { /*...*/ }
+class SomeDataA { /* ... */ }
+class SomeDataB : SomeDataA { /* ... */ }
 
-//...
+// ...
 SomeDataB _someDataB = new SomeDataB();
-EcsPipelone pipeline = EcsPipeline.New()
-    //...
+EcsPipeline pipeline = EcsPipeline.New()
+    // ...
     // Внедрит _someDataB в системы реализующие IEcsInject<SomeDataB>.
     .Inject(_someDataB) 
-    // Добавит системы реализующие IEcsInject<SomeDataA> в дерево инъекции
+    // Добавит системы реализующие IEcsInject<SomeDataA> в дерево инъекции,
     // теперь эти системы так же получат _someDataB.
-    .Injector.AddNode<SomeDataA>() // 
-    //...
+    .Injector.AddNode<SomeDataA>()
+    // ...
+    .Add(new SomeSystem())
+    // ...
     .BuildAndInit();
 
-//...
+// ...
 // Для внедрения используется интерфейс IEcsInject<T> и его метод Inject(T obj)
 class SomeSystem : IEcsInject<SomeDataA>, IEcsRun
 {
     SomeDataA _someDataA
-    //obj будет экземпляром типа SomeDataB
+    // obj будет экземпляром типа SomeDataB.
     public void Inject(SomeDataA obj) => _someDataA = obj;
 
     public void Run () 
@@ -222,21 +224,22 @@ class SomeSystem : IEcsInject<SomeDataA>, IEcsRun
 Группы систем реализующие общую фичу можно объединять в модули, и просто добавлять модули в Pipeline.
 ``` c#
 using DCFApixels.DragonECS;
-class Module : IEcsModule 
+class Module1 : IEcsModule 
 {
     public void Import(EcsPipeline.Builder b) 
     {
         b.Add(new System1());
-        b.Add(new System2(), EcsConsts.END_LAYER); // данная система будет добавлена в слой EcsConsts.END_LAYER
-        b.Add(new System3());
+        b.Add(new System2());
+        b.AddModule(new Module2());
+        // ...
     }
 }
 ```
 ``` c#
-EcsPipelone pipeline = EcsPipeline.New()
-    //...
-    .AddModule(new Module())
-    //...
+EcsPipeline pipeline = EcsPipeline.New()
+    // ...
+    .AddModule(new Module1())
+    // ...
     .BuildAndInit();
 ```
 
@@ -244,11 +247,13 @@ EcsPipelone pipeline = EcsPipeline.New()
 Очередь систем можно разбить на слои. Слой определяет место в очереди для вставки систем. Если необходимо чтобы какая-то система была вставлена в конце очереди, вне зависимости от места добавления, эту систему можно добавить в слой EcsConsts.END_LAYER.
 ``` c#
 const string SOME_LAYER = nameof(SOME_LAYER);
-EcsPipelone pipeline = EcsPipeline.New()
-    //...
-    .Layers.Insert(EcsConsts.END_LAYER, SOME_LAYER) // Вставляет новый слой перед конечным слоем EcsConsts.END_LAYER
-    .Add(New SomeSystem(), SOME_LAYER) // Система SomeSystem будет вставлена в слой SOME_LAYER
-    //...
+EcsPipeline pipeline = EcsPipeline.New()
+    // ...
+    // Вставляет новый слой перед конечным слоем EcsConsts.END_LAYER
+    .Layers.Insert(EcsConsts.END_LAYER, SOME_LAYER)
+    // Система SomeSystem будет вставлена в слой SOME_LAYER
+    .Add(New SomeSystem(), SOME_LAYER) 
+    // ...
     .BuildAndInit();
 ```
 Встроенные слои расположены в следующем порядке:
@@ -275,12 +280,12 @@ EcsPipelone pipeline = EcsPipeline.New()
  
 Для добавления нового процесса создайте интерфейс наследованный от `IEcsProcess` и создайте раннер для него. Раннер это класс реализующий интерфейс запускаемого процесса и наследуемый от `EcsRunner<TInterface>`. Пример:
 ``` c#
-//Интерфейс.
+// Интерфейс.
 interface IDoSomethingProcess : IEcsProcess
 {
     void Do();
 }
-//Реализация раннера. Пример реализации можно так же посмотреть в встроенных процессах 
+// Реализация раннера. Пример реализации можно так же посмотреть в встроенных процессах 
 sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomethingProcess
 {
     public void Do() 
@@ -288,19 +293,19 @@ sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomet
         foreach (var item in Process) item.Do();
     }
 }
-//...
+// ...
 
-//Добавление раннера при создании пайплайна.
+// Добавление раннера при создании пайплайна.
 _pipeline = EcsPipeline.New()
     //...
     .AddRunner<DoSomethingProcessRunner>()
     //...
     .BuildAndInit();
 
-//Запуск раннера если раннер был добавлен.
+// Запуск раннера если раннер был добавлен.
 _pipeline.GetRunner<IDoSomethingProcess>.Do()
 
-//Или если раннер не был добавлен(Вызов GetRunnerInstance так же добавит раннер в пайплайн).
+// Или если раннер не был добавлен(Вызов GetRunnerInstance так же добавит раннер в пайплайн).
 _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 ```
 > Раннеры имеют ряд требований к реализации: 
@@ -314,31 +319,30 @@ _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 ## Мир
 Является контейнером для сущностей и компонентов.
 ``` c#
-//Создание экземпляра мира
+// Создание экземпляра мира.
 _world = new EcsDefaultWorld();
-//Пример из раздела Сущности
+// Создание и удаление сущности по примеру из раздела Сущности.
 var e = _world.NewEntity();
 _world.DelEntity(e);
 ```
 > **NOTICE:** Необходимо вызывать EcsWorld.Destroy() у экземпляра мира если он больше не используется, иначе он будет висеть в памяти.
 
 ### Конфигурация мира
-При создании мира, в конструктор можно передать экземпляр `EcsWorldConfig`.
+Для инициализации мира сразу необходимого размера и сокращения времени прогрева, в конструктор можно передать экземпляр `EcsWorldConfig`.
 
 ``` c#
 EcsWorldConfig config = new EcsWorldConfig(
-    //предварительно инициализирует вместимость мира для 2000 сущностей
+    // Предварительно инициализирует вместимость мира для 2000 сущностей.
     entitiesCapacity: 2000, 
-    //предварительно инициализирует вместимость пулов для 2000 компонентов
+    // Предварительно инициализирует вместимость пулов для 2000 компонентов.
     poolComponentsCapacity: 2000);  
 _world = new EcsDefaultWorld(config);
 ```
 
-> Компоненты и конфиги можно применять для создания расширений в связке с методами расширений.
 ## Пул
-Является контейнером для компонентов, предоставляет методы для добавления/чтения/редактирования/удаления компонентов на сущности. Есть несколько видов пулов, для разных целей:
+Является хранилищем для компонентов, предоставляет методы для добавления/чтения/редактирования/удаления компонентов на сущности. Есть несколько видов пулов, для разных целей:
 * `EcsPool` - универсальный пул, хранит struct-компоненты реализующие интерфейс `IEcsComponent`;
-* `EcsTagPool` - подходит для хранения пустых компонентов-тегов, в сравнении с `EcsPool` имеет лучше оптимизацию памяти и скорости, хранит struct-компоненты с `IEcsTagComponent`;
+* `EcsTagPool` - специальный пул для пустых компонентов-тегов, хранит struct-компоненты с `IEcsTagComponent` как bool значения, что в сравнении с реализацией `EcsPool` имеет лучше оптимизацию памяти и скорости;
 
 Пулы имеют 5 основных метода и их разновидности:
 ``` c#
@@ -360,10 +364,9 @@ if (poses.Has(entityID)) { /* ... */ }
 // Удалит компонент у сущности, бросит исключение если у сущности нет этого компонента.
 poses.Del(entityID);
 ```
-> Есть "безопасные" методы, которые сначала выполнят проверку наличия/отсутствия компонента, названия таких методов начинаются с `Try`
+> Есть "безопасные" методы, которые сначала выполнят проверку наличия/отсутствия компонента, названия таких методов начинаются с `Try`.
     
-Имеется возможность реализации пользовательского пула
-> эта функция будет описана в ближайшее время
+> Имеется возможность реализации пользовательского пула. Эта функция будет описана в ближайшее время.
  
 ## Аспект
 Это пользовательские классы наследуемые от `EcsAspect` и используемые для взаимодействия с сущностями. Аспекты одновременно являются кешем пулов и маской компонентов для фильтрации сущностей. Можно рассматривать аспекты как описание того с какими сущностями работает система.
@@ -371,7 +374,7 @@ poses.Del(entityID);
 Упрощенный синтаксис:
 ``` c#
 using DCFApixels.DragonECS;
-...
+// ...
 class Aspect : EcsAspect
 {
     // Кешируется пул и Pose добавляется во включающее ограничение.
@@ -390,12 +393,11 @@ class Aspect : EcsAspect
 Явный синтаксис (результат идентичен примеру выше):
 ``` c#
 using DCFApixels.DragonECS;
-...
+// ...
 class Aspect : EcsAspect
 {
     public EcsPool<Pose> poses;
     public EcsPool<Velocity> velocities;
-    // вместо виртуальной функции, можно использовать конструктор Aspect(Builder b) 
     protected override void Init(Builder b)
     {
         poses = b.Include<Pose>();
@@ -411,21 +413,21 @@ class Aspect : EcsAspect
 В аспекты можно добавлять другие аспекты, тем самым комбинируя их. Ограничения так же будут скомбинированы.
 ``` c#
 using DCFApixels.DragonECS;
-...
+// ...
 class Aspect : EcsAspect
 {
     public OtherAspect1 otherAspect1;
     public OtherAspect2 otherAspect2;
     public EcsPool<Pose> poses;
  
-    // функция Init аналогична конструктору Aspect(Builder b)
+    // Функция Init аналогична конструктору Aspect(Builder b).
     protected override void Init(Builder b)
     {
-        // комбинирует с SomeAspect1.
+        // Комбинирует с SomeAspect1.
         otherAspect1 = b.Combine<OtherAspect1>(1);
-        // хотя для OtherAspect1 метод Combine был вызван раньше, сначала будет скомбинирован с OtherAspect2, так как по умолчанию order = 0.
+        // Хотя для OtherAspect1 метод Combine был вызван раньше, сначала будет скомбинирован с OtherAspect2, так как по умолчанию order = 0.
         otherAspect2 = b.Combine<OtherAspect2>();
-        // если в OtherAspect1 или в OtherAspect2 было ограничение b.Exclude<Pose>() тут оно будет заменено на b.Include<Pose>().
+        // Если в OtherAspect1 или в OtherAspect2 было ограничение b.Exclude<Pose>() тут оно будет заменено на b.Include<Pose>().
         poses = b.Include<Pose>();
     }
 }
@@ -441,7 +443,7 @@ class Aspect : EcsAspect
 </details>
 
 ## Запросы
-Что бы получить необходимый набор сущностей используется метод-запрос `EcsWorld.Where<TAspcet>(out TAspcet aspect)`. В качестве `TAspcet` указывается аспект, сущности будут отфильтрованны по маске указанного аспекта. Запрос `Where` применим как к `EcsWorld` так и коллекциям фреймворка (в этом плане Where чемто похож на аналогичный из Linq).
+Что бы получить необходимый набор сущностей используется метод-запрос `EcsWorld.Where<TAspect>(out TAspect aspect)`. В качестве `TAspect` указывается аспект, сущности будут отфильтрованны по маске указанного аспекта. Запрос `Where` применим как к `EcsWorld` так и коллекциям фреймворка (в этом плане Where чем-то похож на аналогичный из Linq).
 Пример:
 ``` c#
 public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
@@ -459,7 +461,7 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
     {
         foreach (var e in _world.Where(out Aspect a))
         {
-            // Сюда попадают сущности с компонентами Health, DamageSignal и без IsInvulnerable
+            // Сюда попадают сущности с компонентами Health, DamageSignal и без IsInvulnerable.
             a.healths.Get(e).points -= a.damageSignals.Get(e).points;
         }
     }
@@ -471,9 +473,9 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
 ### EcsSpan
 Коллекция сущностей, доступная только для чтения и выделяемая только в стеке. Состоит из ссылки на массив, длинны и идентификатора мира. Аналог `ReadOnlySpan<int>`.
 ``` c#
-//Запрос Where возвращает сущности в виде EcsSpan
+// Запрос Where возвращает сущности в виде EcsSpan.
 EcsSpan es = _world.Where(out Aspect a);
-//Итерироваться можно по foreach и for
+// Итерироваться можно по foreach и for.
 foreach (var e in es)
 {
     // ...
@@ -481,68 +483,68 @@ foreach (var e in es)
 for (int i = 0; i < es.Count; i++)
 {
     int e = es[i];
-    //...
+    // ...
 }
 ```
 > Хотя `EcsSpan` является просто массивом, в нем не допускается дублирование сущностей. 
 
 ### EcsGroup
-Вспомогательная коллекция основаная на spase set для хранения множества сущностей с O(1) операциями добавления/удаления/проверки и т.д.
+Вспомогательная коллекция основанная на Sparse Set для хранения множества сущностей с O(1) операциями добавления/удаления/проверки и т.д.
 ``` c#
-//Получем новую группу. EcsWorld содержит в себе пул групп,
-//поэтому будет создана новая или переиспользована свободная.
+// Получаем новую группу. EcsWorld содержит в себе пул групп,
+// поэтому будет создана новая или переиспользована свободная.
 EcsGroup group = EcsGroup.New(_world);
-//Освобождаем группу.
+// Освобождаем группу.
 group.Dispose();
 ```
 ``` c#
-//Добвялем сущность entityID.
+// Добавляем сущность entityID.
 group.Add(entityID);
-//Проверяем наличие сущности entityID.
+// Проверяем наличие сущности entityID.
 group.Has(entityID);
-//Удялем сущность entityID.
+// Удаляем сущность entityID.
 group.Remove(entityID);
 ```
 ``` c#
-//Запрос WhereToGroup возвращает сущности в виде группы только для чтения EcsReadonlyGroup
+// Запрос WhereToGroup возвращает сущности в виде группы только для чтения EcsReadonlyGroup.
 EcsReadonlyGroup group = _world.WhereToGroup(out Aspect a);
-//Итерироваться можно по foreach и for
+// Итерироваться можно по foreach и for.
 foreach (var e in group) 
 { 
-    //...
+    // ...
 }
 for (int i = 0; i < group.Count; i++)
 {
     int e = group[i];
-    //...
+    // ...
 }
 ```
 Так как группы это множества, они содержат методы аналогичные `ISet<T>`. Редактирующие методы имеет 2 варианта, с записью результата в groupA, либо с возвращением новой группы:            
                                 
 ``` c#
-// Объединение groupA и groupB
+// Объединение groupA и groupB.
 groupA.UnionWith(groupB);
 EcsGroup newGroup = EcsGroup.Union(groupA, groupB);
 
-// Пересечение groupA и groupB
+// Пересечение groupA и groupB.
 groupA.IntersectWith(groupB);
 EcsGroup newGroup = EcsGroup.Intersect(groupA, groupB);
 
-// Разность groupA и groupB
+// Разность groupA и groupB.
 groupA.ExceptWith(groupB);
 EcsGroup newGroup = EcsGroup.Except(groupA, groupB);
 
-// Симметрическая разность groupA и groupB
+// Симметрическая разность groupA и groupB.
 groupA.SymmetricExceptWith(groupB);
 EcsGroup newGroup = EcsGroup.SymmetricExcept(groupA, groupB);
 
-//Разница всех сущностей в мире и groupA
+// Разница всех сущностей в мире и groupA.
 groupA.Inverse();
 EcsGroup newGroup = EcsGroup.Inverse(groupA);
 ```
 
 ## Корень ECS
-Это пользовательский класс который является точкой входа для ECS. Основное назначение инициализация, запуск систем на каждый Update движка и очистка по окончанию использования.
+Это пользовательский класс который является точкой входа для ECS. Основное назначение инициализация, запуск систем на каждый Update движка и освобождение ресурсов по окончанию использования.
 ### Пример для Unity
 ``` c#
 using DCFApixels.DragonECS;
@@ -553,9 +555,9 @@ public class EcsRoot : MonoBehaviour
     private EcsDefaultWorld _world;
     private void Start()
     {
-        //Создание мира для сущностей и компонентов
+        // Создание мира для сущностей и компонентов.
         _world = new EcsDefaultWorld();
-        //Создание пайплайна длясистем
+        // Создание пайплайна для систем.
         _pipeline = EcsPipeline.New()
             // Добавление систем.
             // .Add(new SomeSystem1())
@@ -569,21 +571,21 @@ public class EcsRoot : MonoBehaviour
 
             // Завершение построения пайплайна.
             .Build();
-        //Инициализация пайплайна и запуск IEcsPreInit.PreInit
-        //и IEcsInit.Init у всех добавленных систем
+        // Инициализация пайплайна и запуск IEcsPreInit.PreInit()
+        // и IEcsInit.Init() у всех добавленных систем.
         _pipeline.Init();
     }
     private void Update()
     {
-        //Запуск IEcsRun.Run у всех добавленных систем
+        // Запуск IEcsRun.Run() у всех добавленных систем.
         _pipeline.Run();
     }
     private void OnDestroy()
     {
-        //Запускает IEcsDestroyInit.Destroy у всех добавленных систем
+        // Запускает IEcsDestroy.Destroy() у всех добавленных систем.
         _pipeline.Destroy();
         _pipeline = null;
-        //Обязательно удалять миры которые больше не будут использованы 
+        // Обязательно удалять миры которые больше не будут использованы.
         _world.Destroy();
         _world = null;
     }
@@ -615,22 +617,22 @@ public class EcsRoot
 
             // Завершение построения пайплайна.
             .Build();
-        // Инициализация пайплайна и запуск IEcsPreInit.PreInit
-        // и IEcsInit.Init у всех добавленных систем.
+        // Инициализация пайплайна и запуск IEcsPreInit.PreInit()
+        // и IEcsInit.Init() у всех добавленных систем.
         _pipeline.Init();
     }
 
     // Update-цикл движка.
     public void Update()
     {
-        // Запуск IEcsRun.Run у всех добавленных систем.
+        // Запуск IEcsRun.Run() у всех добавленных систем.
         _pipeline.Run();
     }
 
     // Очистка окружения.
     public void Destroy()
     {
-        // Запускает IEcsDestroyInit.Destroy у всех добавленных систем.
+        // Запускает IEcsDestroy.Destroy() у всех добавленных систем.
         _pipeline.Destroy();
         _pipeline = null;
         // Обязательно удалять миры которые больше не будут использованы.
@@ -645,7 +647,7 @@ public class EcsRoot
 # Debug
 Фреймворк предоставляет дополнительные инструменты для отладки и логирования, не зависящие от среды. Так же многие типы имеют свой DebuggerProxy для более информативного отображения в IDE.
 ## Мета-Атрибуты
-В чистом виде мета-атрибуты не имеют применения, но могут быть использованы для генерации автоматической документации и используются в интеграциях с движками для задания отображения в отладочных инструментах и редакторах.
+По умолчанию мета-атрибуты не имеют применения, но используются в интеграциях с движками для задания отображения в отладочных инструментах и редакторах. А так же могут быть использованы для генерации автоматической документации.
 ``` c#
 using DCFApixels.DragonECS;
 
@@ -655,7 +657,7 @@ using DCFApixels.DragonECS;
 // Используется для группировки типов.
 [MetaGroup("Abilities/Passive/")] // или [MetaGroup("Abilities", "Passive")]
 
-// Задает цвет типа в системе rgb, где каждый канал принимает значение от 0 до 255, по умолчанию белый. 
+// Задает цвет типа в RGB кодировке, где каждый канал принимает значение от 0 до 255, по умолчанию белый. 
 [MetaColor(MetaColor.Red)] // или [MetaColor(255, 0, 0)]
  
 // Добавляет описание типу.
@@ -663,9 +665,9 @@ using DCFApixels.DragonECS;
  
 // Добавляет строковые теги.
 [MetaTags("Tag1", "Tag2", ...)]  // [MetaTags(MetaTags.HIDDEN))] чтобы скрыть в редакторе 
-public struct Component { }
+public struct Component : IEcsComponent { /* ... */ }
 ```
-Получение мета-информации. С помощью TypeMeta:
+Получение мета-информации:
 ``` c#
 TypeMeta typeMeta = someComponent.GetMeta();
 // или
@@ -677,24 +679,17 @@ var description = typeMeta.Description;
 var group = typeMeta.Group;
 var tags = typeMeta.Tags;
 ```
-С помощью EcsDebugUtility:
-``` c#
-EcsDebugUtility.GetMetaName(someComponent);
-EcsDebugUtility.GetColor(someComponent);
-EcsDebugUtility.GetDescription(someComponent);
-EcsDebugUtility.GetGroup(someComponent);
-EcsDebugUtility.GetTags(someComponent);
-```
+
 ## EcsDebug
-Имеет набор методов для отладки и логирования. Реализован как статический класс вызывающий методы Debug-сервисов. Debug-сервисы - это посредники между системами отладки среды и EcsDebug. Это позволяет не изменяя отладочный код проекта, переносить проект на другие движки, достаточно только реализовать специальный Debug-сервис.
+Имеет набор методов для отладки и логирования. Реализован как статический класс вызывающий методы Debug-сервисов. Debug-сервисы - это посредники между системами отладки среды и EcsDebug. Это позволяет не изменяя отладочный код проекта, переносить проект на другие движки, достаточно только реализовать соответствующий Debug-сервис.
 
 По умолчанию используется `DefaultDebugService` который выводит логи в консоль. Для реализации пользовательского создайте класс наследуемый от `DebugService` и реализуйте абстрактные члены класса.
 
 ``` c#
-// Логирование.
+// Вывод лога.
 EcsDebug.Print("Message");
 
-// Логирование с тегом.
+// Вывод лога с тегом.
 EcsDebug.Print("Tag", "Message");
 
 // Прерывание игры.
@@ -748,7 +743,7 @@ var configs = new ConfigContainer()
     .Set(new SomeDataA(/* ... */))
     .Set(new SomeDataB(/* ... */)));
 EcsDefaultWorld _world = new EcsDefaultWorld(configs);
-//...
+// ...
 var _someDataA = _world.Configs.Get<SomeDataA>();
 var _someDataB = _world.Configs.Get<SomeDataB>();
 ```
@@ -757,9 +752,9 @@ var _someDataB = _world.Configs.Get<SomeDataB>();
 _pipeline = EcsPipeline.New()// аналогично _pipeline = EcsPipeline.New(new ConfigContainer())
     .Configs.Set(new SomeDataA(/* ... */))
     .Configs.Set(new SomeDataB(/* ... */))
-    //...
+    // ...
     .BuildAndInit();
-//...
+// ...
 var _someDataA = _pipeline.Configs.Get<SomeDataA>();
 var _someDataB = _pipeline.Configs.Get<SomeDataB>();
 ```
@@ -803,15 +798,15 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 {
     private SomeClass _object; // Объект который будет утилизироваться.
-    private SomeReusedClass _resusedObject; // Объект который будет переиспользоваться.
+    private SomeReusedClass _reusedObject; // Объект который будет переиспользоваться.
     public SomeClass Object => _object;
-    public SomeReusedClass ResusedObject => _resusedObject;
+    public SomeReusedClass ReusedObject => _reusedObject;
     void IEcsWorldComponent<WorldComponent>.Init(ref WorldComponent component, EcsWorld world)
     {
-        if (component._resusedObject == null)
-            component._resusedObject = new SomeReusedClass();
+        if (component._reusedObject == null)
+            component._reusedObject = new SomeReusedClass();
         component._object = new SomeClass();
-        // Теперь при получении компонента через EcsWorld.Get, _resusedObject и _object уже будут созданы.
+        // Теперь при получении компонента через EcsWorld.Get, _reusedObject и _object уже будут созданы.
     }
     void IEcsWorldComponent<WorldComponent>.OnDestroy(ref WorldComponent component, EcsWorld world)
     {
@@ -820,14 +815,16 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
         component._object = null;
         
         // Как вариант тут можно сделать сброс значений у переиспользуемого объекта.
-        //component._resusedObject.Reset();
+        //component._reusedObject.Reset();
         
-        //Так как в этом примере не нужно полное обнуление компонента, то строчка ниже не нужна.
-        //component = default;
+        // Так как в этом примере не нужно полное обнуление компонента, то строчка ниже не нужна.
+        // component = default;
     }
 }
 ```
 </details>
+
+> Компоненты и конфиги можно применять для создания расширений в связке с методами расширений.
 
 </br>
 
@@ -845,7 +842,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 * [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
 * [Шаблоны кода IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [для Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
 * Графы (Work in progress)
-<!--* Твое расширение? Если разрабатываешь свои расширения для DragonECS, дай знать и они будут добавлены сюда-->
+> *Твое расширение? Если разрабатываешь расширение для DragonECS, пиши [сюда](#обратная-связь).
 
 </br>
  
