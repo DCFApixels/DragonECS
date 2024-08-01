@@ -12,6 +12,7 @@
 </p>
 
 # DragonECS - C# Entity Component System Framework
+
 <table>
   <tr></tr>
   <tr>
@@ -39,6 +40,8 @@
     </td>
   </tr>
 </table>
+
+</br>
 
 The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes. Without code generation and dependencies. Inspired by [LeoEcs](https://github.com/Leopotam/ecslite). 
 

@@ -10,6 +10,7 @@
 </p>
 
 # DragonECS - C# Entity Component System Фреймворк
+
 <table>
   <tr></tr>
   <tr>
@@ -37,6 +38,8 @@
     </td>
   </tr>
 </table>
+
+</br>
 
 DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) фреймворк нацеленный на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Разработан на чистом C#, без зависимостей и генерации кода. Вдохновлен [LeoEcs](https://github.com/Leopotam/ecslite).
 
