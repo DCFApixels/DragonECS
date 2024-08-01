@@ -11,37 +11,28 @@
 
 # DragonECS - C# 实体组件系统框架
 <table>
+  <tr></tr>
   <tr>
-    <td colspan="3">
-      Languages:
-    </td>
+    <td colspan="3">Readme Languages:</td>
   </tr>
+  <tr></tr>
   <tr>
-    <td width="100">
+    <td nowrap width="100">
       <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md">
-        <img src="https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755">
-        </br>
-        <span>
-          Русский
-        </span>
+        <img src="https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755"></br>
+        <span>Русский</span>
       </a>  
     </td>
-    <td width="100">
+    <td nowrap width="100">
       <a href="https://github.com/DCFApixels/DragonECS">
-        <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930">
-        </br>
-        <span>
-          English(WIP)
-        </span>
+        <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930"></br>
+        <span>English(WIP)</span>
       </a>  
     </td>
-    <td width="100">
+    <td nowrap width="100">
       <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-ZN.md">
-        <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927">
-        </br>
-        <span>
-          中文
-        </span>
+        <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927"></br>
+        <span>中文</span>
       </a>  
     </td>
   </tr>
