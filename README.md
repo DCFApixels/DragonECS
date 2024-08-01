@@ -12,7 +12,7 @@
 </p>
 
 # DragonECS - C# Entity Component System Framework
-| Languages: | [![russia](https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755) Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [![united-kingdom](https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930) English(WIP)](https://github.com/DCFApixels/DragonECS) | [![china](https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927) 中文](https://github.com/DCFApixels/DragonECS/blob/main/README-ZN.md) |
+| Languages: | [![(ru)](https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755) Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [![(en)](https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930) English(WIP)](https://github.com/DCFApixels/DragonECS) | [![(zn)](https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927) 中文](https://github.com/DCFApixels/DragonECS/blob/main/README-ZN.md) |
 | :--- | :--- | :--- | :--- |
 
 The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes. Without code generation and dependencies. Inspired by [LeoEcs](https://github.com/Leopotam/ecslite). 
