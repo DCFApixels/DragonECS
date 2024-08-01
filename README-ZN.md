@@ -10,9 +10,8 @@
 </p>
 
 # DragonECS - C# 实体组件系统框架
-| Languages: | [Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [English(WIP)](https://github.com/DCFApixels/DragonECS) | [中文](https://github.com/DCFApixels/DragonECS/blob/main/README-ZN.md) |
+| Languages: | [![russia](https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755) Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [![united-kingdom](https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930) English(WIP)](https://github.com/DCFApixels/DragonECS) | [![china](https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927) 中文](https://github.com/DCFApixels/DragonECS/blob/main/README-ZN.md) |
 | :--- | :--- | :--- | :--- |
-
 
 DragonECS 是一个[实体组件系统](https://en.wikipedia.org/wiki/Entity_component_system)框架。专注于提升便利性、模块性、可扩展性和动态实体修改性能。 用纯C#开发的，没有依赖和代码生成。灵感来自于[LeoEcs](https://github.com/Leopotam/ecslite)。
 
