@@ -10,8 +10,42 @@
 </p>
 
 # DragonECS - C# Entity Component System Фреймворк
-| Languages: | [![(ru)](https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755) Русский](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md) | [![(en)](https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930) English(WIP)](https://github.com/DCFApixels/DragonECS) | [![(zn)](https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927) 中文](https://github.com/DCFApixels/DragonECS/blob/main/README-ZN.md) |
-| :--- | :--- | :--- | :--- |
+<table>
+  <tr>
+    <td colspan="3">
+      Languages:
+    </td>
+  </tr>
+  <tr>
+    <td width="100">
+      <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md">
+        <img src="https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755">
+        </br>
+        <span>
+          Русский
+        </span>
+      </a>  
+    </td>
+    <td width="100">
+      <a href="https://github.com/DCFApixels/DragonECS">
+        <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930">
+        </br>
+        <span>
+          English(WIP)
+        </span>
+      </a>  
+    </td>
+    <td width="100">
+      <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-ZN.md">
+        <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927">
+        </br>
+        <span>
+          中文
+        </span>
+      </a>  
+    </td>
+  </tr>
+</table>
 
 DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) фреймворк нацеленный на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Разработан на чистом C#, без зависимостей и генерации кода. Вдохновлен [LeoEcs](https://github.com/Leopotam/ecslite).
 
