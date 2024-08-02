@@ -2,6 +2,8 @@
 <img width="660" src="https://github.com/DCFApixels/DragonECS/assets/99481254/c09e385e-08c1-4c04-904a-36ad7e25e45b">
 </p>
 
+<!--<a href="https://discord.gg/kqmJjExuCf"><img alt="Discord" src="https://img.shields.io/discord/1111696966208999525?color=%2300b269&label=Discord&logo=Discord&logoColor=%23ffffff&style=for-the-badge"></a>-->
+
 <p align="center">
 <img alt="Version" src="https://img.shields.io/github/package-json/v/DCFApixels/DragonECS?color=%23ff4e85&style=for-the-badge">
 <img alt="License" src="https://img.shields.io/github/license/DCFApixels/DragonECS?color=ff4e85&style=for-the-badge">
@@ -9,7 +11,7 @@
 <a href="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=IbDcH43vhfArb30luGMP1TMXB3GCHzxm&authKey=s%2FJfqvv46PswFq68irnGhkLrMR6y9tf%2FUn2mogYizSOGiS%2BmB%2B8Ar9I%2Fnr%2Bs4oS%2B&noverify=0&group_code=949562781"><img alt="QQ" src="https://img.shields.io/badge/QQ-JOIN-00b269?logo=tencentqq&logoColor=%23ffffff&style=for-the-badge"></a>
 </p>
 
-# DragonECS - C# Entity Component System Фреймворк
+# DragonECS - C# Entity Component System Framework
 
 <table>
   <tr></tr>
@@ -41,115 +43,117 @@
 
 </br>
 
-DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) фреймворк нацеленный на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Разработан на чистом C#, без зависимостей и генерации кода. Вдохновлен [LeoEcs](https://github.com/Leopotam/ecslite).
+The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes. Without code generation and dependencies. Inspired by [LeoEcs](https://github.com/Leopotam/ecslite). 
 
 > [!WARNING]
-> Проект предрелизной версии, поэтому API может меняться. В ветке main актуальная и рабочая версия.</br>
-> Readme еще не завершен, если есть не ясные моменты, вопросы можно задать тут [Обратная связь](#обратная-связь)
+> The project is a work in progress, API may change.
+> 
+> While the English version of the README is incomplete, you can view the [Russian version](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md).
 
 ## Оглавление
-- [Установка](#установка)
-- [Основные концепции](#основные-концепции)
+- [Installation](#Installation)
+- [Basic Concepts](#Basic-Concepts)
   - [Entity](#entity)
   - [Component](#component)
   - [System](#system)
-- [Концепции фреймворка](#концепции-фреймворка)
-  - [Пайплайн](#пайплайн)
-    - [Построение](#построение)
-    - [Внедрение зависимостей](#внедрение-зависимостей)
-    - [Модули](#модули)
-    - [Слои](#слои)
-  - [Процессы](#процессы)
-  - [Мир](#мир)
-  - [Пул](#пул)
-  - [Аспект](#аспект)
-  - [Запросы](#запросы)
-  - [Коллекции](#Коллекции)
-  - [Корень ECS](#корень-ecs)
+- [Framework Concepts](#Framework-Concepts)
+  - [Pipeline](#Pipeline)
+    - [Building](#Building)
+    - [Dependency Injection](#Dependency-Injection)
+    - [Modules](#Modules)
+    - [Layers](#Layers)
+  - [Processes](#Processes)
+  - [World](#World)
+  - [Pool](#Pool)
+  - [Aspect](#Aspect)
+  - [Queries](#Queries)
+  - [Collections](#Collections)
+  - [ECS Root](#ecs-root)
 - [Debug](#debug)
-  - [Мета-Атрибуты](#мета-атрибуты)
+  - [Meta Attributes](#Meta-Attributes)
   - [EcsDebug](#ecsdebug)
-  - [Профилирование](#профилирование)
+  - [Profiling](#Profiling)
 - [Define Symbols](#define-symbols)
-- [Расширение фреймворка](#расширение-фреймворка)
-  - [Компоненты мира](#компоненты-мира)
-  - [Конфиги](#конфиги)
-- [Проекты на DragonECS](#Проекты-на-DragonECS)
-- [Расширения](#расширения)
+- [Framework Extension Tools](#Framework-Extension-tools)
+  - [World Components](#World-Components)
+  - [Configs](#Configs)
+- [Projects powered by DragonECS](#Projects-powered-by-DragonECS)
+- [Extensions](#Extensions)
 - [FAQ](#faq)
-- [Обратная связь](#обратная-связь)
+- [Feedback](#Feedback)
 
 </br>
 
-# Установка
-Семантика версионирования - [Открыть](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
-## Окружение
-Обязательные требования:
-+ Минимальная версия C# 7.3;
+# Installation
+Versioning semantics - [Open](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
+## Environment
+Requirements:
++ Minimum version of C# 7.3;
+  
+Optional:
++ Support for NativeAOT
++ Game engines with C#: Unity, Godot, MonoGame, etc.
+  
+Tested with:
++ **Unity:** Minimum version 2020.1.0;
 
-Опционально:
-+ Поддержка NativeAOT
-+ Игровые движки с C#: Unity, Godot, MonoGame и т.д.
-
-Протестировано:
-+ **Unity:** Минимальная версия 2020.1.0;
-
-## Установка для Unity
-> Рекомендуется так же установить расширение [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
-* ### Unity-модуль
-Поддерживается установка в виде Unity-модуля в  при помощи добавления git-URL [в PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) или ручного добавления в `Packages/manifest.json`: 
+## Unity Installation
+* ### Unity Package
+The framework can be installed as a Unity package by adding the Git URL [in the PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) or manually adding it to `Packages/manifest.json`: 
 ```
 https://github.com/DCFApixels/DragonECS.git
 ```
-* ### В виде исходников
-Фреймворк так же может быть добавлен в проект в виде исходников.
+* ### Source Code
+The framework can also be added to the project as source code.
+
 </br>
 
-# Основные концепции
+# Basic Concepts
 ## Entity
-**Сущности** - это то к чему крепятся данные. Реализованы в виде идентификаторов, которых есть 2 вида:
-* `int` - однократный идентификатор, применяется в пределах одного тика. Не рекомендуется хранить `int` идентификаторы, в место этого используйте `entlong`;
-* `entlong` - долговременный идентификатор, содержит в себе полный набор информации для однозначной идентификации;
+Сontainer for components. They are implemented as identifiers, of which there are two types:
+* `int` - a short-term identifier used within a single tick. Storing `int` identifiers is not recommended, use `entlong` instead;
+* `entlong` - long-term identifier, contains a full set of information for unique identification;
 ``` c#
-// Создание новой сущности в мире.
+// Creating a new entity in the world.
 int entityID = _world.NewEntity();
 
-// Удаление сущности.
+// Deleting an entity.
 _world.DelEntity(entityID);
 
-// Копирование компонентов одной сущности в другую.
+// Copying components from one entity to another.
 _world.CopyEntity(entityID, otherEntityID);
 
-// Клонирование сущности.
+// Cloning an entity.
 int newEntityID = _world.CloneEntity(entityID);
 ```
 
 <details>
-<summary>Работа с entlong</summary>
+<summary>Working with entlong</summary>
  
 ``` c#
-// Конвертация int в entlong.
+// Convert int to entlong.
 entlong entity = _world.GetEntityLong(entityID);
-// или
+// or
 entlong entity = (_world, entityID);
 
-// Проверка что сущность еще жива.
+// Check that the entity is still alive.
 if (entity.IsAlive) { }
 
-// Конвертация entlong в int. Если сущность уже не существует, будет брошено исключение. 
+// Converting entlong to int. Throws an exception if the entity no longer exists.
 int entityID = entity.ID;
-// или
+// or
 var (entityID, world) = entity;
  
-// Конвертация entlong в int. Вернет true и ее int идентификатор, если сущность еще жива.
+// Converting entlong to int. Returns true and the int identifier if the entity is still alive.
 if (entity.TryGetID(out int entityID)) { }
 ```
  
  </details>
  
-> **NOTICE:** Сущности не могут существовать без компонентов, пустые сущности будут автоматически удаляться сразу после удаления последнего компонента либо в конце тика.
+> **NOTICE:** Entities cannot exist without components, empty entities will be automatically deleted immediately after the last component is deleted.
+
 ## Component
-**Компоненты** - это данные для сущностей. Обязаны реализовывать интерфейс `IEcsComponent` или другой указывающий вид компонента. 
+Data for entities. Must implement the ``IEcsComponent`` interface or other specifying type of component. 
 ```c#
 struct Health : IEcsComponent
 {
@@ -158,63 +162,64 @@ struct Health : IEcsComponent
 }
 struct PlayerTag : IEcsTagComponent {}
 ```
-Встроенные виды компонентов:
-* `IEcsComponent` - Компоненты с данными. Универсальный тип компонентов.
-* `IEcsTagComponent` - Компоненты-теги. Без данных.
+Built-in component types:
+* `IEcsComponent` - Components with data. Universal component type.
+* `IEcsTagComponent` - Tag components. Components without data.
 
 ## System
-**Системы** - это основная логика, тут задается поведение сущностей. Существуют в виде пользовательских классов, реализующих как минимум один из интерфейсов процессов. Основные процессы:
+Represent the core logic defining entity behaviors. They are implemented as user-defined classes that implement at least one of the process interfaces. Key processes include:
 ```c#
 class SomeSystem : IEcsPreInit, IEcsInit, IEcsRun, IEcsDestroy
 {
-    // Будет вызван один раз в момент работы EcsPipeline.Init() и до срабатывания IEcsInit.Init().
+    // Called once during EcsPipeline.Init() and before IEcsInit.Init().
     public void PreInit () { }
     
-    // Будет вызван один раз в момент работы EcsPipeline.Init() и после срабатывания IEcsPreInit.PreInit().
+    // Called once during EcsPipeline.Init() and after IEcsPreInit.PreInit().
     public void Init ()  { }
     
-    // Будет вызван один раз в момент работы EcsPipeline.Run().
+    // Called each time during EcsPipeline.Run().
     public void Run () { }
     
-    // Будет вызван один раз в момент работы EcsPipeline.Destroy().
+    // Called once during EcsPipeline.Destroy().
     public void Destroy () { }
 }
 ```
-> Для реализации дополнительных процессов перейдите к разделу [Процессы](#Процессы).
+> For implementing additional processes, refer to the [Processes](#Processes) section.
 
 </br>
 
-# Концепции фреймворка
-## Пайплайн
-Контейнер и движок систем. Отвечает за настройку очереди вызова систем, предоставляет механизм для сообщений между системами и механизм внедрения зависимостей. Реализован в виде класса `EcsPipeline`.
-### Построение
-За построение пайплайна отвечает Builder. В Builder добавляются системы, а в конце строится пайплайн. Пример:
+# Framework Concepts
+## Pipeline
+Container and engine of systems. Responsible for setting up the system call queue, provides mechanisms for communication between systems, and dependency injection. Implemented as the `EcsPipeline` class.
+### Building
+Builder is responsible for building the pipeline. Systems are added to the Builder and at the end, the pipeline is built. Example:
 ```c#
 EcsPipeline pipeline = EcsPipeline.New() // Создает Builder пайплайна.
-    // Добавляет систему System1 в очередь систем.
+    // Add System1 to the systems queue.
     .Add(new System1())
-    // Добавляет System2 в очередь после System1.
+    // Add System2 to the queue after System1.
     .Add(new System2())
-    // Добавляет System3 в очередь после System2, но в единичном экземпляре.
+    // Add System3 to the queue after System2, as a unique instance.
     .AddUnique(new System3())
-    // Завершает построение пайплайна и возвращает его экземпляр.
+    // Completes the pipeline building and returns its instance.
     .Build(); 
-pipeline.Init(); // Инициализация пайплайна.
+pipeline.Init(); // Initializes the pipeline.
 ```
 
 ```c#
 class SomeSystem : IEcsRun, IEcsPipelineMember
 {
-    // Получить экземпляр пайплайна к которому принадлежит система.
+    // Gets the pipeline instance to which the system belongs.
     public EcsPipeline Pipeline { get ; set; }
 
     public void Run () { }
 }
 ```
-> Для одновременного построения и инициализации есть метод Builder.BuildAndInit();
-### Внедрение зависимостей
-Фреймворк реализует внедрение зависимостей для систем. это процесс который запускается вместе с инициализацией пайплайна и внедряет данные переданные в Builder.
-> Использование встроенного внедрения зависимостей опционально. 
+> For simultaneous building and initialization, there is the method  `Builder.BuildAndInit();`
+
+### Dependency Injection
+The framework implements dependency injection for systems. This process begins during pipeline initialization  and injects data passed to the Builder.
+> Using built-in dependency injection is optional. 
 ``` c#
 class SomeDataA { /* ... */ }
 class SomeDataB : SomeDataA { /* ... */ }
@@ -223,10 +228,10 @@ class SomeDataB : SomeDataA { /* ... */ }
 SomeDataB _someDataB = new SomeDataB();
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
-    // Внедрит _someDataB в системы реализующие IEcsInject<SomeDataB>.
+    // Injects _someDataB into systems implementing IEcsInject<SomeDataB>.
     .Inject(_someDataB) 
-    // Добавит системы реализующие IEcsInject<SomeDataA> в дерево инъекции,
-    // теперь эти системы так же получат _someDataB.
+    // Adds systems implementing IEcsInject<SomeDataA> to the injection tree,
+    // now these systems will also receive _someDataB.
     .Injector.AddNode<SomeDataA>()
     // ...
     .Add(new SomeSystem())
@@ -234,11 +239,11 @@ EcsPipeline pipeline = EcsPipeline.New()
     .BuildAndInit();
 
 // ...
-// Для внедрения используется интерфейс IEcsInject<T> и его метод Inject(T obj)
+// Injection uses the interface IEcsInject<T> and its method Inject(T obj).
 class SomeSystem : IEcsInject<SomeDataA>, IEcsRun
 {
     SomeDataA _someDataA
-    // obj будет экземпляром типа SomeDataB.
+    // obj will be an instance of type SomeDataB.
     public void Inject(SomeDataA obj) => _someDataA = obj;
 
     public void Run () 
@@ -248,8 +253,8 @@ class SomeSystem : IEcsInject<SomeDataA>, IEcsRun
 }
 ```
 
-### Модули
-Группы систем реализующие общую фичу можно объединять в модули, и просто добавлять модули в Pipeline.
+### Modules
+Groups of systems that implement a common feature can be grouped into modules and easily added to the Pipeline.
 ``` c#
 using DCFApixels.DragonECS;
 class Module1 : IEcsModule 
@@ -271,40 +276,40 @@ EcsPipeline pipeline = EcsPipeline.New()
     .BuildAndInit();
 ```
 
-### Слои
-Очередь систем можно разбить на слои. Слой определяет место в очереди для вставки систем. Например, если необходимо чтобы какая-то система была вставлена в конце очереди, вне зависимости от места добавления, эту систему можно добавить в слой EcsConsts.END_LAYER.
+### Layers
+Queues in the system can be segmented into layers. A layer defines a position in the queue for inserting systems.  For example, if a system needs to be inserted at the end of the queue regardless of where it is added, you can add this system to the `EcsConsts.END_LAYER` layer.
 ``` c#
 const string SOME_LAYER = nameof(SOME_LAYER);
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
-    // Вставляет новый слой перед конечным слоем EcsConsts.END_LAYER
+    // Inserts a new layer before the end layer EcsConsts.END_LAYER
     .Layers.Insert(EcsConsts.END_LAYER, SOME_LAYER)
-    // Система SomeSystem будет вставлена в слой SOME_LAYER
+    // System SomeSystem will be added to the SOME_LAYER layer
     .Add(New SomeSystem(), SOME_LAYER) 
     // ...
     .BuildAndInit();
 ```
-Встроенные слои расположены в следующем порядке:
+The built-in layers are arranged in the following order:
 * `EcsConst.PRE_BEGIN_LAYER`
 * `EcsConst.BEGIN_LAYER`
-* `EcsConst.BASIC_LAYER` (Если при добавлении системы не указать слой, то она будет добавлена сюда)
+* `EcsConst.BASIC_LAYER` (Systems are added here if no layer is specified during addition)
 * `EcsConst.END_LAYER`
 * `EcsConst.POST_END_LAYER`
 
 ## Процессы
-Процессы - это очереди систем реализующие общий интерфейс, например `IEcsRun`. Для запуска процессов используются Runner-ы. Встроенные процессы запускаются автоматически. Есть возможность реализации пользовательских процессов.
+Processes are queues of systems that implement a common interface, such as `IEcsRun`. Runners are used to start processes. Built-in processes are started automatically. It is possible to implement custom processes.
 
 <details>
-<summary>Встроенные процессы</summary>
+<summary>Built-in processes</summary>
  
-* `IEcsPreInit`, `IEcsInit`, `IEcsRun`, `IEcsDestroy` - процессы жизненного цикла `EcsPipeline`.
-* `IEcsInject<T>` - Процессы системы [внедрения зависимостей](#Внедрение-зависимостей).
-* `IOnInitInjectionComplete` - Так же процесс системы [внедрения зависимостей](#Внедрение-зависимостей), но сигнализирует о завершении инициализирующей инъекции.
+* `IEcsPreInit`, `IEcsInit`, `IEcsRun`, `IEcsDestroy` - lifecycle processes of `EcsPipeline`.
+* `IEcsInject<T>` - [Dependency Injection](#Dependency-Injection) processes.
+* `IOnInitInjectionComplete` - Similar to the [Dependency Injection](#Dependency-Injection) process, but signals the completion of initialization injection.
 
 </details>
  
 <details>
-<summary>Пользовательские процессы</summary>
+<summary>Custom Processes</summary>
  
 Для добавления нового процесса создайте интерфейс наследованный от `IEcsProcess` и создайте раннер для него. Раннер это класс реализующий интерфейс запускаемого процесса и наследуемый от `EcsRunner<TInterface>`. Пример:
 ``` c#
@@ -333,7 +338,7 @@ _pipeline = EcsPipeline.New()
 // Запуск раннера если раннер был добавлен.
 _pipeline.GetRunner<IDoSomethingProcess>.Do()
 
-// Или если раннер не был добавлен(Вызов GetRunnerInstance так же добавит раннер в пайплайн).
+// or если раннер не был добавлен(Вызов GetRunnerInstance так же добавит раннер в пайплайн).
 _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 ```
 > Раннеры имеют ряд требований к реализации: 
@@ -344,25 +349,25 @@ _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 > Не рекомендуется в цикле вызывать `GetRunner`, иначе кешируйте полученный раннер.
 </details>
 
-## Мир
-Является контейнером для сущностей и компонентов.
+## World
+Is a container for entities and components.
 ``` c#
-// Создание экземпляра мира.
+// Creating an instance of the world.
 _world = new EcsDefaultWorld();
-// Создание и удаление сущности по примеру из раздела Сущности.
+// Creating and deleting an entity as shown in the Entities section.
 var e = _world.NewEntity();
 _world.DelEntity(e);
 ```
-> **NOTICE:** Необходимо вызывать EcsWorld.Destroy() у экземпляра мира если он больше не используется, иначе он будет висеть в памяти.
+> **NOTICE:** It's necessary to call EcsWorld.Destroy() on the world instance when it's no longer needed, otherwise it will remain in memory.
 
-### Конфигурация мира
-Для инициализации мира сразу необходимого размера и сокращения времени прогрева, в конструктор можно передать экземпляр `EcsWorldConfig`.
+### World Configuration
+To initialize the world with a required size upfront and reduce warm-up time, you can pass an `EcsWorldConfig` instance to the constructor.
 
 ``` c#
 EcsWorldConfig config = new EcsWorldConfig(
-    // Предварительно инициализирует вместимость мира для 2000 сущностей.
+    // Pre-initializes the world capacity for 2000 entities.
     entitiesCapacity: 2000, 
-    // Предварительно инициализирует вместимость пулов для 2000 компонентов.
+    // Pre-initializes the pools capacity for 2000 components.
     poolComponentsCapacity: 2000);  
 _world = new EcsDefaultWorld(config);
 ```
@@ -683,10 +688,10 @@ using DCFApixels.DragonECS;
 [MetaName("SomeComponent")]
 
 // Используется для группировки типов.
-[MetaGroup("Abilities/Passive/")] // или [MetaGroup("Abilities", "Passive")]
+[MetaGroup("Abilities/Passive/")] // or [MetaGroup("Abilities", "Passive")]
 
 // Задает цвет типа в RGB кодировке, где каждый канал принимает значение от 0 до 255, по умолчанию белый. 
-[MetaColor(MetaColor.Red)] // или [MetaColor(255, 0, 0)]
+[MetaColor(MetaColor.Red)] // or [MetaColor(255, 0, 0)]
  
 // Добавляет описание типу.
 [MetaDescription("The quick brown fox jumps over the lazy dog")] 
@@ -698,7 +703,7 @@ public struct Component : IEcsComponent { /* ... */ }
 Получение мета-информации:
 ``` c#
 TypeMeta typeMeta = someComponent.GetMeta();
-// или
+// or
 TypeMeta typeMeta = pool.ComponentType.ToMeta();
 
 var name = typeMeta.Name;
@@ -738,7 +743,7 @@ marker.Begin();
 // Код для которого замеряется скорость.
 marker.End();
 
-// или
+// or
 
 using (marker.Auto())
 {
@@ -856,21 +861,20 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 
 </br>
 
-# Проекты на DragonECS
+# Projects powered by DragonECS
 * [3D Platformer (Example)](https://github.com/DCFApixels/3D-Platformer-DragonECS)
-![alt text](https://i.ibb.co/hm7Lrm4/Platformer.png)
 
 </br>
 
-# Расширения
-* [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
-* [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
-* [Классическая C# многопоточность](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+# Extensions
+* [Unity integration](https://github.com/DCFApixels/DragonECS-Unity)
+* [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
+* [Classic C# multithreading](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
 * [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
-* [Шаблоны кода IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [для Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
-* Графы (Work in progress)
-> *Твое расширение? Если разрабатываешь расширение для DragonECS, пиши [сюда](#обратная-связь).
+* [Code Templates for IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) and [for  Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
+* Graphs (Work in progress)
+> > *Your extension? If you are developing an extension for Dragoness, you can share it [here](#feedback).
 
 </br>
  
@@ -882,15 +886,9 @@ The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing 
 ``` 
 Чтобы починить добавьте директиву `ENABLE_DUMMY_SPAN` в `Project Settings/Player/Other Settings/Scripting Define Symbols`.
 
-## Как Выключать/Включать системы?
-Напрямую - никак. </br>
-Обычно потребность выключить/включить систему появляется когда поменялось общее состояние игры, это может так же значить что нужно переключить сразу группу систем, все это в совокупности можно рассматривать как измннеия процессов. Есть 2 решения：</br>
-+ Если изменения процесса глобальные, то создать новый `EcsPipeline` и в цикле обновления движка запускать соответствующий пайплайн.
-+ Разделить `IEcsRun` на несколько процессов и в цикле обновления движка запускать соответствующий процесс. Для этого создайте новый интерфейс процесса, раннер для запуска этого интерфейса и получайте раннер через `EcsPipeline.GetRunner<T>()`.
-## Перечень рекомендаций [DragonECS-Vault](https://github.com/DCFApixels/DragonECS-Vault)
 </br>
 
-# Обратная связь
+# Feedback
 + Discord (RU-EN) [https://discord.gg/kqmJjExuCf](https://discord.gg/kqmJjExuCf)
 + QQ (中文) [949562781](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=IbDcH43vhfArb30luGMP1TMXB3GCHzxm&authKey=s%2FJfqvv46PswFq68irnGhkLrMR6y9tf%2FUn2mogYizSOGiS%2BmB%2B8Ar9I%2Fnr%2Bs4oS%2B&noverify=0&group_code=949562781)
 
