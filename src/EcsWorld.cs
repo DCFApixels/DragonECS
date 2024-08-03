@@ -553,9 +553,12 @@ namespace DCFApixels.DragonECS
             }
             for (int i = 0; i < _groups.Count; i++)
             {
-                if (_groups[i].TryGetTarget(out EcsGroup group) && group.IsReleased)
+                if (_groups[i].TryGetTarget(out EcsGroup group))
                 {
-                    group.OnReleaseDelEntityBuffer_Internal(buffer);
+                    if(group.IsReleased)
+                    {
+                        group.OnReleaseDelEntityBuffer_Internal(buffer);
+                    }
                 }
                 else
                 {
