@@ -22,10 +22,6 @@
             where TAspect : EcsAspect, new()
         {
             EcsWorld world = span.World;
-            if (world.IsEnableReleaseDelEntBuffer)
-            {
-                world.ReleaseDelEntityBufferAll();
-            }
             var executor = world.GetExecutor<EcsWhereExecutor<TAspect>>();
             aspect = executor.Aspect;
             return executor.ExecuteFor(span);
@@ -48,10 +44,6 @@
             where TAspect : EcsAspect, new()
         {
             EcsWorld world = span.World;
-            if (world.IsEnableReleaseDelEntBuffer)
-            {
-                world.ReleaseDelEntityBufferAll();
-            }
             var executor = world.GetExecutor<EcsWhereToGroupExecutor<TAspect>>();
             aspect = executor.Aspect;
             return executor.ExecuteFor(span);

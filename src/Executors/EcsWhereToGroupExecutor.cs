@@ -58,6 +58,10 @@ namespace DCFApixels.DragonECS
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
             if (span.WorldID != WorldID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
+            if (World.IsEnableReleaseDelEntBuffer)
+            {
+                World.ReleaseDelEntityBufferAll();
+            }
             if (_lastWorldVersion != World.Version)
             {
                 _aspect.GetIteratorFor(span).CopyTo(_filteredGroup);

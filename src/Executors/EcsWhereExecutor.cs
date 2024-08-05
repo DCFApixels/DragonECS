@@ -56,6 +56,10 @@ namespace DCFApixels.DragonECS
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
             if (span.WorldID != WorldID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
+            if (World.IsEnableReleaseDelEntBuffer)
+            {
+                World.ReleaseDelEntityBufferAll();
+            }
             EcsSpan result;
             if (_lastWorldVersion != World.Version)
             {
