@@ -113,9 +113,19 @@ namespace DCFApixels.DragonECS.Internal
         internal static void Ent_ThrowIsNotAlive(entlong entity)
         {
             if (entity.IsNull)
+            {
                 throw new EcsFrameworkException($"The {entity} is null.");
+            }
             else
+            {
                 throw new EcsFrameworkException($"The {entity} is not alive.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void Quiery_ArgumentDifferentWorldsException()
+        {
+            throw new ArgumentException("The groups belong to different worlds.");
         }
 
 
@@ -123,6 +133,11 @@ namespace DCFApixels.DragonECS.Internal
         internal static void ArgumentNull()
         {
             throw new ArgumentNullException();
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentNull(string paramName)
+        {
+            throw new ArgumentNullException(paramName);
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ArgumentOutOfRange()

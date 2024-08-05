@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using DCFApixels.DragonECS.Internal;
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
@@ -54,8 +55,8 @@ namespace DCFApixels.DragonECS
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _executeMarker.Begin();
-            if (span.IsNull) throw new System.ArgumentNullException();//TODO составить текст исключения. 
-            if (span.WorldID != WorldID) throw new System.ArgumentException();//TODO составить текст исключения. 
+            if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
+            if (span.WorldID != WorldID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
             if (_lastWorldVersion != World.Version)
             {
