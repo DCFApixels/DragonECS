@@ -373,14 +373,14 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
             if (mask._worldID != id) { Throw.World_MaskDoesntBelongWorld(); }
 #endif
-            for (int i = 0, iMax = mask._incChunckMasks.Length; i < iMax; i++)
+            for (int i = 0, iMax = mask._inc.Length; i < iMax; i++)
             {
                 if (!_pools[mask._inc[i]].Has(entityID))
                 {
                     return false;
                 }
             }
-            for (int i = 0, iMax = mask._excChunckMasks.Length; i < iMax; i++)
+            for (int i = 0, iMax = mask._exc.Length; i < iMax; i++)
             {
                 if (_pools[mask._exc[i]].Has(entityID))
                 {
@@ -553,9 +553,12 @@ namespace DCFApixels.DragonECS
             }
             for (int i = 0; i < _groups.Count; i++)
             {
-                if (_groups[i].TryGetTarget(out EcsGroup group) && group.IsReleased)
+                if (_groups[i].TryGetTarget(out EcsGroup group))
                 {
-                    group.OnReleaseDelEntityBuffer_Internal(buffer);
+                    if(group.IsReleased)
+                    {
+                        group.OnReleaseDelEntityBuffer_Internal(buffer);
+                    }
                 }
                 else
                 {
