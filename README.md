@@ -28,12 +28,12 @@
     </td>
     <td nowrap width="100">
       <a href="https://github.com/DCFApixels/DragonECS">
-        <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930"></br>
+        <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"></br>
         <span>English(WIP)</span>
       </a>  
     </td>
     <td nowrap width="100">
-      <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-ZN.md">
+      <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-ZH.md">
         <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927"></br>
         <span>中文</span>
       </a>  
@@ -765,11 +765,11 @@ using (marker.Auto())
 </br>
 
 # Framework Extension Tools
-Для большей расширяемости фреймворка есть дополнительные инструменты.
+There are additional tools for greater extensibility of the framework.
 
 ## Configs
-Конструкторы классов `EcsWorld` и `EcsPipeline` могут принимать контейнеры конфигов реализующие интерфейс `IConfigContainer` или `IConfigContainerWriter`. С помощью этих контейнеров можно передавать данные и зависимости. Встроенная реализация контейнера - `ConfigContainer`, но можно так же использовать свою реализацию.</br>
-Пример использования конфигов для мира:
+Constructors of `EcsWorld` and `EcsPipeline` classes can accept config containers implementing `IConfigContainer` or `IConfigContainerWriter` interface. These containers can be used to pass data and dependencies. The built-in container implementation is `ConfigContainer`, but you can also use your own implementation.</br>
+Example of using configs for EcsWorld:
 ``` c#
 var configs = new ConfigContainer()
     .Set(new EcsWorldConfig(entitiesCapacity: 2000, poolsCapacity: 2000)
@@ -780,9 +780,9 @@ EcsDefaultWorld _world = new EcsDefaultWorld(configs);
 var _someDataA = _world.Configs.Get<SomeDataA>();
 var _someDataB = _world.Configs.Get<SomeDataB>();
 ```
-Пример использования конфигов для пайплайна:
+Example of using configs for EcsPipeline:
 ``` c#
-_pipeline = EcsPipeline.New()// аналогично _pipeline = EcsPipeline.New(new ConfigContainer())
+_pipeline = EcsPipeline.New()// similarly _pipeline = EcsPipeline.New(new ConfigContainer())
     .Configs.Set(new SomeDataA(/* ... */))
     .Configs.Set(new SomeDataB(/* ... */))
     // ...
@@ -857,7 +857,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 ```
 </details>
 
-> Компоненты и конфиги можно применять для создания расширений в связке с методами расширений.
+> Components and configs can be used to create extensions in conjunction with extension methods.
 
 </br>
 
@@ -898,3 +898,4 @@ The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing 
 </br></br></br>
 </br></br></br>
 </br></br></br>
+<img width="0" src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930"><!--Чтоб флаг подгружался в любом случае-->

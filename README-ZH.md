@@ -31,8 +31,8 @@
       </a>  
     </td>
     <td nowrap width="100">
-      <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-ZN.md">
-        <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927"></br>
+      <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-ZH.md">
+        <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"></br>
         <span>中文</span>
       </a>  
     </td>
@@ -898,3 +898,4 @@ The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing 
 </br></br></br>
 </br></br></br>
 </br></br></br>
+<img width="0" src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927"><!--Чтоб флаг подгружался в любом случае-->
