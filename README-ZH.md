@@ -65,7 +65,7 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
   - [方面](#方面)
   - [查询](#查询)
   - [集合](#集合)
-  - [根本](#根本)
+  - [ECS入口](#ECS入口)
 - [Debug](#debug)
   - [元属性](#元属性)
   - [EcsDebug](#ecsdebug)
@@ -308,12 +308,12 @@ EcsPipeline pipeline = EcsPipeline.New()
  
 Для добавления нового процесса создайте интерфейс наследованный от `IEcsProcess` и создайте раннер для него. Раннер это класс реализующий интерфейс запускаемого процесса и наследуемый от `EcsRunner<TInterface>`. Пример:
 ``` c#
-//Интерфейс.
+// 流程接口。
 interface IDoSomethingProcess : IEcsProcess
 {
     void Do();
 }
-//Реализация раннера. Пример реализации можно так же посмотреть в встроенных процессах 
+// 启动器实现. 也可以在内置的流程中参考实现示例。
 sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomethingProcess
 {
     public void Do() 
@@ -323,25 +323,25 @@ sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomet
 }
 //...
 
-//Добавление раннера при создании пайплайна.
+// 添加启动器到管线
 _pipeline = EcsPipeline.New()
     //...
     .AddRunner<DoSomethingProcessRunner>()
     //...
     .BuildAndInit();
 
-//Запуск раннера если раннер был добавлен.
+// 如果启动器已经添加，运行它。
 _pipeline.GetRunner<IDoSomethingProcess>.Do()
 
-//Или если раннер не был добавлен(Вызов GetRunnerInstance так же добавит раннер в пайплайн).
+// 如果启动器尚未添加，使用 GetRunnerInstance 将其添加并运行
 _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 ```
-> Раннеры имеют ряд требований к реализации: 
-> * Наследоваться от `EcsRunner<T>` можно только напрямую;
-> * Раннер может содержать только один интерфейс(за исключением `IEcsProcess`);
-> * Наследуемый класс `EcsRunner<T>,` должен так же реализовать интерфейс `T`;
+> 启动器的实现有一些要求：
+> * 必须直接继承自 `EcsRunner<T>`；
+> * 启动器只能包含一个接口（除了 `IEcsProcess` 接口）；
+> * 继承的 `EcsRunner<T>,` 类必须实现接口 `T`；
     
-> Не рекомендуется в цикле вызывать `GetRunner`, иначе кешируйте полученный раннер.
+不建议在循环中频繁调用 `GetRunner` 方法，建议缓存获取的启动器实例。
 </details>
 
 ## 世界
@@ -438,7 +438,7 @@ class Aspect : EcsAspect
 <details>
 <summary>结合方面</summary>
 
-В аспекты можно добавлять другие аспекты, тем самым комбинируя их. Ограничения так же будут скомбинированы.
+可以把一个方面加入另一个方面，从而组合它们。限制也会被组合
 ``` c#
 using DCFApixels.DragonECS;
 ...
@@ -450,22 +450,22 @@ class Aspect : EcsAspect
  
     protected override void Init(Builder b)
     {
-        // комбинирует с SomeAspect1.
+        // 与 SomeAspect1 进行组合。
         otherAspect1 = b.Combine<OtherAspect1>(1);
-        // хотя для OtherAspect1 метод Combine был вызван раньше, сначала будет скомбинирован с OtherAspect2, так как по умолчанию order = 0.
+        // 即使对 OtherAspect1 调用 Combine 方法更早，Aspect 会首先与 OtherAspect2 进行组合，因为默认情况下 order = 0。
         otherAspect2 = b.Combine<OtherAspect2>();
-        // если в OtherAspect1 или в OtherAspect2 было ограничение b.Exclude<Pose>() тут оно будет заменено на b.Include<Pose>().
+         // 如果 OtherAspect1 或 OtherAspect2 中有 b.Exclude<Pose>() 的限制条件，这里将被替换为 b.Include<Pose>()。
         poses = b.Include<Pose>();
     }
 }
 ```
-Если будут конфликтующие ограничения у комбинируемых аспектов, то новые ограничения будут заменять добавленные ранее. Ограничения корневого аспекта всегда заменяют ограничения из добавленных аспектов. Визуальный пример комбинации ограничений:
+如果组合的方面存在冲突的限制条件，则新的限制条件将替换先前添加的限制条件。根方面的限制条件始终会替换添加的方面中的限制条件。限制条件组合的视觉示例：
 | | cmp1 | cmp2 | cmp3 | cmp4 | cmp5 | разрешение конфликтных ограничений|
 | :--- | :--- | :--- | :--- | :--- | :--- |:--- |
 | OtherAspect2 | :heavy_check_mark: | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | |
-| OtherAspect1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | Для `cmp2` будет выбрано :heavy_check_mark: |
-| Aspect | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | Для `cmp1` будет выбрано :x: |
-| Итоговые ограничения | :x: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_check_mark: | |
+| OtherAspect1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | 对于 `cmp2` 将选择 :heavy_check_mark: |
+| Aspect | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | 对于 `cmp1` 将选择 :x: |
+| 最终的限制 | :x: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_check_mark: | |
 
 </details>
 
@@ -570,9 +570,9 @@ groupA.Inverse();
 EcsGroup newGroup = EcsGroup.Inverse(groupA);
 ```
 
-## 根本
+## ECS入口
 这是一个用户定义的类，作为 ECS 的入口点。其主要目的是初始化和启动每个 Update 引擎上的系统，并在使用结束后释放资源。
-### Пример для Unity
+### Unity示例
 ``` c#
 using DCFApixels.DragonECS;
 using UnityEngine;
@@ -618,7 +618,7 @@ public class EcsRoot : MonoBehaviour
     }
 }
 ```
-### Общий пример
+### 公用示例
 ``` c#
 using DCFApixels.DragonECS;
 public class EcsRoot
