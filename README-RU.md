@@ -308,7 +308,7 @@ EcsPipeline pipeline = EcsPipeline.New()
  
 Для добавления нового процесса создайте интерфейс наследованный от `IEcsProcess` и создайте раннер для него. Раннер это класс реализующий интерфейс запускаемого процесса и наследуемый от `EcsRunner<TInterface>`. Пример:
 ``` c#
-// Интерфейс.
+// Интерфейс процесса.
 interface IDoSomethingProcess : IEcsProcess
 {
     void Do();
@@ -448,7 +448,6 @@ class Aspect : EcsAspect
     public OtherAspect2 otherAspect2;
     public EcsPool<Pose> poses;
  
-    // Функция Init аналогична конструктору Aspect(Builder b).
     protected override void Init(Builder b)
     {
         // Комбинирует с SomeAspect1.

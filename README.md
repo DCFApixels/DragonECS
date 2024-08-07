@@ -311,14 +311,14 @@ Processes are queues of systems that implement a common interface, such as `IEcs
 <details>
 <summary>Custom Processes</summary>
  
-Для добавления нового процесса создайте интерфейс наследованный от `IEcsProcess` и создайте раннер для него. Раннер это класс реализующий интерфейс запускаемого процесса и наследуемый от `EcsRunner<TInterface>`. Пример:
+To add a new process, create an interface inherited from `IEcsProcess` and create a runner for it. A runner is a class that implements the interface of the process to be run and inherits from `EcsRunner<TInterface>`. Example:
 ``` c#
-// Интерфейс.
+// Process interface.
 interface IDoSomethingProcess : IEcsProcess
 {
     void Do();
 }
-// Реализация раннера. Пример реализации можно так же посмотреть в встроенных процессах 
+// Implementation of a runner. An example of implementation can also be seen in built-in processes.
 sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomethingProcess
 {
     public void Do() 
@@ -328,25 +328,25 @@ sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomet
 }
 // ...
 
-// Добавление раннера при создании пайплайна.
+// Adding the runner when creating the pipeline
 _pipeline = EcsPipeline.New()
     //...
     .AddRunner<DoSomethingProcessRunner>()
     //...
     .BuildAndInit();
 
-// Запуск раннера если раннер был добавлен.
+// Running the runner if it was added
 _pipeline.GetRunner<IDoSomethingProcess>.Do()
 
-// or если раннер не был добавлен(Вызов GetRunnerInstance так же добавит раннер в пайплайн).
+// or if the runner was not added (calling GetRunnerInstance will also add the runner to the pipeline).
 _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 ```
-> Раннеры имеют ряд требований к реализации: 
-> * Наследоваться от `EcsRunner<T>` можно только напрямую;
-> * Раннер может содержать только один интерфейс(за исключением `IEcsProcess`);
-> * Наследуемый класс `EcsRunner<T>,` должен так же реализовать интерфейс `T`;
+> Runners have several implementation requirements:
+> * Inheritance from `EcsRunner<T>` must be direct.
+> * Runner can only contain one interface (except `IEcsProcess`);
+> * The inheriting class of `EcsRunner<T>,` must also implement the `T` interface;
     
-> Не рекомендуется в цикле вызывать `GetRunner`, иначе кешируйте полученный раннер.
+> It's not recommended to call `GetRunner` in a loop; instead, cache the retrieved runner instance.
 </details>
 
 ## World
@@ -401,7 +401,7 @@ poses.Del(entityID);
     
 > It is possible to implement a user pool. This feature will be described shortly.
  
-## Аспект
+## Aspect
 These are custom classes inherited from `EcsAspect` and used to interact with entities. Aspects are both a pool cache and a component mask for filtering entities. You can think of aspects as a description of what entities the system is working with.
 
 Simplified syntax:
@@ -443,7 +443,7 @@ class Aspect : EcsAspect
 <details>
 <summary>Combining aspects</summary>
 
-В аспекты можно добавлять другие аспекты, тем самым комбинируя их. Ограничения так же будут скомбинированы.
+Aspects can have additional aspects added to them, thus combining them. The constraints will also be combined accordingly.
 ``` c#
 using DCFApixels.DragonECS;
 // ...
@@ -453,25 +453,24 @@ class Aspect : EcsAspect
     public OtherAspect2 otherAspect2;
     public EcsPool<Pose> poses;
  
-    // Функция Init аналогична конструктору Aspect(Builder b).
     protected override void Init(Builder b)
     {
-        // Комбинирует с SomeAspect1.
+        // Combines with SomeAspect1.
         otherAspect1 = b.Combine<OtherAspect1>(1);
-        // Хотя для OtherAspect1 метод Combine был вызван раньше, сначала будет скомбинирован с OtherAspect2, так как по умолчанию order = 0.
+        // Although Combine was called earlier for OtherAspect1, it will first combine with OtherAspect2 because the default order is 0.
         otherAspect2 = b.Combine<OtherAspect2>();
-        // Если в OtherAspect1 или в OtherAspect2 было ограничение b.Exclude<Pose>() тут оно будет заменено на b.Include<Pose>().
+        // If b.Exclude<Pose>() was specified in OtherAspect1 or OtherAspect2, it will be replaced with b.Include<Pose>() here.
         poses = b.Include<Pose>();
     }
 }
 ```
-Если будут конфликтующие ограничения у комбинируемых аспектов, то новые ограничения будут заменять добавленные ранее. Ограничения корневого аспекта всегда заменяют ограничения из добавленных аспектов. Визуальный пример комбинации ограничений:
+If there are conflicting constraints between the combined aspects, the new constraints will replace those added earlier. Constraints from the root aspect always replace constraints from added aspects. Here's a visual example of constraint combination:
 | | cmp1 | cmp2 | cmp3 | cmp4 | cmp5 | разрешение конфликтных ограничений|
 | :--- | :--- | :--- | :--- | :--- | :--- |:--- |
 | OtherAspect2 | :heavy_check_mark: | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | |
-| OtherAspect1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | Для `cmp2` будет выбрано :heavy_check_mark: |
-| Aspect | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | Для `cmp1` будет выбрано :x: |
-| Итоговые ограничения | :x: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_check_mark: | |
+| OtherAspect1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | For `cmp2` will be chosen. :heavy_check_mark: |
+| Aspect | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | For `cmp1` will be chosen. :x: |
+| Final Constraints | :x: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_check_mark: | |
 
 </details>
 
@@ -793,40 +792,42 @@ var _someDataB = _pipeline.Configs.Get<SomeDataB>();
 ```
 
 ## World Components
-С помощью компонентов можно прикреплять дополнительные данные к мирам. В качестве компонентов используются `struct` типы. Доступ к компонентам через `Get` оптимизирован, скорость почти такая же как доступ к полям класса.
+Components can be used to attach additional data to worlds. World components are `struct` types. Access to components via `Get` is optimized, the speed is almost the same as access to class fields.
+
+Get component:
 ``` c#
-// Получить компонент.
 ref WorldComponent component = ref _world.Get<WorldComponent>();
 ```
-Реализация компонента:
+Component Implementation:
 ``` c#
 public struct WorldComponent
 {
-    // Данные.
+    // Data.
 }
 ```
-Или:
+Or:
 ``` c#
 public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 {
-    // Данные.
+    // Data.
+
     void IEcsWorldComponent<WorldComponent>.Init(ref WorldComponent component, EcsWorld world)
     {
-        // Действия при инициализации компонента. Вызывается до первого возвращения из EcsWorld.Get .
+        // Actions during component initialization. Called before the first return from EcsWorld.Get().
     }
     void IEcsWorldComponent<WorldComponent>.OnDestroy(ref WorldComponent component, EcsWorld world)
     {
-        // Действия когда вызывается EcsWorld.Destroy.
-        // Вызов OnDestroy, обязует пользователя вручную обнулять компонент, если это необходимо. 
+        // Actions when EcsWorld.Destroy is called.
+        // Calling OnDestroy, obliges the user to manually reset the component if necessary. 
         component = default;
     }
 }
 ```
 
 <details>
-<summary>Пример использования</summary>
+<summary>Example of use</summary>
 
-События интерфейса IEcsWorldComponent<T>, могут быть использованы для автоматической инициализации полей компонента, и освобождения ресурсов.
+IEcsWorldComponent<T> interface events, can be used to automatically initialize component fields, and release resources.
 ``` c#
 public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 {
