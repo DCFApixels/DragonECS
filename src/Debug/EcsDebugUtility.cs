@@ -48,7 +48,7 @@ namespace DCFApixels.DragonECS
             for (int i = 0; i < typeParameters.Length; ++i)
             {
                 //чтобы строка не была слишком длинной, используются сокращенные имена для типов аргументов
-                string paramTypeName = GetGenericTypeNameInternal(typeParameters[i], maxDepth - 1, false);
+                string paramTypeName = GetGenericTypeName_Internal(typeParameters[i], maxDepth - 1, false);
                 genericParams += (i == 0 ? paramTypeName : $", {paramTypeName}");
             }
             return $"{typeName}<{genericParams}>";
