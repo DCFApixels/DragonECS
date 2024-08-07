@@ -448,7 +448,6 @@ class Aspect : EcsAspect
     public OtherAspect2 otherAspect2;
     public EcsPool<Pose> poses;
  
-    // функция Init аналогична конструктору Aspect(Builder b)
     protected override void Init(Builder b)
     {
         // комбинирует с SomeAspect1.
