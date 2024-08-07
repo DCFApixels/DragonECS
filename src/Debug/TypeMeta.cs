@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
 using System.Reflection;
+#endif
 
 namespace DCFApixels.DragonECS
 {
@@ -81,14 +83,7 @@ namespace DCFApixels.DragonECS
             if (_initFlags.HasFlag(InitFlag.Name) == false)
             {
                 (_name, _isCustomName) = MetaGenerator.GetMetaName(_type);
-                if (_isCustomName)
-                {
-                    _typeName = MetaGenerator.GetTypeName(_type);
-                }
-                else
-                {
-                    _typeName = _name;
-                }
+                _typeName = _isCustomName ? MetaGenerator.GetTypeName(_type) : _name;
                 _initFlags |= InitFlag.Name;
             }
         }
@@ -301,12 +296,12 @@ namespace DCFApixels.DragonECS
 
             //private static HashSet<Type> _;
 
-            #region GetMemberType
-            public static EcsMemberType GetMemberType(Type type)
-            {
-                throw new NotImplementedException();
-            }
-            #endregion
+            //#region GetMemberType
+            //public static EcsMemberType GetMemberType(Type type)
+            //{
+            //    throw new NotImplementedException();
+            //}
+            //#endregion
 
             #region GetMetaName/GetTypeName
             public static string GetTypeName(Type type)
@@ -315,6 +310,7 @@ namespace DCFApixels.DragonECS
             }
             public static (string, bool) GetMetaName(Type type)
             {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 bool isCustom = type.TryGetCustomAttribute(out MetaNameAttribute atr) && string.IsNullOrEmpty(atr.name) == false;
                 if (isCustom)
                 {
@@ -332,6 +328,10 @@ namespace DCFApixels.DragonECS
                     return ($"{atr.name}<{genericParams}>", isCustom);
                 }
                 return (EcsDebugUtility.GetGenericTypeName(type, GENERIC_NAME_DEPTH), isCustom);
+#else
+                EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetMetaName)} method does not work.");
+                return (type.Name, false);
+#endif
             }
             #endregion
 
@@ -342,35 +342,55 @@ namespace DCFApixels.DragonECS
             }
             public static (MetaColor, bool) GetColor(Type type)
             {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 bool isCustom = type.TryGetCustomAttribute(out MetaColorAttribute atr);
                 return (isCustom ? atr.color : AutoColor(type), isCustom);
+#else
+                EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetColor)} method does not work.");
+                return (AutoColor(type), false);
+#endif
             }
             #endregion
 
             #region GetGroup
             public static MetaGroup GetGroup(Type type)
             {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 return type.TryGetCustomAttribute(out MetaGroupAttribute atr) ? atr.Data : MetaGroup.Empty;
+#else
+                EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetGroup)} method does not work.");
+                return MetaGroup.Empty;
+#endif
             }
             #endregion
 
             #region GetDescription
             public static MetaDescription GetDescription(Type type)
             {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 bool isCustom = type.TryGetCustomAttribute(out MetaDescriptionAttribute atr);
                 return isCustom ? atr.Data : MetaDescription.Empty;
+#else
+                EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetDescription)} method does not work.");
+                return MetaDescription.Empty;
+#endif
             }
             #endregion
 
             #region GetTags
             public static IReadOnlyList<string> GetTags(Type type)
             {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 var atr = type.GetCustomAttribute<MetaTagsAttribute>();
                 return atr != null ? atr.Tags : Array.Empty<string>();
+#else
+                EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetTags)} method does not work.");
+                return Array.Empty<string>();
+#endif
             }
             #endregion
         }
-        #endregion
+#endregion
     }
 
     public enum EcsMemberType : byte

@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
 using System.Reflection;
+#endif
 
 namespace DCFApixels.DragonECS
 {
     public static class EcsDebugUtility
     {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
         private const BindingFlags RFL_FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+#endif
 
         #region GetGenericTypeName
         public static string GetGenericTypeFullName<T>(int maxDepth = 2)
@@ -15,7 +19,7 @@ namespace DCFApixels.DragonECS
         }
         public static string GetGenericTypeFullName(Type type, int maxDepth = 2)
         {
-            return GetGenericTypeNameInternal(type, maxDepth, true);
+            return GetGenericTypeName_Internal(type, maxDepth, true);
         }
         public static string GetGenericTypeName<T>(int maxDepth = 2)
         {
@@ -23,10 +27,11 @@ namespace DCFApixels.DragonECS
         }
         public static string GetGenericTypeName(Type type, int maxDepth = 2)
         {
-            return GetGenericTypeNameInternal(type, maxDepth, false);
+            return GetGenericTypeName_Internal(type, maxDepth, false);
         }
-        private static string GetGenericTypeNameInternal(Type type, int maxDepth, bool isFull)
+        private static string GetGenericTypeName_Internal(Type type, int maxDepth, bool isFull)
         {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
             string typeName = isFull ? type.FullName : type.Name;
             if (!type.IsGenericType || maxDepth == 0)
             {
@@ -47,6 +52,10 @@ namespace DCFApixels.DragonECS
                 genericParams += (i == 0 ? paramTypeName : $", {paramTypeName}");
             }
             return $"{typeName}<{genericParams}>";
+#else
+            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(GetGenericTypeName_Internal)} method does not work.");
+            return isFull ? type.FullName : type.Name;
+#endif
         }
         #endregion
 
@@ -56,10 +65,11 @@ namespace DCFApixels.DragonECS
         {
             return AutoToString(self, typeof(T), isWriteName);
         }
+        
+        //TODO сделать специальный вывод в виде названий констант для Enum-ов
         private static string AutoToString(object target, Type type, bool isWriteName)
         {
-#if !REFLECTION_DISABLED
-            //TODO сделать специальный вывод в виде названий констант для Enum-ов
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
 #pragma warning disable IL2070 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.
             var fields = type.GetFields(RFL_FLAGS);
 #pragma warning restore IL2070
@@ -283,7 +293,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region TypeMetaSource
+        #region TypeMetaProvider
         public static bool IsTypeMetaProvided(object obj)
         {
             return obj is IEcsTypeMetaProvider;
