@@ -863,7 +863,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 </br>
 
 # Projects powered by DragonECS
-* [3D Platformer (Example)](https://github.com/DCFApixels/3D-Platformer-DragonECS)
+* [3D Platformer (Example)](https://github.com/DCFApixels/3D-Platformer-DragonECS-Demo)
 
 </br>
 
