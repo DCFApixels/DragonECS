@@ -8,6 +8,24 @@ using static DCFApixels.DragonECS.EcsConsts;
 
 namespace DCFApixels.DragonECS
 {
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(PACK_GROUP, OTHER_GROUP)]
+    [MetaDescription(AUTHOR, "...")]
+    public interface IEcsAddLayer
+    {
+        string Layer { get; }
+    }
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(PACK_GROUP, OTHER_GROUP)]
+    [MetaDescription(AUTHOR, "...")]
+    public interface IEcsAddSortOrder
+    {
+        int SortOrder { get; }
+    }
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(PACK_GROUP, OTHER_GROUP)]
+    [MetaDescription(AUTHOR, "...")]
+    public interface IEcsAddUnique { }
     public sealed partial class EcsPipeline
     {
         public class Builder : IEcsModule
@@ -52,21 +70,21 @@ namespace DCFApixels.DragonECS
             #region Add
             public Builder Add(IEcsProcess system, int? sortOrder = null)
             {
-                return AddInternal(system, string.Empty, sortOrder, false);
+                return AddSystem_Internal(system, string.Empty, sortOrder, false);
             }
             public Builder Add(IEcsProcess system, string layerName, int? sortOrder = null)
             {
-                return AddInternal(system, layerName, sortOrder, false);
+                return AddSystem_Internal(system, layerName, sortOrder, false);
             }
             public Builder AddUnique(IEcsProcess system, int? sortOrder = null)
             {
-                return AddInternal(system, string.Empty, sortOrder, true);
+                return AddSystem_Internal(system, string.Empty, sortOrder, true);
             }
             public Builder AddUnique(IEcsProcess system, string layerName, int? sortOrder = null)
             {
-                return AddInternal(system, layerName, sortOrder, true);
+                return AddSystem_Internal(system, layerName, sortOrder, true);
             }
-            private Builder AddInternal(IEcsProcess system, string layerName, int? settedSortOrder, bool isUnique)
+            private Builder AddSystem_Internal(IEcsProcess system, string layerName, int? settedSortOrder, bool isUnique)
             {
                 int sortOrder;
                 if (settedSortOrder.HasValue)
@@ -75,22 +93,22 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
-                    sortOrder = system is IEcsSystemDefaultSortOrder defaultSortOrder ? defaultSortOrder.SortOrder : _defaultOrder;
+                    sortOrder = system is IEcsAddSortOrder defaultSortOrder ? defaultSortOrder.SortOrder : _defaultOrder;
                 }
                 if (string.IsNullOrEmpty(layerName))
                 {
-                    layerName = system is IEcsSystemDefaultLayer defaultLayer ? defaultLayer.Layer : _defaultLayer;
+                    layerName = system is IEcsAddLayer defaultLayer ? defaultLayer.Layer : _defaultLayer;
                 }
-                AddRecordInternal(system, layerName, _systemRecordsInrement++, sortOrder, isUnique);
+                AddRecord_Internal(system, layerName, sortOrder, isUnique, _systemRecordsInrement++);
 
                 if (system is IEcsModule module)//если система одновременно явялется и системой и модулем то за один Add будет вызван Add и AddModule
                 {
-                    AddModule(module);
+                    AddModule(module, layerName, settedSortOrder);
                 }
 
                 return this;
             }
-            private void AddRecordInternal(IEcsProcess system, string layer, int addOrder, int sortOrder, bool isUnique)
+            private void AddRecord_Internal(IEcsProcess system, string layer, int sortOrder, bool isUnique, int addOrder)
             {
                 SystemRecord record = new SystemRecord(system, layer, addOrder, sortOrder, isUnique);
                 if (_layerLists.TryGetValue(layer, out LayerSystemsList list) == false)
@@ -111,13 +129,21 @@ namespace DCFApixels.DragonECS
             #region AddModule
             public Builder AddModule(IEcsModule module, int? sortOrder = null)
             {
-                return AddModuleInternal(module, string.Empty, sortOrder);
+                return AddModule_Internal(module, string.Empty, sortOrder, false);
             }
             public Builder AddModule(IEcsModule module, string layerName, int? sortOrder = null)
             {
-                return AddModuleInternal(module, layerName, sortOrder);
+                return AddModule_Internal(module, layerName, sortOrder, false);
             }
-            public Builder AddModuleInternal(IEcsModule module, string layerName, int? settedSortOrder)
+            public Builder AddModuleUnique(IEcsModule module, int? sortOrder = null)
+            {
+                return AddModule_Internal(module, string.Empty, sortOrder, true);
+            }
+            public Builder AddModuleUnique(IEcsModule module, string layerName, int? sortOrder = null)
+            {
+                return AddModule_Internal(module, layerName, sortOrder, true);
+            }
+            public Builder AddModule_Internal(IEcsModule module, string layerName, int? settedSortOrder, bool isUnique)
             {
                 string prevLayer = _defaultLayer;
                 int prevSortOrder = _defaultOrder;
@@ -128,11 +154,11 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
-                    _defaultOrder = module is IEcsSystemDefaultSortOrder defaultSortOrder ? defaultSortOrder.SortOrder : 0;
+                    _defaultOrder = module is IEcsAddSortOrder defaultSortOrder ? defaultSortOrder.SortOrder : 0;
                 }
                 if (string.IsNullOrEmpty(layerName))
                 {
-                    _defaultLayer = module is IEcsSystemDefaultLayer defaultLayer ? defaultLayer.Layer : BASIC_LAYER;
+                    _defaultLayer = module is IEcsAddLayer defaultLayer ? defaultLayer.Layer : BASIC_LAYER;
                 }
                 else
                 {
@@ -172,7 +198,7 @@ namespace DCFApixels.DragonECS
                 //_systemRecordsInrement + otherRecord.addOrder смещает порядок так что новые системы встают в конец очереди, но сохраняют порядок addOrder
                 foreach (var otherRecord in other.SystemRecords)
                 {
-                    AddRecordInternal(otherRecord.system, otherRecord.layer, _systemRecordsInrement + otherRecord.addOrder, otherRecord.sortOrder, otherRecord.isUnique);
+                    AddRecord_Internal(otherRecord.system, otherRecord.layer, otherRecord.sortOrder, otherRecord.isUnique, _systemRecordsInrement + otherRecord.addOrder);
                 }
                 _systemRecordsInrement += other._systemRecordsInrement;
             }
@@ -511,6 +537,7 @@ namespace DCFApixels.DragonECS
                 public Item[] records = null;
                 public int recordsCount = 0;
 
+                //отслеживание осортированности систем
                 private int _lastSortOrder;
                 private int _lastAddOrder;
                 private bool _isSorted = true;
@@ -533,36 +560,32 @@ namespace DCFApixels.DragonECS
                     for (int i = 1; i < other.recordsCount; i++)
                     {
                         var otherRecord = other.records[i];
-                        AddItemInternal(otherRecord);
+                        AddItem_Internal(otherRecord);
                     }
                 }
                 public void Add(IEcsProcess system, int addOrder, int sortOrder, bool isUnique)
                 {
-                    AddItemInternal(new Item(system, addOrder, sortOrder, isUnique));
+                    AddItem_Internal(new Item(system, addOrder, sortOrder, isUnique));
                 }
-                private void AddItemInternal(Item item)
+                private void AddItem_Internal(Item item)
                 {
                     if (_isSorted)
                     {
                         if (recordsCount <= 1)
                         {
                             _lastSortOrder = item.sortOrder;
-                        }
-                        else if (_lastSortOrder != item.sortOrder)
+                            _lastAddOrder = item.addOrder;
+                        } 
+                        else if (_lastSortOrder > item.sortOrder || _lastAddOrder > item.addOrder)
                         {
                             _isSorted = false;
                         }
-
-                        if (recordsCount <= 1)
+                        else
                         {
+                            _lastSortOrder = item.sortOrder;
                             _lastAddOrder = item.addOrder;
                         }
-                        else if (_lastAddOrder != item.addOrder)
-                        {
-                            _isSorted = false;
-                        }
                     }
-
 
                     if (records.Length <= recordsCount)
                     {
@@ -587,6 +610,8 @@ namespace DCFApixels.DragonECS
                     //Игнорирую первую систему, так как это чисто система с названием слоя
                     Array.Sort(records, 1, recordsCount - 1);
                     _isSorted = true;
+                    _lastSortOrder = records[recordsCount - 1].sortOrder;
+                    _lastAddOrder = records[recordsCount - 1].addOrder;
                 }
             }
             private readonly struct Item : IComparable<Item>

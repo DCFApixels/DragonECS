@@ -6,33 +6,20 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using static DCFApixels.DragonECS.EcsConsts;
 
 namespace DCFApixels.DragonECS
 {
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
+    [MetaGroup(PACK_GROUP, OTHER_GROUP)]
+    [MetaDescription(AUTHOR, "...")]
     public interface IEcsPipelineMember : IEcsProcess
     {
         EcsPipeline Pipeline { get; set; }
     }
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
-    public interface IEcsSystemDefaultLayer : IEcsProcess
-    {
-        string Layer { get; }
-    }
-    [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
-    public interface IEcsSystemDefaultSortOrder : IEcsProcess
-    {
-        int SortOrder { get; }
-    }
-    [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "Container and engine for systems. Responsible for configuring the execution order of systems, providing a mechanism for messaging between systems, and a dependency injection mechanism.")]
+    [MetaGroup(PACK_GROUP, OTHER_GROUP)]
+    [MetaDescription(AUTHOR, "Container and engine for systems. Responsible for configuring the execution order of systems, providing a mechanism for messaging between systems, and a dependency injection mechanism.")]
     public sealed partial class EcsPipeline
     {
         private readonly IConfigContainer _configs;
@@ -274,8 +261,8 @@ namespace DCFApixels.DragonECS
     #region SystemsLayerMarkerSystem
     [MetaTags(MetaTags.HIDDEN)]
     [MetaColor(MetaColor.Black)]
-    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "An auxiliary type of system for dividing a pipeline into layers. This system is automatically added to the EcsPipeline.")]
+    [MetaGroup(PACK_GROUP, OTHER_GROUP)]
+    [MetaDescription(AUTHOR, "An auxiliary type of system for dividing a pipeline into layers. This system is automatically added to the EcsPipeline.")]
     public class SystemsLayerMarkerSystem : IEcsProcess
     {
         public readonly string name;
