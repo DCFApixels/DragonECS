@@ -29,7 +29,7 @@
     <td nowrap width="100">
       <a href="https://github.com/DCFApixels/DragonECS">
         <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"></br>
-        <span>English(WIP)</span>
+        <span>English</span>
       </a>  
     </td>
     <td nowrap width="100">
@@ -863,7 +863,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 </br>
 
 # Projects powered by DragonECS
-* [3D Platformer (Example)](https://github.com/DCFApixels/3D-Platformer-DragonECS)
+* [3D Platformer (Example)](https://github.com/DCFApixels/3D-Platformer-DragonECS-Demo)
 
 </br>
 
@@ -881,11 +881,11 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
  
 # FAQ
 ## 'ReadOnlySpan<>' could not be found
-В версии Unity 2020.1.х в консоли может выпадать ошибка:
+In Unity 2020.1.x, you may encounter this error in the console:
 ```
 The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing a using directive or an assembly reference?)
 ``` 
-Чтобы починить добавьте директиву `ENABLE_DUMMY_SPAN` в `Project Settings/Player/Other Settings/Scripting Define Symbols`.
+To fix this, add the define symbol `ENABLE_DUMMY_SPAN` to `Project Settings/Player/Other Settings/Scripting Define Symbols`.
 
 </br>
 

@@ -27,7 +27,7 @@
     <td nowrap width="100">
       <a href="https://github.com/DCFApixels/DragonECS">
         <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930"></br>
-        <span>English(WIP)</span>
+        <span>English</span>
       </a>  
     </td>
     <td nowrap width="100">
@@ -860,7 +860,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 </br>
 
 # 使用DragonECS的项目
-* [3D Platformer (Example)](https://github.com/DCFApixels/3D-Platformer-DragonECS)
+* [3D Platformer (Example)](https://github.com/DCFApixels/3D-Platformer-DragonECS-Demo)
 ![alt text](https://i.ibb.co/hm7Lrm4/Platformer.png)
 
 </br>
