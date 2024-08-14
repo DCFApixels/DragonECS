@@ -26,7 +26,7 @@ namespace DCFApixels.DragonECS
         public string layerName;
         public int sortOrder;
         public bool isUnique;
-        public AddParamsOverwriteFlags overrideFlags;
+        public AddParamsOverwriteFlags overwriteFlags;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(string layerName)
@@ -34,7 +34,7 @@ namespace DCFApixels.DragonECS
             this.layerName = layerName;
             this.sortOrder = default;
             this.isUnique = default;
-            overrideFlags = AddParamsOverwriteFlags.LayerName;
+            overwriteFlags = AddParamsOverwriteFlags.LayerName;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(int sortOrder)
@@ -42,7 +42,7 @@ namespace DCFApixels.DragonECS
             this.layerName = default;
             this.sortOrder = sortOrder;
             this.isUnique = default;
-            overrideFlags = AddParamsOverwriteFlags.SortOrder;
+            overwriteFlags = AddParamsOverwriteFlags.SortOrder;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(bool isUnique)
@@ -50,7 +50,7 @@ namespace DCFApixels.DragonECS
             this.layerName = default;
             this.sortOrder = default;
             this.isUnique = isUnique;
-            overrideFlags = AddParamsOverwriteFlags.IsUnique;
+            overwriteFlags = AddParamsOverwriteFlags.IsUnique;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -59,7 +59,7 @@ namespace DCFApixels.DragonECS
             this.layerName = layerName;
             this.sortOrder = sortOrder;
             this.isUnique = default;
-            overrideFlags = AddParamsOverwriteFlags.LayerName | AddParamsOverwriteFlags.SortOrder;
+            overwriteFlags = AddParamsOverwriteFlags.LayerName | AddParamsOverwriteFlags.SortOrder;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(string layerName, bool isUnique)
@@ -67,7 +67,7 @@ namespace DCFApixels.DragonECS
             this.layerName = layerName;
             this.sortOrder = default;
             this.isUnique = isUnique;
-            overrideFlags = AddParamsOverwriteFlags.LayerName | AddParamsOverwriteFlags.IsUnique;
+            overwriteFlags = AddParamsOverwriteFlags.LayerName | AddParamsOverwriteFlags.IsUnique;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(int sortOrder, bool isUnique)
@@ -75,7 +75,7 @@ namespace DCFApixels.DragonECS
             this.layerName = default;
             this.sortOrder = sortOrder;
             this.isUnique = isUnique;
-            overrideFlags = AddParamsOverwriteFlags.SortOrder | AddParamsOverwriteFlags.IsUnique;
+            overwriteFlags = AddParamsOverwriteFlags.SortOrder | AddParamsOverwriteFlags.IsUnique;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -84,7 +84,7 @@ namespace DCFApixels.DragonECS
             this.layerName = layerName;
             this.sortOrder = sortOrder;
             this.isUnique = isUnique;
-            overrideFlags = AddParamsOverwriteFlags.All;
+            overwriteFlags = AddParamsOverwriteFlags.All;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(string layerName, int sortOrder, bool isUnique, AddParamsOverwriteFlags overrideFlags)
@@ -92,7 +92,7 @@ namespace DCFApixels.DragonECS
             this.layerName = layerName;
             this.sortOrder = sortOrder;
             this.isUnique = isUnique;
-            this.overrideFlags = overrideFlags;
+            this.overwriteFlags = overrideFlags;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -115,29 +115,27 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
         {
-            return (overrideFlags.IsLayerName() ? $"{layerName}, " : "") +
-                (overrideFlags.IsSortOrder() ? $"{sortOrder}, " : "") +
-                (overrideFlags.IsIsUnique() ? $"{isUnique}, " : "");
+            return (overwriteFlags.IsLayerName() ? $"{layerName}, " : "") +
+                (overwriteFlags.IsSortOrder() ? $"{sortOrder}, " : "") +
+                (overwriteFlags.IsIsUnique() ? $"{isUnique}, " : "");
         }
 
         public AddParams Overwrite(AddParams other)
         {
             AddParams result = this;
-            if (other.overrideFlags.IsLayerName())
+            if (other.overwriteFlags.IsLayerName())
             {
                 result.layerName = other.layerName;
-                result.overrideFlags |= AddParamsOverwriteFlags.LayerName;
             }
-            if (other.overrideFlags.IsSortOrder())
+            if (other.overwriteFlags.IsSortOrder())
             {
                 result.sortOrder = other.sortOrder;
-                result.overrideFlags |= AddParamsOverwriteFlags.SortOrder;
             }
-            if (other.overrideFlags.IsIsUnique())
+            if (other.overwriteFlags.IsIsUnique())
             {
                 result.isUnique = other.isUnique;
-                result.overrideFlags |= AddParamsOverwriteFlags.IsUnique;
             }
+            result.overwriteFlags |= other.overwriteFlags;
             return result;
         }
 
