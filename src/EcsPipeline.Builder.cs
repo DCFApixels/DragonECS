@@ -179,7 +179,7 @@ namespace DCFApixels.DragonECS
             public readonly Injector.Builder Injector;
             public readonly Configurator Configs;
 
-            private AddParams _defaultAddParams;
+            private AddParams _defaultAddParams = new AddParams(BASIC_LAYER, 0, false);
 
             #region Properties
             private ReadOnlySpan<SystemRecord> SystemRecords
@@ -205,6 +205,10 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Add IEcsProcess
+            public Builder Add(IEcsProcess system)
+            {
+                return AddSystem_Internal(system, AddParams.Default);
+            }
             public Builder Add(IEcsProcess system, string layerName)
             {
                 return AddSystem_Internal(system, new AddParams(layerName: layerName));
@@ -266,7 +270,7 @@ namespace DCFApixels.DragonECS
                         _moduleSystemsStack = new Stack<IEcsProcess>(4);
                     }
 
-                    if (_moduleSystemsStack.Count <= 0 && system != _moduleSystemsStack.Peek())
+                    if (_moduleSystemsStack.Count <= 0 || system != _moduleSystemsStack.Peek())
                     {
                         _moduleSystemsStack.Push(system);
                         AddModule_Internal(module, prms);
@@ -296,6 +300,10 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region AddModule IEcsModule
+            public Builder AddModule(IEcsModule module)
+            {
+                return AddModule_Internal(module, AddParams.Default);
+            }
             public Builder AddModule(IEcsModule module, string layerName)
             {
                 return AddModule_Internal(module, new AddParams(layerName: layerName));
@@ -347,15 +355,21 @@ namespace DCFApixels.DragonECS
                 {
                     prms = prms.Overwrite(overrideInterface.AddParams);
                 }
+                var oldDefaultAddParams = _defaultAddParams;
                 _defaultAddParams = prms.Overwrite(settedAddParams);
 
                 module.Import(this);
 
+                _defaultAddParams = oldDefaultAddParams;
                 return this;
             }
             #endregion
 
             #region Add Raw
+            public Builder Add(object raw)
+            {
+                return AddRaw_Internal(raw, AddParams.Default);
+            }
             public Builder Add(object raw, string layerName)
             {
                 return AddRaw_Internal(raw, new AddParams(layerName: layerName));
@@ -437,7 +451,7 @@ namespace DCFApixels.DragonECS
                 //_systemRecordsInrement + otherRecord.addOrder смещает порядок так что новые системы встают в конец очереди, но сохраняют порядок addOrder
                 foreach (var otherRecord in other.SystemRecords)
                 {
-                    AddRecord_Internal(otherRecord.system, otherRecord.layer, otherRecord.sortOrder, otherRecord.isUnique, _systemRecordsInrement + otherRecord.addOrder);
+                    AddRecord_Internal(otherRecord.system, otherRecord.layerName, otherRecord.sortOrder, otherRecord.isUnique, _systemRecordsInrement + otherRecord.addOrder);
                 }
                 _systemRecordsInrement += other._systemRecordsInrement;
             }
@@ -447,7 +461,7 @@ namespace DCFApixels.DragonECS
             private void RemoveAt(int index)
             {
                 ref var slot = ref _systemRecords[index];
-                _layerLists[slot.layer].lasyInitSystemsCount--;
+                _layerLists[slot.layerName].lasyInitSystemsCount--;
                 slot = _systemRecords[--_systemRecordsCount];
             }
             public Builder Remove<TSystem>()
@@ -501,7 +515,7 @@ namespace DCFApixels.DragonECS
                 for (int i = 0, iMax = _systemRecordsCount; i < iMax; i++)
                 {
                     ref var record = ref _systemRecords[i];
-                    var list = _layerLists[record.layer];
+                    var list = _layerLists[record.layerName];
                     if (list.IsInit == false)
                     {
                         list = basicLayerList;
@@ -881,11 +895,11 @@ namespace DCFApixels.DragonECS
                 var records = SystemRecords;
                 EcsPipelineTemplate result = new EcsPipelineTemplate();
                 result.layers = new string[Layers.Count];
-                result.systems = new EcsPipelineTemplate.SystemRecord[records.Length];
+                result.systems = new EcsPipelineTemplate.AddCommand[records.Length];
                 for (int i = 0; i < records.Length; i++)
                 {
                     var r = records[i];
-                    result.systems[i] = new EcsPipelineTemplate.SystemRecord(r.system, r.layer, r.sortOrder, r.isUnique);
+                    result.systems[i] = new EcsPipelineTemplate.AddCommand(r.system, new AddParams(r.layerName, r.sortOrder, r.isUnique));
                 }
 
                 return result;
@@ -896,14 +910,14 @@ namespace DCFApixels.DragonECS
             private readonly struct SystemRecord : IComparable<SystemRecord>
             {
                 public readonly IEcsProcess system;
-                public readonly string layer;
+                public readonly string layerName;
                 public readonly int addOrder;
                 public readonly int sortOrder;
                 public readonly bool isUnique;
-                public SystemRecord(IEcsProcess system, string layer, int addOrder, int sortOrder, bool isUnique)
+                public SystemRecord(IEcsProcess system, string layerName, int addOrder, int sortOrder, bool isUnique)
                 {
                     this.system = system;
-                    this.layer = layer;
+                    this.layerName = layerName;
                     this.addOrder = addOrder;
                     this.sortOrder = sortOrder;
                     this.isUnique = isUnique;

@@ -390,7 +390,7 @@ namespace DCFApixels.DragonECS
             }
             #endregion
         }
-#endregion
+        #endregion
     }
 
     public enum EcsMemberType : byte

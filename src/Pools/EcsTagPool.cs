@@ -2,8 +2,10 @@ using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.CompilerServices;
+#if (DEBUG && !DISABLE_DEBUG)
+using System.Reflection;
+#endif
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
 #endif
@@ -42,7 +44,7 @@ namespace DCFApixels.DragonECS
         private EcsWorld.PoolsMediator _mediator;
 
         #region CheckValide
-#if DEBUG
+#if (DEBUG && !DISABLE_DEBUG)
         private static bool _isInvalidType;
         static EcsTagPool()
         {
