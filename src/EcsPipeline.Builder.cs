@@ -205,50 +205,6 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Add IEcsProcess
-            public Builder Add(IEcsProcess system)
-            {
-                return AddSystem_Internal(system, AddParams.Default);
-            }
-            public Builder Add(IEcsProcess system, string layerName)
-            {
-                return AddSystem_Internal(system, new AddParams(layerName: layerName));
-            }
-            public Builder Add(IEcsProcess system, int sortOrder)
-            {
-                return AddSystem_Internal(system, new AddParams(sortOrder: sortOrder));
-            }
-            public Builder Add(IEcsProcess system, bool isUnique)
-            {
-                return AddSystem_Internal(system, new AddParams(isUnique: isUnique));
-            }
-            public Builder Add(IEcsProcess system, string layerName, int sortOrder)
-            {
-                return AddSystem_Internal(system, new AddParams(layerName: layerName, sortOrder: sortOrder));
-            }
-            public Builder Add(IEcsProcess system, string layerName, bool isUnique)
-            {
-                return AddSystem_Internal(system, new AddParams(layerName: layerName, isUnique: isUnique));
-            }
-            public Builder Add(IEcsProcess system, int sortOrder, bool isUnique)
-            {
-                return AddSystem_Internal(system, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
-            }
-            public Builder Add(IEcsProcess system, string layerName, int sortOrder, bool isUnique)
-            {
-                return AddSystem_Internal(system, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
-            }
-            public Builder AddUnique(IEcsProcess system, string layerName)
-            {
-                return AddSystem_Internal(system, new AddParams(layerName: layerName, isUnique: true));
-            }
-            public Builder AddUnique(IEcsProcess system, int sortOrder)
-            {
-                return AddSystem_Internal(system, new AddParams(sortOrder: sortOrder, isUnique: true));
-            }
-            public Builder AddUnique(IEcsProcess system, string layerName, int sortOrder)
-            {
-                return AddSystem_Internal(system, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: true));
-            }
             public Builder Add(IEcsProcess system, AddParams parameters)
             {
                 return AddSystem_Internal(system, parameters);
@@ -300,50 +256,6 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region AddModule IEcsModule
-            public Builder AddModule(IEcsModule module)
-            {
-                return AddModule_Internal(module, AddParams.Default);
-            }
-            public Builder AddModule(IEcsModule module, string layerName)
-            {
-                return AddModule_Internal(module, new AddParams(layerName: layerName));
-            }
-            public Builder AddModule(IEcsModule module, int sortOrder)
-            {
-                return AddModule_Internal(module, new AddParams(sortOrder: sortOrder));
-            }
-            public Builder AddModule(IEcsModule module, bool isUnique)
-            {
-                return AddModule_Internal(module, new AddParams(isUnique: isUnique));
-            }
-            public Builder AddModule(IEcsModule module, string layerName, int sortOrder)
-            {
-                return AddModule_Internal(module, new AddParams(layerName: layerName, sortOrder: sortOrder));
-            }
-            public Builder AddModule(IEcsModule module, string layerName, bool isUnique)
-            {
-                return AddModule_Internal(module, new AddParams(layerName: layerName, isUnique: isUnique));
-            }
-            public Builder AddModule(IEcsModule module, int sortOrder, bool isUnique)
-            {
-                return AddModule_Internal(module, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
-            }
-            public Builder AddModule(IEcsModule module, string layerName, int sortOrder, bool isUnique)
-            {
-                return AddModule_Internal(module, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
-            }
-            public Builder AddModuleUnique(IEcsModule module, string layerName)
-            {
-                return AddModule_Internal(module, new AddParams(layerName: layerName, isUnique: true));
-            }
-            public Builder AddModuleUnique(IEcsModule module, int sortOrder)
-            {
-                return AddModule_Internal(module, new AddParams(sortOrder: sortOrder, isUnique: true));
-            }
-            public Builder AddModuleUnique(IEcsModule module, string layerName, int sortOrder)
-            {
-                return AddModule_Internal(module, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: true));
-            }
             public Builder AddModule(IEcsModule module, AddParams parameters)
             {
                 return AddModule_Internal(module, parameters);
@@ -366,50 +278,6 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Add Raw
-            public Builder Add(object raw)
-            {
-                return AddRaw_Internal(raw, AddParams.Default);
-            }
-            public Builder Add(object raw, string layerName)
-            {
-                return AddRaw_Internal(raw, new AddParams(layerName: layerName));
-            }
-            public Builder Add(object raw, int sortOrder)
-            {
-                return AddRaw_Internal(raw, new AddParams(sortOrder: sortOrder));
-            }
-            public Builder Add(object raw, bool isUnique)
-            {
-                return AddRaw_Internal(raw, new AddParams(isUnique: isUnique));
-            }
-            public Builder Add(object raw, string layerName, int sortOrder)
-            {
-                return AddRaw_Internal(raw, new AddParams(layerName: layerName, sortOrder: sortOrder));
-            }
-            public Builder Add(object raw, string layerName, bool isUnique)
-            {
-                return AddRaw_Internal(raw, new AddParams(layerName: layerName, isUnique: isUnique));
-            }
-            public Builder Add(object raw, int sortOrder, bool isUnique)
-            {
-                return AddRaw_Internal(raw, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
-            }
-            public Builder Add(object raw, string layerName, int sortOrder, bool isUnique)
-            {
-                return AddRaw_Internal(raw, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
-            }
-            public Builder AddUnique(object raw, string layerName)
-            {
-                return AddRaw_Internal(raw, new AddParams(layerName: layerName, isUnique: true));
-            }
-            public Builder AddUnique(object raw, int sortOrder)
-            {
-                return AddRaw_Internal(raw, new AddParams(sortOrder: sortOrder, isUnique: true));
-            }
-            public Builder AddUnique(object raw, string layerName, int sortOrder)
-            {
-                return AddRaw_Internal(raw, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: true));
-            }
             public Builder Add(object raw, AddParams parameters)
             {
                 return AddRaw_Internal(raw, parameters);
@@ -929,5 +797,182 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
+    }
+
+    public static partial class EcsPipelineBuilderExtensions
+    {
+        #region Add IEcsProcess
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system)
+        {
+            return self.Add(system, AddParams.Default);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, string layerName)
+        {
+            return self.Add(system, new AddParams(layerName: layerName));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, int sortOrder)
+        {
+            return self.Add(system, new AddParams(sortOrder: sortOrder));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, bool isUnique)
+        {
+            return self.Add(system, new AddParams(isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, string layerName, int sortOrder)
+        {
+            return self.Add(system, new AddParams(layerName: layerName, sortOrder: sortOrder));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, string layerName, bool isUnique)
+        {
+            return self.Add(system, new AddParams(layerName: layerName, isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, int sortOrder, bool isUnique)
+        {
+            return self.Add(system, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, string layerName, int sortOrder, bool isUnique)
+        {
+            return self.Add(system, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEcsProcess system, string layerName)
+        {
+            return self.Add(system, new AddParams(layerName: layerName, isUnique: true));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEcsProcess system, int sortOrder)
+        {
+            return self.Add(system, new AddParams(sortOrder: sortOrder, isUnique: true));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEcsProcess system, string layerName, int sortOrder)
+        {
+            return self.Add(system, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: true));
+        }
+        #endregion
+
+        #region AddModule IEcsModule
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module)
+        {
+            return self.AddModule(module, AddParams.Default);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, string layerName)
+        {
+            return self.AddModule(module, new AddParams(layerName: layerName));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, int sortOrder)
+        {
+            return self.AddModule(module, new AddParams(sortOrder: sortOrder));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, bool isUnique)
+        {
+            return self.AddModule(module, new AddParams(isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, string layerName, int sortOrder)
+        {
+            return self.AddModule(module, new AddParams(layerName: layerName, sortOrder: sortOrder));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, string layerName, bool isUnique)
+        {
+            return self.AddModule(module, new AddParams(layerName: layerName, isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, int sortOrder, bool isUnique)
+        {
+            return self.AddModule(module, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, string layerName, int sortOrder, bool isUnique)
+        {
+            return self.AddModule(module, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModuleUnique(this EcsPipeline.Builder self, IEcsModule module, string layerName)
+        {
+            return self.AddModule(module, new AddParams(layerName: layerName, isUnique: true));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModuleUnique(this EcsPipeline.Builder self, IEcsModule module, int sortOrder)
+        {
+            return self.AddModule(module, new AddParams(sortOrder: sortOrder, isUnique: true));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModuleUnique(this EcsPipeline.Builder self, IEcsModule module, string layerName, int sortOrder)
+        {
+            return self.AddModule(module, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: true));
+        }
+        #endregion
+
+        #region Add Raw
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw)
+        {
+            return self.Add(raw, AddParams.Default);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, string layerName)
+        {
+            return self.Add(raw, new AddParams(layerName: layerName));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, int sortOrder)
+        {
+            return self.Add(raw, new AddParams(sortOrder: sortOrder));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, bool isUnique)
+        {
+            return self.Add(raw, new AddParams(isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, string layerName, int sortOrder)
+        {
+            return self.Add(raw, new AddParams(layerName: layerName, sortOrder: sortOrder));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, string layerName, bool isUnique)
+        {
+            return self.Add(raw, new AddParams(layerName: layerName, isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, int sortOrder, bool isUnique)
+        {
+            return self.Add(raw, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, string layerName, int sortOrder, bool isUnique)
+        {
+            return self.Add(raw, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, object raw, string layerName)
+        {
+            return self.Add(raw, new AddParams(layerName: layerName, isUnique: true));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, object raw, int sortOrder)
+        {
+            return self.Add(raw, new AddParams(sortOrder: sortOrder, isUnique: true));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, object raw, string layerName, int sortOrder)
+        {
+            return self.Add(raw, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: true));
+        }
+        #endregion
     }
 }
