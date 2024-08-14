@@ -157,8 +157,11 @@ namespace DCFApixels.DragonECS
     }
     public static class AddParamsFlagsUtility
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsLayerName(this AddParamsOverwriteFlags flags) { return (flags & AddParamsOverwriteFlags.LayerName) != 0; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsSortOrder(this AddParamsOverwriteFlags flags) { return (flags & AddParamsOverwriteFlags.SortOrder) != 0; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsIsUnique(this AddParamsOverwriteFlags flags) { return (flags & AddParamsOverwriteFlags.IsUnique) != 0; }
     }
 
