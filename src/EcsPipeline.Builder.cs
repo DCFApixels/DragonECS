@@ -115,9 +115,9 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
         {
-            return (overrideFlags.IsLayerName() ? "" : $"{layerName}, ") +
-                (overrideFlags.IsSortOrder() ? "" : $"{sortOrder}, ") +
-                (overrideFlags.IsIsUnique() ? "" : $"{isUnique}, ");
+            return (overrideFlags.IsLayerName() ? $"{layerName}, " : "") +
+                (overrideFlags.IsSortOrder() ? $"{sortOrder}, " : "") +
+                (overrideFlags.IsIsUnique() ? $"{isUnique}, " : "");
         }
 
         public AddParams Overwrite(AddParams other)
