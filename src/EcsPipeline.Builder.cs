@@ -13,25 +13,6 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "...")]
-    public interface IEcsAddLayer
-    {
-        string Layer { get; }
-    }
-    [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(PACK_GROUP, OTHER_GROUP)]
-    [MetaDescription(AUTHOR, "...")]
-    public interface IEcsAddSortOrder
-    {
-        int SortOrder { get; }
-    }
-    [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(PACK_GROUP, OTHER_GROUP)]
-    [MetaDescription(AUTHOR, "...")]
-    public interface IEcsAddUnique { }
-
-    [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(PACK_GROUP, OTHER_GROUP)]
-    [MetaDescription(AUTHOR, "...")]
     public interface IEcsAddParams
     {
         AddParams AddParams { get; }
@@ -42,54 +23,84 @@ namespace DCFApixels.DragonECS
     public struct AddParams : IEquatable<AddParams>
     {
         public static readonly AddParams Default = new AddParams();
-        public int paramSortOrder;
-        public string paramLayerName;
-        public bool paramIsUnique;
+        public string layerName;
+        public int sortOrder;
+        public bool isUnique;
+        public AddParamsOverwriteFlags overrideFlags;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(int sortOrder = 0, string layer = "", bool isUnique = false)
+        public AddParams(string layerName)
         {
-            paramSortOrder = sortOrder;
-            paramLayerName = layer;
-            paramIsUnique = isUnique;
+            this.layerName = layerName;
+            this.sortOrder = default;
+            this.isUnique = default;
+            overrideFlags = AddParamsOverwriteFlags.LayerName;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(string layer, bool isUnique = false, int sortOrder = 0)
+        public AddParams(int sortOrder)
         {
-            paramSortOrder = sortOrder;
-            paramLayerName = layer;
-            paramIsUnique = isUnique;
+            this.layerName = default;
+            this.sortOrder = sortOrder;
+            this.isUnique = default;
+            overrideFlags = AddParamsOverwriteFlags.SortOrder;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(bool isUnique = false, int sortOrder = 0, string layer = "")
+        public AddParams(bool isUnique)
         {
-            paramSortOrder = sortOrder;
-            paramLayerName = layer;
-            paramIsUnique = isUnique;
+            this.layerName = default;
+            this.sortOrder = default;
+            this.isUnique = isUnique;
+            overrideFlags = AddParamsOverwriteFlags.IsUnique;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AddParams SortOrder(int v)
+        public AddParams(string layerName, int sortOrder)
         {
-            return new AddParams(v);
+            this.layerName = layerName;
+            this.sortOrder = sortOrder;
+            this.isUnique = default;
+            overrideFlags = AddParamsOverwriteFlags.LayerName | AddParamsOverwriteFlags.SortOrder;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AddParams LayerName(string v)
+        public AddParams(string layerName, bool isUnique)
         {
-            return new AddParams(v);
+            this.layerName = layerName;
+            this.sortOrder = default;
+            this.isUnique = isUnique;
+            overrideFlags = AddParamsOverwriteFlags.LayerName | AddParamsOverwriteFlags.IsUnique;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AddParams IsUnique()
+        public AddParams(int sortOrder, bool isUnique)
         {
-            return new AddParams(true);
+            this.layerName = default;
+            this.sortOrder = sortOrder;
+            this.isUnique = isUnique;
+            overrideFlags = AddParamsOverwriteFlags.SortOrder | AddParamsOverwriteFlags.IsUnique;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public AddParams(string layerName, int sortOrder, bool isUnique)
+        {
+            this.layerName = layerName;
+            this.sortOrder = sortOrder;
+            this.isUnique = isUnique;
+            overrideFlags = AddParamsOverwriteFlags.All;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public AddParams(string layerName, int sortOrder, bool isUnique, AddParamsOverwriteFlags overrideFlags)
+        {
+            this.layerName = layerName;
+            this.sortOrder = sortOrder;
+            this.isUnique = isUnique;
+            this.overrideFlags = overrideFlags;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(AddParams other)
         {
-            return paramSortOrder == other.paramSortOrder &&
-                paramLayerName == other.paramLayerName &&
-                paramIsUnique == other.paramIsUnique;
+            return sortOrder == other.sortOrder &&
+                layerName == other.layerName &&
+                isUnique == other.isUnique;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj)
@@ -99,35 +110,60 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
-            return HashCode.Combine(paramSortOrder, paramLayerName, paramIsUnique);
+            return HashCode.Combine(sortOrder, layerName, isUnique);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
         {
-            return $"{paramSortOrder}, {paramLayerName}, {paramIsUnique}";
+            return (overrideFlags.IsLayerName() ? "" : $"{layerName}, ") +
+                (overrideFlags.IsSortOrder() ? "" : $"{sortOrder}, ") +
+                (overrideFlags.IsIsUnique() ? "" : $"{isUnique}, ");
         }
+
+        public AddParams Overwrite(AddParams other)
+        {
+            AddParams result = this;
+            if (other.overrideFlags.IsLayerName())
+            {
+                result.layerName = other.layerName;
+                result.overrideFlags |= AddParamsOverwriteFlags.LayerName;
+            }
+            if (other.overrideFlags.IsSortOrder())
+            {
+                result.sortOrder = other.sortOrder;
+                result.overrideFlags |= AddParamsOverwriteFlags.SortOrder;
+            }
+            if (other.overrideFlags.IsIsUnique())
+            {
+                result.isUnique = other.isUnique;
+                result.overrideFlags |= AddParamsOverwriteFlags.IsUnique;
+            }
+            return result;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator AddParams(string a) { return new AddParams(a); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator AddParams(int a) { return new AddParams(a); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator AddParams(bool a) { return new AddParams(a); }
     }
-    public static class AddParamsExt
+    [Flags]
+    public enum AddParamsOverwriteFlags
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AddParams SortOrder(this AddParams self, int v)
-        {
-            self.paramSortOrder = v;
-            return self;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AddParams LayerName(this AddParams self, string v)
-        {
-            self.paramLayerName = v;
-            return self;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AddParams IsUnique(this AddParams self)
-        {
-            self.paramIsUnique = true;
-            return self;
-        }
+        None = 0,
+        LayerName = 1 << 0,
+        SortOrder = 1 << 1,
+        IsUnique = 1 << 2,
+        All = LayerName | SortOrder | IsUnique,
     }
+    public static class AddParamsFlagsUtility
+    {
+        public static bool IsLayerName(this AddParamsOverwriteFlags flags) { return (flags & AddParamsOverwriteFlags.LayerName) != 0; }
+        public static bool IsSortOrder(this AddParamsOverwriteFlags flags) { return (flags & AddParamsOverwriteFlags.SortOrder) != 0; }
+        public static bool IsIsUnique(this AddParamsOverwriteFlags flags) { return (flags & AddParamsOverwriteFlags.IsUnique) != 0; }
+    }
+
     public sealed partial class EcsPipeline
     {
         public class Builder : IEcsModule
@@ -143,9 +179,7 @@ namespace DCFApixels.DragonECS
             public readonly Injector.Builder Injector;
             public readonly Configurator Configs;
 
-            private string _defaultLayer = BASIC_LAYER;
-            private int _defaultSortOrder = 0;
-            private bool _defaultIsUnique = false;
+            private AddParams _defaultAddParams;
 
             #region Properties
             private ReadOnlySpan<SystemRecord> SystemRecords
@@ -170,82 +204,78 @@ namespace DCFApixels.DragonECS
             }
             #endregion
 
-            #region Add
+            #region Add IEcsProcess
+            public Builder Add(IEcsProcess system, string layerName)
+            {
+                return AddSystem_Internal(system, new AddParams(layerName: layerName));
+            }
+            public Builder Add(IEcsProcess system, int sortOrder)
+            {
+                return AddSystem_Internal(system, new AddParams(sortOrder: sortOrder));
+            }
+            public Builder Add(IEcsProcess system, bool isUnique)
+            {
+                return AddSystem_Internal(system, new AddParams(isUnique: isUnique));
+            }
+            public Builder Add(IEcsProcess system, string layerName, int sortOrder)
+            {
+                return AddSystem_Internal(system, new AddParams(layerName: layerName, sortOrder: sortOrder));
+            }
+            public Builder Add(IEcsProcess system, string layerName, bool isUnique)
+            {
+                return AddSystem_Internal(system, new AddParams(layerName: layerName, isUnique: isUnique));
+            }
+            public Builder Add(IEcsProcess system, int sortOrder, bool isUnique)
+            {
+                return AddSystem_Internal(system, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
+            }
             public Builder Add(IEcsProcess system, string layerName, int sortOrder, bool isUnique)
             {
-                return AddSystem_Internal(system, layerName, sortOrder, isUnique, DelayedSettingFlags.All);
+                return AddSystem_Internal(system, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
             }
-            private Builder AddSystem_Internal(IEcsProcess system, string settedLayerName, int settedSortOrder, bool settedIsUnique, DelayedSettingFlags flags)
+            public Builder AddUnique(IEcsProcess system, string layerName)
             {
-                string layerName = _defaultLayer;
-                int sortOrder = _defaultSortOrder;
-                bool isUnique = _defaultIsUnique;
-
-                if (system is IEcsAddParams addParams)
-                {
-                    layerName = addParams.AddParams.paramLayerName;
-                    sortOrder = addParams.AddParams.paramSortOrder;
-                    isUnique = addParams.AddParams.paramIsUnique;
-                }
-
-                if (AddSettingFlagsUtility.IsLayerName(flags))
-                {
-                    // ...
-                }
-                if (AddSettingFlagsUtility.IsSortOrder(flags))
-                {
-                    // ...
-                }
-                if (AddSettingFlagsUtility.IsIsUnique(flags))
-                {
-                    // ...
-                }
-
+                return AddSystem_Internal(system, new AddParams(layerName: layerName, isUnique: true));
             }
-
-
+            public Builder AddUnique(IEcsProcess system, int sortOrder)
+            {
+                return AddSystem_Internal(system, new AddParams(sortOrder: sortOrder, isUnique: true));
+            }
+            public Builder AddUnique(IEcsProcess system, string layerName, int sortOrder)
+            {
+                return AddSystem_Internal(system, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: true));
+            }
             public Builder Add(IEcsProcess system, AddParams parameters)
             {
-                return AddSystem_Internal(system, parameters.paramLayerName, parameters.paramSortOrder, parameters.paramIsUnique);
+                return AddSystem_Internal(system, parameters);
             }
-            public Builder Add(IEcsProcess system, int? sortOrder = null)
+            private Stack<IEcsProcess> _moduleSystemsStack = null;
+            private Builder AddSystem_Internal(IEcsProcess system, AddParams settedAddParams)
             {
-                return AddSystem_Internal(system, string.Empty, sortOrder, false);
-            }
-            public Builder Add(IEcsProcess system, string layerName, int? sortOrder = null)
-            {
-                return AddSystem_Internal(system, layerName, sortOrder, false);
-            }
-            public Builder AddUnique(IEcsProcess system, int? sortOrder = null)
-            {
-                return AddSystem_Internal(system, string.Empty, sortOrder, true);
-            }
-            public Builder AddUnique(IEcsProcess system, string layerName, int? sortOrder = null)
-            {
-                return AddSystem_Internal(system, layerName, sortOrder, true);
-            }
-            private Builder AddSystem_Internal(IEcsProcess system, string layerName, int? settedSortOrder, bool isUnique)
-            {
-                int sortOrder;
-                if (settedSortOrder.HasValue)
+                AddParams prms = _defaultAddParams;
+                if (system is IEcsAddParams overrideInterface)
                 {
-                    sortOrder = settedSortOrder.Value;
+                    prms = prms.Overwrite(overrideInterface.AddParams);
                 }
-                else
-                {
-                    sortOrder = system is IEcsAddSortOrder defaultSortOrder ? defaultSortOrder.SortOrder : _defaultSortOrder;
-                }
-                if (string.IsNullOrEmpty(layerName))
-                {
-                    layerName = system is IEcsAddLayer defaultLayer ? defaultLayer.Layer : _defaultLayer;
-                }
-                AddRecord_Internal(system, layerName, sortOrder, isUnique, _systemRecordsInrement++);
+                prms = prms.Overwrite(settedAddParams);
 
                 if (system is IEcsModule module)//если система одновременно явялется и системой и модулем то за один Add будет вызван Add и AddModule
                 {
-                    AddModule(module, layerName, settedSortOrder);
+                    if (_moduleSystemsStack == null)
+                    {
+                        _moduleSystemsStack = new Stack<IEcsProcess>(4);
+                    }
+
+                    if (_moduleSystemsStack.Count <= 0 && system != _moduleSystemsStack.Peek())
+                    {
+                        _moduleSystemsStack.Push(system);
+                        AddModule_Internal(module, prms);
+                        _moduleSystemsStack.Pop();
+                        return this;
+                    }
                 }
 
+                AddRecord_Internal(system, prms.layerName, prms.sortOrder, prms.isUnique, _systemRecordsInrement++);
                 return this;
             }
             private void AddRecord_Internal(IEcsProcess system, string layer, int sortOrder, bool isUnique, int addOrder)
@@ -263,101 +293,121 @@ namespace DCFApixels.DragonECS
                 }
                 _systemRecords[_systemRecordsCount++] = record;
             }
-
             #endregion
 
-            #region AddModule
-            public Builder AddModule(IEcsModule module, int? sortOrder = null)
+            #region AddModule IEcsModule
+            public Builder AddModule(IEcsModule module, string layerName)
             {
-                return AddModule_Internal(module, string.Empty, sortOrder, false);
+                return AddModule_Internal(module, new AddParams(layerName: layerName));
             }
-            public Builder AddModule(IEcsModule module, string layerName, int? sortOrder = null)
+            public Builder AddModule(IEcsModule module, int sortOrder)
             {
-                return AddModule_Internal(module, layerName, sortOrder, false);
+                return AddModule_Internal(module, new AddParams(sortOrder: sortOrder));
             }
-            public Builder AddModuleUnique(IEcsModule module, int? sortOrder = null)
+            public Builder AddModule(IEcsModule module, bool isUnique)
             {
-                return AddModule_Internal(module, string.Empty, sortOrder, true);
+                return AddModule_Internal(module, new AddParams(isUnique: isUnique));
             }
-            public Builder AddModuleUnique(IEcsModule module, string layerName, int? sortOrder = null)
+            public Builder AddModule(IEcsModule module, string layerName, int sortOrder)
             {
-                return AddModule_Internal(module, layerName, sortOrder, true);
+                return AddModule_Internal(module, new AddParams(layerName: layerName, sortOrder: sortOrder));
             }
-            public Builder AddModule_Internal(IEcsModule module, string layerName, int? settedSortOrder, bool isUnique)
+            public Builder AddModule(IEcsModule module, string layerName, bool isUnique)
             {
-                string prevLayer = _defaultLayer;
-                int prevSortOrder = _defaultSortOrder;
-
-                if (settedSortOrder.HasValue)
+                return AddModule_Internal(module, new AddParams(layerName: layerName, isUnique: isUnique));
+            }
+            public Builder AddModule(IEcsModule module, int sortOrder, bool isUnique)
+            {
+                return AddModule_Internal(module, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
+            }
+            public Builder AddModule(IEcsModule module, string layerName, int sortOrder, bool isUnique)
+            {
+                return AddModule_Internal(module, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
+            }
+            public Builder AddModuleUnique(IEcsModule module, string layerName)
+            {
+                return AddModule_Internal(module, new AddParams(layerName: layerName, isUnique: true));
+            }
+            public Builder AddModuleUnique(IEcsModule module, int sortOrder)
+            {
+                return AddModule_Internal(module, new AddParams(sortOrder: sortOrder, isUnique: true));
+            }
+            public Builder AddModuleUnique(IEcsModule module, string layerName, int sortOrder)
+            {
+                return AddModule_Internal(module, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: true));
+            }
+            public Builder AddModule(IEcsModule module, AddParams parameters)
+            {
+                return AddModule_Internal(module, parameters);
+            }
+            private Builder AddModule_Internal(IEcsModule module, AddParams settedAddParams)
+            {
+                AddParams prms = _defaultAddParams;
+                if (module is IEcsAddParams overrideInterface)
                 {
-                    _defaultSortOrder = settedSortOrder.Value;
+                    prms = prms.Overwrite(overrideInterface.AddParams);
                 }
-                else
-                {
-                    _defaultSortOrder = module is IEcsAddSortOrder defaultSortOrder ? defaultSortOrder.SortOrder : 0;
-                }
-                if (string.IsNullOrEmpty(layerName))
-                {
-                    _defaultLayer = module is IEcsAddLayer defaultLayer ? defaultLayer.Layer : BASIC_LAYER;
-                }
-                else
-                {
-                    _defaultLayer = layerName;
-                }
+                _defaultAddParams = prms.Overwrite(settedAddParams);
 
                 module.Import(this);
-                _defaultLayer = prevLayer;
-                _defaultSortOrder = prevSortOrder;
+
                 return this;
             }
             #endregion
 
-            #region AddParams
-            private enum DelayedSettingFlags : byte
+            #region Add Raw
+            public Builder Add(object raw, string layerName)
             {
-                None = 0,
-                LayerName = 1 << 0,
-                SortOrder = 1 << 1,
-                IsUnique = 1 << 2,
-                All = LayerName | SortOrder | IsUnique,
+                return AddRaw_Internal(raw, new AddParams(layerName: layerName));
             }
-            private static class AddSettingFlagsUtility
+            public Builder Add(object raw, int sortOrder)
             {
-                public static bool IsLayerName(DelayedSettingFlags flags)
+                return AddRaw_Internal(raw, new AddParams(sortOrder: sortOrder));
+            }
+            public Builder Add(object raw, bool isUnique)
+            {
+                return AddRaw_Internal(raw, new AddParams(isUnique: isUnique));
+            }
+            public Builder Add(object raw, string layerName, int sortOrder)
+            {
+                return AddRaw_Internal(raw, new AddParams(layerName: layerName, sortOrder: sortOrder));
+            }
+            public Builder Add(object raw, string layerName, bool isUnique)
+            {
+                return AddRaw_Internal(raw, new AddParams(layerName: layerName, isUnique: isUnique));
+            }
+            public Builder Add(object raw, int sortOrder, bool isUnique)
+            {
+                return AddRaw_Internal(raw, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
+            }
+            public Builder Add(object raw, string layerName, int sortOrder, bool isUnique)
+            {
+                return AddRaw_Internal(raw, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
+            }
+            public Builder AddUnique(object raw, string layerName)
+            {
+                return AddRaw_Internal(raw, new AddParams(layerName: layerName, isUnique: true));
+            }
+            public Builder AddUnique(object raw, int sortOrder)
+            {
+                return AddRaw_Internal(raw, new AddParams(sortOrder: sortOrder, isUnique: true));
+            }
+            public Builder AddUnique(object raw, string layerName, int sortOrder)
+            {
+                return AddRaw_Internal(raw, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: true));
+            }
+            public Builder Add(object raw, AddParams parameters)
+            {
+                return AddRaw_Internal(raw, parameters);
+            }
+            private Builder AddRaw_Internal(object raw, AddParams settedAddParams)
+            {
+                switch (raw)
                 {
-                    return (flags & DelayedSettingFlags.LayerName) != 0;
+                    case IEcsProcess system: return AddSystem_Internal(system, settedAddParams);
+                    case IEcsModule module: return AddModule_Internal(module, settedAddParams);
+                    default: Throw.UndefinedException(); return this;
                 }
-                public static bool IsSortOrder(DelayedSettingFlags flags)
-                {
-                    return (flags & DelayedSettingFlags.SortOrder) != 0;
-                }
-                public static bool IsIsUnique(DelayedSettingFlags flags)
-                {
-                    return (flags & DelayedSettingFlags.IsUnique) != 0;
-                }
-            }
-            private IEcsProcess _delayedSystem;
-            private string _delayedLayerName;
-            private int _delayedSortOrder;
-            private bool _delayedIsUnique;
-            private DelayedSettingFlags _delayedSettingFlags;
-            public Builder LayerName(string v)
-            {
-                _delayedLayerName = v;
-                _delayedSettingFlags |= DelayedSettingFlags.LayerName;
-                return this;
-            }
-            public Builder SortOrder(int v)
-            {
-                _delayedSortOrder = v;
-                _delayedSettingFlags |= DelayedSettingFlags.SortOrder;
-                return this;
-            }
-            public Builder IsUnique()
-            {
-                _delayedIsUnique = true;
-                _delayedSettingFlags |= DelayedSettingFlags.IsUnique;
-                return this;
             }
             #endregion
 
@@ -764,7 +814,7 @@ namespace DCFApixels.DragonECS
                         {
                             _lastSortOrder = item.sortOrder;
                             _lastAddOrder = item.addOrder;
-                        } 
+                        }
                         else if (_lastSortOrder > item.sortOrder || _lastAddOrder > item.addOrder)
                         {
                             _isSorted = false;
@@ -842,6 +892,7 @@ namespace DCFApixels.DragonECS
             }
             #endregion
 
+            [StructLayout(LayoutKind.Auto)]
             private readonly struct SystemRecord : IComparable<SystemRecord>
             {
                 public readonly IEcsProcess system;

@@ -6,8 +6,6 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.PoolsCore
 {
-    public interface IEcsMember { }
-
     /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
     public interface IEcsPoolImplementation : IEcsPool
     {
