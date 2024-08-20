@@ -1,6 +1,7 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
@@ -20,18 +21,28 @@ namespace DCFApixels.DragonECS
     {
         void OnInitInjectionComplete();
     }
-    public class Injector
+
+    public interface IInjector
+    {
+        void Inject<T>(T obj);
+        T Extract<T>();
+    }
+    public class Injector : IInjector
     {
         private EcsPipeline _pipeline;
         private Dictionary<Type, InjectionBranch> _branches = new Dictionary<Type, InjectionBranch>(32);
         private Dictionary<Type, InjectionNodeBase> _nodes = new Dictionary<Type, InjectionNodeBase>(32);
         private bool _isInit = false;
 
-        public EcsPipeline Pipelie { get { return _pipeline; } }
+        public EcsPipeline Pipelie
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pipeline; }
+        }
 
         private Injector() { }
 
-        #region Inject/AddNode
+        #region Inject/Extract/AddNode
         public void Inject<T>(T obj)
         {
             object raw = obj;
@@ -67,6 +78,24 @@ namespace DCFApixels.DragonECS
                 }
             }
             branch.Inject(raw);
+        }
+        public T Extract<T>()
+        {
+            return (T)Extract_Internal(typeof(T));
+        }
+        private object Extract_Internal(Type type)
+        {
+            if (_branches.TryGetValue(type, out InjectionBranch branch))
+            {
+                return branch.CurrentInjectedDependency;
+            }
+            return null;
+
+            //if (_nodes.ContainsKey(type))
+            //{
+            //    return null;
+            //}
+            //throw new EcsInjectionException($"The injection graph is missing a node for {type.Name} type. To create a node, use the AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
         }
         public void AddNode<T>()
         {

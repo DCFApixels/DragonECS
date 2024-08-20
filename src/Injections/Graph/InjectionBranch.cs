@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.Internal
 {
@@ -9,9 +10,17 @@ namespace DCFApixels.DragonECS.Internal
         private InjectionNodeBase[] _nodes = new InjectionNodeBase[2];
         private int _nodesCount = 0;
 
+        private object _currentInjectedDependency;
+
         public Type Type
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _type; }
+        }
+        public object CurrentInjectedDependency
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _currentInjectedDependency; }
         }
         public InjectionBranch(Injector source, Type type)
         {
@@ -20,6 +29,7 @@ namespace DCFApixels.DragonECS.Internal
         }
         public void Inject(object obj)
         {
+            _currentInjectedDependency = obj;
             for (int i = 0; i < _nodesCount; i++)
             {
                 _nodes[i].Inject(obj);
