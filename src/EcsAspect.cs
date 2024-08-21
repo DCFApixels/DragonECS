@@ -496,7 +496,7 @@ namespace DCFApixels.DragonECS
             EcsWorld world = EcsWorld.GetWorld(worldID);
             foreach (var incTypeID in _mask._inc)
             {
-                var pool = world.GetPoolInstance(incTypeID);
+                var pool = world.FindPoolInstance(incTypeID);
                 if (pool != null)
                 {
                     if (pool.Has(entityID) == false)
@@ -513,7 +513,7 @@ namespace DCFApixels.DragonECS
             }
             foreach (var excTypeID in _mask._exc)
             {
-                var pool = world.GetPoolInstance(excTypeID);
+                var pool = world.FindPoolInstance(excTypeID);
                 if (pool != null && pool.Has(entityID))
                 {
                     pool.Del(entityID);

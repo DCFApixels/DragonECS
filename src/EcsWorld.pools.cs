@@ -16,34 +16,49 @@ namespace DCFApixels.DragonECS
 
         private readonly PoolsMediator _poolsMediator;
 
-        private EcsNullPool _nullPool = EcsNullPool.instance;
+        private readonly EcsNullPool _nullPool = EcsNullPool.instance;
 
-        #region Getters
+        #region FindPoolInstance
+        [Obsolete("The GetPoolInstance(int componentTypeID) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
         public IEcsPool GetPoolInstance(int componentTypeID)
+        {
+            return FindPoolInstance(componentTypeID);
+        }
+        [Obsolete("The GetPoolInstance(Type componentType) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
+        public IEcsPool GetPoolInstance(Type componentType)
+        {
+            return FindPoolInstance(componentType);
+        }
+
+        public IEcsPool FindPoolInstance(int componentTypeID)
         {
             if (IsComponentTypeDeclared(componentTypeID))
             {
-                var resuult = _pools[componentTypeID];
-#if DEBUG
-                if (resuult != _nullPool && resuult.ComponentTypeID != componentTypeID) { Throw.UndefinedException(); }
-#endif
-                return resuult;
+                return FindPoolInstance_Internal(componentTypeID);
             }
             return null;
         }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEcsPool GetPoolInstance(Type componentType)
+        public IEcsPool FindPoolInstance(Type componentType)
         {
-            int componentTypeID = GetComponentTypeID(componentType);
-            ref var pool = ref _pools[componentTypeID];
-            if (pool == _nullPool)
-            {
-                return null;
-            }
-            return pool;
+            return FindPoolInstance_Internal(GetComponentTypeID(componentType));
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private IEcsPool FindPoolInstance_Internal(int componentTypeID)
+        {
+            ref var result = ref _pools[componentTypeID];
+            if (result != _nullPool)
+            {
+#if (DEBUG && !DISABLE_DEBUG)
+                if (result.ComponentTypeID != componentTypeID) { Throw.UndefinedException(); }
+#endif
+                return result;
+            }
+            return null;
+        }
+        #endregion
 
+        #region GetPoolInstance
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.Preserve]
 #endif
