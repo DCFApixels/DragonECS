@@ -242,6 +242,9 @@ namespace DCFApixels.DragonECS
         #region Add/Remove
         public void AddUnchecked(int entityID)
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (Has(entityID)) { Throw.Group_AlreadyContains(entityID); }
+#endif
             Add_Internal(entityID);
         }
         public bool Add(int entityID)
@@ -254,11 +257,8 @@ namespace DCFApixels.DragonECS
             return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Add_Internal(int entityID)
+        private void Add_Internal(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (Has(entityID)) { Throw.Group_AlreadyContains(entityID); }
-#endif
             if (++_count >= _dense.Length)
             {
                 Array.Resize(ref _dense, _dense.Length << 1);
@@ -340,9 +340,9 @@ namespace DCFApixels.DragonECS
             {
                 Clear();
             }
-            foreach (var item in group)
+            foreach (var entityID in group)
             {
-                Add_Internal(item);
+                Add_Internal(entityID);
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -786,11 +786,11 @@ namespace DCFApixels.DragonECS
         public static EcsGroup Inverse(EcsGroup a)
         {
             EcsGroup result = a._source.GetFreeGroup();
-            foreach (var item in a._source.Entities)
+            foreach (var entityID in a._source.Entities)
             {
-                if (a.Has(item) == false)
+                if (a.Has(entityID) == false)
                 {
-                    result.Add_Internal(item);
+                    result.Add_Internal(entityID);
                 }
             }
             return result;

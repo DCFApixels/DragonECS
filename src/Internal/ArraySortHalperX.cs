@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.Internal
 {
-    internal interface IComparerX<T>
+    internal interface IStructComparer<T>
     {
         // a > b = return > 0
         int Compare(T a, T b);
@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS.Internal
         private const int IntrosortSizeThreshold = 16;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SwapIfGreater<TComparer>(T[] items, ref TComparer comparer, int i, int j) where TComparer : IComparerX<T>
+        public static void SwapIfGreater<TComparer>(T[] items, ref TComparer comparer, int i, int j) where TComparer : IStructComparer<T>
         {
             if (comparer.Compare(items[i], items[j]) > 0)
             {
@@ -24,7 +24,7 @@ namespace DCFApixels.DragonECS.Internal
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InsertionSort<TComparer>(T[] items, ref TComparer comparer) where TComparer : IComparerX<T>
+        public static void InsertionSort<TComparer>(T[] items, ref TComparer comparer) where TComparer : IStructComparer<T>
         {
             for (int i = 0; i < items.Length - 1; i++)
             {
@@ -41,7 +41,7 @@ namespace DCFApixels.DragonECS.Internal
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Sort<TComparer>(T[] items, ref TComparer comparer) where TComparer : IComparerX<T>
+        public static void Sort<TComparer>(T[] items, ref TComparer comparer) where TComparer : IStructComparer<T>
         {
             int length = items.Length;
             if (length == 1)
@@ -69,7 +69,7 @@ namespace DCFApixels.DragonECS.Internal
                 InsertionSort(items, ref comparer);
                 return;
             }
-            IComparerX<T> packed = comparer;
+            IStructComparer<T> packed = comparer;
             Array.Sort(items, comparer.Compare);
             comparer = (TComparer)packed;
         }
@@ -80,7 +80,7 @@ namespace DCFApixels.DragonECS.Internal
         private const int IntrosortSizeThreshold = 16;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SwapIfGreater<TComparer>(T* items, ref TComparer comparer, int i, int j) where TComparer : IComparerX<T>
+        public static void SwapIfGreater<TComparer>(T* items, ref TComparer comparer, int i, int j) where TComparer : IStructComparer<T>
         {
             if (comparer.Compare(items[i], items[j]) > 0)
             {
@@ -90,7 +90,7 @@ namespace DCFApixels.DragonECS.Internal
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InsertionSort_Unchecked<TComparer>(T* items, int length, ref TComparer comparer) where TComparer : IComparerX<T>
+        public static void InsertionSort_Unchecked<TComparer>(T* items, int length, ref TComparer comparer) where TComparer : IStructComparer<T>
         {
             for (int i = 0; i < length - 1; i++)
             {
@@ -127,7 +127,7 @@ namespace DCFApixels.DragonECS.Internal
         //            break;
         //    }
         //}
-        public static void InsertionSort<TComparer>(T* items, int length, ref TComparer comparer) where TComparer : IComparerX<T>
+        public static void InsertionSort<TComparer>(T* items, int length, ref TComparer comparer) where TComparer : IStructComparer<T>
         {
             if (length == 1)
             {

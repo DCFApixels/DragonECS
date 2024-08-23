@@ -12,11 +12,11 @@ namespace DCFApixels.DragonECS
         private SparseArray<int> _cmpTypeCode_2_CmpTypeIDs = new SparseArray<int>();
         private int _poolsCount;
         internal IEcsPoolImplementation[] _pools;
-        internal int[] _poolComponentCounts;
+        internal PoolSlot[] _poolSlots;
 
         private readonly PoolsMediator _poolsMediator;
 
-        private readonly EcsNullPool _nullPool = EcsNullPool.instance;
+        private EcsNullPool _nullPool = EcsNullPool.instance;
 
         #region FindPoolInstance
         [Obsolete("The GetPoolInstance(int componentTypeID) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
@@ -146,7 +146,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Create
+        #region CreatePool
         private TPool CreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
             int poolTypeCode = EcsTypeCode.Get<TPool>();
@@ -184,7 +184,7 @@ namespace DCFApixels.DragonECS
             {
                 int oldCapacity = _pools.Length;
                 Array.Resize(ref _pools, _pools.Length << 1);
-                Array.Resize(ref _poolComponentCounts, _pools.Length);
+                Array.Resize(ref _poolSlots, _pools.Length);
                 ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
 
                 int newEntityComponentMaskLength = CalcEntityComponentMaskLength(); //_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
@@ -231,7 +231,9 @@ namespace DCFApixels.DragonECS
         private void RegisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
             UpVersion();
-            _poolComponentCounts[componentTypeID]++;
+            ref PoolSlot slot = ref _poolSlots[componentTypeID];
+            slot.count++;
+            slot.version++;
             _entities[entityID].componentsCount++;
             _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chankIndex] |= maskBit.mask;
         }
@@ -239,7 +241,9 @@ namespace DCFApixels.DragonECS
         private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
             UpVersion();
-            _poolComponentCounts[componentTypeID]--;
+            ref PoolSlot slot = ref _poolSlots[componentTypeID];
+            slot.count--;
+            slot.version++;
             var count = --_entities[entityID].componentsCount;
             _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chankIndex] &= ~maskBit.mask;
 
@@ -262,7 +266,9 @@ namespace DCFApixels.DragonECS
             {
                 UpVersion();
                 chunk = newChunk;
-                _poolComponentCounts[componentTypeID]++;
+                ref PoolSlot slot = ref _poolSlots[componentTypeID];
+                slot.count++;
+                slot.version++;
                 _entities[entityID].componentsCount++;
                 return true;
             }
@@ -276,7 +282,9 @@ namespace DCFApixels.DragonECS
             if (chunk != newChunk)
             {
                 UpVersion();
-                _poolComponentCounts[componentTypeID]--;
+                ref PoolSlot slot = ref _poolSlots[componentTypeID];
+                slot.count--;
+                slot.version++;
                 var count = --_entities[entityID].componentsCount;
                 chunk = newChunk;
 
@@ -295,7 +303,12 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetPoolComponentCount(int componentTypeID)
         {
-            return _poolComponentCounts[componentTypeID];
+            return _poolSlots[componentTypeID].count;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private long GetPoolVersion(int componentTypeID)
+        {
+            return _poolSlots[componentTypeID].version;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool HasEntityComponent(int entityID, EcsMaskChunck maskBit)
@@ -343,10 +356,23 @@ namespace DCFApixels.DragonECS
                 return World.GetPoolComponentCount(componentTypeID);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public long GetVersion(int componentTypeID)
+            {
+                return World.GetPoolVersion(componentTypeID);
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool HasComponent(int entityID, EcsMaskChunck maskBit)
             {
                 return World.HasEntityComponent(entityID, maskBit);
             }
+        }
+        #endregion
+
+        #region PoolSlot
+        internal struct PoolSlot
+        {
+            public int count;
+            public long version;
         }
         #endregion
     }

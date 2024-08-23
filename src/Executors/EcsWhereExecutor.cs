@@ -15,10 +15,7 @@ namespace DCFApixels.DragonECS
         private int _filteredEntitiesCount;
 
         private long _lastWorldVersion;
-
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-        //private readonly EcsProfilerMarker _executeMarker = new EcsProfilerMarker("Where");
-#endif
+        private PoolVersionsChecker _versionsChecker;
 
         #region Properties
         public TAspect Aspect
@@ -38,11 +35,39 @@ namespace DCFApixels.DragonECS
         {
             _aspect = World.GetAspect<TAspect>();
             _filteredEntities = new int[32];
+            _versionsChecker = new PoolVersionsChecker(_aspect._mask);
         }
         protected sealed override void OnDestroy() { }
         #endregion
 
         #region Methods
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Filter(EcsSpan span)
+        {
+            _filteredEntitiesCount = _aspect.GetIteratorFor(span).CopyTo(ref _filteredEntities);
+            _lastWorldVersion = World.Version;
+        }
+
+        //        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //        public EcsSpan Execute(Comparison<int> comparison) 
+        //        {
+        //            return ExecuteFor(_aspect.World.Entities, comparison);
+        //        }
+        //        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //        public EcsSpan ExecuteFor(EcsSpan span, Comparison<int> comparison)
+        //        {
+        //#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+        //            if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
+        //            if (span.WorldID != WorldID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
+        //#endif
+        //            World.ReleaseDelEntityBufferAllAuto();
+        //            if (_lastWorldVersion != World.Version)
+        //            {
+        //                Filter(span);
+        //            }
+        //            Array.Sort<int>(_filteredEntities, 0, _filteredEntitiesCount, comparison);
+        //        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Execute()
         {
@@ -52,29 +77,15 @@ namespace DCFApixels.DragonECS
         public EcsSpan ExecuteFor(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            //_executeMarker.Begin();
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
             if (span.WorldID != WorldID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
-            if (World.IsEnableReleaseDelEntBuffer)
+            World.ReleaseDelEntityBufferAllAuto();
+            if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
             {
-                World.ReleaseDelEntityBufferAll();
+                Filter(span);
             }
-            EcsSpan result;
-            if (_lastWorldVersion != World.Version)
-            {
-                result = _aspect.GetIteratorFor(span).CopyToSpan(ref _filteredEntities);
-                _filteredEntitiesCount = result.Count;
-                _lastWorldVersion = World.Version;
-            }
-            else
-            {
-                result = new EcsSpan(WorldID, _filteredEntities, _filteredEntitiesCount);
-            }
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            //_executeMarker.End();
-#endif
-            return result;
+            return new EcsSpan(WorldID, _filteredEntities, _filteredEntitiesCount);
         }
         #endregion
     }

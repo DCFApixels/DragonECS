@@ -169,7 +169,7 @@ namespace DCFApixels.DragonECS
 
             int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.PoolsCapacity);
             _pools = new IEcsPoolImplementation[poolsCapacity];
-            _poolComponentCounts = new int[poolsCapacity];
+            _poolSlots = new int[poolsCapacity];
             ArrayUtility.Fill(_pools, _nullPool);
 
             int entitiesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.EntitiesCapacity);
@@ -816,9 +816,18 @@ namespace DCFApixels.DragonECS
 
     public static class EcsWorldExtenssions
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNullOrDetroyed(this EcsWorld self)
         {
             return self == null || self.IsDestroyed;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ReleaseDelEntityBufferAllAuto(this EcsWorld self)
+        {
+            if (self.IsEnableReleaseDelEntBuffer)
+            {
+                self.ReleaseDelEntityBufferAll();
+            }
         }
     }
 

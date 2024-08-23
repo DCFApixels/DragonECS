@@ -14,6 +14,7 @@ namespace DCFApixels.DragonECS
         private EcsGroup _filteredGroup;
 
         private long _lastWorldVersion;
+        private PoolVersionsChecker _versionsChecker;
 
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
         private readonly EcsProfilerMarker _executeMarker = new EcsProfilerMarker("Where");
@@ -37,6 +38,7 @@ namespace DCFApixels.DragonECS
         {
             _aspect = World.GetAspect<TAspect>();
             _filteredGroup = EcsGroup.New(World);
+            _versionsChecker = new PoolVersionsChecker(_aspect._mask);
         }
         protected sealed override void OnDestroy()
         {
@@ -45,6 +47,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Filter(EcsSpan span)
+        {
+            _aspect.GetIteratorFor(span).CopyTo(_filteredGroup);
+            _lastWorldVersion = World.Version;
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup Execute()
         {
@@ -58,14 +66,10 @@ namespace DCFApixels.DragonECS
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
             if (span.WorldID != WorldID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
-            if (World.IsEnableReleaseDelEntBuffer)
+            World.ReleaseDelEntityBufferAllAuto();
+            if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
             {
-                World.ReleaseDelEntityBufferAll();
-            }
-            if (_lastWorldVersion != World.Version)
-            {
-                _aspect.GetIteratorFor(span).CopyTo(_filteredGroup);
-                _lastWorldVersion = World.Version;
+                Filter(span);
             }
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             _executeMarker.End();

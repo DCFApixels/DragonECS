@@ -22,6 +22,8 @@ namespace DCFApixels.DragonECS
         internal readonly int[] _inc; //Sorted
         internal readonly int[] _exc; //Sorted
 
+        private EcsMaskIterator _iterator;
+
         #region Properties
         public int ID
         {
@@ -217,6 +219,17 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region Other
+        public EcsMaskIterator GetIterator()
+        {
+            if(_iterator == null)
+            {
+                _iterator = new EcsMaskIterator(EcsWorld.GetWorld(_worldID), this);
+            }
+            return _iterator;
+        }
+        #endregion
+
         #region Debug utils
 #if DEBUG
         private static HashSet<int> _dummyHashSet = new HashSet<int>();
@@ -381,50 +394,6 @@ namespace DCFApixels.DragonECS
                 }
                 return result;
             }
-            //internal EcsMask ExceptMask(EcsMask a, EcsMask b)
-            //{
-            //    int operation = OpMaskKey.EXCEPT_OP;
-            //    if (_opMasks.TryGetValue(new OpMaskKey(a.id, b.id, operation), out EcsMask result) == false)
-            //    {
-            //        var builder = New(a.World);
-            //        if (a.IsConflictWith(b))
-            //        {
-            //            return a.World.Get<WorldMaskComponent>().BrokenMask;
-            //        }
-            //        ExceptMaskConstraint(builder, a.inc, b.inc, true);
-            //        ExceptMaskConstraint(builder, a.exc, b.exc, false);
-            //        result = builder.Build();
-            //        _opMasks.Add(new OpMaskKey(a.id, b.id, operation), result);
-            //    }
-            //    return result;
-            //}
-            //private void ExceptMaskConstraint(Builder b, int[] acnstrs, int[] bcnstrs, bool isInc)
-            //{
-            //    for (int i = 0, ii = 0; i < acnstrs.Length; i++)
-            //    {
-            //        int acnst = acnstrs[i];
-            //        while (ii < bcnstrs.Length && acnst > bcnstrs[ii])
-            //        {
-            //            ii++;
-            //        }
-            //        if (ii >= bcnstrs.Length)
-            //        {
-            //            break;
-            //        }
-            //        int binc = bcnstrs[ii];
-            //        if (acnst == binc)
-            //        {
-            //            if (isInc)
-            //            {
-            //                b.Include(acnst);
-            //            }
-            //            else
-            //            {
-            //                b.Exclude(acnst);
-            //            }
-            //        }
-            //    }
-            //}
             internal EcsMask GetMask(Key maskKey)
             {
                 if (!_masks.TryGetValue(maskKey, out EcsMask result))
@@ -681,4 +650,265 @@ namespace DCFApixels.DragonECS
         }
     }
     #endregion
+
+    public class EcsMaskIterator
+    {
+        #region CountStructComparers
+        private readonly struct IncCountComparer : IStructComparer<int>
+        {
+            public readonly EcsWorld.PoolSlot[] counts;
+            public IncCountComparer(EcsWorld.PoolSlot[] counts)
+            {
+                this.counts = counts;
+            }
+            public int Compare(int a, int b)
+            {
+                return counts[a].count - counts[b].count;
+            }
+        }
+        private readonly struct ExcCountComparer : IStructComparer<int>
+        {
+            public readonly EcsWorld.PoolSlot[] counts;
+            public ExcCountComparer(EcsWorld.PoolSlot[] counts)
+            {
+                this.counts = counts;
+            }
+            public int Compare(int a, int b)
+            {
+                return counts[b].count - counts[a].count;
+            }
+        }
+        #endregion
+
+        internal EcsWorld _source;
+        internal EcsMask _mask;
+
+        private UnsafeArray<int> _sortIncBuffer;
+        private UnsafeArray<int> _sortExcBuffer;
+        private UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
+        private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
+
+        #region Constructors
+        public EcsMaskIterator(EcsWorld source, EcsMask mask)
+        {
+            _source = source;
+            _mask = mask;
+        }
+        #endregion
+
+        #region Properties
+        public EcsWorld World
+        {
+            get { return _source; }
+        }
+        public EcsMask Mask
+        {
+            get { return _mask; }
+        }
+        #endregion
+
+        #region Enumerable
+        public Enumerable Iterate(EcsSpan span)
+        {
+            return new Enumerable();
+        }
+        public readonly ref struct Enumerable
+        {
+            private readonly EcsMaskIterator _iterator;
+            private readonly EcsSpan _span;
+
+            public Enumerable(EcsMaskIterator iterator, EcsSpan span)
+            {
+                _iterator = iterator;
+                _span = span;
+            }
+
+            #region CopyTo
+            public void CopyTo(EcsGroup group)
+            {
+                group.Clear();
+                var enumerator = GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    group.AddUnchecked(enumerator.Current);
+                }
+            }
+            public int CopyTo(ref int[] array)
+            {
+                int count = 0;
+                var enumerator = GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    if (array.Length <= count)
+                    {
+                        Array.Resize(ref array, array.Length << 1);
+                    }
+                    array[count++] = enumerator.Current;
+                }
+                return count;
+            }
+            public EcsSpan CopyToSpan(ref int[] array)
+            {
+                int count = CopyTo(ref array);
+                return new EcsSpan(_iterator.World.id, array, count);
+            }
+            #endregion
+
+            #region Other
+            public override string ToString()
+            {
+                List<int> ints = new List<int>();
+                foreach (var e in this)
+                {
+                    ints.Add(e);
+                }
+                return CollectionUtility.EntitiesToString(ints, "it");
+            }
+            #endregion
+
+            #region Enumerator
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Enumerator GetEnumerator() { return new Enumerator(_span, _iterator); }
+
+            public unsafe ref struct Enumerator
+            {
+                private ReadOnlySpan<int>.Enumerator _span;
+                private readonly int[] _entityComponentMasks;
+
+                private static EcsMaskChunck* _preSortedIncBuffer;
+                private static EcsMaskChunck* _preSortedExcBuffer;
+
+                private UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
+                private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
+
+                private readonly int _entityComponentMaskLengthBitShift;
+
+                public unsafe Enumerator(EcsSpan span, EcsMaskIterator iterator)
+                {
+                    _entityComponentMasks = iterator.World._entityComponentMasks;
+                    _sortIncChunckBuffer = iterator._sortIncChunckBuffer;
+                    _sortExcChunckBuffer = iterator._sortExcChunckBuffer;
+
+                    _entityComponentMaskLengthBitShift = iterator.World._entityComponentMaskLengthBitShift;
+
+                    if (iterator.Mask.IsBroken)
+                    {
+                        _span = span.Slice(0, 0).GetEnumerator();
+                        return;
+                    }
+
+                    #region Sort
+                    UnsafeArray<int> _sortIncBuffer = iterator._sortIncBuffer;
+                    UnsafeArray<int> _sortExcBuffer = iterator._sortExcBuffer;
+                    EcsWorld.PoolSlot[] counts = iterator.World._poolSlots;
+
+                    if (_preSortedIncBuffer == null)
+                    {
+                        _preSortedIncBuffer = UnmanagedArrayUtility.New<EcsMaskChunck>(256);
+                        _preSortedExcBuffer = UnmanagedArrayUtility.New<EcsMaskChunck>(256);
+                    }
+
+                    if (_sortIncChunckBuffer.Length > 1)
+                    {
+                        IncCountComparer incComparer = new IncCountComparer(counts);
+                        UnsafeArraySortHalperX<int>.InsertionSort(_sortIncBuffer.ptr, _sortIncBuffer.Length, ref incComparer);
+                        for (int i = 0; i < _sortIncBuffer.Length; i++)
+                        {
+                            _preSortedIncBuffer[i] = EcsMaskChunck.FromID(_sortIncBuffer.ptr[i]);
+                        }
+                        for (int i = 0, ii = 0; ii < _sortIncChunckBuffer.Length; ii++)
+                        {
+                            EcsMaskChunck chunkX = _preSortedIncBuffer[i];
+                            int chankIndexX = chunkX.chankIndex;
+                            int maskX = chunkX.mask;
+
+                            for (int j = i + 1; j < _sortIncBuffer.Length; j++)
+                            {
+                                if (_preSortedIncBuffer[j].chankIndex == chankIndexX)
+                                {
+                                    maskX |= _preSortedIncBuffer[j].mask;
+                                }
+                            }
+                            _sortIncChunckBuffer.ptr[ii] = new EcsMaskChunck(chankIndexX, maskX);
+                            while (++i < _sortIncBuffer.Length && _preSortedIncBuffer[i].chankIndex == chankIndexX)
+                            {
+                                // skip
+                            }
+                        }
+                    }
+                    if (_sortIncChunckBuffer.Length > 0 && counts[_sortIncBuffer.ptr[0]].count <= 0)
+                    {
+                        _span = span.Slice(0, 0).GetEnumerator();
+                        return;
+                    }
+                    if (_sortExcChunckBuffer.Length > 1)
+                    {
+                        ExcCountComparer excComparer = new ExcCountComparer(counts);
+                        UnsafeArraySortHalperX<int>.InsertionSort(_sortExcBuffer.ptr, _sortExcBuffer.Length, ref excComparer);
+                        for (int i = 0; i < _sortExcBuffer.Length; i++)
+                        {
+                            _preSortedExcBuffer[i] = EcsMaskChunck.FromID(_sortExcBuffer.ptr[i]);
+                        }
+
+                        for (int i = 0, ii = 0; ii < _sortExcChunckBuffer.Length; ii++)
+                        {
+                            EcsMaskChunck bas = _preSortedExcBuffer[i];
+                            int chankIndexX = bas.chankIndex;
+                            int maskX = bas.mask;
+
+                            for (int j = i + 1; j < _sortExcBuffer.Length; j++)
+                            {
+                                if (_preSortedExcBuffer[j].chankIndex == chankIndexX)
+                                {
+                                    maskX |= _preSortedExcBuffer[j].mask;
+                                }
+                            }
+                            _sortExcChunckBuffer.ptr[ii] = new EcsMaskChunck(chankIndexX, maskX);
+                            while (++i < _sortExcBuffer.Length && _preSortedExcBuffer[i].chankIndex == chankIndexX)
+                            {
+                                // skip
+                            }
+                        }
+                    }
+                    #endregion
+
+                    _span = span.GetEnumerator();
+                }
+                public int Current
+                {
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    get { return _span.Current; }
+                }
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public bool MoveNext()
+                {
+                    while (_span.MoveNext())
+                    {
+                        int chunck = _span.Current << _entityComponentMaskLengthBitShift;
+                        for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
+                        {
+                            var bit = _sortIncChunckBuffer.ptr[i];
+                            if ((_entityComponentMasks[chunck + bit.chankIndex] & bit.mask) != bit.mask)
+                            {
+                                goto skip;
+                            }
+                        }
+                        for (int i = 0; i < _sortExcChunckBuffer.Length; i++)
+                        {
+                            var bit = _sortExcChunckBuffer.ptr[i];
+                            if ((_entityComponentMasks[chunck + bit.chankIndex] & bit.mask) != 0)
+                            {
+                                goto skip;
+                            }
+                        }
+                        return true;
+                        skip: continue;
+                    }
+                    return false;
+                }
+            }
+            #endregion
+        }
+        #endregion
+    }
 }
