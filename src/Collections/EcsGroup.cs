@@ -372,16 +372,15 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start)
         {
-            return Slice(start, _count - start + 1);
+            return Slice(start, _count - start);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start, int length)
         {
-            start++;
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (start < 1 || start + length > _count) { Throw.ArgumentOutOfRange(); }
+            if (start < 0 || start + length > _count) { Throw.ArgumentOutOfRange(); }
 #endif
-            return new EcsSpan(WorldID, _dense, start, length);
+            return new EcsSpan(WorldID, _dense, start + 1, length);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan()
