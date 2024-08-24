@@ -50,7 +50,7 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 > 
 > While the English version of the README is incomplete, you can view the [Russian version](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md).
 
-## Оглавление
+## Table of Contents
 - [Installation](#Installation)
 - [Basic Concepts](#Basic-Concepts)
   - [Entity](#entity)
