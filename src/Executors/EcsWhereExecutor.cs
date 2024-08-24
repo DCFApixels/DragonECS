@@ -13,7 +13,11 @@ namespace DCFApixels.DragonECS.Internal
     internal class EcsWhereExecutorCore : EcsQueryExecutorCore
     {
         private EcsMaskIterator _iterator;
-        private int[] _filteredEntities = new int[32];
+        private int[] _filteredAllEntities = new int[32];
+        private int _filteredAllEntitiesCount = 0;
+        private long _version;
+
+        private int[] _filteredEntities = null;
         private int _filteredEntitiesCount = 0;
 
         private long _lastWorldVersion = 0;
@@ -23,7 +27,7 @@ namespace DCFApixels.DragonECS.Internal
         public long Version
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _lastWorldVersion; }
+            get { return _version; }
         }
         #endregion
 
@@ -38,50 +42,55 @@ namespace DCFApixels.DragonECS.Internal
 
         #region Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Filter(EcsSpan span)
+        private void Execute_Iternal()
         {
-            _filteredEntitiesCount = _iterator.Iterate(span).CopyTo(ref _filteredEntities);
+            World.ReleaseDelEntityBufferAllAuto();
+            if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
+            {
+                _version++;
+                _filteredAllEntitiesCount = _iterator.Iterate(World.Entities).CopyTo(ref _filteredAllEntities);
+            }
             _lastWorldVersion = World.Version;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan Execute()
-        {
-            return ExecuteFor(World.Entities);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan ExecuteFor(EcsSpan span)
+        private void ExecuteFor_Iternal(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
             if (span.WorldID != World.id) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
-            World.ReleaseDelEntityBufferAllAuto();
-            if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
+            if (_filteredEntities == null)
             {
-                Filter(span);
+                _filteredEntities = new int[32];
             }
+            _filteredEntitiesCount = _iterator.Iterate(span).CopyTo(ref _filteredEntities);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan Execute()
+        {
+            Execute_Iternal();
+            return new EcsSpan(World.id, _filteredAllEntities, _filteredAllEntitiesCount);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan ExecuteFor(EcsSpan span)
+        {
+            ExecuteFor_Iternal(span);
             return new EcsSpan(World.id, _filteredEntities, _filteredEntitiesCount);
         }
 
-        //        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //        public EcsSpan Execute(Comparison<int> comparison) 
-        //        {
-        //            return ExecuteFor(_aspect.World.Entities, comparison);
-        //        }
-        //        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //        public EcsSpan ExecuteFor(EcsSpan span, Comparison<int> comparison)
-        //        {
-        //#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-        //            if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
-        //            if (span.WorldID != WorldID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
-        //#endif
-        //            World.ReleaseDelEntityBufferAllAuto();
-        //            if (_lastWorldVersion != World.Version)
-        //            {
-        //                Filter(span);
-        //            }
-        //            Array.Sort<int>(_filteredEntities, 0, _filteredEntitiesCount, comparison);
-        //        }
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public EcsSpan Execute(Comparison<int> comparison)
+        //{
+        //    Execute_Iternal();
+        //    return new EcsSpan(World.id, _filteredAllEntities, _filteredAllEntitiesCount);
+        //}
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public EcsSpan ExecuteFor(EcsSpan span, Comparison<int> comparison)
+        //{
+        //    ExecuteFor_Iternal(span);
+        //    return new EcsSpan(World.id, _filteredEntities, _filteredEntitiesCount);
+        //}
         #endregion
     }
 }

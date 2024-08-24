@@ -13,6 +13,9 @@ namespace DCFApixels.DragonECS.Internal
     internal class EcsWhereToGroupExecutorCore : EcsQueryExecutorCore
     {
         private EcsMaskIterator _iterator;
+        private EcsGroup _filteredAllGroup;
+        private long _version;
+
         private EcsGroup _filteredGroup;
 
         private long _lastWorldVersion;
@@ -22,7 +25,7 @@ namespace DCFApixels.DragonECS.Internal
         public long Version
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _lastWorldVersion; }
+            get { return _version; }
         }
         #endregion
 
@@ -30,40 +33,52 @@ namespace DCFApixels.DragonECS.Internal
         protected sealed override void OnInitialize()
         {
             _versionsChecker = new PoolVersionsChecker(Mask);
-            _filteredGroup = EcsGroup.New(World);
+            _filteredAllGroup = EcsGroup.New(World);
             _iterator = Mask.GetIterator();
         }
         protected sealed override void OnDestroy()
         {
-            _filteredGroup.Dispose();
+            _filteredAllGroup.Dispose();
         }
         #endregion
 
         #region Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Filter(EcsSpan span)
+        private void Execute_Iternal()
         {
-            _iterator.Iterate(span).CopyTo(_filteredGroup);
+            World.ReleaseDelEntityBufferAllAuto();
+            if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
+            {
+                _version++;
+                _iterator.Iterate(World.Entities).CopyTo(_filteredAllGroup);
+            }
             _lastWorldVersion = World.Version;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsReadonlyGroup Execute()
-        {
-            return ExecuteFor(World.Entities);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsReadonlyGroup ExecuteFor(EcsSpan span)
+        private void ExecuteFor_Iternal(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
             if (span.WorldID != World.id) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
-            World.ReleaseDelEntityBufferAllAuto();
-            if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
+            if (_filteredGroup == null)
             {
-                Filter(span);
+                _filteredGroup = EcsGroup.New(World);
             }
-            return _filteredGroup.Readonly;
+            _iterator.Iterate(span).CopyTo(_filteredGroup);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsReadonlyGroup Execute()
+        {
+            Execute_Iternal();
+            return _filteredAllGroup;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsReadonlyGroup ExecuteFor(EcsSpan span)
+        {
+            ExecuteFor_Iternal(span);
+            return _filteredGroup;
         }
         #endregion
     }
