@@ -166,10 +166,11 @@ namespace DCFApixels.DragonECS
             _worlds[worldID] = this;
 
             _poolsMediator = new PoolsMediator(this);
+            _executorsMediator = new ExecutorMediator(this);
 
             int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.PoolsCapacity);
             _pools = new IEcsPoolImplementation[poolsCapacity];
-            _poolSlots = new int[poolsCapacity];
+            _poolSlots = new PoolSlot[poolsCapacity];
             ArrayUtility.Fill(_pools, _nullPool);
 
             int entitiesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.EntitiesCapacity);
@@ -218,7 +219,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TExecutor GetExecutor<TExecutor>() where TExecutor : EcsQueryExecutor, new()
         {
-            return Get<ExcecutorCache<TExecutor>>().instance;
+            return Get<ExeccutorCache<TExecutor>>().instance;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -2,7 +2,7 @@
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+using static DCFApixels.DragonECS.EcsAspect;
 
 namespace DCFApixels.DragonECS
 {
@@ -138,29 +138,6 @@ namespace DCFApixels.DragonECS
                 builder.Build(out newAspect._mask);
                 newAspect._isBuilt = true;
 
-                newAspect._sortIncBuffer = new UnsafeArray<int>(newAspect._mask._inc.Length, true);
-                newAspect._sortExcBuffer = new UnsafeArray<int>(newAspect._mask._exc.Length, true);
-                newAspect._sortIncChunckBuffer = new UnsafeArray<EcsMaskChunck>(newAspect._mask._incChunckMasks.Length, true);
-                newAspect._sortExcChunckBuffer = new UnsafeArray<EcsMaskChunck>(newAspect._mask._excChunckMasks.Length, true);
-
-                for (int i = 0; i < newAspect._sortIncBuffer.Length; i++)
-                {
-                    newAspect._sortIncBuffer.ptr[i] = newAspect._mask._inc[i];
-                }
-                for (int i = 0; i < newAspect._sortExcBuffer.Length; i++)
-                {
-                    newAspect._sortExcBuffer.ptr[i] = newAspect._mask._exc[i];
-                }
-
-                for (int i = 0; i < newAspect._sortIncChunckBuffer.Length; i++)
-                {
-                    newAspect._sortIncChunckBuffer.ptr[i] = newAspect._mask._incChunckMasks[i];
-                }
-                for (int i = 0; i < newAspect._sortExcChunckBuffer.Length; i++)
-                {
-                    newAspect._sortExcChunckBuffer.ptr[i] = newAspect._mask._excChunckMasks[i];
-                }
-
                 return (TAspect)newAspect;
             }
 
@@ -224,27 +201,6 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Finalizator
-        unsafe ~EcsAspect()
-        {
-            _sortIncBuffer.Dispose();
-            _sortExcBuffer.Dispose();
-            _sortIncChunckBuffer.Dispose();
-            _sortExcChunckBuffer.Dispose();
-        }
-        #endregion
-
-        #region Iterator
-        public Iterator GetIterator()
-        {
-            return new Iterator(this, _source.Entities);
-        }
-        public Iterator GetIteratorFor(EcsSpan span)
-        {
-            return new Iterator(this, span);
-        }
-        #endregion
-
         #region Combined
         private readonly struct Combined
         {
@@ -259,17 +215,48 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Iterator
+        [Obsolete("Use EcsMask.GetIterator()")]
+        public Iterator GetIterator()
+        {
+            return new Iterator(Mask.GetIterator(), _source.Entities);
+        }
+        [Obsolete("Use EcsMask.GetIterator().Iterate(span)")]
+        public Iterator GetIteratorFor(EcsSpan span)
+        {
+            return new Iterator(Mask.GetIterator(), span);
+        }
+        [Obsolete("Use EcsMaskIterator")]
         public ref struct Iterator
         {
             public readonly short worldID;
-            public readonly EcsAspect aspect;
+            public readonly EcsMaskIterator.Enumerable iterator;
             private EcsSpan _span;
 
-            public Iterator(EcsAspect aspect, EcsSpan span)
+            public Iterator(EcsMaskIterator iterator, EcsSpan span)
             {
-                worldID = aspect.World.id;
+                worldID = iterator.World.id;
                 _span = span;
-                this.aspect = aspect;
+                this.iterator = iterator.Iterate(span);
+            }
+
+            #region CopyTo
+            public void CopyTo(EcsGroup group)
+            {
+                iterator.CopyTo(group);
+            }
+            public int CopyTo(ref int[] array)
+            {
+                return iterator.CopyTo(ref array);
+            }
+            public EcsSpan CopyToSpan(ref int[] array)
+            {
+                return iterator.CopyToSpan(ref array);
+            }
+            #endregion
+
+            public EcsMaskIterator.Enumerable.Enumerator GetEnumerator()
+            {
+                return iterator.GetEnumerator();
             }
         }
         #endregion

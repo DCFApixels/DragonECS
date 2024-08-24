@@ -651,6 +651,11 @@ namespace DCFApixels.DragonECS
     }
     #endregion
 
+    #region EcsMaskIterator
+#if ENABLE_IL2CPP
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     public class EcsMaskIterator
     {
         #region CountStructComparers
@@ -689,10 +694,43 @@ namespace DCFApixels.DragonECS
         private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
         #region Constructors
-        public EcsMaskIterator(EcsWorld source, EcsMask mask)
+        public unsafe EcsMaskIterator(EcsWorld source, EcsMask mask)
         {
             _source = source;
             _mask = mask;
+
+            _sortIncBuffer = new UnsafeArray<int>(_mask._inc.Length, true);
+            _sortExcBuffer = new UnsafeArray<int>(_mask._exc.Length, true);
+            _sortIncChunckBuffer = new UnsafeArray<EcsMaskChunck>(_mask._incChunckMasks.Length, true);
+            _sortExcChunckBuffer = new UnsafeArray<EcsMaskChunck>(_mask._excChunckMasks.Length, true);
+
+            for (int i = 0; i < _sortIncBuffer.Length; i++)
+            {
+                _sortIncBuffer.ptr[i] = _mask._inc[i];
+            }
+            for (int i = 0; i < _sortExcBuffer.Length; i++)
+            {
+                _sortExcBuffer.ptr[i] = _mask._exc[i];
+            }
+
+            for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
+            {
+                _sortIncChunckBuffer.ptr[i] = _mask._incChunckMasks[i];
+            }
+            for (int i = 0; i < _sortExcChunckBuffer.Length; i++)
+            {
+                _sortExcChunckBuffer.ptr[i] = _mask._excChunckMasks[i];
+            }
+        }
+        #endregion
+
+        #region Finalizator
+        unsafe ~EcsMaskIterator()
+        {
+            _sortIncBuffer.Dispose();
+            _sortExcBuffer.Dispose();
+            _sortIncChunckBuffer.Dispose();
+            _sortExcChunckBuffer.Dispose();
         }
         #endregion
 
@@ -911,4 +949,5 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
+    #endregion
 }
