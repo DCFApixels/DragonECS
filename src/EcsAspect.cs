@@ -2,7 +2,6 @@
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
-using static DCFApixels.DragonECS.EcsAspect;
 
 namespace DCFApixels.DragonECS
 {

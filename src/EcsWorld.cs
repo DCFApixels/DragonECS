@@ -202,6 +202,11 @@ namespace DCFApixels.DragonECS
             _isDestroyed = true;
             _poolTypeCode_2_CmpTypeIDs = null;
             _cmpTypeCode_2_CmpTypeIDs = null;
+
+            foreach (var item in _executorCoures)
+            {
+                item.Value.Destroy();
+            }
             //_entities - не обнуляется для работы entlong.IsAlive
         }
         //public void Clear() { }

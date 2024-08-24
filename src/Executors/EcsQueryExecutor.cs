@@ -6,7 +6,7 @@ namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {
-        private readonly Dictionary<(Type, Type), EcsQueryExecutorCore> _executorCoures = new Dictionary<(Type, Type), EcsQueryExecutorCore>();
+        private readonly Dictionary<(Type, EcsMask), EcsQueryExecutorCore> _executorCoures = new Dictionary<(Type, EcsMask), EcsQueryExecutorCore>();
         private readonly ExecutorMediator _executorsMediator;
         public readonly struct ExecutorMediator
         {
@@ -19,15 +19,15 @@ namespace DCFApixels.DragonECS
                 }
                 World = world;
             }
-            public TExecutorCore GetCore<TExecutorCore>(Type aspectType)
+            public TExecutorCore GetCore<TExecutorCore>(EcsMask mask)
                 where TExecutorCore : EcsQueryExecutorCore, new()
             {
-                var coreType = typeof(EcsQueryExecutorCore);
-                if(World._executorCoures.TryGetValue((aspectType, coreType), out EcsQueryExecutorCore core))
+                var coreType = typeof(TExecutorCore);
+                if (World._executorCoures.TryGetValue((coreType, mask), out EcsQueryExecutorCore core) == false)
                 {
                     core = new TExecutorCore();
-                    core.Initialize(World);
-                    World._executorCoures.Add((aspectType, coreType), core);
+                    core.Initialize(World, mask);
+                    World._executorCoures.Add((coreType, mask), core);
                 }
                 return (TExecutorCore)core;
             }
@@ -36,6 +36,7 @@ namespace DCFApixels.DragonECS
     public abstract class EcsQueryExecutorCore
     {
         private EcsWorld _source;
+        private EcsMask _mask;
         public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -46,9 +47,15 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source; }
         }
-        internal void Initialize(EcsWorld world)
+        protected EcsMask Mask
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _mask; }
+        }
+        internal void Initialize(EcsWorld world, EcsMask mask)
         {
             _source = world;
+            _mask = mask;
             OnInitialize();
         }
         internal void Destroy()

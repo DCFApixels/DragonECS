@@ -1,5 +1,4 @@
 ﻿using DCFApixels.DragonECS.Internal;
-using System;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
@@ -11,31 +10,8 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal readonly struct EcsWhereExecutorCoreList : IEcsWorldComponent<EcsWhereExecutorCoreList>
+    internal class EcsWhereExecutorCore : EcsQueryExecutorCore
     {
-        internal readonly EcsWhereExecutorCore[] _cores;
-        public EcsWhereExecutorCoreList(EcsWhereExecutorCore[] cores)
-        {
-            _cores = cores;
-        }
-        public void Init(ref EcsWhereExecutorCoreList component, EcsWorld world)
-        {
-            component = new EcsWhereExecutorCoreList(new EcsWhereExecutorCore[64]);
-        }
-        public void OnDestroy(ref EcsWhereExecutorCoreList component, EcsWorld world)
-        {
-            component = default;
-        }
-    }
-
-#if ENABLE_IL2CPP
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-#endif
-    internal class EcsWhereExecutorCore
-    {
-        private EcsWorld _source;
-
         private EcsMaskIterator _iterator;
         private int[] _filteredEntities = new int[32];
         private int _filteredEntitiesCount = 0;
@@ -51,12 +27,13 @@ namespace DCFApixels.DragonECS.Internal
         }
         #endregion
 
-        #region Constructors
-        public EcsWhereExecutorCore(EcsWorld source, EcsAspect aspect)
+        #region OnInitialize/OnDestroy
+        protected sealed override void OnInitialize()
         {
-            _source = source;
-            _versionsChecker = new PoolVersionsChecker(aspect.Mask);
+            _versionsChecker = new PoolVersionsChecker(Mask);
+            _iterator = Mask.GetIterator();
         }
+        protected sealed override void OnDestroy() { }
         #endregion
 
         #region Methods
@@ -64,26 +41,26 @@ namespace DCFApixels.DragonECS.Internal
         private void Filter(EcsSpan span)
         {
             _filteredEntitiesCount = _iterator.Iterate(span).CopyTo(ref _filteredEntities);
-            _lastWorldVersion = _source.Version;
+            _lastWorldVersion = World.Version;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Execute()
         {
-            return ExecuteFor(_source.Entities);
+            return ExecuteFor(World.Entities);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ExecuteFor(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
-            if (span.WorldID != _source.id) { Throw.Quiery_ArgumentDifferentWorldsException(); }
+            if (span.WorldID != World.id) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
-            _source.ReleaseDelEntityBufferAllAuto();
-            if (_lastWorldVersion != _source.Version || _versionsChecker.NextEquals() == false)
+            World.ReleaseDelEntityBufferAllAuto();
+            if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
             {
                 Filter(span);
             }
-            return new EcsSpan(_source.id, _filteredEntities, _filteredEntitiesCount);
+            return new EcsSpan(World.id, _filteredEntities, _filteredEntitiesCount);
         }
 
         //        [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -137,20 +114,7 @@ namespace DCFApixels.DragonECS
         protected sealed override void OnInitialize()
         {
             _aspect = World.GetAspect<TAspect>();
-            int maskID = _aspect.Mask.ID;
-            ref var list = ref World.Get<EcsWhereExecutorCoreList>();
-            var cores = list._cores;
-            if (maskID >= list._cores.Length)
-            {
-                Array.Resize(ref cores, cores.Length << 1);
-                list = new EcsWhereExecutorCoreList(cores);
-            }
-            ref var coreRef = ref cores[maskID];
-            if (coreRef == null)
-            {
-                coreRef = new EcsWhereExecutorCore(World, _aspect);
-            }
-            _core = coreRef;
+            _core = Mediator.GetCore<EcsWhereExecutorCore>(_aspect.Mask);
         }
         protected sealed override void OnDestroy() { }
         #endregion

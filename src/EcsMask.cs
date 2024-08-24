@@ -222,7 +222,7 @@ namespace DCFApixels.DragonECS
         #region Other
         public EcsMaskIterator GetIterator()
         {
-            if(_iterator == null)
+            if (_iterator == null)
             {
                 _iterator = new EcsMaskIterator(EcsWorld.GetWorld(_worldID), this);
             }
@@ -748,7 +748,7 @@ namespace DCFApixels.DragonECS
         #region Enumerable
         public Enumerable Iterate(EcsSpan span)
         {
-            return new Enumerable();
+            return new Enumerable(this, span);
         }
         public readonly ref struct Enumerable
         {

@@ -10,31 +10,8 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal readonly struct EcsWhereToGroupExecutorCoreList : IEcsWorldComponent<EcsWhereToGroupExecutorCoreList>
+    internal class EcsWhereToGroupExecutorCore : EcsQueryExecutorCore
     {
-        internal readonly EcsWhereToGroupExecutorCore[] _cores;
-        public EcsWhereToGroupExecutorCoreList(EcsWhereToGroupExecutorCore[] cores)
-        {
-            _cores = cores;
-        }
-        public void Init(ref EcsWhereToGroupExecutorCoreList component, EcsWorld world)
-        {
-            component = new EcsWhereToGroupExecutorCoreList(new EcsWhereToGroupExecutorCore[64]);
-        }
-        public void OnDestroy(ref EcsWhereToGroupExecutorCoreList component, EcsWorld world)
-        {
-            component = default;
-        }
-    }
-
-#if ENABLE_IL2CPP
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-#endif
-    internal class EcsWhereToGroupExecutorCore
-    {
-        private EcsWorld _source;
-
         private EcsMaskIterator _iterator;
         private EcsGroup _filteredGroup;
 
@@ -49,13 +26,14 @@ namespace DCFApixels.DragonECS.Internal
         }
         #endregion
 
-        #region Constructors/Destroy
-        public EcsWhereToGroupExecutorCore(EcsWorld source, EcsAspect aspect)
+        #region OnInitialize/OnDestroy
+        protected sealed override void OnInitialize()
         {
-            _source = source;
-            _versionsChecker = new PoolVersionsChecker(aspect.Mask);
+            _versionsChecker = new PoolVersionsChecker(Mask);
+            _filteredGroup = EcsGroup.New(World);
+            _iterator = Mask.GetIterator();
         }
-        public void Destroy()
+        protected sealed override void OnDestroy()
         {
             _filteredGroup.Dispose();
         }
@@ -66,22 +44,22 @@ namespace DCFApixels.DragonECS.Internal
         private void Filter(EcsSpan span)
         {
             _iterator.Iterate(span).CopyTo(_filteredGroup);
-            _lastWorldVersion = _source.Version;
+            _lastWorldVersion = World.Version;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan Execute()
+        public EcsReadonlyGroup Execute()
         {
-            return ExecuteFor(_source.Entities);
+            return ExecuteFor(World.Entities);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan ExecuteFor(EcsSpan span)
+        public EcsReadonlyGroup ExecuteFor(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
-            if (span.WorldID != _source.id) { Throw.Quiery_ArgumentDifferentWorldsException(); }
+            if (span.WorldID != World.id) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
-            _source.ReleaseDelEntityBufferAllAuto();
-            if (_lastWorldVersion != _source.Version || _versionsChecker.NextEquals() == false)
+            World.ReleaseDelEntityBufferAllAuto();
+            if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
             {
                 Filter(span);
             }
@@ -119,8 +97,7 @@ namespace DCFApixels.DragonECS
         protected sealed override void OnInitialize()
         {
             _aspect = World.GetAspect<TAspect>();
-            _filteredGroup = EcsGroup.New(World);
-            _versionsChecker = new PoolVersionsChecker(_aspect._mask);
+            _core = Mediator.GetCore<EcsWhereToGroupExecutorCore>(_aspect.Mask);
         }
         protected sealed override void OnDestroy()
         {
@@ -130,12 +107,12 @@ namespace DCFApixels.DragonECS
 
         #region Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan Execute()
+        public EcsReadonlyGroup Execute()
         {
             return _core.Execute();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan ExecuteFor(EcsSpan span)
+        public EcsReadonlyGroup ExecuteFor(EcsSpan span)
         {
             return _core.ExecuteFor(span);
         }
