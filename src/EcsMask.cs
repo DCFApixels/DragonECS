@@ -699,10 +699,10 @@ namespace DCFApixels.DragonECS
             _source = source;
             _mask = mask;
 
-            _sortIncBuffer = new UnsafeArray<int>(_mask._inc.Length, true);
-            _sortExcBuffer = new UnsafeArray<int>(_mask._exc.Length, true);
-            _sortIncChunckBuffer = new UnsafeArray<EcsMaskChunck>(_mask._incChunckMasks.Length, true);
-            _sortExcChunckBuffer = new UnsafeArray<EcsMaskChunck>(_mask._excChunckMasks.Length, true);
+            _sortIncBuffer = new UnsafeArray<int>(_mask._inc.Length);
+            _sortExcBuffer = new UnsafeArray<int>(_mask._exc.Length);
+            _sortIncChunckBuffer = new UnsafeArray<EcsMaskChunck>(_mask._incChunckMasks.Length);
+            _sortExcChunckBuffer = new UnsafeArray<EcsMaskChunck>(_mask._excChunckMasks.Length);
 
             for (int i = 0; i < _sortIncBuffer.Length; i++)
             {

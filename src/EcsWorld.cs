@@ -113,10 +113,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (_isEnableAutoReleaseDelEntBuffer)
-                {
-                    ReleaseDelEntityBufferAll();
-                }
+                ReleaseDelEntityBufferAll();
                 return _entityDispenser.UsedToEcsSpan(id);
             }
         }
