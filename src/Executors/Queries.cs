@@ -1,4 +1,6 @@
-﻿namespace DCFApixels.DragonECS
+﻿using System;
+
+namespace DCFApixels.DragonECS
 {
     public interface IEntityStorage
     {
@@ -25,6 +27,28 @@
             var executor = world.GetExecutor<EcsWhereExecutor<TAspect>>();
             aspect = executor.Aspect;
             return executor.ExecuteFor(span);
+        }
+        #endregion
+
+        #region Where with sort
+        public static EcsSpan Where<TCollection, TAspect>(this TCollection entities, out TAspect aspect, Comparison<int> comparison)
+            where TAspect : EcsAspect, new()
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().Where(out aspect, comparison);
+        }
+        public static EcsSpan Where<TAspect>(this EcsReadonlyGroup group, out TAspect aspect, Comparison<int> comparison)
+            where TAspect : EcsAspect, new()
+        {
+            return group.ToSpan().Where(out aspect, comparison);
+        }
+        public static EcsSpan Where<TAspect>(this EcsSpan span, out TAspect aspect, Comparison<int> comparison)
+            where TAspect : EcsAspect, new()
+        {
+            EcsWorld world = span.World;
+            var executor = world.GetExecutor<EcsWhereExecutor<TAspect>>();
+            aspect = executor.Aspect;
+            return executor.ExecuteFor(span, comparison);
         }
         #endregion
 

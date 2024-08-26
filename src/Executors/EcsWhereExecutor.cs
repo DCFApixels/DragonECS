@@ -1,4 +1,5 @@
 ﻿using DCFApixels.DragonECS.Internal;
+using System;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
@@ -79,18 +80,20 @@ namespace DCFApixels.DragonECS.Internal
             return new EcsSpan(World.id, _filteredEntities, _filteredEntitiesCount);
         }
 
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public EcsSpan Execute(Comparison<int> comparison)
-        //{
-        //    Execute_Iternal();
-        //    return new EcsSpan(World.id, _filteredAllEntities, _filteredAllEntitiesCount);
-        //}
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public EcsSpan ExecuteFor(EcsSpan span, Comparison<int> comparison)
-        //{
-        //    ExecuteFor_Iternal(span);
-        //    return new EcsSpan(World.id, _filteredEntities, _filteredEntitiesCount);
-        //}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan Execute(Comparison<int> comparison)
+        {
+            Execute_Iternal();
+            ArraySortHalperX<int>.Sort(_filteredAllEntities, comparison, _filteredAllEntitiesCount);
+            return new EcsSpan(World.id, _filteredAllEntities, _filteredAllEntitiesCount);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan ExecuteFor(EcsSpan span, Comparison<int> comparison)
+        {
+            ExecuteFor_Iternal(span);
+            ArraySortHalperX<int>.Sort(_filteredEntities, comparison, _filteredEntitiesCount);
+            return new EcsSpan(World.id, _filteredEntities, _filteredEntitiesCount);
+        }
         #endregion
     }
 }
@@ -138,6 +141,16 @@ namespace DCFApixels.DragonECS
         public EcsSpan ExecuteFor(EcsSpan span)
         {
             return _core.ExecuteFor(span);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan Execute(Comparison<int> comparison)
+        {
+            return _core.Execute(comparison);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan ExecuteFor(EcsSpan span, Comparison<int> comparison)
+        {
+            return _core.ExecuteFor(span, comparison);
         }
         #endregion
     }

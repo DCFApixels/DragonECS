@@ -101,6 +101,7 @@ namespace DCFApixels.DragonECS
             private EcsWorld _world;
             private EcsMask.Builder _maskBuilder;
 
+            #region Properties
             public IncludeMarker Inc
             {
                 get { return new IncludeMarker(this); }
@@ -113,9 +114,13 @@ namespace DCFApixels.DragonECS
             {
                 get { return new OptionalMarker(this); }
             }
+            public EcsWorld World
+            {
+                get { return _world; }
+            }
+            #endregion
 
-            public EcsWorld World => _world;
-
+            #region Constructors/New
             private Builder(EcsWorld world)
             {
                 _world = world;
@@ -128,17 +133,19 @@ namespace DCFApixels.DragonECS
                 EcsAspect newAspect;
 
                 var buildersStack = GetBuildersStack();
-                buildersStack.Push(builder);
 
+                buildersStack.Push(builder);
                 newAspect = new TAspect();
                 newAspect.Init(builder);
                 buildersStack.Pop();
+
                 newAspect._source = world;
                 builder.Build(out newAspect._mask);
                 newAspect._isBuilt = true;
 
                 return (TAspect)newAspect;
             }
+            #endregion
 
             #region Include/Exclude/Optional/Combine/Except
             public TPool IncludePool<TPool>() where TPool : IEcsPoolImplementation, new()
@@ -179,10 +186,12 @@ namespace DCFApixels.DragonECS
             }
             #endregion
 
+            #region Build
             private void Build(out EcsMask mask)
             {
                 mask = _maskBuilder.Build();
             }
+            #endregion
 
             #region SupportReflectionHack
 #if UNITY_2020_3_OR_NEWER
@@ -292,6 +301,27 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
+
+    #region EcsAspectExtensions
+    //public static class EcsAspectExtensions
+    //{
+    //    public static EcsAspect.Builder Inc<TPool>(this EcsAspect.Builder self, ref TPool pool) where TPool : IEcsPoolImplementation, new()
+    //    {
+    //        pool = self.IncludePool<TPool>();
+    //        return self;
+    //    }
+    //    public static EcsAspect.Builder Exc<TPool>(this EcsAspect.Builder self, ref TPool pool) where TPool : IEcsPoolImplementation, new()
+    //    {
+    //        pool = self.ExcludePool<TPool>();
+    //        return self;
+    //    }
+    //    public static EcsAspect.Builder Opt<TPool>(this EcsAspect.Builder self, ref TPool pool) where TPool : IEcsPoolImplementation, new()
+    //    {
+    //        pool = self.OptionalPool<TPool>();
+    //        return self;
+    //    }
+    //}
+    #endregion
 
     #region Constraint Markers
     public readonly ref struct IncludeMarker
