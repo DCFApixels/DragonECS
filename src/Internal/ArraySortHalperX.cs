@@ -1,18 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 
 namespace DCFApixels.DragonECS.Internal
 {
-    internal interface IStructComparer<T>
+    internal interface IStructComparer<T> : IComparer<T>
     {
         // a > b = return > 0
-        int Compare(T a, T b);
+        // int Compare(T a, T b);
     }
+
     internal static class ArraySortHalperX<T>
     {
         private const int IntrosortSizeThreshold = 16;
 
+        #region IStructComparer
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SwapIfGreater<TComparer>(T[] items, ref TComparer comparer, int i, int j) where TComparer : IStructComparer<T>
         {
@@ -40,6 +43,7 @@ namespace DCFApixels.DragonECS.Internal
                 items[j + 1] = t;
             }
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Sort<TComparer>(T[] items, ref TComparer comparer) where TComparer : IStructComparer<T>
         {
@@ -69,10 +73,82 @@ namespace DCFApixels.DragonECS.Internal
                 InsertionSort(items, ref comparer);
                 return;
             }
+
             IStructComparer<T> packed = comparer;
-            Array.Sort(items, comparer.Compare);
+            Array.Sort(items, 0, items.Length, packed);
             comparer = (TComparer)packed;
         }
+        #endregion
+
+        #region Comparison
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SwapIfGreater(T[] items, Comparison<T> comparison, int i, int j)
+        {
+            if (comparison(items[i], items[j]) > 0)
+            {
+                T key = items[i];
+                items[i] = items[j];
+                items[j] = key;
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InsertionSort(T[] items, int length, Comparison<T> comparison)
+        {
+            for (int i = 0; i < length - 1; i++)
+            {
+                T t = items[i + 1];
+
+                int j = i;
+                while (j >= 0 && comparison(t, items[j]) < 0)
+                {
+                    items[j + 1] = items[j];
+                    j--;
+                }
+
+                items[j + 1] = t;
+            }
+        }
+
+        private class ComparisonHach : IComparer<T>
+        {
+            public static readonly ComparisonHach Instance = new ComparisonHach();
+            public Comparison<T> comparison;
+            private ComparisonHach() { }
+            public int Compare(T x, T y) { return comparison(x, y); }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Sort(T[] items, Comparison<T> comparison)
+        {
+            Sort(items, comparison, items.Length);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Sort(T[] items, Comparison<T> comparison, int length)
+        {
+            if (length <= IntrosortSizeThreshold)
+            {
+                if (length == 1)
+                {
+                    return;
+                }
+                if (length == 2)
+                {
+                    SwapIfGreater(items, comparison, 0, 1);
+                    return;
+                }
+                if (length == 3)
+                {
+                    SwapIfGreater(items, comparison, 0, 1);
+                    SwapIfGreater(items, comparison, 0, 2);
+                    SwapIfGreater(items, comparison, 1, 2);
+                    return;
+                }
+                InsertionSort(items, length, comparison);
+                return;
+            }
+            ComparisonHach.Instance.comparison = comparison;
+            Array.Sort(items, 0, length, ComparisonHach.Instance);
+        }
+        #endregion
     }
 
     internal static unsafe class UnsafeArraySortHalperX<T> where T : unmanaged
