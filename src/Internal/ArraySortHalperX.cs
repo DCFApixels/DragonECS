@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-
+#if ENABLE_IL2CPP
+using Unity.IL2CPP.CompilerServices;
+#endif
 
 namespace DCFApixels.DragonECS.Internal
 {
@@ -11,6 +13,10 @@ namespace DCFApixels.DragonECS.Internal
         // int Compare(T a, T b);
     }
 
+#if ENABLE_IL2CPP
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     internal static class ArraySortHalperX<T>
     {
         private const int IntrosortSizeThreshold = 16;
@@ -109,6 +115,10 @@ namespace DCFApixels.DragonECS.Internal
             }
         }
 
+#if ENABLE_IL2CPP
+        [Il2CppSetOption (Option.NullChecks, false)]
+        [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
         private class ComparisonHach : IComparer<T>
         {
             public static readonly ComparisonHach Instance = new ComparisonHach();
@@ -151,6 +161,10 @@ namespace DCFApixels.DragonECS.Internal
         #endregion
     }
 
+#if ENABLE_IL2CPP
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     internal static unsafe class UnsafeArraySortHalperX<T> where T : unmanaged
     {
         private const int IntrosortSizeThreshold = 16;
