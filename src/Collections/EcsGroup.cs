@@ -90,6 +90,10 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int[] ToArray() { return _source.ToArray(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int ToArray(ref int[] dynamicBuffer) { return _source.ToArray(ref dynamicBuffer); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ToCollection(ICollection<int> collection) { _source.ToCollection(collection); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup.Enumerator GetEnumerator() { return _source.GetEnumerator(); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -387,12 +391,31 @@ namespace DCFApixels.DragonECS
         {
             return new EcsSpan(WorldID, _dense, 1, _count);
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int[] ToArray()
         {
             int[] result = new int[_count];
             Array.Copy(_dense, 1, result, 0, _count);
             return result;
+        }
+        public int ToArray(ref int[] dynamicBuffer)
+        {
+            if (dynamicBuffer.Length < _count)
+            {
+                Array.Resize(ref dynamicBuffer, ArrayUtility.NormalizeSizeToPowerOfTwo(_count));
+            }
+            int i = 0;
+            foreach (var e in this)
+            {
+                dynamicBuffer[i++] = e;
+            }
+            return i;
+        }
+        public void ToCollection(ICollection<int> collection)
+        {
+            foreach (var e in this)
+            {
+                collection.Add(e);
+            }
         }
         #endregion
 

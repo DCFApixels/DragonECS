@@ -1,5 +1,6 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -78,13 +79,32 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Slice/ToArry
+        #region Slice/ToArray
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start) { return new EcsSpan(_worldID, _values.Slice(start)); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start, int length) { return new EcsSpan(_worldID, _values.Slice(start, length)); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int[] ToArray() { return _values.ToArray(); }
+        public int ToArray(ref int[] dynamicBuffer)
+        {
+            if (dynamicBuffer.Length < _values.Length)
+            {
+                Array.Resize(ref dynamicBuffer, ArrayUtility.NormalizeSizeToPowerOfTwo(_values.Length));
+            }
+            int i = 0;
+            foreach (var e in this)
+            {
+                dynamicBuffer[i++] = e;
+            }
+            return i;
+        }
+        public void ToCollection(ICollection<int> collection)
+        {
+            foreach (var e in this)
+            {
+                collection.Add(e);
+            }
+        }
         #endregion
 
         #region operators
@@ -199,8 +219,36 @@ namespace DCFApixels.DragonECS
         public EcsLongsSpan Slice(int start, int length) { return new EcsLongsSpan(_source.Slice(start, length)); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan() { return _source; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int[] ToArray() { return _source.ToArray(); }
+        public entlong[] ToArray()
+        {
+            entlong[] result = new entlong[_source.Count];
+            int i = 0;
+            foreach (var e in this)
+            {
+                result[i++] = e;
+            }
+            return result;
+        }
+        public int ToArray(ref entlong[] dynamicBuffer)
+        {
+            if (dynamicBuffer.Length < _source.Count)
+            {
+                Array.Resize(ref dynamicBuffer, ArrayUtility.NormalizeSizeToPowerOfTwo(_source.Count));
+            }
+            int i = 0;
+            foreach (var e in this)
+            {
+                dynamicBuffer[i++] = e;
+            }
+            return i;
+        }
+        public void ToCollection(ICollection<entlong> collection)
+        {
+            foreach (var e in this)
+            {
+                collection.Add(e);
+            }
+        }
         #endregion
 
         #region operators
