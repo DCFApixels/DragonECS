@@ -196,6 +196,7 @@ namespace DCFApixels.DragonECS
         {
             self.Print("");
         }
+        //TODO PrintJson не возможно будет добавлено когда-то
     }
     public sealed class DefaultDebugService : DebugService
     {
