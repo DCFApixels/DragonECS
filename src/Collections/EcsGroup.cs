@@ -80,6 +80,8 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID) { return _source.IndexOf(entityID); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CopyTo(int[] array, int arrayIndex) { _source.CopyTo(array, arrayIndex); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone() { return _source.Clone(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start) { return _source.Slice(start); }
@@ -107,6 +109,8 @@ namespace DCFApixels.DragonECS
         public bool SetEquals(EcsReadonlyGroup group) { return _source.SetEquals(group._source); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetEquals(EcsSpan span) { return _source.SetEquals(span); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetEquals(IEnumerable<int> other) { return _source.SetEquals(other); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Overlaps(EcsGroup group) { return _source.Overlaps(group); }
@@ -114,16 +118,42 @@ namespace DCFApixels.DragonECS
         public bool Overlaps(EcsReadonlyGroup group) { return _source.Overlaps(group._source); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Overlaps(EcsSpan span) { return _source.Overlaps(span); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Overlaps(IEnumerable<int> other) { return _source.Overlaps(other); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(EcsGroup group) { return _source.IsSubsetOf(group); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(EcsReadonlyGroup group) { return _source.IsSubsetOf(group._source); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSubsetOf(EcsSpan span) { return _source.IsSubsetOf(span); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSubsetOf(IEnumerable<int> other) { return _source.IsSubsetOf(other); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsProperSubsetOf(EcsGroup group) { return _source.IsProperSubsetOf(group); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsProperSubsetOf(EcsReadonlyGroup group) { return _source.IsProperSubsetOf(group._source); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsProperSubsetOf(EcsSpan span) { return _source.IsProperSubsetOf(span); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsProperSubsetOf(IEnumerable<int> other) { return _source.IsProperSubsetOf(other); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(EcsGroup group) { return _source.IsSupersetOf(group); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(EcsReadonlyGroup group) { return _source.IsSupersetOf(group._source); }
+        public bool IsSupersetOf(EcsSpan span) { return _source.IsSupersetOf(span); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSupersetOf(IEnumerable<int> other) { return _source.IsSupersetOf(other); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsProperSupersetOf(EcsGroup group) { return _source.IsProperSupersetOf(group); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsProperSupersetOf(EcsReadonlyGroup group) { return _source.IsProperSupersetOf(group._source); }
+        public bool IsProperSupersetOf(EcsSpan span) { return _source.IsProperSupersetOf(span); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsProperSupersetOf(IEnumerable<int> other) { return _source.IsProperSupersetOf(other); }
         #endregion
 
         #region Internal
@@ -154,11 +184,11 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public class EcsGroup : IDisposable, IEnumerable<int>, IEntityStorage
+    public class EcsGroup : IDisposable, IEnumerable<int>, IEntityStorage, ISet<int>
     {
         private EcsWorld _source;
         private int[] _dense;
-        private int[] _sparse;
+        private int[] _sparse; //Старший бит занят временной маркировкой в операциях над множествами
         private int _count = 0;
         internal bool _isReleased = true;
 
@@ -198,6 +228,9 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _isReleased; }
         }
+
+        bool ICollection<int>.IsReadOnly => throw new NotImplementedException();
+
         public int this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -234,12 +267,59 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
         {
-            return _sparse[entityID] > 0;
+            return _sparse[entityID] != 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID)
         {
             return _sparse[entityID];
+        }
+        #endregion
+
+        #region HiBitMarking
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Mark_Internal(int entityID)
+        {
+            _sparse[entityID] |= int.MinValue;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsMark_Internal(int entityID)
+        {
+            return (_sparse[entityID] & int.MinValue) == int.MinValue;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Unmark_Internal(int entityID)
+        {
+            _sparse[entityID] &= int.MaxValue;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ClearUnmarked_Internal()
+        {
+            for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
+            {
+                int entityID = _dense[i];
+                if (IsMark_Internal(entityID))
+                {
+                    Unmark_Internal(entityID);
+                }
+                else
+                {
+                    Remove_Internal(entityID);
+                }
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ClearMarked_Internal()
+        {
+            for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
+            {
+                int entityID = _dense[i];
+                if (IsMark_Internal(entityID))
+                {
+                    Unmark_Internal(entityID); // Unmark_Internal должен быть до Remove_Internal
+                    Remove_Internal(entityID);
+                }
+            }
         }
         #endregion
 
@@ -367,6 +447,14 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CopyTo(int[] array, int arrayIndex)
+        {
+            foreach (var item in this)
+            {
+                array[arrayIndex++] = item;
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone()
         {
             EcsGroup result = _source.GetFreeGroup();
@@ -426,15 +514,9 @@ namespace DCFApixels.DragonECS
         public void UnionWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source != group._source) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            foreach (var entityID in group)
-            {
-                if (Has(entityID) == false)
-                {
-                    Add_Internal(entityID);
-                }
-            }
+            foreach (var entityID in group) { UnionWithStep(entityID); }
         }
         /// <summary>as Union sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -445,12 +527,18 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            foreach (var entityID in span)
+            foreach (var entityID in span) { UnionWithStep(entityID); }
+        }
+        public void UnionWith(IEnumerable<int> other)
+        {
+            foreach (var entityID in other) { UnionWithStep(entityID); }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UnionWithStep(int entityID)
+        {
+            if (Has(entityID) == false)
             {
-                if (Has(entityID) == false)
-                {
-                    Add_Internal(entityID);
-                }
+                Add_Internal(entityID);
             }
         }
         #endregion
@@ -460,9 +548,9 @@ namespace DCFApixels.DragonECS
         public void ExceptWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) { Throw.Group_ArgumentDifferentWorldsException(); }
+            if (_source != group._source) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
-            if (group.Count > Count)
+            if (group.Count > Count) //мини оптимизация, итеррируемся по короткому списку
             {
                 for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
                 {
@@ -475,13 +563,7 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                foreach (var entityID in group)
-                {
-                    if (Has(entityID))
-                    {
-                        Remove_Internal(entityID);
-                    }
-                }
+                foreach (var entityID in group) { ExceptWithStep_Internal(entityID); }
             }
         }
         /// <summary>as Except sets</summary>
@@ -493,12 +575,18 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source.id != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
-            foreach (var entityID in span)
+            foreach (var entityID in span) { ExceptWithStep_Internal(entityID); }
+        }
+        public void ExceptWith(IEnumerable<int> other)
+        {
+            foreach (var entityID in other) { ExceptWithStep_Internal(entityID); }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ExceptWithStep_Internal(int entityID)
+        {
+            if (Has(entityID))
             {
-                if (Has(entityID))
-                {
-                    Remove_Internal(entityID);
-                }
+                Remove_Internal(entityID);
             }
         }
         #endregion
@@ -508,7 +596,7 @@ namespace DCFApixels.DragonECS
         public void IntersectWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (World != group.World) { Throw.Group_ArgumentDifferentWorldsException(); }
+            if (_source != group._source) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
             {
@@ -522,6 +610,46 @@ namespace DCFApixels.DragonECS
         /// <summary>as Intersect sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void IntersectWith(EcsReadonlyGroup group) { IntersectWith(group.GetSource_Internal()); }
+        /// <summary>as Intersect sets</summary>
+        public void IntersectWith(EcsSpan span) //TODO протестировать
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source.id != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+#endif
+            foreach (var entityID in span)
+            {
+                if (Has(entityID))
+                {
+                    Mark_Internal(entityID);
+                }
+            }
+            ClearUnmarked_Internal();
+        }
+        public void IntersectWith(IEnumerable<int> other)
+        {
+            if (other is ISet<int> set)
+            {
+                for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
+                {
+                    int entityID = _dense[i];
+                    if (set.Contains(entityID) == false)
+                    {
+                        Remove_Internal(entityID);
+                    }
+                }
+            }
+            else 
+            {
+                foreach (var entityID in other)
+                {
+                    if (Has(entityID))
+                    {
+                        Mark_Internal(entityID);
+                    }
+                }
+                ClearUnmarked_Internal();
+            }
+        }
         #endregion
 
         #region SymmetricExceptWith
@@ -529,23 +657,37 @@ namespace DCFApixels.DragonECS
         public void SymmetricExceptWith(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) { Throw.Group_ArgumentDifferentWorldsException(); }
+            if (_source != group._source) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
-            foreach (var entityID in group)
-            {
-                if (Has(entityID))
-                {
-                    Remove_Internal(entityID);
-                }
-                else
-                {
-                    Add_Internal(entityID);
-                }
-            }
+            foreach (var entityID in group) { SymmetricExceptWithStep_Internal(entityID); }
         }
         /// <summary>as Symmetric Except sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SymmetricExceptWith(EcsReadonlyGroup group) { SymmetricExceptWith(group.GetSource_Internal()); }
+
+        /// <summary>as Symmetric Except sets</summary>
+        public void SymmetricExceptWith(EcsSpan span)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source.id != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+#endif
+            foreach (var entityID in span) { SymmetricExceptWithStep_Internal(entityID); }
+        }
+        public void SymmetricExceptWith(IEnumerable<int> other)
+        {
+            foreach (var entityID in other) { SymmetricExceptWithStep_Internal(entityID); }
+        }
+        private void SymmetricExceptWithStep_Internal(int entityID)
+        {
+            if (Has(entityID))
+            {
+                Remove_Internal(entityID);
+            }
+            else
+            {
+                Add_Internal(entityID);
+            }
+        }
         #endregion
 
         #region Inverse
@@ -579,10 +721,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source != group.World) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
-            if (group.Count != Count)
-            {
-                return false;
-            }
+            if (group.Count != Count) { return false; }
             foreach (var entityID in group)
             {
                 if (Has(entityID) == false)
@@ -599,11 +738,20 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_source.id != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
-            if (span.Count != Count)
-            {
-                return false;
-            }
+            if (span.Count != Count) { return false; }
             foreach (var entityID in span)
+            {
+                if (Has(entityID) == false)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        public bool SetEquals(IEnumerable<int> other)
+        {
+            if (other is ICollection collection && collection.Count != Count) { return false; }
+            foreach (var entityID in other)
             {
                 if (Has(entityID) == false)
                 {
@@ -658,18 +806,81 @@ namespace DCFApixels.DragonECS
             }
             return false;
         }
+        public bool Overlaps(IEnumerable<int> other)
+        {
+            foreach (var entityID in other)
+            {
+                if (Has(entityID))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         #endregion
 
-        #region IsSubsetOf
+        #region IsSubsetOf/IsProperSubsetOf
         public bool IsSubsetOf(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source != group._source) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            if (group.Count < Count)
-            {
-                return false;
-            }
+            if (Count == 0) { return true; }
+            if (group.Count < Count) { return false; }
+            return IsSubsetOf_Internal(group);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSubsetOf(EcsReadonlyGroup group) { return IsSubsetOf(group.GetSource_Internal()); }
+        public bool IsSubsetOf(EcsSpan span)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            if (Count == 0) { return true; }
+            if (span.Count < Count) { return false; }
+            return IsSubsetOf_Internal(span);
+        }
+        public bool IsSubsetOf(IEnumerable<int> other)
+        {
+            if (Count == 0) { return true; }
+            if (other is ICollection collection && collection.Count < Count) { return false; }
+            return IsSubsetOf_Internal(other);
+        }
+
+        // ================================================================================
+
+        public bool IsProperSubsetOf(EcsGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source != group._source) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            if (Count == 0) { return true; }
+            if (group.Count <= Count) { return false; }
+            return IsSubsetOf_Internal(group);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsProperSubsetOf(EcsReadonlyGroup group) { return IsProperSubsetOf(group.GetSource_Internal()); }
+        public bool IsProperSubsetOf(EcsSpan span)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            if (Count == 0) { return true; }
+            if (span.Count <= Count) { return false; }
+            return IsSubsetOf_Internal(span);
+        }
+        public bool IsProperSubsetOf(IEnumerable<int> other)
+        {
+            if (Count == 0) { return true; }
+            if (other is ICollection collection && collection.Count <= Count) { return false; }
+            return IsSubsetOf_Internal(other);
+        }
+
+        // ================================================================================
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsSubsetOf_Internal(EcsGroup group)
+        {
             foreach (var entityID in this)
             {
                 if (group.Has(entityID) == false)
@@ -680,19 +891,88 @@ namespace DCFApixels.DragonECS
             return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSubsetOf(EcsReadonlyGroup group) { return IsSubsetOf(group.GetSource_Internal()); }
+        private bool IsSubsetOf_Internal(EcsSpan span)
+        {
+            int uniqueCount = 0;
+            foreach (var entityID in span)
+            {
+                if (Has(entityID) == false)
+                {
+                    uniqueCount++;
+                }
+            }
+            return uniqueCount == Count;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsSubsetOf_Internal(IEnumerable<int> other)
+        {
+            int uniqueCount = 0;
+            foreach (var entityID in other)
+            {
+                if (Has(entityID) == false)
+                {
+                    uniqueCount++;
+                }
+            }
+            return uniqueCount == Count;
+        }
         #endregion
 
-        #region IsSupersetOf
+        #region IsSupersetOf/IsProperSupersetOf
         public bool IsSupersetOf(EcsGroup group)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source != group.World) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source != group._source) Throw.Group_ArgumentDifferentWorldsException();
 #endif
-            if (group.Count > Count)
-            {
-                return false;
-            }
+            if (group.Count > Count) { return false; }
+            return IsSupersetOf_Internal(group);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSupersetOf(EcsReadonlyGroup group) { return IsSupersetOf(group.GetSource_Internal()); }
+        public bool IsSupersetOf(EcsSpan span)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            if (span.Count > Count) { return false; }
+            return IsSupersetOf_Internal(span);
+        }
+        public bool IsSupersetOf(IEnumerable<int> other)
+        {
+            if (other is ICollection collection && collection.Count > Count) { return false; }
+            return IsSupersetOf_Internal(other);
+        }
+
+        // ================================================================================
+
+        public bool IsProperSupersetOf(EcsGroup group)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source != group._source) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            if (group.Count >= Count) { return false; }
+            return IsSupersetOf_Internal(group);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsProperSupersetOf(EcsReadonlyGroup group) { return IsProperSupersetOf(group.GetSource_Internal()); }
+        public bool IsProperSupersetOf(EcsSpan span)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+#endif
+            if (span.Count >= Count) { return false; }
+            return IsSupersetOf_Internal(span);
+        }
+        public bool IsProperSupersetOf(IEnumerable<int> other)
+        {
+            if (other is ICollection collection && collection.Count >= Count) { return false; }
+            return IsSupersetOf_Internal(other);
+        }
+
+        // ================================================================================
+
+        private bool IsSupersetOf_Internal(EcsGroup group)
+        {
             foreach (var entityID in group)
             {
                 if (Has(entityID) == false)
@@ -702,13 +982,35 @@ namespace DCFApixels.DragonECS
             }
             return true;
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSupersetOf(EcsReadonlyGroup group) { return IsSupersetOf(group.GetSource_Internal()); }
+        private bool IsSupersetOf_Internal(EcsSpan span)
+        {
+            foreach (var entityID in span)
+            {
+                if (Has(entityID) == false)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        private bool IsSupersetOf_Internal(IEnumerable<int> other)
+        {
+            foreach (var entityID in other)
+            {
+                if (Has(entityID) == false)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
         #endregion
 
         #endregion
 
         #region Static Set operations
+
+        #region Union
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
         public static EcsGroup Union(EcsGroup a, EcsGroup b)
@@ -727,11 +1029,33 @@ namespace DCFApixels.DragonECS
             }
             return result;
         }
+        /// <summary>as Intersect sets</summary>
+        /// <returns>new group from pool</returns>
         public static EcsGroup Union(EcsReadonlyGroup a, EcsReadonlyGroup b)
         {
             return Union(a.GetSource_Internal(), b.GetSource_Internal());
         }
+        /// <summary>as Intersect sets</summary>
+        /// <returns>new group from pool</returns>
+        public static EcsGroup Union(EcsSpan a, EcsSpan b)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (a.WorldID != b.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+#endif
+            EcsGroup result = a.World.GetFreeGroup();
+            foreach (var entityID in a)
+            {
+                result.Add_Internal(entityID);
+            }
+            foreach (var entityID in b)
+            {
+                result.Add(entityID);
+            }
+            return result;
+        }
+        #endregion
 
+        #region Except
         /// <summary>as Except sets</summary>
         /// <returns>new group from pool</returns>
         public static EcsGroup Except(EcsGroup a, EcsGroup b)
@@ -749,11 +1073,44 @@ namespace DCFApixels.DragonECS
             }
             return result;
         }
+        /// <summary>as Except sets</summary>
+        /// <returns>new group from pool</returns>
+        public static EcsGroup Except(EcsSpan a, EcsGroup b)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (a.WorldID != b._source.id) { Throw.Group_ArgumentDifferentWorldsException(); }
+#endif
+            EcsGroup result = b._source.GetFreeGroup();
+            foreach (var entityID in a)
+            {
+                if (b.Has(entityID) == false)
+                {
+                    result.Add_Internal(entityID);
+                }
+            }
+            return result;
+        }
+        /// <summary>as Except sets</summary>
+        /// <returns>new group from pool</returns>
+        public static EcsGroup Except(EcsSpan a, EcsSpan b)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (a.WorldID != b.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+#endif
+            EcsGroup result = a.World.GetFreeGroup();
+            result.CopyFrom(a);
+            result.ExceptWith(b);
+            return result;
+        }
+        /// <summary>as Except sets</summary>
+        /// <returns>new group from pool</returns>
         public static EcsGroup Except(EcsReadonlyGroup a, EcsReadonlyGroup b)
         {
             return Except(a.GetSource_Internal(), b.GetSource_Internal());
         }
+        #endregion
 
+        #region Intersect
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
         public static EcsGroup Intersect(EcsGroup a, EcsGroup b)
@@ -771,11 +1128,51 @@ namespace DCFApixels.DragonECS
             }
             return result;
         }
+        /// <summary>as Intersect sets</summary>
+        /// <returns>new group from pool</returns>
+        public static EcsGroup Intersect(EcsSpan a, EcsGroup b)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (a.WorldID != b._source.id) { Throw.Group_ArgumentDifferentWorldsException(); }
+#endif
+            EcsGroup result = b._source.GetFreeGroup();
+            foreach (var entityID in a)
+            {
+                if (b.Has(entityID))
+                {
+                    result.Add_Internal(entityID);
+                }
+            }
+            return result;
+        }
+        /// <summary>as Intersect sets</summary>
+        /// <returns>new group from pool</returns>
+        public static EcsGroup Intersect(EcsGroup a, EcsSpan b)
+        {
+            //операция симметричная, можно просто переставить параметры
+            return Intersect(b, a);
+        }
+        /// <summary>as Intersect sets</summary>
+        /// <returns>new group from pool</returns>
+        public static EcsGroup Intersect(EcsSpan a, EcsSpan b)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (a.WorldID != b.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+#endif
+            EcsGroup result = b.World.GetFreeGroup();
+            result.CopyFrom(a);
+            result.IntersectWith(b);
+            return result;
+        }
+        /// <summary>as Intersect sets</summary>
+        /// <returns>new group from pool</returns>
         public static EcsGroup Intersect(EcsReadonlyGroup a, EcsReadonlyGroup b)
         {
             return Intersect(a.GetSource_Internal(), b.GetSource_Internal());
         }
+        #endregion
 
+        #region SymmetricExcept
         /// <summary>as Symmetric Except sets</summary>
         /// <returns>new group from pool</returns>
         public static EcsGroup SymmetricExcept(EcsGroup a, EcsGroup b)
@@ -786,25 +1183,50 @@ namespace DCFApixels.DragonECS
             EcsGroup result = a._source.GetFreeGroup();
             foreach (var entityID in a)
             {
-                if (!b.Has(entityID))
+                if (b.Has(entityID) == false)
                 {
                     result.Add_Internal(entityID);
                 }
             }
             foreach (var entityID in b)
             {
-                if (!a.Has(entityID))
+                if (a.Has(entityID) == false)
                 {
                     result.Add_Internal(entityID);
                 }
             }
             return result;
         }
+        /// <summary>as Symmetric Except sets</summary>
+        /// <returns>new group from pool</returns>
+        public static EcsGroup SymmetricExcept(EcsSpan a, EcsSpan b)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (a.WorldID != b.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+#endif
+            EcsGroup result = a.World.GetFreeGroup();
+            result.CopyFrom(a);
+            foreach (var entityID in b)
+            {
+                if (result.Has(entityID))
+                {
+                    result.Mark_Internal(entityID);
+                }
+                else
+                {
+                    result.Add_Internal(entityID);
+                }
+            }
+            result.ClearMarked_Internal();
+            return result;
+        }
         public static EcsGroup SymmetricExcept(EcsReadonlyGroup a, EcsReadonlyGroup b)
         {
             return SymmetricExcept(a.GetSource_Internal(), b.GetSource_Internal());
         }
+        #endregion
 
+        #region Inverse
         public static EcsGroup Inverse(EcsGroup a)
         {
             EcsGroup result = a._source.GetFreeGroup();
@@ -821,6 +1243,15 @@ namespace DCFApixels.DragonECS
         {
             return Inverse(a.GetSource_Internal());
         }
+        public static EcsGroup Inverse(EcsSpan a)
+        {
+            EcsGroup result = a.World.GetFreeGroup();
+            result.CopyFrom(a.World.Entities);
+            result.ExceptWith(a);
+            return result;
+        }
+        #endregion
+
         #endregion
 
         #region Enumerator
@@ -887,6 +1318,7 @@ namespace DCFApixels.DragonECS
         {
             return CollectionUtility.EntitiesToString(_dense.Skip(1).Take(_count), "group");
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsReadonlyGroup(EcsGroup a) { return a.Readonly; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -914,6 +1346,17 @@ namespace DCFApixels.DragonECS
             public override string ToString() { return _group.ToString(); }
             public DebuggerProxy(EcsGroup group) { _group = group; }
             public DebuggerProxy(EcsReadonlyGroup group) : this(group.GetSource_Internal()) { }
+        }
+        #endregion
+
+        #region ISet
+        void ICollection<int>.Add(int item)
+        {
+            Add(item);
+        }
+        bool ICollection<int>.Contains(int item)
+        {
+            return Has(item);
         }
         #endregion
     }
