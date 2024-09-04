@@ -184,6 +184,7 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
+    //TODO переработать EcsGroup в структуру-обертку, чтобы когда вызывается Release то можно было занулить эту структуру
     public class EcsGroup : IDisposable, IEnumerable<int>, IEntityStorage, ISet<int>
     {
         private EcsWorld _source;
@@ -353,6 +354,9 @@ namespace DCFApixels.DragonECS
 
         public void RemoveUnchecked(int entityID)
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (Has(entityID) == false) { Throw.Group_DoesNotContain(entityID); }
+#endif
             Remove_Internal(entityID);
         }
         public bool Remove(int entityID)
@@ -365,11 +369,8 @@ namespace DCFApixels.DragonECS
             return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Remove_Internal(int entityID)
+        private void Remove_Internal(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (Has(entityID) == false) { Throw.Group_DoesNotContain(entityID); }
-#endif
             _dense[_sparse[entityID]] = _dense[_count];
             _sparse[_dense[_count--]] = _sparse[entityID];
             _sparse[entityID] = 0;
@@ -401,7 +402,6 @@ namespace DCFApixels.DragonECS
             _count = 0;
         }
         #endregion
-
 
         #region Upsize
         public void Upsize(int minSize)
@@ -1302,10 +1302,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void OnReleaseDelEntityBuffer_Internal(ReadOnlySpan<int> buffer)
         {
-            if (_count <= 0)
-            {
-                return;
-            }
+            if (_count <= 0) { return; }
             foreach (var entityID in buffer)
             {
                 if (Has(entityID))
@@ -1318,6 +1315,8 @@ namespace DCFApixels.DragonECS
         {
             return CollectionUtility.EntitiesToString(_dense.Skip(1).Take(_count), "group");
         }
+        void ICollection<int>.Add(int item) { Add(item); }
+        bool ICollection<int>.Contains(int item) { return Has(item); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsReadonlyGroup(EcsGroup a) { return a.Readonly; }
@@ -1346,17 +1345,6 @@ namespace DCFApixels.DragonECS
             public override string ToString() { return _group.ToString(); }
             public DebuggerProxy(EcsGroup group) { _group = group; }
             public DebuggerProxy(EcsReadonlyGroup group) : this(group.GetSource_Internal()) { }
-        }
-        #endregion
-
-        #region ISet
-        void ICollection<int>.Add(int item)
-        {
-            Add(item);
-        }
-        bool ICollection<int>.Contains(int item)
-        {
-            return Has(item);
         }
         #endregion
     }
