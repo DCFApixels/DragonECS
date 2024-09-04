@@ -8,6 +8,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+//_dense заполняется с индекса 1
+//в операциях изменяющих состояние группы нельзя итерироваться по this, либо осторожно учитывать этот момент
 namespace DCFApixels.DragonECS
 {
 #if ENABLE_IL2CPP
@@ -15,8 +17,6 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    //_dense заполняется с индекса 1
-    //в операциях изменяющих состояние группы нельзя итерироваться по this, либо осторожно учитывать этот момент
     [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
     [DebuggerTypeProxy(typeof(EcsGroup.DebuggerProxy))]
     public readonly ref struct EcsReadonlyGroup
@@ -274,53 +274,6 @@ namespace DCFApixels.DragonECS
         public int IndexOf(int entityID)
         {
             return _sparse[entityID];
-        }
-        #endregion
-
-        #region HiBitMarking
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Mark_Internal(int entityID)
-        {
-            _sparse[entityID] |= int.MinValue;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsMark_Internal(int entityID)
-        {
-            return (_sparse[entityID] & int.MinValue) == int.MinValue;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Unmark_Internal(int entityID)
-        {
-            _sparse[entityID] &= int.MaxValue;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ClearUnmarked_Internal()
-        {
-            for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
-            {
-                int entityID = _dense[i];
-                if (IsMark_Internal(entityID))
-                {
-                    Unmark_Internal(entityID);
-                }
-                else
-                {
-                    Remove_Internal(entityID);
-                }
-            }
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ClearMarked_Internal()
-        {
-            for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
-            {
-                int entityID = _dense[i];
-                if (IsMark_Internal(entityID))
-                {
-                    Unmark_Internal(entityID); // Unmark_Internal должен быть до Remove_Internal
-                    Remove_Internal(entityID);
-                }
-            }
         }
         #endregion
 
@@ -638,7 +591,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
             }
-            else 
+            else
             {
                 foreach (var entityID in other)
                 {
@@ -1286,6 +1239,53 @@ namespace DCFApixels.DragonECS
             public void Dispose() { }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset() { }
+        }
+        #endregion
+
+        #region HiBitMarking
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Mark_Internal(int entityID)
+        {
+            _sparse[entityID] |= int.MinValue;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsMark_Internal(int entityID)
+        {
+            return (_sparse[entityID] & int.MinValue) == int.MinValue;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Unmark_Internal(int entityID)
+        {
+            _sparse[entityID] &= int.MaxValue;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ClearUnmarked_Internal()
+        {
+            for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
+            {
+                int entityID = _dense[i];
+                if (IsMark_Internal(entityID))
+                {
+                    Unmark_Internal(entityID);
+                }
+                else
+                {
+                    Remove_Internal(entityID);
+                }
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ClearMarked_Internal()
+        {
+            for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
+            {
+                int entityID = _dense[i];
+                if (IsMark_Internal(entityID))
+                {
+                    Unmark_Internal(entityID); // Unmark_Internal должен быть до Remove_Internal
+                    Remove_Internal(entityID);
+                }
+            }
         }
         #endregion
 
