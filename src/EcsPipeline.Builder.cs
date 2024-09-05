@@ -19,190 +19,6 @@ namespace DCFApixels.DragonECS
         AddParams AddParams { get; }
     }
 
-    [Serializable]
-    [DataContract]
-    [StructLayout(LayoutKind.Auto)]
-    public struct AddParams : IEquatable<AddParams>
-    {
-        public static readonly AddParams Default = new AddParams();
-        [DataMember] public string layerName;
-        [DataMember] public int sortOrder;
-        [DataMember] public bool isUnique;
-        [DataMember] public AddParamsFlags flags;
-
-        #region Properties
-        public bool IsOverwriteLayerName
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return flags.IsOverwriteLayerName(); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set { flags = value ? flags | AddParamsFlags.OverwriteLayerName : flags & ~AddParamsFlags.OverwriteLayerName; }
-        }
-        public bool IsOverwriteSortOrder
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return flags.IsOverwriteSortOrder(); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set { flags = value ? flags | AddParamsFlags.OverwriteSortOrder : flags & ~AddParamsFlags.OverwriteSortOrder; }
-        }
-        public bool IsOverwriteIsUnique
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return flags.IsOverwriteIsUnique(); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set { flags = value ? flags | AddParamsFlags.OverwriteIsUnique : flags & ~AddParamsFlags.OverwriteIsUnique; }
-        }
-        #endregion
-
-        #region Constructors
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(string layerName)
-        {
-            this.layerName = layerName;
-            this.sortOrder = default;
-            this.isUnique = default;
-            flags = AddParamsFlags.OverwriteLayerName;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(int sortOrder)
-        {
-            this.layerName = default;
-            this.sortOrder = sortOrder;
-            this.isUnique = default;
-            flags = AddParamsFlags.OverwriteSortOrder;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(bool isUnique)
-        {
-            this.layerName = default;
-            this.sortOrder = default;
-            this.isUnique = isUnique;
-            flags = AddParamsFlags.OverwriteIsUnique;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(string layerName, int sortOrder)
-        {
-            this.layerName = layerName;
-            this.sortOrder = sortOrder;
-            this.isUnique = default;
-            flags = AddParamsFlags.OverwriteLayerName | AddParamsFlags.OverwriteSortOrder;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(string layerName, bool isUnique)
-        {
-            this.layerName = layerName;
-            this.sortOrder = default;
-            this.isUnique = isUnique;
-            flags = AddParamsFlags.OverwriteLayerName | AddParamsFlags.OverwriteIsUnique;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(int sortOrder, bool isUnique)
-        {
-            this.layerName = default;
-            this.sortOrder = sortOrder;
-            this.isUnique = isUnique;
-            flags = AddParamsFlags.OverwriteSortOrder | AddParamsFlags.OverwriteIsUnique;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(string layerName, int sortOrder, bool isUnique)
-        {
-            this.layerName = layerName;
-            this.sortOrder = sortOrder;
-            this.isUnique = isUnique;
-            flags = AddParamsFlags.OverwriteAll;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AddParams(string layerName, int sortOrder, bool isUnique, AddParamsFlags overrideFlags)
-        {
-            this.layerName = layerName;
-            this.sortOrder = sortOrder;
-            this.isUnique = isUnique;
-            this.flags = overrideFlags;
-        }
-        #endregion
-
-        #region Overwrite
-        public AddParams Overwrite(AddParams other)
-        {
-            AddParams result = this;
-            if (other.flags.IsOverwriteLayerName())
-            {
-                result.layerName = other.layerName;
-            }
-            if (other.flags.IsOverwriteSortOrder())
-            {
-                result.sortOrder = other.sortOrder;
-            }
-            if (other.flags.IsOverwriteIsUnique())
-            {
-                result.isUnique = other.isUnique;
-            }
-            result.flags |= other.flags;
-            return result;
-        }
-        #endregion
-
-        #region Other
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(AddParams other)
-        {
-            return sortOrder == other.sortOrder &&
-                layerName == other.layerName &&
-                isUnique == other.isUnique;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool Equals(object obj)
-        {
-            return obj is AddParams && Equals((AddParams)obj);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(sortOrder, layerName, isUnique);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override string ToString()
-        {
-            return (flags.IsOverwriteLayerName() ? $"{layerName}, " : "") +
-                (flags.IsOverwriteSortOrder() ? $"{sortOrder}, " : "") +
-                (flags.IsOverwriteIsUnique() ? $"{isUnique}, " : "");
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator AddParams(string a) { return new AddParams(a); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator AddParams(int a) { return new AddParams(a); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator AddParams(bool a) { return new AddParams(a); }
-        #endregion
-    }
-
-    [Flags]
-    public enum AddParamsFlags
-    {
-        None = 0,
-        OverwriteLayerName = 1 << 0,
-        OverwriteSortOrder = 1 << 1,
-        OverwriteIsUnique = 1 << 2,
-
-        OverwriteAll = OverwriteLayerName | OverwriteSortOrder | OverwriteIsUnique,
-
-
-    }
-    public static class AddParamsFlagsUtility
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsOverwriteLayerName(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteLayerName) != 0; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsOverwriteSortOrder(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteSortOrder) != 0; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsOverwriteIsUnique(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteIsUnique) != 0; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsOverwriteAll(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteAll) == AddParamsFlags.OverwriteAll; }
-    }
-
     public sealed partial class EcsPipeline
     {
         public class Builder : IEcsModule
@@ -224,10 +40,10 @@ namespace DCFApixels.DragonECS
             private AddParams _defaultAddParams = new AddParams(BASIC_LAYER, 0, false);
 
             #region Properties
-            private ReadOnlySpan<SystemNode> SystemRecords
-            {
-                get { return new ReadOnlySpan<SystemNode>(_systemNodes, 0, _systemNodesCount); }
-            }
+            //private ReadOnlySpan<SystemNode> SystemRecords
+            //{
+            //    get { return new ReadOnlySpan<SystemNode>(_systemNodes, 0, _systemNodesCount); }
+            //}
             #endregion
 
             #region Constructors
@@ -251,7 +67,8 @@ namespace DCFApixels.DragonECS
             {
                 return AddSystem_Internal(system, parameters);
             }
-            private Stack<IEcsProcess> _moduleSystemsStack = null;
+            private IEcsProcess _systemModule;
+            private bool _systemModuleAdded;
             private Builder AddSystem_Internal(IEcsProcess system, AddParams settedAddParams)
             {
                 AddParams prms = _defaultAddParams;
@@ -261,34 +78,46 @@ namespace DCFApixels.DragonECS
                 }
                 prms = prms.Overwrite(settedAddParams);
 
-                if (system is IEcsModule module)//если система одновременно явялется и системой и модулем то за один Add будет вызван Add и AddModule
+                // Если система одновременно явялется и системой и модулем то сначала будет вызван IEcsModule
+                // При этом дается возможность ручной установки порядка импорта системы вызовом Add(this)
+                if (system is IEcsModule module && _systemModule != system)
                 {
-                    if (_moduleSystemsStack == null)
-                    {
-                        _moduleSystemsStack = new Stack<IEcsProcess>(4);
+                    IEcsProcess systemModulePrev = _systemModule;
+                    bool systemModuleAddedPrev = _systemModuleAdded;
+
+                    _systemModule = system;
+                    _systemModuleAdded = false;
+                    int importHeadIndex = _endIndex;
+                    AddModule_Internal(module, prms);
+                    if (_systemModuleAdded == false)
+                    { //Если система не была добавлена вручную, то она будет добавлена перед тем что было импортировано через IEcsModule
+                        InsertAfterNode_Internal(importHeadIndex, system, prms.layerName, prms.sortOrder, prms.isUnique);
                     }
 
-                    if (_moduleSystemsStack.Count <= 0 || system != _moduleSystemsStack.Peek())
-                    {
-                        _moduleSystemsStack.Push(system);
-                        AddModule_Internal(module, prms);
-                        _moduleSystemsStack.Pop();
-                        return this;
-                    }
+                    _systemModule = systemModulePrev;
+                    _systemModuleAdded = systemModuleAddedPrev;
+                    return this;
                 }
 
+                _systemModuleAdded = true;
                 AddNode_Internal(system, prms.layerName, prms.sortOrder, prms.isUnique);
                 return this;
             }
             private void AddNode_Internal(IEcsProcess system, string layer, int sortOrder, bool isUnique)
             {
+                InsertAfterNode_Internal(_endIndex, system, layer, sortOrder, isUnique);
+            }
+            int _DEBUG_COUNTER = 0;
+            private void InsertAfterNode_Internal(int insertAfterIndex, IEcsProcess system, string layer, int sortOrder, bool isUnique)
+            {
+                _DEBUG_COUNTER++;
                 SystemNode record = new SystemNode(system, layer, sortOrder, isUnique);
                 int newIndex;
                 if (_freeNodesCount <= 0)
                 {
                     if (_systemNodes.Length <= _systemNodesCount)
                     {
-                        Array.Resize(ref _systemNodes, _systemNodesCount << 1);
+                        Array.Resize(ref _systemNodes, _systemNodes.Length << 1);
                     }
                     newIndex = _systemNodesCount;
                     _systemNodes[newIndex] = record;
@@ -301,17 +130,20 @@ namespace DCFApixels.DragonECS
                 }
                 _systemNodesCount++;
 
+                _systemNodes[newIndex] = record;
                 if (_systemNodesCount == 1)
                 {
                     _startIndex = newIndex;
                 }
                 else
                 {
-                    _systemNodes[_endIndex].next = newIndex;
+                    _systemNodes[newIndex].next = _systemNodes[insertAfterIndex].next;
+                    _systemNodes[insertAfterIndex].next = newIndex;
                 }
-                _systemNodes[newIndex] = record;
-
-                _endIndex = newIndex;
+                if (insertAfterIndex == _endIndex)
+                {
+                    _endIndex = newIndex;
+                }
 
                 if (_layerLists.TryGetValue(layer, out LayerSystemsList list) == false)
                 {
@@ -329,6 +161,10 @@ namespace DCFApixels.DragonECS
             }
             private Builder AddModule_Internal(IEcsModule module, AddParams settedAddParams)
             {
+                if (settedAddParams.flags.IsNoImport())
+                {
+                    return this;
+                }
                 AddParams prms = _defaultAddParams;
                 if (module is IEcsDefaultAddParams overrideInterface)
                 {
@@ -383,7 +219,7 @@ namespace DCFApixels.DragonECS
                 }
                 Layers.MergeWith(other.Layers);
 
-                foreach (var otherRecord in other.SystemRecords)
+                foreach (ref readonly SystemNode otherRecord in new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex))
                 {
                     AddNode_Internal(otherRecord.system, otherRecord.layerName, otherRecord.sortOrder, otherRecord.isUnique);
                 }
@@ -445,6 +281,8 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 _buildBarker.Begin();
 #endif
+                var it = new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
+
                 LayerSystemsList basicLayerList;
                 if (_layerLists.TryGetValue(BASIC_LAYER, out basicLayerList) == false)
                 {
@@ -452,29 +290,28 @@ namespace DCFApixels.DragonECS
                     _layerLists.Add(BASIC_LAYER, basicLayerList);
                 }
 
+                //ERROR Уникальные системы ломают работу подсчета систем
                 HashSet<Type> uniqueSystemsSet = new HashSet<Type>();
 
                 int allSystemsLength = 0;
                 foreach (var item in _layerLists)
                 {
                     if (item.Key == BASIC_LAYER) { continue; }
-                    if (!Layers.Contains(item.Key))
-                    {
-                        basicLayerList.lasyInitSystemsCount += item.Value.lasyInitSystemsCount;
-                    }
-                    else
+                    if (Layers.Contains(item.Key))
                     {
                         item.Value.Init();
                         allSystemsLength += item.Value.lasyInitSystemsCount + 1;
+                    }
+                    else
+                    {
+                        basicLayerList.lasyInitSystemsCount += item.Value.lasyInitSystemsCount;
                     }
                 }
                 allSystemsLength += basicLayerList.lasyInitSystemsCount + 1;
                 basicLayerList.Init();
 
-                int enumIndex = _startIndex;
-                for (int i = 0, iMax = _systemNodesCount; i < iMax; i++)
+                foreach (ref readonly SystemNode node in it)
                 {
-                    ref var node = ref _systemNodes[enumIndex];
                     var list = _layerLists[node.layerName];
                     if (list.IsInit == false)
                     {
@@ -484,7 +321,6 @@ namespace DCFApixels.DragonECS
                     {
                         list.Add(node.system, node.sortOrder, node.isUnique);
                     }
-                    enumIndex = node.next;
                 }
 
 
@@ -846,30 +682,33 @@ namespace DCFApixels.DragonECS
             #region SerializableTemplate
             public EcsPipelineTemplate GenerateSerializableTemplate()
             {
-                Array.Sort(_systemNodes, 0, _systemNodesCount);
-                var records = SystemRecords;
+                var it = new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
                 EcsPipelineTemplate result = new EcsPipelineTemplate();
                 result.layers = new string[Layers.Count];
-                result.systems = new EcsPipelineTemplate.AddCommand[records.Length];
-                for (int i = 0; i < records.Length; i++)
+                result.systems = new EcsPipelineTemplate.AddCommand[it.Count];
+                int i = 0;
+                foreach (ref readonly SystemNode node in it)
                 {
-                    var r = records[i];
-                    result.systems[i] = new EcsPipelineTemplate.AddCommand(r.system, new AddParams(r.layerName, r.sortOrder, r.isUnique));
+                    result.systems[i++] = new EcsPipelineTemplate.AddCommand(node.system, new AddParams(node.layerName, node.sortOrder, node.isUnique));
                 }
-
                 return result;
             }
             #endregion
 
             #region SystemRecord
             [StructLayout(LayoutKind.Auto)]
-            private struct SystemNode
+            private struct SystemNode : ILinkedNext
             {
                 public readonly IEcsProcess system;
                 public readonly string layerName;
                 public readonly int sortOrder;
                 public readonly bool isUnique;
                 public int next;
+                public int Next
+                {
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    get { return next; }
+                }
                 public SystemNode(IEcsProcess system, string layerName, int sortOrder, bool isUnique, int next = -1)
                 {
                     this.system = system;
@@ -877,6 +716,10 @@ namespace DCFApixels.DragonECS
                     this.sortOrder = sortOrder;
                     this.isUnique = isUnique;
                     this.next = next;
+                }
+                public override string ToString()
+                {
+                    return this.AutoToString();
                 }
             }
             #endregion
@@ -1059,4 +902,197 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
+
+    #region AddParams
+    [Serializable]
+    [DataContract]
+    [StructLayout(LayoutKind.Auto)]
+    public struct AddParams : IEquatable<AddParams>
+    {
+        public static readonly AddParams Default = new AddParams();
+        [DataMember] public string layerName;
+        [DataMember] public int sortOrder;
+        [DataMember] public bool isUnique;
+        [DataMember] public AddParamsFlags flags;
+
+        #region Properties
+        public bool IsOverwriteLayerName
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return flags.IsOverwriteLayerName(); }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set { flags = value ? flags | AddParamsFlags.OverwriteLayerName : flags & ~AddParamsFlags.OverwriteLayerName; }
+        }
+        public bool IsOverwriteSortOrder
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return flags.IsOverwriteSortOrder(); }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set { flags = value ? flags | AddParamsFlags.OverwriteSortOrder : flags & ~AddParamsFlags.OverwriteSortOrder; }
+        }
+        public bool IsOverwriteIsUnique
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return flags.IsOverwriteIsUnique(); }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set { flags = value ? flags | AddParamsFlags.OverwriteIsUnique : flags & ~AddParamsFlags.OverwriteIsUnique; }
+        }
+        #endregion
+
+        #region Constructors
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public AddParams(string layerName)
+        {
+            this.layerName = layerName;
+            this.sortOrder = default;
+            this.isUnique = default;
+            flags = AddParamsFlags.OverwriteLayerName;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public AddParams(int sortOrder)
+        {
+            this.layerName = default;
+            this.sortOrder = sortOrder;
+            this.isUnique = default;
+            flags = AddParamsFlags.OverwriteSortOrder;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public AddParams(bool isUnique)
+        {
+            this.layerName = default;
+            this.sortOrder = default;
+            this.isUnique = isUnique;
+            flags = AddParamsFlags.OverwriteIsUnique;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public AddParams(string layerName, int sortOrder)
+        {
+            this.layerName = layerName;
+            this.sortOrder = sortOrder;
+            this.isUnique = default;
+            flags = AddParamsFlags.OverwriteLayerName | AddParamsFlags.OverwriteSortOrder;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public AddParams(string layerName, bool isUnique)
+        {
+            this.layerName = layerName;
+            this.sortOrder = default;
+            this.isUnique = isUnique;
+            flags = AddParamsFlags.OverwriteLayerName | AddParamsFlags.OverwriteIsUnique;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public AddParams(int sortOrder, bool isUnique)
+        {
+            this.layerName = default;
+            this.sortOrder = sortOrder;
+            this.isUnique = isUnique;
+            flags = AddParamsFlags.OverwriteSortOrder | AddParamsFlags.OverwriteIsUnique;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public AddParams(string layerName, int sortOrder, bool isUnique)
+        {
+            this.layerName = layerName;
+            this.sortOrder = sortOrder;
+            this.isUnique = isUnique;
+            flags = AddParamsFlags.OverwriteAll;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public AddParams(string layerName, int sortOrder, bool isUnique, AddParamsFlags overrideFlags)
+        {
+            this.layerName = layerName;
+            this.sortOrder = sortOrder;
+            this.isUnique = isUnique;
+            this.flags = overrideFlags;
+        }
+        #endregion
+
+        #region Overwrite
+        public AddParams Overwrite(AddParams other)
+        {
+            AddParams result = this;
+            if (other.flags.IsOverwriteLayerName())
+            {
+                result.layerName = other.layerName;
+            }
+            if (other.flags.IsOverwriteSortOrder())
+            {
+                result.sortOrder = other.sortOrder;
+            }
+            if (other.flags.IsOverwriteIsUnique())
+            {
+                result.isUnique = other.isUnique;
+            }
+            result.flags |= other.flags;
+            return result;
+        }
+        #endregion
+
+        #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(AddParams other)
+        {
+            return sortOrder == other.sortOrder &&
+                layerName == other.layerName &&
+                isUnique == other.isUnique;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override bool Equals(object obj)
+        {
+            return obj is AddParams && Equals((AddParams)obj);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(sortOrder, layerName, isUnique);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override string ToString()
+        {
+            return (flags.IsOverwriteLayerName() ? $"{layerName}, " : "") +
+                (flags.IsOverwriteSortOrder() ? $"{sortOrder}, " : "") +
+                (flags.IsOverwriteIsUnique() ? $"{isUnique}, " : "");
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator AddParams(string a) { return new AddParams(a); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator AddParams(int a) { return new AddParams(a); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator AddParams(bool a) { return new AddParams(a); }
+        #endregion
+    }
+
+    [Flags]
+    public enum AddParamsFlags : byte
+    {
+        None = 0,
+        OverwriteLayerName = 1 << 0,
+        OverwriteSortOrder = 1 << 1,
+        OverwriteIsUnique = 1 << 2,
+
+        /// <summary>
+        /// Ignore call IEcsModule.Import(Builder b)
+        /// </summary>
+        NoImport = 1 << 7,
+
+        OverwriteAll = OverwriteLayerName | OverwriteSortOrder | OverwriteIsUnique,
+
+
+    }
+    public static class AddParamsFlagsUtility
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsOverwriteLayerName(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteLayerName) == AddParamsFlags.OverwriteLayerName; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsOverwriteSortOrder(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteSortOrder) == AddParamsFlags.OverwriteSortOrder; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsOverwriteIsUnique(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteIsUnique) == AddParamsFlags.OverwriteIsUnique; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsOverwriteAll(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteAll) == AddParamsFlags.OverwriteAll; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNoImport(this AddParamsFlags flags) { return (flags & AddParamsFlags.NoImport) == AddParamsFlags.NoImport; }
+    }
+    #endregion
 }
