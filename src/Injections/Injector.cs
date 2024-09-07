@@ -41,7 +41,7 @@ namespace DCFApixels.DragonECS
                     bool hasNode = _nodes.ContainsKey(type);
                     if (hasNode == false && obj is IInjectionUnit unit)
                     {
-                        unit.OnInitInjectionBranch(new InjectionBranchIniter(this));
+                        unit.InitInjectionNode(new InjectionNodes(this));
                         hasNode = _nodes.ContainsKey(type);
                     }
                     if (hasNode)
