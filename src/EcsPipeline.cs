@@ -228,6 +228,15 @@ namespace DCFApixels.DragonECS
     {
         void Import(EcsPipeline.Builder b);
     }
+    public abstract class EcsModule : IEcsModule
+    {
+        public abstract void Import(EcsPipeline.Builder b);
+    }
+    public abstract class EcsModule<T> : IInjectionUnit
+    {
+        void IInjectionUnit.OnInitInjectionBranch(InjectionBranchIniter initer) { initer.AddNode<T>(); }
+        public EcsModule() { if (GetType() != typeof(T)) { Throw.UndefinedException(); } }
+    }
 
     #region Extensions
     public static partial class EcsPipelineExtensions
