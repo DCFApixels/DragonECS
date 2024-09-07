@@ -689,7 +689,8 @@ namespace DCFApixels.DragonECS
                 int i = 0;
                 foreach (ref readonly SystemNode node in it)
                 {
-                    result.systems[i++] = new EcsPipelineTemplate.AddCommand(node.system, new AddParams(node.layerName, node.sortOrder, node.isUnique));
+                    var prms = new AddParams(node.layerName, node.sortOrder, node.isUnique, AddParamsFlags.OverwriteAll | AddParamsFlags.NoImport);
+                    result.systems[i++] = new EcsPipelineTemplate.AddCommand(node.system, prms);
                 }
                 return result;
             }
