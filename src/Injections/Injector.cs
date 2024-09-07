@@ -51,6 +51,11 @@ namespace DCFApixels.DragonECS
                     }
                     else
                     {
+                        //TODO переработать это исключение
+                        // идея следующая, в режиме дебага с помощью рефлекшена собрать информацию о системах в которых есть IEcsInject, собрать все типы которые принимают системы,
+                        // потом при инициирующих инъекциях проверить что во все собранные типы были заинжектены. Если нет, то только тогда бросать исключение.
+                        // Исключения можно заранее определять и собирать, а бросать на моменте. Например тут создать исключение, и если инхекции небыло то бросить его.
+                        // Дополнительно обернуть все в #if DEBUG
                         throw new EcsInjectionException($"To create an injection branch, no injection node of {type.Name} was found. To create a node, use the AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
                     }
                 }
