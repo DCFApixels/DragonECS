@@ -261,10 +261,8 @@ namespace DCFApixels.DragonECS.Internal
         #endregion
 
         #region Enumerable
-        public Enumerator GetEnumerator()
-        {
-            return new Enumerator(_dense, 0, _usedCount);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Enumerator GetEnumerator() { return new Enumerator(_dense, 0, _usedCount); }
         IEnumerator<int> IEnumerable<int>.GetEnumerator() { return GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         public struct Enumerator : IEnumerator<int>
@@ -272,17 +270,25 @@ namespace DCFApixels.DragonECS.Internal
             private readonly int[] _dense;
             private readonly int _count;
             private int _index;
-            public int Current => _dense[_index];
-            object IEnumerator.Current => Current;
+            public int Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get { return _dense[_index]; }
+            }
+            object IEnumerator.Current { get { return Current; } }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator(int[] dense, int startIndex, int count)
             {
                 _dense = dense;
                 _count = startIndex + count;
                 _index = startIndex - 1;
             }
-            public bool MoveNext() => ++_index < _count;
-            public void Dispose() { }
-            public void Reset() => _index = -1;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext() { return ++_index < _count; }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            void IDisposable.Dispose() { }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Reset() { _index = -1; }
         }
         #endregion
 
@@ -303,19 +309,15 @@ namespace DCFApixels.DragonECS.Internal
         private static class ThrowHalper
         {
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsAlreadyInUse(int id) => throw new ArgumentException($"Id {id} is already in use.");
+            public static void ThrowIsAlreadyInUse(int id) { throw new ArgumentException($"Id {id} is already in use."); }
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsHasBeenReserved(int id) => throw new ArgumentException($"Id {id} has been reserved.");
-
+            public static void ThrowIsHasBeenReserved(int id) { throw new ArgumentException($"Id {id} has been reserved."); }
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsNotUsed(int id) => throw new ArgumentException($"Id {id} is not used.");
-
+            public static void ThrowIsNotUsed(int id) { throw new ArgumentException($"Id {id} is not used."); }
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsNotAvailable(int id) => throw new ArgumentException($"Id {id} is not available.");
-
+            public static void ThrowIsNotAvailable(int id) { throw new ArgumentException($"Id {id} is not available."); }
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsNullID(int id) => throw new ArgumentException($"Id {id} cannot be released because it is used as a null id.");
-
+            public static void ThrowIsNullID(int id) { throw new ArgumentException($"Id {id} cannot be released because it is used as a null id."); }
             [MethodImpl(MethodImplOptions.NoInlining)]
             public static void UndefinedException() { throw new Exception(); }
         }

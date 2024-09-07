@@ -55,10 +55,10 @@ namespace DCFApixels.DragonECS.Internal
             return CollectionUtility.AutoToString(EnumerableInt.Range(0, Length).Select(i => ptr[i]), "ua");
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(ptr, Length);
+        public Enumerator GetEnumerator() { return new Enumerator(ptr, Length); }
         public struct Enumerator : IEnumerator<T>
         {
             private readonly T* _ptr;
@@ -74,15 +74,14 @@ namespace DCFApixels.DragonECS.Internal
             public T Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _ptr[_index];
+                get { return _ptr[_index]; }
             }
-            object IEnumerator.Current => Current;
+            object IEnumerator.Current { get { return Current; } }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() => ++_index < _length;
+            public bool MoveNext() { return ++_index < _length; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Reset() { }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose() { }
+            void IDisposable.Dispose() { }
+            void IEnumerator.Reset() { throw new NotSupportedException(); }
         }
 
         internal class DebuggerProxy

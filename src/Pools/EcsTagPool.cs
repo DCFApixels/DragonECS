@@ -270,8 +270,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IEnumerator - IntelliSense hack
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => throw new NotImplementedException();
-        IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() { throw new NotImplementedException(); }
+        IEnumerator IEnumerable.GetEnumerator() { throw new NotImplementedException(); }
         #endregion
 
         #region MarkersConverter

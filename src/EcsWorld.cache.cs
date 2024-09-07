@@ -8,7 +8,7 @@ namespace DCFApixels.DragonECS
             where T : IEcsPoolImplementation, new()
         {
             public readonly T instance;
-            public PoolCache(T instance) => this.instance = instance;
+            public PoolCache(T instance) { this.instance = instance; }
             void IEcsWorldComponent<PoolCache<T>>.Init(ref PoolCache<T> component, EcsWorld world)
             {
                 component = new PoolCache<T>(world.CreatePool<T>());
@@ -22,7 +22,7 @@ namespace DCFApixels.DragonECS
             where T : EcsAspect, new()
         {
             public readonly T instance;
-            public AspectCache(T instance) => this.instance = instance;
+            public AspectCache(T instance) { this.instance = instance; }
             void IEcsWorldComponent<AspectCache<T>>.Init(ref AspectCache<T> component, EcsWorld world)
             {
                 component = new AspectCache<T>(EcsAspect.Builder.New<T>(world));
@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS
             where T : EcsQueryExecutor, new()
         {
             public readonly T instance;
-            public ExeccutorCache(T instance) => this.instance = instance;
+            public ExeccutorCache(T instance) { this.instance = instance; }
             void IEcsWorldComponent<ExeccutorCache<T>>.Init(ref ExeccutorCache<T> component, EcsWorld world)
             {
                 T instance = new T();

@@ -10,9 +10,9 @@ namespace DCFApixels.DragonECS
     public struct EcsWorldCmp<T> where T : struct
     {
         private short _worldID;
-        public EcsWorldCmp(short worldID) => _worldID = worldID;
-        public EcsWorld World => EcsWorld.GetWorld(_worldID);
-        public ref T Value => ref EcsWorld.GetData<T>(_worldID);
+        public EcsWorldCmp(short worldID) { _worldID = worldID; }
+        public EcsWorld World { get { return EcsWorld.GetWorld(_worldID); } }
+        public ref T Value { get { return ref EcsWorld.GetData<T>(_worldID); } }
     }
     public partial class EcsWorld
     {

@@ -32,15 +32,15 @@ namespace DCFApixels.DragonECS.Internal
         #region Properties
         public TValue this[int keyX, int keyY]
         {
-            get => _entries[FindEntry((keyX << 16) | keyY)].value;
-            set => Insert(keyX + (keyY << 16), value);
+            get { return _entries[FindEntry((keyX << 16) | keyY)].value; }
+            set { Insert(keyX + (keyY << 16), value); }
         }
         public TValue this[int key]
         {
-            get => _entries[FindEntry(key)].value;
-            set => Insert(key, value);
+            get { return _entries[FindEntry(key)].value; }
+            set { Insert(key, value); }
         }
-        public int Count => _count;
+        public int Count { get { return _count; } }
         #endregion
 
         #region Constructors
@@ -57,22 +57,21 @@ namespace DCFApixels.DragonECS.Internal
 
         #region Add/Contains/Remove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(int keyX, int keyY, TValue value) => Add((keyX << 16) | keyY, value);
+        public void Add(int keyX, int keyY, TValue value) { Add((keyX << 16) | keyY, value); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(int key, TValue value)
         {
 #if DEBUG
-            if (Contains(key))
-                throw new ArgumentException("Contains(hashKey) is true");
+            if (Contains(key)) { throw new ArgumentException("Contains(hashKey) is true"); }
 #endif
             Insert(key, value);
         }
 
-        public bool Contains(int keyX, int keyY) => FindEntry((keyX << 16) | keyY) >= 0;
-        public bool Contains(int key) => FindEntry(key) >= 0;
+        public bool Contains(int keyX, int keyY) { return FindEntry((keyX << 16) | keyY) >= 0; }
+        public bool Contains(int key) { return FindEntry(key) >= 0; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Remove(int keyX, int keyY) => Remove((keyX << 16) | keyY);
+        public bool Remove(int keyX, int keyY) { return Remove((keyX << 16) | keyY); }
         public bool Remove(int key)
         {
             int bucket = key & _modBitMask;

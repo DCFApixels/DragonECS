@@ -429,7 +429,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset() { _index = -1; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose() { }
+            void IDisposable.Dispose() { }
         }
         #endregion
 

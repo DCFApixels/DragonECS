@@ -460,7 +460,7 @@ namespace DCFApixels.DragonECS
                 return true;
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public override int GetHashCode() => hash;
+            public override int GetHashCode() { return hash; }
             #endregion
         }
 

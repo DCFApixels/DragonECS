@@ -11,52 +11,6 @@ namespace DCFApixels.DragonECS.Internal
     {
         int Next { get; }
     }
-    internal readonly struct LinkedIndexesIterator<T> : IEnumerable<int>
-        where T : ILinkedNext
-    {
-        private readonly T[] _array;
-        private readonly int _count;
-        private readonly int _startIndex;
-        public LinkedIndexesIterator(T[] array, int count, int startIndex)
-        {
-            _array = array;
-            _count = count;
-            _startIndex = startIndex;
-        }
-        public Enumerator GetEnumerator()
-        {
-            return new Enumerator(_array, _count, _startIndex);
-        }
-        IEnumerator<int> IEnumerable<int>.GetEnumerator() { return GetEnumerator(); }
-        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
-        public struct Enumerator : IEnumerator<int>
-        {
-            private readonly T[] _array;
-            private readonly int _count;
-            private int _index;
-            private int _counter;
-            public Enumerator(T[] array, int count, int index)
-            {
-                _array = array;
-                _count = count;
-                _index = index;
-                _counter = 0;
-            }
-            public int Current { get { return _index; } }
-            object IEnumerator.Current { get { return Current; } }
-            public bool MoveNext()
-            {
-                if (++_counter > _count) { return false; }
-                if (_counter > 1)
-                {
-                    _index = _array[_index].Next;
-                }
-                return true;
-            }
-            public void Dispose() { }
-            public void Reset() { }
-        }
-    }
     internal readonly struct LinkedListIterator<T> : IEnumerable<T>
         where T : ILinkedNext
     {
@@ -88,7 +42,11 @@ namespace DCFApixels.DragonECS.Internal
                 _index = index;
                 _counter = 0;
             }
-            public ref readonly T Current { get { return ref _array[_index]; } }
+            public ref T Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get { return ref _array[_index]; }
+            }
             T IEnumerator<T>.Current { get { return _array[_index]; } }
             object IEnumerator.Current { get { return Current; } }
             public bool MoveNext()
@@ -100,10 +58,12 @@ namespace DCFApixels.DragonECS.Internal
                 }
                 return true;
             }
-            public void Dispose() { }
-            public void Reset() { throw new NotSupportedException(); }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            void IDisposable.Dispose() { }
+            void IEnumerator.Reset() { throw new NotSupportedException(); }
         }
     }
+
     internal static class ArrayUtility
     {
         private static int GetHighBitNumber(uint bits)
@@ -183,12 +143,12 @@ namespace DCFApixels.DragonECS.Internal
             this.start = start;
             this.length = length;
         }
-        public static EnumerableInt Range(int start, int length) => new EnumerableInt(start, length);
-        public static EnumerableInt StartEnd(int start, int end) => new EnumerableInt(start, end - start);
-        IEnumerator<int> IEnumerable<int>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public static EnumerableInt Range(int start, int length) { return new EnumerableInt(start, length); }
+        public static EnumerableInt StartEnd(int start, int end) { return new EnumerableInt(start, end - start); }
+        IEnumerator<int> IEnumerable<int>.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(start, start + length);
+        public Enumerator GetEnumerator() { return new Enumerator(start, start + length); }
         public struct Enumerator : IEnumerator<int>
         {
             private readonly int _max;
@@ -202,16 +162,16 @@ namespace DCFApixels.DragonECS.Internal
             public int Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _current;
+                get { return _current; }
             }
-            object IEnumerator.Current => Current;
+            object IEnumerator.Current { get { return Current; } }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() => ++_current < _max;
+            public bool MoveNext() { return ++_current < _max; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Reset() { }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose() { }
+            void IDisposable.Dispose() { }
+            void IEnumerator.Reset() { throw new NotSupportedException(); }
+
         }
     }
     internal static unsafe class UnmanagedArrayUtility

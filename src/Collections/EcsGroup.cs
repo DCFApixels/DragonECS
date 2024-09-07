@@ -229,8 +229,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _isReleased; }
         }
-
-        bool ICollection<int>.IsReadOnly => throw new NotImplementedException();
+        bool ICollection<int>.IsReadOnly { get { return false; } }
 
         public int this[int index]
         {
@@ -473,7 +472,7 @@ namespace DCFApixels.DragonECS
         }
         /// <summary>as Union sets</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UnionWith(EcsReadonlyGroup group) => UnionWith(group.GetSource_Internal());
+        public void UnionWith(EcsReadonlyGroup group) { UnionWith(group.GetSource_Internal()); }
         /// <summary>as Union sets</summary>
         public void UnionWith(EcsSpan span)
         {
@@ -1226,19 +1225,14 @@ namespace DCFApixels.DragonECS
             public int Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _dense[_index];
+                get { return _dense[_index]; }
             }
             object IEnumerator.Current { get { return Current; } }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                // проверка с учтом что отсчет начинается с индекса 1 
-                return --_index > 0;
-            }
+            public bool MoveNext() { return --_index > 0; }  // проверка с учтом что отсчет начинается с индекса 1 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose() { }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Reset() { }
+            void IDisposable.Dispose() { }
+            void IEnumerator.Reset() { throw new NotSupportedException(); }
         }
         #endregion
 

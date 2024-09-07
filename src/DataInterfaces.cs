@@ -62,9 +62,9 @@ namespace DCFApixels.DragonECS
         private sealed class DummyHandler : IEcsComponentLifecycle<T>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Enable(ref T component) => component = default;
+            public void Enable(ref T component) { component = default; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Disable(ref T component) => component = default;
+            public void Disable(ref T component) { component = default; }
         }
     }
     #endregion
@@ -95,7 +95,7 @@ namespace DCFApixels.DragonECS
         private sealed class DummyHandler : IEcsComponentCopy<T>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Copy(ref T from, ref T to) => to = from;
+            public void Copy(ref T from, ref T to) { to = from; }
         }
     }
     #endregion

@@ -512,9 +512,9 @@ namespace DCFApixels.DragonECS.Internal
             byte result = ToByte(bitsString);
             return *(bool*)&result;
         }
-        public static short ToShort(string bitsString) => (short)ToUShort(bitsString);
-        public static int ToInt(string bitsString) => (int)ToUInt(bitsString);
-        public static long ToLong(string bitsString) => (long)ToULong(bitsString);
+        public static short ToShort(string bitsString) { return (short)ToUShort(bitsString); }
+        public static int ToInt(string bitsString) { return (int)ToUInt(bitsString); }
+        public static long ToLong(string bitsString) { return (long)ToULong(bitsString); }
         #endregion
 
         #region XorShift
@@ -625,249 +625,18 @@ namespace DCFApixels.DragonECS.Internal
         #endregion
     }
 
-    #region FindBitsResult removed
-    /*
-    public unsafe struct FindBitsResult8 : IEnumerable<byte>
-    {
-        private fixed byte _numbers[8];
-        public readonly byte Count;
-        public int this[int index]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _numbers[index];
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsResult8(uint bits)
-        {
-            unchecked
-            {
-                Count = (byte)CountBits(bits);
-                for (int i = 0; i < Count; i++)
-                {
-                    int number = GetHighBitNumber(bits);
-                    _numbers[i] = (byte)number;
-                    bits ^= 1u << number;
-                }
-            }
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ReadOnlySpan<byte> CreateSpanInternal(FindBitsResult8 a)
-        {
-            return new ReadOnlySpan<byte>(a._numbers, a.Count);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ReadOnlySpan<byte> ToSpan()
-        {
-            return CreateSpanInternal(this);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static FindBitsResultEnumerator GetEnumeratorInternal(FindBitsResult8 a)
-        {
-            return new FindBitsResultEnumerator(a._numbers, a.Count);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsResultEnumerator GetEnumerator()
-        {
-            return GetEnumeratorInternal(this);
-        }
-        IEnumerator<byte> IEnumerable<byte>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-    
-    public unsafe struct FindBitsResult16 : IEnumerable<byte>
-    {
-        private fixed byte _numbers[16];
-        public readonly byte Count;
-        public int this[int index]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _numbers[index];
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsResult16(uint bits)
-        {
-            unchecked
-            {
-                Count = (byte)CountBits(bits);
-                for (int i = 0; i < Count; i++)
-                {
-                    int number = GetHighBitNumber(bits);
-                    _numbers[i] = (byte)number;
-                    bits ^= 1u << number;
-                }
-            }
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ReadOnlySpan<byte> CreateSpanInternal(FindBitsResult16 a)
-        {
-            return new ReadOnlySpan<byte>(a._numbers, a.Count);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ReadOnlySpan<byte> ToSpan()
-        {
-            return CreateSpanInternal(this);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static FindBitsResultEnumerator GetEnumeratorInternal(FindBitsResult16 a)
-        {
-            return new FindBitsResultEnumerator(a._numbers, a.Count);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsResultEnumerator GetEnumerator()
-        {
-            return GetEnumeratorInternal(this);
-        }
-        IEnumerator<byte> IEnumerable<byte>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-    
-    public unsafe struct FindBitsResult32 : IEnumerable<byte>
-    {
-        public fixed byte _numbers[32];
-        public readonly byte Count;
-        public int this[int index]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _numbers[index];
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsResult32(uint bits)
-        {
-            unchecked
-            {
-                Count = (byte)CountBits(bits);
-                for (int i = 0; i < Count; i++)
-                {
-                    int number = GetHighBitNumber(bits);
-                    _numbers[i] = (byte)number;
-                    bits ^= 1u << number;
-                }
-            }
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ReadOnlySpan<byte> CreateSpanInternal(FindBitsResult32 a)
-        {
-            return new ReadOnlySpan<byte>(a._numbers, a.Count);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ReadOnlySpan<byte> ToSpan()
-        {
-            return CreateSpanInternal(this);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static FindBitsResultEnumerator GetEnumeratorInternal(FindBitsResult32 a)
-        {
-            return new FindBitsResultEnumerator(a._numbers, a.Count);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsResultEnumerator GetEnumerator()
-        {
-            return GetEnumeratorInternal(this);
-        }
-        IEnumerator<byte> IEnumerable<byte>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-    
-    public unsafe struct FindBitsResult64 : IEnumerable<byte>
-    {
-        private fixed byte _numbers[64];
-        public readonly byte Count;
-        public int this[int index]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _numbers[index];
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsResult64(ulong bits)
-        {
-            unchecked
-            {
-                Count = (byte)CountBits(bits);
-                for (int i = 0; i < Count; i++)
-                {
-                    int number = GetHighBitNumber(bits);
-                    _numbers[i] = (byte)number;
-                    bits ^= 1u << number;
-                }
-            }
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ReadOnlySpan<byte> CreateSpanInternal(FindBitsResult64 a)
-        {
-            return new ReadOnlySpan<byte>(a._numbers, a.Count);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ReadOnlySpan<byte> ToSpan()
-        {
-            return CreateSpanInternal(this);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static FindBitsResultEnumerator GetEnumeratorInternal(FindBitsResult64 a)
-        {
-            return new FindBitsResultEnumerator(a._numbers, a.Count);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsResultEnumerator GetEnumerator()
-        {
-            return GetEnumeratorInternal(this);
-        }
-        IEnumerator<byte> IEnumerable<byte>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    public unsafe struct FindBitsResultEnumerator : IEnumerator<byte>
-    {
-        private byte* _numbers;
-        private byte _count;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsResultEnumerator(byte* numbers, byte count)
-        {
-            _numbers = numbers;
-            _count = count;
-        }
-        public byte Current
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return *_numbers;
-            }
-        }
-        object IEnumerator.Current => Current;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool MoveNext()
-        {
-            return _count-- > 0;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose() { }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Reset() { }
-    }
-    */
-    #endregion
-
     #region FindBitsIterator
     public struct FindBitsIterator8 : IEnumerable<int>
     {
         private Enumerator _enumerator;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsIterator8(sbyte bits)
-        {
-            _enumerator = new Enumerator((byte)bits);
-        }
+        public FindBitsIterator8(sbyte bits) { _enumerator = new Enumerator((byte)bits); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsIterator8(byte bits)
-        {
-            _enumerator = new Enumerator(bits);
-        }
+        public FindBitsIterator8(byte bits) { _enumerator = new Enumerator(bits); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator()
-        {
-            return _enumerator;
-        }
-        IEnumerator<int> IEnumerable<int>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public Enumerator GetEnumerator() { return _enumerator; }
+        IEnumerator<int> IEnumerable<int>.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         public struct Enumerator : IEnumerator<int>
         {
             private uint _bits;
@@ -888,16 +657,12 @@ namespace DCFApixels.DragonECS.Internal
                     return number;
                 }
             }
-            object IEnumerator.Current => Current;
+            object IEnumerator.Current { get { return Current; } }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                return _count-- > 0;
-            }
+            public bool MoveNext() { return _count-- > 0; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            void IEnumerator.Reset() { }
+            void IEnumerator.Reset() { throw new NotSupportedException(); }
         }
     }
 
@@ -905,22 +670,13 @@ namespace DCFApixels.DragonECS.Internal
     {
         private Enumerator _enumerator;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsIterator16(short bits)
-        {
-            _enumerator = new Enumerator((ushort)bits);
-        }
+        public FindBitsIterator16(short bits) { _enumerator = new Enumerator((ushort)bits); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsIterator16(ushort bits)
-        {
-            _enumerator = new Enumerator(bits);
-        }
+        public FindBitsIterator16(ushort bits) { _enumerator = new Enumerator(bits); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator()
-        {
-            return _enumerator;
-        }
-        IEnumerator<int> IEnumerable<int>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public Enumerator GetEnumerator() { return _enumerator; }
+        IEnumerator<int> IEnumerable<int>.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         public struct Enumerator : IEnumerator<int>
         {
             private uint _bits;
@@ -941,16 +697,12 @@ namespace DCFApixels.DragonECS.Internal
                     return number;
                 }
             }
-            object IEnumerator.Current => Current;
+            object IEnumerator.Current { get { return Current; } }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                return _count-- > 0;
-            }
+            public bool MoveNext() { return _count-- > 0; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            void IEnumerator.Reset() { }
+            void IEnumerator.Reset() { throw new NotSupportedException(); }
         }
     }
 
@@ -958,22 +710,13 @@ namespace DCFApixels.DragonECS.Internal
     {
         private Enumerator _enumerator;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsIterator32(int bits)
-        {
-            _enumerator = new Enumerator((uint)bits);
-        }
+        public FindBitsIterator32(int bits) { _enumerator = new Enumerator((uint)bits); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsIterator32(uint bits)
-        {
-            _enumerator = new Enumerator(bits);
-        }
+        public FindBitsIterator32(uint bits) { _enumerator = new Enumerator(bits); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator()
-        {
-            return _enumerator;
-        }
-        IEnumerator<int> IEnumerable<int>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public Enumerator GetEnumerator() { return _enumerator; }
+        IEnumerator<int> IEnumerable<int>.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         public struct Enumerator : IEnumerator<int>
         {
             private uint _bits;
@@ -994,16 +737,12 @@ namespace DCFApixels.DragonECS.Internal
                     return number;
                 }
             }
-            object IEnumerator.Current => Current;
+            object IEnumerator.Current { get { return Current; } }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                return _count-- > 0;
-            }
+            public bool MoveNext() { return _count-- > 0; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            void IEnumerator.Reset() { }
+            void IEnumerator.Reset() { throw new NotSupportedException(); }
         }
     }
 
@@ -1011,22 +750,13 @@ namespace DCFApixels.DragonECS.Internal
     {
         private Enumerator _enumerator;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsIterator64(long bits)
-        {
-            _enumerator = new Enumerator((ulong)bits);
-        }
+        public FindBitsIterator64(long bits) { _enumerator = new Enumerator((ulong)bits); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FindBitsIterator64(ulong bits)
-        {
-            _enumerator = new Enumerator(bits);
-        }
+        public FindBitsIterator64(ulong bits) { _enumerator = new Enumerator(bits); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator()
-        {
-            return _enumerator;
-        }
-        IEnumerator<int> IEnumerable<int>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public Enumerator GetEnumerator() { return _enumerator; }
+        IEnumerator<int> IEnumerable<int>.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         public struct Enumerator : IEnumerator<int>
         {
             private ulong _bits;
@@ -1047,16 +777,12 @@ namespace DCFApixels.DragonECS.Internal
                     return number;
                 }
             }
-            object IEnumerator.Current => Current;
+            object IEnumerator.Current { get { return Current; } }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                return _count-- > 0;
-            }
+            public bool MoveNext() { return _count-- > 0; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            void IEnumerator.Reset() { }
+            void IEnumerator.Reset() { throw new NotSupportedException(); }
         }
     }
     #endregion
