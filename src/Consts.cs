@@ -1,6 +1,6 @@
 ﻿namespace DCFApixels.DragonECS
 {
-    public class EcsConsts
+    public static class EcsConsts
     {
         public const string AUTHOR = "DCFApixels";
         public const string FRAMEWORK_NAME = "DragonECS";
@@ -33,9 +33,10 @@
 
         public const string COMPONENTS_GROUP = "Components";
         public const string SYSTEMS_GROUP = "Systems";
+    }
 
-        /// defs
-
+    public static class EcsDefines
+    {
         public const bool DISABLE_POOLS_EVENTS =
 #if DISABLE_POOLS_EVENTS
             true;
