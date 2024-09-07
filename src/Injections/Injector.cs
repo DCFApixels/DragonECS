@@ -5,28 +5,6 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    [MetaName(nameof(Inject))]
-    [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DI_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "The interface of the dependency injection process.")]
-    public interface IEcsInject<T> : IEcsProcess
-    {
-        void Inject(T obj);
-    }
-    [MetaName(nameof(OnInitInjectionComplete))]
-    [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DI_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "The process interface that signals the completion of injection during pipeline initialization via the EcsPipeline.Init() method.")]
-    public interface IOnInitInjectionComplete : IEcsProcess
-    {
-        void OnInitInjectionComplete();
-    }
-
-    public interface IInjector
-    {
-        void Inject<T>(T obj);
-        T Extract<T>();
-    }
     public class Injector : IInjector
     {
         private EcsPipeline _pipeline;
@@ -175,7 +153,7 @@ namespace DCFApixels.DragonECS
             return true;
         }
 
-        public class Builder
+        public class Builder : IInjector
         {
             private EcsPipeline.Builder _source;
             private Injector _instance;
@@ -193,6 +171,21 @@ namespace DCFApixels.DragonECS
             public EcsPipeline.Builder Inject<T>(T obj)
             {
                 _initInjections.Add(new InitInject<T>(obj));
+                return _source;
+            }
+            public EcsPipeline.Builder Extract<T>(ref T obj)
+            {
+                Type type = typeof(T);
+                for (int i = _initInjections.Count - 1; i >= 0; i--)
+                {
+                    var item = _initInjections[i];
+                    if (item.Type.IsAssignableFrom(type))
+                    {
+                        obj = (T)item.Raw;
+                        return _source;
+                    }
+                }
+                Throw.UndefinedException();
                 return _source;
             }
             public Injector Build(EcsPipeline pipeline)
@@ -216,13 +209,25 @@ namespace DCFApixels.DragonECS
                 }
             }
 
+            void IInjector.Inject<T>(T obj) { Inject(obj); }
+            T IInjector.Extract<T>()
+            {
+                T result = default;
+                Extract(ref result);
+                return result;
+            }
+
             private abstract class InitInjectBase
             {
+                public abstract Type Type { get; }
+                public abstract object Raw { get; }
                 public abstract void InjectTo(Injector instance);
             }
             private sealed class InitInject<T> : InitInjectBase
             {
                 private T _injectedData;
+                public override Type Type { get { return typeof(T); } }
+                public override object Raw { get { return _injectedData; } }
                 public InitInject(T injectedData)
                 {
                     _injectedData = injectedData;
@@ -236,4 +241,3 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 }
-
