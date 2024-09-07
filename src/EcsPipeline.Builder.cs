@@ -161,25 +161,24 @@ namespace DCFApixels.DragonECS
             }
             private Builder AddModule_Internal(IEcsModule module, AddParams settedAddParams)
             {
-                if (settedAddParams.flags.IsNoImport())
+                if (settedAddParams.flags.IsNoImport() == false)
                 {
-                    return this;
-                }
-                AddParams prms = _defaultAddParams;
-                if (module is IEcsDefaultAddParams overrideInterface)
-                {
-                    prms = prms.Overwrite(overrideInterface.AddParams);
-                }
-                var oldDefaultAddParams = _defaultAddParams;
-                _defaultAddParams = prms.Overwrite(settedAddParams);
+                    AddParams prms = _defaultAddParams;
+                    if (module is IEcsDefaultAddParams overrideInterface)
+                    {
+                        prms = prms.Overwrite(overrideInterface.AddParams);
+                    }
+                    var oldDefaultAddParams = _defaultAddParams;
+                    _defaultAddParams = prms.Overwrite(settedAddParams);
 
-                module.Import(this);
-                if(module is IInjectionUnit injectionUnit)
+                    module.Import(this);
+                    _defaultAddParams = oldDefaultAddParams;
+                }
+
+                if (module is IInjectionUnit injectionUnit)
                 {
                     Injector.Inject(injectionUnit);
                 }
-
-                _defaultAddParams = oldDefaultAddParams;
                 return this;
             }
             #endregion
