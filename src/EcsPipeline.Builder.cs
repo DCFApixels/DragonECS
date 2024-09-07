@@ -174,6 +174,10 @@ namespace DCFApixels.DragonECS
                 _defaultAddParams = prms.Overwrite(settedAddParams);
 
                 module.Import(this);
+                if(module is IInjectionUnit injectionUnit)
+                {
+                    Injector.Inject(injectionUnit);
+                }
 
                 _defaultAddParams = oldDefaultAddParams;
                 return this;
