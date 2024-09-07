@@ -524,6 +524,7 @@ namespace DCFApixels.DragonECS
                 }
                 public void MergeWith(IReadOnlyList<string> other)
                 {
+                    //TODO добавить оишбку если порядок совпадающих слоев не совпадает
                     HashSet<string> seen = new HashSet<string>();
                     List<string> result = new List<string>();
 
