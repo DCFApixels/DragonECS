@@ -25,10 +25,10 @@
     {
         void InjectTo(Injector inj);
     }
-    public readonly struct InjectionNodes
+    public readonly struct InjectionGraph
     {
         private readonly Injector _injector;
-        internal InjectionNodes(Injector injector)
+        internal InjectionGraph(Injector injector)
         {
             _injector = injector;
         }
@@ -39,6 +39,6 @@
     }
     public interface IInjectionUnit
     {
-        void InitInjectionNode(InjectionNodes graph);
+        void InitInjectionNode(InjectionGraph graph);
     }
 }

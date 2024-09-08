@@ -235,7 +235,7 @@ namespace DCFApixels.DragonECS
     }
     public abstract class EcsModule<T> : IInjectionUnit
     {
-        void IInjectionUnit.InitInjectionNode(InjectionNodes nodes) { nodes.AddNode<T>(); }
+        void IInjectionUnit.InitInjectionNode(InjectionGraph nodes) { nodes.AddNode<T>(); }
         public EcsModule() { if (GetType() != typeof(T)) { Throw.UndefinedException(); } }
     }
     #endregion

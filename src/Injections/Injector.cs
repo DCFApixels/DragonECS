@@ -40,7 +40,7 @@ namespace DCFApixels.DragonECS
                 bool hasNode = _nodes.ContainsKey(objType);
                 if (hasNode == false && obj is IInjectionUnit unit)
                 {
-                    unit.InitInjectionNode(new InjectionNodes(this));
+                    unit.InitInjectionNode(new InjectionGraph(this));
                     hasNode = _nodes.ContainsKey(objType);
                 }
 

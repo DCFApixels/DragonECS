@@ -11,7 +11,7 @@ namespace DCFApixels.DragonECS
     {
         public EcsDefaultWorld(EcsWorldConfig config, short worldID = -1) : base(config, worldID) { }
         public EcsDefaultWorld(IConfigContainer configs = null, short worldID = -1) : base(configs, worldID) { }
-        void IInjectionUnit.InitInjectionNode(InjectionNodes nodes) { nodes.AddNode(this); }
+        void IInjectionUnit.InitInjectionNode(InjectionGraph nodes) { nodes.AddNode(this); }
     }
     /// <summary> EcsWrold for store event entities. </summary>
     [MetaColor(MetaColor.DragonRose)]
@@ -22,6 +22,6 @@ namespace DCFApixels.DragonECS
     {
         public EcsEventWorld(EcsWorldConfig config, short worldID = -1) : base(config, worldID) { }
         public EcsEventWorld(IConfigContainer configs = null, short worldID = -1) : base(configs, worldID) { }
-        void IInjectionUnit.InitInjectionNode(InjectionNodes nodes) { nodes.AddNode(this); }
+        void IInjectionUnit.InitInjectionNode(InjectionGraph nodes) { nodes.AddNode(this); }
     }
 }
