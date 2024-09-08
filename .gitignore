@@ -92,3 +92,6 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+
+[Bb]in.meta
+[Oo]bj.meta
