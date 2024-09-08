@@ -7,20 +7,18 @@ namespace DCFApixels.DragonECS.Internal
     {
         private readonly Injector _source;
         private readonly Type _type;
-        private InjectionNodeBase[] _nodes = new InjectionNodeBase[2];
+        private InjectionNodeBase[] _nodes = new InjectionNodeBase[4];
         private int _nodesCount = 0;
-
-        private object _currentInjectedDependency;
 
         public Type Type
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _type; }
         }
-        public object CurrentInjectedDependency
+        public ReadOnlySpan<InjectionNodeBase> Nodes
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _currentInjectedDependency; }
+            get { return new ReadOnlySpan<InjectionNodeBase>(_nodes, 0, _nodesCount); }
         }
         public InjectionBranch(Injector source, Type type)
         {
@@ -29,7 +27,6 @@ namespace DCFApixels.DragonECS.Internal
         }
         public void Inject(object obj)
         {
-            _currentInjectedDependency = obj;
             for (int i = 0; i < _nodesCount; i++)
             {
                 _nodes[i].Inject(obj);

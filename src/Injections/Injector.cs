@@ -1,6 +1,7 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -11,6 +12,10 @@ namespace DCFApixels.DragonECS
         private Dictionary<Type, InjectionBranch> _branches = new Dictionary<Type, InjectionBranch>(32);
         private Dictionary<Type, InjectionNodeBase> _nodes = new Dictionary<Type, InjectionNodeBase>(32);
         private bool _isInit = false;
+
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+        private HashSet<Type> _requiredInjectionTypes = new HashSet<Type>();
+#endif
 
         public EcsPipeline Pipelie
         {
@@ -24,43 +29,36 @@ namespace DCFApixels.DragonECS
         public void Inject<T>(T obj)
         {
             object raw = obj;
-            Type type = obj.GetType();
-            if (_branches.TryGetValue(type, out InjectionBranch branch) == false)
+            Type tType = typeof(T);
+            Type objType = obj.GetType();
+            if (_branches.TryGetValue(objType, out InjectionBranch branch) == false)
             {
-                if (typeof(T) == type)
+                if (_nodes.ContainsKey(tType) == false)
                 {
-                    if (_nodes.ContainsKey(type) == false)
-                    {
-                        InitNode(new InjectionNode<T>(type));
-                    }
-                    branch = new InjectionBranch(this, type);
-                    InitBranch(branch);
+                    InitNode(new InjectionNode<T>());
                 }
-                else
+                bool hasNode = _nodes.ContainsKey(objType);
+                if (hasNode == false && obj is IInjectionUnit unit)
                 {
-                    bool hasNode = _nodes.ContainsKey(type);
-                    if (hasNode == false && obj is IInjectionUnit unit)
-                    {
-                        unit.InitInjectionNode(new InjectionNodes(this));
-                        hasNode = _nodes.ContainsKey(type);
-                    }
-                    if (hasNode)
-                    {
-                        branch = new InjectionBranch(this, type);
-                        InitBranch(branch);
-                    }
-                    else
-                    {
-                        //TODO переработать это исключение
-                        // идея следующая, в режиме дебага с помощью рефлекшена собрать информацию о системах в которых есть IEcsInject, собрать все типы которые принимают системы,
-                        // потом при инициирующих инъекциях проверить что во все собранные типы были заинжектены. Если нет, то только тогда бросать исключение.
-                        // Исключения можно заранее определять и собирать, а бросать на моменте. Например тут создать исключение, и если инхекции небыло то бросить его.
-                        // Дополнительно обернуть все в #if DEBUG
+                    unit.InitInjectionNode(new InjectionNodes(this));
+                    hasNode = _nodes.ContainsKey(objType);
+                }
 
-                        //Другой вариант, тут добавить дополнительную проверку, если среди систем есть системы с IEcsInject<T> где T это obj.GetType() то бросить исключение
-                        throw new EcsInjectionException($"To create an injection branch, no injection node of {type.Name} was found. To create a node, use the AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
+                branch = new InjectionBranch(this, objType);
+                InitBranch(branch);
+
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+                foreach (var requiredInjectionType in _requiredInjectionTypes)
+                {
+                    if (requiredInjectionType.IsAssignableFrom(objType))
+                    {
+                        if (_nodes.ContainsKey(requiredInjectionType) == false)
+                        {
+                            throw new EcsInjectionException($"A systems in the pipeline implements IEcsInject<{requiredInjectionType.Name}> interface, but no suitable injection node was found in the Injector. To create a node, use Injector.AddNode<{requiredInjectionType.Name}>() or implement the IInjectionUnit interface for type {objType.Name}.");
+                        }
                     }
                 }
+#endif
             }
             branch.Inject(raw);
         }
@@ -68,26 +66,19 @@ namespace DCFApixels.DragonECS
         {
             return (T)Extract_Internal(typeof(T));
         }
-        private object Extract_Internal(Type type)
+        private object Extract_Internal(Type type)//TODO проверить
         {
-            if (_branches.TryGetValue(type, out InjectionBranch branch))
+            if (_nodes.TryGetValue(type, out InjectionNodeBase node))
             {
-                return branch.CurrentInjectedDependency;
+                return node.CurrentInjectedDependencyRaw;
             }
-            return null;
-
-            //if (_nodes.ContainsKey(type))
-            //{
-            //    return null;
-            //}
-            //throw new EcsInjectionException($"The injection graph is missing a node for {type.Name} type. To create a node, use the AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
+            throw new EcsInjectionException($"The injection graph is missing a node for {type.Name} type. To create a node, use the Injector.AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
         }
         public void AddNode<T>()
         {
-            Type type = typeof(T);
-            if (_nodes.ContainsKey(type) == false)
+            if (_nodes.ContainsKey(typeof(T)) == false)
             {
-                InitNode(new InjectionNode<T>(type));
+                InitNode(new InjectionNode<T>());
             }
         }
         #endregion
@@ -132,16 +123,27 @@ namespace DCFApixels.DragonECS
         #region Build
         private void Init(EcsPipeline pipeline)
         {
-            if (_isInit)
-            {
-                throw new Exception("Already initialized");
-            }
+            if (_isInit) { Throw.Exception("Already initialized"); }
+
             _pipeline = pipeline;
-            foreach (var node in _nodes.Values)
+            foreach (var pair in _nodes)
             {
-                node.Init(pipeline);
+                pair.Value.Init(pipeline);
             }
             _isInit = true;
+
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            var systems = _pipeline.AllSystems;
+            var injectType = typeof(IEcsInject<>);
+            foreach (var system in systems)
+            {
+                var type = system.GetType();
+                foreach (var requiredInjectionType in type.GetInterfaces().Where(o => o.IsGenericType && o.GetGenericTypeDefinition() == injectType).Select(o => o.GenericTypeArguments[0]))
+                {
+                    _requiredInjectionTypes.Add(requiredInjectionType);
+                }
+            }
+#endif
         }
         private bool TryDeclare<T>()
         {
@@ -150,7 +152,7 @@ namespace DCFApixels.DragonECS
             {
                 return false;
             }
-            InitNode(new InjectionNode<T>(type));
+            InitNode(new InjectionNode<T>());
 #if !REFLECTION_DISABLED
             if (IsCanInstantiated(type))
 #endif
@@ -180,13 +182,13 @@ namespace DCFApixels.DragonECS
                 _initInjections.Add(new InitInject<T>(obj));
                 return _source;
             }
-            public EcsPipeline.Builder Extract<T>(ref T obj)
+            public EcsPipeline.Builder Extract<T>(ref T obj)//TODO проверить
             {
                 Type type = typeof(T);
                 for (int i = _initInjections.Count - 1; i >= 0; i--)
                 {
                     var item = _initInjections[i];
-                    if (item.Type.IsAssignableFrom(type))
+                    if (type.IsAssignableFrom(item.Type))
                     {
                         obj = (T)item.Raw;
                         return _source;

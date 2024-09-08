@@ -224,6 +224,7 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    #region EcsModule
     public interface IEcsModule
     {
         void Import(EcsPipeline.Builder b);
@@ -237,6 +238,7 @@ namespace DCFApixels.DragonECS
         void IInjectionUnit.InitInjectionNode(InjectionNodes nodes) { nodes.AddNode<T>(); }
         public EcsModule() { if (GetType() != typeof(T)) { Throw.UndefinedException(); } }
     }
+    #endregion
 
     #region Extensions
     public static partial class EcsPipelineExtensions

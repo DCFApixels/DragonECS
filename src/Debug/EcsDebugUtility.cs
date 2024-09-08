@@ -66,7 +66,6 @@ namespace DCFApixels.DragonECS
             return AutoToString(self, typeof(T), isWriteName);
         }
 
-        //TODO сделать специальный вывод в виде названий констант для Enum-ов
         private static string AutoToString(object target, Type type, bool isWriteName)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает

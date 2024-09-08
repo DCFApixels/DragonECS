@@ -39,6 +39,8 @@ namespace DCFApixels.DragonECS
 
             private AddParams _defaultAddParams = new AddParams(BASIC_LAYER, 0, false);
 
+            private HashSet<Type> _uniqueSystemsSet = new HashSet<Type>();
+
             #region Properties
             //private ReadOnlySpan<SystemNode> SystemRecords
             //{
@@ -107,10 +109,14 @@ namespace DCFApixels.DragonECS
             {
                 InsertAfterNode_Internal(_endIndex, system, layer, sortOrder, isUnique);
             }
-            int _DEBUG_COUNTER = 0;
             private void InsertAfterNode_Internal(int insertAfterIndex, IEcsProcess system, string layer, int sortOrder, bool isUnique)
             {
-                _DEBUG_COUNTER++;
+                //TODO нужно потестить
+                if (isUnique && _uniqueSystemsSet.Add(system.GetType()) == false)
+                {
+                    EcsDebug.PrintWarning($"The pipeline already contains a unique instance of {system.GetType().Name}");
+                }
+
                 SystemNode record = new SystemNode(system, layer, sortOrder, isUnique);
                 int newIndex;
                 if (_freeNodesCount <= 0)
@@ -175,10 +181,7 @@ namespace DCFApixels.DragonECS
                     _defaultAddParams = oldDefaultAddParams;
                 }
 
-                if (module is IInjectionUnit injectionUnit)
-                {
-                    Injector.Inject(injectionUnit);
-                }
+                Injector.Inject(module);
                 return this;
             }
             #endregion
@@ -251,6 +254,8 @@ namespace DCFApixels.DragonECS
             }
             public Builder Remove<TSystem>()
             {
+                _uniqueSystemsSet.Remove(typeof(TSystem));
+
                 if (_systemNodesCount <= 1)
                 {
                     if (_systemNodesCount == 1 && _systemNodes[0].system is TSystem)
@@ -293,9 +298,6 @@ namespace DCFApixels.DragonECS
                     _layerLists.Add(BASIC_LAYER, basicLayerList);
                 }
 
-                //ERROR Уникальные системы ломают работу подсчета систем
-                HashSet<Type> uniqueSystemsSet = new HashSet<Type>();
-
                 int allSystemsLength = 0;
                 foreach (var item in _layerLists)
                 {
@@ -320,10 +322,12 @@ namespace DCFApixels.DragonECS
                     {
                         list = basicLayerList;
                     }
-                    if (node.isUnique == false || uniqueSystemsSet.Add(node.system.GetType()))
-                    {
-                        list.Add(node.system, node.sortOrder, node.isUnique);
-                    }
+                    list.Add(node.system, node.sortOrder, node.isUnique);
+
+                    //if (node.isUnique == false || uniqueSystemsSet.Add(node.system.GetType()))
+                    //{
+                    //    list.Add(node.system, node.sortOrder, node.isUnique);
+                    //}
                 }
 
 
@@ -525,14 +529,31 @@ namespace DCFApixels.DragonECS
                     }
                     return InsertAfter(targetLayer, movingLayers);
                 }
+
+                private static bool AreMatchingOrderIdentical(IReadOnlyList<string> listA, IReadOnlyList<string> listB)
+                {
+                    int indexA = 0;
+                    foreach (string itemB in listB)
+                    {
+                        if (indexA < listA.Count && listA[indexA] == itemB)
+                        {
+                            indexA++;
+                        }
+                    }
+                    return indexA == listA.Count;
+                }
                 public void MergeWith(IReadOnlyList<string> other)
                 {
-                    //TODO добавить оишбку если порядок совпадающих слоев не совпадает
-                    HashSet<string> seen = new HashSet<string>();
-                    List<string> result = new List<string>();
-
                     List<string> listA = _layers;
                     IReadOnlyList<string> listB = other;
+
+                    if (AreMatchingOrderIdentical(listA, listB) == false)
+                    {
+                        Throw.Exception("Для слияния списков слоев, нужно чтобы названия слоев, присутствующие в обоих списках, появлялись в одном и том же порядке в обоих списках");
+                    }
+
+                    HashSet<string> seen = new HashSet<string>();
+                    List<string> result = new List<string>();
 
                     foreach (string item in listA)
                     {

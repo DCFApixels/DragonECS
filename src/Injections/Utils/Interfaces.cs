@@ -39,6 +39,6 @@
     }
     public interface IInjectionUnit
     {
-        void InitInjectionNode(InjectionNodes nodes);
+        void InitInjectionNode(InjectionNodes graph);
     }
 }

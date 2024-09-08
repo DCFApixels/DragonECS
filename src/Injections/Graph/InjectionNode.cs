@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
@@ -9,6 +10,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _type; }
         }
+        public abstract object CurrentInjectedDependencyRaw { get; }
         protected InjectionNodeBase(Type type)
         {
             _type = type;
@@ -22,7 +24,18 @@ namespace DCFApixels.DragonECS.Internal
     internal sealed class InjectionNode<T> : InjectionNodeBase
     {
         private EcsProcess<IEcsInject<T>> _process;
-        public InjectionNode(Type type) : base(type) { }
+        private T _currentInjectedDependency;
+        public sealed override object CurrentInjectedDependencyRaw
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _currentInjectedDependency; }
+        }
+        public T CurrentInjectedDependency
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _currentInjectedDependency; }
+        }
+        public InjectionNode() : base(typeof(T)) { }
         public sealed override void Init(EcsPipeline pipeline)
         {
             _process = pipeline.GetProcess<IEcsInject<T>>();
@@ -30,6 +43,7 @@ namespace DCFApixels.DragonECS.Internal
         public sealed override void Inject(object raw)
         {
             T obj = (T)raw;
+            _currentInjectedDependency = obj;
             for (int i = 0; i < _process.Length; i++)
             {
                 _process[i].Inject(obj);
