@@ -134,77 +134,83 @@ namespace DCFApixels.DragonECS
         public EcsWorld(EcsWorldConfig config, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), worldID) { }
         public EcsWorld(IConfigContainer configs = null, short worldID = -1)
         {
-            if (configs == null) { configs = ConfigContainer.Empty; }
-            bool nullWorld = this is NullWorld;
-            if (nullWorld == false && worldID == NULL_WORLD_ID)
+            lock (_lock)
             {
-                EcsDebug.PrintWarning($"The world identifier cannot be {NULL_WORLD_ID}");
-            }
-            _configs = configs;
-            EcsWorldConfig config = configs.GetWorldConfigOrDefault();
-
-            if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
-            {
-                worldID = (short)_worldIdDispenser.UseFree();
-            }
-            else
-            {
-                if (worldID != _worldIdDispenser.NullID)
+                if (configs == null) { configs = ConfigContainer.Empty; }
+                bool nullWorld = this is NullWorld;
+                if (nullWorld == false && worldID == NULL_WORLD_ID)
                 {
-                    _worldIdDispenser.Use(worldID);
+                    EcsDebug.PrintWarning($"The world identifier cannot be {NULL_WORLD_ID}");
                 }
-                if (_worlds[worldID] != null)
+                _configs = configs;
+                EcsWorldConfig config = configs.GetWorldConfigOrDefault();
+
+                if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
                 {
-                    _worldIdDispenser.Release(worldID);
-                    Throw.Exception("The world with the specified ID has already been created\r\n");
+                    worldID = (short)_worldIdDispenser.UseFree();
                 }
+                else
+                {
+                    if (worldID != _worldIdDispenser.NullID)
+                    {
+                        _worldIdDispenser.Use(worldID);
+                    }
+                    if (_worlds[worldID] != null)
+                    {
+                        _worldIdDispenser.Release(worldID);
+                        Throw.Exception("The world with the specified ID has already been created\r\n");
+                    }
+                }
+                id = worldID;
+                _worlds[worldID] = this;
+
+                _poolsMediator = new PoolsMediator(this);
+                _executorsMediator = new ExecutorMediator(this);
+
+                int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.PoolsCapacity);
+                _pools = new IEcsPoolImplementation[poolsCapacity];
+                _poolSlots = new PoolSlot[poolsCapacity];
+                ArrayUtility.Fill(_pools, _nullPool);
+
+                int entitiesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.EntitiesCapacity);
+                _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
+
+                GetComponentTypeID<NullComponent>();
             }
-            id = worldID;
-            _worlds[worldID] = this;
-
-            _poolsMediator = new PoolsMediator(this);
-            _executorsMediator = new ExecutorMediator(this);
-
-            int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.PoolsCapacity);
-            _pools = new IEcsPoolImplementation[poolsCapacity];
-            _poolSlots = new PoolSlot[poolsCapacity];
-            ArrayUtility.Fill(_pools, _nullPool);
-
-            int entitiesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.EntitiesCapacity);
-            _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
-
-            GetComponentTypeID<NullComponent>();
         }
         public void Destroy()
         {
-            if (_isDestroyed)
+            lock (_lock)
             {
-                EcsDebug.PrintWarning("The world is already destroyed");
-                return;
-            }
-            if (id == NULL_WORLD_ID)
-            {
+                if (_isDestroyed)
+                {
+                    EcsDebug.PrintWarning("The world is already destroyed");
+                    return;
+                }
+                if (id == NULL_WORLD_ID)
+                {
 #if (DEBUG && !DISABLE_DEBUG)
-                Throw.World_WorldCantBeDestroyed();
+                    Throw.World_WorldCantBeDestroyed();
 #endif
-                return;
-            }
-            _listeners.InvokeOnWorldDestroy();
-            _entityDispenser = null;
-            _pools = null;
-            _nullPool = null;
-            _worlds[id] = null;
-            ReleaseData(id);
-            _worldIdDispenser.Release(id);
-            _isDestroyed = true;
-            _poolTypeCode_2_CmpTypeIDs = null;
-            _cmpTypeCode_2_CmpTypeIDs = null;
+                    return;
+                }
+                _listeners.InvokeOnWorldDestroy();
+                _entityDispenser = null;
+                _pools = null;
+                _nullPool = null;
+                _worlds[id] = null;
+                ReleaseData(id);
+                _worldIdDispenser.Release(id);
+                _isDestroyed = true;
+                _poolTypeCode_2_CmpTypeIDs = null;
+                _cmpTypeCode_2_CmpTypeIDs = null;
 
-            foreach (var item in _executorCoures)
-            {
-                item.Value.Destroy();
+                foreach (var item in _executorCoures)
+                {
+                    item.Value.Destroy();
+                }
+                //_entities - не обнуляется для работы entlong.IsAlive
             }
-            //_entities - не обнуляется для работы entlong.IsAlive
         }
         //public void Clear() { }
         #endregion
