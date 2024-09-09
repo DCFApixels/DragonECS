@@ -1,6 +1,6 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -116,6 +116,8 @@ namespace DCFApixels.DragonECS
     public abstract class DebugService
     {
         private static DebugService _instance;
+        private static object _lock = new object();
+
         public static DebugService Instance
         {
             get
@@ -141,7 +143,7 @@ namespace DCFApixels.DragonECS
         public static Action<DebugService> OnServiceChanged = delegate { };
 
         private IdDispenser _idDispenser = new IdDispenser(4, -1);
-        private Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
+        private ConcurrentDictionary<string, int> _nameIdTable = new ConcurrentDictionary<string, int>();
         public abstract void Print(string tag, object v);
         public abstract void Break();
         public int RegisterMark(string name)
@@ -149,8 +151,11 @@ namespace DCFApixels.DragonECS
             int id;
             if (!_nameIdTable.TryGetValue(name, out id))
             {
-                id = _idDispenser.UseFree();
-                _nameIdTable.Add(name, id);
+                lock (_lock)
+                {
+                    id = _idDispenser.UseFree();
+                    _nameIdTable.TryAdd(name, id);
+                }
             }
             OnNewProfilerMark(id, name);
             return id;
@@ -158,7 +163,8 @@ namespace DCFApixels.DragonECS
         public void DeleteMark(string name)
         {
             int id = _nameIdTable[name];
-            _nameIdTable.Remove(name);
+            //TODO кажется этот TryRemove не подходит
+            _nameIdTable.TryRemove(name, out id);
             _idDispenser.Release(id);
             OnDelProfilerMark(id);
         }

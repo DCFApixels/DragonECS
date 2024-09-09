@@ -3,6 +3,7 @@ using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace DCFApixels.DragonECS
 {
@@ -149,80 +150,83 @@ namespace DCFApixels.DragonECS
         #region CreatePool
         private TPool CreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
-            int poolTypeCode = EcsTypeCode.Get<TPool>();
-            if (_poolTypeCode_2_CmpTypeIDs.Contains(poolTypeCode))
+            lock (_worldLock)
             {
-                Throw.World_PoolAlreadyCreated();
-            }
-            TPool newPool = new TPool();
+                int poolTypeCode = EcsTypeCode.Get<TPool>();
+                if (_poolTypeCode_2_CmpTypeIDs.Contains(poolTypeCode))
+                {
+                    Throw.World_PoolAlreadyCreated();
+                }
+                TPool newPool = new TPool();
 
-            Type componentType = newPool.ComponentType;
+                Type componentType = newPool.ComponentType;
 #if DEBUG //проверка соответсвия типов
 #pragma warning disable IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
-            if (componentType != typeof(TPool).GetInterfaces()
-                .First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>))
-                .GetGenericArguments()[0])
-            {
-                Throw.Exception("A custom pool must implement the interface IEcsPoolImplementation<T> where T is the type that stores the pool.");
-            }
+                if (componentType != typeof(TPool).GetInterfaces()
+                    .First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>))
+                    .GetGenericArguments()[0])
+                {
+                    Throw.Exception("A custom pool must implement the interface IEcsPoolImplementation<T> where T is the type that stores the pool.");
+                }
 #pragma warning restore IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
 #endif
-            int componentTypeCode = EcsTypeCode.Get(componentType);
+                int componentTypeCode = EcsTypeCode.Get(componentType);
 
-            if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int componentTypeID))
-            {
-                _poolTypeCode_2_CmpTypeIDs[poolTypeCode] = componentTypeID;
-            }
-            else
-            {
-                componentTypeID = _poolsCount++;
-                _poolTypeCode_2_CmpTypeIDs[poolTypeCode] = componentTypeID;
-                _cmpTypeCode_2_CmpTypeIDs[componentTypeCode] = componentTypeID;
-            }
-
-            if (_poolsCount >= _pools.Length)
-            {
-                int oldCapacity = _pools.Length;
-                Array.Resize(ref _pools, _pools.Length << 1);
-                Array.Resize(ref _poolSlots, _pools.Length);
-                ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
-
-                int newEntityComponentMaskLength = CalcEntityComponentMaskLength(); //_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
-                int dif = newEntityComponentMaskLength - _entityComponentMaskLength;
-                if (dif > 0)
+                if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int componentTypeID))
                 {
-                    int[] newEntityComponentMasks = new int[_entitiesCapacity * newEntityComponentMaskLength];
-                    int indxMax = _entityComponentMaskLength * _entitiesCapacity;
-                    int indx = 0;
-                    int newIndx = 0;
-                    int nextIndx = _entityComponentMaskLength;
-                    while (indx < indxMax)
-                    {
-                        while (indx < nextIndx)
-                        {
-                            newEntityComponentMasks[newIndx] = _entityComponentMasks[indx];
-                            indx++;
-                            newIndx++;
-                        }
-                        newIndx += dif;
-                        nextIndx += _entityComponentMaskLength;
-                    }
-                    SetEntityComponentMaskLength(newEntityComponentMaskLength);
-                    _entityComponentMasks = newEntityComponentMasks;
+                    _poolTypeCode_2_CmpTypeIDs[poolTypeCode] = componentTypeID;
+                }
+                else
+                {
+                    componentTypeID = _poolsCount++;
+                    _poolTypeCode_2_CmpTypeIDs[poolTypeCode] = componentTypeID;
+                    _cmpTypeCode_2_CmpTypeIDs[componentTypeCode] = componentTypeID;
                 }
 
+                if (_poolsCount >= _pools.Length)
+                {
+                    int oldCapacity = _pools.Length;
+                    Array.Resize(ref _pools, _pools.Length << 1);
+                    Array.Resize(ref _poolSlots, _pools.Length);
+                    ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
+
+                    int newEntityComponentMaskLength = CalcEntityComponentMaskLength(); //_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
+                    int dif = newEntityComponentMaskLength - _entityComponentMaskLength;
+                    if (dif > 0)
+                    {
+                        int[] newEntityComponentMasks = new int[_entitiesCapacity * newEntityComponentMaskLength];
+                        int indxMax = _entityComponentMaskLength * _entitiesCapacity;
+                        int indx = 0;
+                        int newIndx = 0;
+                        int nextIndx = _entityComponentMaskLength;
+                        while (indx < indxMax)
+                        {
+                            while (indx < nextIndx)
+                            {
+                                newEntityComponentMasks[newIndx] = _entityComponentMasks[indx];
+                                indx++;
+                                newIndx++;
+                            }
+                            newIndx += dif;
+                            nextIndx += _entityComponentMaskLength;
+                        }
+                        SetEntityComponentMaskLength(newEntityComponentMaskLength);
+                        _entityComponentMasks = newEntityComponentMasks;
+                    }
+
+                }
+
+                var oldPool = _pools[componentTypeID];
+
+                if (oldPool != _nullPool)
+                {
+                    Throw.UndefinedException();
+                }
+
+                _pools[componentTypeID] = newPool;
+                newPool.OnInit(this, _poolsMediator, componentTypeID);
+                return newPool;
             }
-
-            var oldPool = _pools[componentTypeID];
-
-            if (oldPool != _nullPool)
-            {
-                Throw.UndefinedException();
-            }
-
-            _pools[componentTypeID] = newPool;
-            newPool.OnInit(this, _poolsMediator, componentTypeID);
-            return newPool;
         }
         #endregion
 

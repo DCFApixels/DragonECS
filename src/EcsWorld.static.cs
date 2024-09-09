@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace DCFApixels.DragonECS
 {
@@ -31,7 +32,7 @@ namespace DCFApixels.DragonECS
         private static List<DataReleaser> _dataReleaseres = new List<DataReleaser>();
         //public static int Copacity => Worlds.Length;
 
-        private static readonly object _lock = new object();
+        private static readonly object _worldLock = new object();
 
         static EcsWorld()
         {
@@ -39,7 +40,7 @@ namespace DCFApixels.DragonECS
         }
         private static void ReleaseData(int worldID)
         {// ts
-            lock (_lock)
+            lock (_worldLock)
             {
                 for (int i = 0, iMax = _dataReleaseres.Count; i < iMax; i++)
                 {
@@ -78,17 +79,15 @@ namespace DCFApixels.DragonECS
             private static short _recycledItemsCount;
             private static IEcsWorldComponent<T> _interface = EcsWorldComponentHandler<T>.instance;
 
-            private static readonly object _lock = new object();
-
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ref T Get(int itemIndex)
+            public static ref T GetItem(int itemIndex)
             {// ts
                 return ref _items[itemIndex];
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetForWorld(int worldID)
             {// зависит от GetItemIndex
-                return ref Get(GetItemIndex(worldID));
+                return ref GetItem(GetItemIndex(worldID));
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetForWorldUnchecked(int worldID)
@@ -102,7 +101,7 @@ namespace DCFApixels.DragonECS
             {// ts
                 if (_mapping.Length < _worlds.Length)
                 {
-                    lock (_lock)
+                    lock (_worldLock)
                     {
                         if (_mapping.Length < _worlds.Length)
                         {
@@ -114,7 +113,7 @@ namespace DCFApixels.DragonECS
 
                 if (itemIndex == 0)
                 {
-                    lock (_lock)
+                    lock (_worldLock)
                     {
                         itemIndex = _mapping[worldID];
                         if (itemIndex <= 0)
@@ -134,6 +133,7 @@ namespace DCFApixels.DragonECS
                             {
                                 Array.Resize(ref _items, _items.Length << 1);
                             }
+
                             _interface.Init(ref _items[itemIndex], _worlds[worldID]);
                             _dataReleaseres.Add(new Releaser());
                         }
@@ -143,7 +143,7 @@ namespace DCFApixels.DragonECS
             }
             private static void Release(int worldID)
             {// ts
-                lock (_lock)
+                lock (_worldLock)
                 {
                     if (_mapping.Length < _worlds.Length)
                     {

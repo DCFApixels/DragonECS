@@ -16,6 +16,7 @@ namespace DCFApixels.DragonECS.Internal
     {
         private static readonly Dictionary<Type, int> _codes = new Dictionary<Type, int>();
         private static int _increment = 1;
+        private static object _lock = new object();
         public static int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -23,12 +24,15 @@ namespace DCFApixels.DragonECS.Internal
         }
         public static int Get(Type type)
         {
-            if (!_codes.TryGetValue(type, out int code))
+            lock (_lock)
             {
-                code = _increment++;
-                _codes.Add(type, code);
+                if (!_codes.TryGetValue(type, out int code))
+                {
+                    code = _increment++;
+                    _codes.Add(type, code);
+                }
+                return code;
             }
-            return code;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Get<T>() { return EcsTypeCodeCache<T>.code; }

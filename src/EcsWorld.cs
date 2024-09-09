@@ -134,7 +134,7 @@ namespace DCFApixels.DragonECS
         public EcsWorld(EcsWorldConfig config, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), worldID) { }
         public EcsWorld(IConfigContainer configs = null, short worldID = -1)
         {
-            lock (_lock)
+            lock (_worldLock)
             {
                 if (configs == null) { configs = ConfigContainer.Empty; }
                 bool nullWorld = this is NullWorld;
@@ -180,7 +180,7 @@ namespace DCFApixels.DragonECS
         }
         public void Destroy()
         {
-            lock (_lock)
+            lock (_worldLock)
             {
                 if (_isDestroyed)
                 {
@@ -707,7 +707,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Debug Components
-        private static int[] _componentIDsBuffer = new int[64];
+        [ThreadStatic]
+        private static int[] _componentIDsBuffer;
         public ReadOnlySpan<int> GetComponentTypeIDsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor(entityID, ref _componentIDsBuffer);
@@ -733,6 +734,10 @@ namespace DCFApixels.DragonECS
         }
         private int GetComponentTypeIDsFor(int entityID, ref int[] componentIDs)
         {
+            if (componentIDs == null)
+            {
+                componentIDs = new int[64];
+            }
             int count = 0;
             var itemsCount = GetComponentsCount(entityID);
             if (itemsCount <= 0) { return count; }

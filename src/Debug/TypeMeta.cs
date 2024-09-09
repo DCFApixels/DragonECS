@@ -45,17 +45,22 @@ namespace DCFApixels.DragonECS
 
         private InitFlag _initFlags = InitFlag.None;
 
+        private static object _lock = new object();
+
         //private EcsMemberType _memberType;
 
         #region Constructors
         public static TypeMeta Get(Type type)
         {
-            if (_metaCache.TryGetValue(type, out TypeMeta result) == false)
+            lock (_lock)
             {
-                result = new TypeMeta(type);
-                _metaCache.Add(type, result);
+                if (_metaCache.TryGetValue(type, out TypeMeta result) == false)
+                {
+                    result = new TypeMeta(type);
+                    _metaCache.Add(type, result);
+                }
+                return result;
             }
-            return result;
         }
         private TypeMeta(Type type)
         {
