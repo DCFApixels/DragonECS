@@ -820,29 +820,13 @@ namespace DCFApixels.DragonECS
             }
             public long Version { get { return _world.Version; } }
             public IEcsPool[] Pools { get { return _world._pools; } }
+            public short ID { get { return _world.id; } }
             public DebuggerProxy(EcsWorld world)
             {
                 _world = world;
             }
         }
         #endregion
-    }
-
-    public static class EcsWorldExtenssions
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsNullOrDetroyed(this EcsWorld self)
-        {
-            return self == null || self.IsDestroyed;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ReleaseDelEntityBufferAllAuto(this EcsWorld self)
-        {
-            if (self.IsEnableReleaseDelEntBuffer)
-            {
-                self.ReleaseDelEntityBufferAll();
-            }
-        }
     }
 
     #region Callbacks Interface
@@ -903,6 +887,22 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region Extensions
+    public static class EcsWorldExtenssions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNullOrDetroyed(this EcsWorld self)
+        {
+            return self == null || self.IsDestroyed;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ReleaseDelEntityBufferAllAuto(this EcsWorld self)
+        {
+            if (self.IsEnableReleaseDelEntBuffer)
+            {
+                self.ReleaseDelEntityBufferAll();
+            }
+        }
+    }
     public static class IntExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
