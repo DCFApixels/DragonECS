@@ -124,7 +124,10 @@ namespace DCFApixels.DragonECS
             {
                 if (_instance == null)
                 {
-                    _instance = new DefaultDebugService();
+                    lock (_lock)
+                    {
+                        _instance = new DefaultDebugService();
+                    }
                 }
                 return _instance;
             }
@@ -132,12 +135,18 @@ namespace DCFApixels.DragonECS
 
         public static void Set<T>() where T : DebugService, new()
         {
-            Set(new T());
+            lock (_lock)
+            {
+                Set(new T());
+            }
         }
         public static void Set(DebugService service)
         {
-            _instance = service;
-            OnServiceChanged(_instance);
+            lock (_lock)
+            {
+                _instance = service;
+                OnServiceChanged(_instance);
+            }
         }
 
         public static Action<DebugService> OnServiceChanged = delegate { };
@@ -162,11 +171,14 @@ namespace DCFApixels.DragonECS
         }
         public void DeleteMark(string name)
         {
-            int id = _nameIdTable[name];
-            //TODO кажется этот TryRemove не подходит
-            _nameIdTable.TryRemove(name, out id);
-            _idDispenser.Release(id);
-            OnDelProfilerMark(id);
+            lock (_lock)
+            {
+                int id = _nameIdTable[name];
+                //TODO проверить TryRemove
+                _nameIdTable.TryRemove(name, out id);
+                _idDispenser.Release(id);
+                OnDelProfilerMark(id);
+            }
         }
 
         protected abstract void OnNewProfilerMark(int id, string name);
