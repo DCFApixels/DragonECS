@@ -170,6 +170,8 @@ namespace DCFApixels.DragonECS
 
                     foreach (var info in oldService.MarkerInfos)
                     {
+                        service._idDispenser.Use(info.ID);
+                        service._nameIdTable.TryAdd(info.Name, info.ID);
                         service.OnNewProfilerMark(info.ID, info.Name);
                     }
 
