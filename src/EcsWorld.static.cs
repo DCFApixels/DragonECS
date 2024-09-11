@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace DCFApixels.DragonECS
 {
@@ -153,7 +152,7 @@ namespace DCFApixels.DragonECS
                     if (itemIndex != 0)
                     {
                         _interface.OnDestroy(ref _items[itemIndex], _worlds[worldID]);
-                        if(_recycledItemsCount >= _recycledItems.Length)
+                        if (_recycledItemsCount >= _recycledItems.Length)
                         {
                             Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
                         }
