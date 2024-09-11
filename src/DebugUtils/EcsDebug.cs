@@ -1,6 +1,5 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -215,7 +214,6 @@ namespace DCFApixels.DragonECS
             lock (_lock)
             {
                 int id = _nameIdTable[name];
-                //TODO проверить TryRemove
                 _nameIdTable.Remove(name);
                 _idDispenser.Release(id);
                 OnDelProfilerMark(id);
