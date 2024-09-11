@@ -12,7 +12,10 @@ namespace DCFApixels.DragonECS
     {
         public readonly int id;
         internal EcsProfilerMarker(int id) { this.id = id; }
-        public EcsProfilerMarker(string name) { id = DebugService.Instance.RegisterMark(name); }
+        public EcsProfilerMarker(string name)
+        {
+            id = DebugService.Instance.RegisterMark(name);
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Begin() { DebugService.Instance.ProfilerMarkBegin(id); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -169,7 +172,7 @@ namespace DCFApixels.DragonECS
                     var oldService = _instance;
                     _instance = service;
                     if(_instance != null)
-                    { //TODO Так, всеже треды влияют друг на друга, скоерее всего проблема в использовании _nameIdTable
+                    { //TODO Так, всеже треды влияют друг на друга, скоерее всего проблема в использовании _nameIdTable/ Так вроде пофиксил, но не понял как конкретно
                         foreach (var info in oldService.MarkerInfos)
                         {
                             service._idDispenser.Use(info.ID);
@@ -187,7 +190,7 @@ namespace DCFApixels.DragonECS
         public static Action<DebugService> OnServiceChanged = delegate { };
 
         private IdDispenser _idDispenser = new IdDispenser(16, 0);
-        private ConcurrentDictionary<string, int> _nameIdTable = new ConcurrentDictionary<string, int>();
+        private Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
         public abstract void Print(string tag, object v);
         public abstract void Break();
         public int RegisterMark(string name)
@@ -197,11 +200,14 @@ namespace DCFApixels.DragonECS
             {
                 lock (_lock)
                 {
-                    id = _idDispenser.UseFree();
-                    _nameIdTable.TryAdd(name, id);
+                    if (!_nameIdTable.TryGetValue(name, out id))
+                    {
+                        id = _idDispenser.UseFree();
+                        _nameIdTable.Add(name, id);
+                        OnNewProfilerMark(id, name);
+                    }
                 }
             }
-            OnNewProfilerMark(id, name);
             return id;
         }
         public void DeleteMark(string name)
@@ -210,7 +216,7 @@ namespace DCFApixels.DragonECS
             {
                 int id = _nameIdTable[name];
                 //TODO проверить TryRemove
-                _nameIdTable.TryRemove(name, out id);
+                _nameIdTable.Remove(name);
                 _idDispenser.Release(id);
                 OnDelProfilerMark(id);
             }
