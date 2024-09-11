@@ -1,7 +1,9 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -132,25 +134,55 @@ namespace DCFApixels.DragonECS
             }
         }
 
+        public readonly struct MarkerInfo
+        {
+            public readonly string Name;
+            public readonly int ID;
+            public MarkerInfo(string name, int iD)
+            {
+                Name = name;
+                ID = iD;
+            }
+        }
+        public IEnumerable<MarkerInfo> MarkerInfos
+        {
+            get { return _nameIdTable.Select(o => new MarkerInfo(o.Key, o.Value)); }
+        }
+
         public static void Set<T>() where T : DebugService, new()
         {
             lock (_lock)
             {
-                Set(new T());
+                if (Instance is T == false)
+                {
+                    Set(new T());
+                }
             }
         }
         public static void Set(DebugService service)
         {
             lock (_lock)
             {
-                _instance = service;
-                OnServiceChanged(_instance);
+                if (_instance != service)
+                {
+                    var oldService = _instance;
+                    _instance = service;
+
+                    foreach (var info in oldService.MarkerInfos)
+                    {
+                        service.OnNewProfilerMark(info.ID, info.Name);
+                    }
+
+                    service.OnServiceSetup(oldService);
+                    OnServiceChanged(service);
+                }
             }
         }
+        protected virtual void OnServiceSetup(DebugService oldService) { }
 
         public static Action<DebugService> OnServiceChanged = delegate { };
 
-        private IdDispenser _idDispenser = new IdDispenser(4, -1);
+        private IdDispenser _idDispenser = new IdDispenser(16, 0);
         private ConcurrentDictionary<string, int> _nameIdTable = new ConcurrentDictionary<string, int>();
         public abstract void Print(string tag, object v);
         public abstract void Break();
@@ -218,19 +250,22 @@ namespace DCFApixels.DragonECS
     public sealed class DefaultDebugService : DebugService
     {
         private const string PROFILER_MARKER = "ProfilerMark";
-        private struct MarkerData
+        private readonly struct MarkerData
         {
-            public Stopwatch stopwatch;
-            public string name;
-            public MarkerData(Stopwatch stopwatch, string name)
+            public readonly Stopwatch Stopwatch;
+            public readonly string Name;
+            public readonly int ID;
+            public MarkerData(Stopwatch stopwatch, string name, int id)
             {
-                this.stopwatch = stopwatch;
-                this.name = name;
+                Stopwatch = stopwatch;
+                Name = name;
+                ID = id;
             }
         }
         private MarkerData[] _stopwatchs;
         [ThreadStatic]
         private static char[] _buffer;
+
         public DefaultDebugService()
         {
             Console.ForegroundColor = ConsoleColor.White;
@@ -323,7 +358,7 @@ namespace DCFApixels.DragonECS
             {
                 Array.Resize(ref _stopwatchs, _stopwatchs.Length << 1);
             }
-            _stopwatchs[id] = new MarkerData(new Stopwatch(), name);
+            _stopwatchs[id] = new MarkerData(new Stopwatch(), name, id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
