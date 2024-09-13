@@ -1,5 +1,6 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -132,6 +133,19 @@ namespace DCFApixels.DragonECS
                 }
                 return _instance;
             }
+        }
+
+        protected static string AutoConvertObjectToString(object o)
+        {
+            if (o is string str)
+            {
+                return str;
+            }
+            if (o is IEnumerable enumerable)
+            {
+                return string.Join(", ", enumerable.Cast<object>());
+            }
+            return o.ToString();
         }
 
         public readonly struct MarkerInfo
@@ -281,7 +295,7 @@ namespace DCFApixels.DragonECS
         {
             if (string.IsNullOrEmpty(tag))
             {
-                Console.WriteLine(v);
+                Console.WriteLine(AutoConvertObjectToString(v));
             }
             else
             {
@@ -298,7 +312,7 @@ namespace DCFApixels.DragonECS
                         Console.ForegroundColor = ConsoleColor.Green;
                         break;
                 }
-                Console.WriteLine($"[{tag}] {v}");
+                Console.WriteLine($"[{tag}] {AutoConvertObjectToString(v)}");
                 Console.ForegroundColor = color;
             }
         }

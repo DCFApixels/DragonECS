@@ -66,7 +66,7 @@ namespace DCFApixels.DragonECS
             return AutoToString(self, typeof(T), isWriteName);
         }
 
-        private static string AutoToString(object target, Type type, bool isWriteName)
+        internal static string AutoToString(object target, Type type, bool isWriteName)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
 #pragma warning disable IL2070 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.
