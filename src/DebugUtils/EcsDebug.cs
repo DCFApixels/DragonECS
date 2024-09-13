@@ -13,7 +13,10 @@ namespace DCFApixels.DragonECS
     {
         public readonly int id;
         internal EcsProfilerMarker(int id) { this.id = id; }
-        public EcsProfilerMarker(string name) { id = DebugService.Instance.RegisterMark(name); }
+        public EcsProfilerMarker(string name)
+        {
+            id = DebugService.Instance.RegisterMark(name);
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Begin() { DebugService.Instance.ProfilerMarkBegin(id); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -157,6 +160,7 @@ namespace DCFApixels.DragonECS
                 Name = name;
                 ID = iD;
             }
+            public override string ToString() { return this.AutoToString(); }
         }
         public IEnumerable<MarkerInfo> MarkerInfos
         {
@@ -181,14 +185,15 @@ namespace DCFApixels.DragonECS
                 {
                     var oldService = _instance;
                     _instance = service;
-
-                    foreach (var info in oldService.MarkerInfos)
-                    {
-                        service._idDispenser.Use(info.ID);
-                        service._nameIdTable.TryAdd(info.Name, info.ID);
-                        service.OnNewProfilerMark(info.ID, info.Name);
+                    if(_instance != null)
+                    { //TODO Так, всеже треды влияют друг на друга, скоерее всего проблема в использовании _nameIdTable/ Так вроде пофиксил, но не понял как конкретно
+                        foreach (var info in oldService.MarkerInfos)
+                        {
+                            service._idDispenser.Use(info.ID);
+                            service._nameIdTable.TryAdd(info.Name, info.ID);
+                            service.OnNewProfilerMark(info.ID, info.Name);
+                        }
                     }
-
                     service.OnServiceSetup(oldService);
                     OnServiceChanged(service);
                 }
@@ -199,7 +204,7 @@ namespace DCFApixels.DragonECS
         public static Action<DebugService> OnServiceChanged = delegate { };
 
         private IdDispenser _idDispenser = new IdDispenser(16, 0);
-        private ConcurrentDictionary<string, int> _nameIdTable = new ConcurrentDictionary<string, int>();
+        private Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
         public abstract void Print(string tag, object v);
         public abstract void Break();
         public int RegisterMark(string name)
@@ -209,11 +214,14 @@ namespace DCFApixels.DragonECS
             {
                 lock (_lock)
                 {
-                    id = _idDispenser.UseFree();
-                    _nameIdTable.TryAdd(name, id);
+                    if (!_nameIdTable.TryGetValue(name, out id))
+                    {
+                        id = _idDispenser.UseFree();
+                        _nameIdTable.Add(name, id);
+                        OnNewProfilerMark(id, name);
+                    }
                 }
             }
-            OnNewProfilerMark(id, name);
             return id;
         }
         public void DeleteMark(string name)
@@ -221,8 +229,7 @@ namespace DCFApixels.DragonECS
             lock (_lock)
             {
                 int id = _nameIdTable[name];
-                //TODO проверить TryRemove
-                _nameIdTable.TryRemove(name, out id);
+                _nameIdTable.Remove(name);
                 _idDispenser.Release(id);
                 OnDelProfilerMark(id);
             }
@@ -276,6 +283,10 @@ namespace DCFApixels.DragonECS
                 Stopwatch = stopwatch;
                 Name = name;
                 ID = id;
+            }
+            public override string ToString()
+            {
+                return this.AutoToString();
             }
         }
         private MarkerData[] _stopwatchs;
@@ -332,10 +343,10 @@ namespace DCFApixels.DragonECS
 
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            _stopwatchs[id].stopwatch.Start();
+            _stopwatchs[id].Stopwatch.Start();
 
             Console.Write(PROFILER_MARKER_CACHE);
-            Console.Write(_stopwatchs[id].name);
+            Console.Write(_stopwatchs[id].Name);
             Console.WriteLine("> ");
 
             Console.ForegroundColor = color;
@@ -346,13 +357,13 @@ namespace DCFApixels.DragonECS
 #if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER) && !UNITY_5_3_OR_NEWER
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            _stopwatchs[id].stopwatch.Stop();
-            var time = _stopwatchs[id].stopwatch.Elapsed;
-            _stopwatchs[id].stopwatch.Reset();
+            _stopwatchs[id].Stopwatch.Stop();
+            var time = _stopwatchs[id].Stopwatch.Elapsed;
+            _stopwatchs[id].Stopwatch.Reset();
 
             Console.Write(PROFILER_MARKER_CACHE);
             Console.Write("> ");
-            Console.Write(_stopwatchs[id].name);
+            Console.Write(_stopwatchs[id].Name);
             Console.Write(" s:");
 
             int written = 0;
