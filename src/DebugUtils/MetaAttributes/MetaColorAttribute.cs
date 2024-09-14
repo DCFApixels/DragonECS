@@ -248,6 +248,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Operators
+        public static implicit operator MetaColor((byte, byte, byte) a) { return new MetaColor(a.Item1, a.Item2, a.Item3); }
+        public static implicit operator MetaColor((byte, byte, byte, byte) a) { return new MetaColor(a.Item1, a.Item2, a.Item3, a.Item4); }
+        public static implicit operator MetaColor(int a) { return new MetaColor(a); }
         public static bool operator ==(MetaColor a, MetaColor b) { return a.colorCode == b.colorCode; }
         public static bool operator !=(MetaColor a, MetaColor b) { return a.colorCode != b.colorCode; }
 
