@@ -17,8 +17,18 @@ namespace DCFApixels.DragonECS
         MetaDescription Description { get; }
         MetaGroup Group { get; }
         IReadOnlyList<string> Tags { get; }
-    }
 
+        ITypeMeta BaseMeta { get; }
+    }
+    public static class ITypeMetaExstensions
+    {
+        public static TypeMeta FindRootTypeMeta(this ITypeMeta meta)
+        {
+            ITypeMeta result = null;
+            while ((result = meta.BaseMeta) != null) { }
+            return (TypeMeta)result;
+        }
+    }
     /// <summary> Expanding meta information over Type. </summary>
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DEBUG_GROUP)]
@@ -48,6 +58,11 @@ namespace DCFApixels.DragonECS
         private static object _lock = new object();
 
         //private EcsMemberType _memberType;
+
+        public ITypeMeta BaseMeta
+        {
+            get { return null; }
+        }
 
         #region Constructors
         public static TypeMeta Get(Type type)
@@ -263,6 +278,11 @@ namespace DCFApixels.DragonECS
         private class DebuggerProxy : ITypeMeta
         {
             private readonly TypeMeta _meta;
+
+            public ITypeMeta BaseMeta
+            {
+                get { return _meta.BaseMeta; }
+            }
             public Type Type
             {
                 get { return _meta.Type; }
