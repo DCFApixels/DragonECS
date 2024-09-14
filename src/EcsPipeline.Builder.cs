@@ -714,7 +714,7 @@ namespace DCFApixels.DragonECS
                 int i = 0;
                 foreach (ref readonly SystemNode node in it)
                 {
-                    var prms = new AddParams(node.layerName, node.sortOrder, node.isUnique, AddParamsFlags.OverwriteAll | AddParamsFlags.NoImport);
+                    var prms = new AddParams(node.layerName, node.sortOrder, node.isUnique, AddParamsFlags.None.SetOverwriteAll(true).SetNoImport(true));
                     result.systems[i++] = new EcsPipelineTemplate.AddCommand(node.system, prms);
                 }
                 return result;
@@ -1022,7 +1022,7 @@ namespace DCFApixels.DragonECS
             this.layerName = layerName;
             this.sortOrder = sortOrder;
             this.isUnique = isUnique;
-            flags = AddParamsFlags.OverwriteAll;
+            flags = AddParamsFlags.None.SetOverwriteAll(true);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(string layerName, int sortOrder, bool isUnique, AddParamsFlags overrideFlags)
@@ -1102,22 +1102,23 @@ namespace DCFApixels.DragonECS
         /// Ignore call IEcsModule.Import(Builder b)
         /// </summary>
         NoImport = 1 << 7,
-
-        OverwriteAll = OverwriteLayerName | OverwriteSortOrder | OverwriteIsUnique,
-
-
     }
     public static class AddParamsFlagsUtility
     {
+        private const AddParamsFlags OverwriteAll = AddParamsFlags.OverwriteLayerName | AddParamsFlags.OverwriteSortOrder | AddParamsFlags.OverwriteIsUnique;
+        private const AddParamsFlags All = OverwriteAll | AddParamsFlags.NoImport;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static AddParamsFlags Normalize(this AddParamsFlags flags) { return flags & All; }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsOverwriteLayerName(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteLayerName) == AddParamsFlags.OverwriteLayerName; }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsOverwriteSortOrder(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteSortOrder) == AddParamsFlags.OverwriteSortOrder; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsOverwriteIsUnique(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteIsUnique) == AddParamsFlags.OverwriteIsUnique; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsOverwriteAll(this AddParamsFlags flags) { return (flags & AddParamsFlags.OverwriteAll) == AddParamsFlags.OverwriteAll; }
+        public static bool IsOverwriteAll(this AddParamsFlags flags) { return (flags & OverwriteAll) == OverwriteAll; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNoImport(this AddParamsFlags flags) { return (flags & AddParamsFlags.NoImport) == AddParamsFlags.NoImport; }
 
@@ -1127,6 +1128,10 @@ namespace DCFApixels.DragonECS
         public static AddParamsFlags SetOverwriteSortOrder(this AddParamsFlags flags, bool flag) { return flag ? flags | AddParamsFlags.OverwriteSortOrder : flags & ~AddParamsFlags.OverwriteSortOrder; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static AddParamsFlags SetOverwriteIsUnique(this AddParamsFlags flags, bool flag) { return flag ? flags | AddParamsFlags.OverwriteIsUnique : flags & ~AddParamsFlags.OverwriteIsUnique; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static AddParamsFlags SetOverwriteAll(this AddParamsFlags flags, bool flag) { return flag ? flags | OverwriteAll : flags & ~OverwriteAll; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static AddParamsFlags SetNoImport(this AddParamsFlags flags, bool flag) { return flag ? flags | AddParamsFlags.NoImport : flags & ~AddParamsFlags.NoImport; }
     }
     #endregion
 }

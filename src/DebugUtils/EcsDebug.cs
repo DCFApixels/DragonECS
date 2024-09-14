@@ -184,7 +184,7 @@ namespace DCFApixels.DragonECS
                 {
                     var oldService = _instance;
                     _instance = service;
-                    if(_instance != null)
+                    if (_instance != null)
                     { //TODO Так, всеже треды влияют друг на друга, скоерее всего проблема в использовании _nameIdTable/ Так вроде пофиксил, но не понял как конкретно
                         foreach (var info in oldService.MarkerInfos)
                         {
