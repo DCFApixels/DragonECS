@@ -65,6 +65,25 @@ namespace DCFApixels.DragonECS
             get { return null; }
         }
 
+        private static bool CheckEcsMemener(Type checkedType)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+            return checkedType.IsInterface == false && checkedType.IsAbstract == false && typeof(IEcsMember).IsAssignableFrom(checkedType);
+#else
+            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetTags)} method does not work.");
+            return false;
+#endif
+        }
+        public static bool IsHasMeta(Type type)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+            return (CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(EcsMetaAttribute), false).Length > 0);
+#else
+            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetTags)} method does not work.");
+            return false;
+#endif
+        }
+
         #region Constructors
         public static TypeMeta Get(Type type)
         {
