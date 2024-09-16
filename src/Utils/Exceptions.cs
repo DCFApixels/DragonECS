@@ -154,7 +154,11 @@ namespace DCFApixels.DragonECS.Internal
         {
             throw new Exception(message);
         }
-
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentException(string message)
+        {
+            throw new ArgumentException(message);
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Aspect_CanOnlyBeUsedDuringInitialization(string methodName)

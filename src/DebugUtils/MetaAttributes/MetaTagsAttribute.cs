@@ -23,16 +23,17 @@ namespace DCFApixels.DragonECS
                 _tags[i] = string.Intern(_tags[i]);
             }
         }
-        //public MetaTagsAttribute(string tag0, string tag1) : this($"{tag0},{tag1}") { }
-        //public MetaTagsAttribute(string tag0, string tag1, string tag2) : this($"{tag0},{tag1},{tag2}") { }
-        //public MetaTagsAttribute(string tag0, string tag1, string tag2, string tag3) : this($"{tag0},{tag1},{tag2},{tag3}") { }
-        //public MetaTagsAttribute(string tag0, string tag1, string tag2, string tag3, string tag4) : this($"{tag0},{tag1},{tag2},{tag3},{tag4}") { }
-        //public MetaTagsAttribute(string tag0, string tag1, string tag2, string tag3, string tag4, string tag5) : this($"{tag0},{tag1},{tag2},{tag3},{tag4},{tag5}") { }
+        public MetaTagsAttribute(string tag0, string tag1) : this($"{tag0},{tag1}") { }
+        public MetaTagsAttribute(string tag0, string tag1, string tag2) : this($"{tag0},{tag1},{tag2}") { }
+        public MetaTagsAttribute(string tag0, string tag1, string tag2, string tag3) : this($"{tag0},{tag1},{tag2},{tag3}") { }
+        public MetaTagsAttribute(string tag0, string tag1, string tag2, string tag3, string tag4) : this($"{tag0},{tag1},{tag2},{tag3},{tag4}") { }
+        public MetaTagsAttribute(string tag0, string tag1, string tag2, string tag3, string tag4, string tag5) : this($"{tag0},{tag1},{tag2},{tag3},{tag4},{tag5}") { }
+        public MetaTagsAttribute(string tag0, string tag1, string tag2, string tag3, string tag4, string tag5, string tag6) : this($"{tag0},{tag1},{tag2},{tag3},{tag4},{tag5},{tag6}") { }
+        public MetaTagsAttribute(string tag0, string tag1, string tag2, string tag3, string tag4, string tag5, string tag6, string tag7) : this($"{tag0},{tag1},{tag2},{tag3},{tag4},{tag5},{tag6},{tag7}") { }
         public MetaTagsAttribute(params string[] tags) : this(string.Join(SEPARATOR, tags)) { }
     }
     public readonly ref struct MetaTags
     {
         public const string HIDDEN = EcsConsts.META_HIDDEN_TAG;
-        //private static string[] _tags = new string[64];
     }
 }

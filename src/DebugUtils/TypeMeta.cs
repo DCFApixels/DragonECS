@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
         MetaDescription Description { get; }
         MetaGroup Group { get; }
         IReadOnlyList<string> Tags { get; }
-
+        //string MetaID { get; }
         ITypeMeta BaseMeta { get; }
     }
     public static class ITypeMetaExstensions
@@ -51,6 +51,7 @@ namespace DCFApixels.DragonECS
         private MetaDescription _description;
         private MetaGroup _group;
         private IReadOnlyList<string> _tags;
+        private string _metaID;
         private int _typeCode;
 
         private InitFlag _initFlags = InitFlag.None;
@@ -218,6 +219,25 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region MetaID
+        private void InitMetaID()
+        {
+            if (_initFlags.HasFlag(InitFlag.MetaID) == false)
+            {
+                _metaID = MetaGenerator.GetMetaID(_type);
+                _initFlags |= InitFlag.MetaID;
+            }
+        }
+        public string MetaID
+        {
+            get
+            {
+                InitMetaID();
+                return _metaID;
+            }
+        }
+        #endregion
+
         #region TypeCode
         public int TypeCode
         {
@@ -243,6 +263,7 @@ namespace DCFApixels.DragonECS
                 _ = Color;
                 _ = Description;
                 _ = Tags;
+                _ = MetaID;
                 _ = TypeCode;
             }
             return this;
@@ -259,10 +280,11 @@ namespace DCFApixels.DragonECS
             Color = 1 << 2,
             Description = 1 << 3,
             Tags = 1 << 4,
-            TypeCode = 1 << 5,
-            MemberType = 1 << 6,
+            MetaID = 1 << 5,
+            TypeCode = 1 << 6,
+            //MemberType = 1 << 7,
 
-            All = Name | Group | Color | Description | Tags | TypeCode | MemberType
+            All = Name | Group | Color | Description | Tags | TypeCode | MetaID //| MemberType
         }
         #endregion
 
@@ -306,6 +328,10 @@ namespace DCFApixels.DragonECS
             public IReadOnlyList<string> Tags
             {
                 get { return _meta.Tags; }
+            }
+            public string MetaID
+            {
+                get { return _meta.MetaID; }
             }
             public DebuggerProxy(TypeMeta meta)
             {
@@ -414,16 +440,29 @@ namespace DCFApixels.DragonECS
 #endif
             }
             #endregion
+
+            #region GetMetaID
+            public static string GetMetaID(Type type)
+            {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+                var atr = type.GetCustomAttribute<MetaIDAttribute>();
+                return atr != null ? atr.ID : string.Empty;
+#else
+                EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetTags)} method does not work.");
+                return string.Empty;
+#endif
+            }
+            #endregion
         }
         #endregion
     }
 
-    public enum EcsMemberType : byte
-    {
-        Undefined = 0,
-
-        Component = 1,
-        System = 2,
-        Other = 3,
-    }
+    //public enum EcsMemberType : byte
+    //{
+    //    Undefined = 0,
+    //
+    //    Component = 1,
+    //    System = 2,
+    //    Other = 3,
+    //}
 }
