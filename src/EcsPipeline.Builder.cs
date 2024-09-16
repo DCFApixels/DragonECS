@@ -710,12 +710,12 @@ namespace DCFApixels.DragonECS
                 var it = new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
                 EcsPipelineTemplate result = new EcsPipelineTemplate();
                 result.layers = new string[Layers.Count];
-                result.systems = new EcsPipelineTemplate.AddCommand[it.Count];
+                result.records = new EcsPipelineTemplate.Record[it.Count];
                 int i = 0;
                 foreach (ref readonly SystemNode node in it)
                 {
                     var prms = new AddParams(node.layerName, node.sortOrder, node.isUnique, AddParamsFlags.None.SetOverwriteAll(true).SetNoImport(true));
-                    result.systems[i++] = new EcsPipelineTemplate.AddCommand(node.system, prms);
+                    result.records[i++] = new EcsPipelineTemplate.Record(node.system, prms);
                 }
                 return result;
             }

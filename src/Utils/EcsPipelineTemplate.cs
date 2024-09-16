@@ -5,14 +5,15 @@ namespace DCFApixels.DragonECS
 {
     [Serializable]
     [DataContract]
+    [MetaTags(MetaTags.HIDDEN)]
     public class EcsPipelineTemplate : IEcsModule
     {
         [DataMember] public string[] layers;
-        [DataMember] public AddCommand[] systems;
+        [DataMember] public Record[] records;
         void IEcsModule.Import(EcsPipeline.Builder b)
         {
             b.Layers.MergeWith(layers);
-            foreach (var s in systems)
+            foreach (var s in records)
             {
                 if (s.target == null) { continue; }
 
@@ -21,11 +22,11 @@ namespace DCFApixels.DragonECS
         }
         [Serializable]
         [DataContract]
-        public struct AddCommand
+        public struct Record
         {
             [DataMember] public object target;
             [DataMember] public AddParams parameters;
-            public AddCommand(object target, AddParams parameters)
+            public Record(object target, AddParams parameters)
             {
                 this.target = target;
                 this.parameters = parameters;
