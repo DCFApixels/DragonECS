@@ -1,13 +1,12 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
+using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
     public sealed class MetaIDAttribute : EcsMetaAttribute
     {
-        //private static HashSet<string> _ids = new HashSet<string>();
-
         public readonly string ID;
         public MetaIDAttribute(string id)
         {
@@ -19,33 +18,42 @@ namespace DCFApixels.DragonECS
             {
                 Throw.ArgumentException($"Аргумент {nameof(id)} не может содержать символ запятой ','");
             }
-            //if (_ids.Add(id) == false) //этот ексепшен не работает, так как атрибуты не кешируются а пересоздаются
-            //{
-            //    //TODO перевести ексепшен
-            //    Throw.ArgumentException($"Дублирование MetaID: {id}");
-            //}
             ID = id;
         }
     }
 
     public static class MetaIDUtility
     {
+        [ThreadStatic]
+        private static System.Random _randon;
+        [ThreadStatic]
+        private static byte[] _buffer;
+        [ThreadStatic]
+        private static bool _isInit;
+
         public static unsafe string GenerateNewUniqueID()
         {
-            long ticks = DateTime.Now.Ticks;
-            byte* hibits = stackalloc byte[8];
-            hibits = (byte*)ticks;
-
-            byte[] byteArray = Guid.NewGuid().ToByteArray();
-
-            fixed (byte* ptr = byteArray)
+            if (_isInit == false)
             {
-                for (int i = 0; i < 8; i++)
-                {
-                    byteArray[i] = hibits[i];
-                }
+                IntPtr prt = Marshal.AllocHGlobal(1);
+                long alloc = (long)prt;
+                Marshal.Release(prt);
+                _randon = new System.Random((int)alloc);
+                _buffer = new byte[8];
+                _isInit = true;
             }
-            return BitConverter.ToString(byteArray).Replace("-", "");
+
+            byte* hibits = stackalloc byte[8];
+            long* hibitsL = (long*)hibits;
+            hibitsL[0] = DateTime.Now.Ticks;
+            hibitsL[1] = _randon.Next();
+
+            for (int i = 0; i < 8; i++)
+            {
+                _buffer[i] = hibits[i];
+            }
+
+            return BitConverter.ToString(_buffer).Replace("-", "");
         }
         public static unsafe string GenerateNewUniqueIDWithAttribute()
         {

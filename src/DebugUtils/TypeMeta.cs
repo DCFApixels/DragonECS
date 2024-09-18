@@ -461,11 +461,27 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetMetaID
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+            private static Dictionary<string, Type> _idTypePairs = new Dictionary<string, Type>();
+#endif
             public static string GetMetaID(Type type)
             {
 #if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 var atr = type.GetCustomAttribute<MetaIDAttribute>();
-                return atr != null ? atr.ID : string.Empty;
+
+                if (atr == null)
+                {
+                    return string.Empty;
+                }
+                else
+                {
+                    if (_idTypePairs.TryGetValue(atr.ID, out Type otherType) && type != otherType) //этот ексепшен не работает, так как атрибуты не кешируются а пересоздаются
+                    {
+                        Throw.Exception($"Types {type.Name} and {otherType.Name} have duplicate MetaID identifiers.");
+                    }
+                    _idTypePairs.Add(atr.ID, type);
+                    return atr.ID;
+                }
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetTags)} method does not work.");
                 return string.Empty;
