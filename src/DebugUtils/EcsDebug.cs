@@ -289,8 +289,10 @@ namespace DCFApixels.DragonECS
             }
         }
         private MarkerData[] _stopwatchs;
+#if !UNITY_5_3_OR_NEWER
         [ThreadStatic]
         private static char[] _buffer;
+#endif
 
         public DefaultDebugService()
         {
