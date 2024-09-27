@@ -280,6 +280,7 @@ namespace DCFApixels.DragonECS
         #region GetTypeMeta
         public static TypeMeta GetTypeMeta(object obj)
         {
+            if (obj == null) { return TypeMeta.NullTypeMeta; }
             return TypeMeta.Get(GetTypeMetaSource(obj).GetType());
         }
         public static TypeMeta GetTypeMeta<T>()

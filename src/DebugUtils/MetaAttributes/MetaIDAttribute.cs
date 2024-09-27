@@ -18,6 +18,7 @@ namespace DCFApixels.DragonECS
             {
                 Throw.ArgumentException($"Аргумент {nameof(id)} не может содержать символ запятой ','");
             }
+            id = string.Intern(id);
             ID = id;
         }
     }
@@ -25,7 +26,7 @@ namespace DCFApixels.DragonECS
     public static class MetaIDUtility
     {
         [ThreadStatic]
-        private static System.Random _randon;
+        private static Random _randon;
         [ThreadStatic]
         private static byte[] _buffer;
         [ThreadStatic]
@@ -38,7 +39,7 @@ namespace DCFApixels.DragonECS
                 IntPtr prt = Marshal.AllocHGlobal(1);
                 long alloc = (long)prt;
                 Marshal.Release(prt);
-                _randon = new System.Random((int)alloc);
+                _randon = new Random((int)alloc);
                 _buffer = new byte[8];
                 _isInit = true;
             }

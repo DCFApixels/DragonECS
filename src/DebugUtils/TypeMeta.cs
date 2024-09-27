@@ -17,15 +17,14 @@ namespace DCFApixels.DragonECS
         MetaDescription Description { get; }
         MetaGroup Group { get; }
         IReadOnlyList<string> Tags { get; }
-        //string MetaID { get; }
         ITypeMeta BaseMeta { get; }
     }
     public static class ITypeMetaExstensions
     {
         public static TypeMeta FindRootTypeMeta(this ITypeMeta meta)
         {
-            ITypeMeta result = null;
-            while ((result = meta.BaseMeta) != null) { }
+            ITypeMeta result = meta;
+            while (result.BaseMeta != null) { result = meta.BaseMeta; }
             return (TypeMeta)result;
         }
     }
@@ -36,8 +35,14 @@ namespace DCFApixels.DragonECS
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class TypeMeta : ITypeMeta
     {
-        private static readonly Dictionary<Type, TypeMeta> _metaCache = new Dictionary<Type, TypeMeta>();
+        private const string NULL_NAME = "NULL";
+        public static readonly TypeMeta NullTypeMeta;
 
+        private static object _lock = new object();
+        private static readonly Dictionary<Type, TypeMeta> _metaCache = new Dictionary<Type, TypeMeta>();
+        private static int _increment = 1;
+
+        private readonly int _uniqueID;
         internal readonly Type _type;
 
         private bool _isCustomName;
@@ -56,38 +61,31 @@ namespace DCFApixels.DragonECS
 
         private InitFlag _initFlags = InitFlag.None;
 
-        private static object _lock = new object();
-
-        //private EcsMemberType _memberType;
-
-        public ITypeMeta BaseMeta
-        {
-            get { return null; }
-        }
-
-        private static bool CheckEcsMemener(Type checkedType)
-        {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
-            return checkedType.IsInterface == false && checkedType.IsAbstract == false && typeof(IEcsMember).IsAssignableFrom(checkedType);
-#else
-            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetTags)} method does not work.");
-            return false;
-#endif
-        }
-        public static bool IsHasMeta(Type type)
-        {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
-            return (CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(EcsMetaAttribute), false).Length > 0);
-#else
-            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetTags)} method does not work.");
-            return false;
-#endif
-        }
-
         #region Constructors
+        static TypeMeta()
+        {
+            NullTypeMeta = new TypeMeta(typeof(void))
+            {
+                _isCustomName = false,
+                _isCustomColor = true,
+                _isHidden = true,
+
+                _name = NULL_NAME,
+                _typeName = NULL_NAME,
+                _color = new MetaColor(MetaColor.Black),
+                _description = new MetaDescription("", NULL_NAME),
+                _group = new MetaGroup(""),
+                _tags = Array.Empty<string>(),
+                _metaID = string.Empty,
+                _typeCode = EcsTypeCode.Get(typeof(void)),
+
+                _initFlags = InitFlag.All,
+            };
+            _metaCache.Add(typeof(void), NullTypeMeta);
+        }
         public static TypeMeta Get(Type type)
         {
-            lock (_lock)
+            lock (_lock) //TODO посмотреть можно ли тут убрать лок
             {
                 if (_metaCache.TryGetValue(type, out TypeMeta result) == false)
                 {
@@ -99,6 +97,7 @@ namespace DCFApixels.DragonECS
         }
         private TypeMeta(Type type)
         {
+            _uniqueID = _increment++;
             _type = type;
         }
         #endregion
@@ -109,13 +108,6 @@ namespace DCFApixels.DragonECS
             get { return _type; }
         }
         #endregion
-
-        //#region EcsMemberType
-        //public EcsMemberType EcsMemberType
-        //{
-        //    get { return _memberType; }
-        //}
-        //#endregion
 
         #region Name
         private void InitName()
@@ -308,21 +300,42 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
-        public override string ToString()
+        ITypeMeta ITypeMeta.BaseMeta
         {
-            return Name;
+            get { return null; }
         }
-        public override int GetHashCode()
+        private static bool CheckEcsMemener(Type checkedType)
         {
-            return _color.GetHashCode() ^ _name[0].GetHashCode() ^ _name[_name.Length - 1].GetHashCode();
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+            return checkedType.IsInterface == false && checkedType.IsAbstract == false && typeof(IEcsMember).IsAssignableFrom(checkedType);
+#else
+            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(CheckEcsMemener)} method does not work.");
+            return false;
+#endif
         }
+        public static bool IsHasMeta(Type type)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+            return (CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(EcsMetaAttribute), false).Length > 0);
+#else
+            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasMeta)} method does not work.");
+            return false;
+#endif
+        }
+        public override string ToString() { return Name; }
+        /// <returns> Unique ID </returns>
+        public override int GetHashCode() { return _uniqueID; }
         private class DebuggerProxy : ITypeMeta
         {
             private readonly TypeMeta _meta;
 
-            public ITypeMeta BaseMeta
+            public int UniqueID
             {
-                get { return _meta.BaseMeta; }
+                get { return _meta._uniqueID; }
+            }
+            ITypeMeta ITypeMeta.BaseMeta
+            {
+                get { return null; }
             }
             public Type Type
             {
@@ -483,7 +496,7 @@ namespace DCFApixels.DragonECS
                     return atr.ID;
                 }
 #else
-                EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetTags)} method does not work.");
+                EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetMetaID)} method does not work.");
                 return string.Empty;
 #endif
             }
@@ -491,13 +504,4 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
-
-    //public enum EcsMemberType : byte
-    //{
-    //    Undefined = 0,
-    //
-    //    Component = 1,
-    //    System = 2,
-    //    Other = 3,
-    //}
 }
