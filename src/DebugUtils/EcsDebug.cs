@@ -2,39 +2,71 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    using static EcsConsts;
     public readonly struct EcsProfilerMarker
     {
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
         public readonly int id;
-        internal EcsProfilerMarker(int id) { this.id = id; }
+#endif
+        internal EcsProfilerMarker(int id)
+        {
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
+            this.id = id;
+#endif
+        }
         public EcsProfilerMarker(string name)
         {
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
             id = DebugService.Instance.RegisterMark(name);
+#endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Begin() { DebugService.Instance.ProfilerMarkBegin(id); }
+        public void Begin()
+        {
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
+            DebugService.Instance.ProfilerMarkBegin(id);
+#endif
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void End() { DebugService.Instance.ProfilerMarkEnd(id); }
+        public void End()
+        {
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
+            DebugService.Instance.ProfilerMarkEnd(id);
+#endif
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AutoScope Auto() { return new AutoScope(id); }
+        public AutoScope Auto()
+        {
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
+            return new AutoScope(id);
+#else
+            return default;
+#endif
+        }
         public readonly ref struct AutoScope
         {
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
             private readonly int _id;
+#endif
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public AutoScope(int id)
             {
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
                 _id = id;
                 DebugService.Instance.ProfilerMarkBegin(id);
+#endif
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
             {
+#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
                 DebugService.Instance.ProfilerMarkEnd(_id);
+#endif
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -42,14 +74,10 @@ namespace DCFApixels.DragonECS
     }
 
     [MetaColor(MetaColor.DragonRose)]
-    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DEBUG_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "Debugging utility. To modify or change the behavior, create a new class inherited from DebugService and set this service using DebugService.Set<T>().")]
+    [MetaGroup(PACK_GROUP, DEBUG_GROUP)]
+    [MetaDescription(AUTHOR, "Debugging utility. To modify or change the behavior, create a new class inherited from DebugService and set this service using DebugService.Set<T>().")]
     public static class EcsDebug
     {
-        public const string WARNING_TAG = EcsConsts.DEBUG_WARNING_TAG;
-        public const string ERROR_TAG = EcsConsts.DEBUG_ERROR_TAG;
-        public const string PASS_TAG = EcsConsts.DEBUG_PASS_TAG;
-
         public static void Set<T>() where T : DebugService, new()
         {
             DebugService.Set<T>();
@@ -271,7 +299,10 @@ namespace DCFApixels.DragonECS
     }
     public sealed class DefaultDebugService : DebugService
     {
+#if !UNITY_5_3_OR_NEWER
         private const string PROFILER_MARKER = "ProfilerMark";
+        private const string PROFILER_MARKER_CACHE = "[" + PROFILER_MARKER + "] ";
+
         private readonly struct MarkerData
         {
             public readonly Stopwatch Stopwatch;
@@ -289,18 +320,14 @@ namespace DCFApixels.DragonECS
             }
         }
         private MarkerData[] _stopwatchs;
-#if !UNITY_5_3_OR_NEWER
         [ThreadStatic]
         private static char[] _buffer;
-#endif
 
         public DefaultDebugService()
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.BackgroundColor = ConsoleColor.Black;
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
             _stopwatchs = new MarkerData[64];
-#endif
         }
 
         public override void Print(string tag, object v)
@@ -337,11 +364,8 @@ namespace DCFApixels.DragonECS
             Console.ForegroundColor = color;
         }
 
-        private const string PROFILER_MARKER_CACHE = "[" + PROFILER_MARKER + "] ";
         public override void ProfilerMarkBegin(int id)
         {
-#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER) && !UNITY_5_3_OR_NEWER
-
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
             _stopwatchs[id].Stopwatch.Start();
@@ -351,11 +375,9 @@ namespace DCFApixels.DragonECS
             Console.WriteLine("> ");
 
             Console.ForegroundColor = color;
-#endif
         }
         public override void ProfilerMarkEnd(int id)
         {
-#if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER) && !UNITY_5_3_OR_NEWER
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
             _stopwatchs[id].Stopwatch.Stop();
@@ -373,7 +395,6 @@ namespace DCFApixels.DragonECS
             Console.WriteLine(_buffer, 0, written);
 
             Console.ForegroundColor = color;
-#endif
         }
 
         protected override void OnDelProfilerMark(int id)
@@ -441,5 +462,12 @@ namespace DCFApixels.DragonECS
 
             written = bufferLength - zeroPartLength;
         }
+#endif
+        public override void Break() { }
+        public override void Print(string tag, object v) { }
+        public override void ProfilerMarkBegin(int id) { }
+        public override void ProfilerMarkEnd(int id) { }
+        protected override void OnDelProfilerMark(int id) { }
+        protected override void OnNewProfilerMark(int id, string name) { }
     }
 }

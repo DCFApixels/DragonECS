@@ -316,9 +316,18 @@ namespace DCFApixels.DragonECS
         public static bool IsHasMeta(Type type)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
-            return (CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(EcsMetaAttribute), false).Length > 0);
+            return CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(EcsMetaAttribute), false).Length > 0;
 #else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasMeta)} method does not work.");
+            return false;
+#endif
+        }
+        public static bool IsHasMetaID(Type type)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+            return type.HasAttribute<MetaIDAttribute>();
+#else
+            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasMetaID)} method does not work.");
             return false;
 #endif
         }
@@ -394,7 +403,7 @@ namespace DCFApixels.DragonECS
             public static (string, bool) GetMetaName(Type type)
             {
 #if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                bool isCustom = type.TryGetCustomAttribute(out MetaNameAttribute atr) && string.IsNullOrEmpty(atr.name) == false;
+                bool isCustom = type.TryGetAttribute(out MetaNameAttribute atr) && string.IsNullOrEmpty(atr.name) == false;
                 if (isCustom)
                 {
                     if ((type.IsGenericType && atr.isHideGeneric == false) == false)
@@ -426,7 +435,7 @@ namespace DCFApixels.DragonECS
             public static (MetaColor, bool) GetColor(Type type)
             {
 #if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                bool isCustom = type.TryGetCustomAttribute(out MetaColorAttribute atr);
+                bool isCustom = type.TryGetAttribute(out MetaColorAttribute atr);
                 return (isCustom ? atr.color : AutoColor(type), isCustom);
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetColor)} method does not work.");
@@ -439,7 +448,7 @@ namespace DCFApixels.DragonECS
             public static MetaGroup GetGroup(Type type)
             {
 #if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                return type.TryGetCustomAttribute(out MetaGroupAttribute atr) ? atr.Data : MetaGroup.Empty;
+                return type.TryGetAttribute(out MetaGroupAttribute atr) ? atr.Data : MetaGroup.Empty;
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetGroup)} method does not work.");
                 return MetaGroup.Empty;
@@ -451,7 +460,7 @@ namespace DCFApixels.DragonECS
             public static MetaDescription GetDescription(Type type)
             {
 #if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                bool isCustom = type.TryGetCustomAttribute(out MetaDescriptionAttribute atr);
+                bool isCustom = type.TryGetAttribute(out MetaDescriptionAttribute atr);
                 return isCustom ? atr.Data : MetaDescription.Empty;
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetDescription)} method does not work.");

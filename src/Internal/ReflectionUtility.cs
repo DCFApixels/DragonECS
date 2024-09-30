@@ -7,16 +7,26 @@ namespace DCFApixels.DragonECS.Internal
     internal static class ReflectionUtility
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetCustomAttribute<T>(this Type self, out T attribute) where T : Attribute
+        public static bool TryGetAttribute<T>(this MemberInfo self, out T attribute) where T : Attribute
         {
             attribute = self.GetCustomAttribute<T>();
             return attribute != null;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetCustomAttribute<T>(this MemberInfo self, out T attribute) where T : Attribute
+        public static bool TryGetAttribute<T>(this MemberInfo self, bool inherit, out T attribute) where T : Attribute
         {
-            attribute = self.GetCustomAttribute<T>();
+            attribute = self.GetCustomAttribute<T>(inherit);
             return attribute != null;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HasAttribute<T>(this MemberInfo self) where T : Attribute
+        {
+            return self.GetCustomAttribute<T>() != null;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HasAttribute<T>(this MemberInfo self, bool inherit) where T : Attribute
+        {
+            return self.GetCustomAttribute<T>(inherit) != null;
         }
     }
 }
