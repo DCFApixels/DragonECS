@@ -24,10 +24,14 @@ namespace DCFApixels.DragonECS
             where TAspect : EcsAspect, new()
         {
             EcsWorld world = span.World;
-            var executor = world.GetExecutor<EcsWhereExecutor<TAspect>>();
+            var executor = world.GetQueryCache<EcsWhereCache<TAspect>>();
             aspect = executor.Aspect;
             return executor.ExecuteFor(span);
         }
+        //public static EcsSpan Where<TCollection>(this TCollection entities, EcsStaticMask mask)
+        //{
+        //    
+        //}
         #endregion
 
         #region Where with sort
@@ -46,7 +50,7 @@ namespace DCFApixels.DragonECS
             where TAspect : EcsAspect, new()
         {
             EcsWorld world = span.World;
-            var executor = world.GetExecutor<EcsWhereExecutor<TAspect>>();
+            var executor = world.GetQueryCache<EcsWhereCache<TAspect>>();
             aspect = executor.Aspect;
             return executor.ExecuteFor(span, comparison);
         }
@@ -68,7 +72,7 @@ namespace DCFApixels.DragonECS
             where TAspect : EcsAspect, new()
         {
             EcsWorld world = span.World;
-            var executor = world.GetExecutor<EcsWhereToGroupExecutor<TAspect>>();
+            var executor = world.GetQueryCache<EcsWhereToGroupCache<TAspect>>();
             aspect = executor.Aspect;
             return executor.ExecuteFor(span);
         }

@@ -1,14 +1,188 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+#if ENABLE_IL2CPP
+using Unity.IL2CPP.CompilerServices;
+#endif
 
 namespace DCFApixels.DragonECS
 {
 #if ENABLE_IL2CPP
-    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+    public sealed class EcsStaticMask : IEquatable<EcsStaticMask>
+    {
+        private static ConcurrentDictionary<Key, EcsStaticMask> _ids = new ConcurrentDictionary<Key, EcsStaticMask>();
+        private static IdDispenser _idDIspenser = new IdDispenser(nullID: 0);
+        private static object _lock = new object();
+
+        private readonly int _id;
+        /// <summary> Sorted </summary>
+        private readonly EcsTypeCode[] _inc;
+        /// <summary> Sorted </summary>
+        private readonly EcsTypeCode[] _exc;
+
+        #region Properties
+        public int ID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _id; }
+        }
+        /// <summary> Sorted set including constraints presented as global type codes. </summary>
+        public ReadOnlySpan<EcsTypeCode> IncTypeCodes
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _inc; }
+        }
+        /// <summary> Sorted set excluding constraints presented as global type codes. </summary>
+        public ReadOnlySpan<EcsTypeCode> ExcTypeCodes
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _exc; }
+        }
+        #endregion
+
+        #region Constrcutors
+        public static Builder New() { return new Builder(); }
+        public static Builder Inc<T>() { return new Builder().Inc<T>(); }
+        public static Builder Exc<T>() { return new Builder().Exc<T>(); }
+        private EcsStaticMask(int id, Key key)
+        {
+            _id = id;
+            _inc = key.inc;
+            _exc = key.exc;
+        }
+        #endregion
+
+        #region Methods
+        public EcsMask ToMask(EcsWorld world)
+        {
+            return EcsMask.FromStatic(world, this);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(EcsStaticMask other) { return _id == other._id; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode() { return _id; }
+        public override bool Equals(object obj) { return Equals((EcsStaticMask)obj); }
+        public override string ToString() { return $"s_mask({_id})"; }
+        #endregion
+
+        #region Builder
+        private readonly struct Key : IEquatable<Key>
+        {
+            public readonly EcsTypeCode[] inc;
+            public readonly EcsTypeCode[] exc;
+            public readonly int hash;
+
+            #region Constructors
+            public Key(EcsTypeCode[] inc, EcsTypeCode[] exc)
+            {
+                this.inc = inc;
+                this.exc = exc;
+                unchecked
+                {
+                    hash = inc.Length + exc.Length;
+                    for (int i = 0, iMax = inc.Length; i < iMax; i++)
+                    {
+                        hash = hash * EcsConsts.MAGIC_PRIME + (int)inc[i];
+                    }
+                    for (int i = 0, iMax = exc.Length; i < iMax; i++)
+                    {
+                        hash = hash * EcsConsts.MAGIC_PRIME - (int)exc[i];
+                    }
+                }
+            }
+            #endregion
+
+            #region Object
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool Equals(Key other)
+            {
+                if (inc.Length != other.inc.Length) { return false; }
+                if (exc.Length != other.exc.Length) { return false; }
+                for (int i = 0; i < inc.Length; i++)
+                {
+                    if (inc[i] != other.inc[i]) { return false; }
+                }
+                for (int i = 0; i < exc.Length; i++)
+                {
+                    if (exc[i] != other.exc[i]) { return false; }
+                }
+                return true;
+            }
+            public override bool Equals(object obj) { return Equals((Key)obj); }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public override int GetHashCode() { return hash; }
+            #endregion
+        }
+        public class Builder
+        {
+            private readonly HashSet<EcsTypeCode> _inc = new HashSet<EcsTypeCode>();
+            private readonly HashSet<EcsTypeCode> _exc = new HashSet<EcsTypeCode>();
+
+            #region Constrcutors
+            internal Builder() { }
+            #endregion
+
+            #region Include/Exclude/Combine
+            public Builder Inc<T>() { return Inc(EcsTypeCodeManager.Get<T>()); }
+            public Builder Exc<T>() { return Exc(EcsTypeCodeManager.Get<T>()); }
+            public Builder Inc(Type type) { return Inc(EcsTypeCodeManager.Get(type)); }
+            public Builder Exc(Type type) { return Exc(EcsTypeCodeManager.Get(type)); }
+            public Builder Inc(EcsTypeCode typeCode)
+            {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+                if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(); }
+#endif
+                _inc.Add(typeCode);
+                return this;
+            }
+            public Builder Exc(EcsTypeCode typeCode)
+            {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+                if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(); }
+#endif
+                _exc.Add(typeCode);
+                return this;
+            }
+            #endregion
+
+            #region Build
+            public EcsStaticMask Build()
+            {
+                HashSet<EcsTypeCode> combinedIncs = _inc;
+                HashSet<EcsTypeCode> combinedExcs = _exc;
+
+                var inc = combinedIncs.ToArray();
+                Array.Sort(inc);
+                var exc = combinedExcs.ToArray();
+                Array.Sort(exc);
+
+                var key = new Key(inc, exc);
+                if (_ids.TryGetValue(key, out EcsStaticMask result) == false)
+                {
+                    lock (_lock)
+                    {
+                        if (_ids.TryGetValue(key, out result) == false)
+                        {
+                            result = new EcsStaticMask(_idDIspenser.UseFree(), key);
+                            _ids[key] = result;
+                        }
+                    }
+                }
+                return result;
+            }
+            #endregion
+        }
+        #endregion
+    }
+
+#if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
@@ -19,36 +193,44 @@ namespace DCFApixels.DragonECS
         internal readonly short _worldID;
         internal readonly EcsMaskChunck[] _incChunckMasks;
         internal readonly EcsMaskChunck[] _excChunckMasks;
-        internal readonly int[] _inc; //Sorted
-        internal readonly int[] _exc; //Sorted
+        /// <summary> Sorted </summary>
+        internal readonly int[] _inc;
+        /// <summary> Sorted </summary>
+        internal readonly int[] _exc;
 
         private EcsMaskIterator _iterator;
 
         #region Properties
         public int ID
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _id; }
         }
         public short WorldID
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _worldID; }
         }
         public EcsWorld World
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return EcsWorld.GetWorld(_worldID); }
         }
-        /// <summary>Including constraints</summary>
+        /// <summary> Sorted set including constraints. </summary>
         public ReadOnlySpan<int> Inc
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _inc; }
         }
-        /// <summary>Excluding constraints</summary>
+        /// <summary> Sorted set excluding constraints. </summary>
         public ReadOnlySpan<int> Exc
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _exc; }
         }
         public bool IsEmpty
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _inc.Length == 0 && _exc.Length == 0; }
         }
         public bool IsBroken
@@ -58,32 +240,28 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        public static Builder New(EcsWorld world)
-        {
-            return new Builder(world);
-        }
-
-        internal static EcsMask New(int id, short worldID, int[] inc, int[] exc)
+        public static Builder New(EcsWorld world) { return new Builder(world); }
+        internal static EcsMask Create(int id, short worldID, int[] inc, int[] exc)
         {
 #if DEBUG
             CheckConstraints(inc, exc);
 #endif
             return new EcsMask(id, worldID, inc, exc);
         }
-        internal static EcsMask NewEmpty(int id, short worldID)
+        internal static EcsMask CreateEmpty(int id, short worldID)
         {
             return new EcsMask(id, worldID, new int[0], new int[0]);
         }
-        internal static EcsMask NewBroken(int id, short worldID)
+        internal static EcsMask CreateBroken(int id, short worldID)
         {
             return new EcsMask(id, worldID, new int[1] { 1 }, new int[1] { 1 });
         }
         private EcsMask(int id, short worldID, int[] inc, int[] exc)
         {
-            this._id = id;
-            this._inc = inc;
-            this._exc = exc;
-            this._worldID = worldID;
+            _id = id;
+            _inc = inc;
+            _exc = exc;
+            _worldID = worldID;
 
             _incChunckMasks = MakeMaskChuncsArray(inc);
             _excChunckMasks = MakeMaskChuncsArray(exc);
@@ -343,38 +521,48 @@ namespace DCFApixels.DragonECS
 
         #endregion
 
+        #region AbstractMask
+        public static EcsMask FromStatic(EcsWorld world, EcsStaticMask abstractMask)
+        {
+            return world.Get<WorldMaskComponent>().ConvertFromAbstract(abstractMask);
+        }
+        #endregion
+
         #region Builder
         private readonly struct WorldMaskComponent : IEcsWorldComponent<WorldMaskComponent>
         {
             private readonly EcsWorld _world;
             private readonly Dictionary<Key, EcsMask> _masks;
             private readonly Dictionary<OpMaskKey, EcsMask> _opMasks;
+            private readonly SparseArray<EcsMask> _abstractMasks;
 
             public readonly EcsMask EmptyMask;
             public readonly EcsMask BrokenMask;
 
             #region Constructor/Destructor
-            public WorldMaskComponent(EcsWorld world, Dictionary<Key, EcsMask> masks, Dictionary<OpMaskKey, EcsMask> opMasks, EcsMask emptyMask, EcsMask brokenMask)
+            public WorldMaskComponent(EcsWorld world, Dictionary<Key, EcsMask> masks, EcsMask emptyMask, EcsMask brokenMask)
             {
                 _world = world;
                 _masks = masks;
-                _opMasks = opMasks;
+                _opMasks = new Dictionary<OpMaskKey, EcsMask>(256);
+                _abstractMasks = new SparseArray<EcsMask>(256);
                 EmptyMask = emptyMask;
                 BrokenMask = brokenMask;
             }
             public void Init(ref WorldMaskComponent component, EcsWorld world)
             {
                 var masks = new Dictionary<Key, EcsMask>(256);
-                EcsMask emptyMask = NewEmpty(0, world.id);
-                EcsMask brokenMask = NewBroken(1, world.id);
+                EcsMask emptyMask = CreateEmpty(0, world.id);
+                EcsMask brokenMask = CreateBroken(1, world.id);
                 masks.Add(new Key(emptyMask._inc, emptyMask._exc), emptyMask);
                 masks.Add(new Key(brokenMask._inc, brokenMask._exc), brokenMask);
-                component = new WorldMaskComponent(world, masks, new Dictionary<OpMaskKey, EcsMask>(256), emptyMask, brokenMask);
+                component = new WorldMaskComponent(world, masks, emptyMask, brokenMask);
             }
             public void OnDestroy(ref WorldMaskComponent component, EcsWorld world)
             {
                 component._masks.Clear();
                 component._opMasks.Clear();
+                component._abstractMasks.Clear();
                 component = default;
             }
             #endregion
@@ -394,11 +582,29 @@ namespace DCFApixels.DragonECS
                 }
                 return result;
             }
+            internal EcsMask ConvertFromAbstract(EcsStaticMask abstractMask)
+            {
+                if (_abstractMasks.TryGetValue(abstractMask.ID, out EcsMask result) == false)
+                {
+                    var b = New(_world);
+                    foreach (var typeCode in abstractMask.IncTypeCodes)
+                    {
+                        b.Inc(_world.DeclareOrGetComponentTypeID(typeCode));
+                    }
+                    foreach (var typeCode in abstractMask.ExcTypeCodes)
+                    {
+                        b.Exc(_world.DeclareOrGetComponentTypeID(typeCode));
+                    }
+                    result = b.Build();
+                    _abstractMasks.Add(abstractMask.ID, result);
+                }
+                return result;
+            }
             internal EcsMask GetMask(Key maskKey)
             {
-                if (!_masks.TryGetValue(maskKey, out EcsMask result))
+                if (_masks.TryGetValue(maskKey, out EcsMask result) == false)
                 {
-                    result = New(_masks.Count, _world.id, maskKey.inc, maskKey.exc);
+                    result = Create(_masks.Count, _world.id, maskKey.inc, maskKey.exc);
                     _masks.Add(maskKey, result);
                 }
                 return result;
@@ -435,30 +641,19 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool Equals(Key other)
             {
-                if (inc.Length != other.inc.Length)
-                {
-                    return false;
-                }
-                if (exc.Length != other.exc.Length)
-                {
-                    return false;
-                }
+                if (inc.Length != other.inc.Length) { return false; }
+                if (exc.Length != other.exc.Length) { return false; }
                 for (int i = 0; i < inc.Length; i++)
                 {
-                    if (inc[i] != other.inc[i])
-                    {
-                        return false;
-                    }
+                    if (inc[i] != other.inc[i]) { return false; }
                 }
                 for (int i = 0; i < exc.Length; i++)
                 {
-                    if (exc[i] != other.exc[i])
-                    {
-                        return false;
-                    }
+                    if (exc[i] != other.exc[i]) { return false; }
                 }
                 return true;
             }
+            public override bool Equals(object obj) { return Equals((Key)obj); }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public override int GetHashCode() { return hash; }
             #endregion
@@ -479,38 +674,31 @@ namespace DCFApixels.DragonECS
             }
             #endregion
 
-            #region Include/Exclude/Combine
-            public Builder Include<T>()
-            {
-                return Include(_world.GetComponentTypeID<T>());
-            }
-            public Builder Exclude<T>()
-            {
-                return Exclude(_world.GetComponentTypeID<T>());
-            }
-            public Builder Include(Type type)
-            {
-                return Include(_world.GetComponentTypeID(type));
-            }
-            public Builder Exclude(Type type)
-            {
-                return Exclude(_world.GetComponentTypeID(type));
-            }
+            #region Inc/Exc/Combine
+            [Obsolete("Use Inc(type)")] public Builder Include<T>() { return Inc<T>(); }
+            [Obsolete("Use Exc(type)")] public Builder Exclude<T>() { return Exc<T>(); }
+            [Obsolete("Use Inc(type)")] public Builder Include(Type type) { return Inc(type); }
+            [Obsolete("Use Exc(type)")] public Builder Exclude(Type type) { return Exc(type); }
 
-            public Builder Include(int compponentTypeID)
+            public Builder Inc<T>() { return Inc(_world.GetComponentTypeID<T>()); }
+            public Builder Exc<T>() { return Exc(_world.GetComponentTypeID<T>()); }
+            public Builder Inc(Type type) { return Inc(_world.GetComponentTypeID(type)); }
+            public Builder Exc(Type type) { return Exc(_world.GetComponentTypeID(type)); }
+
+            public Builder Inc(int componentTypeID)
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(compponentTypeID) || _exc.Contains(compponentTypeID)) Throw.ConstraintIsAlreadyContainedInMask(_world.GetComponentType(compponentTypeID));
+                if (_inc.Contains(componentTypeID) || _exc.Contains(componentTypeID)) { Throw.ConstraintIsAlreadyContainedInMask(_world.GetComponentType(componentTypeID)); }
 #endif
-                _inc.Add(compponentTypeID);
+                _inc.Add(componentTypeID);
                 return this;
             }
-            public Builder Exclude(int compponentTypeID)
+            public Builder Exc(int componentTypeID)
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(compponentTypeID) || _exc.Contains(compponentTypeID)) Throw.ConstraintIsAlreadyContainedInMask(_world.GetComponentType(compponentTypeID));
+                if (_inc.Contains(componentTypeID) || _exc.Contains(componentTypeID)) { Throw.ConstraintIsAlreadyContainedInMask(_world.GetComponentType(componentTypeID)); }
 #endif
-                _exc.Add(compponentTypeID);
+                _exc.Add(componentTypeID);
                 return this;
             }
 

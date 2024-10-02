@@ -6,7 +6,7 @@ namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {
-        private readonly Dictionary<(Type, EcsMask), EcsQueryExecutorCore> _executorCoures = new Dictionary<(Type, EcsMask), EcsQueryExecutorCore>();
+        private readonly Dictionary<(Type, object), EcsQueryExecutor> _executorCoures = new Dictionary<(Type, object), EcsQueryExecutor>(256);
         private readonly ExecutorMediator _executorsMediator;
         public readonly struct ExecutorMediator
         {
@@ -20,10 +20,10 @@ namespace DCFApixels.DragonECS
                 World = world;
             }
             public TExecutorCore GetCore<TExecutorCore>(EcsMask mask)
-                where TExecutorCore : EcsQueryExecutorCore, new()
+                where TExecutorCore : EcsQueryExecutor, new()
             {
                 var coreType = typeof(TExecutorCore);
-                if (World._executorCoures.TryGetValue((coreType, mask), out EcsQueryExecutorCore core) == false)
+                if (World._executorCoures.TryGetValue((coreType, mask), out EcsQueryExecutor core) == false)
                 {
                     core = new TExecutorCore();
                     core.Initialize(World, mask);
@@ -31,9 +31,21 @@ namespace DCFApixels.DragonECS
                 }
                 return (TExecutorCore)core;
             }
+            public TExecutorCore GetCore<TExecutorCore>(EcsStaticMask staticMask)
+                where TExecutorCore : EcsQueryExecutor, new()
+            {
+                var coreType = typeof(TExecutorCore);
+                if (World._executorCoures.TryGetValue((coreType, staticMask), out EcsQueryExecutor core) == false)
+                {
+                    core = new TExecutorCore();
+                    core.Initialize(World, staticMask.ToMask(World));
+                    World._executorCoures.Add((coreType, staticMask), core);
+                }
+                return (TExecutorCore)core;
+            }
         }
     }
-    public abstract class EcsQueryExecutorCore
+    public abstract class EcsQueryExecutor
     {
         private EcsWorld _source;
         private EcsMask _mask;
@@ -66,7 +78,7 @@ namespace DCFApixels.DragonECS
         protected abstract void OnInitialize();
         protected abstract void OnDestroy();
     }
-    public abstract class EcsQueryExecutor
+    public abstract class EcsQueryCache
     {
         private EcsWorld _source;
         private EcsWorld.ExecutorMediator _mediator;

@@ -225,9 +225,9 @@ namespace DCFApixels.DragonECS
             return Get<AspectCache<TAspect>>().instance;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TExecutor GetExecutor<TExecutor>() where TExecutor : EcsQueryExecutor, new()
+        public TExecutor GetQueryCache<TExecutor>() where TExecutor : EcsQueryCache, new()
         {
-            return Get<ExeccutorCache<TExecutor>>().instance;
+            return Get<QueryCache<TExecutor>>().instance;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -713,6 +713,15 @@ namespace DCFApixels.DragonECS
         {
             int count = GetComponentTypeIDsFor(entityID, ref _componentIDsBuffer);
             return new ReadOnlySpan<int>(_componentIDsBuffer, 0, count);
+        }
+        public void GetComponentPoolsFor(int entityID, List<IEcsPool> list)
+        {
+            list.Clear();
+            int count = GetComponentTypeIDsFor(entityID, ref _componentIDsBuffer);
+            for (int i = 0; i < count; i++)
+            {
+                list.Add(_pools[_componentIDsBuffer[i]]);
+            }
         }
         public void GetComponentsFor(int entityID, List<object> list)
         {

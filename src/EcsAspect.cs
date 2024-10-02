@@ -166,11 +166,11 @@ namespace DCFApixels.DragonECS
             }
             private void IncludeImplicit(Type type)
             {
-                _maskBuilder.Include(type);
+                _maskBuilder.Inc(type);
             }
             private void ExcludeImplicit(Type type)
             {
-                _maskBuilder.Exclude(type);
+                _maskBuilder.Exc(type);
             }
             public TOtherAspect Combine<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect, new()
             {

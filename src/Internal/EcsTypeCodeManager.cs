@@ -12,9 +12,9 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal static class EcsTypeCode
+    internal static class EcsTypeCodeManager
     {
-        private static readonly Dictionary<Type, int> _codes = new Dictionary<Type, int>();
+        private static readonly Dictionary<Type, EcsTypeCode> _codes = new Dictionary<Type, EcsTypeCode>();
         private static int _increment = 1;
         private static object _lock = new object();
         public static int Count
@@ -22,20 +22,20 @@ namespace DCFApixels.DragonECS.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _codes.Count; }
         }
-        public static int Get(Type type)
+        public static EcsTypeCode Get(Type type)
         {
             lock (_lock)
             {
-                if (!_codes.TryGetValue(type, out int code))
+                if (!_codes.TryGetValue(type, out EcsTypeCode code))
                 {
-                    code = _increment++;
+                    code = (EcsTypeCode)_increment++;
                     _codes.Add(type, code);
                 }
                 return code;
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Get<T>() { return EcsTypeCodeCache<T>.code; }
+        public static EcsTypeCode Get<T>() { return EcsTypeCodeCache<T>.code; }
         public static bool Has(Type type) { return _codes.ContainsKey(type); }
         public static bool Has<T>() { return _codes.ContainsKey(typeof(T)); }
         public static IEnumerable<TypeCodeInfo> GetDeclaredTypes() { return _codes.Select(o => new TypeCodeInfo(o.Key, o.Value)); }
@@ -46,7 +46,7 @@ namespace DCFApixels.DragonECS.Internal
 #endif
     internal static class EcsTypeCodeCache<T>
     {
-        public static readonly int code = EcsTypeCode.Get(typeof(T));
+        public static readonly EcsTypeCode code = EcsTypeCodeManager.Get(typeof(T));
     }
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
@@ -55,8 +55,8 @@ namespace DCFApixels.DragonECS.Internal
     internal struct TypeCodeInfo
     {
         public Type type;
-        public int code;
-        public TypeCodeInfo(Type type, int code)
+        public EcsTypeCode code;
+        public TypeCodeInfo(Type type, EcsTypeCode code)
         {
             this.type = type;
             this.code = code;

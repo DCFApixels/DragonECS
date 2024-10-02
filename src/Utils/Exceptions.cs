@@ -38,6 +38,11 @@ namespace DCFApixels.DragonECS.Internal
     internal static class Throw
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ConstraintIsAlreadyContainedInMask()
+        {
+            throw new EcsFrameworkException($"The constraint is already contained in the mask.");
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ConstraintIsAlreadyContainedInMask(Type type)
         {
             throw new EcsFrameworkException($"The {EcsDebugUtility.GetGenericTypeName(type)} constraint is already contained in the mask.");

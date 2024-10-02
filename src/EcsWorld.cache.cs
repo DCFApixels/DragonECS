@@ -32,18 +32,18 @@ namespace DCFApixels.DragonECS
                 component = default;
             }
         }
-        internal readonly struct ExeccutorCache<T> : IEcsWorldComponent<ExeccutorCache<T>>
-            where T : EcsQueryExecutor, new()
+        internal readonly struct QueryCache<T> : IEcsWorldComponent<QueryCache<T>>
+            where T : EcsQueryCache, new()
         {
             public readonly T instance;
-            public ExeccutorCache(T instance) { this.instance = instance; }
-            void IEcsWorldComponent<ExeccutorCache<T>>.Init(ref ExeccutorCache<T> component, EcsWorld world)
+            public QueryCache(T instance) { this.instance = instance; }
+            void IEcsWorldComponent<QueryCache<T>>.Init(ref QueryCache<T> component, EcsWorld world)
             {
                 T instance = new T();
                 instance.Initialize(world, world._executorsMediator);
-                component = new ExeccutorCache<T>(instance);
+                component = new QueryCache<T>(instance);
             }
-            void IEcsWorldComponent<ExeccutorCache<T>>.OnDestroy(ref ExeccutorCache<T> component, EcsWorld world)
+            void IEcsWorldComponent<QueryCache<T>>.OnDestroy(ref QueryCache<T> component, EcsWorld world)
             {
                 component = default;
             }

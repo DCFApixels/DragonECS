@@ -10,7 +10,7 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal class EcsWhereToGroupExecutorCore : EcsQueryExecutorCore
+    internal class EcsWhereToGroupExecutor : EcsQueryExecutor
     {
         private EcsMaskIterator _iterator;
         private EcsGroup _filteredAllGroup;
@@ -90,10 +90,10 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public sealed class EcsWhereToGroupExecutor<TAspect> : EcsQueryExecutor where TAspect : EcsAspect, new()
+    public sealed class EcsWhereToGroupCache<TAspect> : EcsQueryCache where TAspect : EcsAspect, new()
     {
         private TAspect _aspect;
-        private EcsWhereToGroupExecutorCore _core;
+        private EcsWhereToGroupExecutor _executor;
 
         #region Properties
         public TAspect Aspect
@@ -104,7 +104,7 @@ namespace DCFApixels.DragonECS
         public sealed override long Version
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _core.Version; }
+            get { return _executor.Version; }
         }
         #endregion
 
@@ -112,11 +112,11 @@ namespace DCFApixels.DragonECS
         protected sealed override void OnInitialize()
         {
             _aspect = World.GetAspect<TAspect>();
-            _core = Mediator.GetCore<EcsWhereToGroupExecutorCore>(_aspect.Mask);
+            _executor = Mediator.GetCore<EcsWhereToGroupExecutor>(_aspect.Mask);
         }
         protected sealed override void OnDestroy()
         {
-            _core.Destroy();
+            _executor.Destroy();
         }
         #endregion
 
@@ -124,12 +124,12 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup Execute()
         {
-            return _core.Execute();
+            return _executor.Execute();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup ExecuteFor(EcsSpan span)
         {
-            return _core.ExecuteFor(span);
+            return _executor.ExecuteFor(span);
         }
         #endregion
     }

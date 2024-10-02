@@ -96,19 +96,19 @@ namespace DCFApixels.DragonECS
         #region ComponentInfo
         public int GetComponentTypeID<TComponent>()
         {
-            return DeclareOrGetComponentTypeID(EcsTypeCode.Get<TComponent>());
+            return DeclareOrGetComponentTypeID(EcsTypeCodeManager.Get<TComponent>());
         }
         public int GetComponentTypeID(Type componentType)
         {
-            return DeclareOrGetComponentTypeID(EcsTypeCode.Get(componentType));
+            return DeclareOrGetComponentTypeID(EcsTypeCodeManager.Get(componentType));
         }
         public bool IsComponentTypeDeclared<TComponent>()
         {
-            return _cmpTypeCode_2_CmpTypeIDs.Contains(EcsTypeCode.Get<TComponent>());
+            return _cmpTypeCode_2_CmpTypeIDs.Contains((int)EcsTypeCodeManager.Get<TComponent>());
         }
         public bool IsComponentTypeDeclared(Type componentType)
         {
-            return _cmpTypeCode_2_CmpTypeIDs.Contains(EcsTypeCode.Get(componentType));
+            return _cmpTypeCode_2_CmpTypeIDs.Contains((int)EcsTypeCodeManager.Get(componentType));
         }
         public bool IsComponentTypeDeclared(int componentTypeID)
         {
@@ -125,21 +125,21 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Declare
-        private int DeclareOrGetComponentTypeID(int componentTypeCode)
+        internal int DeclareOrGetComponentTypeID(EcsTypeCode componentTypeCode)
         {
-            if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int ComponentTypeID) == false)
+            if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue((int)componentTypeCode, out int ComponentTypeID) == false)
             {
                 ComponentTypeID = _poolsCount++;
-                _cmpTypeCode_2_CmpTypeIDs.Add(componentTypeCode, ComponentTypeID);
+                _cmpTypeCode_2_CmpTypeIDs.Add((int)componentTypeCode, ComponentTypeID);
             }
             return ComponentTypeID;
         }
-        private bool TryDeclareComponentTypeID(int componentTypeCode, out int componentTypeID)
+        internal bool TryDeclareComponentTypeID(EcsTypeCode componentTypeCode, out int componentTypeID)
         {
-            if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out componentTypeID) == false)
+            if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue((int)componentTypeCode, out componentTypeID) == false)
             {
                 componentTypeID = _poolsCount++;
-                _cmpTypeCode_2_CmpTypeIDs.Add(componentTypeCode, componentTypeID);
+                _cmpTypeCode_2_CmpTypeIDs.Add((int)componentTypeCode, componentTypeID);
                 return true;
             }
             return false;
@@ -151,7 +151,7 @@ namespace DCFApixels.DragonECS
         {
             lock (_worldLock)
             {
-                int poolTypeCode = EcsTypeCode.Get<TPool>();
+                int poolTypeCode = (int)EcsTypeCodeManager.Get<TPool>();
                 if (_poolTypeCode_2_CmpTypeIDs.Contains(poolTypeCode))
                 {
                     Throw.World_PoolAlreadyCreated();
@@ -169,7 +169,7 @@ namespace DCFApixels.DragonECS
                 }
 #pragma warning restore IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
 #endif
-                int componentTypeCode = EcsTypeCode.Get(componentType);
+                int componentTypeCode = (int)EcsTypeCodeManager.Get(componentType);
 
                 if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue(componentTypeCode, out int componentTypeID))
                 {

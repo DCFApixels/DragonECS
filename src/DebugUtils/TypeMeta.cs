@@ -57,7 +57,7 @@ namespace DCFApixels.DragonECS
         private MetaGroup _group;
         private IReadOnlyList<string> _tags;
         private string _metaID;
-        private int _typeCode;
+        private EcsTypeCode _typeCode;
 
         private InitFlag _initFlags = InitFlag.None;
 
@@ -77,7 +77,7 @@ namespace DCFApixels.DragonECS
                 _group = new MetaGroup(""),
                 _tags = Array.Empty<string>(),
                 _metaID = string.Empty,
-                _typeCode = EcsTypeCode.Get(typeof(void)),
+                _typeCode = EcsTypeCodeManager.Get(typeof(void)),
 
                 _initFlags = InitFlag.All,
             };
@@ -250,13 +250,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region TypeCode
-        public int TypeCode
+        public EcsTypeCode TypeCode
         {
             get
             {
                 if (_initFlags.HasFlag(InitFlag.TypeCode) == false)
                 {
-                    _typeCode = EcsTypeCode.Get(_type);
+                    _typeCode = EcsTypeCodeManager.Get(_type);
                     _initFlags |= InitFlag.TypeCode;
                 }
                 return _typeCode;
