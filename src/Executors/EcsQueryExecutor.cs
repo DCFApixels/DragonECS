@@ -7,42 +7,29 @@ namespace DCFApixels.DragonECS
     public partial class EcsWorld
     {
         private readonly Dictionary<(Type, object), EcsQueryExecutor> _executorCoures = new Dictionary<(Type, object), EcsQueryExecutor>(256);
-        private readonly ExecutorMediator _executorsMediator;
-        public readonly struct ExecutorMediator
+        public TExecutor GetExecutor<TExecutor>(EcsMask mask)
+            where TExecutor : EcsQueryExecutor, new()
         {
-            public readonly EcsWorld World;
-            internal ExecutorMediator(EcsWorld world)
+            var coreType = typeof(TExecutor);
+            if (_executorCoures.TryGetValue((coreType, mask), out EcsQueryExecutor core) == false)
             {
-                if (world == null || world._executorsMediator.World != null)
-                {
-                    throw new InvalidOperationException();
-                }
-                World = world;
+                core = new TExecutor();
+                core.Initialize(this, mask);
+                _executorCoures.Add((coreType, mask), core);
             }
-            public TExecutorCore GetCore<TExecutorCore>(EcsMask mask)
-                where TExecutorCore : EcsQueryExecutor, new()
+            return (TExecutor)core;
+        }
+        public TExecutorCore GetExecutor<TExecutorCore>(EcsStaticMask staticMask)
+            where TExecutorCore : EcsQueryExecutor, new()
+        {
+            var coreType = typeof(TExecutorCore);
+            if (_executorCoures.TryGetValue((coreType, staticMask), out EcsQueryExecutor core) == false)
             {
-                var coreType = typeof(TExecutorCore);
-                if (World._executorCoures.TryGetValue((coreType, mask), out EcsQueryExecutor core) == false)
-                {
-                    core = new TExecutorCore();
-                    core.Initialize(World, mask);
-                    World._executorCoures.Add((coreType, mask), core);
-                }
-                return (TExecutorCore)core;
+                core = new TExecutorCore();
+                core.Initialize(this, staticMask.ToMask(this));
+                _executorCoures.Add((coreType, staticMask), core);
             }
-            public TExecutorCore GetCore<TExecutorCore>(EcsStaticMask staticMask)
-                where TExecutorCore : EcsQueryExecutor, new()
-            {
-                var coreType = typeof(TExecutorCore);
-                if (World._executorCoures.TryGetValue((coreType, staticMask), out EcsQueryExecutor core) == false)
-                {
-                    core = new TExecutorCore();
-                    core.Initialize(World, staticMask.ToMask(World));
-                    World._executorCoures.Add((coreType, staticMask), core);
-                }
-                return (TExecutorCore)core;
-            }
+            return (TExecutorCore)core;
         }
     }
     public abstract class EcsQueryExecutor
@@ -64,44 +51,11 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _mask; }
         }
+        public abstract long Version { get; }
         internal void Initialize(EcsWorld world, EcsMask mask)
         {
             _source = world;
             _mask = mask;
-            OnInitialize();
-        }
-        internal void Destroy()
-        {
-            OnDestroy();
-            _source = null;
-        }
-        protected abstract void OnInitialize();
-        protected abstract void OnDestroy();
-    }
-    public abstract class EcsQueryCache
-    {
-        private EcsWorld _source;
-        private EcsWorld.ExecutorMediator _mediator;
-        public short WorldID
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _source.id; }
-        }
-        public EcsWorld World
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _source; }
-        }
-        protected EcsWorld.ExecutorMediator Mediator
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _mediator; }
-        }
-        public abstract long Version { get; }
-        internal void Initialize(EcsWorld world, EcsWorld.ExecutorMediator mediator)
-        {
-            _source = world;
-            _mediator = mediator;
             OnInitialize();
         }
         internal void Destroy()

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Internal;
+using System;
 
 namespace DCFApixels.DragonECS
 {
@@ -24,14 +25,39 @@ namespace DCFApixels.DragonECS
             where TAspect : EcsAspect, new()
         {
             EcsWorld world = span.World;
-            var executor = world.GetQueryCache<EcsWhereCache<TAspect>>();
-            aspect = executor.Aspect;
+            world.GetQueryCache(out EcsWhereExecutor executor, out aspect);
             return executor.ExecuteFor(span);
         }
-        //public static EcsSpan Where<TCollection>(this TCollection entities, EcsStaticMask mask)
-        //{
-        //    
-        //}
+        public static EcsSpan Where<TCollection>(this TCollection entities, EcsStaticMask mask)
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().Where(mask);
+        }
+        public static EcsSpan Where(this EcsReadonlyGroup group, EcsStaticMask mask)
+        {
+            return group.ToSpan().Where(mask);
+        }
+        public static EcsSpan Where(this EcsSpan span, EcsStaticMask mask)
+        {
+            EcsWorld world = span.World;
+            var executor = world.GetExecutor<EcsWhereExecutor>(mask);
+            return executor.ExecuteFor(span);
+        }
+        public static EcsSpan Where<TCollection>(this TCollection entities, EcsMask mask)
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().Where(mask);
+        }
+        public static EcsSpan Where(this EcsReadonlyGroup group, EcsMask mask)
+        {
+            return group.ToSpan().Where(mask);
+        }
+        public static EcsSpan Where(this EcsSpan span, EcsMask mask)
+        {
+            EcsWorld world = span.World;
+            var executor = world.GetExecutor<EcsWhereExecutor>(mask);
+            return executor.ExecuteFor(span);
+        }
         #endregion
 
         #region Where with sort
@@ -50,8 +76,37 @@ namespace DCFApixels.DragonECS
             where TAspect : EcsAspect, new()
         {
             EcsWorld world = span.World;
-            var executor = world.GetQueryCache<EcsWhereCache<TAspect>>();
-            aspect = executor.Aspect;
+            world.GetQueryCache(out EcsWhereExecutor executor, out aspect);
+            return executor.ExecuteFor(span, comparison);
+        }
+        public static EcsSpan Where<TCollection>(this TCollection entities, EcsStaticMask mask, Comparison<int> comparison)
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().Where(mask, comparison);
+        }
+        public static EcsSpan Where(this EcsReadonlyGroup group, EcsStaticMask mask, Comparison<int> comparison)
+        {
+            return group.ToSpan().Where(mask, comparison);
+        }
+        public static EcsSpan Where(this EcsSpan span, EcsStaticMask mask, Comparison<int> comparison)
+        {
+            EcsWorld world = span.World;
+            var executor = world.GetExecutor<EcsWhereExecutor>(mask);
+            return executor.ExecuteFor(span);
+        }
+        public static EcsSpan Where<TCollection>(this TCollection entities, EcsMask mask, Comparison<int> comparison)
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().Where(mask, comparison);
+        }
+        public static EcsSpan Where(this EcsReadonlyGroup group, EcsMask mask, Comparison<int> comparison)
+        {
+            return group.ToSpan().Where(mask, comparison);
+        }
+        public static EcsSpan Where(this EcsSpan span, EcsMask mask, Comparison<int> comparison)
+        {
+            EcsWorld world = span.World;
+            var executor = world.GetExecutor<EcsWhereExecutor>(mask);
             return executor.ExecuteFor(span, comparison);
         }
         #endregion
@@ -72,8 +127,38 @@ namespace DCFApixels.DragonECS
             where TAspect : EcsAspect, new()
         {
             EcsWorld world = span.World;
-            var executor = world.GetQueryCache<EcsWhereToGroupCache<TAspect>>();
-            aspect = executor.Aspect;
+            world.GetQueryCache(out EcsWhereToGroupExecutor executor, out aspect);
+            return executor.ExecuteFor(span);
+        }
+        public static EcsReadonlyGroup WhereToGroup<TCollection>(this TCollection entities, EcsStaticMask mask)
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().WhereToGroup(mask);
+        }
+        public static EcsReadonlyGroup WhereToGroup(this EcsReadonlyGroup group, EcsStaticMask mask)
+        {
+            return group.ToSpan().WhereToGroup(mask);
+        }
+        public static EcsReadonlyGroup WhereToGroup(this EcsSpan span, EcsStaticMask mask)
+        {
+            EcsWorld world = span.World;
+            var executor = world.GetExecutor<EcsWhereToGroupExecutor>(mask);
+            return executor.ExecuteFor(span);
+        }
+
+        public static EcsReadonlyGroup WhereToGroup<TCollection>(this TCollection entities, EcsMask mask)
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().WhereToGroup(mask);
+        }
+        public static EcsReadonlyGroup WhereToGroup(this EcsReadonlyGroup group, EcsMask mask)
+        {
+            return group.ToSpan().WhereToGroup(mask);
+        }
+        public static EcsReadonlyGroup WhereToGroup(this EcsSpan span, EcsMask mask)
+        {
+            EcsWorld world = span.World;
+            var executor = world.GetExecutor<EcsWhereToGroupExecutor>(mask);
             return executor.ExecuteFor(span);
         }
         #endregion

@@ -7,8 +7,8 @@ namespace DCFApixels.DragonECS
         internal readonly struct PoolCache<T> : IEcsWorldComponent<PoolCache<T>>
             where T : IEcsPoolImplementation, new()
         {
-            public readonly T instance;
-            public PoolCache(T instance) { this.instance = instance; }
+            public readonly T Instance;
+            public PoolCache(T instance) { Instance = instance; }
             void IEcsWorldComponent<PoolCache<T>>.Init(ref PoolCache<T> component, EcsWorld world)
             {
                 component = new PoolCache<T>(world.CreatePool<T>());
@@ -21,8 +21,8 @@ namespace DCFApixels.DragonECS
         internal readonly struct AspectCache<T> : IEcsWorldComponent<AspectCache<T>>
             where T : EcsAspect, new()
         {
-            public readonly T instance;
-            public AspectCache(T instance) { this.instance = instance; }
+            public readonly T Instance;
+            public AspectCache(T instance) { Instance = instance; }
             void IEcsWorldComponent<AspectCache<T>>.Init(ref AspectCache<T> component, EcsWorld world)
             {
                 component = new AspectCache<T>(EcsAspect.Builder.New<T>(world));
@@ -32,18 +32,25 @@ namespace DCFApixels.DragonECS
                 component = default;
             }
         }
-        internal readonly struct QueryCache<T> : IEcsWorldComponent<QueryCache<T>>
-            where T : EcsQueryCache, new()
+        internal readonly struct QueryCache<TExecutor, TAspcet> : IEcsWorldComponent<QueryCache<TExecutor, TAspcet>>
+            where TExecutor : EcsQueryExecutor, new()
+            where TAspcet : EcsAspect, new()
         {
-            public readonly T instance;
-            public QueryCache(T instance) { this.instance = instance; }
-            void IEcsWorldComponent<QueryCache<T>>.Init(ref QueryCache<T> component, EcsWorld world)
+            public readonly TExecutor Executor;
+            public readonly TAspcet Aspcet;
+            public QueryCache(TExecutor executor, TAspcet aspcet)
             {
-                T instance = new T();
-                instance.Initialize(world, world._executorsMediator);
-                component = new QueryCache<T>(instance);
+                Executor = executor;
+                Aspcet = aspcet;
             }
-            void IEcsWorldComponent<QueryCache<T>>.OnDestroy(ref QueryCache<T> component, EcsWorld world)
+            void IEcsWorldComponent<QueryCache<TExecutor, TAspcet>>.Init(ref QueryCache<TExecutor, TAspcet> component, EcsWorld world)
+            {
+                TExecutor instance = new TExecutor();
+                TAspcet aspect = world.GetAspect<TAspcet>();
+                instance.Initialize(world, aspect.Mask);
+                component = new QueryCache<TExecutor, TAspcet>(instance, aspect);
+            }
+            void IEcsWorldComponent<QueryCache<TExecutor, TAspcet>>.OnDestroy(ref QueryCache<TExecutor, TAspcet> component, EcsWorld world)
             {
                 component = default;
             }

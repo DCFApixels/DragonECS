@@ -165,7 +165,6 @@ namespace DCFApixels.DragonECS
                 _worlds[worldID] = this;
 
                 _poolsMediator = new PoolsMediator(this);
-                _executorsMediator = new ExecutorMediator(this);
 
                 int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.PoolsCapacity);
                 _pools = new IEcsPoolImplementation[poolsCapacity];
@@ -222,12 +221,16 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TAspect GetAspect<TAspect>() where TAspect : EcsAspect, new()
         {
-            return Get<AspectCache<TAspect>>().instance;
+            return Get<AspectCache<TAspect>>().Instance;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TExecutor GetQueryCache<TExecutor>() where TExecutor : EcsQueryCache, new()
+        public void GetQueryCache<TExecutor, TAspect>(out TExecutor executor, out TAspect aspect)
+            where TExecutor : EcsQueryExecutor, new()
+            where TAspect : EcsAspect, new()
         {
-            return Get<QueryCache<TExecutor>>().instance;
+            ref var cmp = ref Get<QueryCache<TExecutor, TAspect>>();
+            executor = cmp.Executor;
+            aspect = cmp.Aspcet;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

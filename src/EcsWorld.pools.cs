@@ -65,7 +65,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TPool GetPoolInstance<TPool>() where TPool : IEcsPoolImplementation, new()
         {
-            return Get<PoolCache<TPool>>().instance;
+            return Get<PoolCache<TPool>>().Instance;
         }
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.Preserve]
@@ -73,7 +73,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TPool GetPoolInstanceUnchecked<TPool>() where TPool : IEcsPoolImplementation, new()
         {
-            return GetUnchecked<PoolCache<TPool>>().instance;
+            return GetUnchecked<PoolCache<TPool>>().Instance;
         }
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.Preserve]
@@ -81,7 +81,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TPool GetPoolInstance<TPool>(int worldID) where TPool : IEcsPoolImplementation, new()
         {
-            return Get<PoolCache<TPool>>(worldID).instance;
+            return Get<PoolCache<TPool>>(worldID).Instance;
         }
 #if UNITY_2020_3_OR_NEWER
         [UnityEngine.Scripting.Preserve]
@@ -89,7 +89,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TPool GetPoolInstanceUnchecked<TPool>(int worldID) where TPool : IEcsPoolImplementation, new()
         {
-            return GetUnchecked<PoolCache<TPool>>(worldID).instance;
+            return GetUnchecked<PoolCache<TPool>>(worldID).Instance;
         }
         #endregion
 

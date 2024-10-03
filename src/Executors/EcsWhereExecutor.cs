@@ -1,5 +1,4 @@
-﻿using DCFApixels.DragonECS.Internal;
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
@@ -25,7 +24,7 @@ namespace DCFApixels.DragonECS.Internal
         private PoolVersionsChecker _versionsChecker;
 
         #region Properties
-        public long Version
+        public sealed override long Version
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _version; }
@@ -93,64 +92,6 @@ namespace DCFApixels.DragonECS.Internal
             ExecuteFor_Iternal(span);
             ArraySortHalperX<int>.Sort(_filteredEntities, comparison, _filteredEntitiesCount);
             return new EcsSpan(World.id, _filteredEntities, _filteredEntitiesCount);
-        }
-        #endregion
-    }
-}
-
-namespace DCFApixels.DragonECS
-{
-#if ENABLE_IL2CPP
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-#endif
-    public sealed class EcsWhereCache<TAspect> : EcsQueryCache where TAspect : EcsAspect, new()
-    {
-        private TAspect _aspect;
-        private EcsWhereExecutor _executor;
-
-        #region Properties
-        public TAspect Aspect
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _aspect; }
-        }
-        public sealed override long Version
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _executor.Version; }
-        }
-        #endregion
-
-        #region OnInitialize/OnDestroy
-        protected sealed override void OnInitialize()
-        {
-            _aspect = World.GetAspect<TAspect>();
-            _executor = Mediator.GetCore<EcsWhereExecutor>(_aspect.Mask);
-        }
-        protected sealed override void OnDestroy() { }
-        #endregion
-
-        #region Methods
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan Execute()
-        {
-            return _executor.Execute();
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan ExecuteFor(EcsSpan span)
-        {
-            return _executor.ExecuteFor(span);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan Execute(Comparison<int> comparison)
-        {
-            return _executor.Execute(comparison);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EcsSpan ExecuteFor(EcsSpan span, Comparison<int> comparison)
-        {
-            return _executor.ExecuteFor(span, comparison);
         }
         #endregion
     }
