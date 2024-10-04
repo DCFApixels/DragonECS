@@ -22,21 +22,21 @@ namespace DCFApixels.DragonECS
         public EcsProfilerMarker(string name)
         {
 #if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
-            id = DebugService.Instance.RegisterMark(name);
+            id = DebugService.CurrentThreadInstance.RegisterMark(name);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Begin()
         {
 #if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
-            DebugService.Instance.ProfilerMarkBegin(id);
+            DebugService.CurrentThreadInstance.ProfilerMarkBegin(id);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void End()
         {
 #if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
-            DebugService.Instance.ProfilerMarkEnd(id);
+            DebugService.CurrentThreadInstance.ProfilerMarkEnd(id);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -58,14 +58,14 @@ namespace DCFApixels.DragonECS
             {
 #if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
                 _id = id;
-                DebugService.Instance.ProfilerMarkBegin(id);
+                DebugService.CurrentThreadInstance.ProfilerMarkBegin(id);
 #endif
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
             {
 #if ((DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER)
-                DebugService.Instance.ProfilerMarkEnd(_id);
+                DebugService.CurrentThreadInstance.ProfilerMarkEnd(_id);
 #endif
             }
         }
@@ -91,80 +91,204 @@ namespace DCFApixels.DragonECS
         public static void PrintWarning(object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.PrintWarning(v);
+            DebugService.CurrentThreadInstance.PrintWarning(v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintError(object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.PrintError(v);
+            DebugService.CurrentThreadInstance.PrintError(v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintErrorAndBreak(object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.PrintErrorAndBreak(v);
+            DebugService.CurrentThreadInstance.PrintErrorAndBreak(v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintPass(object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.PrintPass(v);
+            DebugService.CurrentThreadInstance.PrintPass(v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.Print();
+            DebugService.CurrentThreadInstance.Print();
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.Print(v);
+            DebugService.CurrentThreadInstance.Print(v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(string tag, object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.Print(tag, v);
+            DebugService.CurrentThreadInstance.Print(tag, v);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Break()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
-            DebugService.Instance.Break();
+            DebugService.CurrentThreadInstance.Break();
 #endif
         }
     }
+
+    //------------------------------------------------------------------------------------------------------------//
 
     public abstract class DebugService
     {
         private static DebugService _instance;
         private static object _lock = new object();
 
-        public static DebugService Instance
-        {
+        private static HashSet<DebugService> _threadServiceClonesSet = new HashSet<DebugService>();
+
+        [ThreadStatic]
+        private static DebugService _currentThreadInstanceClone;
+        [ThreadStatic]
+        private static DebugService _currentThreadInstance; // для сравнения
+
+        private static IdDispenser _idDispenser = new IdDispenser(16, 0);
+        private static Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
+
+        #region Properties
+        public static DebugService CurrentThreadInstance
+        {// ts завист от Set
             get
             {
-                if (_instance == null)
+                if (_currentThreadInstance != _instance)
                 {
                     lock (_lock)
                     {
-                        _instance = new DefaultDebugService();
+                        if (_currentThreadInstance != _instance)
+                        {
+                            _currentThreadInstanceClone = _instance.Clone();
+                            _threadServiceClonesSet.Add(_currentThreadInstanceClone);
+                            _currentThreadInstance = _instance;
+
+                            foreach (var record in _nameIdTable)
+                            {
+                                _currentThreadInstanceClone.OnNewProfilerMark(record.Value, record.Key);
+                            }
+                        }
                     }
                 }
-                return _instance;
+                return _currentThreadInstanceClone;
+            }
+        }
+        public IEnumerable<MarkerInfo> MarkerInfos
+        {
+            get { return _nameIdTable.Select(o => new MarkerInfo(o.Key, o.Value)); }
+        }
+        #endregion
+
+        static DebugService()
+        {
+            Set(new DefaultDebugService());
+        }
+
+        #region Set
+        public static void Set<T>() where T : DebugService, new()
+        {
+            lock (_lock)
+            {
+                if (CurrentThreadInstance is T == false)
+                {
+                    Set(new T());
+                }
+            }
+        }
+        public static void Set(DebugService service)
+        {// ts
+            lock (_lock)
+            {
+                if (service == null)
+                {
+                    service = new NullDebugService();
+                }
+                if (_instance != service)
+                {
+                    var oldService = _instance;
+                    _instance = service;
+                    if (oldService != null)
+                    { //TODO Так, всеже треды влияют друг на друга, скоерее всего проблема в использовании _nameIdTable/ Так вроде пофиксил, но не понял как конкретно
+                        foreach (var record in _nameIdTable)
+                        {
+                            service.OnNewProfilerMark(record.Value, record.Key);
+                        }
+                    }
+                    service.OnServiceSetup(oldService);
+                    OnServiceChanged(service);
+                }
+            }
+        }
+        #endregion
+
+        #region Setup/Clone
+        protected virtual void OnServiceSetup(DebugService oldService) { }
+        protected abstract DebugService Clone();
+        #endregion
+
+        #region Print/Break
+        public abstract void Print(string tag, object v);
+        public abstract void Break();
+        #endregion
+
+        #region ProfilerMarkesrs
+        public int RegisterMark(string name)
+        {
+            int id;
+            if (_nameIdTable.TryGetValue(name, out id) == false)
+            {
+                lock (_lock)
+                {
+                    if (_nameIdTable.TryGetValue(name, out id) == false)
+                    {
+                        id = _idDispenser.UseFree();
+                        _nameIdTable.Add(name, id);
+                        foreach (var service in _threadServiceClonesSet)
+                        {
+                            service.OnNewProfilerMark(id, name);
+                        }
+                    }
+                }
+            }
+            return id;
+        }
+        public void DeleteMark(string name)
+        {
+            lock (_lock)
+            {
+                int id = _nameIdTable[name];
+                _nameIdTable.Remove(name);
+                _idDispenser.Release(id);
+                foreach (var service in _threadServiceClonesSet)
+                {
+                    service.OnNewProfilerMark(id, name);
+                }
+                OnDelProfilerMark(id);
             }
         }
 
+        protected abstract void OnNewProfilerMark(int id, string name);
+        protected abstract void OnDelProfilerMark(int id);
+
+        public abstract void ProfilerMarkBegin(int id);
+        public abstract void ProfilerMarkEnd(int id);
+        #endregion
+
+        #region Utils
         protected static string AutoConvertObjectToString(object o)
         {
             if (o is string str)
@@ -189,103 +313,28 @@ namespace DCFApixels.DragonECS
             }
             public override string ToString() { return this.AutoToString(); }
         }
-        public IEnumerable<MarkerInfo> MarkerInfos
-        {
-            get { return _nameIdTable.Select(o => new MarkerInfo(o.Key, o.Value)); }
-        }
-
-        public static void Set<T>() where T : DebugService, new()
-        {
-            lock (_lock)
-            {
-                if (Instance is T == false)
-                {
-                    Set(new T());
-                }
-            }
-        }
-        public static void Set(DebugService service)
-        {
-            lock (_lock)
-            {
-                if (_instance != service)
-                {
-                    var oldService = _instance;
-                    _instance = service;
-                    if (_instance != null)
-                    { //TODO Так, всеже треды влияют друг на друга, скоерее всего проблема в использовании _nameIdTable/ Так вроде пофиксил, но не понял как конкретно
-                        foreach (var info in oldService.MarkerInfos)
-                        {
-                            service._idDispenser.Use(info.ID);
-                            service._nameIdTable.TryAdd(info.Name, info.ID);
-                            service.OnNewProfilerMark(info.ID, info.Name);
-                        }
-                    }
-                    service.OnServiceSetup(oldService);
-                    OnServiceChanged(service);
-                }
-            }
-        }
-        protected virtual void OnServiceSetup(DebugService oldService) { }
+        #endregion
 
         public static Action<DebugService> OnServiceChanged = delegate { };
-
-        private IdDispenser _idDispenser = new IdDispenser(16, 0);
-        private Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
-        public abstract void Print(string tag, object v);
-        public abstract void Break();
-        public int RegisterMark(string name)
-        {
-            int id;
-            if (!_nameIdTable.TryGetValue(name, out id))
-            {
-                lock (_lock)
-                {
-                    if (!_nameIdTable.TryGetValue(name, out id))
-                    {
-                        id = _idDispenser.UseFree();
-                        _nameIdTable.Add(name, id);
-                        OnNewProfilerMark(id, name);
-                    }
-                }
-            }
-            return id;
-        }
-        public void DeleteMark(string name)
-        {
-            lock (_lock)
-            {
-                int id = _nameIdTable[name];
-                _nameIdTable.Remove(name);
-                _idDispenser.Release(id);
-                OnDelProfilerMark(id);
-            }
-        }
-
-        protected abstract void OnNewProfilerMark(int id, string name);
-        protected abstract void OnDelProfilerMark(int id);
-
-        public abstract void ProfilerMarkBegin(int id);
-        public abstract void ProfilerMarkEnd(int id);
     }
     public static class DebugServiceExtensions
     {
         public static void PrintWarning(this DebugService self, object v)
         {
-            self.Print(EcsConsts.DEBUG_WARNING_TAG, v);
+            self.Print(DEBUG_WARNING_TAG, v);
         }
         public static void PrintError(this DebugService self, object v)
         {
-            self.Print(EcsConsts.DEBUG_ERROR_TAG, v);
+            self.Print(DEBUG_ERROR_TAG, v);
         }
         public static void PrintErrorAndBreak(this DebugService self, object v)
         {
-            self.Print(EcsConsts.DEBUG_ERROR_TAG, v);
+            self.Print(DEBUG_ERROR_TAG, v);
             self.Break();
         }
         public static void PrintPass(this DebugService self, object v)
         {
-            self.Print(EcsConsts.DEBUG_PASS_TAG, v);
+            self.Print(DEBUG_PASS_TAG, v);
         }
         public static void Print(this DebugService self, object v)
         {
@@ -297,40 +346,41 @@ namespace DCFApixels.DragonECS
         }
         //TODO PrintJson возможно будет добавлено когда-то
     }
+
+    //------------------------------------------------------------------------------------------------------------//
+
+    public sealed class NullDebugService : DebugService
+    {
+        protected sealed override DebugService Clone() { return this; }
+        public sealed override void Break() { }
+        public sealed override void Print(string tag, object v) { }
+        public sealed override void ProfilerMarkBegin(int id) { }
+        public sealed override void ProfilerMarkEnd(int id) { }
+        protected sealed override void OnDelProfilerMark(int id) { }
+        protected sealed override void OnNewProfilerMark(int id, string name) { }
+    }
+
+    //------------------------------------------------------------------------------------------------------------//
+
     public sealed class DefaultDebugService : DebugService
     {
 #if !UNITY_5_3_OR_NEWER
         private const string PROFILER_MARKER = "ProfilerMark";
         private const string PROFILER_MARKER_CACHE = "[" + PROFILER_MARKER + "] ";
 
-        private readonly struct MarkerData
-        {
-            public readonly System.Diagnostics.Stopwatch Stopwatch;
-            public readonly string Name;
-            public readonly int ID;
-            public MarkerData(System.Diagnostics.Stopwatch stopwatch, string name, int id)
-            {
-                Stopwatch = stopwatch;
-                Name = name;
-                ID = id;
-            }
-            public override string ToString()
-            {
-                return this.AutoToString();
-            }
-        }
-        private MarkerData[] _stopwatchs;
-        [ThreadStatic]
-        private static char[] _buffer;
+        private MarkerData[] _stopwatchs = new MarkerData[64];
+        private char[] _buffer = new char[128];
 
         public DefaultDebugService()
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.BackgroundColor = ConsoleColor.Black;
-            _stopwatchs = new MarkerData[64];
         }
-
-        public override void Print(string tag, object v)
+        protected sealed override DebugService Clone()
+        {
+            return new DefaultDebugService();
+        }
+        public sealed override void Print(string tag, object v)
         {
             if (string.IsNullOrEmpty(tag))
             {
@@ -355,7 +405,7 @@ namespace DCFApixels.DragonECS
                 Console.ForegroundColor = color;
             }
         }
-        public override void Break()
+        public sealed override void Break()
         {
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -364,7 +414,7 @@ namespace DCFApixels.DragonECS
             Console.ForegroundColor = color;
         }
 
-        public override void ProfilerMarkBegin(int id)
+        public sealed override void ProfilerMarkBegin(int id)
         {
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -376,7 +426,7 @@ namespace DCFApixels.DragonECS
 
             Console.ForegroundColor = color;
         }
-        public override void ProfilerMarkEnd(int id)
+        public sealed override void ProfilerMarkEnd(int id)
         {
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -390,28 +440,27 @@ namespace DCFApixels.DragonECS
             Console.Write(" s:");
 
             int written = 0;
-            if (_buffer == null) { _buffer = new char[128]; }
             ConvertDoubleToText(time.TotalSeconds, _buffer, ref written);
             Console.WriteLine(_buffer, 0, written);
 
             Console.ForegroundColor = color;
         }
 
-        protected override void OnDelProfilerMark(int id)
+        protected sealed override void OnDelProfilerMark(int id)
         {
             _stopwatchs[id] = default;
         }
-        protected override void OnNewProfilerMark(int id, string name)
+        protected sealed override void OnNewProfilerMark(int id, string name)
         {
             if (id >= _stopwatchs.Length)
             {
-                Array.Resize(ref _stopwatchs, _stopwatchs.Length << 1);
+                Array.Resize(ref _stopwatchs, id << 1);
             }
             _stopwatchs[id] = new MarkerData(new System.Diagnostics.Stopwatch(), name, id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void ConvertDoubleToText(double value, char[] stringBuffer, ref int written)
+        private static void ConvertDoubleToText(double value, char[] stringBuffer, ref int written)
         {
             int bufferLength = stringBuffer.Length - 1;
 
@@ -462,13 +511,31 @@ namespace DCFApixels.DragonECS
 
             written = bufferLength - zeroPartLength;
         }
+
+        private readonly struct MarkerData
+        {
+            public readonly System.Diagnostics.Stopwatch Stopwatch;
+            public readonly string Name;
+            public readonly int ID;
+            public MarkerData(System.Diagnostics.Stopwatch stopwatch, string name, int id)
+            {
+                Stopwatch = stopwatch;
+                Name = name;
+                ID = id;
+            }
+            public override string ToString()
+            {
+                return this.AutoToString();
+            }
+        }
 #else
-        public override void Break() { }
-        public override void Print(string tag, object v) { }
-        public override void ProfilerMarkBegin(int id) { }
-        public override void ProfilerMarkEnd(int id) { }
-        protected override void OnDelProfilerMark(int id) { }
-        protected override void OnNewProfilerMark(int id, string name) { }
+        protected sealed override DebugService Clone() { return this; }
+        public sealed override void Break() { }
+        public sealed override void Print(string tag, object v) { }
+        public sealed override void ProfilerMarkBegin(int id) { }
+        public sealed override void ProfilerMarkEnd(int id) { }
+        protected sealed override void OnDelProfilerMark(int id) { }
+        protected sealed override void OnNewProfilerMark(int id, string name) { }
 #endif
     }
 }
