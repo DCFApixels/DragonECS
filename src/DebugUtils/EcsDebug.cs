@@ -305,10 +305,10 @@ namespace DCFApixels.DragonECS
 
         private readonly struct MarkerData
         {
-            public readonly Stopwatch Stopwatch;
+            public readonly System.Diagnostics.Stopwatch Stopwatch;
             public readonly string Name;
             public readonly int ID;
-            public MarkerData(Stopwatch stopwatch, string name, int id)
+            public MarkerData(System.Diagnostics.Stopwatch stopwatch, string name, int id)
             {
                 Stopwatch = stopwatch;
                 Name = name;
@@ -341,13 +341,13 @@ namespace DCFApixels.DragonECS
                 var color = Console.ForegroundColor;
                 switch (tag)
                 {
-                    case EcsDebug.ERROR_TAG:
+                    case DEBUG_ERROR_TAG:
                         Console.ForegroundColor = ConsoleColor.Red;
                         break;
-                    case EcsDebug.WARNING_TAG:
+                    case DEBUG_WARNING_TAG:
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         break;
-                    case EcsDebug.PASS_TAG:
+                    case DEBUG_PASS_TAG:
                         Console.ForegroundColor = ConsoleColor.Green;
                         break;
                 }
@@ -407,7 +407,7 @@ namespace DCFApixels.DragonECS
             {
                 Array.Resize(ref _stopwatchs, _stopwatchs.Length << 1);
             }
-            _stopwatchs[id] = new MarkerData(new Stopwatch(), name, id);
+            _stopwatchs[id] = new MarkerData(new System.Diagnostics.Stopwatch(), name, id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -462,12 +462,13 @@ namespace DCFApixels.DragonECS
 
             written = bufferLength - zeroPartLength;
         }
-#endif
+#else
         public override void Break() { }
         public override void Print(string tag, object v) { }
         public override void ProfilerMarkBegin(int id) { }
         public override void ProfilerMarkEnd(int id) { }
         protected override void OnDelProfilerMark(int id) { }
         protected override void OnNewProfilerMark(int id, string name) { }
+#endif
     }
 }
