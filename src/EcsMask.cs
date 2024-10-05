@@ -495,6 +495,14 @@ namespace DCFApixels.DragonECS
         {
             return a.World.Get<WorldMaskComponent>().ExceptMask(a, b);
         }
+        public static EcsMask operator +(EcsMask a, EcsMask b)
+        {
+            return a.World.Get<WorldMaskComponent>().CombineMask(a, b);
+        }
+        public static implicit operator EcsMask((IEcsComponentMask mask, EcsWorld world) a)
+        {
+            return a.mask.ToMask(a.world);
+        }
         #endregion
 
         #region OpMaskKey
@@ -504,7 +512,7 @@ namespace DCFApixels.DragonECS
             public readonly int rightMaskID;
             public readonly int operation;
 
-            public const int UNION_OP = 7;
+            public const int COMBINE_OP = 7;
             public const int EXCEPT_OP = 32;
             public OpMaskKey(int leftMaskID, int rightMaskID, int operation)
             {
@@ -573,6 +581,20 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetMask
+            internal EcsMask CombineMask(EcsMask a, EcsMask b)
+            {
+                int operation = OpMaskKey.COMBINE_OP;
+                if (_opMasks.TryGetValue(new OpMaskKey(a._id, b._id, operation), out EcsMask result) == false)
+                {
+                    if (a.IsConflictWith(b))
+                    {
+                        return a.World.Get<WorldMaskComponent>().BrokenMask;
+                    }
+                    result = New(a.World).Combine(a).Combine(b).Build();
+                    _opMasks.Add(new OpMaskKey(a._id, b._id, operation), result);
+                }
+                return result;
+            }
             internal EcsMask ExceptMask(EcsMask a, EcsMask b)
             {
                 int operation = OpMaskKey.EXCEPT_OP;
