@@ -252,8 +252,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region operators
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(EcsLongsSpan left, EcsLongsSpan right) { return left._source == right._source; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(EcsLongsSpan left, EcsLongsSpan right) { return left._source != right._source; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator EcsSpan(EcsLongsSpan a) { return a.ToSpan(); }
         #endregion
 
         #region Enumerator
@@ -296,8 +300,6 @@ namespace DCFApixels.DragonECS
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override int GetHashCode() { throw new NotSupportedException(); }
 #pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator EcsSpan(EcsLongsSpan a) { return a.ToSpan(); }
         #endregion
     }
 }

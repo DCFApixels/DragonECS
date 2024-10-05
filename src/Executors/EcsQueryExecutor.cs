@@ -7,29 +7,17 @@ namespace DCFApixels.DragonECS
     public partial class EcsWorld
     {
         private readonly Dictionary<(Type, object), EcsQueryExecutor> _executorCoures = new Dictionary<(Type, object), EcsQueryExecutor>(256);
-        public TExecutor GetExecutor<TExecutor>(EcsMask mask)
+        public TExecutor GetExecutor<TExecutor>(IEcsComponentMask mask)
             where TExecutor : EcsQueryExecutor, new()
         {
             var coreType = typeof(TExecutor);
             if (_executorCoures.TryGetValue((coreType, mask), out EcsQueryExecutor core) == false)
             {
                 core = new TExecutor();
-                core.Initialize(this, mask);
+                core.Initialize(this, mask.ToMask(this));
                 _executorCoures.Add((coreType, mask), core);
             }
             return (TExecutor)core;
-        }
-        public TExecutorCore GetExecutor<TExecutorCore>(EcsStaticMask staticMask)
-            where TExecutorCore : EcsQueryExecutor, new()
-        {
-            var coreType = typeof(TExecutorCore);
-            if (_executorCoures.TryGetValue((coreType, staticMask), out EcsQueryExecutor core) == false)
-            {
-                core = new TExecutorCore();
-                core.Initialize(this, staticMask.ToMask(this));
-                _executorCoures.Add((coreType, staticMask), core);
-            }
-            return (TExecutorCore)core;
         }
     }
     public abstract class EcsQueryExecutor

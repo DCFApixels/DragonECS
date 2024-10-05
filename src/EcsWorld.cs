@@ -72,6 +72,10 @@ namespace DCFApixels.DragonECS
         private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
 
         #region Properties
+        EcsWorld IEntityStorage.World
+        {
+            get { return this; }
+        }
         public IConfigContainer Configs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

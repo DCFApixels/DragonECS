@@ -11,11 +11,15 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    public interface IEcsComponentMask
+    {
+        EcsMask ToMask(EcsWorld world);
+    }
 #if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public sealed class EcsStaticMask : IEquatable<EcsStaticMask>
+    public sealed class EcsStaticMask : IEquatable<EcsStaticMask>, IEcsComponentMask
     {
         private static ConcurrentDictionary<Key, EcsStaticMask> _ids = new ConcurrentDictionary<Key, EcsStaticMask>();
         private static IdDispenser _idDIspenser = new IdDispenser(nullID: 0);
@@ -187,7 +191,7 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public sealed class EcsMask : IEquatable<EcsMask>
+    public sealed class EcsMask : IEquatable<EcsMask>, IEcsComponentMask
     {
         internal readonly int _id;
         internal readonly short _worldID;
@@ -398,6 +402,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        EcsMask IEcsComponentMask.ToMask(EcsWorld world) { return this; }
         public EcsMaskIterator GetIterator()
         {
             if (_iterator == null)
@@ -1001,7 +1006,9 @@ namespace DCFApixels.DragonECS
                 private ReadOnlySpan<int>.Enumerator _span;
                 private readonly int[] _entityComponentMasks;
 
+                [ThreadStatic]
                 private static EcsMaskChunck* _preSortedIncBuffer;
+                [ThreadStatic]
                 private static EcsMaskChunck* _preSortedExcBuffer;
 
                 private UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;

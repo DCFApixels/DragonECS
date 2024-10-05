@@ -370,6 +370,8 @@ namespace DCFApixels.DragonECS
         private MarkerData[] _stopwatchs = new MarkerData[64];
         private char[] _buffer = new char[128];
 
+        private object _lock = new object();
+
         public DefaultDebugService()
         {
             Console.ForegroundColor = ConsoleColor.White;
@@ -406,11 +408,14 @@ namespace DCFApixels.DragonECS
         }
         public sealed override void Break()
         {
-            var color = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("Press Enter to сontinue.");
-            Console.ReadKey();
-            Console.ForegroundColor = color;
+            lock (_lock)
+            {
+                var color = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Press Enter to сontinue.");
+                Console.ForegroundColor = color;
+                Console.ReadKey();
+            }
         }
 
         public sealed override void ProfilerMarkBegin(int id)

@@ -165,23 +165,6 @@ namespace DCFApixels.DragonECS
                 return _world.GetPoolInstance<TPool>();
             }
 
-            public void Include<T>()
-            {
-                IncludeImplicit(typeof(T));
-            }
-            public void Exclude<T>()
-            {
-                ExcludeImplicit(typeof(T));
-            }
-            public void Include(Type type)
-            {
-                IncludeImplicit(type);
-            }
-            public void Exclude(Type type)
-            {
-                ExcludeImplicit(type);
-            }
-
             private void IncludeImplicit(Type type)
             {
                 _maskBuilder.Inc(type);
