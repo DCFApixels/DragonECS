@@ -495,9 +495,25 @@ namespace DCFApixels.DragonECS
         {
             return a.World.Get<WorldMaskComponent>().ExceptMask(a, b);
         }
+        public static EcsMask operator -(EcsMask a, IEcsComponentMask b)
+        {
+            return a.World.Get<WorldMaskComponent>().ExceptMask(a, b.ToMask(a.World));
+        }
+        public static EcsMask operator -(IEcsComponentMask b, EcsMask a)
+        {
+            return a.World.Get<WorldMaskComponent>().ExceptMask(b.ToMask(a.World), a);
+        }
         public static EcsMask operator +(EcsMask a, EcsMask b)
         {
             return a.World.Get<WorldMaskComponent>().CombineMask(a, b);
+        }
+        public static EcsMask operator +(EcsMask a, IEcsComponentMask b)
+        {
+            return a.World.Get<WorldMaskComponent>().CombineMask(a, b.ToMask(a.World));
+        }
+        public static EcsMask operator +(IEcsComponentMask b, EcsMask a)
+        {
+            return a.World.Get<WorldMaskComponent>().CombineMask(b.ToMask(a.World), a);
         }
         public static implicit operator EcsMask((IEcsComponentMask mask, EcsWorld world) a)
         {

@@ -15,7 +15,7 @@ namespace DCFApixels.DragonECS
             where TAspect : EcsAspect, new()
             where TCollection : IEntityStorage
         {
-            if(ReferenceEquals(entities, entities.World))
+            if (ReferenceEquals(entities, entities.World))
             {
                 entities.World.GetQueryCache(out EcsWhereExecutor executor, out aspect);
                 return executor.Execute();

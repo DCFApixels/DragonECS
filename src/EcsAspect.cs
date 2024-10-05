@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract class EcsAspect : ITemplateNode
+    public abstract class EcsAspect : ITemplateNode, IEcsComponentMask
     {
         #region Initialization Halpers
         [ThreadStatic]
@@ -301,6 +301,10 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
+        #endregion
+
+        #region Other
+        EcsMask IEcsComponentMask.ToMask(EcsWorld world) { return _mask; }
         #endregion
     }
 
