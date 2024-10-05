@@ -503,6 +503,10 @@ namespace DCFApixels.DragonECS
         {
             return a.mask.ToMask(a.world);
         }
+        public static implicit operator EcsMask((EcsWorld world, IEcsComponentMask mask) a)
+        {
+            return a.mask.ToMask(a.world);
+        }
         #endregion
 
         #region OpMaskKey
