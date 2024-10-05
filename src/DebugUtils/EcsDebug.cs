@@ -528,7 +528,7 @@ namespace DCFApixels.DragonECS
             }
         }
 #else
-        protected sealed override DebugService Clone() { return this; }
+        protected sealed override DebugService CreateThreadInstance() { return this; }
         public sealed override void Break() { }
         public sealed override void Print(string tag, object v) { }
         public sealed override void ProfilerMarkBegin(int id) { }
