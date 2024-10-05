@@ -932,7 +932,6 @@ namespace DCFApixels.DragonECS
     #region AddParams
     [Serializable]
     [DataContract]
-    [StructLayout(LayoutKind.Auto)]
     public struct AddParams : IEquatable<AddParams>
     {
         public static readonly AddParams Default = new AddParams();

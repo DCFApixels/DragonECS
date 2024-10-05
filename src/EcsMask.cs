@@ -675,8 +675,8 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Inc/Exc/Combine
-            [Obsolete("Use Inc(type)")] public Builder Include<T>() { return Inc<T>(); }
-            [Obsolete("Use Exc(type)")] public Builder Exclude<T>() { return Exc<T>(); }
+            [Obsolete("Use Inc<T>()")] public Builder Include<T>() { return Inc<T>(); }
+            [Obsolete("Use Exc<T>()")] public Builder Exclude<T>() { return Exc<T>(); }
             [Obsolete("Use Inc(type)")] public Builder Include(Type type) { return Inc(type); }
             [Obsolete("Use Exc(type)")] public Builder Exclude(Type type) { return Exc(type); }
 

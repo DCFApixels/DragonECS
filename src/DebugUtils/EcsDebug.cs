@@ -163,6 +163,10 @@ namespace DCFApixels.DragonECS
         private static Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
 
         #region Properties
+        public static DebugService Instance
+        {
+            get { return _instance; }
+        }
         public static DebugService CurrentThreadInstance
         {// ts завист от Set
             get
@@ -173,7 +177,7 @@ namespace DCFApixels.DragonECS
                     {
                         if (_currentThreadInstance != _instance)
                         {
-                            _currentThreadInstanceClone = _instance.Clone();
+                            _currentThreadInstanceClone = _instance.CreateThreadInstance();
                             _threadServiceClonesSet.Add(_currentThreadInstanceClone);
                             _currentThreadInstance = _instance;
 
@@ -187,20 +191,18 @@ namespace DCFApixels.DragonECS
                 return _currentThreadInstanceClone;
             }
         }
-        public IEnumerable<MarkerInfo> MarkerInfos
-        {
-            get { return _nameIdTable.Select(o => new MarkerInfo(o.Key, o.Value)); }
-        }
         #endregion
 
+        #region Constructors
         static DebugService()
         {
             Set(new DefaultDebugService());
         }
+        #endregion
 
         #region Set
         public static void Set<T>() where T : DebugService, new()
-        {
+        {// ts
             lock (_lock)
             {
                 if (CurrentThreadInstance is T == false)
@@ -221,12 +223,9 @@ namespace DCFApixels.DragonECS
                 {
                     var oldService = _instance;
                     _instance = service;
-                    if (oldService != null)
-                    { //TODO Так, всеже треды влияют друг на друга, скоерее всего проблема в использовании _nameIdTable/ Так вроде пофиксил, но не понял как конкретно
-                        foreach (var record in _nameIdTable)
-                        {
-                            service.OnNewProfilerMark(record.Value, record.Key);
-                        }
+                    foreach (var record in _nameIdTable)
+                    {
+                        service.OnNewProfilerMark(record.Value, record.Key);
                     }
                     service.OnServiceSetup(oldService);
                     OnServiceChanged(service);
@@ -235,9 +234,9 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Setup/Clone
+        #region OnServiceSetup/CreateThreadInstance
         protected virtual void OnServiceSetup(DebugService oldService) { }
-        protected abstract DebugService Clone();
+        protected abstract DebugService CreateThreadInstance();
         #endregion
 
         #region Print/Break
@@ -351,7 +350,7 @@ namespace DCFApixels.DragonECS
 
     public sealed class NullDebugService : DebugService
     {
-        protected sealed override DebugService Clone() { return this; }
+        protected sealed override DebugService CreateThreadInstance() { return this; }
         public sealed override void Break() { }
         public sealed override void Print(string tag, object v) { }
         public sealed override void ProfilerMarkBegin(int id) { }
@@ -376,7 +375,7 @@ namespace DCFApixels.DragonECS
             Console.ForegroundColor = ConsoleColor.White;
             Console.BackgroundColor = ConsoleColor.Black;
         }
-        protected sealed override DebugService Clone()
+        protected sealed override DebugService CreateThreadInstance()
         {
             return new DefaultDebugService();
         }
