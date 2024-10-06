@@ -114,7 +114,13 @@ namespace DCFApixels.DragonECS
                 //TODO нужно потестить
                 if (isUnique && _uniqueSystemsSet.Add(system.GetType()) == false)
                 {
-                    EcsDebug.PrintWarning($"The pipeline already contains a unique instance of {system.GetType().Name}");
+                    //EcsDebug.PrintWarning($"The pipeline already contains a unique instance of {system.GetType().Name}");
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(layer))
+                {
+                    layer = BASIC_LAYER;
                 }
 
                 SystemNode record = new SystemNode(system, layer, sortOrder, isUnique);
@@ -796,6 +802,11 @@ namespace DCFApixels.DragonECS
             return self.Add(system, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEcsProcess system)
+        {
+            return self.Add(system, new AddParams(isUnique: true));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEcsProcess system, string layerName)
         {
             return self.Add(system, new AddParams(layerName: layerName, isUnique: true));
@@ -854,6 +865,11 @@ namespace DCFApixels.DragonECS
             return self.AddModule(module, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddModuleUnique(this EcsPipeline.Builder self, IEcsModule module)
+        {
+            return self.AddModule(module, new AddParams(isUnique: true));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModuleUnique(this EcsPipeline.Builder self, IEcsModule module, string layerName)
         {
             return self.AddModule(module, new AddParams(layerName: layerName, isUnique: true));
@@ -910,6 +926,11 @@ namespace DCFApixels.DragonECS
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, string layerName, int sortOrder, bool isUnique)
         {
             return self.Add(raw, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, object raw)
+        {
+            return self.Add(raw, new AddParams(isUnique: true));
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, object raw, string layerName)
