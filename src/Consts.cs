@@ -18,6 +18,7 @@
         public const string POST_END_LAYER = NAME_SPACE + nameof(POST_END_LAYER);
 
         public const string META_HIDDEN_TAG = "HiddenInDebagging";
+        public const string META_ENGINE_MEMBER_TAG = "EngineMember";
 
         public const int MAGIC_PRIME = 314159;
 

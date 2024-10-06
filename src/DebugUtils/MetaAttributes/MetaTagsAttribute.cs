@@ -35,5 +35,6 @@ namespace DCFApixels.DragonECS
     public readonly ref struct MetaTags
     {
         public const string HIDDEN = EcsConsts.META_HIDDEN_TAG;
+        public const string ENGINE_MEMBER = EcsConsts.META_ENGINE_MEMBER_TAG;
     }
 }
