@@ -48,7 +48,7 @@ namespace DCFApixels.DragonECS.Internal
             if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
             {
                 _version++;
-                _filteredAllEntitiesCount = _iterator.Iterate(World.Entities).CopyTo(ref _filteredAllEntities);
+                _filteredAllEntitiesCount = _iterator.IterateTo(World.Entities, ref _filteredAllEntities);
             }
             _lastWorldVersion = World.Version;
         }
@@ -63,7 +63,7 @@ namespace DCFApixels.DragonECS.Internal
             {
                 _filteredEntities = new int[32];
             }
-            _filteredEntitiesCount = _iterator.Iterate(span).CopyTo(ref _filteredEntities);
+            _filteredEntitiesCount = _iterator.IterateTo(span, ref _filteredEntities);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

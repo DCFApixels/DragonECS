@@ -49,7 +49,7 @@ namespace DCFApixels.DragonECS.Internal
             if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
             {
                 _version++;
-                _iterator.Iterate(World.Entities).CopyTo(_filteredAllGroup);
+                _iterator.IterateTo(World.Entities, _filteredAllGroup);
             }
             _lastWorldVersion = World.Version;
         }
@@ -64,7 +64,7 @@ namespace DCFApixels.DragonECS.Internal
             {
                 _filteredGroup = EcsGroup.New(World);
             }
-            _iterator.Iterate(span).CopyTo(_filteredGroup);
+            _iterator.IterateTo(span, _filteredGroup);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

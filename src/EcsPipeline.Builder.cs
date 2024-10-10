@@ -82,7 +82,7 @@ namespace DCFApixels.DragonECS
 
                 // Если система одновременно явялется и системой и модулем то сначала будет вызван IEcsModule
                 // При этом дается возможность ручной установки порядка импорта системы вызовом Add(this)
-                if(_systemModule == system)
+                if (_systemModule == system)
                 {
                     _systemModuleAdded = true;
                 }
@@ -413,7 +413,7 @@ namespace DCFApixels.DragonECS
                 // Автоматический слой нужный только для метода Add
                 // Идея в том что метод Add добавляет слои до EcsConsts.END_LAYER и EcsConsts.POST_END_LAYER
                 private const string ADD_LAYERS_LAYER = nameof(LayerList) + "." + nameof(ADD_LAYERS_LAYER);
-                
+
 
                 private Builder _source;
                 private List<string> _layers;

@@ -238,7 +238,7 @@ namespace DCFApixels.DragonECS
             slot.count++;
             slot.version++;
             _entities[entityID].componentsCount++;
-            _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chankIndex] |= maskBit.mask;
+            _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex] |= maskBit.mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
@@ -248,7 +248,7 @@ namespace DCFApixels.DragonECS
             slot.count--;
             slot.version++;
             var count = --_entities[entityID].componentsCount;
-            _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chankIndex] &= ~maskBit.mask;
+            _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex] &= ~maskBit.mask;
 
             if (count == 0 && IsUsed(entityID))
             {
@@ -263,7 +263,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryRegisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
-            ref int chunk = ref _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chankIndex];
+            ref int chunk = ref _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex];
             int newChunk = chunk | maskBit.mask;
             if (chunk != newChunk)
             {
@@ -280,7 +280,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryUnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
-            ref int chunk = ref _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chankIndex];
+            ref int chunk = ref _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex];
             int newChunk = chunk & ~maskBit.mask;
             if (chunk != newChunk)
             {
@@ -316,7 +316,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool HasEntityComponent(int entityID, EcsMaskChunck maskBit)
         {
-            return (_entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chankIndex] & maskBit.mask) == maskBit.mask;
+            return (_entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex] & maskBit.mask) == maskBit.mask;
         }
         #endregion
 

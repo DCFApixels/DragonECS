@@ -260,7 +260,8 @@ namespace DCFApixels.DragonECS
             }
             public EcsSpan CopyToSpan(ref int[] array)
             {
-                return iterator.CopyToSpan(ref array);
+                int count = CopyTo(ref array);
+                return new EcsSpan(worldID, array, count);
             }
             #endregion
 

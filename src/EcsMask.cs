@@ -11,6 +11,7 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    using static EcsMaskIteratorUtility;
     public interface IEcsComponentMask
     {
         EcsMask ToMask(EcsWorld world);
@@ -283,7 +284,7 @@ namespace DCFApixels.DragonECS
                 do
                 {
                     EcsMaskChunck bitJ = EcsMaskChunck.FromID(sortedArray[i]);
-                    if (bitJ.chankIndex != chankIndexX)
+                    if (bitJ.chunkIndex != chankIndexX)
                     {
                         break;
                     }
@@ -554,7 +555,7 @@ namespace DCFApixels.DragonECS
 
         #endregion
 
-        #region AbstractMask
+        #region StaticMask
         public static EcsMask FromStatic(EcsWorld world, EcsStaticMask abstractMask)
         {
             return world.Get<WorldMaskComponent>().ConvertFromAbstract(abstractMask);
@@ -849,11 +850,11 @@ namespace DCFApixels.DragonECS
         internal const int DIV_SHIFT = 5;
         internal const int MOD_MASK = BITS - 1;
 
-        public readonly int chankIndex;
+        public readonly int chunkIndex;
         public readonly int mask;
         public EcsMaskChunck(int chankIndex, int mask)
         {
-            this.chankIndex = chankIndex;
+            this.chunkIndex = chankIndex;
             this.mask = mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -863,7 +864,7 @@ namespace DCFApixels.DragonECS
         }
         public override string ToString()
         {
-            return $"mask({chankIndex}, {mask}, {BitsUtility.CountBits(mask)})";
+            return $"mask({chunkIndex}, {mask}, {BitsUtility.CountBits(mask)})";
         }
         internal class DebuggerProxy
         {
@@ -873,7 +874,7 @@ namespace DCFApixels.DragonECS
             public string bits;
             public DebuggerProxy(EcsMaskChunck maskbits)
             {
-                chunk = maskbits.chankIndex;
+                chunk = maskbits.chunkIndex;
                 mask = (uint)maskbits.mask;
                 BitsUtility.GetBitNumbersNoAlloc(mask, ref values);
                 for (int i = 0; i < values.Length; i++)
@@ -893,103 +894,75 @@ namespace DCFApixels.DragonECS
 #endif
     public class EcsMaskIterator
     {
-        #region CountStructComparers
-        private readonly struct IncCountComparer : IStructComparer<int>
-        {
-            public readonly EcsWorld.PoolSlot[] counts;
-            public IncCountComparer(EcsWorld.PoolSlot[] counts)
-            {
-                this.counts = counts;
-            }
-            public int Compare(int a, int b)
-            {
-                return counts[a].count - counts[b].count;
-            }
-        }
-        private readonly struct ExcCountComparer : IStructComparer<int>
-        {
-            public readonly EcsWorld.PoolSlot[] counts;
-            public ExcCountComparer(EcsWorld.PoolSlot[] counts)
-            {
-                this.counts = counts;
-            }
-            public int Compare(int a, int b)
-            {
-                return counts[b].count - counts[a].count;
-            }
-        }
-        #endregion
+        public readonly EcsWorld World;
+        public readonly EcsMask Mask;
 
-        internal EcsWorld _source;
-        internal EcsMask _mask;
+        private readonly UnsafeArray<int> _sortIncBuffer;
+        private readonly UnsafeArray<int> _sortExcBuffer;
+        private readonly UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
+        private readonly UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
-        private UnsafeArray<int> _sortIncBuffer;
-        private UnsafeArray<int> _sortExcBuffer;
-        private UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
-        private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
+        private readonly bool _isOnlyInc;
 
-        #region Constructors
+        #region Constructors/Finalizator
         public unsafe EcsMaskIterator(EcsWorld source, EcsMask mask)
         {
-            _source = source;
-            _mask = mask;
-
-            _sortIncBuffer = new UnsafeArray<int>(_mask._inc.Length);
-            _sortExcBuffer = new UnsafeArray<int>(_mask._exc.Length);
-            _sortIncChunckBuffer = new UnsafeArray<EcsMaskChunck>(_mask._incChunckMasks.Length);
-            _sortExcChunckBuffer = new UnsafeArray<EcsMaskChunck>(_mask._excChunckMasks.Length);
-
-            for (int i = 0; i < _sortIncBuffer.Length; i++)
-            {
-                _sortIncBuffer.ptr[i] = _mask._inc[i];
-            }
-            for (int i = 0; i < _sortExcBuffer.Length; i++)
-            {
-                _sortExcBuffer.ptr[i] = _mask._exc[i];
-            }
-
-            for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
-            {
-                _sortIncChunckBuffer.ptr[i] = _mask._incChunckMasks[i];
-            }
-            for (int i = 0; i < _sortExcChunckBuffer.Length; i++)
-            {
-                _sortExcChunckBuffer.ptr[i] = _mask._excChunckMasks[i];
-            }
+            World = source;
+            Mask = mask;
+            _sortIncBuffer = UnsafeArray<int>.FromArray(mask._inc);
+            _sortExcBuffer = UnsafeArray<int>.FromArray(mask._exc);
+            _sortIncChunckBuffer = UnsafeArray<EcsMaskChunck>.FromArray(mask._incChunckMasks);
+            _sortExcChunckBuffer = UnsafeArray<EcsMaskChunck>.FromArray(mask._excChunckMasks);
+            _isOnlyInc = _sortExcBuffer.Length <= 0;
         }
-        #endregion
-
-        #region Finalizator
         unsafe ~EcsMaskIterator()
         {
-            _sortIncBuffer.Dispose();
-            _sortExcBuffer.Dispose();
-            _sortIncChunckBuffer.Dispose();
-            _sortExcChunckBuffer.Dispose();
+            _sortIncBuffer.ReadonlyDispose();
+            _sortExcBuffer.ReadonlyDispose();
+            _sortIncChunckBuffer.ReadonlyDispose();
+            _sortExcChunckBuffer.ReadonlyDispose();
         }
         #endregion
 
-        #region Properties
-        public EcsWorld World
+
+        #region IterateTo
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void IterateTo(EcsSpan source, EcsGroup group)
         {
-            get { return _source; }
+            if (_isOnlyInc)
+            {
+                IterateOnlyInc(source).CopyTo(group);
+            }
+            else
+            {
+                Iterate(source).CopyTo(group);
+            }
         }
-        public EcsMask Mask
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int IterateTo(EcsSpan source, ref int[] array)
         {
-            get { return _mask; }
+            if (_isOnlyInc)
+            {
+                return IterateOnlyInc(source).CopyTo(ref array);
+            }
+            else
+            {
+                return Iterate(source).CopyTo(ref array);
+            }
         }
         #endregion
 
-        #region Enumerable
-        public Enumerable Iterate(EcsSpan span)
-        {
-            return new Enumerable(this, span);
-        }
+        #region Iterate/Enumerable
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Enumerable Iterate(EcsSpan span) { return new Enumerable(this, span); }
+#if ENABLE_IL2CPP
+        [Il2CppSetOption (Option.NullChecks, false)]
+        [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
         public readonly ref struct Enumerable
         {
             private readonly EcsMaskIterator _iterator;
             private readonly EcsSpan _span;
-
             public Enumerable(EcsMaskIterator iterator, EcsSpan span)
             {
                 _iterator = iterator;
@@ -997,6 +970,7 @@ namespace DCFApixels.DragonECS
             }
 
             #region CopyTo
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void CopyTo(EcsGroup group)
             {
                 group.Clear();
@@ -1006,6 +980,7 @@ namespace DCFApixels.DragonECS
                     group.AddUnchecked(enumerator.Current);
                 }
             }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int CopyTo(ref int[] array)
             {
                 int count = 0;
@@ -1020,50 +995,41 @@ namespace DCFApixels.DragonECS
                 }
                 return count;
             }
-            public EcsSpan CopyToSpan(ref int[] array)
-            {
-                int count = CopyTo(ref array);
-                return new EcsSpan(_iterator.World.id, array, count);
-            }
             #endregion
 
             #region Other
-            public override string ToString()
+            public List<int> ToList()
             {
                 List<int> ints = new List<int>();
-                foreach (var e in this)
-                {
-                    ints.Add(e);
-                }
-                return CollectionUtility.EntitiesToString(ints, "it");
+                foreach (var e in this) { ints.Add(e); }
+                return ints;
             }
+            public override string ToString() { return CollectionUtility.EntitiesToString(ToList(), "it"); }
             #endregion
 
             #region Enumerator
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator GetEnumerator() { return new Enumerator(_span, _iterator); }
-
+#if ENABLE_IL2CPP
+            [Il2CppSetOption (Option.NullChecks, false)]
+            [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
             public unsafe ref struct Enumerator
             {
                 private ReadOnlySpan<int>.Enumerator _span;
+
+                private readonly UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
+                private readonly UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
+
                 private readonly int[] _entityComponentMasks;
-
-                [ThreadStatic]
-                private static EcsMaskChunck* _preSortedIncBuffer;
-                [ThreadStatic]
-                private static EcsMaskChunck* _preSortedExcBuffer;
-
-                private UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
-                private UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
-
                 private readonly int _entityComponentMaskLengthBitShift;
 
                 public unsafe Enumerator(EcsSpan span, EcsMaskIterator iterator)
                 {
-                    _entityComponentMasks = iterator.World._entityComponentMasks;
                     _sortIncChunckBuffer = iterator._sortIncChunckBuffer;
                     _sortExcChunckBuffer = iterator._sortExcChunckBuffer;
 
+                    _entityComponentMasks = iterator.World._entityComponentMasks;
                     _entityComponentMaskLengthBitShift = iterator.World._entityComponentMaskLengthBitShift;
 
                     if (iterator.Mask.IsBroken)
@@ -1076,74 +1042,36 @@ namespace DCFApixels.DragonECS
                     UnsafeArray<int> _sortIncBuffer = iterator._sortIncBuffer;
                     UnsafeArray<int> _sortExcBuffer = iterator._sortExcBuffer;
                     EcsWorld.PoolSlot[] counts = iterator.World._poolSlots;
+                    int max = _sortIncBuffer.Length > _sortExcBuffer.Length ? _sortIncBuffer.Length : _sortExcBuffer.Length;
 
-                    if (_preSortedIncBuffer == null)
+                    EcsMaskChunck* preSortingBuffer;
+                    if (max > STACK_BUFFER_THRESHOLD)
                     {
-                        _preSortedIncBuffer = UnmanagedArrayUtility.New<EcsMaskChunck>(256);
-                        _preSortedExcBuffer = UnmanagedArrayUtility.New<EcsMaskChunck>(256);
+                        preSortingBuffer = TempBuffer<EcsMaskChunck>.Get(max);
+                    }
+                    else
+                    {
+                        EcsMaskChunck* ptr = stackalloc EcsMaskChunck[max];
+                        preSortingBuffer = ptr;
                     }
 
                     if (_sortIncChunckBuffer.Length > 1)
                     {
-                        IncCountComparer incComparer = new IncCountComparer(counts);
-                        UnsafeArraySortHalperX<int>.InsertionSort(_sortIncBuffer.ptr, _sortIncBuffer.Length, ref incComparer);
-                        for (int i = 0; i < _sortIncBuffer.Length; i++)
-                        {
-                            _preSortedIncBuffer[i] = EcsMaskChunck.FromID(_sortIncBuffer.ptr[i]);
-                        }
-                        for (int i = 0, ii = 0; ii < _sortIncChunckBuffer.Length; ii++)
-                        {
-                            EcsMaskChunck chunkX = _preSortedIncBuffer[i];
-                            int chankIndexX = chunkX.chankIndex;
-                            int maskX = chunkX.mask;
-
-                            for (int j = i + 1; j < _sortIncBuffer.Length; j++)
-                            {
-                                if (_preSortedIncBuffer[j].chankIndex == chankIndexX)
-                                {
-                                    maskX |= _preSortedIncBuffer[j].mask;
-                                }
-                            }
-                            _sortIncChunckBuffer.ptr[ii] = new EcsMaskChunck(chankIndexX, maskX);
-                            while (++i < _sortIncBuffer.Length && _preSortedIncBuffer[i].chankIndex == chankIndexX)
-                            {
-                                // skip
-                            }
-                        }
+                        var comparer = new IncCountComparer(counts);
+                        UnsafeArraySortHalperX<int>.InsertionSort(_sortIncBuffer.ptr, _sortIncBuffer.Length, ref comparer);
+                        ConvertToChuncks(preSortingBuffer, _sortIncBuffer, _sortIncChunckBuffer);
                     }
                     if (_sortIncChunckBuffer.Length > 0 && counts[_sortIncBuffer.ptr[0]].count <= 0)
                     {
                         _span = span.Slice(0, 0).GetEnumerator();
                         return;
                     }
+
                     if (_sortExcChunckBuffer.Length > 1)
                     {
-                        ExcCountComparer excComparer = new ExcCountComparer(counts);
-                        UnsafeArraySortHalperX<int>.InsertionSort(_sortExcBuffer.ptr, _sortExcBuffer.Length, ref excComparer);
-                        for (int i = 0; i < _sortExcBuffer.Length; i++)
-                        {
-                            _preSortedExcBuffer[i] = EcsMaskChunck.FromID(_sortExcBuffer.ptr[i]);
-                        }
-
-                        for (int i = 0, ii = 0; ii < _sortExcChunckBuffer.Length; ii++)
-                        {
-                            EcsMaskChunck bas = _preSortedExcBuffer[i];
-                            int chankIndexX = bas.chankIndex;
-                            int maskX = bas.mask;
-
-                            for (int j = i + 1; j < _sortExcBuffer.Length; j++)
-                            {
-                                if (_preSortedExcBuffer[j].chankIndex == chankIndexX)
-                                {
-                                    maskX |= _preSortedExcBuffer[j].mask;
-                                }
-                            }
-                            _sortExcChunckBuffer.ptr[ii] = new EcsMaskChunck(chankIndexX, maskX);
-                            while (++i < _sortExcBuffer.Length && _preSortedExcBuffer[i].chankIndex == chankIndexX)
-                            {
-                                // skip
-                            }
-                        }
+                        ExcCountComparer comparer = new ExcCountComparer(counts);
+                        UnsafeArraySortHalperX<int>.InsertionSort(_sortExcBuffer.ptr, _sortExcBuffer.Length, ref comparer);
+                        ConvertToChuncks(preSortingBuffer, _sortExcBuffer, _sortExcChunckBuffer);
                     }
                     #endregion
 
@@ -1163,7 +1091,7 @@ namespace DCFApixels.DragonECS
                         for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
                         {
                             var bit = _sortIncChunckBuffer.ptr[i];
-                            if ((_entityComponentMasks[chunck + bit.chankIndex] & bit.mask) != bit.mask)
+                            if ((_entityComponentMasks[chunck + bit.chunkIndex] & bit.mask) != bit.mask)
                             {
                                 goto skip;
                             }
@@ -1171,7 +1099,7 @@ namespace DCFApixels.DragonECS
                         for (int i = 0; i < _sortExcChunckBuffer.Length; i++)
                         {
                             var bit = _sortExcChunckBuffer.ptr[i];
-                            if ((_entityComponentMasks[chunck + bit.chankIndex] & bit.mask) != 0)
+                            if ((_entityComponentMasks[chunck + bit.chunkIndex] & bit.mask) != 0)
                             {
                                 goto skip;
                             }
@@ -1185,6 +1113,231 @@ namespace DCFApixels.DragonECS
             #endregion
         }
         #endregion
+
+        #region Iterate/Enumerable OnlyInc
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public OnlyIncEnumerable IterateOnlyInc(EcsSpan span) { return new OnlyIncEnumerable(this, span); }
+#if ENABLE_IL2CPP
+        [Il2CppSetOption (Option.NullChecks, false)]
+        [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+        public readonly ref struct OnlyIncEnumerable
+        {
+            private readonly EcsMaskIterator _iterator;
+            private readonly EcsSpan _span;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public OnlyIncEnumerable(EcsMaskIterator iterator, EcsSpan span)
+            {
+                _iterator = iterator;
+                _span = span;
+            }
+
+            #region CopyTo
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void CopyTo(EcsGroup group)
+            {
+                group.Clear();
+                var enumerator = GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    group.AddUnchecked(enumerator.Current);
+                }
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int CopyTo(ref int[] array)
+            {
+                int count = 0;
+                var enumerator = GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    if (array.Length <= count)
+                    {
+                        Array.Resize(ref array, array.Length << 1);
+                    }
+                    array[count++] = enumerator.Current;
+                }
+                return count;
+            }
+            #endregion
+
+            #region Other
+            public List<int> ToList()
+            {
+                List<int> ints = new List<int>();
+                foreach (var e in this) { ints.Add(e); }
+                return ints;
+            }
+            public override string ToString() { return CollectionUtility.EntitiesToString(ToList(), "inc_it"); }
+            #endregion
+
+            #region Enumerator
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Enumerator GetEnumerator() { return new Enumerator(_span, _iterator); }
+#if ENABLE_IL2CPP
+            [Il2CppSetOption (Option.NullChecks, false)]
+            [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+            public unsafe ref struct Enumerator
+            {
+                private ReadOnlySpan<int>.Enumerator _span;
+
+                private readonly UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
+
+                private readonly int[] _entityComponentMasks;
+                private readonly int _entityComponentMaskLengthBitShift;
+
+                public unsafe Enumerator(EcsSpan span, EcsMaskIterator iterator)
+                {
+                    _sortIncChunckBuffer = iterator._sortIncChunckBuffer;
+
+                    _entityComponentMasks = iterator.World._entityComponentMasks;
+                    _entityComponentMaskLengthBitShift = iterator.World._entityComponentMaskLengthBitShift;
+
+                    if (iterator.Mask.IsBroken)
+                    {
+                        _span = span.Slice(0, 0).GetEnumerator();
+                        return;
+                    }
+
+                    #region Sort
+                    UnsafeArray<int> _sortIncBuffer = iterator._sortIncBuffer;
+                    EcsWorld.PoolSlot[] counts = iterator.World._poolSlots;
+                    int max = _sortIncBuffer.Length;
+
+                    EcsMaskChunck* preSortingBuffer;
+                    if (max > STACK_BUFFER_THRESHOLD)
+                    {
+                        preSortingBuffer = TempBuffer<EcsMaskChunck>.Get(max);
+                    }
+                    else
+                    {
+                        EcsMaskChunck* ptr = stackalloc EcsMaskChunck[max];
+                        preSortingBuffer = ptr;
+                    }
+
+                    if (_sortIncChunckBuffer.Length > 1)
+                    {
+                        var comparer = new IncCountComparer(counts);
+                        UnsafeArraySortHalperX<int>.InsertionSort(_sortIncBuffer.ptr, _sortIncBuffer.Length, ref comparer);
+                        ConvertToChuncks(preSortingBuffer, _sortIncBuffer, _sortIncChunckBuffer);
+                    }
+                    if (_sortIncChunckBuffer.Length > 0 && counts[_sortIncBuffer.ptr[0]].count <= 0)
+                    {
+                        _span = span.Slice(0, 0).GetEnumerator();
+                        return;
+                    }
+                    #endregion
+
+                    _span = span.GetEnumerator();
+                }
+                public int Current
+                {
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    get { return _span.Current; }
+                }
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public bool MoveNext()
+                {
+                    while (_span.MoveNext())
+                    {
+                        int chunck = _span.Current << _entityComponentMaskLengthBitShift;
+                        for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
+                        {
+                            var bit = _sortIncChunckBuffer.ptr[i];
+                            if ((_entityComponentMasks[chunck + bit.chunkIndex] & bit.mask) != bit.mask)
+                            {
+                                goto skip;
+                            }
+                        }
+                        return true;
+                        skip: continue;
+                    }
+                    return false;
+                }
+            }
+            #endregion
+        }
+        #endregion
+    }
+    #endregion
+}
+
+namespace DCFApixels.DragonECS.Internal
+{
+    #region EcsMaskIteratorUtility
+#if ENABLE_IL2CPP
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+    internal unsafe class EcsMaskIteratorUtility
+    {
+        internal const int STACK_BUFFER_THRESHOLD = 256;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ConvertToChuncks(EcsMaskChunck* ptr, UnsafeArray<int> input, UnsafeArray<EcsMaskChunck> output)
+        {
+            for (int i = 0; i < input.Length; i++)
+            {
+                ptr[i] = EcsMaskChunck.FromID(input.ptr[i]);
+            }
+
+            for (int inputI = 0, outputI = 0; outputI < output.Length; inputI++, ptr++)
+            {
+                int maskX = ptr->mask;
+                if (maskX == 0) { continue; }
+                int chunkIndexX = ptr->chunkIndex;
+
+                EcsMaskChunck* subptr = ptr;
+                for (int j = 1; j < input.Length - inputI; j++, subptr++)
+                {
+                    if (subptr->chunkIndex == chunkIndexX)
+                    {
+                        maskX |= subptr->mask;
+                        *subptr = default;
+                    }
+                }
+                output.ptr[outputI] = new EcsMaskChunck(chunkIndexX, maskX);
+                outputI++;
+            }
+        }
+
+#if ENABLE_IL2CPP
+        [Il2CppSetOption (Option.NullChecks, false)]
+        [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+        internal readonly struct IncCountComparer : IStructComparer<int>
+        {
+            public readonly EcsWorld.PoolSlot[] counts;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public IncCountComparer(EcsWorld.PoolSlot[] counts)
+            {
+                this.counts = counts;
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int Compare(int a, int b)
+            {
+                return counts[a].count - counts[b].count;
+            }
+        }
+
+#if ENABLE_IL2CPP
+        [Il2CppSetOption (Option.NullChecks, false)]
+        [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+        internal readonly struct ExcCountComparer : IStructComparer<int>
+        {
+            public readonly EcsWorld.PoolSlot[] counts;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ExcCountComparer(EcsWorld.PoolSlot[] counts)
+            {
+                this.counts = counts;
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int Compare(int a, int b)
+            {
+                return counts[b].count - counts[a].count;
+            }
+        }
     }
     #endregion
 }

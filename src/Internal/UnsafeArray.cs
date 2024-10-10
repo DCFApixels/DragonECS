@@ -4,11 +4,45 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+#if ENABLE_IL2CPP
+using Unity.IL2CPP.CompilerServices;
+#endif
 
 namespace DCFApixels.DragonECS.Internal
 {
 #if ENABLE_IL2CPP
-    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+    public static unsafe class TempBuffer<T> where T : unmanaged
+    {
+        [ThreadStatic] private static T* _ptr;
+        [ThreadStatic] private static int _size;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T* Get(int size)
+        {
+            if (_size < size)
+            {
+                if (_ptr != null)
+                {
+                    UnmanagedArrayUtility.Free(_ptr);
+                }
+                _ptr = UnmanagedArrayUtility.New<T>(size);
+                _size = size;
+            }
+            return _ptr;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Clear()
+        {
+            for (int i = 0; i < _size; i++)
+            {
+                _ptr[i] = default;
+            }
+        }
+    }
+#if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
@@ -18,6 +52,16 @@ namespace DCFApixels.DragonECS.Internal
     {
         internal T* ptr;
         internal int Length;
+
+        public static UnsafeArray<T> FromArray(T[] array)
+        {
+            UnsafeArray<T> result = new UnsafeArray<T>(array.Length);
+            for (int i = 0; i < array.Length; i++)
+            {
+                result.ptr[i] = array[i];
+            }
+            return result;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnsafeArray(int length)
@@ -48,6 +92,11 @@ namespace DCFApixels.DragonECS.Internal
         public void Dispose()
         {
             UnmanagedArrayUtility.Free(ref ptr, ref Length);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ReadonlyDispose()
+        {
+            UnmanagedArrayUtility.Free(ptr);
         }
         public override string ToString()
         {
