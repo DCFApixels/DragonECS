@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Internal;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -55,37 +56,107 @@ namespace DCFApixels.DragonECS
         protected abstract void OnDestroy();
     }
 
-    public readonly struct PoolVersionsChecker
+    public readonly unsafe struct WorldStateVersionsChecker : IDisposable
     {
-        private readonly EcsMask _mask;
-        private readonly long[] _versions;
-
-        public PoolVersionsChecker(EcsMask mask)
+        private readonly EcsWorld _world;
+        private readonly int[] _maskInc;
+        private readonly int[] _maskExc;
+        // [0]                      world version
+        // [-> _maskInc.Length]     inc versions
+        // [-> _maskExc.Length]     exc versions
+        private readonly long* _versions;
+        public long Version
         {
-            _mask = mask;
-            _versions = new long[mask._inc.Length + mask._exc.Length];
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _versions[0]; }
         }
 
-        public bool NextEquals()
+        public WorldStateVersionsChecker(EcsMask mask)
         {
-            var slots = _mask.World._poolSlots;
-            bool result = true;
-            int index = 0;
-            foreach (var i in _mask._inc)
+            _world = mask.World;
+            _maskInc = mask._inc;
+            _maskExc = mask._exc;
+            _versions = UnmanagedArrayUtility.New<long>(1 + mask._inc.Length + mask._exc.Length);
+        }
+        public bool Check()
+        {
+            if (*_versions == _world.Version)
             {
-                if (slots[i].version != _versions[index++])
+                return true;
+            }
+
+            long* ptr = _versions;
+            var slots = _world._poolSlots;
+            foreach (var slotIndex in _maskInc)
+            {
+                ptr++;
+                if (*ptr != slots[slotIndex].version)
                 {
-                    result = false;
+                    return false;
                 }
             }
-            foreach (var i in _mask._exc)
+            foreach (var slotIndex in _maskExc)
             {
-                if (slots[i].version != _versions[index++])
+                ptr++;
+                if (*ptr != slots[slotIndex].version)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        public void Next()
+        {
+            *_versions = _world.Version;
+
+            long* ptr = _versions;
+            var slots = _world._poolSlots;
+            foreach (var slotIndex in _maskInc)
+            {
+                ptr++;
+                *ptr = slots[slotIndex].version;
+            }
+            foreach (var slotIndex in _maskExc)
+            {
+                ptr++;
+                *ptr = slots[slotIndex].version;
+            }
+        }
+        public bool CheckAndNext()
+        {
+            if (*_versions == _world.Version)
+            {
+                return true;
+            }
+            *_versions = _world.Version;
+
+            long* ptr = _versions;
+            var slots = _world._poolSlots;
+            bool result = true;
+            foreach (var slotIndex in _maskInc)
+            {
+                ptr++;
+                if (*ptr != slots[slotIndex].version)
                 {
                     result = false;
+                    *ptr = slots[slotIndex].version;
+                }
+            }
+            foreach (var slotIndex in _maskExc)
+            {
+                ptr++;
+                if (*ptr != slots[slotIndex].version)
+                {
+                    result = false;
+                    *ptr = slots[slotIndex].version;
                 }
             }
             return result;
+        }
+
+        public void Dispose()
+        {
+
         }
     }
 }

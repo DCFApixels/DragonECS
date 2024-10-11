@@ -20,8 +20,7 @@ namespace DCFApixels.DragonECS.Internal
         private int[] _filteredEntities = null;
         private int _filteredEntitiesCount = 0;
 
-        private long _lastWorldVersion = 0;
-        private PoolVersionsChecker _versionsChecker;
+        private WorldStateVersionsChecker _versionsChecker;
 
         #region Properties
         public sealed override long Version
@@ -34,10 +33,13 @@ namespace DCFApixels.DragonECS.Internal
         #region OnInitialize/OnDestroy
         protected sealed override void OnInitialize()
         {
-            _versionsChecker = new PoolVersionsChecker(Mask);
+            _versionsChecker = new WorldStateVersionsChecker(Mask);
             _iterator = Mask.GetIterator();
         }
-        protected sealed override void OnDestroy() { }
+        protected sealed override void OnDestroy()
+        {
+            _versionsChecker.Dispose();
+        }
         #endregion
 
         #region Methods
@@ -45,12 +47,11 @@ namespace DCFApixels.DragonECS.Internal
         private void Execute_Iternal()
         {
             World.ReleaseDelEntityBufferAllAuto();
-            if (_lastWorldVersion != World.Version || _versionsChecker.NextEquals() == false)
+            if (_versionsChecker.CheckAndNext() == false)
             {
                 _version++;
                 _filteredAllEntitiesCount = _iterator.IterateTo(World.Entities, ref _filteredAllEntities);
             }
-            _lastWorldVersion = World.Version;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ExecuteFor_Iternal(EcsSpan span)
