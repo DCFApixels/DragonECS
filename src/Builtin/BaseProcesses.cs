@@ -8,6 +8,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "The process to run when EcsPipeline.Init() is called. Before Init")]
+    [MetaID("DE26527C92015AFDD4ECF4D81A4C946B")]
     public interface IEcsPreInit : IEcsProcess
     {
         void PreInit();
@@ -16,6 +17,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "The process to run when EcsPipeline.Init() is called. After PreInit")]
+    [MetaID("CC45527C9201DF82DCAAAEF33072F9EF")]
     public interface IEcsInit : IEcsProcess
     {
         void Init();
@@ -24,6 +26,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "The process to run when EcsPipeline.Run() is called.")]
+    [MetaID("9654527C9201BE75546322B9BB03C131")]
     public interface IEcsRun : IEcsProcess
     {
         void Run();
@@ -32,6 +35,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "The process to run when EcsPipeline.Destroy() is called.")]
+    [MetaID("4661527C9201EE669C6EB61B19899AE5")]
     public interface IEcsDestroy : IEcsProcess
     {
         void Destroy();
@@ -49,6 +53,7 @@ namespace DCFApixels.DragonECS.Internal
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "...")]
     [MetaTags(MetaTags.HIDDEN)]
+    [MetaID("3273527C9201285BAA0A463F700A50FB")]
     internal sealed class EcsPreInitRunner : EcsRunner<IEcsPreInit>, IEcsPreInit
     {
 #if DEBUG && !DISABLE_DEBUG
@@ -107,6 +112,7 @@ namespace DCFApixels.DragonECS.Internal
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "...")]
     [MetaTags(MetaTags.HIDDEN)]
+    [MetaID("ED85527C9201A391AB8EC0B734917859")]
     internal sealed class EcsInitRunner : EcsRunner<IEcsInit>, IEcsInit
     {
 #if DEBUG && !DISABLE_DEBUG
@@ -162,6 +168,7 @@ namespace DCFApixels.DragonECS.Internal
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "...")]
     [MetaTags(MetaTags.HIDDEN)]
+    [MetaID("2098527C9201F260C840BFD50BC7E0BA")]
     internal sealed class EcsRunRunner : EcsRunner<IEcsRun>, IEcsRun
     {
 #if DEBUG && !DISABLE_DEBUG
@@ -217,6 +224,7 @@ namespace DCFApixels.DragonECS.Internal
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "...")]
     [MetaTags(MetaTags.HIDDEN)]
+    [MetaID("06A6527C92010430ACEB3DA520F272CC")]
     internal sealed class EcsDestroyRunner : EcsRunner<IEcsDestroy>, IEcsDestroy
     {
 #if DEBUG && !DISABLE_DEBUG

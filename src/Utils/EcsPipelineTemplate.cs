@@ -6,6 +6,7 @@ namespace DCFApixels.DragonECS
     [Serializable]
     [DataContract]
     [MetaTags(MetaTags.HIDDEN)]
+    [MetaID("128D547C9201EEAC49B05F89E4A253DF")]
     public class EcsPipelineTemplate : IEcsModule
     {
         [DataMember] public string[] layers;

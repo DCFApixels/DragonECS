@@ -15,6 +15,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "...")]
+    [MetaID("F064557C92010419AB677453893D00AE")]
     public interface IEcsPipelineMember : IEcsProcess
     {
         EcsPipeline Pipeline { get; set; }
@@ -23,6 +24,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "Container and engine for systems. Responsible for configuring the execution order of systems, providing a mechanism for messaging between systems, and a dependency injection mechanism.")]
+    [MetaID("9F5A557C9201C5C3D9BCAC2FF1CC07D4")]
     public sealed partial class EcsPipeline
     {
         private readonly IConfigContainer _configs;
