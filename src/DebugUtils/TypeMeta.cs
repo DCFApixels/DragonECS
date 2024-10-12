@@ -498,11 +498,16 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
-                    if (_idTypePairs.TryGetValue(atr.ID, out Type otherType) && type != otherType) //этот ексепшен не работает, так как атрибуты не кешируются а пересоздаются
+                    string id = atr.ID;
+                    if (type.IsGenericType && type.IsGenericTypeDefinition == false)
                     {
-                        Throw.Exception($"Types {type.Name} and {otherType.Name} have duplicate MetaID identifiers.");
+                        id = $"{id}<{string.Join(", ", type.GetGenericArguments().Select(o => GetMetaID(o)))}>";
                     }
-                    _idTypePairs.Add(atr.ID, type);
+                    if (_idTypePairs.TryGetValue(id, out Type otherType) && type != otherType) //этот ексепшен не работает, так как атрибуты не кешируются а пересоздаются
+                    {
+                        Throw.Exception($"Types {type.ToMeta().TypeName} and {otherType.ToMeta().TypeName} have duplicate {atr.ID} MetaID.");
+                    }
+                    _idTypePairs[atr.ID] = type;
                     return atr.ID;
                 }
 #else

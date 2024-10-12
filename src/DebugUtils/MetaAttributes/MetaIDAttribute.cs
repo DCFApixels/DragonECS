@@ -1,6 +1,7 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace DCFApixels.DragonECS
 {
@@ -14,16 +15,16 @@ namespace DCFApixels.DragonECS
             {
                 Throw.ArgumentNull(nameof(id));
             }
-            if (id.Contains(','))
+            if (MetaID.IsGenericID(id) == false)
             {
-                Throw.ArgumentException($"Аргумент {nameof(id)} не может содержать символ запятой ','");
+                Throw.ArgumentException($"Иентификатор {id} содержит не допустимые символы: ,<>");
             }
             id = string.Intern(id);
             ID = id;
         }
     }
 
-    public static class MetaIDUtility
+    public static class MetaID
     {
         [ThreadStatic]
         private static Random _randon;
@@ -31,6 +32,11 @@ namespace DCFApixels.DragonECS
         private static byte[] _buffer;
         [ThreadStatic]
         private static bool _isInit;
+
+        public static bool IsGenericID(string id)
+        {
+            return Regex.IsMatch(id, @"^[^,<>\s]*$");
+        }
 
         public static unsafe string GenerateNewUniqueID()
         {
@@ -56,9 +62,13 @@ namespace DCFApixels.DragonECS
 
             return BitConverter.ToString(_buffer).Replace("-", "");
         }
-        public static unsafe string GenerateNewUniqueIDWithAttribute()
+        public static string IDToAttribute(string id)
         {
-            return $"[MetaID(\"{GenerateNewUniqueID()}\")]";
+            return $"[MetaID(\"id\")]";
+        }
+        public static string GenerateNewUniqueIDWithAttribute()
+        {
+            return IDToAttribute(GenerateNewUniqueID());
         }
     }
 }
