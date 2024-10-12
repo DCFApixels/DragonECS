@@ -36,6 +36,7 @@
 
         public const string COMPONENTS_GROUP = "Components";
         public const string SYSTEMS_GROUP = "Systems";
+        public const string MODULES_GROUP = "Modules";
     }
 
     public static class EcsDefines
