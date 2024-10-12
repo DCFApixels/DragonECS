@@ -14,6 +14,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "...")]
+    [MetaID("FC38597C9201C15D1A14D133237BD67F")]
     public interface IEcsDefaultAddParams
     {
         AddParams AddParams { get; }

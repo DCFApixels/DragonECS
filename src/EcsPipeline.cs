@@ -279,6 +279,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.Black)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "An auxiliary type of system for dividing a pipeline into layers. This system is automatically added to the EcsPipeline.")]
+    [MetaID("42596C7C9201D0B85D1335E6E4704B57")]
     public class SystemsLayerMarkerSystem : IEcsProcess
     {
         public readonly string name;

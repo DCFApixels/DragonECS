@@ -31,6 +31,8 @@
         public const string PROCESSES_GROUP = "Processes";
         public const string DEBUG_GROUP = "Debug";
         public const string OTHER_GROUP = "Other";
+        public const string TEMPLATES_GROUP = "Templates";
+        public const string IMPLEMENTATIONS_GROUP = "Implementation";
 
         public const string COMPONENTS_GROUP = "Components";
         public const string SYSTEMS_GROUP = "Systems";

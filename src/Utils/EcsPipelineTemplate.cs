@@ -3,10 +3,15 @@ using System.Runtime.Serialization;
 
 namespace DCFApixels.DragonECS
 {
+    using static EcsConsts;
+
     [Serializable]
     [DataContract]
     [MetaTags(MetaTags.HIDDEN)]
+    [MetaDescription(AUTHOR, "...")]
+    [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaID("128D547C9201EEAC49B05F89E4A253DF")]
+    [MetaColor(MetaColor.DragonRose)]
     public class EcsPipelineTemplate : IEcsModule
     {
         [DataMember] public string[] layers;
