@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
             }
             if (MetaID.IsGenericID(id) == false)
             {
-                Throw.ArgumentException($"Иентификатор {id} содержит не допустимые символы: ,<>");
+                Throw.ArgumentException($"Identifier {id} contains invalid characters: ,<>");
             }
             id = string.Intern(id);
             ID = id;
