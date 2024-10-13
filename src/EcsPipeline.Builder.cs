@@ -176,6 +176,10 @@ namespace DCFApixels.DragonECS
             #region AddModule IEcsModule
             public Builder AddModule(IEcsModule module, AddParams parameters)
             {
+                if(module is IEcsProcess system)
+                {
+                    return AddSystem_Internal(system, parameters);
+                }
                 return AddModule_Internal(module, parameters);
             }
             private Builder AddModule_Internal(IEcsModule module, AddParams settedAddParams)
