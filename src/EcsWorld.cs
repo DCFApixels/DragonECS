@@ -385,6 +385,10 @@ namespace DCFApixels.DragonECS
             return _entities[entityID].componentsCount;
         }
 
+        public bool IsMatchesMask(IEcsComponentMask mask, int entityID)
+        {
+            return IsMatchesMask(mask.ToMask(this), entityID);
+        }
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
