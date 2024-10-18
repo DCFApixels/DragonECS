@@ -797,6 +797,32 @@ namespace DCFApixels.DragonECS
 
     public static partial class EcsPipelineBuilderExtensions
     {
+        #region Simple Builders
+        public static EcsPipeline ToPipeline(this IEcsModule module)
+        {
+            return EcsPipeline.New().Add(module).Build();
+        }
+        public static EcsPipeline ToPipelineAndInit(this IEcsModule module)
+        {
+            return EcsPipeline.New().Add(module).BuildAndInit();
+        }
+        public static EcsPipeline ToPipeline(this IEnumerable<IEcsModule> modules)
+        {
+            var result = EcsPipeline.New();
+            foreach (var module in modules)
+            {
+                result.Add(module);
+            }
+            return result.Build();
+        }
+        public static EcsPipeline ToPipelineAndInit(this IEnumerable<IEcsModule> modules)
+        {
+            var result = modules.ToPipeline();
+            result.Init();
+            return result;
+        }
+        #endregion
+
         #region Add IEcsProcess
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system)

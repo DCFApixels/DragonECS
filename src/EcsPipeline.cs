@@ -231,8 +231,10 @@ namespace DCFApixels.DragonECS
     {
         void Import(EcsPipeline.Builder b);
     }
-    public abstract class EcsModule<T> : IEcsModule, IInjectionUnit
+    public abstract class EcsModule<T> : IEcsModule, IInjectionUnit, IEcsDefaultAddParams
     {
+        AddParams IEcsDefaultAddParams.AddParams { get { return AddParams; } }
+        protected virtual AddParams AddParams { get { return default; } }
         public abstract void Import(EcsPipeline.Builder b);
         void IInjectionUnit.InitInjectionNode(InjectionGraph nodes) { nodes.AddNode<T>(); }
         public EcsModule() { if (GetType() != typeof(T)) { Throw.UndefinedException(); } }
