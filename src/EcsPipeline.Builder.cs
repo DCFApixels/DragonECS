@@ -415,11 +415,6 @@ namespace DCFApixels.DragonECS
             #region LayerList
             public class LayerList : IEnumerable<string>
             {
-                // Автоматический слой нужный только для метода Add
-                // Идея в том что метод Add добавляет слои до EcsConsts.END_LAYER и EcsConsts.POST_END_LAYER
-                // private const string ADD_LAYERS_LAYER = nameof(LayerList) + "." + nameof(ADD_LAYERS_LAYER);
-
-
                 private Builder _source;
                 private List<string> _layers;
                 private string _basicLayerName;
@@ -434,7 +429,6 @@ namespace DCFApixels.DragonECS
                 public LayerList(Builder source, string basicLayerName)
                 {
                     _source = source;
-                    //_layers = new List<string>(16) { basicLayerName, ADD_LAYERS_LAYER };
                     _layers = new List<string>(16) { basicLayerName };
                     _basicLayerName = basicLayerName;
                     _addLayerName = _basicLayerName;
@@ -442,7 +436,6 @@ namespace DCFApixels.DragonECS
                 public LayerList(Builder source, string preBeginlayer, string beginlayer, string basicLayer, string endLayer, string postEndLayer)
                 {
                     _source = source;
-                    //_layers = new List<string>(16) { preBeginlayer, beginlayer, basicLayer, ADD_LAYERS_LAYER, endLayer, postEndLayer };
                     _layers = new List<string>(16) { preBeginlayer, beginlayer, basicLayer, endLayer, postEndLayer };
                     _basicLayerName = basicLayer;
                     _addLayerName = _basicLayerName;
@@ -452,7 +445,6 @@ namespace DCFApixels.DragonECS
                 #region Edit
 
                 #region Single
-                //public Builder Add(string newLayer) { return InsertAfter(ADD_LAYERS_LAYER, newLayer); }
                 public Builder Add(string newLayer)
                 {
                     InsertAfter(_addLayerName, newLayer);
@@ -475,11 +467,6 @@ namespace DCFApixels.DragonECS
                 {
                     if (Contains(newLayer)) { return _source; }
 
-                    //if (targetLayer == _basicLayerName) // нужно чтобы метод Add работал правильно. _basicLayerName и ADD_LAYER считается одним слоем, поэтому Before = _basicLayerName After = ADD_LAYER
-                    //{
-                    //    targetLayer = ADD_LAYERS_LAYER;
-                    //}
-
                     int index = _layers.IndexOf(targetLayer);
                     if (index < 0)
                     {
@@ -496,18 +483,12 @@ namespace DCFApixels.DragonECS
                 }
                 public Builder MoveAfter(string targetLayer, string movingLayer)
                 {
-                    //if (targetLayer == _basicLayerName) // нужно чтобы метод Add работал правильно. _basicLayerName и ADD_LAYER считается одним слоем, поэтому Before = _basicLayerName After = ADD_LAYER
-                    //{
-                    //    targetLayer = ADD_LAYERS_LAYER;
-                    //}
-
                     _layers.Remove(movingLayer);
                     return InsertAfter(targetLayer, movingLayer);
                 }
                 #endregion
 
                 #region Range
-                //public Builder Add(params string[] newLayers) { return InsertAfter(ADD_LAYERS_LAYER, newLayers); }
                 public Builder Add(params string[] newLayers)
                 {
                     InsertAfter(_addLayerName, newLayers);
@@ -526,11 +507,6 @@ namespace DCFApixels.DragonECS
                 }
                 public Builder InsertAfter(string targetLayer, params string[] newLayers)
                 {
-                    //if (targetLayer == _basicLayerName) // нужно чтобы метод Add работал правильно. _basicLayerName и ADD_LAYER считается одним слоем, поэтому Before = _basicLayerName After = ADD_LAYER
-                    //{
-                    //    targetLayer = ADD_LAYERS_LAYER;
-                    //}
-
                     int index = _layers.IndexOf(targetLayer);
                     if (index < 0)
                     {
@@ -550,11 +526,6 @@ namespace DCFApixels.DragonECS
                 }
                 public Builder MoveAfter(string targetLayer, params string[] movingLayers)
                 {
-                    //if (targetLayer == _basicLayerName) // нужно чтобы метод Add работал правильно. _basicLayerName и ADD_LAYER считается одним слоем, поэтому Before = _basicLayerName After = ADD_LAYER
-                    //{
-                    //    targetLayer = ADD_LAYERS_LAYER;
-                    //}
-
                     foreach (var movingLayer in movingLayers)
                     {
                         _layers.Remove(movingLayer);
@@ -569,11 +540,9 @@ namespace DCFApixels.DragonECS
                 private static bool AreMatchingOrderIdentical(IReadOnlyList<string> listA, IReadOnlyList<string> listB)
                 {
                     int indexA = 0;
-                    //if (listA.Contains(ADD_LAYERS_LAYER)) { indexA++; }// чтобы игнорировать слой ADD_LAYERS_LAYER
 
                     foreach (string itemB in listB)
                     {
-                        //if (itemB == ADD_LAYERS_LAYER) { continue; } // чтобы игнорировать слой ADD_LAYERS_LAYER
                         if (indexA < listA.Count && listA[indexA] == itemB)
                         {
                             indexA++;
