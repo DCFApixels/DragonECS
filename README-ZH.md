@@ -44,8 +44,11 @@
 DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框架。专注于提升便利性、模块性、可扩展性和动态实体修改性能。 用纯C#开发的，没有依赖和代码生成。灵感来自于[LeoEcs Lite](https://github.com/Leopotam/ecslite)。
 
 > [!WARNING]
-> 该框架是预发布版本，因此 API 可能会有变化。在 `main` 分支中是当前的工作版本。</br>
-> Readme还没完成，如果有不清楚的地方，可以在这里提问 [反馈](#反馈)
+> 该框架是预发布版本，因此 API 可能会有变化。在 `main` 分支中是当前的工作版本。
+>
+> 最新版本的 README 是[俄文版](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md)。
+>
+> 如果有不清楚的地方，可以在这里提问 [反馈](#反馈)。
 
 ## 目录
 - [安装](#安装)

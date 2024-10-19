@@ -48,7 +48,9 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 > [!WARNING]
 > The project is a work in progress, API may change.
 > 
-> While the English version of the README is incomplete, you can view the [Russian version](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md).
+> The most current version of the README is in [Russian version](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md).
+>
+> If there are unclear points, you can ask questions here [Feedback](#Feedback)
 
 ## Table of Contents
 - [Installation](#Installation)
