@@ -876,9 +876,10 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 # Extensions
 * [Unity integration](https://github.com/DCFApixels/DragonECS-Unity)
 * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
+* [Simple syntax](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
+* [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
 * [Classic C# multithreading](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
-* [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
 * [Code Templates for IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) and [for  Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
 * Graphs (Work in progress)
 > > *Your extension? If you are developing an extension for Dragoness, you can share it [here](#feedback).

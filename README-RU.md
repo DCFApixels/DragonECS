@@ -214,7 +214,7 @@ class SomeSystem : IEcsRun, IEcsPipelineMember
 > Для одновременного построения и инициализации есть метод Builder.BuildAndInit();
 ### Внедрение зависимостей
 Фреймворк реализует внедрение зависимостей для систем. это процесс который запускается вместе с инициализацией пайплайна и внедряет данные переданные в Builder.
-> Использование встроенного внедрения зависимостей опционально. 
+
 ``` c#
 class SomeDataA { /* ... */ }
 class SomeDataB : SomeDataA { /* ... */ }
@@ -247,6 +247,9 @@ class SomeSystem : IEcsInject<SomeDataA>, IEcsRun
     }
 }
 ```
+> Использование встроенного внедрения зависимостей опционально. 
+
+> Имеется [Расширение](#расширения) упрощающее синтаксис инъекций - [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections).
 
 ### Модули
 Группы систем реализующие общую фичу можно объединять в модули, и просто добавлять модули в Pipeline.
@@ -569,6 +572,8 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
     }
 }
 ```
+
+> Имеется [Расширение](#расширения) упрощающее синтаксис запросов и обращения к компонентам - [Упрощенный синтаксис](https://github.com/DCFApixels/DragonECS-AutoInjections).
  
 ## Коллекции
 
@@ -949,9 +954,10 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 # Расширения
 * [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
 * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
+* [Упрощенный синтаксис](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
+* [Однокадровые компоненты](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
 * [Классическая C# многопоточность](https://github.com/DCFApixels/DragonECS-ClassicThreads)
 * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
-* [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
 * [Шаблоны кода IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [для Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
 * Графы (Work in progress)
 > *Твое расширение? Если разрабатываешь расширение для DragonECS, пиши [сюда](#обратная-связь).
