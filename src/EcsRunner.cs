@@ -149,7 +149,7 @@ namespace DCFApixels.DragonECS
                 }
                 #endregion
 
-                #region CheckCache
+                #region Utils
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 private void CheckCache(Delegate d)
                 {
@@ -173,7 +173,7 @@ namespace DCFApixels.DragonECS
 
                 #region Do
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void Do(Action<TProcess> translationCallback)
+                public void Run(Action<TProcess> translationCallback)
                 {
                     CheckCache(translationCallback);
 #if DEBUG && !DISABLE_DEBUG
