@@ -127,19 +127,20 @@ namespace DCFApixels.DragonECS
             public struct RunHelper
             {
                 private readonly EcsProcess<TProcess> _process;
+#if DEBUG && !DISABLE_DEBUG
                 private Delegate _cacheCheck;
                 private bool _cacheCheckInit;
-#if DEBUG && !DISABLE_DEBUG
                 private readonly EcsProfilerMarker[] _markers;
 #endif
 
                 #region Constructors
-                public RunHalper(EcsRunner<TProcess> runner, string methodName)
+                public RunHelper(EcsRunner<TProcess> runner) : this(runner, typeof(TProcess).ToMeta().Name) { }
+                public RunHelper(EcsRunner<TProcess> runner, string methodName)
                 {
                     _process = runner.Process;
+#if DEBUG && !DISABLE_DEBUG
                     _cacheCheck = null;
                     _cacheCheckInit = false;
-#if DEBUG && !DISABLE_DEBUG
                     _markers = new EcsProfilerMarker[_process.Length];
                     for (int i = 0; i < _process.Length; i++)
                     {
@@ -150,6 +151,7 @@ namespace DCFApixels.DragonECS
                 #endregion
 
                 #region Utils
+#if DEBUG && !DISABLE_DEBUG
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 private void CheckCache(Delegate d)
                 {
@@ -169,14 +171,16 @@ namespace DCFApixels.DragonECS
                         }
                     }
                 }
+#endif
                 #endregion
 
                 #region Do
+#pragma warning disable CS0162 // Обнаружен недостижимый код
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public void Run(Action<TProcess> translationCallback)
                 {
-                    CheckCache(translationCallback);
 #if DEBUG && !DISABLE_DEBUG
+                    CheckCache(translationCallback);
                     for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
                     {
                         _markers[i].Begin();
@@ -212,10 +216,10 @@ namespace DCFApixels.DragonECS
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void Do<T0>(Action<TProcess, T0> translationCallback, T0 t0)
+                public void Run<T0>(Action<TProcess, T0> translationCallback, T0 t0)
                 {
-                    CheckCache(translationCallback);
 #if DEBUG && !DISABLE_DEBUG
+                    CheckCache(translationCallback);
                     for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
                     {
                         _markers[i].Begin();
@@ -237,7 +241,7 @@ namespace DCFApixels.DragonECS
                     {
                         try 
                         {
-                            translationCallback(item);
+                            translationCallback(item, t0);
                         }
                         catch (Exception e)
                         {
@@ -251,10 +255,10 @@ namespace DCFApixels.DragonECS
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void Do<T0, T1>(Action<TProcess, T0, T1> translationCallback, T0 t0, T1 t1)
+                public void Run<T0, T1>(Action<TProcess, T0, T1> translationCallback, T0 t0, T1 t1)
                 {
-                    CheckCache(translationCallback);
 #if DEBUG && !DISABLE_DEBUG
+                    CheckCache(translationCallback);
                     for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
                     {
                         _markers[i].Begin();
@@ -276,7 +280,7 @@ namespace DCFApixels.DragonECS
                     {
                         try 
                         {
-                            translationCallback(item);
+                            translationCallback(item, t0, t1);
                         }
                         catch (Exception e)
                         {
@@ -290,10 +294,10 @@ namespace DCFApixels.DragonECS
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void Do<T0, T1, T2>(Action<TProcess, T0, T1, T2> translationCallback, T0 t0, T1 t1, T2 t2)
+                public void Run<T0, T1, T2>(Action<TProcess, T0, T1, T2> translationCallback, T0 t0, T1 t1, T2 t2)
                 {
-                    CheckCache(translationCallback);
 #if DEBUG && !DISABLE_DEBUG
+                    CheckCache(translationCallback);
                     for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
                     {
                         _markers[i].Begin();
@@ -315,7 +319,7 @@ namespace DCFApixels.DragonECS
                     {
                         try 
                         {
-                            translationCallback(item);
+                            translationCallback(item, t0, t1, t2);
                         }
                         catch (Exception e)
                         {
@@ -329,7 +333,7 @@ namespace DCFApixels.DragonECS
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void Do<T0, T1, T2, T3>(Action<TProcess, T0, T1, T2, T3> translationCallback, T0 t0, T1 t1, T2 t2, T3 t3)
+                public void Run<T0, T1, T2, T3>(Action<TProcess, T0, T1, T2, T3> translationCallback, T0 t0, T1 t1, T2 t2, T3 t3)
                 {
                     CheckCache(translationCallback);
 #if DEBUG && !DISABLE_DEBUG
@@ -354,7 +358,7 @@ namespace DCFApixels.DragonECS
                     {
                         try 
                         {
-                            translationCallback(item);
+                            translationCallback(item, t0, t1, t2, t3);
                         }
                         catch (Exception e)
                         {
@@ -366,6 +370,7 @@ namespace DCFApixels.DragonECS
                     }
 #endif
                 }
+#pragma warning restore CS0162 // Обнаружен недостижимый код
                 //------------------------
                 #endregion
             }

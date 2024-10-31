@@ -1,5 +1,4 @@
-﻿#pragma warning disable CS0162 // Обнаружен недостижимый код
-using DCFApixels.DragonECS.RunnersCore;
+﻿using DCFApixels.DragonECS.RunnersCore;
 using System;
 
 namespace DCFApixels.DragonECS
@@ -59,7 +58,7 @@ namespace DCFApixels.DragonECS.Internal
         private RunHelper _helper;
         protected override void OnSetup()
         {
-            _helper = new RunHelper(this, nameof(IEcsPreInit.PreInit));
+            _helper = new RunHelper(this);
         }
         public void PreInit()
         {
@@ -80,7 +79,7 @@ namespace DCFApixels.DragonECS.Internal
         private RunHelper _helper;
         protected override void OnSetup()
         {
-            _helper = new RunHelper(this, nameof(IEcsInit.Init));
+            _helper = new RunHelper(this);
         }
         public void Init()
         {
@@ -157,7 +156,7 @@ namespace DCFApixels.DragonECS.Internal
         private RunHelper _helper;
         protected override void OnSetup()
         {
-            _helper = new RunHelper(this, nameof(IEcsDestroy.Destroy));
+            _helper = new RunHelper(this);
         }
         public void Destroy()
         {
