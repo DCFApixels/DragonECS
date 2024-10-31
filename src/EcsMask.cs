@@ -379,9 +379,9 @@ namespace DCFApixels.DragonECS
 
 
 
-                EmptyMask = CreateEmpty(_staticMasks.Count, world.id);
+                EmptyMask = CreateEmpty(_staticMasks.Count, world.ID);
                 _staticMasks.Add(EmptyMask._staticMask.ID, EmptyMask);
-                BrokenMask = CreateBroken(_staticMasks.Count, world.id);
+                BrokenMask = CreateBroken(_staticMasks.Count, world.ID);
                 _staticMasks.Add(BrokenMask._staticMask.ID, BrokenMask);
             }
             public void Init(ref WorldMaskComponent component, EcsWorld world)
@@ -444,7 +444,7 @@ namespace DCFApixels.DragonECS
                     int[] incs = ConvertTypeCodeToComponentTypeID(staticMask.IncTypeCodes, _world);
                     int[] excs = ConvertTypeCodeToComponentTypeID(staticMask.ExcTypeCodes, _world);
 
-                    result = new EcsMask(staticMask, _staticMasks.Count, _world.id, incs, excs);
+                    result = new EcsMask(staticMask, _staticMasks.Count, _world.ID, incs, excs);
 
                     _staticMasks.Add(staticMask.ID, result);
                 }

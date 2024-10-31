@@ -28,7 +28,7 @@ namespace DCFApixels.DragonECS
         public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _source.id; }
+            get { return _source.ID; }
         }
         public EcsWorld World
         {

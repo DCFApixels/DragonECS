@@ -355,7 +355,6 @@ namespace DCFApixels.DragonECS
             return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
 #endif
         }
-
         internal class DebuggerProxy
         {
             private EcsStaticMask _source;
@@ -388,28 +387,49 @@ namespace DCFApixels.DragonECS
 
 #if DEBUG
         //TODO оптимизировать, так как списки сортированны, наверняка есть способ без хешсета пройтись и не локать треды
-        private static HashSet<int> _dummyHashSet = new HashSet<int>();
-        private static void CheckConstraints(int[] inc, int[] exc)
+        private static void CheckConstraints(EcsTypeCode[] incs, EcsTypeCode[] excs)
         {
-            lock (_dummyHashSet)
-            {
-                if (CheckRepeats(inc)) { throw new EcsFrameworkException("The values in the Include constraints are repeated."); }
-                if (CheckRepeats(exc)) { throw new EcsFrameworkException("The values in the Exclude constraints are repeated."); }
-                _dummyHashSet.Clear();
-                _dummyHashSet.UnionWith(inc);
-                if (_dummyHashSet.Overlaps(exc)) { throw new EcsFrameworkException("Conflicting Include and Exclude constraints."); }
-            }
+            if (CheckRepeats(incs)) { throw new EcsFrameworkException("The values in the Include constraints are repeated."); }
+            if (CheckRepeats(excs)) { throw new EcsFrameworkException("The values in the Exclude constraints are repeated."); }
+            if (HasCommonElements(incs, excs)) { throw new EcsFrameworkException("Conflicting Include and Exclude constraints."); }
         }
-        private static bool CheckRepeats(int[] array)
+        private static bool HasCommonElements(EcsTypeCode[] a, EcsTypeCode[] b)
         {
-            _dummyHashSet.Clear();
-            foreach (var item in array)
+            int i = 0;
+            int j = 0;
+
+            while (i < a.Length && j < b.Length)
             {
-                if (_dummyHashSet.Contains(item))
+                if (a[i] == b[j])
+                {
+                    return true; 
+                }
+                else if (a[i] < b[j])
+                {
+                    i++;
+                }
+                else
+                {
+                    j++; 
+                }
+            }
+            return false;
+        }
+        private static bool CheckRepeats(EcsTypeCode[] array)
+        {
+            if(array.Length <= 0)
+            {
+                return false;
+            }
+            EcsTypeCode lastValue = array[0];
+            for (int i = 1; i < array.Length; i++)
+            {
+                EcsTypeCode value = array[i];
+                if(value == lastValue)
                 {
                     return true;
                 }
-                _dummyHashSet.Add(item);
+                lastValue = value;
             }
             return false;
         }

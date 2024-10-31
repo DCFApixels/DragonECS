@@ -58,7 +58,7 @@ namespace DCFApixels.DragonECS.Internal
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
-            if (span.WorldID != World.id) { Throw.Quiery_ArgumentDifferentWorldsException(); }
+            if (span.WorldID != World.ID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
             if (_filteredEntities == null)
             {
@@ -71,13 +71,13 @@ namespace DCFApixels.DragonECS.Internal
         public EcsSpan Execute()
         {
             Execute_Iternal();
-            return new EcsSpan(World.id, _filteredAllEntities, _filteredAllEntitiesCount);
+            return new EcsSpan(World.ID, _filteredAllEntities, _filteredAllEntitiesCount);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ExecuteFor(EcsSpan span)
         {
             ExecuteFor_Iternal(span);
-            return new EcsSpan(World.id, _filteredEntities, _filteredEntitiesCount);
+            return new EcsSpan(World.ID, _filteredEntities, _filteredEntitiesCount);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -85,14 +85,14 @@ namespace DCFApixels.DragonECS.Internal
         {
             Execute_Iternal();
             ArraySortHalperX<int>.Sort(_filteredAllEntities, comparison, _filteredAllEntitiesCount);
-            return new EcsSpan(World.id, _filteredAllEntities, _filteredAllEntitiesCount);
+            return new EcsSpan(World.ID, _filteredAllEntities, _filteredAllEntitiesCount);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ExecuteFor(EcsSpan span, Comparison<int> comparison)
         {
             ExecuteFor_Iternal(span);
             ArraySortHalperX<int>.Sort(_filteredEntities, comparison, _filteredEntitiesCount);
-            return new EcsSpan(World.id, _filteredEntities, _filteredEntitiesCount);
+            return new EcsSpan(World.ID, _filteredEntities, _filteredEntitiesCount);
         }
         #endregion
     }

@@ -57,7 +57,7 @@ namespace DCFApixels.DragonECS.Internal
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
-            if (span.WorldID != World.id) { Throw.Quiery_ArgumentDifferentWorldsException(); }
+            if (span.WorldID != World.ID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif
             if (_filteredGroup == null)
             {

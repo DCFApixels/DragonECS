@@ -225,7 +225,7 @@ namespace DCFApixels.DragonECS
 
             public Iterator(EcsMaskIterator iterator, EcsSpan span)
             {
-                worldID = iterator.World.id;
+                worldID = iterator.World.ID;
                 _span = span;
                 this.iterator = iterator.Iterate(span);
             }

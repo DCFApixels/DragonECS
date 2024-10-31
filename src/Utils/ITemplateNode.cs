@@ -9,13 +9,13 @@ namespace DCFApixels.DragonECS
         public static int NewEntity(this EcsWorld world, ITemplateNode template)
         {
             int e = world.NewEntity();
-            template.Apply(world.id, e);
+            template.Apply(world.ID, e);
             return e;
         }
         public static entlong NewEntityLong(this EcsWorld world, ITemplateNode template)
         {
             entlong e = world.NewEntityLong();
-            template.Apply(world.id, e.ID);
+            template.Apply(world.ID, e.ID);
             return e;
         }
     }

@@ -197,7 +197,7 @@ namespace DCFApixels.DragonECS
         public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _source.id; }
+            get { return _source.ID; }
         }
         public EcsWorld World
         {
@@ -477,7 +477,7 @@ namespace DCFApixels.DragonECS
         public void UnionWith(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.ID != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             foreach (var entityID in span) { UnionWithStep(entityID); }
         }
@@ -525,7 +525,7 @@ namespace DCFApixels.DragonECS
         public void ExceptWith(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+            if (_source.ID != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             foreach (var entityID in span) { ExceptWithStep_Internal(entityID); }
         }
@@ -563,10 +563,10 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void IntersectWith(EcsReadonlyGroup group) { IntersectWith(group.GetSource_Internal()); }
         /// <summary>as Intersect sets</summary>
-        public void IntersectWith(EcsSpan span) //TODO протестировать
+        public void IntersectWith(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+            if (_source.ID != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             foreach (var entityID in span)
             {
@@ -621,7 +621,7 @@ namespace DCFApixels.DragonECS
         public void SymmetricExceptWith(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+            if (_source.ID != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             foreach (var entityID in span) { SymmetricExceptWithStep_Internal(entityID); }
         }
@@ -688,7 +688,7 @@ namespace DCFApixels.DragonECS
         public bool SetEquals(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+            if (_source.ID != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             if (span.Count != Count) { return false; }
             foreach (var entityID in span)
@@ -747,7 +747,7 @@ namespace DCFApixels.DragonECS
         public bool Overlaps(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.ID != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             foreach (var entityID in span)
             {
@@ -786,7 +786,7 @@ namespace DCFApixels.DragonECS
         public bool IsSubsetOf(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.ID != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             if (Count == 0) { return true; }
             if (span.Count < Count) { return false; }
@@ -815,7 +815,7 @@ namespace DCFApixels.DragonECS
         public bool IsProperSubsetOf(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.ID != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             if (Count == 0) { return true; }
             if (span.Count <= Count) { return false; }
@@ -884,7 +884,7 @@ namespace DCFApixels.DragonECS
         public bool IsSupersetOf(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.ID != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             if (span.Count > Count) { return false; }
             return IsSupersetOf_Internal(span);
@@ -910,7 +910,7 @@ namespace DCFApixels.DragonECS
         public bool IsProperSupersetOf(EcsSpan span)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_source.id != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
+            if (_source.ID != span.WorldID) Throw.Group_ArgumentDifferentWorldsException();
 #endif
             if (span.Count >= Count) { return false; }
             return IsSupersetOf_Internal(span);
@@ -1030,7 +1030,7 @@ namespace DCFApixels.DragonECS
         public static EcsGroup Except(EcsSpan a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (a.WorldID != b._source.id) { Throw.Group_ArgumentDifferentWorldsException(); }
+            if (a.WorldID != b._source.ID) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             EcsGroup result = b._source.GetFreeGroup();
             foreach (var entityID in a)
@@ -1085,7 +1085,7 @@ namespace DCFApixels.DragonECS
         public static EcsGroup Intersect(EcsSpan a, EcsGroup b)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (a.WorldID != b._source.id) { Throw.Group_ArgumentDifferentWorldsException(); }
+            if (a.WorldID != b._source.ID) { Throw.Group_ArgumentDifferentWorldsException(); }
 #endif
             EcsGroup result = b._source.GetFreeGroup();
             foreach (var entityID in a)
