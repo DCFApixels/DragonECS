@@ -56,52 +56,14 @@ namespace DCFApixels.DragonECS.Internal
     [MetaID("3273527C9201285BAA0A463F700A50FB")]
     internal sealed class EcsPreInitRunner : EcsRunner<IEcsPreInit>, IEcsPreInit
     {
-#if DEBUG && !DISABLE_DEBUG
-        private EcsProfilerMarker[] _markers;
+        private RunHelper _helper;
         protected override void OnSetup()
         {
-            _markers = new EcsProfilerMarker[Process.Length];
-            for (int i = 0; i < Process.Length; i++)
-            {
-                _markers[i] = new EcsProfilerMarker($"{Process[i].GetMeta().Name}.{nameof(PreInit)}");
-            }
+            _helper = new RunHelper(this, nameof(IEcsPreInit.PreInit));
         }
-#endif
         public void PreInit()
         {
-#if DEBUG && !DISABLE_DEBUG
-            for (int i = 0, n = Process.Length < _markers.Length ? Process.Length : _markers.Length; i < n; i++)
-            {
-                _markers[i].Begin();
-                try
-                {
-                    Process[i].PreInit();
-                }
-                catch (Exception e)
-                {
-#if DISABLE_CATH_EXCEPTIONS
-                    throw;
-#endif
-                    EcsDebug.PrintError(e);
-                }
-                _markers[i].End();
-            }
-#else
-            foreach (var item in Process)
-            {
-                try 
-                { 
-                    item.PreInit(); 
-                }
-                catch (Exception e)
-                {
-#if DISABLE_CATH_EXCEPTIONS
-                    throw;
-#endif
-                    EcsDebug.PrintError(e);
-                }
-            }
-#endif
+            _helper.Run(p => p.PreInit());
         }
     }
 #if ENABLE_IL2CPP
@@ -115,49 +77,14 @@ namespace DCFApixels.DragonECS.Internal
     [MetaID("ED85527C9201A391AB8EC0B734917859")]
     internal sealed class EcsInitRunner : EcsRunner<IEcsInit>, IEcsInit
     {
-#if DEBUG && !DISABLE_DEBUG
-        private EcsProfilerMarker[] _markers;
+        private RunHelper _helper;
         protected override void OnSetup()
         {
-            _markers = new EcsProfilerMarker[Process.Length];
-            for (int i = 0; i < Process.Length; i++)
-            {
-                _markers[i] = new EcsProfilerMarker($"{Process[i].GetMeta().Name}.{nameof(Init)}");
-            }
+            _helper = new RunHelper(this, nameof(IEcsInit.Init));
         }
-#endif
         public void Init()
         {
-#if DEBUG && !DISABLE_DEBUG
-            for (int i = 0, n = Process.Length < _markers.Length ? Process.Length : _markers.Length; i < n; i++)
-            {
-                _markers[i].Begin();
-                try
-                {
-                    Process[i].Init();
-                }
-                catch (Exception e)
-                {
-#if DISABLE_CATH_EXCEPTIONS
-                    throw;
-#endif
-                    EcsDebug.PrintError(e);
-                }
-                _markers[i].End();
-            }
-#else
-            foreach (var item in Process)
-            {
-                try { item.Init(); }
-                catch (Exception e)
-                {
-#if DISABLE_CATH_EXCEPTIONS
-                    throw;
-#endif
-                    EcsDebug.PrintError(e);
-                }
-            }
-#endif
+            _helper.Run(p => p.Init());
         }
     }
 #if ENABLE_IL2CPP
@@ -227,49 +154,14 @@ namespace DCFApixels.DragonECS.Internal
     [MetaID("06A6527C92010430ACEB3DA520F272CC")]
     internal sealed class EcsDestroyRunner : EcsRunner<IEcsDestroy>, IEcsDestroy
     {
-#if DEBUG && !DISABLE_DEBUG
-        private EcsProfilerMarker[] _markers;
+        private RunHelper _helper;
         protected override void OnSetup()
         {
-            _markers = new EcsProfilerMarker[Process.Length];
-            for (int i = 0; i < Process.Length; i++)
-            {
-                _markers[i] = new EcsProfilerMarker($"{Process[i].GetMeta().Name}.{nameof(IEcsDestroy.Destroy)}");
-            }
+            _helper = new RunHelper(this, nameof(IEcsDestroy.Destroy));
         }
-#endif
         public void Destroy()
         {
-#if DEBUG && !DISABLE_DEBUG
-            for (int i = 0, n = Process.Length < _markers.Length ? Process.Length : _markers.Length; i < n; i++)
-            {
-                _markers[i].Begin();
-                try
-                {
-                    Process[i].Destroy();
-                }
-                catch (Exception e)
-                {
-#if DISABLE_CATH_EXCEPTIONS
-                    throw;
-#endif
-                    EcsDebug.PrintError(e);
-                }
-                _markers[i].End();
-            }
-#else
-            foreach (var item in Process)
-            {
-                try { item.Destroy(); }
-                catch (Exception e)
-                {
-#if DISABLE_CATH_EXCEPTIONS
-                    throw;
-#endif
-                    EcsDebug.PrintError(e);
-                }
-            }
-#endif
+            _helper.Run(p => p.Destroy());
         }
     }
 }
