@@ -2,6 +2,7 @@
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using static DCFApixels.DragonECS.EcsDebugUtility;
 
 namespace DCFApixels.DragonECS
@@ -70,7 +71,7 @@ namespace DCFApixels.DragonECS
             EcsProcessRaw ProcessRaw { get; }
             bool IsEmpty { get; }
         }
-
+        //TODO добавить функцию фильтрации систем по string, за счет создания отдельных ранеров для отдельных string
         [MetaColor(MetaColor.DragonRose)]
         [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
         [MetaDescription(EcsConsts.AUTHOR, "...")]
@@ -120,6 +121,254 @@ namespace DCFApixels.DragonECS
                 OnSetup();
             }
             protected virtual void OnSetup() { }
+            #endregion
+
+            #region Simple
+            public struct RunHelper
+            {
+                private readonly EcsProcess<TProcess> _process;
+                private Delegate _cacheCheck;
+                private bool _cacheCheckInit;
+#if DEBUG && !DISABLE_DEBUG
+                private readonly EcsProfilerMarker[] _markers;
+#endif
+
+                #region Constructors
+                public RunHalper(EcsRunner<TProcess> runner, string methodName)
+                {
+                    _process = runner.Process;
+                    _cacheCheck = null;
+                    _cacheCheckInit = false;
+#if DEBUG && !DISABLE_DEBUG
+                    _markers = new EcsProfilerMarker[_process.Length];
+                    for (int i = 0; i < _process.Length; i++)
+                    {
+                        _markers[i] = new EcsProfilerMarker($"{_process[i].GetMeta().Name}.{methodName}");
+                    }
+#endif
+                }
+                #endregion
+
+                #region CheckCache
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                private void CheckCache(Delegate d)
+                {
+                    if (_cacheCheckInit == false)
+                    {
+                        if (_cacheCheck == null)
+                        {
+                            _cacheCheck = d;
+                        }
+                        else
+                        {
+                            if (ReferenceEquals(_cacheCheck, d) == false)
+                            {
+                                EcsDebug.PrintWarning("The delegate is not cached");
+                            }
+                            _cacheCheckInit = true;
+                        }
+                    }
+                }
+                #endregion
+
+                #region Do
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public void Do(Action<TProcess> translationCallback)
+                {
+                    CheckCache(translationCallback);
+#if DEBUG && !DISABLE_DEBUG
+                    for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
+                    {
+                        _markers[i].Begin();
+                        try
+                        {
+                            translationCallback(_process[i]);
+                        }
+                        catch (Exception e)
+                        {
+#if DISABLE_CATH_EXCEPTIONS
+                            throw;
+#endif
+                            EcsDebug.PrintError(e);
+                        }
+                        _markers[i].End();
+                    }
+#else
+                    foreach (var item in _process)
+                    {
+                        try 
+                        {
+                            translationCallback(item);
+                        }
+                        catch (Exception e)
+                        {
+#if DISABLE_CATH_EXCEPTIONS
+                            throw;
+#endif
+                            EcsDebug.PrintError(e);
+                        }
+                    }
+#endif
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public void Do<T0>(Action<TProcess, T0> translationCallback, T0 t0)
+                {
+                    CheckCache(translationCallback);
+#if DEBUG && !DISABLE_DEBUG
+                    for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
+                    {
+                        _markers[i].Begin();
+                        try
+                        {
+                            translationCallback(_process[i], t0);
+                        }
+                        catch (Exception e)
+                        {
+#if DISABLE_CATH_EXCEPTIONS
+                            throw;
+#endif
+                            EcsDebug.PrintError(e);
+                        }
+                        _markers[i].End();
+                    }
+#else
+                    foreach (var item in _process)
+                    {
+                        try 
+                        {
+                            translationCallback(item);
+                        }
+                        catch (Exception e)
+                        {
+#if DISABLE_CATH_EXCEPTIONS
+                            throw;
+#endif
+                            EcsDebug.PrintError(e);
+                        }
+                    }
+#endif
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public void Do<T0, T1>(Action<TProcess, T0, T1> translationCallback, T0 t0, T1 t1)
+                {
+                    CheckCache(translationCallback);
+#if DEBUG && !DISABLE_DEBUG
+                    for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
+                    {
+                        _markers[i].Begin();
+                        try
+                        {
+                            translationCallback(_process[i], t0, t1);
+                        }
+                        catch (Exception e)
+                        {
+#if DISABLE_CATH_EXCEPTIONS
+                            throw;
+#endif
+                            EcsDebug.PrintError(e);
+                        }
+                        _markers[i].End();
+                    }
+#else
+                    foreach (var item in _process)
+                    {
+                        try 
+                        {
+                            translationCallback(item);
+                        }
+                        catch (Exception e)
+                        {
+#if DISABLE_CATH_EXCEPTIONS
+                            throw;
+#endif
+                            EcsDebug.PrintError(e);
+                        }
+                    }
+#endif
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public void Do<T0, T1, T2>(Action<TProcess, T0, T1, T2> translationCallback, T0 t0, T1 t1, T2 t2)
+                {
+                    CheckCache(translationCallback);
+#if DEBUG && !DISABLE_DEBUG
+                    for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
+                    {
+                        _markers[i].Begin();
+                        try
+                        {
+                            translationCallback(_process[i], t0, t1, t2);
+                        }
+                        catch (Exception e)
+                        {
+#if DISABLE_CATH_EXCEPTIONS
+                            throw;
+#endif
+                            EcsDebug.PrintError(e);
+                        }
+                        _markers[i].End();
+                    }
+#else
+                    foreach (var item in _process)
+                    {
+                        try 
+                        {
+                            translationCallback(item);
+                        }
+                        catch (Exception e)
+                        {
+#if DISABLE_CATH_EXCEPTIONS
+                            throw;
+#endif
+                            EcsDebug.PrintError(e);
+                        }
+                    }
+#endif
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public void Do<T0, T1, T2, T3>(Action<TProcess, T0, T1, T2, T3> translationCallback, T0 t0, T1 t1, T2 t2, T3 t3)
+                {
+                    CheckCache(translationCallback);
+#if DEBUG && !DISABLE_DEBUG
+                    for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
+                    {
+                        _markers[i].Begin();
+                        try
+                        {
+                            translationCallback(_process[i], t0, t1, t2, t3);
+                        }
+                        catch (Exception e)
+                        {
+#if DISABLE_CATH_EXCEPTIONS
+                            throw;
+#endif
+                            EcsDebug.PrintError(e);
+                        }
+                        _markers[i].End();
+                    }
+#else
+                    foreach (var item in _process)
+                    {
+                        try 
+                        {
+                            translationCallback(item);
+                        }
+                        catch (Exception e)
+                        {
+#if DISABLE_CATH_EXCEPTIONS
+                            throw;
+#endif
+                            EcsDebug.PrintError(e);
+                        }
+                    }
+#endif
+                }
+                //------------------------
+                #endregion
+            }
             #endregion
         }
     }
