@@ -1,6 +1,5 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -16,176 +15,6 @@ namespace DCFApixels.DragonECS
     {
         EcsMask ToMask(EcsWorld world);
     }
-#if ENABLE_IL2CPP
-    [Il2CppSetOption (Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-#endif
-    public sealed class EcsStaticMask : IEquatable<EcsStaticMask>, IEcsComponentMask
-    {
-        private static ConcurrentDictionary<Key, EcsStaticMask> _ids = new ConcurrentDictionary<Key, EcsStaticMask>();
-        private static IdDispenser _idDIspenser = new IdDispenser(nullID: 0);
-        private static object _lock = new object();
-
-        private readonly int _id;
-        /// <summary> Sorted </summary>
-        private readonly EcsTypeCode[] _inc;
-        /// <summary> Sorted </summary>
-        private readonly EcsTypeCode[] _exc;
-
-        #region Properties
-        public int ID
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _id; }
-        }
-        /// <summary> Sorted set including constraints presented as global type codes. </summary>
-        public ReadOnlySpan<EcsTypeCode> IncTypeCodes
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _inc; }
-        }
-        /// <summary> Sorted set excluding constraints presented as global type codes. </summary>
-        public ReadOnlySpan<EcsTypeCode> ExcTypeCodes
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _exc; }
-        }
-        #endregion
-
-        #region Constrcutors
-        public static Builder New() { return new Builder(); }
-        public static Builder Inc<T>() { return new Builder().Inc<T>(); }
-        public static Builder Exc<T>() { return new Builder().Exc<T>(); }
-        private EcsStaticMask(int id, Key key)
-        {
-            _id = id;
-            _inc = key.inc;
-            _exc = key.exc;
-        }
-        #endregion
-
-        #region Methods
-        public EcsMask ToMask(EcsWorld world)
-        {
-            return EcsMask.FromStatic(world, this);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(EcsStaticMask other) { return _id == other._id; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() { return _id; }
-        public override bool Equals(object obj) { return Equals((EcsStaticMask)obj); }
-        public override string ToString() { return $"s_mask({_id})"; }
-        #endregion
-
-        #region Builder
-        private readonly struct Key : IEquatable<Key>
-        {
-            public readonly EcsTypeCode[] inc;
-            public readonly EcsTypeCode[] exc;
-            public readonly int hash;
-
-            #region Constructors
-            public Key(EcsTypeCode[] inc, EcsTypeCode[] exc)
-            {
-                this.inc = inc;
-                this.exc = exc;
-                unchecked
-                {
-                    hash = inc.Length + exc.Length;
-                    for (int i = 0, iMax = inc.Length; i < iMax; i++)
-                    {
-                        hash = hash * EcsConsts.MAGIC_PRIME + (int)inc[i];
-                    }
-                    for (int i = 0, iMax = exc.Length; i < iMax; i++)
-                    {
-                        hash = hash * EcsConsts.MAGIC_PRIME - (int)exc[i];
-                    }
-                }
-            }
-            #endregion
-
-            #region Object
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool Equals(Key other)
-            {
-                if (inc.Length != other.inc.Length) { return false; }
-                if (exc.Length != other.exc.Length) { return false; }
-                for (int i = 0; i < inc.Length; i++)
-                {
-                    if (inc[i] != other.inc[i]) { return false; }
-                }
-                for (int i = 0; i < exc.Length; i++)
-                {
-                    if (exc[i] != other.exc[i]) { return false; }
-                }
-                return true;
-            }
-            public override bool Equals(object obj) { return Equals((Key)obj); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public override int GetHashCode() { return hash; }
-            #endregion
-        }
-        public class Builder
-        {
-            private readonly HashSet<EcsTypeCode> _inc = new HashSet<EcsTypeCode>();
-            private readonly HashSet<EcsTypeCode> _exc = new HashSet<EcsTypeCode>();
-
-            #region Constrcutors
-            internal Builder() { }
-            #endregion
-
-            #region Include/Exclude/Combine
-            public Builder Inc<T>() { return Inc(EcsTypeCodeManager.Get<T>()); }
-            public Builder Exc<T>() { return Exc(EcsTypeCodeManager.Get<T>()); }
-            public Builder Inc(Type type) { return Inc(EcsTypeCodeManager.Get(type)); }
-            public Builder Exc(Type type) { return Exc(EcsTypeCodeManager.Get(type)); }
-            public Builder Inc(EcsTypeCode typeCode)
-            {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(); }
-#endif
-                _inc.Add(typeCode);
-                return this;
-            }
-            public Builder Exc(EcsTypeCode typeCode)
-            {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(); }
-#endif
-                _exc.Add(typeCode);
-                return this;
-            }
-            #endregion
-
-            #region Build
-            public EcsStaticMask Build()
-            {
-                HashSet<EcsTypeCode> combinedIncs = _inc;
-                HashSet<EcsTypeCode> combinedExcs = _exc;
-
-                var inc = combinedIncs.ToArray();
-                Array.Sort(inc);
-                var exc = combinedExcs.ToArray();
-                Array.Sort(exc);
-
-                var key = new Key(inc, exc);
-                if (_ids.TryGetValue(key, out EcsStaticMask result) == false)
-                {
-                    lock (_lock)
-                    {
-                        if (_ids.TryGetValue(key, out result) == false)
-                        {
-                            result = new EcsStaticMask(_idDIspenser.UseFree(), key);
-                            _ids[key] = result;
-                        }
-                    }
-                }
-                return result;
-            }
-            #endregion
-        }
-        #endregion
-    }
 
 #if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]
@@ -194,6 +23,7 @@ namespace DCFApixels.DragonECS
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsMask : IEquatable<EcsMask>, IEcsComponentMask
     {
+        internal readonly EcsStaticMask _staticMask;
         internal readonly int _id;
         internal readonly short _worldID;
         internal readonly EcsMaskChunck[] _incChunckMasks;
@@ -245,24 +75,19 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
+        [Obsolete("")]//TODO написать новый сопсоб создания
         public static Builder New(EcsWorld world) { return new Builder(world); }
-        internal static EcsMask Create(int id, short worldID, int[] inc, int[] exc)
-        {
-#if DEBUG
-            CheckConstraints(inc, exc);
-#endif
-            return new EcsMask(id, worldID, inc, exc);
-        }
         internal static EcsMask CreateEmpty(int id, short worldID)
         {
-            return new EcsMask(id, worldID, new int[0], new int[0]);
+            return new EcsMask(EcsStaticMask.Empty, id, worldID, new int[0], new int[0]);
         }
         internal static EcsMask CreateBroken(int id, short worldID)
         {
-            return new EcsMask(id, worldID, new int[1] { 1 }, new int[1] { 1 });
+            return new EcsMask(EcsStaticMask.Broken, id, worldID, new int[1] { 1 }, new int[1] { 1 });
         }
-        private EcsMask(int id, short worldID, int[] inc, int[] exc)
+        private EcsMask(EcsStaticMask staticMask, int id, short worldID, int[] inc, int[] exc)
         {
+            _staticMask = staticMask;
             _id = id;
             _inc = inc;
             _exc = exc;
@@ -415,33 +240,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Debug utils
-#if DEBUG
-        private static HashSet<int> _dummyHashSet = new HashSet<int>();
-        private static void CheckConstraints(int[] inc, int[] exc)
-        {
-            lock (_dummyHashSet)
-            {
-                if (CheckRepeats(inc)) { throw new EcsFrameworkException("The values in the Include constraints are repeated."); }
-                if (CheckRepeats(exc)) { throw new EcsFrameworkException("The values in the Exclude constraints are repeated."); }
-                _dummyHashSet.Clear();
-                _dummyHashSet.UnionWith(inc);
-                if (_dummyHashSet.Overlaps(exc)) { throw new EcsFrameworkException("Conflicting Include and Exclude constraints."); }
-            }
-        }
-        private static bool CheckRepeats(int[] array)
-        {
-            _dummyHashSet.Clear();
-            foreach (var item in array)
-            {
-                if (_dummyHashSet.Contains(item))
-                {
-                    return true;
-                }
-                _dummyHashSet.Add(item);
-            }
-            return false;
-        }
-#endif
         private static string CreateLogString(short worldID, int[] inc, int[] exc)
         {
 #if (DEBUG && !DISABLE_DEBUG)
@@ -558,7 +356,7 @@ namespace DCFApixels.DragonECS
         #region StaticMask
         public static EcsMask FromStatic(EcsWorld world, EcsStaticMask abstractMask)
         {
-            return world.Get<WorldMaskComponent>().ConvertFromAbstract(abstractMask);
+            return world.Get<WorldMaskComponent>().ConvertFromStatic(abstractMask);
         }
         #endregion
 
@@ -566,37 +364,34 @@ namespace DCFApixels.DragonECS
         private readonly struct WorldMaskComponent : IEcsWorldComponent<WorldMaskComponent>
         {
             private readonly EcsWorld _world;
-            private readonly Dictionary<Key, EcsMask> _masks;
             private readonly Dictionary<OpMaskKey, EcsMask> _opMasks;
-            private readonly SparseArray<EcsMask> _abstractMasks;
+            private readonly SparseArray<EcsMask> _staticMasks;
 
             public readonly EcsMask EmptyMask;
             public readonly EcsMask BrokenMask;
 
             #region Constructor/Destructor
-            public WorldMaskComponent(EcsWorld world, Dictionary<Key, EcsMask> masks, EcsMask emptyMask, EcsMask brokenMask)
+            public WorldMaskComponent(EcsWorld world)
             {
                 _world = world;
-                _masks = masks;
                 _opMasks = new Dictionary<OpMaskKey, EcsMask>(256);
-                _abstractMasks = new SparseArray<EcsMask>(256);
-                EmptyMask = emptyMask;
-                BrokenMask = brokenMask;
+                _staticMasks = new SparseArray<EcsMask>(256);
+
+
+
+                EmptyMask = CreateEmpty(_staticMasks.Count, world.id);
+                _staticMasks.Add(EmptyMask._staticMask.ID, EmptyMask);
+                BrokenMask = CreateBroken(_staticMasks.Count, world.id);
+                _staticMasks.Add(BrokenMask._staticMask.ID, BrokenMask);
             }
             public void Init(ref WorldMaskComponent component, EcsWorld world)
             {
-                var masks = new Dictionary<Key, EcsMask>(256);
-                EcsMask emptyMask = CreateEmpty(0, world.id);
-                EcsMask brokenMask = CreateBroken(1, world.id);
-                masks.Add(new Key(emptyMask._inc, emptyMask._exc), emptyMask);
-                masks.Add(new Key(brokenMask._inc, brokenMask._exc), brokenMask);
-                component = new WorldMaskComponent(world, masks, emptyMask, brokenMask);
+                component = new WorldMaskComponent(world);
             }
             public void OnDestroy(ref WorldMaskComponent component, EcsWorld world)
             {
-                component._masks.Clear();
                 component._opMasks.Clear();
-                component._abstractMasks.Clear();
+                component._staticMasks.Clear();
                 component = default;
             }
             #endregion
@@ -611,7 +406,7 @@ namespace DCFApixels.DragonECS
                     {
                         return a.World.Get<WorldMaskComponent>().BrokenMask;
                     }
-                    result = New(a.World).Combine(a).Combine(b).Build();
+                    result = ConvertFromStatic(EcsStaticMask.New().Combine(a._staticMask).Combine(b._staticMask).Build());
                     _opMasks.Add(new OpMaskKey(a._id, b._id, operation), result);
                 }
                 return result;
@@ -625,219 +420,69 @@ namespace DCFApixels.DragonECS
                     {
                         return a.World.Get<WorldMaskComponent>().BrokenMask;
                     }
-                    result = New(a.World).Combine(a).Except(b).Build();
+                    result = ConvertFromStatic(EcsStaticMask.New().Combine(a._staticMask).Except(b._staticMask).Build());
                     _opMasks.Add(new OpMaskKey(a._id, b._id, operation), result);
                 }
                 return result;
             }
-            internal EcsMask ConvertFromAbstract(EcsStaticMask abstractMask)
+
+            internal EcsMask ConvertFromStatic(EcsStaticMask staticMask)
             {
-                if (_abstractMasks.TryGetValue(abstractMask.ID, out EcsMask result) == false)
+                int[] ConvertTypeCodeToComponentTypeID(ReadOnlySpan<EcsTypeCode> from, EcsWorld world)
                 {
-                    var b = New(_world);
-                    foreach (var typeCode in abstractMask.IncTypeCodes)
+                    int[] to = new int[from.Length];
+                    for (int i = 0; i < to.Length; i++)
                     {
-                        b.Inc(_world.DeclareOrGetComponentTypeID(typeCode));
+                        to[i] = world.DeclareOrGetComponentTypeID(from[i]);
                     }
-                    foreach (var typeCode in abstractMask.ExcTypeCodes)
-                    {
-                        b.Exc(_world.DeclareOrGetComponentTypeID(typeCode));
-                    }
-                    result = b.Build();
-                    _abstractMasks.Add(abstractMask.ID, result);
+                    Array.Sort(to);
+                    return to;
                 }
-                return result;
-            }
-            internal EcsMask GetMask(Key maskKey)
-            {
-                if (_masks.TryGetValue(maskKey, out EcsMask result) == false)
+
+                if (_staticMasks.TryGetValue(staticMask.ID, out EcsMask result) == false)
                 {
-                    result = Create(_masks.Count, _world.id, maskKey.inc, maskKey.exc);
-                    _masks.Add(maskKey, result);
+                    int[] incs = ConvertTypeCodeToComponentTypeID(staticMask.IncTypeCodes, _world);
+                    int[] excs = ConvertTypeCodeToComponentTypeID(staticMask.ExcTypeCodes, _world);
+
+                    result = new EcsMask(staticMask, _staticMasks.Count, _world.id, incs, excs);
+
+                    _staticMasks.Add(staticMask.ID, result);
                 }
                 return result;
             }
             #endregion
         }
-        private readonly struct Key : IEquatable<Key>
+
+        [Obsolete("")]//TODO написать новый сопсоб создания
+        public struct Builder
         {
-            public readonly int[] inc;
-            public readonly int[] exc;
-            public readonly int hash;
-
-            #region Constructors
-            public Key(int[] inc, int[] exc)
-            {
-                this.inc = inc;
-                this.exc = exc;
-                unchecked
-                {
-                    hash = inc.Length + exc.Length;
-                    for (int i = 0, iMax = inc.Length; i < iMax; i++)
-                    {
-                        hash = hash * EcsConsts.MAGIC_PRIME + inc[i];
-                    }
-                    for (int i = 0, iMax = exc.Length; i < iMax; i++)
-                    {
-                        hash = hash * EcsConsts.MAGIC_PRIME - exc[i];
-                    }
-                }
-            }
-            #endregion
-
-            #region Object
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool Equals(Key other)
-            {
-                if (inc.Length != other.inc.Length) { return false; }
-                if (exc.Length != other.exc.Length) { return false; }
-                for (int i = 0; i < inc.Length; i++)
-                {
-                    if (inc[i] != other.inc[i]) { return false; }
-                }
-                for (int i = 0; i < exc.Length; i++)
-                {
-                    if (exc[i] != other.exc[i]) { return false; }
-                }
-                return true;
-            }
-            public override bool Equals(object obj) { return Equals((Key)obj); }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public override int GetHashCode() { return hash; }
-            #endregion
-        }
-
-        public class Builder
-        {
+            private readonly EcsStaticMask.Builder _builder;
             private readonly EcsWorld _world;
-            private readonly HashSet<int> _inc = new HashSet<int>();
-            private readonly HashSet<int> _exc = new HashSet<int>();
-            private readonly List<Combined> _combineds = new List<Combined>();
-            private readonly List<Excepted> _excepteds = new List<Excepted>();
 
-            #region Constrcutors
-            internal Builder(EcsWorld world)
+            public Builder(EcsWorld world)
             {
                 _world = world;
-            }
-            #endregion
-
-            #region Inc/Exc/Combine
-            [Obsolete("Use Inc<T>()")] public Builder Include<T>() { return Inc<T>(); }
-            [Obsolete("Use Exc<T>()")] public Builder Exclude<T>() { return Exc<T>(); }
-            [Obsolete("Use Inc(type)")] public Builder Include(Type type) { return Inc(type); }
-            [Obsolete("Use Exc(type)")] public Builder Exclude(Type type) { return Exc(type); }
-
-            public Builder Inc<T>() { return Inc(_world.GetComponentTypeID<T>()); }
-            public Builder Exc<T>() { return Exc(_world.GetComponentTypeID<T>()); }
-            public Builder Inc(Type type) { return Inc(_world.GetComponentTypeID(type)); }
-            public Builder Exc(Type type) { return Exc(_world.GetComponentTypeID(type)); }
-
-            public Builder Inc(int componentTypeID)
-            {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(componentTypeID) || _exc.Contains(componentTypeID)) { Throw.ConstraintIsAlreadyContainedInMask(_world.GetComponentType(componentTypeID)); }
-#endif
-                _inc.Add(componentTypeID);
-                return this;
-            }
-            public Builder Exc(int componentTypeID)
-            {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(componentTypeID) || _exc.Contains(componentTypeID)) { Throw.ConstraintIsAlreadyContainedInMask(_world.GetComponentType(componentTypeID)); }
-#endif
-                _exc.Add(componentTypeID);
-                return this;
+                _builder = EcsStaticMask.Builder.New();
             }
 
-            public Builder Combine(EcsMask mask, int order = 0)
-            {
-                _combineds.Add(new Combined(mask, order));
-                return this;
-            }
+            public Builder Include<T>() { return Inc<T>(); }
+            public Builder Exclude<T>() { return Exc<T>(); }
+            public Builder Include(Type type) { return Inc(type); }
+            public Builder Exclude(Type type) { return Exc(type); }
 
-            public Builder Except(EcsMask mask, int order = 0)
-            {
-                _excepteds.Add(new Excepted(mask, order));
-                return this;
-            }
-            #endregion
+            public Builder Inc<T>() { _builder.Inc<T>(); return this; }
+            public Builder Exc<T>() { _builder.Exc<T>(); return this; }
+            public Builder Inc(Type type) { _builder.Inc(type); return this; }
+            public Builder Exc(Type type) { _builder.Exc(type); return this; }
+            public Builder Inc(EcsTypeCode typeCode) { _builder.Inc(typeCode); return this; }
+            public Builder Exc(EcsTypeCode typeCode) { _builder.Exc(typeCode); return this; }
+            public Builder Combine(EcsMask mask) { _builder.Combine(mask._staticMask); return this; }
+            public Builder Except(EcsMask mask) { _builder.Except(mask._staticMask); return this; }
 
-            #region Build
-            public EcsMask Build()
-            {
-                HashSet<int> combinedInc;
-                HashSet<int> combinedExc;
-                if (_combineds.Count > 0)
-                {
-                    combinedInc = new HashSet<int>();
-                    combinedExc = new HashSet<int>();
-                    _combineds.Sort((a, b) => a.order - b.order);
-                    foreach (var item in _combineds)
-                    {
-                        EcsMask submask = item.mask;
-                        combinedInc.ExceptWith(submask._exc);//удаляю конфликтующие ограничения
-                        combinedExc.ExceptWith(submask._inc);//удаляю конфликтующие ограничения
-                        combinedInc.UnionWith(submask._inc);
-                        combinedExc.UnionWith(submask._exc);
-                    }
-                    combinedInc.ExceptWith(_exc);//удаляю конфликтующие ограничения
-                    combinedExc.ExceptWith(_inc);//удаляю конфликтующие ограничения
-                    combinedInc.UnionWith(_inc);
-                    combinedExc.UnionWith(_exc);
-                }
-                else
-                {
-                    combinedInc = _inc;
-                    combinedExc = _exc;
-                }
-                if (_excepteds.Count > 0)
-                {
-                    foreach (var item in _excepteds)
-                    {
-                        if (combinedInc.Overlaps(item.mask._exc) || combinedExc.Overlaps(item.mask._inc))
-                        {
-                            _combineds.Clear();
-                            _excepteds.Clear();
-                            return _world.Get<WorldMaskComponent>().BrokenMask;
-                        }
-                        combinedInc.ExceptWith(item.mask._inc);
-                        combinedExc.ExceptWith(item.mask._exc);
-                    }
-                }
+            public Builder Inc(int componentTypeID) { Inc(_world.GetComponentType(componentTypeID)); return this; }
+            public Builder Exc(int componentTypeID) { Exc(_world.GetComponentType(componentTypeID)); return this; }
 
-                var inc = combinedInc.ToArray();
-                Array.Sort(inc);
-                var exc = combinedExc.ToArray();
-                Array.Sort(exc);
-
-                _combineds.Clear();
-                _excepteds.Clear();
-
-                return _world.Get<WorldMaskComponent>().GetMask(new Key(inc, exc));
-            }
-            #endregion
-        }
-
-        private readonly struct Combined
-        {
-            public readonly EcsMask mask;
-            public readonly int order;
-            public Combined(EcsMask mask, int order)
-            {
-                this.mask = mask;
-                this.order = order;
-            }
-        }
-        private readonly struct Excepted
-        {
-            public readonly EcsMask mask;
-            public readonly int order;
-            public Excepted(EcsMask mask, int order)
-            {
-                this.mask = mask;
-                this.order = order;
-            }
+            public EcsMask Build() { return _world.Get<WorldMaskComponent>().ConvertFromStatic(_builder.Build()); }
         }
         #endregion
     }

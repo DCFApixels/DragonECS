@@ -85,20 +85,20 @@ namespace DCFApixels.DragonECS
                 return true;
             }
 
-            long* ptr = _versions;
+            long* versionsPtr = _versions;
             var slots = _world._poolSlots;
             foreach (var slotIndex in _maskInc)
             {
-                ptr++;
-                if (*ptr != slots[slotIndex].version)
+                versionsPtr++;
+                if (*versionsPtr != slots[slotIndex].version)
                 {
                     return false;
                 }
             }
             foreach (var slotIndex in _maskExc)
             {
-                ptr++;
-                if (*ptr != slots[slotIndex].version)
+                versionsPtr++;
+                if (*versionsPtr != slots[slotIndex].version)
                 {
                     return false;
                 }

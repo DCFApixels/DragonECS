@@ -38,6 +38,17 @@ namespace DCFApixels.DragonECS.Internal
         public static EcsTypeCode Get<T>() { return EcsTypeCodeCache<T>.code; }
         public static bool Has(Type type) { return _codes.ContainsKey(type); }
         public static bool Has<T>() { return _codes.ContainsKey(typeof(T)); }
+        public static Type FindTypeOfCode(EcsTypeCode typeCode)
+        {
+            foreach (var item in _codes)
+            {
+                if (item.Value == typeCode)
+                {
+                    return item.Key;
+                }
+            }
+            return null;
+        }
         public static IEnumerable<TypeCodeInfo> GetDeclaredTypes() { return _codes.Select(o => new TypeCodeInfo(o.Key, o.Value)); }
     }
 #if ENABLE_IL2CPP

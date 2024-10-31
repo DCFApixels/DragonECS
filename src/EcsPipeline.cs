@@ -40,7 +40,7 @@ namespace DCFApixels.DragonECS
         private bool _isDestoryed = false;
 
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-        private EcsProfilerMarker _initMarker = new EcsProfilerMarker("EcsPipeline.Init");
+        private static EcsProfilerMarker _initMarker = new EcsProfilerMarker("EcsPipeline.Init");
 #endif
 
         #region Properties
@@ -305,12 +305,23 @@ namespace DCFApixels.DragonECS
 
     #region EcsProcess
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public readonly struct EcsProcessRaw : IEnumerable
+    public readonly struct EcsProcessRaw : IReadOnlyCollection<IEcsProcess>
     {
+        public static readonly EcsProcessRaw Empty = new EcsProcessRaw(Array.Empty<IEcsProcess>());
         private readonly Array _systems;
 
         #region Properties
+        public bool IsNullOrEmpty
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _systems == null || _systems.Length <= 0; }
+        }
         public int Length
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _systems.Length; }
+        }
+        int IReadOnlyCollection<IEcsProcess>.Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _systems.Length; }
@@ -330,6 +341,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Enumerator
+
+        IEnumerator<IEcsProcess> IEnumerable<IEcsProcess>.GetEnumerator()
+        {
+            return ((IEnumerable<IEcsProcess>)(EcsProcess<IEcsProcess>)this).GetEnumerator();
+        }
         public IEnumerator GetEnumerator()
         {
             return _systems.GetEnumerator();
@@ -371,7 +387,7 @@ namespace DCFApixels.DragonECS
     public readonly struct EcsProcess<TProcess> : IReadOnlyCollection<TProcess>
         where TProcess : IEcsProcess
     {
-        public readonly static EcsProcess<TProcess> Empty = new EcsProcess<TProcess>(Array.Empty<TProcess>());
+        public static readonly EcsProcess<TProcess> Empty = new EcsProcess<TProcess>(Array.Empty<TProcess>());
         private readonly TProcess[] _systems;
 
         #region Properties

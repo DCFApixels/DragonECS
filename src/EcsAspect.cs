@@ -1,7 +1,6 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
-using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
 {
@@ -9,62 +8,31 @@ namespace DCFApixels.DragonECS
     {
         #region Initialization Halpers
         [ThreadStatic]
-        private static Stack<Builder> _constructorBuildersStack = null;
-        private static Stack<Builder> GetBuildersStack()
-        {
-            if (_constructorBuildersStack == null)
-            {
-                _constructorBuildersStack = new Stack<Builder>();
-            }
-            return _constructorBuildersStack;
-        }
+        private static Builder[] _constructorBuildersStack;
+        [ThreadStatic]
+        private static int _constructorBuildersStackIndex;
         protected static Builder CurrentBuilder
         {
             get
             {
-                var buildersStack = GetBuildersStack();
-                if (buildersStack.Count <= 0)
+                if (_constructorBuildersStack == null || _constructorBuildersStackIndex < 0)
                 {
                     Throw.Aspect_CanOnlyBeUsedDuringInitialization(nameof(CurrentBuilder));
                 }
-                return buildersStack.Peek();
+                return _constructorBuildersStack[_constructorBuildersStackIndex];
             }
         }
         protected static IncludeMarker Inc
         {
-            get
-            {
-                var buildersStack = GetBuildersStack();
-                if (buildersStack.Count <= 0)
-                {
-                    Throw.Aspect_CanOnlyBeUsedDuringInitialization(nameof(Inc));
-                }
-                return buildersStack.Peek().Inc;
-            }
+            get { return CurrentBuilder.Inc; }
         }
         protected static ExcludeMarker Exc
         {
-            get
-            {
-                var buildersStack = GetBuildersStack();
-                if (buildersStack.Count <= 0)
-                {
-                    Throw.Aspect_CanOnlyBeUsedDuringInitialization(nameof(Exc));
-                }
-                return buildersStack.Peek().Exc;
-            }
+            get { return CurrentBuilder.Exc; }
         }
         protected static OptionalMarker Opt
         {
-            get
-            {
-                var buildersStack = GetBuildersStack();
-                if (buildersStack.Count <= 0)
-                {
-                    Throw.Aspect_CanOnlyBeUsedDuringInitialization(nameof(Opt));
-                }
-                return buildersStack.Peek().Opt;
-            }
+            get { return CurrentBuilder.Opt; }
         }
         #endregion
 
@@ -99,7 +67,7 @@ namespace DCFApixels.DragonECS
         public sealed class Builder
         {
             private EcsWorld _world;
-            private EcsMask.Builder _maskBuilder;
+            private EcsStaticMask.Builder _maskBuilder;
 
             #region Properties
             public IncludeMarker Inc
@@ -121,29 +89,42 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Constructors/New
-            private Builder(EcsWorld world)
+            private Builder() { }
+            private void Reset(EcsWorld world)
             {
+                _maskBuilder = EcsStaticMask.New();
                 _world = world;
-                _maskBuilder = EcsMask.New(world);
             }
             internal static unsafe TAspect New<TAspect>(EcsWorld world) where TAspect : EcsAspect, new()
             {
-                Builder builder = new Builder(world);
-                Type aspectType = typeof(TAspect);
-                EcsAspect newAspect;
+                if (_constructorBuildersStack == null)
+                {
+                    _constructorBuildersStack = new Builder[4];
+                    _constructorBuildersStackIndex = -1;
+                }
 
-                var buildersStack = GetBuildersStack();
+                _constructorBuildersStackIndex++;
+                if (_constructorBuildersStackIndex >= _constructorBuildersStack.Length)
+                {
+                    Array.Resize(ref _constructorBuildersStack, _constructorBuildersStack.Length << 1);
+                }
+                Builder builder = _constructorBuildersStack[_constructorBuildersStackIndex];
+                if (builder == null)
+                {
+                    builder = new Builder();
+                    _constructorBuildersStack[_constructorBuildersStackIndex] = builder;
+                }
+                builder.Reset(world);
 
-                buildersStack.Push(builder);
-                newAspect = new TAspect();
+                TAspect newAspect = new TAspect();
                 newAspect.Init(builder);
-                buildersStack.Pop();
+                _constructorBuildersStackIndex--;
 
                 newAspect._source = world;
                 builder.Build(out newAspect._mask);
                 newAspect._isBuilt = true;
 
-                return (TAspect)newAspect;
+                return newAspect;
             }
             #endregion
 
@@ -177,13 +158,13 @@ namespace DCFApixels.DragonECS
             public TOtherAspect Combine<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect, new()
             {
                 var result = _world.GetAspect<TOtherAspect>();
-                _maskBuilder.Combine(result.Mask);
+                _maskBuilder.Combine(result.Mask._staticMask);
                 return result;
             }
             public TOtherAspect Except<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect, new()
             {
                 var result = _world.GetAspect<TOtherAspect>();
-                _maskBuilder.Except(result.Mask);
+                _maskBuilder.Except(result.Mask._staticMask);
                 return result;
             }
             #endregion
@@ -191,7 +172,7 @@ namespace DCFApixels.DragonECS
             #region Build
             private void Build(out EcsMask mask)
             {
-                mask = _maskBuilder.Build();
+                mask = _maskBuilder.Build().ToMask(_world);
             }
             #endregion
 

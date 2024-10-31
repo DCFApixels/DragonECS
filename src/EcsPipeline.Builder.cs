@@ -299,7 +299,7 @@ namespace DCFApixels.DragonECS
 
             #region Build
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            private EcsProfilerMarker _buildBarker = new EcsProfilerMarker("EcsPipeline.Build");
+            private static EcsProfilerMarker _buildBarker = new EcsProfilerMarker("EcsPipeline.Build");
 #endif
             public EcsPipeline Build()
             {
