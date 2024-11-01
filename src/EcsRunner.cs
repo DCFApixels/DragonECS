@@ -335,8 +335,8 @@ namespace DCFApixels.DragonECS
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public void Run<T0, T1, T2, T3>(Action<TProcess, T0, T1, T2, T3> translationCallback, T0 t0, T1 t1, T2 t2, T3 t3)
                 {
-                    CheckCache(translationCallback);
 #if DEBUG && !DISABLE_DEBUG
+                    CheckCache(translationCallback);
                     for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
                     {
                         _markers[i].Begin();
