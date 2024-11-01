@@ -1,4 +1,5 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
@@ -73,12 +74,6 @@ namespace DCFApixels.DragonECS
         private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
 
         #region Properties
-        [Obsolete("Use EcsWorld.ID")]
-        public short id
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return ID; }
-        }
         EcsWorld IEntityStorage.World
         {
             get { return this; }
@@ -391,25 +386,25 @@ namespace DCFApixels.DragonECS
             return _entities[entityID].componentsCount;
         }
 
-        public bool IsMatchesMask(IEcsComponentMask mask, int entityID)
+        public bool IsMatchesMask(IComponentMask mask, int entityID)
         {
             return IsMatchesMask(mask.ToMask(this), entityID);
         }
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (mask._worldID != ID) { Throw.World_MaskDoesntBelongWorld(); }
+            if (mask.WorldID != ID) { Throw.World_MaskDoesntBelongWorld(); }
 #endif
-            for (int i = 0, iMax = mask._inc.Length; i < iMax; i++)
+            for (int i = 0, iMax = mask._incs.Length; i < iMax; i++)
             {
-                if (!_pools[mask._inc[i]].Has(entityID))
+                if (!_pools[mask._incs[i]].Has(entityID))
                 {
                     return false;
                 }
             }
-            for (int i = 0, iMax = mask._exc.Length; i < iMax; i++)
+            for (int i = 0, iMax = mask._excs.Length; i < iMax; i++)
             {
-                if (_pools[mask._exc[i]].Has(entityID))
+                if (_pools[mask._excs[i]].Has(entityID))
                 {
                     return false;
                 }

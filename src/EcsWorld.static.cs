@@ -1,6 +1,7 @@
 ﻿using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -173,5 +174,27 @@ namespace DCFApixels.DragonECS
         {
             internal NullWorld() : base(new EcsWorldConfig(4, 4, 4, 4, 4), 0) { }
         }
+
+        #region Obsolete
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Use EcsWorld.ID")]
+        public short id
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ID; }
+        }
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("The GetPoolInstance(int componentTypeID) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
+        public IEcsPool GetPoolInstance(int componentTypeID)
+        {
+            return FindPoolInstance(componentTypeID);
+        }
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("The GetPoolInstance(Type componentType) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
+        public IEcsPool GetPoolInstance(Type componentType)
+        {
+            return FindPoolInstance(componentType);
+        }
+        #endregion
     }
 }

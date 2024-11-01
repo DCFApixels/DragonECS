@@ -19,17 +19,6 @@ namespace DCFApixels.DragonECS
         private EcsNullPool _nullPool = EcsNullPool.instance;
 
         #region FindPoolInstance
-        [Obsolete("The GetPoolInstance(int componentTypeID) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
-        public IEcsPool GetPoolInstance(int componentTypeID)
-        {
-            return FindPoolInstance(componentTypeID);
-        }
-        [Obsolete("The GetPoolInstance(Type componentType) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
-        public IEcsPool GetPoolInstance(Type componentType)
-        {
-            return FindPoolInstance(componentType);
-        }
-
         public IEcsPool FindPoolInstance(int componentTypeID)
         {
             if (IsComponentTypeDeclared(componentTypeID))
