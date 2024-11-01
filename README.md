@@ -865,12 +865,12 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 </br>
 
 # Projects powered by DragonECS
-* [3D Platformer (Example)](https://github.com/DCFApixels/3D-Platformer-DragonECS-Demo)
-![screenshot](https://i.ibb.co/hm7Lrm4/Platformer.png)
-* [Башенки Смерти (без исходников)](https://yandex.ru/games/app/206024?utm_source=game_popup_menu)
-![screenshot](https://avatars.mds.yandex.net/get-vh/6307101/2a00000184f744230c6a62e2c1f7b47fadeb/orig)
-* [Tiny Aliens (Ludum Dare 56)](https://ldjam.com/events/ludum-dare/56/tiny-aliens)
-![screenshot](https://static.jam.host/raw/467/31/z/66681.png)
+## With sources:
+[3D Platformer (Example) ![screenshot](https://i.ibb.co/hm7Lrm4/Platformer.png)](https://github.com/DCFApixels/3D-Platformer-DragonECS-Demo)
+[Tiny Aliens (Ludum Dare 56) ![screenshot](https://static.jam.host/raw/467/31/z/66681.png)](https://github.com/DCFApixels/LD_56_Tiny_Aliens)
+
+## Released games:
+[Башенки Смерти ![screenshot](https://avatars.mds.yandex.net/get-vh/6307101/2a00000184f744230c6a62e2c1f7b47fadeb/orig)](https://yandex.ru/games/app/206024?utm_source=game_popup_menu)
 
 </br>
 
