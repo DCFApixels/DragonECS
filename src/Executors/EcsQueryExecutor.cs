@@ -1,4 +1,5 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -8,7 +9,7 @@ namespace DCFApixels.DragonECS
     public partial class EcsWorld
     {
         private readonly Dictionary<(Type, object), EcsQueryExecutor> _executorCoures = new Dictionary<(Type, object), EcsQueryExecutor>(256);
-        public TExecutor GetExecutor<TExecutor>(IEcsComponentMask mask)
+        public TExecutor GetExecutor<TExecutor>(IComponentMask mask)
             where TExecutor : EcsQueryExecutor, new()
         {
             var coreType = typeof(TExecutor);
@@ -74,9 +75,9 @@ namespace DCFApixels.DragonECS
         public WorldStateVersionsChecker(EcsMask mask)
         {
             _world = mask.World;
-            _maskInc = mask._inc;
-            _maskExc = mask._exc;
-            _versions = UnmanagedArrayUtility.New<long>(1 + mask._inc.Length + mask._exc.Length);
+            _maskInc = mask._incs;
+            _maskExc = mask._excs;
+            _versions = UnmanagedArrayUtility.New<long>(1 + mask._incs.Length + mask._excs.Length);
         }
         public bool Check()
         {

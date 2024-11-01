@@ -1,10 +1,12 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
+using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
 {
-    public abstract class EcsAspect : ITemplateNode, IEcsComponentMask
+    public abstract class EcsAspect : ITemplateNode, IComponentMask
     {
         #region Initialization Halpers
         [ThreadStatic]
@@ -40,6 +42,9 @@ namespace DCFApixels.DragonECS
         internal EcsMask _mask;
         private bool _isBuilt = false;
 
+        //Инициализация аспектов проходит в синхронизированном состоянии, поэтому использование _staticMaskCache потоко безопасно.
+        private static Dictionary<Type, EcsStaticMask> _staticMaskCache = new Dictionary<Type, EcsStaticMask>();
+
         #region Properties
         public EcsMask Mask
         {
@@ -52,6 +57,13 @@ namespace DCFApixels.DragonECS
         public bool IsInit
         {
             get { return _isBuilt; }
+        }
+        /// <summary>
+        /// Статическая инициализация означет что каждый новый эекземпляр идентичен другому, инициализация стандартным путем создает идентичные экземпляры, поэтому значение по умолчанию true.
+        /// </summary>
+        protected virtual bool IsStaticInitialization
+        {
+            get { return true; }
         }
         #endregion
 
@@ -90,19 +102,14 @@ namespace DCFApixels.DragonECS
 
             #region Constructors/New
             private Builder() { }
-            private void Reset(EcsWorld world)
-            {
-                _maskBuilder = EcsStaticMask.New();
-                _world = world;
-            }
             internal static unsafe TAspect New<TAspect>(EcsWorld world) where TAspect : EcsAspect, new()
             {
+                //Get Builder
                 if (_constructorBuildersStack == null)
                 {
                     _constructorBuildersStack = new Builder[4];
                     _constructorBuildersStackIndex = -1;
                 }
-
                 _constructorBuildersStackIndex++;
                 if (_constructorBuildersStackIndex >= _constructorBuildersStack.Length)
                 {
@@ -114,16 +121,34 @@ namespace DCFApixels.DragonECS
                     builder = new Builder();
                     _constructorBuildersStack[_constructorBuildersStackIndex] = builder;
                 }
-                builder.Reset(world);
 
+                //Setup Builder
+                EcsStaticMask staticMask = null;
+                if (_staticMaskCache.TryGetValue(typeof(TAspect), out staticMask) == false)
+                {
+                    builder._maskBuilder = EcsStaticMask.New();
+                }
+                builder._world = world;
+
+                //Building
                 TAspect newAspect = new TAspect();
-                newAspect.Init(builder);
-                _constructorBuildersStackIndex--;
-
                 newAspect._source = world;
-                builder.Build(out newAspect._mask);
+                newAspect.Init(builder);
+
+                //Build Mask
+                if (staticMask == null)
+                {
+                    staticMask = builder._maskBuilder.Build();
+                    builder._maskBuilder = default;
+                    if (newAspect.IsStaticInitialization)
+                    {
+                        _staticMaskCache.Add(typeof(TAspect), staticMask);
+                    }
+                }
+                newAspect._mask = staticMask.ToMask(world);
                 newAspect._isBuilt = true;
 
+                _constructorBuildersStackIndex--;
                 return newAspect;
             }
             #endregion
@@ -148,31 +173,35 @@ namespace DCFApixels.DragonECS
 
             private void IncludeImplicit(Type type)
             {
-                _maskBuilder.Inc(type);
+                if (_maskBuilder.IsNull == false)
+                {
+                    _maskBuilder.Inc(type);
+                }
             }
             private void ExcludeImplicit(Type type)
             {
-                _maskBuilder.Exc(type);
+                if (_maskBuilder.IsNull == false)
+                {
+                    _maskBuilder.Exc(type);
+                }
             }
-
             public TOtherAspect Combine<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect, new()
             {
                 var result = _world.GetAspect<TOtherAspect>();
-                _maskBuilder.Combine(result.Mask._staticMask);
+                if (_maskBuilder.IsNull == false)
+                {
+                    _maskBuilder.Combine(result.Mask._staticMask);
+                }
                 return result;
             }
             public TOtherAspect Except<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect, new()
             {
                 var result = _world.GetAspect<TOtherAspect>();
-                _maskBuilder.Except(result.Mask._staticMask);
+                if (_maskBuilder.IsNull == false)
+                {
+                    _maskBuilder.Except(result.Mask._staticMask);
+                }
                 return result;
-            }
-            #endregion
-
-            #region Build
-            private void Build(out EcsMask mask)
-            {
-                mask = _maskBuilder.Build().ToMask(_world);
             }
             #endregion
 
@@ -205,7 +234,43 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Iterator
+        #region Template
+        public virtual void Apply(short worldID, int entityID)
+        {
+            EcsWorld world = EcsWorld.GetWorld(worldID);
+            foreach (var incTypeID in _mask._incs)
+            {
+                var pool = world.FindPoolInstance(incTypeID);
+                if (pool != null)
+                {
+                    if (pool.Has(entityID) == false)
+                    {
+                        pool.AddRaw(entityID, null);
+                    }
+                }
+#if DEBUG
+                else
+                {
+                    EcsDebug.PrintWarning("Component has not been added because the pool has not been initialized yet.");
+                }
+#endif
+            }
+            foreach (var excTypeID in _mask._excs)
+            {
+                var pool = world.FindPoolInstance(excTypeID);
+                if (pool != null && pool.Has(entityID))
+                {
+                    pool.Del(entityID);
+                }
+            }
+        }
+        #endregion
+
+        #region Other
+        EcsMask IComponentMask.ToMask(EcsWorld world) { return _mask; }
+        #endregion
+
+        #region Obsolete
         [Obsolete("Use EcsMask.GetIterator()")]
         public Iterator GetIterator()
         {
@@ -251,42 +316,6 @@ namespace DCFApixels.DragonECS
                 return iterator.GetEnumerator();
             }
         }
-        #endregion
-
-        #region Template
-        public virtual void Apply(short worldID, int entityID)
-        {
-            EcsWorld world = EcsWorld.GetWorld(worldID);
-            foreach (var incTypeID in _mask._inc)
-            {
-                var pool = world.FindPoolInstance(incTypeID);
-                if (pool != null)
-                {
-                    if (pool.Has(entityID) == false)
-                    {
-                        pool.AddRaw(entityID, null);
-                    }
-                }
-#if DEBUG
-                else
-                {
-                    EcsDebug.PrintWarning("Component has not been added because the pool has not been initialized yet.");
-                }
-#endif
-            }
-            foreach (var excTypeID in _mask._exc)
-            {
-                var pool = world.FindPoolInstance(excTypeID);
-                if (pool != null && pool.Has(entityID))
-                {
-                    pool.Del(entityID);
-                }
-            }
-        }
-        #endregion
-
-        #region Other
-        EcsMask IEcsComponentMask.ToMask(EcsWorld world) { return _mask; }
         #endregion
     }
 

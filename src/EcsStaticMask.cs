@@ -1,4 +1,5 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public sealed class EcsStaticMask : IEquatable<EcsStaticMask>, IEcsComponentMask
+    public sealed class EcsStaticMask : IEquatable<EcsStaticMask>, IComponentMask
     {
         public static readonly EcsStaticMask Empty;
         public static readonly EcsStaticMask Broken;
@@ -32,42 +33,50 @@ namespace DCFApixels.DragonECS
             Broken = CreateMask(new Key(new EcsTypeCode[1] { (EcsTypeCode)1 }, new EcsTypeCode[1] { (EcsTypeCode)1 }));
         }
 
-        private readonly int _id;
+        public readonly int ID;
         /// <summary> Sorted </summary>
-        private readonly EcsTypeCode[] _inc;
+        private readonly EcsTypeCode[] _incs;
         /// <summary> Sorted </summary>
-        private readonly EcsTypeCode[] _exc;
+        private readonly EcsTypeCode[] _excs;
 
         #region Properties
-        public int ID
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _id; }
-        }
         /// <summary> Sorted set including constraints presented as global type codes. </summary>
         public ReadOnlySpan<EcsTypeCode> IncTypeCodes
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _inc; }
+            get { return _incs; }
         }
         /// <summary> Sorted set excluding constraints presented as global type codes. </summary>
         public ReadOnlySpan<EcsTypeCode> ExcTypeCodes
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _exc; }
+            get { return _excs; }
         }
         public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _inc.Length == 0 && _exc.Length == 0; }
+            get { return _incs.Length == 0 && _excs.Length == 0; }
         }
         public bool IsBroken
         {
-            get { return (_inc.Length & _exc.Length) == 1 && _inc[0] == _exc[0]; }
+            get { return (_incs.Length & _excs.Length) == 1 && _incs[0] == _excs[0]; }
         }
         #endregion
 
         #region Constrcutors
+        private EcsStaticMask(int id, Key key)
+        {
+            ID = id;
+            _incs = key.incs;
+            _excs = key.excs;
+        }
+        public static Builder New() { return Builder.New(); }
+        public static Builder Inc<T>() { return Builder.New().Inc<T>(); }
+        public static Builder Exc<T>() { return Builder.New().Exc<T>(); }
+        public static Builder Inc(Type type) { return Builder.New().Inc(type); }
+        public static Builder Exc(Type type) { return Builder.New().Exc(type); }
+        public static Builder Inc(EcsTypeCode typeCode) { return Builder.New().Inc(typeCode); }
+        public static Builder Exc(EcsTypeCode typeCode) { return Builder.New().Exc(typeCode); }
         private static EcsStaticMask CreateMask(Key key)
         {
             if (_ids.TryGetValue(key, out EcsStaticMask result) == false)
@@ -83,46 +92,110 @@ namespace DCFApixels.DragonECS
             }
             return result;
         }
-        public static Builder New() { return Builder.New(); }
-        public static Builder Inc<T>() { return Builder.New().Inc<T>(); }
-        public static Builder Exc<T>() { return Builder.New().Exc<T>(); }
-        public static Builder Inc(Type type) { return Builder.New().Inc(type); }
-        public static Builder Exc(Type type) { return Builder.New().Exc(type); }
-        public static Builder Inc(EcsTypeCode typeCode) { return Builder.New().Inc(typeCode); }
-        public static Builder Exc(EcsTypeCode typeCode) { return Builder.New().Exc(typeCode); }
-        private EcsStaticMask(int id, Key key)
+        #endregion
+
+        #region Checks
+        public bool IsSubmaskOf(EcsStaticMask otherMask)
         {
-            _id = id;
-            _inc = key.inc;
-            _exc = key.exc;
+            return IsSubmask(otherMask, this);
+        }
+        public bool IsSupermaskOf(EcsStaticMask otherMask)
+        {
+            return IsSubmask(this, otherMask);
+        }
+        public bool IsConflictWith(EcsStaticMask otherMask)
+        {
+            return OverlapsArray(_incs, otherMask._excs) || OverlapsArray(_excs, otherMask._incs);
+        }
+        private static bool IsSubmask(EcsStaticMask super, EcsStaticMask sub)
+        {
+            return IsSubarray(sub._incs, super._incs) && IsSuperarray(sub._excs, super._excs);
+        }
+
+        private static bool OverlapsArray(EcsTypeCode[] l, EcsTypeCode[] r)
+        {
+            int li = 0;
+            int ri = 0;
+            while (li < l.Length && ri < r.Length)
+            {
+                if (l[li] == r[ri])
+                {
+                    return true;
+                }
+                else if (l[li] < r[ri])
+                {
+                    li++;
+                }
+                else
+                {
+                    ri++;
+                }
+            }
+            return false;
+        }
+        private static bool IsSubarray(EcsTypeCode[] super, EcsTypeCode[] sub)
+        {
+            if (super.Length < sub.Length)
+            {
+                return false;
+            }
+            int superI = 0;
+            int subI = 0;
+
+            while (superI < super.Length && subI < sub.Length)
+            {
+                if (super[superI] == sub[subI])
+                {
+                    superI++;
+                }
+                subI++;
+            }
+            return subI == sub.Length;
+        }
+        private static bool IsSuperarray(EcsTypeCode[] super, EcsTypeCode[] sub)
+        {
+            if (super.Length < sub.Length)
+            {
+                return false;
+            }
+            int superI = 0;
+            int subI = 0;
+
+            while (superI < super.Length && subI < sub.Length)
+            {
+                if (super[superI] == sub[subI])
+                {
+                    subI++;
+                }
+                superI++;
+            }
+            return subI == sub.Length;
         }
         #endregion
 
+
         #region Methods
-        public EcsMask ToMask(EcsWorld world)
-        {
-            return EcsMask.FromStatic(world, this);
-        }
+        public EcsMask ToMask(EcsWorld world) { return EcsMask.FromStatic(world, this); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(EcsStaticMask other) { return _id == other._id; }
+        public bool Equals(EcsStaticMask other) { return ID == other.ID; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() { return _id; }
+        public override int GetHashCode() { return ID; }
         public override bool Equals(object obj) { return Equals((EcsStaticMask)obj); }
-        public override string ToString() { return CreateLogString(_inc, _exc); }
+        public override string ToString() { return CreateLogString(_incs, _excs); }
         #endregion
 
         #region Builder
         private readonly struct Key : IEquatable<Key>
         {
-            public readonly EcsTypeCode[] inc;
-            public readonly EcsTypeCode[] exc;
+            public readonly EcsTypeCode[] incs;
+            public readonly EcsTypeCode[] excs;
             public readonly int hash;
 
             #region Constructors
             public Key(EcsTypeCode[] inc, EcsTypeCode[] exc)
             {
-                this.inc = inc;
-                this.exc = exc;
+                this.incs = inc;
+                this.excs = exc;
                 unchecked
                 {
                     hash = inc.Length + exc.Length;
@@ -142,15 +215,15 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool Equals(Key other)
             {
-                if (inc.Length != other.inc.Length) { return false; }
-                if (exc.Length != other.exc.Length) { return false; }
-                for (int i = 0; i < inc.Length; i++)
+                if (incs.Length != other.incs.Length) { return false; }
+                if (excs.Length != other.excs.Length) { return false; }
+                for (int i = 0; i < incs.Length; i++)
                 {
-                    if (inc[i] != other.inc[i]) { return false; }
+                    if (incs[i] != other.incs[i]) { return false; }
                 }
-                for (int i = 0; i < exc.Length; i++)
+                for (int i = 0; i < excs.Length; i++)
                 {
-                    if (exc[i] != other.exc[i]) { return false; }
+                    if (excs[i] != other.excs[i]) { return false; }
                 }
                 return true;
             }
@@ -164,6 +237,19 @@ namespace DCFApixels.DragonECS
             private readonly BuilderInstance _builder;
             private readonly int _version;
 
+            #region Properties
+            public bool IsNull
+            {
+                get { return _builder == null || _builder._version != _version; }
+            }
+            #endregion
+
+            #region Constrcutors
+            private Builder(BuilderInstance builder)
+            {
+                _builder = builder;
+                _version = builder._version;
+            }
             public static Builder New()
             {
                 lock (_lock)
@@ -175,11 +261,9 @@ namespace DCFApixels.DragonECS
                     return new Builder(builderInstance);
                 }
             }
-            private Builder(BuilderInstance builder)
-            {
-                _builder = builder;
-                _version = builder._version;
-            }
+            #endregion
+
+            #region Inc/Exc/Combine/Except
             public Builder Inc<T>() { return Inc(EcsTypeCodeManager.Get<T>()); }
             public Builder Exc<T>() { return Exc(EcsTypeCodeManager.Get<T>()); }
             public Builder Inc(Type type) { return Inc(EcsTypeCodeManager.Get(type)); }
@@ -208,7 +292,9 @@ namespace DCFApixels.DragonECS
                 _builder.Except(mask);
                 return this;
             }
+            #endregion
 
+            #region Build/Cancel
             public EcsStaticMask Build()
             {
                 if (_version != _builder._version) { Throw.UndefinedException(); }
@@ -218,6 +304,15 @@ namespace DCFApixels.DragonECS
                     return _builder.Build();
                 }
             }
+            public void Cancel()
+            {
+                if (_version != _builder._version) { Throw.UndefinedException(); }
+                lock (_lock)
+                {
+                    _buildersPool.Push(_builder);
+                }
+            }
+            #endregion
         }
         private class BuilderInstance
         {
@@ -280,10 +375,10 @@ namespace DCFApixels.DragonECS
                     foreach (var item in _combineds)
                     {
                         EcsStaticMask submask = item.mask;
-                        combinedIncs.ExceptWith(submask._exc);//удаляю конфликтующие ограничения
-                        combinedExcs.ExceptWith(submask._inc);//удаляю конфликтующие ограничения
-                        combinedIncs.UnionWith(submask._inc);
-                        combinedExcs.UnionWith(submask._exc);
+                        combinedIncs.ExceptWith(submask._excs);//удаляю конфликтующие ограничения
+                        combinedExcs.ExceptWith(submask._incs);//удаляю конфликтующие ограничения
+                        combinedIncs.UnionWith(submask._incs);
+                        combinedExcs.UnionWith(submask._excs);
                     }
                     combinedIncs.ExceptWith(_exc);//удаляю конфликтующие ограничения
                     combinedExcs.ExceptWith(_inc);//удаляю конфликтующие ограничения
@@ -305,8 +400,8 @@ namespace DCFApixels.DragonECS
                         //{
                         //    return _world.Get<WorldMaskComponent>().BrokenMask;
                         //}
-                        combinedIncs.ExceptWith(item.mask._inc);
-                        combinedExcs.ExceptWith(item.mask._exc);
+                        combinedIncs.ExceptWith(item.mask._incs);
+                        combinedExcs.ExceptWith(item.mask._excs);
                     }
                     _excepteds.Clear();
                 }
@@ -372,9 +467,9 @@ namespace DCFApixels.DragonECS
             {
                 _source = mask;
 
-                ID = mask._id;
-                included = mask._inc;
-                excluded = mask._exc;
+                ID = mask.ID;
+                included = mask._incs;
+                excluded = mask._excs;
                 Type converter(EcsTypeCode o) { return EcsTypeCodeManager.FindTypeOfCode(o); }
                 includedTypes = included.Select(converter).ToArray();
                 excludedTypes = excluded.Select(converter).ToArray();
@@ -391,33 +486,11 @@ namespace DCFApixels.DragonECS
         {
             if (CheckRepeats(incs)) { throw new EcsFrameworkException("The values in the Include constraints are repeated."); }
             if (CheckRepeats(excs)) { throw new EcsFrameworkException("The values in the Exclude constraints are repeated."); }
-            if (HasCommonElements(incs, excs)) { throw new EcsFrameworkException("Conflicting Include and Exclude constraints."); }
-        }
-        private static bool HasCommonElements(EcsTypeCode[] a, EcsTypeCode[] b)
-        {
-            int i = 0;
-            int j = 0;
-
-            while (i < a.Length && j < b.Length)
-            {
-                if (a[i] == b[j])
-                {
-                    return true; 
-                }
-                else if (a[i] < b[j])
-                {
-                    i++;
-                }
-                else
-                {
-                    j++; 
-                }
-            }
-            return false;
+            if (OverlapsArray(incs, excs)) { throw new EcsFrameworkException("Conflicting Include and Exclude constraints."); }
         }
         private static bool CheckRepeats(EcsTypeCode[] array)
         {
-            if(array.Length <= 0)
+            if (array.Length <= 1)
             {
                 return false;
             }
@@ -425,7 +498,7 @@ namespace DCFApixels.DragonECS
             for (int i = 1; i < array.Length; i++)
             {
                 EcsTypeCode value = array[i];
-                if(value == lastValue)
+                if (value == lastValue)
                 {
                     return true;
                 }

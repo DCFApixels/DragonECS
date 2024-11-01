@@ -1,6 +1,8 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,74 +10,69 @@ using System.Runtime.CompilerServices;
 using Unity.IL2CPP.CompilerServices;
 #endif
 
-namespace DCFApixels.DragonECS
+namespace DCFApixels.DragonECS.Core
 {
-    using static EcsMaskIteratorUtility;
-    public interface IEcsComponentMask
+    public interface IComponentMask
     {
         EcsMask ToMask(EcsWorld world);
     }
+}
+
+namespace DCFApixels.DragonECS
+{
+    using static EcsMaskIteratorUtility;
+
 
 #if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public sealed class EcsMask : IEquatable<EcsMask>, IEcsComponentMask
+    public sealed class EcsMask : IEquatable<EcsMask>, IComponentMask
     {
+        public readonly int ID;
+        public readonly short WorldID;
+
         internal readonly EcsStaticMask _staticMask;
-        internal readonly int _id;
-        internal readonly short _worldID;
         internal readonly EcsMaskChunck[] _incChunckMasks;
         internal readonly EcsMaskChunck[] _excChunckMasks;
         /// <summary> Sorted </summary>
-        internal readonly int[] _inc;
+        internal readonly int[] _incs;
         /// <summary> Sorted </summary>
-        internal readonly int[] _exc;
+        internal readonly int[] _excs;
 
         private EcsMaskIterator _iterator;
 
         #region Properties
-        public int ID
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _id; }
-        }
-        public short WorldID
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _worldID; }
-        }
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return EcsWorld.GetWorld(_worldID); }
-        }
-        /// <summary> Sorted set including constraints. </summary>
-        public ReadOnlySpan<int> Inc
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _inc; }
+            get { return EcsWorld.GetWorld(WorldID); }
         }
         /// <summary> Sorted set excluding constraints. </summary>
-        public ReadOnlySpan<int> Exc
+        public ReadOnlySpan<int> Incs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _exc; }
+            get { return _incs; }
+        }
+        /// <summary> Sorted set excluding constraints. </summary>
+        public ReadOnlySpan<int> Excs
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _excs; }
         }
         public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _inc.Length == 0 && _exc.Length == 0; }
+            get { return _incs.Length == 0 && _excs.Length == 0; }
         }
         public bool IsBroken
         {
-            get { return (_inc.Length & _exc.Length) == 1 && _inc[0] == _exc[0]; }
+            get { return (_incs.Length & _excs.Length) == 1 && _incs[0] == _excs[0]; }
         }
         #endregion
 
         #region Constructors
-        [Obsolete("")]//TODO написать новый сопсоб создания
         public static Builder New(EcsWorld world) { return new Builder(world); }
         internal static EcsMask CreateEmpty(int id, short worldID)
         {
@@ -88,10 +85,10 @@ namespace DCFApixels.DragonECS
         private EcsMask(EcsStaticMask staticMask, int id, short worldID, int[] inc, int[] exc)
         {
             _staticMask = staticMask;
-            _id = id;
-            _inc = inc;
-            _exc = exc;
-            _worldID = worldID;
+            ID = id;
+            _incs = inc;
+            _excs = exc;
+            WorldID = worldID;
 
             _incChunckMasks = MakeMaskChuncsArray(inc);
             _excChunckMasks = MakeMaskChuncsArray(exc);
@@ -131,111 +128,227 @@ namespace DCFApixels.DragonECS
         #region Checks
         public bool IsSubmaskOf(EcsMask otherMask)
         {
-            return IsSubmask(otherMask, this);
+            return _staticMask.IsSubmaskOf(otherMask._staticMask);
         }
         public bool IsSupermaskOf(EcsMask otherMask)
         {
-            return IsSubmask(this, otherMask);
+            return _staticMask.IsSupermaskOf(otherMask._staticMask);
         }
         public bool IsConflictWith(EcsMask otherMask)
         {
-            return OverlapsArray(_inc, otherMask._exc) || OverlapsArray(_exc, otherMask._inc);
-        }
-
-        private static bool OverlapsArray(int[] l, int[] r)
-        {
-            int li = 0;
-            int ri = 0;
-            while (li < l.Length && ri < r.Length)
-            {
-                if (l[li] == r[ri])
-                {
-                    return true;
-                }
-                else if (l[li] < r[ri])
-                {
-                    li++;
-                }
-                else
-                {
-                    ri++;
-                }
-            }
-            return false;
-        }
-        private static bool IsSubmask(EcsMask super, EcsMask sub)
-        {
-            return IsSubarray(sub._inc, super._inc) && IsSuperarray(sub._exc, super._exc);
-        }
-        private static bool IsSubarray(int[] super, int[] sub)
-        {
-            if (super.Length < sub.Length)
-            {
-                return false;
-            }
-            int superI = 0;
-            int subI = 0;
-
-            while (superI < super.Length && subI < sub.Length)
-            {
-                if (super[superI] == sub[subI])
-                {
-                    superI++;
-                }
-                subI++;
-            }
-            return subI == sub.Length;
-        }
-
-        private static bool IsSuperarray(int[] super, int[] sub)
-        {
-            if (super.Length < sub.Length)
-            {
-                return false;
-            }
-            int superI = 0;
-            int subI = 0;
-
-            while (superI < super.Length && subI < sub.Length)
-            {
-                if (super[superI] == sub[subI])
-                {
-                    subI++;
-                }
-                superI++;
-            }
-            return subI == sub.Length;
+            return _staticMask.IsConflictWith(otherMask._staticMask);
         }
         #endregion
 
         #region Object
         public override string ToString()
         {
-            return CreateLogString(_worldID, _inc, _exc);
+            return CreateLogString(WorldID, _incs, _excs);
         }
         public bool Equals(EcsMask mask)
         {
-            return _id == mask._id && _worldID == mask._worldID;
+            return ID == mask.ID && WorldID == mask.WorldID;
         }
         public override bool Equals(object obj)
         {
-            return obj is EcsMask mask && _id == mask._id && Equals(mask);
+            return obj is EcsMask mask && ID == mask.ID && Equals(mask);
         }
         public override int GetHashCode()
         {
-            return unchecked(_id ^ (_worldID * EcsConsts.MAGIC_PRIME));
+            return unchecked(ID ^ (WorldID * EcsConsts.MAGIC_PRIME));
         }
         #endregion
 
         #region Other
-        EcsMask IEcsComponentMask.ToMask(EcsWorld world) { return this; }
+        public static EcsMask FromStatic(EcsWorld world, EcsStaticMask abstractMask)
+        {
+            return world.Get<WorldMaskComponent>().ConvertFromStatic(abstractMask);
+        }
+        EcsMask IComponentMask.ToMask(EcsWorld world) { return this; }
         public EcsMaskIterator GetIterator()
         {
             if (_iterator == null)
             {
-                _iterator = new EcsMaskIterator(EcsWorld.GetWorld(_worldID), this);
+                _iterator = new EcsMaskIterator(EcsWorld.GetWorld(WorldID), this);
             }
             return _iterator;
+        }
+        #endregion
+
+        #region Operators
+        public static EcsMask operator -(EcsMask a, EcsMask b)
+        {
+            return a.World.Get<WorldMaskComponent>().ExceptMask(a, b);
+        }
+        public static EcsMask operator -(EcsMask a, IComponentMask b)
+        {
+            return a.World.Get<WorldMaskComponent>().ExceptMask(a, b.ToMask(a.World));
+        }
+        public static EcsMask operator -(IComponentMask b, EcsMask a)
+        {
+            return a.World.Get<WorldMaskComponent>().ExceptMask(b.ToMask(a.World), a);
+        }
+        public static EcsMask operator +(EcsMask a, EcsMask b)
+        {
+            return a.World.Get<WorldMaskComponent>().CombineMask(a, b);
+        }
+        public static EcsMask operator +(EcsMask a, IComponentMask b)
+        {
+            return a.World.Get<WorldMaskComponent>().CombineMask(a, b.ToMask(a.World));
+        }
+        public static EcsMask operator +(IComponentMask b, EcsMask a)
+        {
+            return a.World.Get<WorldMaskComponent>().CombineMask(b.ToMask(a.World), a);
+        }
+        public static implicit operator EcsMask((IComponentMask mask, EcsWorld world) a)
+        {
+            return a.mask.ToMask(a.world);
+        }
+        public static implicit operator EcsMask((EcsWorld world, IComponentMask mask) a)
+        {
+            return a.mask.ToMask(a.world);
+        }
+        #endregion
+
+        #region OpMaskKey
+        private readonly struct OpMaskKey : IEquatable<OpMaskKey>
+        {
+            public readonly int leftMaskID;
+            public readonly int rightMaskID;
+            public readonly int operation;
+
+            public const int COMBINE_OP = 7;
+            public const int EXCEPT_OP = 32;
+            public OpMaskKey(int leftMaskID, int rightMaskID, int operation)
+            {
+                this.leftMaskID = leftMaskID;
+                this.rightMaskID = rightMaskID;
+                this.operation = operation;
+            }
+            public bool Equals(OpMaskKey other)
+            {
+                return leftMaskID == other.leftMaskID && rightMaskID == other.rightMaskID && operation == other.operation;
+            }
+            public override int GetHashCode()
+            {
+                return leftMaskID ^ (rightMaskID * operation);
+            }
+        }
+        #endregion
+
+        #region Builder
+        private readonly struct WorldMaskComponent : IEcsWorldComponent<WorldMaskComponent>
+        {
+            private readonly EcsWorld _world;
+            private readonly Dictionary<OpMaskKey, EcsMask> _opMasks;
+            private readonly SparseArray<EcsMask> _staticMasks;
+
+            public readonly EcsMask EmptyMask;
+            public readonly EcsMask BrokenMask;
+
+            #region Constructor/Destructor
+            public WorldMaskComponent(EcsWorld world)
+            {
+                _world = world;
+                _opMasks = new Dictionary<OpMaskKey, EcsMask>(256);
+                _staticMasks = new SparseArray<EcsMask>(256);
+
+
+                EmptyMask = CreateEmpty(_staticMasks.Count, world.ID);
+                _staticMasks.Add(EmptyMask._staticMask.ID, EmptyMask);
+                BrokenMask = CreateBroken(_staticMasks.Count, world.ID);
+                _staticMasks.Add(BrokenMask._staticMask.ID, BrokenMask);
+            }
+            public void Init(ref WorldMaskComponent component, EcsWorld world)
+            {
+                component = new WorldMaskComponent(world);
+            }
+            public void OnDestroy(ref WorldMaskComponent component, EcsWorld world)
+            {
+                component._opMasks.Clear();
+                component._staticMasks.Clear();
+                component = default;
+            }
+            #endregion
+
+            #region GetMask
+            internal EcsMask CombineMask(EcsMask a, EcsMask b)
+            {
+                int operation = OpMaskKey.COMBINE_OP;
+                if (_opMasks.TryGetValue(new OpMaskKey(a.ID, b.ID, operation), out EcsMask result) == false)
+                {
+                    if (a.IsConflictWith(b))
+                    {
+                        return a.World.Get<WorldMaskComponent>().BrokenMask;
+                    }
+                    result = ConvertFromStatic(EcsStaticMask.New().Combine(a._staticMask).Combine(b._staticMask).Build());
+                    _opMasks.Add(new OpMaskKey(a.ID, b.ID, operation), result);
+                }
+                return result;
+            }
+            internal EcsMask ExceptMask(EcsMask a, EcsMask b)
+            {
+                int operation = OpMaskKey.EXCEPT_OP;
+                if (_opMasks.TryGetValue(new OpMaskKey(a.ID, b.ID, operation), out EcsMask result) == false)
+                {
+                    if (a.IsConflictWith(b))
+                    {
+                        return a.World.Get<WorldMaskComponent>().BrokenMask;
+                    }
+                    result = ConvertFromStatic(EcsStaticMask.New().Combine(a._staticMask).Except(b._staticMask).Build());
+                    _opMasks.Add(new OpMaskKey(a.ID, b.ID, operation), result);
+                }
+                return result;
+            }
+
+            internal EcsMask ConvertFromStatic(EcsStaticMask staticMask)
+            {
+                int[] ConvertTypeCodeToComponentTypeID(ReadOnlySpan<EcsTypeCode> from, EcsWorld world)
+                {
+                    int[] to = new int[from.Length];
+                    for (int i = 0; i < to.Length; i++)
+                    {
+                        to[i] = world.DeclareOrGetComponentTypeID(from[i]);
+                    }
+                    Array.Sort(to);
+                    return to;
+                }
+
+                if (_staticMasks.TryGetValue(staticMask.ID, out EcsMask result) == false)
+                {
+                    int[] incs = ConvertTypeCodeToComponentTypeID(staticMask.IncTypeCodes, _world);
+                    int[] excs = ConvertTypeCodeToComponentTypeID(staticMask.ExcTypeCodes, _world);
+
+                    result = new EcsMask(staticMask, _staticMasks.Count, _world.ID, incs, excs);
+
+                    _staticMasks.Add(staticMask.ID, result);
+                }
+                return result;
+            }
+            #endregion
+        }
+
+        public partial struct Builder
+        {
+            private readonly EcsStaticMask.Builder _builder;
+            private readonly EcsWorld _world;
+
+            public Builder(EcsWorld world)
+            {
+                _world = world;
+                _builder = EcsStaticMask.New();
+            }
+
+            public Builder Inc<T>() { _builder.Inc<T>(); return this; }
+            public Builder Exc<T>() { _builder.Exc<T>(); return this; }
+            public Builder Inc(Type type) { _builder.Inc(type); return this; }
+            public Builder Exc(Type type) { _builder.Exc(type); return this; }
+            public Builder Inc(EcsTypeCode typeCode) { _builder.Inc(typeCode); return this; }
+            public Builder Exc(EcsTypeCode typeCode) { _builder.Exc(typeCode); return this; }
+            public Builder Combine(EcsMask mask) { _builder.Combine(mask._staticMask); return this; }
+            public Builder Except(EcsMask mask) { _builder.Except(mask._staticMask); return this; }
+
+            public EcsMask Build() { return _world.Get<WorldMaskComponent>().ConvertFromStatic(_builder.Build()); }
         }
         #endregion
 
@@ -271,13 +384,13 @@ namespace DCFApixels.DragonECS
             {
                 _source = mask;
 
-                ID = mask._id;
-                world = EcsWorld.GetWorld(mask._worldID);
-                _worldID = mask._worldID;
+                ID = mask.ID;
+                world = EcsWorld.GetWorld(mask.WorldID);
+                _worldID = mask.WorldID;
                 includedChunkMasks = mask._incChunckMasks;
                 excludedChunkMasks = mask._excChunckMasks;
-                included = mask._inc;
-                excluded = mask._exc;
+                included = mask._incs;
+                excluded = mask._excs;
                 Type converter(int o) { return world.GetComponentType(o); }
                 includedTypes = included.Select(converter).ToArray();
                 excludedTypes = excluded.Select(converter).ToArray();
@@ -289,200 +402,31 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Operators
-        public static EcsMask operator -(EcsMask a, EcsMask b)
+        #region Obsolete
+        /// <summary> Sorted set including constraints. </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Use Incs")]
+        public ReadOnlySpan<int> Inc
         {
-            return a.World.Get<WorldMaskComponent>().ExceptMask(a, b);
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _incs; }
         }
-        public static EcsMask operator -(EcsMask a, IEcsComponentMask b)
+        /// <summary> Sorted set excluding constraints. </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Use Excs")]
+        public ReadOnlySpan<int> Exc
         {
-            return a.World.Get<WorldMaskComponent>().ExceptMask(a, b.ToMask(a.World));
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _excs; }
         }
-        public static EcsMask operator -(IEcsComponentMask b, EcsMask a)
+        public partial struct Builder
         {
-            return a.World.Get<WorldMaskComponent>().ExceptMask(b.ToMask(a.World), a);
-        }
-        public static EcsMask operator +(EcsMask a, EcsMask b)
-        {
-            return a.World.Get<WorldMaskComponent>().CombineMask(a, b);
-        }
-        public static EcsMask operator +(EcsMask a, IEcsComponentMask b)
-        {
-            return a.World.Get<WorldMaskComponent>().CombineMask(a, b.ToMask(a.World));
-        }
-        public static EcsMask operator +(IEcsComponentMask b, EcsMask a)
-        {
-            return a.World.Get<WorldMaskComponent>().CombineMask(b.ToMask(a.World), a);
-        }
-        public static implicit operator EcsMask((IEcsComponentMask mask, EcsWorld world) a)
-        {
-            return a.mask.ToMask(a.world);
-        }
-        public static implicit operator EcsMask((EcsWorld world, IEcsComponentMask mask) a)
-        {
-            return a.mask.ToMask(a.world);
-        }
-        #endregion
-
-        #region OpMaskKey
-        private readonly struct OpMaskKey : IEquatable<OpMaskKey>
-        {
-            public readonly int leftMaskID;
-            public readonly int rightMaskID;
-            public readonly int operation;
-
-            public const int COMBINE_OP = 7;
-            public const int EXCEPT_OP = 32;
-            public OpMaskKey(int leftMaskID, int rightMaskID, int operation)
-            {
-                this.leftMaskID = leftMaskID;
-                this.rightMaskID = rightMaskID;
-                this.operation = operation;
-            }
-            public bool Equals(OpMaskKey other)
-            {
-                return leftMaskID == other.leftMaskID &&
-                    rightMaskID == other.rightMaskID &&
-                    operation == other.operation;
-            }
-            public override int GetHashCode()
-            {
-                return leftMaskID ^ (rightMaskID * operation);
-            }
-        }
-
-        #endregion
-
-        #region StaticMask
-        public static EcsMask FromStatic(EcsWorld world, EcsStaticMask abstractMask)
-        {
-            return world.Get<WorldMaskComponent>().ConvertFromStatic(abstractMask);
-        }
-        #endregion
-
-        #region Builder
-        private readonly struct WorldMaskComponent : IEcsWorldComponent<WorldMaskComponent>
-        {
-            private readonly EcsWorld _world;
-            private readonly Dictionary<OpMaskKey, EcsMask> _opMasks;
-            private readonly SparseArray<EcsMask> _staticMasks;
-
-            public readonly EcsMask EmptyMask;
-            public readonly EcsMask BrokenMask;
-
-            #region Constructor/Destructor
-            public WorldMaskComponent(EcsWorld world)
-            {
-                _world = world;
-                _opMasks = new Dictionary<OpMaskKey, EcsMask>(256);
-                _staticMasks = new SparseArray<EcsMask>(256);
-
-
-
-                EmptyMask = CreateEmpty(_staticMasks.Count, world.ID);
-                _staticMasks.Add(EmptyMask._staticMask.ID, EmptyMask);
-                BrokenMask = CreateBroken(_staticMasks.Count, world.ID);
-                _staticMasks.Add(BrokenMask._staticMask.ID, BrokenMask);
-            }
-            public void Init(ref WorldMaskComponent component, EcsWorld world)
-            {
-                component = new WorldMaskComponent(world);
-            }
-            public void OnDestroy(ref WorldMaskComponent component, EcsWorld world)
-            {
-                component._opMasks.Clear();
-                component._staticMasks.Clear();
-                component = default;
-            }
-            #endregion
-
-            #region GetMask
-            internal EcsMask CombineMask(EcsMask a, EcsMask b)
-            {
-                int operation = OpMaskKey.COMBINE_OP;
-                if (_opMasks.TryGetValue(new OpMaskKey(a._id, b._id, operation), out EcsMask result) == false)
-                {
-                    if (a.IsConflictWith(b))
-                    {
-                        return a.World.Get<WorldMaskComponent>().BrokenMask;
-                    }
-                    result = ConvertFromStatic(EcsStaticMask.New().Combine(a._staticMask).Combine(b._staticMask).Build());
-                    _opMasks.Add(new OpMaskKey(a._id, b._id, operation), result);
-                }
-                return result;
-            }
-            internal EcsMask ExceptMask(EcsMask a, EcsMask b)
-            {
-                int operation = OpMaskKey.EXCEPT_OP;
-                if (_opMasks.TryGetValue(new OpMaskKey(a._id, b._id, operation), out EcsMask result) == false)
-                {
-                    if (a.IsConflictWith(b))
-                    {
-                        return a.World.Get<WorldMaskComponent>().BrokenMask;
-                    }
-                    result = ConvertFromStatic(EcsStaticMask.New().Combine(a._staticMask).Except(b._staticMask).Build());
-                    _opMasks.Add(new OpMaskKey(a._id, b._id, operation), result);
-                }
-                return result;
-            }
-
-            internal EcsMask ConvertFromStatic(EcsStaticMask staticMask)
-            {
-                int[] ConvertTypeCodeToComponentTypeID(ReadOnlySpan<EcsTypeCode> from, EcsWorld world)
-                {
-                    int[] to = new int[from.Length];
-                    for (int i = 0; i < to.Length; i++)
-                    {
-                        to[i] = world.DeclareOrGetComponentTypeID(from[i]);
-                    }
-                    Array.Sort(to);
-                    return to;
-                }
-
-                if (_staticMasks.TryGetValue(staticMask.ID, out EcsMask result) == false)
-                {
-                    int[] incs = ConvertTypeCodeToComponentTypeID(staticMask.IncTypeCodes, _world);
-                    int[] excs = ConvertTypeCodeToComponentTypeID(staticMask.ExcTypeCodes, _world);
-
-                    result = new EcsMask(staticMask, _staticMasks.Count, _world.ID, incs, excs);
-
-                    _staticMasks.Add(staticMask.ID, result);
-                }
-                return result;
-            }
-            #endregion
-        }
-
-        [Obsolete("")]//TODO написать новый сопсоб создания
-        public struct Builder
-        {
-            private readonly EcsStaticMask.Builder _builder;
-            private readonly EcsWorld _world;
-
-            public Builder(EcsWorld world)
-            {
-                _world = world;
-                _builder = EcsStaticMask.Builder.New();
-            }
-
-            public Builder Include<T>() { return Inc<T>(); }
-            public Builder Exclude<T>() { return Exc<T>(); }
-            public Builder Include(Type type) { return Inc(type); }
-            public Builder Exclude(Type type) { return Exc(type); }
-
-            public Builder Inc<T>() { _builder.Inc<T>(); return this; }
-            public Builder Exc<T>() { _builder.Exc<T>(); return this; }
-            public Builder Inc(Type type) { _builder.Inc(type); return this; }
-            public Builder Exc(Type type) { _builder.Exc(type); return this; }
-            public Builder Inc(EcsTypeCode typeCode) { _builder.Inc(typeCode); return this; }
-            public Builder Exc(EcsTypeCode typeCode) { _builder.Exc(typeCode); return this; }
-            public Builder Combine(EcsMask mask) { _builder.Combine(mask._staticMask); return this; }
-            public Builder Except(EcsMask mask) { _builder.Except(mask._staticMask); return this; }
-
-            public Builder Inc(int componentTypeID) { Inc(_world.GetComponentType(componentTypeID)); return this; }
-            public Builder Exc(int componentTypeID) { Exc(_world.GetComponentType(componentTypeID)); return this; }
-
-            public EcsMask Build() { return _world.Get<WorldMaskComponent>().ConvertFromStatic(_builder.Build()); }
+            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Include<T>() { return Inc<T>(); }
+            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Exclude<T>() { return Exc<T>(); }
+            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Include(Type type) { return Inc(type); }
+            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Exclude(Type type) { return Exc(type); }
+            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Inc(int componentTypeID) { Inc(_world.GetComponentType(componentTypeID)); return this; }
+            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Exc(int componentTypeID) { Exc(_world.GetComponentType(componentTypeID)); return this; }
         }
         #endregion
     }
@@ -554,8 +498,8 @@ namespace DCFApixels.DragonECS
         {
             World = source;
             Mask = mask;
-            _sortIncBuffer = UnsafeArray<int>.FromArray(mask._inc);
-            _sortExcBuffer = UnsafeArray<int>.FromArray(mask._exc);
+            _sortIncBuffer = UnsafeArray<int>.FromArray(mask._incs);
+            _sortExcBuffer = UnsafeArray<int>.FromArray(mask._excs);
             _sortIncChunckBuffer = UnsafeArray<EcsMaskChunck>.FromArray(mask._incChunckMasks);
             _sortExcChunckBuffer = UnsafeArray<EcsMaskChunck>.FromArray(mask._excChunckMasks);
             _isOnlyInc = _sortExcBuffer.Length <= 0;
