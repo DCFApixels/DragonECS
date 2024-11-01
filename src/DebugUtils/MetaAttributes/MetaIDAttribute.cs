@@ -1,4 +1,5 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;

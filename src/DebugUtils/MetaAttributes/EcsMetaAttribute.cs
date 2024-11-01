@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DCFApixels.DragonECS
+namespace DCFApixels.DragonECS.Core
 {
     public abstract class EcsMetaAttribute : Attribute { }
 

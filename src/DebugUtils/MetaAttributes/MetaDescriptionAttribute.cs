@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Core;
+using System;
 
 namespace DCFApixels.DragonECS
 {

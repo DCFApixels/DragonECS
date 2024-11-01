@@ -18,6 +18,7 @@
         public const string POST_END_LAYER = NAME_SPACE + nameof(POST_END_LAYER);
 
         public const string META_HIDDEN_TAG = "HiddenInDebagging";
+        public const string META_OBSOLETE_TAG = "Obsolete";
         public const string META_ENGINE_MEMBER_TAG = "EngineMember";
 
         public const int MAGIC_PRIME = 314159;
@@ -31,6 +32,7 @@
         public const string PROCESSES_GROUP = "Processes";
         public const string DEBUG_GROUP = "Debug";
         public const string OTHER_GROUP = "Other";
+        public const string OBSOLETE_GROUP = "Obsolete";
         public const string TEMPLATES_GROUP = "Templates";
         public const string IMPLEMENTATIONS_GROUP = "Implementation";
 

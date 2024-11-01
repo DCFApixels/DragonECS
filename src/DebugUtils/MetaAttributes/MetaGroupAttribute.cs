@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Core;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 

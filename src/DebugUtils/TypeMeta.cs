@@ -1,4 +1,5 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -49,6 +50,7 @@ namespace DCFApixels.DragonECS
         private bool _isCustomName;
         private bool _isCustomColor;
         private bool _isHidden;
+        private bool _isObsolete;
 
         private string _name;
         private string _typeName;
@@ -211,6 +213,7 @@ namespace DCFApixels.DragonECS
                 _tags = MetaGenerator.GetTags(_type);
                 _initFlags |= InitFlag.Tags;
                 _isHidden = _tags.Contains(MetaTags.HIDDEN);
+                _isObsolete = _tags.Contains(MetaTags.OBSOLETE);
             }
         }
         public IReadOnlyList<string> Tags
@@ -229,6 +232,22 @@ namespace DCFApixels.DragonECS
                 return _isHidden;
             }
         }
+        public bool IsObsolete
+        {
+            get
+            {
+                InitTags();
+                return _isObsolete;
+            }
+        }
+        public bool IsHiddenOrObsolete
+        {
+            get
+            {
+                return IsHidden || IsObsolete;
+            }
+        }
+
         #endregion
 
         #region MetaID
