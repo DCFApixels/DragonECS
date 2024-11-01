@@ -29,8 +29,14 @@ namespace DCFApixels.DragonECS
 
         static EcsStaticMask()
         {
-            Empty = CreateMask(new Key(new EcsTypeCode[0], new EcsTypeCode[0]));
-            Broken = CreateMask(new Key(new EcsTypeCode[1] { (EcsTypeCode)1 }, new EcsTypeCode[1] { (EcsTypeCode)1 }));
+            EcsStaticMask createMask(Key key)
+            {
+                EcsStaticMask result = new EcsStaticMask(_idDIspenser.UseFree(), key);
+                _ids[key] = result;
+                return result;
+            }
+            Empty = createMask(new Key(new EcsTypeCode[0], new EcsTypeCode[0]));
+            Broken = createMask(new Key(new EcsTypeCode[1] { (EcsTypeCode)1 }, new EcsTypeCode[1] { (EcsTypeCode)1 }));
         }
 
         public readonly int ID;
@@ -67,8 +73,8 @@ namespace DCFApixels.DragonECS
         private EcsStaticMask(int id, Key key)
         {
             ID = id;
-            _incs = key.incs;
-            _excs = key.excs;
+            _incs = key.Incs;
+            _excs = key.Excs;
         }
         public static Builder New() { return Builder.New(); }
         public static Builder Inc<T>() { return Builder.New().Inc<T>(); }
@@ -85,6 +91,9 @@ namespace DCFApixels.DragonECS
                 {
                     if (_ids.TryGetValue(key, out result) == false)
                     {
+#if DEBUG
+                        CheckConstraints(key.Incs, key.Excs);
+#endif
                         result = new EcsStaticMask(_idDIspenser.UseFree(), key);
                         _ids[key] = result;
                     }
@@ -173,7 +182,6 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-
         #region Methods
         public EcsMask ToMask(EcsWorld world) { return EcsMask.FromStatic(world, this); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -187,25 +195,25 @@ namespace DCFApixels.DragonECS
         #region Builder
         private readonly struct Key : IEquatable<Key>
         {
-            public readonly EcsTypeCode[] incs;
-            public readonly EcsTypeCode[] excs;
-            public readonly int hash;
+            public readonly EcsTypeCode[] Incs;
+            public readonly EcsTypeCode[] Excs;
+            public readonly int Hash;
 
             #region Constructors
             public Key(EcsTypeCode[] inc, EcsTypeCode[] exc)
             {
-                this.incs = inc;
-                this.excs = exc;
+                this.Incs = inc;
+                this.Excs = exc;
                 unchecked
                 {
-                    hash = inc.Length + exc.Length;
+                    Hash = inc.Length + exc.Length;
                     for (int i = 0, iMax = inc.Length; i < iMax; i++)
                     {
-                        hash = hash * EcsConsts.MAGIC_PRIME + (int)inc[i];
+                        Hash = Hash * EcsConsts.MAGIC_PRIME + (int)inc[i];
                     }
                     for (int i = 0, iMax = exc.Length; i < iMax; i++)
                     {
-                        hash = hash * EcsConsts.MAGIC_PRIME - (int)exc[i];
+                        Hash = Hash * EcsConsts.MAGIC_PRIME - (int)exc[i];
                     }
                 }
             }
@@ -215,21 +223,21 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool Equals(Key other)
             {
-                if (incs.Length != other.incs.Length) { return false; }
-                if (excs.Length != other.excs.Length) { return false; }
-                for (int i = 0; i < incs.Length; i++)
+                if (Incs.Length != other.Incs.Length) { return false; }
+                if (Excs.Length != other.Excs.Length) { return false; }
+                for (int i = 0; i < Incs.Length; i++)
                 {
-                    if (incs[i] != other.incs[i]) { return false; }
+                    if (Incs[i] != other.Incs[i]) { return false; }
                 }
-                for (int i = 0; i < excs.Length; i++)
+                for (int i = 0; i < Excs.Length; i++)
                 {
-                    if (excs[i] != other.excs[i]) { return false; }
+                    if (Excs[i] != other.Excs[i]) { return false; }
                 }
                 return true;
             }
             public override bool Equals(object obj) { return Equals((Key)obj); }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public override int GetHashCode() { return hash; }
+            public override int GetHashCode() { return Hash; }
             #endregion
         }
         public readonly struct Builder
