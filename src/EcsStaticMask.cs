@@ -29,14 +29,14 @@ namespace DCFApixels.DragonECS
 
         static EcsStaticMask()
         {
-            EcsStaticMask createMask(Key key)
+            EcsStaticMask createMask(int id, Key key)
             {
-                EcsStaticMask result = new EcsStaticMask(_idDIspenser.UseFree(), key);
+                EcsStaticMask result = new EcsStaticMask(id, key);
                 _ids[key] = result;
                 return result;
             }
-            Empty = createMask(new Key(new EcsTypeCode[0], new EcsTypeCode[0]));
-            Broken = createMask(new Key(new EcsTypeCode[1] { (EcsTypeCode)1 }, new EcsTypeCode[1] { (EcsTypeCode)1 }));
+            Empty = createMask(0, new Key(new EcsTypeCode[0], new EcsTypeCode[0]));
+            Broken = createMask(_idDIspenser.UseFree(), new Key(new EcsTypeCode[1] { (EcsTypeCode)1 }, new EcsTypeCode[1] { (EcsTypeCode)1 }));
         }
 
         public readonly int ID;
