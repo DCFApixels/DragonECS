@@ -44,7 +44,7 @@ namespace DCFApixels.DragonECS
         private bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
 
 #if !DISABLE_POOLS_EVENTS
-        private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
+        private readonly List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
         private int _listenersCachedCount = 0;
 #endif
 
