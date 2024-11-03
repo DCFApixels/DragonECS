@@ -250,6 +250,8 @@ namespace DCFApixels.DragonECS.Internal
                 new IntPtr(oldPointer),
                 new IntPtr(MetaCache<T>.Size * newCount))).ToPointer();
         }
+
+
     }
 
     public static class CollectionUtility

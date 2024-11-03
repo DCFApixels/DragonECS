@@ -32,25 +32,32 @@ namespace DCFApixels.DragonECS
                 component = default;
             }
         }
-        internal readonly struct QueryCache<TExecutor, TAspcet> : IEcsWorldComponent<QueryCache<TExecutor, TAspcet>>
+
+        //TODO добавить сквозной кеш для инстансов TExecutor
+        //private readonly struct WhereCache<TExecutor> : IEcsWorldComponent<WhereCache<TExecutor>>
+        //{
+        //    private readonly SparseArray<int, TExecutor> _pairs
+        //}
+        // Это не подохидт
+        internal readonly struct WhereQueryCache<TExecutor, TAspcet> : IEcsWorldComponent<WhereQueryCache<TExecutor, TAspcet>>
             where TExecutor : EcsQueryExecutor, new()
             where TAspcet : EcsAspect, new()
         {
             public readonly TExecutor Executor;
             public readonly TAspcet Aspcet;
-            public QueryCache(TExecutor executor, TAspcet aspcet)
+            public WhereQueryCache(TExecutor executor, TAspcet aspcet)
             {
                 Executor = executor;
                 Aspcet = aspcet;
             }
-            void IEcsWorldComponent<QueryCache<TExecutor, TAspcet>>.Init(ref QueryCache<TExecutor, TAspcet> component, EcsWorld world)
+            void IEcsWorldComponent<WhereQueryCache<TExecutor, TAspcet>>.Init(ref WhereQueryCache<TExecutor, TAspcet> component, EcsWorld world)
             {
                 TExecutor instance = new TExecutor();
                 TAspcet aspect = world.GetAspect<TAspcet>();
                 instance.Initialize(world, aspect.Mask);
-                component = new QueryCache<TExecutor, TAspcet>(instance, aspect);
+                component = new WhereQueryCache<TExecutor, TAspcet>(instance, aspect);
             }
-            void IEcsWorldComponent<QueryCache<TExecutor, TAspcet>>.OnDestroy(ref QueryCache<TExecutor, TAspcet> component, EcsWorld world)
+            void IEcsWorldComponent<WhereQueryCache<TExecutor, TAspcet>>.OnDestroy(ref WhereQueryCache<TExecutor, TAspcet> component, EcsWorld world)
             {
                 component = default;
             }

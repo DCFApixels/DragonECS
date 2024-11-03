@@ -22,7 +22,6 @@ namespace DCFApixels.DragonECS
 {
     using static EcsMaskIteratorUtility;
 
-
 #if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -483,12 +482,19 @@ namespace DCFApixels.DragonECS
 #endif
     public class EcsMaskIterator
     {
+        // TODO есть идея перенести эти ChunckBuffer-ы в стек,
+        // для этого нужно проработать дизайн так чтобы память в стеке выделялась за пределами итератора и GetEnumerator,
+        // а далее передавались поинтеры, в противном случае использовался бы стандартный подход
+
         public readonly EcsWorld World;
         public readonly EcsMask Mask;
 
         private readonly UnsafeArray<int> _sortIncBuffer;
+        /// <summary> slised _sortIncBuffer </summary>
         private readonly UnsafeArray<int> _sortExcBuffer;
+
         private readonly UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
+        /// <summary> slised _sortIncChunckBuffer </summary>
         private readonly UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
         private readonly bool _isOnlyInc;
@@ -498,21 +504,86 @@ namespace DCFApixels.DragonECS
         {
             World = source;
             Mask = mask;
-            _sortIncBuffer = UnsafeArray<int>.FromArray(mask._incs);
-            _sortExcBuffer = UnsafeArray<int>.FromArray(mask._excs);
-            _sortIncChunckBuffer = UnsafeArray<EcsMaskChunck>.FromArray(mask._incChunckMasks);
-            _sortExcChunckBuffer = UnsafeArray<EcsMaskChunck>.FromArray(mask._excChunckMasks);
+
+            //_sortIncBuffer = UnsafeArray<int>.FromArray(mask._incs);
+            //_sortExcBuffer = UnsafeArray<int>.FromArray(mask._excs);
+            //_sortIncChunckBuffer = UnsafeArray<EcsMaskChunck>.FromArray(mask._incChunckMasks);
+            //_sortExcChunckBuffer = UnsafeArray<EcsMaskChunck>.FromArray(mask._excChunckMasks);
+
+            var sortBuffer = new UnsafeArray<int>(mask._incs.Length + mask._excs.Length);
+            var sortChunckBuffer = new UnsafeArray<EcsMaskChunck>(mask._incChunckMasks.Length + mask._excChunckMasks.Length);
+
+            _sortIncBuffer = sortBuffer.Slice(0, mask._incs.Length);
+            _sortIncBuffer.CopyFromArray_Unchecked(mask._incs);
+            _sortExcBuffer = sortBuffer.Slice(mask._incs.Length, mask._excs.Length);
+            _sortExcBuffer.CopyFromArray_Unchecked(mask._excs);
+
+            _sortIncChunckBuffer = sortChunckBuffer.Slice(0, mask._incChunckMasks.Length);
+            _sortIncChunckBuffer.CopyFromArray_Unchecked(mask._incChunckMasks);
+            _sortExcChunckBuffer = sortChunckBuffer.Slice(mask._incChunckMasks.Length, mask._excChunckMasks.Length);
+            _sortExcChunckBuffer.CopyFromArray_Unchecked(mask._excChunckMasks);
+
             _isOnlyInc = _sortExcBuffer.Length <= 0;
         }
         unsafe ~EcsMaskIterator()
         {
             _sortIncBuffer.ReadonlyDispose();
-            _sortExcBuffer.ReadonlyDispose();
+            //_sortExcBuffer.ReadonlyDispose();// использует общую памяять с _sortIncBuffer;
             _sortIncChunckBuffer.ReadonlyDispose();
-            _sortExcChunckBuffer.ReadonlyDispose();
+            //_sortExcChunckBuffer.ReadonlyDispose();// использует общую памяять с _sortIncChunckBuffer;
         }
         #endregion
 
+        #region SortConstraints
+        private unsafe int SortConstraints_Internal()
+        {
+            UnsafeArray<int> sortIncBuffer = _sortIncBuffer;
+            UnsafeArray<int> sortExcBuffer = _sortExcBuffer;
+
+            EcsWorld.PoolSlot[] counts = World._poolSlots;
+            int maxBufferSize = sortIncBuffer.Length > sortExcBuffer.Length ? sortIncBuffer.Length : sortExcBuffer.Length;
+            int maxEntites = int.MaxValue;
+
+            EcsMaskChunck* preSortingBuffer;
+            if (maxBufferSize > STACK_BUFFER_THRESHOLD)
+            {
+                preSortingBuffer = TempBuffer<EcsMaskChunck>.Get(maxBufferSize);
+            }
+            else
+            {
+                EcsMaskChunck* ptr = stackalloc EcsMaskChunck[maxBufferSize];
+                preSortingBuffer = ptr;
+            }
+
+            if (_sortIncChunckBuffer.Length > 1)
+            {
+                var comparer = new IncCountComparer(counts);
+                UnsafeArraySortHalperX<int>.InsertionSort(sortIncBuffer.ptr, sortIncBuffer.Length, ref comparer);
+                ConvertToChuncks(preSortingBuffer, sortIncBuffer, _sortIncChunckBuffer);
+            }
+
+            if (_sortIncChunckBuffer.Length > 0)
+            {
+                maxEntites = counts[_sortIncBuffer.ptr[0]].count;
+                if (maxEntites <= 0)
+                {
+                    return 0;
+                }
+            }
+
+            if (_sortExcChunckBuffer.Length > 1)
+            {
+                ExcCountComparer comparer = new ExcCountComparer(counts);
+                UnsafeArraySortHalperX<int>.InsertionSort(sortExcBuffer.ptr, sortExcBuffer.Length, ref comparer);
+                ConvertToChuncks(preSortingBuffer, sortExcBuffer, _sortExcChunckBuffer);
+            }
+            // Выражение мало IncCount < (AllEntitesCount - ExcCount) вероятно будет истинным.
+            // ExcCount = максимальное количество ентитей с исключеющим ограничением и IncCount = минимальоне количество ентитей с включающим ограничением
+            // Поэтому исключающее ограничение игнорируется для maxEntites.
+
+            return maxEntites;
+        }
+        #endregion
 
         #region IterateTo
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -598,7 +669,20 @@ namespace DCFApixels.DragonECS
 
             #region Enumerator
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Enumerator GetEnumerator() { return new Enumerator(_span, _iterator); }
+            public Enumerator GetEnumerator()
+            {
+                if (_iterator.Mask.IsBroken)
+                {
+                    return new Enumerator(_span.Slice(0, 0), _iterator);
+                }
+                int maxEntities = _iterator.SortConstraints_Internal();
+                if (maxEntities <= 0)
+                {
+                    return new Enumerator(_span.Slice(0, 0), _iterator);
+                }
+                return new Enumerator(_span, _iterator);
+            }
+
 #if ENABLE_IL2CPP
             [Il2CppSetOption (Option.NullChecks, false)]
             [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -620,49 +704,6 @@ namespace DCFApixels.DragonECS
 
                     _entityComponentMasks = iterator.World._entityComponentMasks;
                     _entityComponentMaskLengthBitShift = iterator.World._entityComponentMaskLengthBitShift;
-
-                    if (iterator.Mask.IsBroken)
-                    {
-                        _span = span.Slice(0, 0).GetEnumerator();
-                        return;
-                    }
-
-                    #region Sort
-                    UnsafeArray<int> _sortIncBuffer = iterator._sortIncBuffer;
-                    UnsafeArray<int> _sortExcBuffer = iterator._sortExcBuffer;
-                    EcsWorld.PoolSlot[] counts = iterator.World._poolSlots;
-                    int max = _sortIncBuffer.Length > _sortExcBuffer.Length ? _sortIncBuffer.Length : _sortExcBuffer.Length;
-
-                    EcsMaskChunck* preSortingBuffer;
-                    if (max > STACK_BUFFER_THRESHOLD)
-                    {
-                        preSortingBuffer = TempBuffer<EcsMaskChunck>.Get(max);
-                    }
-                    else
-                    {
-                        EcsMaskChunck* ptr = stackalloc EcsMaskChunck[max];
-                        preSortingBuffer = ptr;
-                    }
-
-                    if (_sortIncChunckBuffer.Length > 1)
-                    {
-                        var comparer = new IncCountComparer(counts);
-                        UnsafeArraySortHalperX<int>.InsertionSort(_sortIncBuffer.ptr, _sortIncBuffer.Length, ref comparer);
-                        ConvertToChuncks(preSortingBuffer, _sortIncBuffer, _sortIncChunckBuffer);
-                    }
-                    if (_sortIncChunckBuffer.Length > 0 && counts[_sortIncBuffer.ptr[0]].count <= 0)
-                    {
-                        _span = span.Slice(0, 0).GetEnumerator();
-                        return;
-                    }
-
-                    if (_sortExcChunckBuffer.Length > 1)
-                    {
-                        ExcCountComparer comparer = new ExcCountComparer(counts);
-                        UnsafeArraySortHalperX<int>.InsertionSort(_sortExcBuffer.ptr, _sortExcBuffer.Length, ref comparer);
-                        ConvertToChuncks(preSortingBuffer, _sortExcBuffer, _sortExcChunckBuffer);
-                    }
-                    #endregion
 
                     _span = span.GetEnumerator();
                 }
@@ -761,7 +802,20 @@ namespace DCFApixels.DragonECS
 
             #region Enumerator
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Enumerator GetEnumerator() { return new Enumerator(_span, _iterator); }
+            public Enumerator GetEnumerator()
+            {
+                if (_iterator.Mask.IsBroken)
+                {
+                    return new Enumerator(_span.Slice(0, 0), _iterator);
+                }
+                int maxEntities = _iterator.SortConstraints_Internal();
+                if (maxEntities <= 0)
+                {
+                    return new Enumerator(_span.Slice(0, 0), _iterator);
+                }
+                return new Enumerator(_span, _iterator);
+            }
+
 #if ENABLE_IL2CPP
             [Il2CppSetOption (Option.NullChecks, false)]
             [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -781,41 +835,6 @@ namespace DCFApixels.DragonECS
 
                     _entityComponentMasks = iterator.World._entityComponentMasks;
                     _entityComponentMaskLengthBitShift = iterator.World._entityComponentMaskLengthBitShift;
-
-                    if (iterator.Mask.IsBroken)
-                    {
-                        _span = span.Slice(0, 0).GetEnumerator();
-                        return;
-                    }
-
-                    #region Sort
-                    UnsafeArray<int> _sortIncBuffer = iterator._sortIncBuffer;
-                    EcsWorld.PoolSlot[] counts = iterator.World._poolSlots;
-                    int max = _sortIncBuffer.Length;
-
-                    EcsMaskChunck* preSortingBuffer;
-                    if (max > STACK_BUFFER_THRESHOLD)
-                    {
-                        preSortingBuffer = TempBuffer<EcsMaskChunck>.Get(max);
-                    }
-                    else
-                    {
-                        EcsMaskChunck* ptr = stackalloc EcsMaskChunck[max];
-                        preSortingBuffer = ptr;
-                    }
-
-                    if (_sortIncChunckBuffer.Length > 1)
-                    {
-                        var comparer = new IncCountComparer(counts);
-                        UnsafeArraySortHalperX<int>.InsertionSort(_sortIncBuffer.ptr, _sortIncBuffer.Length, ref comparer);
-                        ConvertToChuncks(preSortingBuffer, _sortIncBuffer, _sortIncChunckBuffer);
-                    }
-                    if (_sortIncChunckBuffer.Length > 0 && counts[_sortIncBuffer.ptr[0]].count <= 0)
-                    {
-                        _span = span.Slice(0, 0).GetEnumerator();
-                        return;
-                    }
-                    #endregion
 
                     _span = span.GetEnumerator();
                 }

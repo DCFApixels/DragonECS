@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+#if ENABLE_IL2CPP
+using Unity.IL2CPP.CompilerServices;
+#endif
 
 namespace DCFApixels.DragonECS.Internal
 {
     //TODO разработать возможность ручного устанавливания ID типам.
     //это нужно для упрощения разработки сетевух
 #if ENABLE_IL2CPP
-    using Unity.IL2CPP.CompilerServices;
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif

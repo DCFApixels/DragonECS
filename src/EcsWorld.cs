@@ -234,7 +234,7 @@ namespace DCFApixels.DragonECS
             where TExecutor : EcsQueryExecutor, new()
             where TAspect : EcsAspect, new()
         {
-            ref var cmp = ref Get<QueryCache<TExecutor, TAspect>>();
+            ref var cmp = ref Get<WhereQueryCache<TExecutor, TAspect>>();
             executor = cmp.Executor;
             aspect = cmp.Aspcet;
         }

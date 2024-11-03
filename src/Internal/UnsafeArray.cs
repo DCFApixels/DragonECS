@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
@@ -63,6 +62,8 @@ namespace DCFApixels.DragonECS.Internal
             return result;
         }
 
+
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnsafeArray(int length)
         {
@@ -80,6 +81,34 @@ namespace DCFApixels.DragonECS.Internal
         {
             this.ptr = ptr;
             Length = length;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnsafeArray<T> Slice(int start)
+        {
+            if ((uint)start > (uint)Length)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+            return new UnsafeArray<T>(ptr + start, Length - start);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnsafeArray<T> Slice(int start, int length)
+        {
+            if ((uint)start > (uint)Length || (uint)length > (uint)(Length - start))
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+            return new UnsafeArray<T>(ptr + start, length);
+        }
+
+        public void CopyFromArray_Unchecked(T[] array)
+        {
+            for (int i = 0; i < array.Length; i++)
+            {
+                ptr[i] = array[i];
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -101,7 +130,12 @@ namespace DCFApixels.DragonECS.Internal
         public override string ToString()
         {
             T* ptr = this.ptr;
-            return CollectionUtility.AutoToString(EnumerableInt.Range(0, Length).Select(i => ptr[i]), "ua");
+            var elements = new T[Length];
+            for (int i = 0; i < Length; i++)
+            {
+                elements[i] = ptr[i];
+            }
+            return CollectionUtility.AutoToString(elements, "ua");
         }
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator() { return GetEnumerator(); }
@@ -139,8 +173,12 @@ namespace DCFApixels.DragonECS.Internal
             public int length;
             public DebuggerProxy(UnsafeArray<T> instance)
             {
-                elements = EnumerableInt.Range(0, instance.Length).Select(i => instance.ptr[i]).ToArray();
                 length = instance.Length;
+                elements = new T[length];
+                for (int i = 0; i < length; i++)
+                {
+                    elements[i] = instance.ptr[i];
+                }
             }
         }
     }
