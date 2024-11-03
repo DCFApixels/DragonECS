@@ -186,7 +186,7 @@ namespace DCFApixels.DragonECS
                 var pool = _world.GetPoolInstance<TPool>();
                 if(_poolsBufferCount >= _poolsBuffer.Length)
                 {
-                    Array.Resize(ref _poolsBuffer, _poolsBuffer.Length);
+                    Array.Resize(ref _poolsBuffer, _poolsBuffer.Length << 1);
                 }
                 _poolsBuffer[_poolsBufferCount++] = pool;
                 return pool;
