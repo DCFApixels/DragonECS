@@ -38,12 +38,13 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        //Инициализация аспектов проходит в синхронизированном состоянии, поэтому использование _staticMaskCache потоко безопасно.
+        private static Dictionary<Type, EcsStaticMask> _staticMaskCache = new Dictionary<Type, EcsStaticMask>();
+
         internal EcsWorld _source;
         internal EcsMask _mask;
         private bool _isBuilt = false;
-
-        //Инициализация аспектов проходит в синхронизированном состоянии, поэтому использование _staticMaskCache потоко безопасно.
-        private static Dictionary<Type, EcsStaticMask> _staticMaskCache = new Dictionary<Type, EcsStaticMask>();
+        private IEcsPool[] _pools;
 
         #region Properties
         public EcsMask Mask
@@ -57,6 +58,10 @@ namespace DCFApixels.DragonECS
         public bool IsInit
         {
             get { return _isBuilt; }
+        }
+        public ReadOnlySpan<IEcsPool> Pools
+        {
+            get { return _pools; }
         }
         /// <summary>
         /// Статическая инициализация означет что каждый новый эекземпляр идентичен другому, инициализация стандартным путем создает идентичные экземпляры, поэтому значение по умолчанию true.
@@ -80,6 +85,9 @@ namespace DCFApixels.DragonECS
         {
             private EcsWorld _world;
             private EcsStaticMask.Builder _maskBuilder;
+
+            private IEcsPool[] _poolsBuffer = new IEcsPool[8];
+            private int _poolsBufferCount;
 
             #region Properties
             public IncludeMarker Inc
@@ -146,6 +154,8 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 newAspect._mask = staticMask.ToMask(world);
+                var pools = new IEcsPool[builder._poolsBufferCount];
+                Array.Copy(builder._poolsBuffer, pools, pools.Length);
                 newAspect._isBuilt = true;
 
                 _constructorBuildersStackIndex--;
@@ -156,21 +166,31 @@ namespace DCFApixels.DragonECS
             #region Include/Exclude/Optional/Combine/Except
             public TPool IncludePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
-                var pool = _world.GetPoolInstance<TPool>();
+                var pool = CachePool<TPool>();
                 IncludeImplicit(pool.ComponentType);
                 return pool;
             }
             public TPool ExcludePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
-                var pool = _world.GetPoolInstance<TPool>();
+                var pool = CachePool<TPool>();
                 ExcludeImplicit(pool.ComponentType);
                 return pool;
             }
             public TPool OptionalPool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
-                return _world.GetPoolInstance<TPool>();
+                return CachePool<TPool>();
             }
 
+            private TPool CachePool<TPool>() where TPool : IEcsPoolImplementation, new()
+            {
+                var pool = _world.GetPoolInstance<TPool>();
+                if(_poolsBufferCount >= _poolsBuffer.Length)
+                {
+                    Array.Resize(ref _poolsBuffer, _poolsBuffer.Length);
+                }
+                _poolsBuffer[_poolsBufferCount++] = pool;
+                return pool;
+            }
             private void IncludeImplicit(Type type)
             {
                 if (_maskBuilder.IsNull == false)

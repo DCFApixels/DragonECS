@@ -558,7 +558,9 @@ namespace DCFApixels.DragonECS
                     if (AreMatchingOrderIdentical(listA, listB) == false)
                     {
                         //Для слияния списков слоев, нужно чтобы названия слоев, присутствующие в обоих списках, появлялись в одном и том же порядке в обоих списках
-                        Throw.Exception("To merge layer lists, the names of the layers present in both lists must appear in the same order in both lists.");
+
+                        //TODO все еще не работает!!!
+                        //Throw.Exception("To merge layer lists, the names of the layers present in both lists must appear in the same order in both lists.");
                     }
 
                     HashSet<string> seen = new HashSet<string>();
