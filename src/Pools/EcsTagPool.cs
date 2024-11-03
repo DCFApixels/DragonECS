@@ -41,6 +41,7 @@ namespace DCFApixels.DragonECS
         private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
         private int _listenersCachedCount = 0;
 #endif
+        private bool _isLocked;
 
         private T _fakeComponent;
         private EcsWorld.PoolsMediator _mediator;
@@ -92,6 +93,7 @@ namespace DCFApixels.DragonECS
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (Has(entityID)) { EcsPoolThrowHalper.ThrowAlreadyHasComponent<T>(entityID); }
+            if (_isLocked) { EcsPoolThrowHalper.ThrowPoolLocked(); }
 #endif
             _count++;
             _mapping[entityID] = true;
@@ -116,6 +118,7 @@ namespace DCFApixels.DragonECS
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
+            if (_isLocked) { EcsPoolThrowHalper.ThrowPoolLocked(); }
 #endif
             _mapping[entityID] = false;
             _count--;
@@ -174,6 +177,9 @@ namespace DCFApixels.DragonECS
 
         public void ClearAll()
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_isLocked) { EcsPoolThrowHalper.ThrowPoolLocked(); }
+#endif
             var span = _source.Where(out SingleAspect<EcsTagPool<T>> _);
             _count = 0;
             foreach (var entityID in span)
@@ -214,6 +220,7 @@ namespace DCFApixels.DragonECS
                 TryDel(entityID);
             }
         }
+        void IEcsPoolImplementation.OnLockedChanged_Debug(bool locked) { _isLocked = locked; }
         #endregion
 
         #region Other

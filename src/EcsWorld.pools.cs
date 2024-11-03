@@ -13,6 +13,7 @@ namespace DCFApixels.DragonECS
         private int _poolsCount;
         internal IEcsPoolImplementation[] _pools;
         internal PoolSlot[] _poolSlots;
+        private int _lockedPoolCount = 0;
 
         private readonly PoolsMediator _poolsMediator;
 
@@ -360,11 +361,59 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region LockPool/UnLockPool
+        public void LockPool_Debug(int ComponentTypeID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            ref var slot = ref _poolSlots[ComponentTypeID];
+            if (slot.locked == false)
+            {
+                slot.locked = true;
+                if (_lockedPoolCount == 0)
+                {
+                    ReleaseDelEntityBufferAll();
+                }
+                _lockedPoolCount++;
+                _pools[ComponentTypeID].OnLockedChanged_Debug(true);
+            }
+#endif
+        }
+        public void UnlockPool_Debug(int ComponentTypeID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            ref var slot = ref _poolSlots[ComponentTypeID];
+            if (slot.locked == true)
+            {
+                slot.locked = false;
+                _lockedPoolCount--;
+
+                if (_lockedPoolCount < 0)
+                {
+                    _lockedPoolCount = 0;
+                    Throw.UndefinedException();
+                }
+                _pools[ComponentTypeID].OnLockedChanged_Debug(false);
+            }
+#endif
+        }
+        public bool CheckPoolLocked_Debug(int ComponentTypeID)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            return _poolSlots[ComponentTypeID].locked;
+#else
+            return false;
+#endif
+        }
+        #endregion
+
         #region PoolSlot
         internal struct PoolSlot
         {
             public int count;
             public long version;
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            public bool locked;
+#endif
         }
         #endregion
     }

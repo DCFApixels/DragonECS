@@ -47,6 +47,7 @@ namespace DCFApixels.DragonECS
         private readonly List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
         private int _listenersCachedCount = 0;
 #endif
+        private bool _isLocked;
 
         private EcsWorld.PoolsMediator _mediator;
 
@@ -83,6 +84,7 @@ namespace DCFApixels.DragonECS
             ref int itemIndex = ref _mapping[entityID];
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (itemIndex > 0) { EcsPoolThrowHalper.ThrowAlreadyHasComponent<T>(entityID); }
+            if (_isLocked) { EcsPoolThrowHalper.ThrowPoolLocked(); }
 #endif
             if (_recycledItemsCount > 0)
             {
@@ -127,7 +129,10 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
             if (itemIndex <= 0)
-            {
+            { //Add block
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+                if (_isLocked) { EcsPoolThrowHalper.ThrowPoolLocked(); }
+#endif
                 if (_recycledItemsCount > 0)
                 {
                     itemIndex = _recycledItems[--_recycledItemsCount];
@@ -146,7 +151,7 @@ namespace DCFApixels.DragonECS
 #if !DISABLE_POOLS_EVENTS
                 _listeners.InvokeOnAdd(entityID, _listenersCachedCount);
 #endif
-            }
+            } //Add block end
 #if !DISABLE_POOLS_EVENTS
             _listeners.InvokeOnGet(entityID, _listenersCachedCount);
 #endif
@@ -159,6 +164,9 @@ namespace DCFApixels.DragonECS
         }
         public void Del(int entityID)
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_isLocked) { EcsPoolThrowHalper.ThrowPoolLocked(); }
+#endif
             ref int itemIndex = ref _mapping[entityID];
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (itemIndex <= 0) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
@@ -200,6 +208,9 @@ namespace DCFApixels.DragonECS
 
         public void ClearAll()
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_isLocked) { EcsPoolThrowHalper.ThrowPoolLocked(); }
+#endif
             var span = _source.Where(out SingleAspect<EcsPool<T>> _);
             _itemsCount = 0;
             _recycledItemsCount = 0;
@@ -244,6 +255,7 @@ namespace DCFApixels.DragonECS
                 TryDel(entityID);
             }
         }
+        void IEcsPoolImplementation.OnLockedChanged_Debug(bool locked) { _isLocked = locked; }
         #endregion
 
         #region Other

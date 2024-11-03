@@ -14,6 +14,7 @@ namespace DCFApixels.DragonECS.PoolsCore
         void OnWorldResize(int newSize);
         void OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer);
         void OnWorldDestroy();
+        void OnLockedChanged_Debug(bool locked);
         #endregion
     }
 
@@ -43,6 +44,10 @@ namespace DCFApixels.DragonECS.PoolsCore
         {
             throw new ArgumentNullException("listener is null");
         }
+        public static void ThrowPoolLocked()
+        {
+            throw new EcsFrameworkException("The pool is currently locked and cannot add or remove components.");
+        }
     }
 }
 
@@ -56,7 +61,6 @@ namespace DCFApixels.DragonECS.Internal
     public sealed class EcsNullPool : IEcsPoolImplementation<NullComponent>
     {
         public static readonly EcsNullPool instance = new EcsNullPool();
-
         #region Properties
         int IEcsReadonlyPool.ComponentTypeID { get { return 0; } }//TODO Првоерить что NullComponent всегда имеет id 0 
         Type IEcsReadonlyPool.ComponentType { get { return typeof(NullComponent); } }
@@ -131,6 +135,7 @@ namespace DCFApixels.DragonECS.Internal
         void IEcsPoolImplementation.OnWorldDestroy() { }
         void IEcsPoolImplementation.OnWorldResize(int newSize) { }
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer) { }
+        void IEcsPoolImplementation.OnLockedChanged_Debug(bool locked) { }
         #endregion
 
         #region Listeners
