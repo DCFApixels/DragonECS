@@ -537,30 +537,33 @@ namespace DCFApixels.DragonECS
                 #endregion
 
                 #region MergeWith
-                private static bool AreMatchingOrderIdentical(IReadOnlyList<string> listA, IReadOnlyList<string> listB)
+                private static bool AreMatchingOrderIdentical(List<string> listA, IReadOnlyList<string> listB)
                 {
-                    int indexA = 0;
-
-                    foreach (string itemB in listB)
+                    int lastIndexof = 0;
+                    for (int i = 0; i < listB.Count; i++)
                     {
-                        if (indexA < listA.Count && listA[indexA] == itemB)
+                        var a = listB[i];
+                        int indexof = listA.IndexOf(a);
+
+                        if (indexof < 0) { continue; }
+                        if (indexof < lastIndexof)
                         {
-                            indexA++;
+                            return false;
                         }
+                        lastIndexof = indexof;
                     }
-                    return indexA == listA.Count;
+                    return true;
                 }
                 public void MergeWith(IReadOnlyList<string> other)
                 {
                     List<string> listA = _layers;
                     IReadOnlyList<string> listB = other;
 
+                    //TODO все еще не работает!!!
                     if (AreMatchingOrderIdentical(listA, listB) == false)
                     {
-                        //Для слияния списков слоев, нужно чтобы названия слоев, присутствующие в обоих списках, появлялись в одном и том же порядке в обоих списках
-
-                        //TODO все еще не работает!!!
-                        //Throw.Exception("To merge layer lists, the names of the layers present in both lists must appear in the same order in both lists.");
+                        //Для слияния списков слоев, нужно чтобы в пересечении порядок записей совпадал
+                        Throw.Exception("To merge layer lists, the names of the layers present in both lists must appear in the same order in both lists.");
                     }
 
                     HashSet<string> seen = new HashSet<string>();
