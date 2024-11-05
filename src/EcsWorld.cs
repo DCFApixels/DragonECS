@@ -73,6 +73,34 @@ namespace DCFApixels.DragonECS
         private List<IEcsWorldEventListener> _listeners = new List<IEcsWorldEventListener>();
         private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
 
+
+        private static Stack<EcsWorldConfig> _configInitOnlynStack = new Stack<EcsWorldConfig>(4);
+        protected internal static EcsWorldConfig Config_InitOnly
+        {
+            get
+            {
+                if (_configInitOnlynStack.TryPeek(out EcsWorldConfig result))
+                {
+                    return result;
+                }
+                Throw.UndefinedException();
+                return null;
+            }
+        }
+        private readonly ref struct ConfigInitOnlyScope
+        {
+            private readonly Stack<EcsWorldConfig> _stack;
+            public ConfigInitOnlyScope(Stack<EcsWorldConfig> stack, EcsWorldConfig config)
+            {
+                _stack = stack;
+                _stack.Push(config);
+            }
+            public void Dispose()
+            {
+                _stack.Peek();
+            }
+        }
+
         #region Properties
         EcsWorld IEntityStorage.World
         {
@@ -143,6 +171,8 @@ namespace DCFApixels.DragonECS
             lock (_worldLock)
             {
                 if (configs == null) { configs = ConfigContainer.Empty; }
+                _configInitOnlynStack.Push(configs.GetWorldConfigOrDefault());
+
                 bool nullWorld = this is NullWorld;
                 if (nullWorld == false && worldID == NULL_WORLD_ID)
                 {
@@ -164,6 +194,7 @@ namespace DCFApixels.DragonECS
                     if (_worlds[worldID] != null)
                     {
                         _worldIdDispenser.Release(worldID);
+                        _configInitOnlynStack.Pop();
                         Throw.Exception("The world with the specified ID has already been created\r\n");
                     }
                 }
@@ -181,6 +212,8 @@ namespace DCFApixels.DragonECS
                 _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
 
                 GetComponentTypeID<NullComponent>();
+
+                _configInitOnlynStack.Pop();
             }
         }
         public void Destroy()
@@ -231,7 +264,7 @@ namespace DCFApixels.DragonECS
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetQueryCache<TExecutor, TAspect>(out TExecutor executor, out TAspect aspect)
-            where TExecutor : EcsQueryExecutor, new()
+            where TExecutor : MaskQueryExecutor, new()
             where TAspect : EcsAspect, new()
         {
             ref var cmp = ref Get<WhereQueryCache<TExecutor, TAspect>>();

@@ -40,7 +40,7 @@ namespace DCFApixels.DragonECS
         {
             if (ReferenceEquals(entities, entities.World))
             {
-                var executor = entities.World.GetExecutor<EcsWhereExecutor>(mask);
+                var executor = entities.World.GetExecutorForMask<EcsWhereExecutor>(mask);
                 return executor.Execute();
             }
             return entities.ToSpan().Where(mask);
@@ -51,7 +51,7 @@ namespace DCFApixels.DragonECS
         }
         public static EcsSpan Where(this EcsSpan span, IComponentMask mask)
         {
-            var executor = span.World.GetExecutor<EcsWhereExecutor>(mask);
+            var executor = span.World.GetExecutorForMask<EcsWhereExecutor>(mask);
             return executor.ExecuteFor(span);
         }
         #endregion
@@ -85,7 +85,7 @@ namespace DCFApixels.DragonECS
         {
             if (ReferenceEquals(entities, entities.World))
             {
-                EcsWhereExecutor executor = entities.World.GetExecutor<EcsWhereExecutor>(mask);
+                EcsWhereExecutor executor = entities.World.GetExecutorForMask<EcsWhereExecutor>(mask);
                 return executor.Execute(comparison);
             }
             return entities.ToSpan().Where(mask, comparison);
@@ -96,7 +96,7 @@ namespace DCFApixels.DragonECS
         }
         public static EcsSpan Where(this EcsSpan span, IComponentMask mask, Comparison<int> comparison)
         {
-            var executor = span.World.GetExecutor<EcsWhereExecutor>(mask);
+            var executor = span.World.GetExecutorForMask<EcsWhereExecutor>(mask);
             return executor.ExecuteFor(span);
         }
         #endregion
@@ -130,7 +130,7 @@ namespace DCFApixels.DragonECS
         {
             if (ReferenceEquals(entities, entities.World))
             {
-                EcsWhereToGroupExecutor executor = entities.World.GetExecutor<EcsWhereToGroupExecutor>(mask);
+                EcsWhereToGroupExecutor executor = entities.World.GetExecutorForMask<EcsWhereToGroupExecutor>(mask);
                 return executor.Execute();
             }
             return entities.ToSpan().WhereToGroup(mask);
@@ -141,7 +141,7 @@ namespace DCFApixels.DragonECS
         }
         public static EcsReadonlyGroup WhereToGroup(this EcsSpan span, IComponentMask mask)
         {
-            var executor = span.World.GetExecutor<EcsWhereToGroupExecutor>(mask);
+            var executor = span.World.GetExecutorForMask<EcsWhereToGroupExecutor>(mask);
             return executor.ExecuteFor(span);
         }
         #endregion

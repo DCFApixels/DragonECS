@@ -184,7 +184,7 @@ namespace DCFApixels.DragonECS
             private TPool CachePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = _world.GetPoolInstance<TPool>();
-                if(_poolsBufferCount >= _poolsBuffer.Length)
+                if (_poolsBufferCount >= _poolsBuffer.Length)
                 {
                     Array.Resize(ref _poolsBuffer, _poolsBuffer.Length << 1);
                 }

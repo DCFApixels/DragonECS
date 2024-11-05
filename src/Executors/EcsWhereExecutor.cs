@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCFApixels.DragonECS.Core;
+using System;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
@@ -10,16 +11,16 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal class EcsWhereExecutor : EcsQueryExecutor
+    internal class EcsWhereExecutor : MaskQueryExecutor
     {
         private EcsMaskIterator _iterator;
+
         private int[] _filteredAllEntities = new int[32];
         private int _filteredAllEntitiesCount = 0;
-        private long _version;
-
         private int[] _filteredEntities = null;
         private int _filteredEntitiesCount = 0;
 
+        private long _version;
         private WorldStateVersionsChecker _versionsChecker;
 
         #region Properties
@@ -27,6 +28,11 @@ namespace DCFApixels.DragonECS.Internal
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _version; }
+        }
+        public sealed override bool IsCached
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _versionsChecker.Check(); }
         }
         #endregion
 

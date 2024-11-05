@@ -1,4 +1,5 @@
-﻿using DCFApixels.DragonECS.PoolsCore;
+﻿using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.PoolsCore;
 
 namespace DCFApixels.DragonECS
 {
@@ -33,14 +34,8 @@ namespace DCFApixels.DragonECS
             }
         }
 
-        //TODO добавить сквозной кеш для инстансов TExecutor
-        //private readonly struct WhereCache<TExecutor> : IEcsWorldComponent<WhereCache<TExecutor>>
-        //{
-        //    private readonly SparseArray<int, TExecutor> _pairs
-        //}
-        // Это не подохидт
         internal readonly struct WhereQueryCache<TExecutor, TAspcet> : IEcsWorldComponent<WhereQueryCache<TExecutor, TAspcet>>
-            where TExecutor : EcsQueryExecutor, new()
+            where TExecutor : MaskQueryExecutor, new()
             where TAspcet : EcsAspect, new()
         {
             public readonly TExecutor Executor;
@@ -52,8 +47,8 @@ namespace DCFApixels.DragonECS
             }
             void IEcsWorldComponent<WhereQueryCache<TExecutor, TAspcet>>.Init(ref WhereQueryCache<TExecutor, TAspcet> component, EcsWorld world)
             {
-                TExecutor instance = new TExecutor();
                 TAspcet aspect = world.GetAspect<TAspcet>();
+                TExecutor instance = world.GetExecutorForMask<TExecutor>(aspect.Mask);
                 instance.Initialize(world, aspect.Mask);
                 component = new WhereQueryCache<TExecutor, TAspcet>(instance, aspect);
             }

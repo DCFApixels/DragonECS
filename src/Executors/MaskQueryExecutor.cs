@@ -8,21 +8,40 @@ namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {
-        private readonly Dictionary<(Type, object), EcsQueryExecutor> _executorCoures = new Dictionary<(Type, object), EcsQueryExecutor>(256);
-        public TExecutor GetExecutor<TExecutor>(IComponentMask mask)
-            where TExecutor : EcsQueryExecutor, new()
+        private readonly Dictionary<(Type, object), IQueryExecutorImplementation> _executorCoures = new Dictionary<(Type, object), IQueryExecutorImplementation>(Config_InitOnly.PoolComponentsCapacity);
+        public TExecutor GetExecutorForMask<TExecutor>(IComponentMask gmask)
+            where TExecutor : MaskQueryExecutor, new()
         {
             var coreType = typeof(TExecutor);
-            if (_executorCoures.TryGetValue((coreType, mask), out EcsQueryExecutor core) == false)
+            //проверяет ключ по абстрактной маске
+            if (_executorCoures.TryGetValue((coreType, gmask), out IQueryExecutorImplementation executor) == false)
             {
-                core = new TExecutor();
-                core.Initialize(this, mask.ToMask(this));
-                _executorCoures.Add((coreType, mask), core);
+                var mask = gmask.ToMask(this);
+                //проверяет ключ по конкретной маске, или что конкретная и абстрактая одна и таже
+                if (mask == gmask ||
+                    _executorCoures.TryGetValue((coreType, mask), out executor) == false)
+                {
+                    TExecutor newCore = new TExecutor();
+                    newCore.Initialize(this, mask);
+                    executor = newCore;
+                }
+                _executorCoures.Add((coreType, gmask), executor);
             }
-            return (TExecutor)core;
+            return (TExecutor)executor;
         }
     }
-    public abstract class EcsQueryExecutor
+}
+
+namespace DCFApixels.DragonECS.Core
+{
+    public interface IQueryExecutorImplementation
+    {
+        EcsWorld World { get; }
+        long Version { get; }
+        bool IsCached { get; }
+        void Destroy();
+    }
+    public abstract class MaskQueryExecutor : IQueryExecutorImplementation
     {
         private EcsWorld _source;
         private EcsMask _mask;
@@ -42,13 +61,14 @@ namespace DCFApixels.DragonECS
             get { return _mask; }
         }
         public abstract long Version { get; }
+        public abstract bool IsCached { get; }
         internal void Initialize(EcsWorld world, EcsMask mask)
         {
             _source = world;
             _mask = mask;
             OnInitialize();
         }
-        internal void Destroy()
+        void IQueryExecutorImplementation.Destroy()
         {
             OnDestroy();
             _source = null;
