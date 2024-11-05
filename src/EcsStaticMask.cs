@@ -452,7 +452,7 @@ namespace DCFApixels.DragonECS
         private static string CreateLogString(EcsTypeCode[] inc, EcsTypeCode[] exc)
         {
 #if (DEBUG && !DISABLE_DEBUG)
-            string converter(EcsTypeCode o) { return EcsDebugUtility.GetGenericTypeName(EcsTypeCodeManager.FindTypeOfCode(o), 1); }
+            string converter(EcsTypeCode o) { return EcsTypeCodeManager.FindTypeOfCode(o).ToString(); }
             return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
 #else
             return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
@@ -478,7 +478,7 @@ namespace DCFApixels.DragonECS
                 ID = mask.ID;
                 included = mask._incs;
                 excluded = mask._excs;
-                Type converter(EcsTypeCode o) { return EcsTypeCodeManager.FindTypeOfCode(o); }
+                Type converter(EcsTypeCode o) { return EcsTypeCodeManager.FindTypeOfCode(o).Type; }
                 includedTypes = included.Select(converter).ToArray();
                 excludedTypes = excluded.Select(converter).ToArray();
             }

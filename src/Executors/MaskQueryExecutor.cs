@@ -8,7 +8,7 @@ namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {
-        private readonly Dictionary<(Type, object), IQueryExecutorImplementation> _executorCoures = new Dictionary<(Type, object), IQueryExecutorImplementation>(Config_InitOnly.PoolComponentsCapacity);
+        private readonly Dictionary<(Type, object), IQueryExecutorImplementation> _executorCoures;
         public TExecutor GetExecutorForMask<TExecutor>(IComponentMask gmask)
             where TExecutor : MaskQueryExecutor, new()
         {
