@@ -22,7 +22,7 @@ namespace DCFApixels.DragonECS.PoolsCore
     /// <typeparam name="T">Component type</typeparam>
     public interface IEcsPoolImplementation<T> : IEcsPoolImplementation { }
 
-    public static class EcsPoolThrowHalper
+    public static class EcsPoolThrowHelper
     {
         public static void ThrowAlreadyHasComponent<T>(int entityID)
         {

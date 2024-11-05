@@ -92,8 +92,8 @@ namespace DCFApixels.DragonECS
         public void Add(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (Has(entityID)) { EcsPoolThrowHalper.ThrowAlreadyHasComponent<T>(entityID); }
-            if (_isLocked) { EcsPoolThrowHalper.ThrowPoolLocked(); }
+            if (Has(entityID)) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
+            if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
             _count++;
             _mapping[entityID] = true;
@@ -117,8 +117,8 @@ namespace DCFApixels.DragonECS
         public void Del(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(entityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
-            if (_isLocked) { EcsPoolThrowHalper.ThrowPoolLocked(); }
+            if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
+            if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
             _mapping[entityID] = false;
             _count--;
@@ -138,14 +138,14 @@ namespace DCFApixels.DragonECS
         public void Copy(int fromEntityID, int toEntityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(fromEntityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID); }
+            if (!Has(fromEntityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(fromEntityID); }
 #endif
             TryAdd(toEntityID);
         }
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (!Has(fromEntityID)) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(fromEntityID); }
+            if (!Has(fromEntityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(fromEntityID); }
 #endif
             toWorld.GetPool<T>().TryAdd(toEntityID);
         }
@@ -178,7 +178,7 @@ namespace DCFApixels.DragonECS
         public void ClearAll()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (_isLocked) { EcsPoolThrowHalper.ThrowPoolLocked(); }
+            if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
             var span = _source.Where(out SingleAspect<EcsTagPool<T>> _);
             _count = 0;
@@ -228,14 +228,14 @@ namespace DCFApixels.DragonECS
         object IEcsReadonlyPool.GetRaw(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (Has(entityID) == false) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
+            if (Has(entityID) == false) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             return _fakeComponent;
         }
         void IEcsPool.SetRaw(int entityID, object dataRaw)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (Has(entityID) == false) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
+            if (Has(entityID) == false) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
         }
         ref T IEcsStructPool<T>.Add(int entityID)
@@ -246,14 +246,14 @@ namespace DCFApixels.DragonECS
         ref readonly T IEcsStructPool<T>.Read(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (Has(entityID) == false) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
+            if (Has(entityID) == false) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             return ref _fakeComponent;
         }
         ref T IEcsStructPool<T>.Get(int entityID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (Has(entityID) == false) { EcsPoolThrowHalper.ThrowNotHaveComponent<T>(entityID); }
+            if (Has(entityID) == false) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             return ref _fakeComponent;
         }
@@ -263,13 +263,13 @@ namespace DCFApixels.DragonECS
 #if !DISABLE_POOLS_EVENTS
         public void AddListener(IEcsPoolEventListener listener)
         {
-            if (listener == null) { EcsPoolThrowHalper.ThrowNullListener(); }
+            if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
             _listeners.Add(listener);
             _listenersCachedCount++;
         }
         public void RemoveListener(IEcsPoolEventListener listener)
         {
-            if (listener == null) { EcsPoolThrowHalper.ThrowNullListener(); }
+            if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
             if (_listeners.Remove(listener))
             {
                 _listenersCachedCount--;
