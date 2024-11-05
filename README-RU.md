@@ -802,7 +802,7 @@ using DCFApixels.DragonECS;
 [MetaName("SomeComponent")]
 
 // Используется для группировки типов.
-[MetaGroup("Abilities", "Passive")] // или [MetaGroup("Abilities/Passive/")]
+[MetaGroup("Abilities", "Passive", ...)] // или [MetaGroup("Abilities/Passive/")]
 
 // Задает цвет типа в RGB кодировке, где каждый канал принимает значение от 0 до 255, по умолчанию белый. 
 [MetaColor(MetaColor.Red)] // или [MetaColor(255, 0, 0)]
