@@ -802,7 +802,7 @@ using DCFApixels.DragonECS;
 [MetaName("SomeComponent")]
 
 // Используется для группировки типов.
-[MetaGroup("Abilities/Passive/")] // или [MetaGroup("Abilities", "Passive")]
+[MetaGroup("Abilities", "Passive")] // или [MetaGroup("Abilities/Passive/")]
 
 // Задает цвет типа в RGB кодировке, где каждый канал принимает значение от 0 до 255, по умолчанию белый. 
 [MetaColor(MetaColor.Red)] // или [MetaColor(255, 0, 0)]
@@ -814,7 +814,7 @@ using DCFApixels.DragonECS;
 [MetaID("8D56F0949201D0C84465B7A6C586DCD6")] // Строки должны быть уникальными, и не допускают символы ,<> .
  
 // Добавляет строковые теги.
-[MetaTags("Tag1", "Tag2", ...)]  // [MetaTags(MetaTags.HIDDEN))] чтобы скрыть в редакторе 
+[MetaTags("Tag1", "Tag2", ...)] // [MetaTags(MetaTags.HIDDEN))] чтобы скрыть в редакторе 
 public struct Component : IEcsComponent { /* ... */ }
 ```
 ``` c#
