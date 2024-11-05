@@ -537,7 +537,7 @@ namespace DCFApixels.DragonECS
                 #endregion
 
                 #region MergeWith
-                private static bool AreMatchingOrderIdentical(List<string> listA, IReadOnlyList<string> listB)
+                private static bool CheckOverlapsOrder(List<string> listA, IReadOnlyList<string> listB)
                 {
                     int lastIndexof = 0;
                     for (int i = 0; i < listB.Count; i++)
@@ -559,8 +559,7 @@ namespace DCFApixels.DragonECS
                     List<string> listA = _layers;
                     IReadOnlyList<string> listB = other;
 
-                    //TODO все еще не работает!!!
-                    if (AreMatchingOrderIdentical(listA, listB) == false)
+                    if (CheckOverlapsOrder(listA, listB) == false)
                     {
                         //Для слияния списков слоев, нужно чтобы в пересечении порядок записей совпадал
                         Throw.Exception("To merge layer lists, the names of the layers present in both lists must appear in the same order in both lists.");
