@@ -329,7 +329,9 @@ interface IDoSomethingProcess : IEcsProcess
 {
     void Do();
 }
-// Реализация раннера. Пример реализации можно так же посмотреть в встроенных процессах 
+```
+``` c#
+// Реализация раннера. Пример реализации можно так же посмотреть в встроенном процессе IEcsRun 
 sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomethingProcess
 {
     public void Do() 
@@ -337,13 +339,13 @@ sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomet
         foreach (var item in Process) item.Do();
     }
 }
-// ...
-
+```
+``` c#
 // Добавление раннера при создании пайплайна.
 _pipeline = EcsPipeline.New()
-    //...
+    // ...
     .AddRunner<DoSomethingProcessRunner>()
-    //...
+    // ...
     .BuildAndInit();
 
 // Запуск раннера если раннер был добавлен.
@@ -352,10 +354,33 @@ _pipeline.GetRunner<IDoSomethingProcess>.Do()
 // Или если раннер не был добавлен(Вызов GetRunnerInstance так же добавит раннер в пайплайн).
 _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 ```
-> Раннеры имеют ряд требований к реализации: 
+<details>
+<summary>Расширенная реализация раннера</summary>
+
+``` c#
+internal sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomethingProcess
+{
+    // RunHelper упрощает реализацию по подобию реализации встроенных процессов. 
+    // Автоматически вызывает макрер профайлера, а так же содержит try catch блок.
+    private RunHelper _helper;
+    protected override void OnSetup()
+    {
+        // вторым аргументом задается имя маркера, если не указать, то имя будет выбрано автоматически.
+        _helper = new RunHelper(this, nameof(Do));
+    }
+    public void Do()
+    {
+        _helper.Run(p => p.Do());
+    }
+}
+```
+
+</details>
+
+> Требования реализации раннеров: 
 > * Наследоваться от `EcsRunner<T>` можно только напрямую;
 > * Раннер может содержать только один интерфейс(за исключением `IEcsProcess`);
-> * Наследуемый класс `EcsRunner<T>,` должен так же реализовать интерфейс `T`;
+> * Наследуемый класс `EcsRunner<T>`, должен так же реализовать интерфейс `T`;
     
 > Не рекомендуется в цикле вызывать `GetRunner`, иначе кешируйте полученный раннер.
 </details>
@@ -417,9 +442,24 @@ poses.Del(entityID);
 > В `Release` сброке отключаются проверки на исключения.
 
 > Есть "безопасные" методы, которые сначала выполнят проверку наличия/отсутствия компонента, названия таких методов начинаются с `Try`.
-    
-> Имеется возможность реализации пользовательского пула. Эта функция будет описана в ближайшее время.
- 
+
+<details>
+<summary>Пользовательские пулы</summary>
+
+Пулом выступает любой тип реализующий интерфейс `IEcsPoolImplementation<T>` и имеющий конструктор без параметров.
+
+Ключевые моменты при реализации пула:
+* Все методы предоставляемые интерфейсом `IEcsPoolImplementation` не предназначены для публичного использования, рекомендуется реализовывать явно.
+* Подставленный в интерфейсе `IEcsPoolImplementation<T>` тип `T` и тип возвращаемый в свойствах `ComponentType` с `ComponentTypeID` должны совпадать.
+* Обязательно регистрировать все изменения пула в экземпляре `EcsWorld.PoolsMediator` передаваемом в методе `OnInit`.
+* `EcsWorld.PoolsMediator` предназначен только для использования внутри пула.
+* Дефайн `DISABLE_POOLS_EVENTS` отключает реализуемые методы `AddListener` и `RemoveListener`.
+* В статическом классе `EcsPoolThrowHelper` определены бросания наиболее распространенных видов исключений.
+* В методе `OnReleaseDelEntityBuffer` происходит очистка удаленных сущностей.
+
+
+</details>
+
 ## Маска
 Применяется для фильтрации сущностей по наличию или отсутствию компонентов.  
 ``` c#
@@ -599,7 +639,7 @@ for (int i = 0; i < es.Count; i++)
 Вспомогательная коллекция основанная на Sparse Set для хранения множества сущностей с O(1) операциями добавления/удаления/проверки и т.д.
 ``` c#
 // Получаем новую группу. EcsWorld содержит в себе пул групп,
-// поэтому будет создана новая или переиспользована свободная.
+// поэтому будет переиспользована свободная или создана новая.
 EcsGroup group = EcsGroup.New(_world);
 // Освобождаем группу.
 group.Dispose();
@@ -626,7 +666,7 @@ for (int i = 0; i < group.Count; i++)
     // ...
 }
 ```
-Так как группы это множества, они содержат методы аналогичные `ISet<T>`. Редактирующие методы имеет 2 варианта, с записью результата в groupA, либо с возвращением новой группы:            
+Группы являются множествами и реализуют интерфейс `ISet<int>`. Редактирующие методы имеет 2 варианта, с записью результата в groupA, либо с возвращением новой группы. 
                                 
 ``` c#
 // Объединение groupA и groupB.
@@ -777,8 +817,8 @@ using DCFApixels.DragonECS;
 [MetaTags("Tag1", "Tag2", ...)]  // [MetaTags(MetaTags.HIDDEN))] чтобы скрыть в редакторе 
 public struct Component : IEcsComponent { /* ... */ }
 ```
-Получение мета-информации:
 ``` c#
+// Получение мета-информации:
 TypeMeta typeMeta = someComponent.GetMeta();
 // или
 TypeMeta typeMeta = pool.ComponentType.ToMeta();
@@ -790,6 +830,7 @@ var description = typeMeta.Description; // [MetaDescription]
 var metaID = typeMeta.MetaID; // [MetaID]
 var tags = typeMeta.Tags; // [MetaTags]
 ```
+> Для автоматической генерации уникальных идентификаторов MetaID есть метод `MetaID.GenerateNewUniqueID()` и [Браузерный генератор](https://dcfapixels.github.io/DragonECS-MetaID_Generator_Online/)
 
 ## EcsDebug
 Вспомогательный тип с набором методов для отладки и логирования. Реализован как статический класс вызывающий методы Debug-сервисов. Debug-сервисы - это посредники между EcsDebug и инструментами отладки среды. Такая реализация позволяет не изменяя отладочный код, менять его поведение или переносить проект в другие среды, достаточно только реализовать соответствующий Debug-сервис.
@@ -847,7 +888,7 @@ using (marker.Auto())
 </br>
 
 # Расширение фреймворка
-Для большей расширяемости фреймворка есть дополнительные инструменты.
+Дополнительные инструменты полезные для создания расширений.
 
 ## Конфиги
 Конструкторы классов `EcsWorld` и `EcsPipeline` могут принимать контейнеры конфигов реализующие интерфейс `IConfigContainer` или `IConfigContainerWriter`. С помощью этих контейнеров можно передавать данные и зависимости. Встроенная реализация контейнера - `ConfigContainer`, но можно так же использовать свою реализацию.</br>
@@ -954,14 +995,16 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 </br>
 
 # Расширения
-* [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
-* [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
-* [Упрощенный синтаксис](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
-* [Однокадровые компоненты](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
-* [Классическая C# многопоточность](https://github.com/DCFApixels/DragonECS-ClassicThreads)
-* [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
-* [Шаблоны кода IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [для Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
-* Графы (Work in progress)
+* Расширения:
+    * [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
+    * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
+    * [Классическая C# многопоточность](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+    * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
+    * Графы (Work in progress)
+* Утилиты:
+    * [Упрощенный синтаксис](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
+    * [Однокадровые компоненты](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
+    * [Шаблоны кода IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [для Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
 > *Твое расширение? Если разрабатываешь расширение для DragonECS, пиши [сюда](#обратная-связь).
 
 </br>
