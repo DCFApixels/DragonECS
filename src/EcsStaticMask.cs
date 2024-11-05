@@ -489,7 +489,6 @@ namespace DCFApixels.DragonECS
         }
 
 #if DEBUG
-        //TODO оптимизировать, так как списки сортированны, наверняка есть способ без хешсета пройтись и не локать треды
         private static void CheckConstraints(EcsTypeCode[] incs, EcsTypeCode[] excs)
         {
             if (CheckRepeats(incs)) { throw new EcsFrameworkException("The values in the Include constraints are repeated."); }
