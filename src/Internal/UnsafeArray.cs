@@ -83,6 +83,11 @@ namespace DCFApixels.DragonECS.Internal
             Length = length;
         }
 
+        public static UnsafeArray<T> Manual(T* ptr, int length)
+        {
+            return new UnsafeArray<T>(ptr, length);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnsafeArray<T> Slice(int start)
         {

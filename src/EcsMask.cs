@@ -545,14 +545,14 @@ namespace DCFApixels.DragonECS
             int maxEntites = int.MaxValue;
 
             EcsMaskChunck* preSortingBuffer;
-            if (maxBufferSize > STACK_BUFFER_THRESHOLD)
-            {
-                preSortingBuffer = TempBuffer<EcsMaskChunck>.Get(maxBufferSize);
-            }
-            else
+            if (maxBufferSize < STACK_BUFFER_THRESHOLD)
             {
                 EcsMaskChunck* ptr = stackalloc EcsMaskChunck[maxBufferSize];
                 preSortingBuffer = ptr;
+            }
+            else
+            {
+                preSortingBuffer = TempBuffer<EcsMaskChunck>.Get(maxBufferSize);
             }
 
             if (_sortIncChunckBuffer.Length > 1)
@@ -879,7 +879,7 @@ namespace DCFApixels.DragonECS.Internal
 #endif
     internal unsafe class EcsMaskIteratorUtility
     {
-        internal const int STACK_BUFFER_THRESHOLD = 256;
+        internal const int STACK_BUFFER_THRESHOLD = 100;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ConvertToChuncks(EcsMaskChunck* ptr, UnsafeArray<int> input, UnsafeArray<EcsMaskChunck> output)

@@ -463,41 +463,35 @@ namespace DCFApixels.DragonECS
         #region CopyEntity
         public unsafe void CopyEntity(int fromEntityID, int toEntityID)
         {
-            const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
-            int entityLineStartIndex = fromEntityID << _entityComponentMaskLengthBitShift;
-            int poolIndexWithoutOffset = 0;
-            for (int i = 0; i < _entityComponentMaskLength; i++)
+            const int BUFFER_THRESHOLD = 100;
+
+            int count = GetComponentsCount(fromEntityID);
+
+            int* poolIdsPtr;
+            if (count < BUFFER_THRESHOLD)
             {
-                int chunk = _entityComponentMasks[entityLineStartIndex + i];
-                if (chunk != 0)
-                {
-                    if ((chunk & 0x0000FFFF) != 0)
-                    {
-                        int bit = 1;
-                        for (int j = 0; j < COMPONENT_MASK_CHUNK_SIZE_HALF; j++)
-                        {
-                            if ((bit & chunk) != 0)
-                            {
-                                _pools[poolIndexWithoutOffset + j].Copy(fromEntityID, toEntityID);
-                            }
-                            bit <<= 1;
-                        }
-                    }
-                    if ((chunk & -0x7FFF0000) != 0)
-                    {
-                        int bit = 0x00010000;
-                        for (int j = COMPONENT_MASK_CHUNK_SIZE_HALF; j < COMPONENT_MASK_CHUNK_SIZE; j++)
-                        {
-                            if ((bit & chunk) != 0)
-                            {
-                                _pools[poolIndexWithoutOffset + j].Copy(fromEntityID, toEntityID);
-                            }
-                            bit <<= 1;
-                        }
-                    }
-                }
-                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
+                int* ptr = stackalloc int[count];
+                poolIdsPtr = ptr;
             }
+            else
+            {
+                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+            }
+
+            UnsafeArray<int> ua = UnsafeArray<int>.Manual(poolIdsPtr, count);
+
+            GetComponentTypeIDsFor_Internal(fromEntityID, poolIdsPtr, count);
+            for (int i = 0; i < count; i++)
+            {
+                _pools[poolIdsPtr[i]].Copy(fromEntityID, toEntityID);
+            }
+
+            if (count >= BUFFER_THRESHOLD)
+            {
+                UnmanagedArrayUtility.Free(poolIdsPtr);
+            }
+
+
             //foreach (var pool in _pools)
             //{
             //    if (pool.Has(fromEntityID))
@@ -517,42 +511,32 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-        public void CopyEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        public unsafe void CopyEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
-            const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
-            int entityLineStartIndex = fromEntityID << _entityComponentMaskLengthBitShift;
-            int poolIndexWithoutOffset = 0;
-            for (int i = 0; i < _entityComponentMaskLength; i++)
+            const int BUFFER_THRESHOLD = 100;
+
+            int count = GetComponentsCount(fromEntityID);
+
+            int* poolIdsPtr;
+            if (count < BUFFER_THRESHOLD)
             {
-                int chunk = _entityComponentMasks[entityLineStartIndex + i];
-                if (chunk != 0)
-                {
-                    if ((chunk & 0x0000FFFF) != 0)
-                    {
-                        int bit = 0x00000001;
-                        for (int j = 0; j < COMPONENT_MASK_CHUNK_SIZE_HALF; j++)
-                        {
-                            if ((bit & chunk) != 0)
-                            {
-                                _pools[poolIndexWithoutOffset + j].Copy(fromEntityID, toWorld, toEntityID);
-                            }
-                            bit <<= 1;
-                        }
-                    }
-                    if ((chunk & -0x7FFF0000) != 0)
-                    {
-                        int bit = 0x00010000;
-                        for (int j = COMPONENT_MASK_CHUNK_SIZE_HALF; j < COMPONENT_MASK_CHUNK_SIZE; j++)
-                        {
-                            if ((bit & chunk) != 0)
-                            {
-                                _pools[poolIndexWithoutOffset + j].Copy(fromEntityID, toWorld, toEntityID);
-                            }
-                            bit <<= 1;
-                        }
-                    }
-                }
-                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
+                int* ptr = stackalloc int[count];
+                poolIdsPtr = ptr;
+            }
+            else
+            {
+                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+            }
+
+            GetComponentTypeIDsFor_Internal(fromEntityID, poolIdsPtr, count);
+            for (int i = 0; i < count; i++)
+            {
+                _pools[poolIdsPtr[i]].Copy(fromEntityID, toWorld, toEntityID);
+            }
+
+            if (count >= BUFFER_THRESHOLD)
+            {
+                UnmanagedArrayUtility.Free(poolIdsPtr);
             }
 
             //foreach (var pool in _pools)
@@ -617,46 +601,34 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region MoveComponents
-        public void MoveComponents(int fromEntityID, int toEntityID)
+        public unsafe void MoveComponents(int fromEntityID, int toEntityID)
         {
-            const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
-            int entityLineStartIndex = fromEntityID << _entityComponentMaskLengthBitShift;
-            int poolIndexWithoutOffset = 0;
-            for (int i = 0; i < _entityComponentMaskLength; i++)
+            const int BUFFER_THRESHOLD = 100;
+
+            int count = GetComponentsCount(fromEntityID);
+
+            int* poolIdsPtr;
+            if (count < BUFFER_THRESHOLD)
             {
-                int chunk = _entityComponentMasks[i];
-                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
-                if (chunk != 0)
-                {
-                    if ((chunk & 0x0000FFFF) != 0)
-                    {
-                        int bit = 1;
-                        for (int j = 0; j < COMPONENT_MASK_CHUNK_SIZE_HALF; j++)
-                        {
-                            if ((bit & chunk) != 0)
-                            {
-                                var pool = _pools[poolIndexWithoutOffset + j];
-                                pool.Copy(fromEntityID, toEntityID);
-                                pool.Del(fromEntityID);
-                            }
-                            bit <<= 1;
-                        }
-                    }
-                    if ((chunk & -0x7FFF0000) != 0)
-                    {
-                        int bit = 0x00010000;
-                        for (int j = COMPONENT_MASK_CHUNK_SIZE_HALF; j < COMPONENT_MASK_CHUNK_SIZE; j++)
-                        {
-                            if ((bit & chunk) != 0)
-                            {
-                                var pool = _pools[poolIndexWithoutOffset + j];
-                                pool.Copy(fromEntityID, toEntityID);
-                                pool.Del(fromEntityID);
-                            }
-                            bit <<= 1;
-                        }
-                    }
-                }
+                int* ptr = stackalloc int[count];
+                poolIdsPtr = ptr;
+            }
+            else
+            {
+                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+            }
+
+            GetComponentTypeIDsFor_Internal(fromEntityID, poolIdsPtr, count);
+            for (int i = 0; i < count; i++)
+            {
+                var pool = _pools[poolIdsPtr[i]];
+                pool.Copy(fromEntityID, toEntityID);
+                pool.Del(fromEntityID);
+            }
+
+            if (count >= BUFFER_THRESHOLD)
+            {
+                UnmanagedArrayUtility.Free(poolIdsPtr);
             }
         }
         public void MoveComponents(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
@@ -674,42 +646,32 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region RemoveComponents
-        public void RemoveComponents(int fromEntityID, int toEntityID)
+        public unsafe void RemoveComponents(int fromEntityID, int toEntityID)
         {
-            const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
-            int entityLineStartIndex = fromEntityID << _entityComponentMaskLengthBitShift;
-            int poolIndexWithoutOffset = 0;
-            for (int i = 0; i < _entityComponentMaskLength; i++)
+            const int BUFFER_THRESHOLD = 100;
+
+            int count = GetComponentsCount(fromEntityID);
+
+            int* poolIdsPtr;
+            if (count < BUFFER_THRESHOLD)
             {
-                int chunk = _entityComponentMasks[i];
-                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
-                if (chunk != 0)
-                {
-                    if ((chunk & 0x0000FFFF) != 0)
-                    {
-                        int bit = 1;
-                        for (int j = 0; j < COMPONENT_MASK_CHUNK_SIZE_HALF; j++)
-                        {
-                            if ((bit & chunk) != 0)
-                            {
-                                _pools[poolIndexWithoutOffset + j].Del(fromEntityID);
-                            }
-                            bit <<= 1;
-                        }
-                    }
-                    if ((chunk & -0x7FFF0000) != 0)
-                    {
-                        int bit = 0x00010000;
-                        for (int j = COMPONENT_MASK_CHUNK_SIZE_HALF; j < COMPONENT_MASK_CHUNK_SIZE; j++)
-                        {
-                            if ((bit & chunk) != 0)
-                            {
-                                _pools[poolIndexWithoutOffset + j].Del(fromEntityID);
-                            }
-                            bit <<= 1;
-                        }
-                    }
-                }
+                int* ptr = stackalloc int[count];
+                poolIdsPtr = ptr;
+            }
+            else
+            {
+                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+            }
+
+            GetComponentTypeIDsFor_Internal(fromEntityID, poolIdsPtr, count);
+            for (int i = 0; i < count; i++)
+            {
+                _pools[poolIdsPtr[i]].Del(fromEntityID);
+            }
+
+            if (count >= BUFFER_THRESHOLD)
+            {
+                UnmanagedArrayUtility.Free(poolIdsPtr);
             }
         }
         public void RemoveComponents(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
@@ -980,24 +942,28 @@ namespace DCFApixels.DragonECS
         private unsafe int GetComponentTypeIDsFor_Internal(int entityID, ref int[] componentIDs)
         {
             var itemsCount = GetComponentsCount(entityID);
-            if(componentIDs == null)
+            if (componentIDs == null)
             {
                 componentIDs = new int[itemsCount];
             }
-            if(componentIDs.Length < itemsCount)
+            if (componentIDs.Length < itemsCount)
             {
                 Array.Resize(ref componentIDs, itemsCount);
             }
+
+            if (itemsCount <= 0) { return 0; }
             fixed (int* ptr = componentIDs)
             {
-                GetComponentTypeIDsFor_Internal(entityID, itemsCount, ptr);
+                GetComponentTypeIDsFor_Internal(entityID, ptr, itemsCount);
             }
             return itemsCount;
         }
-        private unsafe void GetComponentTypeIDsFor_Internal(int entityID, int itemsCount, int* componentIDs)
+        private unsafe void GetComponentTypeIDsFor_Internal(int entityID, int* componentIDs, int itemsCount)
         {
-            if (itemsCount <= 0) { return; }
-
+            const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
+            // проверка на itemsCount <= 0 не обяательна, алгоритм не ломается,
+            // только впустую отрабатыват по всем чанкам,
+            // но как правильно для пустых сущностей этот алгоритм не применим.
             int poolIndex = 0;
             int bit;
             for (int chunkIndex = entityID << _entityComponentMaskLengthBitShift,
@@ -1015,11 +981,11 @@ namespace DCFApixels.DragonECS
                     if ((chunk & 0x0000FFFF) != 0)
                     {
                         bit = 0x0000_0001;
-                        while (bit != 0x0001_0000)
+                        while (bit < 0x0001_0000)
                         {
                             if ((chunk & bit) != 0)
                             {
-                                *componentIDs = _pools[poolIndex].ComponentTypeID;
+                                *componentIDs = poolIndex;
                                 componentIDs++;
 
                                 itemsCount--;
@@ -1029,6 +995,10 @@ namespace DCFApixels.DragonECS
                             bit <<= 1;
                         }
                     }
+                    else
+                    {
+                        poolIndex += COMPONENT_MASK_CHUNK_SIZE_HALF;
+                    }
                     if ((chunk & -0x7FFF0000) != 0)
                     {
                         bit = 0x0001_0000;
@@ -1036,7 +1006,7 @@ namespace DCFApixels.DragonECS
                         {
                             if ((chunk & bit) != 0)
                             {
-                                *componentIDs = _pools[poolIndex].ComponentTypeID;
+                                *componentIDs = poolIndex;
                                 componentIDs++;
 
                                 itemsCount--;
@@ -1045,6 +1015,10 @@ namespace DCFApixels.DragonECS
                             poolIndex++;
                             bit <<= 1;
                         }
+                    }
+                    else
+                    {
+                        poolIndex += COMPONENT_MASK_CHUNK_SIZE_HALF;
                     }
                 }
             }
