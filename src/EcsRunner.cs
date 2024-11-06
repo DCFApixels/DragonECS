@@ -134,7 +134,13 @@ namespace DCFApixels.DragonECS
 #endif
 
                 #region Constructors
-                public RunHelper(EcsRunner<TProcess> runner) : this(runner, typeof(TProcess).ToMeta().Name) { }
+                public RunHelper(EcsRunner<TProcess> runner) : this(runner,
+#if DEBUG && !DISABLE_DEBUG
+                    typeof(TProcess).ToMeta().Name)
+#else
+                    string.Empty
+#endif
+                { }
                 public RunHelper(EcsRunner<TProcess> runner, string methodName)
                 {
                     _process = runner.Process;
