@@ -717,11 +717,11 @@ namespace DCFApixels.DragonECS
                 {
                     while (_span.MoveNext())
                     {
-                        int chunck = _span.Current << _entityComponentMaskLengthBitShift;
+                        int entityLineStartIndex = _span.Current << _entityComponentMaskLengthBitShift;
                         for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
                         {
                             var bit = _sortIncChunckBuffer.ptr[i];
-                            if ((_entityComponentMasks[chunck + bit.chunkIndex] & bit.mask) != bit.mask)
+                            if ((_entityComponentMasks[entityLineStartIndex + bit.chunkIndex] & bit.mask) != bit.mask)
                             {
                                 goto skip;
                             }
@@ -729,7 +729,7 @@ namespace DCFApixels.DragonECS
                         for (int i = 0; i < _sortExcChunckBuffer.Length; i++)
                         {
                             var bit = _sortExcChunckBuffer.ptr[i];
-                            if ((_entityComponentMasks[chunck + bit.chunkIndex] & bit.mask) != 0)
+                            if ((_entityComponentMasks[entityLineStartIndex + bit.chunkIndex] & bit.mask) != 0)
                             {
                                 goto skip;
                             }
@@ -848,11 +848,11 @@ namespace DCFApixels.DragonECS
                 {
                     while (_span.MoveNext())
                     {
-                        int chunck = _span.Current << _entityComponentMaskLengthBitShift;
+                        int entityLineStartIndex = _span.Current << _entityComponentMaskLengthBitShift;
                         for (int i = 0; i < _sortIncChunckBuffer.Length; i++)
                         {
                             var bit = _sortIncChunckBuffer.ptr[i];
-                            if ((_entityComponentMasks[chunck + bit.chunkIndex] & bit.mask) != bit.mask)
+                            if ((_entityComponentMasks[entityLineStartIndex + bit.chunkIndex] & bit.mask) != bit.mask)
                             {
                                 goto skip;
                             }

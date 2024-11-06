@@ -458,11 +458,59 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Copy/Clone
-        public void CopyEntity(int fromEntityID, int toEntityID)
+        //TODO протестить Copy Clone Move Remove
+
+        #region CopyEntity
+        public unsafe void CopyEntity(int fromEntityID, int toEntityID)
         {
-            foreach (var pool in _pools)
+            const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
+            int entityLineStartIndex = fromEntityID << _entityComponentMaskLengthBitShift;
+            int poolIndexWithoutOffset = 0;
+            for (int i = 0; i < _entityComponentMaskLength; i++)
             {
+                int chunk = _entityComponentMasks[i];
+                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
+                if (chunk != 0)
+                {
+                    if ((chunk & 0x0000FFFF) != 0)
+                    {
+                        int bit = 1;
+                        for (int j = 0; j < COMPONENT_MASK_CHUNK_SIZE_HALF; j++)
+                        {
+                            if ((bit & chunk) != 0)
+                            {
+                                _pools[poolIndexWithoutOffset + j].Copy(fromEntityID, toEntityID);
+                            }
+                            bit <<= 1;
+                        }
+                    }
+                    if ((chunk & -0x7FFF0000) != 0)
+                    {
+                        int bit = 0x00010000;
+                        for (int j = COMPONENT_MASK_CHUNK_SIZE_HALF; j < COMPONENT_MASK_CHUNK_SIZE; j++)
+                        {
+                            if ((bit & chunk) != 0)
+                            {
+                                _pools[poolIndexWithoutOffset + j].Copy(fromEntityID, toEntityID);
+                            }
+                            bit <<= 1;
+                        }
+                    }
+                }
+            }
+            //foreach (var pool in _pools)
+            //{
+            //    if (pool.Has(fromEntityID))
+            //    {
+            //        pool.Copy(fromEntityID, toEntityID);
+            //    }
+            //}
+        }
+        public void CopyEntity(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
+        {
+            foreach (var poolID in componentTypeIDs)
+            {
+                var pool = _pools[poolID];
                 if (pool.Has(fromEntityID))
                 {
                     pool.Copy(fromEntityID, toEntityID);
@@ -471,26 +519,89 @@ namespace DCFApixels.DragonECS
         }
         public void CopyEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
-            foreach (var pool in _pools)
+            const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
+            int entityLineStartIndex = fromEntityID << _entityComponentMaskLengthBitShift;
+            int poolIndexWithoutOffset = 0;
+            for (int i = 0; i < _entityComponentMaskLength; i++)
             {
+                int chunk = _entityComponentMasks[i];
+                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
+                if (chunk != 0)
+                {
+                    if ((chunk & 0x0000FFFF) != 0)
+                    {
+                        int bit = 1;
+                        for (int j = 0; j < COMPONENT_MASK_CHUNK_SIZE_HALF; j++)
+                        {
+                            if ((bit & chunk) != 0)
+                            {
+                                _pools[poolIndexWithoutOffset + j].Copy(fromEntityID, toWorld, toEntityID);
+                            }
+                            bit <<= 1;
+                        }
+                    }
+                    if ((chunk & -0x7FFF0000) != 0)
+                    {
+                        int bit = 0x00010000;
+                        for (int j = COMPONENT_MASK_CHUNK_SIZE_HALF; j < COMPONENT_MASK_CHUNK_SIZE; j++)
+                        {
+                            if ((bit & chunk) != 0)
+                            {
+                                _pools[poolIndexWithoutOffset + j].Copy(fromEntityID, toWorld, toEntityID);
+                            }
+                            bit <<= 1;
+                        }
+                    }
+                }
+            }
+
+            //foreach (var pool in _pools)
+            //{
+            //    if (pool.Has(fromEntityID))
+            //    {
+            //        pool.Copy(fromEntityID, toWorld, toEntityID);
+            //    }
+            //}
+        }
+        public void CopyEntity(int fromEntityID, EcsWorld toWorld, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
+        {
+            foreach (var poolID in componentTypeIDs)
+            {
+                var pool = _pools[poolID];
                 if (pool.Has(fromEntityID))
                 {
                     pool.Copy(fromEntityID, toWorld, toEntityID);
                 }
             }
         }
-        public int CloneEntity(int fromEntityID)
+        #endregion
+
+        #region CloneEntity
+        public int CloneEntity(int entityID)
         {
             int newEntity = NewEntity();
-            CopyEntity(fromEntityID, newEntity);
+            CopyEntity(entityID, newEntity);
             return newEntity;
         }
-        public int CloneEntity(int fromEntityID, EcsWorld toWorld)
+        public int CloneEntity(int entityID, ReadOnlySpan<int> componentTypeIDs)
         {
             int newEntity = NewEntity();
-            CopyEntity(fromEntityID, toWorld, newEntity);
+            CopyEntity(entityID, newEntity, componentTypeIDs);
             return newEntity;
         }
+        public int CloneEntity(int entityID, EcsWorld toWorld)
+        {
+            int newEntity = NewEntity();
+            CopyEntity(entityID, toWorld, newEntity);
+            return newEntity;
+        }
+        public int CloneEntity(int entityID, EcsWorld toWorld, ReadOnlySpan<int> componentTypeIDs)
+        {
+            int newEntity = NewEntity();
+            CopyEntity(entityID, toWorld, newEntity, componentTypeIDs);
+            return newEntity;
+        }
+
         public void CloneEntity(int fromEntityID, int toEntityID)
         {
             CopyEntity(fromEntityID, toEntityID);
@@ -504,6 +615,116 @@ namespace DCFApixels.DragonECS
         }
         //public void CloneEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
         #endregion
+
+        #region MoveComponents
+        public void MoveComponents(int fromEntityID, int toEntityID)
+        {
+            const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
+            int entityLineStartIndex = fromEntityID << _entityComponentMaskLengthBitShift;
+            int poolIndexWithoutOffset = 0;
+            for (int i = 0; i < _entityComponentMaskLength; i++)
+            {
+                int chunk = _entityComponentMasks[i];
+                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
+                if (chunk != 0)
+                {
+                    if ((chunk & 0x0000FFFF) != 0)
+                    {
+                        int bit = 1;
+                        for (int j = 0; j < COMPONENT_MASK_CHUNK_SIZE_HALF; j++)
+                        {
+                            if ((bit & chunk) != 0)
+                            {
+                                var pool = _pools[poolIndexWithoutOffset + j];
+                                pool.Copy(fromEntityID, toEntityID);
+                                pool.Del(fromEntityID);
+                            }
+                            bit <<= 1;
+                        }
+                    }
+                    if ((chunk & -0x7FFF0000) != 0)
+                    {
+                        int bit = 0x00010000;
+                        for (int j = COMPONENT_MASK_CHUNK_SIZE_HALF; j < COMPONENT_MASK_CHUNK_SIZE; j++)
+                        {
+                            if ((bit & chunk) != 0)
+                            {
+                                var pool = _pools[poolIndexWithoutOffset + j];
+                                pool.Copy(fromEntityID, toEntityID);
+                                pool.Del(fromEntityID);
+                            }
+                            bit <<= 1;
+                        }
+                    }
+                }
+            }
+        }
+        public void MoveComponents(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
+        {
+            foreach (var poolID in componentTypeIDs)
+            {
+                var pool = _pools[poolID];
+                if (pool.Has(fromEntityID))
+                {
+                    pool.Copy(fromEntityID, toEntityID);
+                    pool.Del(fromEntityID);
+                }
+            }
+        }
+        #endregion
+
+        #region RemoveComponents
+        public void RemoveComponents(int fromEntityID, int toEntityID)
+        {
+            const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
+            int entityLineStartIndex = fromEntityID << _entityComponentMaskLengthBitShift;
+            int poolIndexWithoutOffset = 0;
+            for (int i = 0; i < _entityComponentMaskLength; i++)
+            {
+                int chunk = _entityComponentMasks[i];
+                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
+                if (chunk != 0)
+                {
+                    if ((chunk & 0x0000FFFF) != 0)
+                    {
+                        int bit = 1;
+                        for (int j = 0; j < COMPONENT_MASK_CHUNK_SIZE_HALF; j++)
+                        {
+                            if ((bit & chunk) != 0)
+                            {
+                                _pools[poolIndexWithoutOffset + j].Del(fromEntityID);
+                            }
+                            bit <<= 1;
+                        }
+                    }
+                    if ((chunk & -0x7FFF0000) != 0)
+                    {
+                        int bit = 0x00010000;
+                        for (int j = COMPONENT_MASK_CHUNK_SIZE_HALF; j < COMPONENT_MASK_CHUNK_SIZE; j++)
+                        {
+                            if ((bit & chunk) != 0)
+                            {
+                                _pools[poolIndexWithoutOffset + j].Del(fromEntityID);
+                            }
+                            bit <<= 1;
+                        }
+                    }
+                }
+            }
+        }
+        public void MoveComponents(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
+        {
+            foreach (var poolID in componentTypeIDs)
+            {
+                var pool = _pools[poolID];
+                if (pool.Has(fromEntityID))
+                {
+                    pool.Del(fromEntityID);
+                }
+            }
+        }
+        #endregion
+
 
         #endregion
 
@@ -800,18 +1021,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region EntitySlot
-        [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 4 * 3)]
+        [StructLayout(LayoutKind.Sequential)]
         private struct EntitySlot
         {
             public static readonly EntitySlot Empty = new EntitySlot(SLEEPING_GEN_FLAG, 0, false);
-            [FieldOffset(0)]
             public short gen;
-            [FieldOffset(2)]
             public short componentsCount;
-            [FieldOffset(4)]
             public bool isUsed;
-            //[FieldOffset(5)]
-            //public bool isLocked;
             public EntitySlot(short gen, short componentsCount, bool isUsed)
             {
                 this.gen = gen;

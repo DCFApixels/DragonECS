@@ -44,7 +44,7 @@ namespace DCFApixels.DragonECS
         internal EcsWorld _source;
         internal EcsMask _mask;
         private bool _isBuilt = false;
-        private IEcsPool[] _pools;
+        //private IEcsPool[] _pools;
 
         #region Properties
         public EcsMask Mask
@@ -59,10 +59,10 @@ namespace DCFApixels.DragonECS
         {
             get { return _isBuilt; }
         }
-        public ReadOnlySpan<IEcsPool> Pools
-        {
-            get { return _pools; }
-        }
+        //public ReadOnlySpan<IEcsPool> Pools
+        //{
+        //    get { return _pools; }
+        //}
         /// <summary>
         /// Статическая инициализация означет что каждый новый эекземпляр идентичен другому, инициализация стандартным путем создает идентичные экземпляры, поэтому значение по умолчанию true.
         /// </summary>
@@ -86,8 +86,8 @@ namespace DCFApixels.DragonECS
             private EcsWorld _world;
             private EcsStaticMask.Builder _maskBuilder;
 
-            private IEcsPool[] _poolsBuffer = new IEcsPool[8];
-            private int _poolsBufferCount;
+            //private IEcsPool[] _poolsBuffer = new IEcsPool[8];
+            //private int _poolsBufferCount;
 
             #region Properties
             public IncludeMarker Inc
@@ -154,8 +154,8 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 newAspect._mask = staticMask.ToMask(world);
-                var pools = new IEcsPool[builder._poolsBufferCount];
-                Array.Copy(builder._poolsBuffer, pools, pools.Length);
+                //var pools = new IEcsPool[builder._poolsBufferCount];
+                //Array.Copy(builder._poolsBuffer, pools, pools.Length);
                 newAspect._isBuilt = true;
 
                 _constructorBuildersStackIndex--;
@@ -184,11 +184,11 @@ namespace DCFApixels.DragonECS
             private TPool CachePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = _world.GetPoolInstance<TPool>();
-                if (_poolsBufferCount >= _poolsBuffer.Length)
-                {
-                    Array.Resize(ref _poolsBuffer, _poolsBuffer.Length << 1);
-                }
-                _poolsBuffer[_poolsBufferCount++] = pool;
+                //if (_poolsBufferCount >= _poolsBuffer.Length)
+                //{
+                //    Array.Resize(ref _poolsBuffer, _poolsBuffer.Length << 1);
+                //}
+                //_poolsBuffer[_poolsBufferCount++] = pool;
                 return pool;
             }
             private void IncludeImplicit(Type type)

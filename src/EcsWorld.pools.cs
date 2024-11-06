@@ -253,12 +253,12 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryRegisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
-            ref int chunk = ref _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex];
-            int newChunk = chunk | maskBit.mask;
-            if (chunk != newChunk)
+            ref int entityLineStartIndex = ref _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex];
+            int newChunk = entityLineStartIndex | maskBit.mask;
+            if (entityLineStartIndex != newChunk)
             {
                 UpVersion();
-                chunk = newChunk;
+                entityLineStartIndex = newChunk;
                 ref PoolSlot slot = ref _poolSlots[componentTypeID];
                 slot.count++;
                 slot.version++;
@@ -270,16 +270,16 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryUnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
-            ref int chunk = ref _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex];
-            int newChunk = chunk & ~maskBit.mask;
-            if (chunk != newChunk)
+            ref int entityLineStartIndex = ref _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex];
+            int newChunk = entityLineStartIndex & ~maskBit.mask;
+            if (entityLineStartIndex != newChunk)
             {
                 UpVersion();
                 ref PoolSlot slot = ref _poolSlots[componentTypeID];
                 slot.count--;
                 slot.version++;
                 var count = --_entities[entityID].componentsCount;
-                chunk = newChunk;
+                entityLineStartIndex = newChunk;
 
                 if (count == 0 && IsUsed(entityID))
                 {
