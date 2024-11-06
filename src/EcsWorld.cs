@@ -712,7 +712,7 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-        public void MoveComponents(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
+        public void RemoveComponents(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
         {
             foreach (var poolID in componentTypeIDs)
             {
