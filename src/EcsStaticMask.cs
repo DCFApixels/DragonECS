@@ -278,25 +278,25 @@ namespace DCFApixels.DragonECS
             public Builder Exc(Type type) { return Exc(EcsTypeCodeManager.Get(type)); }
             public Builder Inc(EcsTypeCode typeCode)
             {
-                if (_version != _builder._version) { Throw.UndefinedException(); }
+                if (_version != _builder._version) { Throw.CantReuseBuilder(); }
                 _builder.Inc(typeCode);
                 return this;
             }
             public Builder Exc(EcsTypeCode typeCode)
             {
-                if (_version != _builder._version) { Throw.UndefinedException(); }
+                if (_version != _builder._version) { Throw.CantReuseBuilder(); }
                 _builder.Exc(typeCode);
                 return this;
             }
             public Builder Combine(EcsStaticMask mask)
             {
-                if (_version != _builder._version) { Throw.UndefinedException(); }
+                if (_version != _builder._version) { Throw.CantReuseBuilder(); }
                 _builder.Combine(mask);
                 return this;
             }
             public Builder Except(EcsStaticMask mask)
             {
-                if (_version != _builder._version) { Throw.UndefinedException(); }
+                if (_version != _builder._version) { Throw.CantReuseBuilder(); }
                 _builder.Except(mask);
                 return this;
             }
@@ -305,7 +305,7 @@ namespace DCFApixels.DragonECS
             #region Build/Cancel
             public EcsStaticMask Build()
             {
-                if (_version != _builder._version) { Throw.UndefinedException(); }
+                if (_version != _builder._version) { Throw.CantReuseBuilder(); }
                 lock (_lock)
                 {
                     _buildersPool.Push(_builder);
@@ -314,7 +314,7 @@ namespace DCFApixels.DragonECS
             }
             public void Cancel()
             {
-                if (_version != _builder._version) { Throw.UndefinedException(); }
+                if (_version != _builder._version) { Throw.CantReuseBuilder(); }
                 lock (_lock)
                 {
                     _buildersPool.Push(_builder);

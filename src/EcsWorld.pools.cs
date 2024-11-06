@@ -209,7 +209,7 @@ namespace DCFApixels.DragonECS
 
                 if (oldPool != _nullPool)
                 {
-                    Throw.UndefinedException();
+                    Throw.Exception("Attempt to initialize a pool with the indetifier of an already existing pool.");
                 }
 
                 _pools[componentTypeID] = newPool;
@@ -390,7 +390,7 @@ namespace DCFApixels.DragonECS
                 if (_lockedPoolCount < 0)
                 {
                     _lockedPoolCount = 0;
-                    Throw.UndefinedException();
+                    Throw.OpeningClosingMethodsBalanceError();
                 }
                 _pools[ComponentTypeID].OnLockedChanged_Debug(false);
             }

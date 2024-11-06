@@ -28,7 +28,7 @@ namespace DCFApixels.DragonECS
                 Type targetInterface = processInterfaceType;
                 if (runnerType.IsAbstract || runnerType.IsInterface)
                 {
-                    Throw.UndefinedException();
+                    Throw.Exception("The instance of a runner cannot be abstract.");
                 }
                 Type GetRunnerBaseType(Type inType)
                 {

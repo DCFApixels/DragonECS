@@ -154,6 +154,14 @@ namespace DCFApixels.DragonECS.Internal
         {
             throw new Exception();
         }
+        internal static void OpeningClosingMethodsBalanceError()
+        {
+            throw new InvalidOperationException("Error of opening - closing methods. Closing method was called more often than opening method.");
+        }
+        internal static void CantReuseBuilder()
+        {
+            throw new InvalidOperationException("Builder has already worked out, use the new builder to build again.");
+        }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Exception(string message)
         {

@@ -93,7 +93,7 @@ namespace DCFApixels.DragonECS
             public static ref T GetForWorldUnchecked(int worldID)
             {// ts
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_mapping[worldID] <= 0) { Throw.UndefinedException(); }
+                if (_mapping[worldID] <= 0) { Throw.ArgumentOutOfRange(); }
 #endif
                 return ref _items[_mapping[worldID]];
             }
