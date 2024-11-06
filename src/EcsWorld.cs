@@ -468,8 +468,7 @@ namespace DCFApixels.DragonECS
             int poolIndexWithoutOffset = 0;
             for (int i = 0; i < _entityComponentMaskLength; i++)
             {
-                int chunk = _entityComponentMasks[i];
-                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
+                int chunk = _entityComponentMasks[entityLineStartIndex + i];
                 if (chunk != 0)
                 {
                     if ((chunk & 0x0000FFFF) != 0)
@@ -497,6 +496,7 @@ namespace DCFApixels.DragonECS
                         }
                     }
                 }
+                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
             }
             //foreach (var pool in _pools)
             //{
@@ -524,13 +524,12 @@ namespace DCFApixels.DragonECS
             int poolIndexWithoutOffset = 0;
             for (int i = 0; i < _entityComponentMaskLength; i++)
             {
-                int chunk = _entityComponentMasks[i];
-                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
+                int chunk = _entityComponentMasks[entityLineStartIndex + i];
                 if (chunk != 0)
                 {
                     if ((chunk & 0x0000FFFF) != 0)
                     {
-                        int bit = 1;
+                        int bit = 0x00000001;
                         for (int j = 0; j < COMPONENT_MASK_CHUNK_SIZE_HALF; j++)
                         {
                             if ((bit & chunk) != 0)
@@ -553,6 +552,7 @@ namespace DCFApixels.DragonECS
                         }
                     }
                 }
+                poolIndexWithoutOffset += COMPONENT_MASK_CHUNK_SIZE;
             }
 
             //foreach (var pool in _pools)
@@ -947,13 +947,13 @@ namespace DCFApixels.DragonECS
         private static int[] _componentIDsBuffer;
         public ReadOnlySpan<int> GetComponentTypeIDsFor(int entityID)
         {
-            int count = GetComponentTypeIDsFor(entityID, ref _componentIDsBuffer);
+            int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
             return new ReadOnlySpan<int>(_componentIDsBuffer, 0, count);
         }
         public void GetComponentPoolsFor(int entityID, List<IEcsPool> list)
         {
             list.Clear();
-            int count = GetComponentTypeIDsFor(entityID, ref _componentIDsBuffer);
+            int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
             for (int i = 0; i < count; i++)
             {
                 list.Add(_pools[_componentIDsBuffer[i]]);
@@ -962,7 +962,7 @@ namespace DCFApixels.DragonECS
         public void GetComponentsFor(int entityID, List<object> list)
         {
             list.Clear();
-            int count = GetComponentTypeIDsFor(entityID, ref _componentIDsBuffer);
+            int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
             for (int i = 0; i < count; i++)
             {
                 list.Add(_pools[_componentIDsBuffer[i]].GetRaw(entityID));
@@ -971,26 +971,40 @@ namespace DCFApixels.DragonECS
         public void GetComponentTypesFor(int entityID, HashSet<Type> typeSet)
         {
             typeSet.Clear();
-            int count = GetComponentTypeIDsFor(entityID, ref _componentIDsBuffer);
+            int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
             for (int i = 0; i < count; i++)
             {
                 typeSet.Add(_pools[_componentIDsBuffer[i]].ComponentType);
             }
         }
-        private int GetComponentTypeIDsFor(int entityID, ref int[] componentIDs)
+        private unsafe int GetComponentTypeIDsFor_Internal(int entityID, ref int[] componentIDs)
         {
-            if (componentIDs == null)
-            {
-                componentIDs = new int[64];
-            }
-            int count = 0;
             var itemsCount = GetComponentsCount(entityID);
-            if (itemsCount <= 0) { return count; }
-            int poolIndex = 0;
-            uint bit;
-            for (int chunkIndex = entityID * _entityComponentMaskLength, chunkIndexMax = chunkIndex + _entityComponentMaskLength; chunkIndex < chunkIndexMax; chunkIndex++)
+            if(componentIDs == null)
             {
-                bit = 0x0000_0001;
+                componentIDs = new int[itemsCount];
+            }
+            if(componentIDs.Length < itemsCount)
+            {
+                Array.Resize(ref componentIDs, itemsCount);
+            }
+            fixed (int* ptr = componentIDs)
+            {
+                GetComponentTypeIDsFor_Internal(entityID, itemsCount, ptr);
+            }
+            return itemsCount;
+        }
+        private unsafe void GetComponentTypeIDsFor_Internal(int entityID, int itemsCount, int* componentIDs)
+        {
+            if (itemsCount <= 0) { return; }
+
+            int poolIndex = 0;
+            int bit;
+            for (int chunkIndex = entityID << _entityComponentMaskLengthBitShift,
+                    chunkIndexMax = chunkIndex + _entityComponentMaskLength;
+                chunkIndex < chunkIndexMax;
+                chunkIndex++)
+            {
                 int chunk = _entityComponentMasks[chunkIndex];
                 if (chunk == 0)
                 {
@@ -998,25 +1012,42 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
-                    while (bit != 0)
+                    if ((chunk & 0x0000FFFF) != 0)
                     {
-                        if ((chunk & bit) != 0)
+                        bit = 0x0000_0001;
+                        while (bit != 0x0001_0000)
                         {
-                            itemsCount--;
-                            if (count > componentIDs.Length)
+                            if ((chunk & bit) != 0)
                             {
-                                Array.Resize(ref componentIDs, count << 1);
+                                *componentIDs = _pools[poolIndex].ComponentTypeID;
+                                componentIDs++;
+
+                                itemsCount--;
+                                if (itemsCount <= 0) { return; }
                             }
-                            componentIDs[count++] = _pools[poolIndex].ComponentTypeID;
-                            if (itemsCount <= 0) { goto exit; }
+                            poolIndex++;
+                            bit <<= 1;
                         }
-                        bit <<= 1;
-                        poolIndex++;
+                    }
+                    if ((chunk & -0x7FFF0000) != 0)
+                    {
+                        bit = 0x0001_0000;
+                        while (bit != 0x0000_0000)
+                        {
+                            if ((chunk & bit) != 0)
+                            {
+                                *componentIDs = _pools[poolIndex].ComponentTypeID;
+                                componentIDs++;
+
+                                itemsCount--;
+                                if (itemsCount <= 0) { return; }
+                            }
+                            poolIndex++;
+                            bit <<= 1;
+                        }
                     }
                 }
             }
-            exit:;
-            return count;
         }
         #endregion
 
