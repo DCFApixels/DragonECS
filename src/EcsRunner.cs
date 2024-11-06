@@ -138,9 +138,10 @@ namespace DCFApixels.DragonECS
 #if DEBUG && !DISABLE_DEBUG
                     typeof(TProcess).ToMeta().Name)
 #else
-                    string.Empty
+                    string.Empty)
 #endif
                 { }
+
                 public RunHelper(EcsRunner<TProcess> runner, string methodName)
                 {
                     _process = runner.Process;
@@ -206,7 +207,7 @@ namespace DCFApixels.DragonECS
 #else
                     foreach (var item in _process)
                     {
-                        try 
+                        try
                         {
                             translationCallback(item);
                         }
@@ -245,7 +246,7 @@ namespace DCFApixels.DragonECS
 #else
                     foreach (var item in _process)
                     {
-                        try 
+                        try
                         {
                             translationCallback(item, t0);
                         }
@@ -284,7 +285,7 @@ namespace DCFApixels.DragonECS
 #else
                     foreach (var item in _process)
                     {
-                        try 
+                        try
                         {
                             translationCallback(item, t0, t1);
                         }
@@ -323,7 +324,7 @@ namespace DCFApixels.DragonECS
 #else
                     foreach (var item in _process)
                     {
-                        try 
+                        try
                         {
                             translationCallback(item, t0, t1, t2);
                         }
@@ -362,7 +363,7 @@ namespace DCFApixels.DragonECS
 #else
                     foreach (var item in _process)
                     {
-                        try 
+                        try
                         {
                             translationCallback(item, t0, t1, t2, t3);
                         }
