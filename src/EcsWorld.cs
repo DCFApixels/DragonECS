@@ -917,7 +917,6 @@ namespace DCFApixels.DragonECS
 
             var count = GetComponentsCount(entityID);
 
-
             if (count <= 0)
             {
                 list.Clear();
@@ -937,19 +936,19 @@ namespace DCFApixels.DragonECS
 
             GetComponentTypeIDsFor_Internal(entityID, poolIdsPtr, count);
 
-            if (list.Count != count)
+            if (list.Count == count)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    list[i] = _pools[poolIdsPtr[i]];
+                }
+            }
+            else
             {
                 list.Clear();
                 for (int i = 0; i < count; i++)
                 {
                     list.Add(_pools[poolIdsPtr[i]]);
-                }
-            }
-            else
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    list[i] = _pools[poolIdsPtr[i]];
                 }
             }
         }
