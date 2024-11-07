@@ -942,14 +942,14 @@ namespace DCFApixels.DragonECS
                 list.Clear();
                 for (int i = 0; i < count; i++)
                 {
-                    list.Add(_pools[_componentIDsBuffer[i]]);
+                    list.Add(_pools[poolIdsPtr[i]]);
                 }
             }
             else
             {
                 for (int i = 0; i < count; i++)
                 {
-                    list[i] = _pools[_componentIDsBuffer[i]];
+                    list[i] = _pools[poolIdsPtr[i]];
                 }
             }
         }
