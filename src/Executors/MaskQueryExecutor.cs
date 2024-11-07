@@ -9,23 +9,24 @@ namespace DCFApixels.DragonECS
     public partial class EcsWorld
     {
         private readonly Dictionary<(Type, object), IQueryExecutorImplementation> _executorCoures;
+
         public TExecutor GetExecutorForMask<TExecutor>(IComponentMask gmask)
             where TExecutor : MaskQueryExecutor, new()
         {
-            var coreType = typeof(TExecutor);
+            var executorType = typeof(TExecutor);
             //проверяет ключ по абстрактной маске
-            if (_executorCoures.TryGetValue((coreType, gmask), out IQueryExecutorImplementation executor) == false)
+            if (_executorCoures.TryGetValue((executorType, gmask), out IQueryExecutorImplementation executor) == false)
             {
                 var mask = gmask.ToMask(this);
                 //проверяет ключ по конкретной маске, или что конкретная и абстрактая одна и таже
                 if (mask == gmask ||
-                    _executorCoures.TryGetValue((coreType, mask), out executor) == false)
+                    _executorCoures.TryGetValue((executorType, mask), out executor) == false)
                 {
-                    TExecutor newCore = new TExecutor();
-                    newCore.Initialize(this, mask);
-                    executor = newCore;
+                    TExecutor executorCore = new TExecutor();
+                    executorCore.Initialize(this, mask);
+                    executor = executorCore;
                 }
-                _executorCoures.Add((coreType, gmask), executor);
+                _executorCoures.Add((executorType, gmask), executor);
             }
             return (TExecutor)executor;
         }
@@ -39,6 +40,7 @@ namespace DCFApixels.DragonECS.Core
         EcsWorld World { get; }
         long Version { get; }
         bool IsCached { get; }
+        int LastCachedCount { get; }
         void Destroy();
     }
     public abstract class MaskQueryExecutor : IQueryExecutorImplementation
@@ -62,6 +64,7 @@ namespace DCFApixels.DragonECS.Core
         }
         public abstract long Version { get; }
         public abstract bool IsCached { get; }
+        public abstract int LastCachedCount { get; }
         internal void Initialize(EcsWorld world, EcsMask mask)
         {
             _source = world;

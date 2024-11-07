@@ -10,7 +10,7 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal class EcsWhereToGroupExecutor : MaskQueryExecutor
+    internal sealed class EcsWhereToGroupExecutor : MaskQueryExecutor
     {
         private EcsMaskIterator _iterator;
 
@@ -30,6 +30,11 @@ namespace DCFApixels.DragonECS.Internal
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _versionsChecker.Check(); }
+        }
+        public sealed override int LastCachedCount
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _filteredAllGroup.Count; }
         }
         #endregion
 
