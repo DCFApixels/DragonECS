@@ -33,7 +33,7 @@ namespace DCFApixels.DragonECS
 
         public void GetMaskQueryExecutors(List<MaskQueryExecutor> result, ref int version)
         {
-            if(_executorCoures == null || version == _executorCoures.Count)
+            if (_executorCoures == null || version == _executorCoures.Count)
             {
                 return;
             }
@@ -42,7 +42,7 @@ namespace DCFApixels.DragonECS
 
             foreach (var item in _executorCoures)
             {
-                if(item.Value is MaskQueryExecutor x)
+                if (item.Value is MaskQueryExecutor x)
                 {
                     result.Add(x);
                 }
@@ -77,7 +77,7 @@ namespace DCFApixels.DragonECS.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source; }
         }
-        protected EcsMask Mask
+        public EcsMask Mask
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _mask; }
