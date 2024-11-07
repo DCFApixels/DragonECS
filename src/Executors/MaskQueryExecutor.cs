@@ -30,6 +30,26 @@ namespace DCFApixels.DragonECS
             }
             return (TExecutor)executor;
         }
+
+        public void GetMaskQueryExecutors(List<MaskQueryExecutor> result, ref int version)
+        {
+            if(_executorCoures == null || version == _executorCoures.Count)
+            {
+                return;
+            }
+
+            result.Clear();
+
+            foreach (var item in _executorCoures)
+            {
+                if(item.Value is MaskQueryExecutor x)
+                {
+                    result.Add(x);
+                }
+            }
+
+            version = _executorCoures.Count;
+        }
     }
 }
 
