@@ -687,7 +687,6 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-
         #endregion
 
         #region DelEntBuffer
@@ -912,13 +911,46 @@ namespace DCFApixels.DragonECS
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
             return new ReadOnlySpan<int>(_componentIDsBuffer, 0, count);
         }
-        public void GetComponentPoolsFor(int entityID, List<IEcsPool> list)
+        public unsafe void GetComponentPoolsFor(int entityID, List<IEcsPool> list)
         {
-            list.Clear();
-            int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
-            for (int i = 0; i < count; i++)
+            const int BUFFER_THRESHOLD = 100;
+
+            var count = GetComponentsCount(entityID);
+
+
+            if (count <= 0)
             {
-                list.Add(_pools[_componentIDsBuffer[i]]);
+                list.Clear();
+                return;
+            }
+
+            int* poolIdsPtr;
+            if (count < BUFFER_THRESHOLD)
+            {
+                int* ptr = stackalloc int[count];
+                poolIdsPtr = ptr;
+            }
+            else
+            {
+                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+            }
+
+            GetComponentTypeIDsFor_Internal(entityID, poolIdsPtr, count);
+
+            if(list.Count != count)
+            {
+                list.Clear();
+                for (int i = 0; i < count; i++)
+                {
+                    list.Add(_pools[_componentIDsBuffer[i]]);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    list[i] = _pools[_componentIDsBuffer[i]];
+                }
             }
         }
         public void GetComponentsFor(int entityID, List<object> list)
@@ -952,10 +984,69 @@ namespace DCFApixels.DragonECS
             }
 
             if (itemsCount <= 0) { return 0; }
-            fixed (int* ptr = componentIDs)
+
+            const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
+            // проверка на itemsCount <= 0 не обяательна, алгоритм не ломается,
+            // только впустую отрабатыват по всем чанкам,
+            // но как правильно для пустых сущностей этот алгоритм не применим.
+            int poolIndex = 0;
+            int bit;
+            int arrayIndex = 0;
+            for (int chunkIndex = entityID << _entityComponentMaskLengthBitShift,
+                    chunkIndexMax = chunkIndex + _entityComponentMaskLength;
+                chunkIndex < chunkIndexMax;
+                chunkIndex++)
             {
-                GetComponentTypeIDsFor_Internal(entityID, ptr, itemsCount);
+                int chunk = _entityComponentMasks[chunkIndex];
+                if (chunk == 0)
+                {
+                    poolIndex += COMPONENT_MASK_CHUNK_SIZE;
+                }
+                else
+                {
+                    if ((chunk & 0x0000FFFF) != 0)
+                    {
+                        bit = 0x0000_0001;
+                        while (bit < 0x0001_0000)
+                        {
+                            if ((chunk & bit) != 0)
+                            {
+                                componentIDs[arrayIndex] = poolIndex;
+
+                                itemsCount--;
+                                if (itemsCount <= 0) { return itemsCount; }
+                            }
+                            poolIndex++;
+                            bit <<= 1;
+                        }
+                    }
+                    else
+                    {
+                        poolIndex += COMPONENT_MASK_CHUNK_SIZE_HALF;
+                    }
+                    if ((chunk & -0x7FFF0000) != 0)
+                    {
+                        bit = 0x0001_0000;
+                        while (bit != 0x0000_0000)
+                        {
+                            if ((chunk & bit) != 0)
+                            {
+                                componentIDs[arrayIndex] = poolIndex;
+
+                                itemsCount--;
+                                if (itemsCount <= 0) { return itemsCount; }
+                            }
+                            poolIndex++;
+                            bit <<= 1;
+                        }
+                    }
+                    else
+                    {
+                        poolIndex += COMPONENT_MASK_CHUNK_SIZE_HALF;
+                    }
+                }
             }
+
             return itemsCount;
         }
         private unsafe void GetComponentTypeIDsFor_Internal(int entityID, int* componentIDs, int itemsCount)
