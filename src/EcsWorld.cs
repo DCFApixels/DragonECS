@@ -601,36 +601,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region MoveComponents
-        public unsafe void MoveComponents(int fromEntityID, int toEntityID)
-        {
-            const int BUFFER_THRESHOLD = 100;
-
-            int count = GetComponentsCount(fromEntityID);
-
-            int* poolIdsPtr;
-            if (count < BUFFER_THRESHOLD)
-            {
-                int* ptr = stackalloc int[count];
-                poolIdsPtr = ptr;
-            }
-            else
-            {
-                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
-            }
-
-            GetComponentTypeIDsFor_Internal(fromEntityID, poolIdsPtr, count);
-            for (int i = 0; i < count; i++)
-            {
-                var pool = _pools[poolIdsPtr[i]];
-                pool.Copy(fromEntityID, toEntityID);
-                pool.Del(fromEntityID);
-            }
-
-            if (count >= BUFFER_THRESHOLD)
-            {
-                UnmanagedArrayUtility.Free(poolIdsPtr);
-            }
-        }
         public void MoveComponents(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
         {
             foreach (var poolID in componentTypeIDs)
@@ -646,35 +616,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region RemoveComponents
-        public unsafe void RemoveComponents(int fromEntityID, int toEntityID)
-        {
-            const int BUFFER_THRESHOLD = 100;
-
-            int count = GetComponentsCount(fromEntityID);
-
-            int* poolIdsPtr;
-            if (count < BUFFER_THRESHOLD)
-            {
-                int* ptr = stackalloc int[count];
-                poolIdsPtr = ptr;
-            }
-            else
-            {
-                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
-            }
-
-            GetComponentTypeIDsFor_Internal(fromEntityID, poolIdsPtr, count);
-            for (int i = 0; i < count; i++)
-            {
-                _pools[poolIdsPtr[i]].Del(fromEntityID);
-            }
-
-            if (count >= BUFFER_THRESHOLD)
-            {
-                UnmanagedArrayUtility.Free(poolIdsPtr);
-            }
-        }
-        public void RemoveComponents(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
+        public void RemoveComponents(int fromEntityID, ReadOnlySpan<int> componentTypeIDs)
         {
             foreach (var poolID in componentTypeIDs)
             {
