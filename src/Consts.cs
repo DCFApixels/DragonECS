@@ -98,10 +98,10 @@
 
 #if ENABLE_IL2CPP
 // Unity IL2CPP performance optimization attribute.
-namespace Unity.IL2CPP.CompilerServices 
+namespace Unity.IL2CPP.CompilerServices
 {
     using System;
-    internal enum Option 
+    internal enum Option
     {
         NullChecks = 1,
         ArrayBoundsChecks = 2,

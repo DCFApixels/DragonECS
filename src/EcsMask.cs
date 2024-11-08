@@ -23,7 +23,7 @@ namespace DCFApixels.DragonECS
     using static EcsMaskIteratorUtility;
 
 #if ENABLE_IL2CPP
-    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
@@ -477,7 +477,7 @@ namespace DCFApixels.DragonECS
 
     #region EcsMaskIterator
 #if ENABLE_IL2CPP
-    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     public class EcsMaskIterator
@@ -616,7 +616,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerable Iterate(EcsSpan span) { return new Enumerable(this, span); }
 #if ENABLE_IL2CPP
-        [Il2CppSetOption (Option.NullChecks, false)]
+        [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
         public readonly ref struct Enumerable
@@ -684,7 +684,7 @@ namespace DCFApixels.DragonECS
             }
 
 #if ENABLE_IL2CPP
-            [Il2CppSetOption (Option.NullChecks, false)]
+            [Il2CppSetOption(Option.NullChecks, false)]
             [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
             public unsafe ref struct Enumerator
@@ -748,7 +748,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public OnlyIncEnumerable IterateOnlyInc(EcsSpan span) { return new OnlyIncEnumerable(this, span); }
 #if ENABLE_IL2CPP
-        [Il2CppSetOption (Option.NullChecks, false)]
+        [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
         public readonly ref struct OnlyIncEnumerable
@@ -817,7 +817,7 @@ namespace DCFApixels.DragonECS
             }
 
 #if ENABLE_IL2CPP
-            [Il2CppSetOption (Option.NullChecks, false)]
+            [Il2CppSetOption(Option.NullChecks, false)]
             [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
             public unsafe ref struct Enumerator
@@ -874,7 +874,7 @@ namespace DCFApixels.DragonECS.Internal
 {
     #region EcsMaskIteratorUtility
 #if ENABLE_IL2CPP
-    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     internal unsafe class EcsMaskIteratorUtility
@@ -910,7 +910,7 @@ namespace DCFApixels.DragonECS.Internal
         }
 
 #if ENABLE_IL2CPP
-        [Il2CppSetOption (Option.NullChecks, false)]
+        [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
         internal readonly struct IncCountComparer : IStructComparer<int>
@@ -929,7 +929,7 @@ namespace DCFApixels.DragonECS.Internal
         }
 
 #if ENABLE_IL2CPP
-        [Il2CppSetOption (Option.NullChecks, false)]
+        [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
         internal readonly struct ExcCountComparer : IStructComparer<int>

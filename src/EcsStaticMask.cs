@@ -13,7 +13,7 @@ using Unity.IL2CPP.CompilerServices;
 namespace DCFApixels.DragonECS
 {
 #if ENABLE_IL2CPP
-    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]

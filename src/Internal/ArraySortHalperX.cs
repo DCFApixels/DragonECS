@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS.Internal
     }
 
 #if ENABLE_IL2CPP
-    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     internal static class ArraySortHalperX<T>
@@ -116,7 +116,7 @@ namespace DCFApixels.DragonECS.Internal
         }
 
 #if ENABLE_IL2CPP
-        [Il2CppSetOption (Option.NullChecks, false)]
+        [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
         private class ComparisonHach : IComparer<T>
@@ -162,7 +162,7 @@ namespace DCFApixels.DragonECS.Internal
     }
 
 #if ENABLE_IL2CPP
-    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     internal static unsafe class UnsafeArraySortHalperX<T> where T : unmanaged

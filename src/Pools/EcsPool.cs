@@ -19,7 +19,7 @@ namespace DCFApixels.DragonECS
 
     /// <summary>Pool for IEcsComponent components</summary>
 #if ENABLE_IL2CPP
-    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption(Option.NullChecks, false)]
 #endif
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
