@@ -46,10 +46,10 @@ namespace DCFApixels.DragonECS.UncheckedCore
         }
     }
 
-    public readonly struct EntitesMatrix
+    public readonly struct EntitiesMatrix
     {
         private readonly EcsWorld _world;
-        public EntitesMatrix(EcsWorld world)
+        public EntitiesMatrix(EcsWorld world)
         {
             _world = world;
         }
