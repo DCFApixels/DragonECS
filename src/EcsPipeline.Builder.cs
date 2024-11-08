@@ -630,7 +630,7 @@ namespace DCFApixels.DragonECS
 
                 //отслеживание осортированности систем
                 private int _lastSortOrder;
-                private int _lastAddOrder;
+                //private int _lastAddOrder;
                 private bool _isSorted = true;
 
                 private string _layerName;
