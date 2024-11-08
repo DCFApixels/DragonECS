@@ -1140,6 +1140,7 @@ namespace DCFApixels.DragonECS
         protected class DebuggerProxy
         {
             private EcsWorld _world;
+            private List<MaskQueryExecutor> _queries;
             public EntitySlotInfo[] Entities
             {
                 get
@@ -1156,9 +1157,13 @@ namespace DCFApixels.DragonECS
             public long Version { get { return _world.Version; } }
             public IEcsPool[] Pools { get { return _world._pools; } }
             public short ID { get { return _world.ID; } }
+            public List<MaskQueryExecutor> MaskQueries { get { return _queries; } }
             public DebuggerProxy(EcsWorld world)
             {
                 _world = world;
+                int v = 0;
+                _queries = new List<MaskQueryExecutor>();
+                world.GetMaskQueryExecutors(_queries, ref v);
             }
         }
         #endregion
