@@ -13,7 +13,9 @@ namespace DCFApixels.DragonECS
         private int _poolsCount;
         internal IEcsPoolImplementation[] _pools;
         internal PoolSlot[] _poolSlots;
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
         private int _lockedPoolCount = 0;
+#endif
 
         private readonly PoolsMediator _poolsMediator;
 
