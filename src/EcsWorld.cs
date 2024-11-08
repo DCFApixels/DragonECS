@@ -1010,10 +1010,10 @@ namespace DCFApixels.DragonECS
                         {
                             if ((chunk & bit) != 0)
                             {
-                                componentIDs[arrayIndex] = poolIndex;
+                                componentIDs[arrayIndex++] = poolIndex;
 
                                 itemsCount--;
-                                if (itemsCount <= 0) { return itemsCount; }
+                                if (itemsCount <= 0) { return arrayIndex; }
                             }
                             poolIndex++;
                             bit <<= 1;
@@ -1030,10 +1030,10 @@ namespace DCFApixels.DragonECS
                         {
                             if ((chunk & bit) != 0)
                             {
-                                componentIDs[arrayIndex] = poolIndex;
+                                componentIDs[arrayIndex++] = poolIndex;
 
                                 itemsCount--;
-                                if (itemsCount <= 0) { return itemsCount; }
+                                if (itemsCount <= 0) { return arrayIndex; }
                             }
                             poolIndex++;
                             bit <<= 1;
