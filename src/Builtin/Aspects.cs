@@ -6,14 +6,14 @@ namespace DCFApixels.DragonECS
 
     public sealed class SingleAspect<TPool> : EcsAspect where TPool : IEcsPoolImplementation, new()
     {
-        public readonly TPool pool = CurrentBuilder.IncludePool<TPool>();
+        public readonly TPool pool = B.IncludePool<TPool>();
     }
     public sealed class CombinedAspect<A0, A1> : EcsAspect
         where A0 : EcsAspect, new()
         where A1 : EcsAspect, new()
     {
-        public readonly A0 a0 = CurrentBuilder.Combine<A0>();
-        public readonly A1 a1 = CurrentBuilder.Combine<A1>();
+        public readonly A0 a0 = B.Combine<A0>();
+        public readonly A1 a1 = B.Combine<A1>();
         public void Deconstruct(out A0 a0, out A1 a1)
         {
             a0 = this.a0;
@@ -26,9 +26,9 @@ namespace DCFApixels.DragonECS
         where A1 : EcsAspect, new()
         where A2 : EcsAspect, new()
     {
-        public readonly A0 a0 = CurrentBuilder.Combine<A0>();
-        public readonly A1 a1 = CurrentBuilder.Combine<A1>();
-        public readonly A2 a2 = CurrentBuilder.Combine<A2>();
+        public readonly A0 a0 = B.Combine<A0>();
+        public readonly A1 a1 = B.Combine<A1>();
+        public readonly A2 a2 = B.Combine<A2>();
         public void Deconstruct(out A0 a0, out A1 a1, out A2 a2)
         {
             a0 = this.a0;
@@ -43,10 +43,10 @@ namespace DCFApixels.DragonECS
         where A2 : EcsAspect, new()
         where A3 : EcsAspect, new()
     {
-        public readonly A0 a0 = CurrentBuilder.Combine<A0>();
-        public readonly A1 a1 = CurrentBuilder.Combine<A1>();
-        public readonly A2 a2 = CurrentBuilder.Combine<A2>();
-        public readonly A3 a3 = CurrentBuilder.Combine<A3>();
+        public readonly A0 a0 = B.Combine<A0>();
+        public readonly A1 a1 = B.Combine<A1>();
+        public readonly A2 a2 = B.Combine<A2>();
+        public readonly A3 a3 = B.Combine<A3>();
         public void Deconstruct(out A0 a0, out A1 a1, out A2 a2, out A3 a3)
         {
             a0 = this.a0;
@@ -63,11 +63,11 @@ namespace DCFApixels.DragonECS
         where A3 : EcsAspect, new()
         where A4 : EcsAspect, new()
     {
-        public readonly A0 a0 = CurrentBuilder.Combine<A0>();
-        public readonly A1 a1 = CurrentBuilder.Combine<A1>();
-        public readonly A2 a2 = CurrentBuilder.Combine<A2>();
-        public readonly A3 a3 = CurrentBuilder.Combine<A3>();
-        public readonly A4 a4 = CurrentBuilder.Combine<A4>();
+        public readonly A0 a0 = B.Combine<A0>();
+        public readonly A1 a1 = B.Combine<A1>();
+        public readonly A2 a2 = B.Combine<A2>();
+        public readonly A3 a3 = B.Combine<A3>();
+        public readonly A4 a4 = B.Combine<A4>();
         public void Deconstruct(out A0 a0, out A1 a1, out A2 a2, out A3 a3, out A4 a4)
         {
             a0 = this.a0;
@@ -86,12 +86,12 @@ namespace DCFApixels.DragonECS
         where A4 : EcsAspect, new()
         where A5 : EcsAspect, new()
     {
-        public readonly A0 a0 = CurrentBuilder.Combine<A0>();
-        public readonly A1 a1 = CurrentBuilder.Combine<A1>();
-        public readonly A2 a2 = CurrentBuilder.Combine<A2>();
-        public readonly A3 a3 = CurrentBuilder.Combine<A3>();
-        public readonly A4 a4 = CurrentBuilder.Combine<A4>();
-        public readonly A5 a5 = CurrentBuilder.Combine<A5>();
+        public readonly A0 a0 = B.Combine<A0>();
+        public readonly A1 a1 = B.Combine<A1>();
+        public readonly A2 a2 = B.Combine<A2>();
+        public readonly A3 a3 = B.Combine<A3>();
+        public readonly A4 a4 = B.Combine<A4>();
+        public readonly A5 a5 = B.Combine<A5>();
         public void Deconstruct(out A0 a0, out A1 a1, out A2 a2, out A3 a3, out A4 a4, out A5 a5)
         {
             a0 = this.a0;

@@ -6,6 +6,25 @@ using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
 {
+    public readonly struct Singleton<T> where T : struct
+    {
+        public readonly short WorldID;
+        public Singleton(short worldID)
+        {
+            WorldID = worldID;
+            EcsWorld.GetData<T>(worldID);
+        }
+        public EcsWorld World
+        {
+            get { return EcsWorld.GetWorld(WorldID); }
+        }
+        public ref T Value
+        {
+            get { return ref EcsWorld.GetDataUnchecked<T>(WorldID); }
+        }
+
+        public static implicit operator Singleton<T>(SingletonMarker a) { return new Singleton<T>(a.Builder.World.ID); }
+    }
     public abstract class EcsAspect : ITemplateNode, IComponentMask
     {
         #region Initialization Halpers
@@ -13,7 +32,7 @@ namespace DCFApixels.DragonECS
         private static Builder[] _constructorBuildersStack;
         [ThreadStatic]
         private static int _constructorBuildersStackIndex;
-        protected static Builder CurrentBuilder
+        protected static Builder B
         {
             get
             {
@@ -24,17 +43,25 @@ namespace DCFApixels.DragonECS
                 return _constructorBuildersStack[_constructorBuildersStackIndex];
             }
         }
+        protected static Builder CurrentBuilder
+        {
+            get { return B; }
+        }
         protected static IncludeMarker Inc
         {
-            get { return CurrentBuilder.Inc; }
+            get { return B.Inc; }
         }
         protected static ExcludeMarker Exc
         {
-            get { return CurrentBuilder.Exc; }
+            get { return B.Exc; }
         }
         protected static OptionalMarker Opt
         {
-            get { return CurrentBuilder.Opt; }
+            get { return B.Opt; }
+        }
+        protected static SingletonMarker Singleton
+        {
+            get { return B.Singleton; }
         }
         #endregion
 
@@ -102,6 +129,10 @@ namespace DCFApixels.DragonECS
             {
                 get { return new OptionalMarker(this); }
             }
+            public SingletonMarker Singleton
+            {
+                get { return new SingletonMarker(this); }
+            }
             public EcsWorld World
             {
                 get { return _world; }
@@ -164,6 +195,10 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Include/Exclude/Optional/Combine/Except
+            public Singleton<T> Get<T>() where T : struct
+            {
+                return new Singleton<T>(_world.ID);
+            }
             public TPool IncludePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = CachePool<TPool>();
@@ -395,6 +430,18 @@ namespace DCFApixels.DragonECS
         public T GetInstance<T>() where T : IEcsPoolImplementation, new()
         {
             return _builder.OptionalPool<T>();
+        }
+    }
+    public readonly ref struct SingletonMarker
+    {
+        public readonly EcsAspect.Builder Builder;
+        public SingletonMarker(EcsAspect.Builder builder)
+        {
+            Builder = builder;
+        }
+        public T Get<T>() where T : struct
+        {
+            return Builder.World.Get<T>();
         }
     }
     #endregion
