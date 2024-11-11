@@ -53,36 +53,37 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 > If there are unclear points, you can ask questions here [Feedback](#Feedback)
 
 ## Table of Contents
-- [Installation](#Installation)
-- [Basic Concepts](#Basic-Concepts)
+- [Installation](#installation)
+- [Basic Concepts](#basic-concepts)
   - [Entity](#entity)
   - [Component](#component)
   - [System](#system)
-- [Framework Concepts](#Framework-Concepts)
-  - [Pipeline](#Pipeline)
-    - [Building](#Building)
-    - [Dependency Injection](#Dependency-Injection)
-    - [Modules](#Modules)
-    - [Layers](#Layers)
+- [Framework Concepts](#framework-concepts)
+  - [Pipeline](#pipeline)
+    - [Building](#building)
+    - [Dependency Injection](#dependency-injection)
+    - [Modules](#modules)
+    - [Sorting](#sorting)
   - [Processes](#Processes)
   - [World](#World)
   - [Pool](#Pool)
-  - [Aspect](#Aspect)
-  - [Queries](#Queries)
-  - [Collections](#Collections)
+  - [Mask](#mask)
+  - [Aspect](#aspect)
+  - [Queries](#queries)
+  - [Collections](#collections)
   - [ECS Root](#ecs-root)
 - [Debug](#debug)
-  - [Meta Attributes](#Meta-Attributes)
+  - [Meta Attributes](#meta-attributes)
   - [EcsDebug](#ecsdebug)
-  - [Profiling](#Profiling)
+  - [Profiling](#profiling)
 - [Define Symbols](#define-symbols)
-- [Framework Extension Tools](#Framework-Extension-tools)
-  - [World Components](#World-Components)
-  - [Configs](#Configs)
-- [Projects powered by DragonECS](#Projects-powered-by-DragonECS)
-- [Extensions](#Extensions)
+- [Framework Extension Tools](#framework-extension-tools)
+  - [World Components](#world-components)
+  - [Configs](#configs)
+- [Projects powered by DragonECS](#projects-powered-by-dragonecs)
+- [Extensions](#extensions)
 - [FAQ](#faq)
-- [Feedback](#Feedback)
+- [Feedback](#feedback)
 
 </br>
 
@@ -152,21 +153,20 @@ if (entity.TryGetID(out int entityID)) { }
  
  </details>
  
-> **NOTICE:** Entities cannot exist without components, empty entities will be automatically deleted immediately after the last component is deleted.
+> Entities cannot exist without components, empty entities will be automatically deleted immediately after the last component is deleted.
 
 ## Component
-Data for entities. Must implement the ``IEcsComponent`` interface or other specifying type of component. 
+Data for entities.
 ```c#
+// IEcsComponent components are stored in regular storage.
 struct Health : IEcsComponent
 {
     public float health;
     public int armor;
 }
+// Components with IEcsTagComponent are stored in tag-optimized storage.
 struct PlayerTag : IEcsTagComponent {}
 ```
-Built-in component types:
-* `IEcsComponent` - Components with data. Universal component type.
-* `IEcsTagComponent` - Tag components. Components without data.
 
 ## System
 Represent the core logic defining entity behaviors. They are implemented as user-defined classes that implement at least one of the process interfaces. Key processes include:
@@ -278,7 +278,9 @@ EcsPipeline pipeline = EcsPipeline.New()
     .BuildAndInit();
 ```
 
-### Layers
+### Sorting
+To manage the position of systems in the pipeline, regardless of the order in which they are added, there are two methods: Layers and Sorting Order.
+#### Layers
 Queues in the system can be segmented into layers. A layer defines a position in the queue for inserting systems.  For example, if a system needs to be inserted at the end of the queue regardless of where it is added, you can add this system to the `EcsConsts.END_LAYER` layer.
 ``` c#
 const string SOME_LAYER = nameof(SOME_LAYER);
@@ -297,6 +299,18 @@ The built-in layers are arranged in the following order:
 * `EcsConst.BASIC_LAYER` (Systems are added here if no layer is specified during addition)
 * `EcsConst.END_LAYER`
 * `EcsConst.POST_END_LAYER`
+#### Sorting Order
+The sort order int value is used to sort systems within a layer. By default, systems are added with `sortOrder = 0`.
+
+```c#
+EcsPipeline pipeline = EcsPipeline.New()
+    // ...
+    // System SomeSystem will be inserted into the layer EcsConsts.BEGIN_LAYER 
+    // and placed after systems with sortOrder less than 10.
+    .Add(New SomeSystem(), EcsConsts.BEGIN_LAYER, 10)
+    // ...
+    .BuildAndInit();
+```
 
 ## Processes
 Processes are queues of systems that implement a common interface, such as `IEcsRun`. Runners are used to start processes. Built-in processes are started automatically. It is possible to implement custom processes.
@@ -328,8 +342,8 @@ sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomet
         foreach (var item in Process) item.Do();
     }
 }
-// ...
-
+```
+``` c#
 // Adding the runner when creating the pipeline
 _pipeline = EcsPipeline.New()
     //...
@@ -343,12 +357,38 @@ _pipeline.GetRunner<IDoSomethingProcess>.Do()
 // or if the runner was not added (calling GetRunnerInstance will also add the runner to the pipeline).
 _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 ```
+
+<details>
+<summary>Advanced Implementation of a Runner</summary>
+
+``` c#
+internal sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomethingProcess
+{
+    // RunHelper simplifies the implementation similar to the built-in processes implementation. 
+    // It automatically triggers the profiler marker and also includes a try-catch block.
+    private RunHelper _helper;
+    private RunHelper _helper;
+    protected override void OnSetup()
+    {
+        // The second argument specifies the name of the marker, if not specified, the name will be chosen automatically.
+        _helper = new RunHelper(this, nameof(Do));
+    }
+    public void Do()
+    {
+        _helper.Run(p => p.Do());
+    }
+}
+```
+
+</details>
+
 > Runners have several implementation requirements:
 > * Inheritance from `EcsRunner<T>` must be direct.
 > * Runner can only contain one interface (except `IEcsProcess`);
 > * The inheriting class of `EcsRunner<T>,` must also implement the `T` interface;
     
 > It's not recommended to call `GetRunner` in a loop; instead, cache the retrieved runner instance.
+
 </details>
 
 ## World
@@ -377,7 +417,7 @@ _world = new EcsDefaultWorld(config);
 ## Pool
 Stash of components, providing methods for adding, reading, editing, and removing components on entities. There are several types of pools designed for different purposes:
 * `EcsPool` - universal pool, stores struct components implementing the `IEcsComponent` interface;
-* `EcsTagPool` - special pool for empty tag components, stores struct-components with `IEcsTagComponent` as bool values, which in comparison with `EcsPool` implementation has better memory and speed optimization;
+* `EcsTagPool` - special pool optimized for tag components, stores struct-components with `IEcsTagComponent`;
 
 Pools have 5 main methods and their variations:
 ``` c#
@@ -402,6 +442,41 @@ poses.Del(entityID);
 > There are "safe" methods that first perform a check for the presence or absence of a component. Such methods are prefixed with `Try`.
     
 > It is possible to implement a user pool. This feature will be described shortly.
+
+## Mask
+Used to filter entities by the presence or absence of components.
+``` c#
+// Creating a mask that checks if entities have components 
+// SomeCmp1 and SomeCmp2, but do not have component SomeCmp3.
+EcsMask mask = EcsMask.New(_world)
+    // Inc - Condition for the presence of a component.
+    .Inc<SomeCmp1>()
+    .Inc<SomeCmp2>()
+    // Exc - Condition for the absence of a component.
+    .Exc<SomeCmp3>()
+    .Build();
+```
+
+<details>
+<summary>Static Mask</summary>
+
+`EcsMask` is tied to specific world instances, which need to be passed to `EcsMask.New(world)`, but there is also `EcsStaticMask`, which can be created without being tied to a world.
+
+``` c#
+class SomeSystem : IEcsRun 
+{
+    // EcsStaticMask can be created in static fields.
+    static readonly EcsStaticMask _staticMask = EcsStaticMask.Inc<SomeCmp1>().Inc<SomeCmp2>().Exc<SomeCmp3>().Build();
+
+    // ...
+}
+```
+``` c#
+// Converting to a regular mask.
+EcsMask mask = _staticMask.ToMask(_world);
+```
+
+</details>
  
 ## Aspect
 These are custom classes inherited from `EcsAspect` and used to interact with entities. Aspects are both a pool cache and a component mask for filtering entities. You can think of aspects as a description of what entities the system is working with.
@@ -477,16 +552,23 @@ If there are conflicting constraints between the combined aspects, the new const
 </details>
 
 ## Queries
-To get the set of required entities, there is a query method `EcsWorld.Where<TAspect>(out TAspect aspect)`. Aspect is specified as `TAspect`, the entities will be filtered by the mask of the specified aspect. The `Where` query is applicable to both `EcsWorld` and framework collections (in this respect, Where is somewhat similar to a similar one from Linq).
-Example:
+Filter entities and return collections of entities that matching conditions. The built-in `Where` query filters by component mask matching and has several overloads:
++ `EcsWorld.Where(EcsMask mask)` - Standard filtering by mask;
++ `EcsWorld.Where<TAspect>(out TAspect aspect)` - Combines filtering by aspect mask and aspect return;
+
+The `Where` query can be applied to both `EcsWorld` and framework collections (in this sense, `Where` is somewhat similar to the one in Linq). There are also overloads for sorting entities using `Comparison<int>`.
+
+Example system:
 ``` c#
 public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
 {
     class Aspect : EcsAspect
     {
-        public EcsPool<Health> healths = Inc; 
-        public EcsPool<DamageSignal> damageSignals = Inc; 
+        public EcsPool<Health> healths = Inc;
+        public EcsPool<DamageSignal> damageSignals = Inc;
         public EcsTagPool<IsInvulnerable> isInvulnerables = Exc;
+        // The presence or absence of this component is not checked.
+        public EcsTagPool<IsDiedSignal> isDiedSignals = Opt;
     }
     EcsDefaultWorld _world;
     public void Inject(EcsDefaultWorld world) => _world = world;
@@ -495,12 +577,22 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
     {
         foreach (var e in _world.Where(out Aspect a))
         {
-            // Сюда попадают сущности с компонентами Health, DamageSignal и без IsInvulnerable.
-            a.healths.Get(e).points -= a.damageSignals.Get(e).points;
+            // Entities with Health, DamageSignal, and without IsInvulnerable will be here.
+            ref var health = ref a.healths.Get(e);
+            if(health.points > 0)
+            {
+                health.points -= a.damageSignals.Get(e).points;
+                if(health.points <= 0)
+                { // Create a signal to other systems that the entity has died.
+                    a.isDiedSignals.TryAdd(e);
+                }
+            }
         }
     }
 }
 ```
+
+> You can use an [Extension](#extensions) to simplify query syntax and interactions with components - [Simplified Syntax](https://github.com/DCFApixels/DragonECS-AutoInjections).
  
 ## Collections
 
@@ -553,7 +645,7 @@ for (int i = 0; i < group.Count; i++)
     // ...
 }
 ```
-Since groups are sets, they have methods similar to `ISet<T>`. Editing methods have 2 variants: either they modify `groupA` directly or return a new group:         
+Groups are sets and implement the `ISet<int>` interface. The editing methods have two variants: one that writes the result to `groupA`, and another that returns a new group.       
                                 
 ``` c#
 // Union of groupA and groupB.
@@ -689,14 +781,17 @@ using DCFApixels.DragonECS;
 [MetaName("SomeComponent")]
 
 // Used for grouping types.
-[MetaGroup("Abilities/Passive/")] // or [MetaGroup("Abilities", "Passive")]
+[MetaGroup("Abilities", "Passive", ...)] // or [MetaGroup("Abilities/Passive/...")]
 
 // Sets the type color in RGB format, where each channel ranges from 0 to 255; defaults to white.
 [MetaColor(MetaColor.Red)] // or [MetaColor(255, 0, 0)]
  
 // Adds description to the type.
 [MetaDescription("The quick brown fox jumps over the lazy dog")] 
- 
+
+// Adds a string unique identifier.
+[MetaID("8D56F0949201D0C84465B7A6C586DCD6")] // Strings must be unique and cannot contain characters ,<> .
+
 // Adds string tags to the type.
 [MetaTags("Tag1", "Tag2", ...)]  // [MetaTags(MetaTags.HIDDEN))]  to hide in the editor 
 public struct Component : IEcsComponent { /* ... */ }
@@ -707,12 +802,14 @@ TypeMeta typeMeta = someComponent.GetMeta();
 // or
 TypeMeta typeMeta = pool.ComponentType.ToMeta();
 
-var name = typeMeta.Name;
-var color = typeMeta.Color;
-var description = typeMeta.Description;
-var group = typeMeta.Group;
-var tags = typeMeta.Tags;
+var name = typeMeta.Name; // [MetaName]
+var group = typeMeta.Group; // [MetaGroup]
+var color = typeMeta.Color; // [MetaColor]
+var description = typeMeta.Description; // [MetaDescription]
+var metaID = typeMeta.MetaID; // [MetaID]
+var tags = typeMeta.Tags; // [MetaTags]
 ```
+> To automatically generate unique identifiers MetaID, there is the method `MetaID.GenerateNewUniqueID()` and the [Browser Generator](https://dcfapixels.github.io/DragonECS-MetaID_Generator_Online/).
 
 ## EcsDebug
 Has a set of methods for debugging and logging. It is implemented as a static class calling methods of Debug services. Debug services are intermediaries between the debugging systems of the environment and EcsDebug. This allows projects to be ported to other engines without modifying the debug code, by implementing the corresponding Debug service.
@@ -736,17 +833,16 @@ EcsDebug.Set<OtherDebugService>();
 ## Profiling
 ``` c#
 // Creating a marker named SomeMarker.
-private static readonly EcsProfilerMarker marker = new EcsProfilerMarker("SomeMarker");
-
-// ...
-
-marker.Begin();
+private static readonly EcsProfilerMarker _marker = new EcsProfilerMarker("SomeMarker");
+```
+``` c#
+_marker.Begin();
 // Code whose execution time is being measured.
-marker.End();
+_marker.End();
 
 // or
 
-using (marker.Auto())
+using (_marker.Auto())
 {
     // Code whose execution time is being measured.
 }
@@ -875,14 +971,16 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 </br>
 
 # Extensions
-* [Unity integration](https://github.com/DCFApixels/DragonECS-Unity)
-* [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
-* [Simple syntax](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
-* [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
-* [Classic C# multithreading](https://github.com/DCFApixels/DragonECS-ClassicThreads)
-* [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
-* [Code Templates for IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) and [for  Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
-* Graphs (Work in progress)
+* Packages:
+    * [Unity integration](https://github.com/DCFApixels/DragonECS-Unity)
+    * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
+    * [Classic C# multithreading](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+    * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
+    * Graphs (Work in progress)
+* Utilities:
+    * [Simple syntax](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
+    * [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
+    * [Code Templates for IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) and [for  Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
 > > *Your extension? If you are developing an extension for Dragoness, you can share it [here](#feedback).
 
 </br>

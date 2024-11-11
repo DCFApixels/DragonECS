@@ -63,6 +63,7 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
   - [Процессы](#процессы)
   - [Мир](#мир)
   - [Пул](#пул)
+  - [Маска](#маска)
   - [Аспект](#аспект)
   - [Запросы](#запросы)
   - [Коллекции](#Коллекции)
@@ -148,7 +149,7 @@ if (entity.TryGetID(out int entityID)) { }
  
  </details>
  
-> **NOTICE:** Сущности не могут существовать без компонентов, пустые сущности будут автоматически удаляться сразу после удаления последнего компонента либо в конце тика.
+> Сущности не могут существовать без компонентов, пустые сущности будут автоматически удаляться сразу после удаления последнего компонента либо в конце тика.
 ## Component
 **Компоненты** - это данные которые крепятся к сущностям.
 ```c#
@@ -296,7 +297,7 @@ EcsPipeline pipeline = EcsPipeline.New()
 * `EcsConst.END_LAYER`
 * `EcsConst.POST_END_LAYER`
 #### Порядок сортировки
-Для сортировки систем в рамках слоя используется int значение порядка сортировки. По умолчанию системы добавляются с sortOrder = 0.
+Для сортировки систем в рамках слоя используется int значение порядка сортировки. По умолчанию системы добавляются с `sortOrder = 0`.
 ``` c#
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
@@ -354,6 +355,7 @@ _pipeline.GetRunner<IDoSomethingProcess>.Do()
 // Или если раннер не был добавлен(Вызов GetRunnerInstance так же добавит раннер в пайплайн).
 _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 ```
+
 <details>
 <summary>Расширенная реализация раннера</summary>
 
@@ -361,11 +363,11 @@ _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 internal sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomethingProcess
 {
     // RunHelper упрощает реализацию по подобию реализации встроенных процессов. 
-    // Автоматически вызывает макрер профайлера, а так же содержит try catch блок.
+    // Автоматически вызывает маркер профайлера, а так же содержит try catch блок.
     private RunHelper _helper;
     protected override void OnSetup()
     {
-        // вторым аргументом задается имя маркера, если не указать, то имя будет выбрано автоматически.
+        // Вторым аргументом задается имя маркера, если не указать, то имя будет выбрано автоматически.
         _helper = new RunHelper(this, nameof(Do));
     }
     public void Do()
@@ -383,6 +385,7 @@ internal sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>,
 > * Наследуемый класс `EcsRunner<T>`, должен так же реализовать интерфейс `T`;
     
 > Не рекомендуется в цикле вызывать `GetRunner`, иначе кешируйте полученный раннер.
+
 </details>
 
 ## Мир
@@ -485,7 +488,7 @@ EcsMask mask = EcsMask.New(_world)
 class SomeSystem : IEcsRun 
 {
     // EcsStaticMask можно создавать в статических полях.
-    static EcsStaticMask _staticMask = EcsStaticMask.Inc<SomeCmp1>().Inc<SomeCmp2>().Exc<SomeCmp3>().Build();
+    static readonly EcsStaticMask _staticMask = EcsStaticMask.Inc<SomeCmp1>().Inc<SomeCmp2>().Exc<SomeCmp3>().Build();
 
     // ...
 }
@@ -590,7 +593,7 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
         public EcsPool<Health> healths = Inc;
         public EcsPool<DamageSignal> damageSignals = Inc;
         public EcsTagPool<IsInvulnerable> isInvulnerables = Exc;
-        // Наличие или отсутвие этого компонента не проверяется.
+        // Наличие или отсутствие этого компонента не проверяется.
         public EcsTagPool<IsDiedSignal> isDiedSignals = Opt;
     }
     EcsDefaultWorld _world;
@@ -859,17 +862,16 @@ EcsDebug.Set<OtherDebugService>();
 За реализацию профайлера так же отвечает Debug-сервис. Для выделения участка кода используется `EcsProfilerMarker`;
 ``` c#
 // Создание маркера с именем SomeMarker.
-private static readonly EcsProfilerMarker marker = new EcsProfilerMarker("SomeMarker");
-
-// ...
-
-marker.Begin();
+private static readonly EcsProfilerMarker _marker = new EcsProfilerMarker("SomeMarker");
+```
+``` c#
+_marker.Begin();
 // Код для которого замеряется скорость.
-marker.End();
+_marker.End();
 
 // или
 
-using (marker.Auto())
+using (_marker.Auto())
 {
     // Код для которого замеряется скорость.
 }
@@ -997,7 +999,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 </br>
 
 # Расширения
-* Расширения:
+* Пакеты:
     * [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
     * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
     * [Классическая C# многопоточность](https://github.com/DCFApixels/DragonECS-ClassicThreads)

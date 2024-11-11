@@ -61,10 +61,11 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
     - [初始化](#初始化)
     - [依赖注入](#依赖注入)
     - [模块](#模块)
-    - [层级](#层级)
+    - [排序](#排序)
   - [流程](#流程)
   - [世界](#世界)
   - [池子](#池子)
+  - [掩码](#掩码)
   - [方面](#方面)
   - [查询](#查询)
   - [集合](#集合)
@@ -154,18 +155,17 @@ if (entity.TryGetID(out int entityID)) { }
 > **NOTICE:** 没有组件的实体不能存在，空实体会在最后一个组件被删除。
 
 ## 组件
-**组件**是实体的数据。必须实现`IEcsComponent`接口或其他指定类型的组件。
+**组件**是实体的数据。
 ```c#
+// IEcsComponent 组件存储在普通的存储中。
 struct Health : IEcsComponent
 {
     public float health;
     public int armor;
 }
+// IEcsTagComponent 组件存储在为标签优化的存储中。
 struct PlayerTag : IEcsTagComponent {}
 ```
-内置组件类型:
-* `IEcsComponent` - 包含数据的组件。 通用类型的组件。
-* `IEcsTagComponent` - 标签组件。 没有数据。
 
 ## 系统
 **系统**这是基本逻辑，这里定义了实体的行为。系统以用户类的形式实现，用户类至少要实现一个流程接口。基本流程：
@@ -274,7 +274,9 @@ EcsPipeline pipeline = EcsPipeline.New()
     .BuildAndInit();
 ```
 
-### 层级
+### 排序
+为了管理系统在管线中的位置，无论添加顺序如何，有两种方式：层级和排序顺序。
+#### 层级
 系统的队列可以分为层。层定义了队列中插入系统的位置。如果要在队列末尾插入一个系统，无论添加的地方如，可以把这个系统添加到 `EcsConsts.END_LAYER` 层级.
 ``` c#
 const string SOME_LAYER = nameof(SOME_LAYER);
@@ -290,9 +292,20 @@ EcsPipeline pipeline = EcsPipeline.New()
 嵌入层按以下顺序排列：
 * `EcsConst.PRE_BEGIN_LAYER`
 * `EcsConst.BEGIN_LAYER`
-* `EcsConst.BASIC_LAYER`（如果在添加系统时没有指定层级，则会在这里添加）
+* `EcsConst.BASIC_LAYER`（默认情况下，系统添加到此层）
 * `EcsConst.END_LAYER`
 * `EcsConst.POST_END_LAYER`
+#### 排序顺序
+在同一层内，可以使用 `int` 类型的排序值来排序系统。默认情况下，系统的排序值为 `sortOrder = 0`。
+```c#
+EcsPipeline pipeline = EcsPipeline.New()
+    // ...
+    // 将 SomeSystem 系统插入到 EcsConsts.BEGIN_LAYER 层
+    // 并且放置在排序值小于 10 的系统之后。
+    .Add(New SomeSystem(), EcsConsts.BEGIN_LAYER, 10)
+    // ...
+    .BuildAndInit();
+```
 
 ## 流程
 流程是实现共同接口的系统队列，例如`IcsRun`接口。用于启动这些流程的是启动器。内置流程会自动启动。还可以实现用户流程。
@@ -324,8 +337,8 @@ sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomet
         foreach (var item in Process) item.Do();
     }
 }
-//...
-
+```
+``` c#
 // 添加启动器到管线
 _pipeline = EcsPipeline.New()
     //...
@@ -339,12 +352,36 @@ _pipeline.GetRunner<IDoSomethingProcess>.Do()
 // 如果启动器尚未添加，使用 GetRunnerInstance 将其添加并运行
 _pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
 ```
+
+<details>
+<summary>扩展的启动器实现</summary>
+
+``` c#
+internal sealed class DoSomethingProcessRunner : EcsRunner<IDoSomethingProcess>, IDoSomethingProcess
+{
+    // RunHelper 简化了实现，类似于内置流程的实现。
+    // 自动调用分析器的标记，同时包含 try-catch 块。
+    private RunHelper _helper;
+    protected override void OnSetup()
+    {
+        // 第二个参数是标记的名称，如果不指定，将自动选择名称。
+        _helper = new RunHelper(this, nameof(Do));
+    }
+    public void Do()
+    {
+        _helper.Run(p => p.Do());
+    }
+}
+```
+
+</details>
+
 > 启动器的实现有一些要求：
 > * 必须直接继承自 `EcsRunner<T>`；
 > * 启动器只能包含一个接口（除了 `IEcsProcess` 接口）；
 > * 继承的 `EcsRunner<T>,` 类必须实现接口 `T`；
     
-不建议在循环中频繁调用 `GetRunner` 方法，建议缓存获取的启动器实例。
+> 不建议在循环中频繁调用 `GetRunner` 方法，建议缓存获取的启动器实例。
 </details>
 
 ## 世界
@@ -372,8 +409,8 @@ _world = new EcsDefaultWorld(config);
 
 ## 池子
 是组件的存储库，池子有添加/读取/编辑/删除实体上组件的方法。有几种类型的池，用于不同的目的：
-* `EcsPool` - 通用池，存储实现`IEcsComponent`接口的 struct 组件；
-* `EcsTagPool` - 专门用于存储实现`IEcsTagComponent`接口的空标签 struct 组件的池。存储的组件仅作为bool值存储，因此与EcsPool相比，具有更好的内存和速度优化;
+* `EcsPool` - 通用池，存储实现 `IEcsComponent` 接口的 struct 组件；
+* `EcsTagPool` - 为标签组件优化的特殊池，用于存储带有 `IEcsTagComponent` 的组件;
 
 池有5种主要方法及其品种：
 ``` c#
@@ -398,7 +435,40 @@ poses.Del(entityID);
 > 有一些 “安全 ”方法会首先检查组件是否存在，这些方法的名称以 “Try ”开头。
     
 > 可以实现用户池。稍后将介绍这一功能。
- 
+
+## 掩码
+用于根据组件的存在与否来过滤实体。
+``` c#
+// 创建一个掩码，检查实体是否具有组件
+// SomeCmp1 和 SomeCmp2，但没有组件 SomeCmp3。
+EcsMask mask = EcsMask.New(_world)
+    // Inc - 组件存在的条件。
+    .Inc<SomeCmp1>()
+    .Inc<SomeCmp2>()
+    // Exc - 组件不存在的条件。
+    .Exc<SomeCmp3>()
+    .Build();
+```
+
+<details>
+<summary>静态掩码</summary>
+
+`EcsMask` 是与特定世界实例绑定的，需要将世界实例传递给 `EcsMask.New(world)`，但是也有 `EcsStaticMask`，它可以在不绑定到世界的情况下创建。
+
+``` c#
+class SomeSystem : IEcsRun 
+{
+    // EcsStaticMask 可以在静态字段中创建。
+    static readonly EcsStaticMask _staticMask = EcsStaticMask.Inc<SomeCmp1>().Inc<SomeCmp2>().Exc<SomeCmp3>().Build();
+
+    // ...
+}
+```
+``` c#
+// 转换为常规掩码。
+EcsMask mask = _staticMask.ToMask(_world);
+```
+
 ## 方面
 这些是继承自 EcsAspect 的用户类，用于与实体进行交互。方面同时充当池的缓存和实体组件的过滤掩码。可以把方面视为系统处理哪些实体的描述。
 
@@ -473,16 +543,23 @@ class Aspect : EcsAspect
 </details>
 
 ## 查询
-要获取所需的实体集，需要使用 `EcsWorld.Where<TAspect>(out TAspect aspect)` 查询方法。在 TAspect 参数中指定的是一个方面，实体将按照指定方面的掩码进行过滤。`Where`查询既适用于`EcsWorld`也适用于框架的集合（在这方面，Where与Linq中的类似查询方式有些相似）。
-示例：
+过滤实体并返回满足特定条件的实体集合。内置查询 `Where` 通过组件掩码匹配条件进行过滤，并有多个重载版本：
++ `EcsWorld.Where(EcsMask mask)` - 基于掩码的普通过滤；
++ `EcsWorld.Where<TAspect>(out TAspect aspect)` - 结合了基于方面掩码的过滤和获取方面；
+
+`Where` 查询既可以应用于 `EcsWorld`，也可以应用于框架的集合（在这方面，`Where` 有点类似于 Linq 中的 `Where`）。此外，还提供了根据 `Comparison<int>` 对实体进行排序的重载。
+
+示例系统：
 ``` c#
 public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
 {
     class Aspect : EcsAspect
     {
-        public EcsPool<Health> healths = Inc; 
-        public EcsPool<DamageSignal> damageSignals = Inc; 
+        public EcsPool<Health> healths = Inc;
+        public EcsPool<DamageSignal> damageSignals = Inc;
         public EcsTagPool<IsInvulnerable> isInvulnerables = Exc;
+        // 不检查此组件的存在与否。
+        public EcsTagPool<IsDiedSignal> isDiedSignals = Opt;
     }
     EcsDefaultWorld _world;
     public void Inject(EcsDefaultWorld world) => _world = world;
@@ -492,11 +569,21 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
         foreach (var e in _world.Where(out Aspect a))
         {
             // 在这里处理具有 Health 和 DamageSignal，但没有 IsInvulnerable 组件的实体。
-            a.healths.Get(e).points -= a.damageSignals.Get(e).points;
+            ref var health = ref a.healths.Get(e);
+            if(health.points > 0)
+            {
+                health.points -= a.damageSignals.Get(e).points;
+                if(health.points <= 0)
+                { // 向其他系统发送实体死亡信号。
+                    a.isDiedSignals.TryAdd(e);
+                }
+            }
         }
     }
 }
 ```
+
+> 有一个简化查询语法和组件访问的[扩展](#扩展) - [简单语法](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)。
  
 ## 集合
 
@@ -549,7 +636,7 @@ for (int i = 0; i < es.Count; i++)
     // ...
 }
 ```
-由于组是没有重复元素的集合，因此组支持集合运算，并包含类似于`Iset<T>`的方法。编辑方法有两种方式：一种是将结果写入到 groupA 中，另一种是返回一个新的群组：
+由于组是没有重复元素的集合，因此组支持集合运算，并实现了接口 `ISet<int>`。编辑方法有两种方式：一种是将结果写入到 groupA 中，另一种是返回一个新的群组：
                                 
 ``` c#
 // 合集 groupA 和 groupB。
@@ -685,14 +772,17 @@ using DCFApixels.DragonECS;
 [MetaName("SomeComponent")]
 
 // 用于对类型进行分组。
-[MetaGroup("Abilities/Passive/")] // 或者  [MetaGroup("Abilities", "Passive")]
+[MetaGroup("Abilities", "Passive", ...)] // 或者 [MetaGroup("Abilities/Passive/...")]
 
 // 使用 RGB 编码设置显示颜色，每个通道的值范围从0到255，默认为白色。
 [MetaColor(MetaColor.Red)] // 或者 [MetaColor(255, 0, 0)]
  
 // 为类型添加描述。
 [MetaDescription("The quick brown fox jumps over the lazy dog")] 
- 
+
+// 添加字符串唯一标识符.
+[MetaID("8D56F0949201D0C84465B7A6C586DCD6")] // 字符串必须是唯一的，并且不允许包含字符 ,<> 。
+
 // 添加字符串标签。
 [MetaTags("Tag1", "Tag2", ...)]  // 使用 [MetaTags(MetaTags.HIDDEN))] 可隐藏在编辑器中。
 public struct Component : IEcsComponent { /* ... */ }
@@ -703,12 +793,14 @@ TypeMeta typeMeta = someComponent.GetMeta();
 // 或者
 TypeMeta typeMeta = pool.ComponentType.ToMeta();
 
-var name = typeMeta.Name;
-var color = typeMeta.Color;
-var description = typeMeta.Description;
-var group = typeMeta.Group;
-var tags = typeMeta.Tags;
+var name = typeMeta.Name; // [MetaName]
+var group = typeMeta.Group; // [MetaGroup]
+var color = typeMeta.Color; // [MetaColor]
+var description = typeMeta.Description; // [MetaDescription]
+var metaID = typeMeta.MetaID; // [MetaID]
+var tags = typeMeta.Tags; // [MetaTags]
 ```
+> 为了自动生成唯一的标识符 MetaID，可以使用 `MetaID.GenerateNewUniqueID()` 方法和 [浏览器生成器](https://dcfapixels.github.io/DragonECS-MetaID_Generator_Online/)。
 
 ## EcsDebug
 具有调试和日志记录方法集. 实现为一个静态类，调用 DebugService 的方法.  DebugService 是环境调试系统与 EcsDebug 之间的中介. 这使得可以将项目移植到其他引擎上，而无需修改项目的调试代码，只需要实现特定的 DebugService 即可。
@@ -732,17 +824,16 @@ EcsDebug.Set<OtherDebugService>();
 ## 性能分析
 ``` c#
 // 创建名为 SomeMarker 的标记器。
-private static readonly EcsProfilerMarker marker = new EcsProfilerMarker("SomeMarker");
-
-// ...
-
-marker.Begin();
+private static readonly EcsProfilerMarker _marker = new EcsProfilerMarker("SomeMarker");
+```
+``` c#
+_marker.Begin();
 // 要测量速度的代码。
-marker.End();
+_marker.End();
 
 // 或者
 
-using (marker.Auto())
+using (_marker.Auto())
 {
     // 要测量速度的代码。
 }
@@ -873,14 +964,16 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 </br>
 
 # 扩展
-* [Unity集成](https://github.com/DCFApixels/DragonECS-Unity)
-* [自动依赖注入](https://github.com/DCFApixels/DragonECS-AutoInjections)
-* [简单语法](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
-* [单帧组件](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
-* [经典C#多线程](https://github.com/DCFApixels/DragonECS-ClassicThreads)
-* [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
-* [IDE代码模板](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [Unity代码模板](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
-* Graphs (Work in progress)
+* Packages:
+    * [Unity集成](https://github.com/DCFApixels/DragonECS-Unity)
+    * [自动依赖注入](https://github.com/DCFApixels/DragonECS-AutoInjections)
+    * [经典C#多线程](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+    * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
+    * Graphs (Work in progress)
+* Utilities:
+    * [简单语法](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
+    * [单帧组件](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
+    * [IDE代码模板](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [Unity代码模板](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
 
 > *你的扩展？如果你正在开发DragonECS的扩展，可以[在此处发布](#反馈).
 
