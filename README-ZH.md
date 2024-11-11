@@ -975,7 +975,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
     * [单帧组件](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
     * [IDE代码模板](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [Unity代码模板](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
 
-> *你的扩展？如果你正在开发DragonECS的扩展，可以[在此处发布](#反馈).
+> *你的扩展？如果你正在开发 DragonECS 的扩展，可以[在此处发布](#反馈).
 
 </br>
  
