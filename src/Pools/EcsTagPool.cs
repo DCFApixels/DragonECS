@@ -224,6 +224,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        void IEcsPool.AddEmpty(int entityID) { Add(entityID); }
         void IEcsPool.AddRaw(int entityID, object dataRaw) { Add(entityID); }
         object IEcsReadonlyPool.GetRaw(int entityID)
         {

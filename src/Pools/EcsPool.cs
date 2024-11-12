@@ -259,6 +259,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        void IEcsPool.AddEmpty(int entityID) { Add(entityID); }
         void IEcsPool.AddRaw(int entityID, object dataRaw)
         {
             Add(entityID) = dataRaw == null ? default : (T)dataRaw;
