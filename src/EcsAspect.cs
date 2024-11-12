@@ -300,7 +300,7 @@ namespace DCFApixels.DragonECS
                 {
                     if (pool.Has(entityID) == false)
                     {
-                        pool.AddRaw(entityID, null);
+                        pool.AddEmpty(entityID);
                     }
                 }
 #if DEBUG
