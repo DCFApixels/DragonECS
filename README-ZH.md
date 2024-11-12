@@ -968,6 +968,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
     * [Unity集成](https://github.com/DCFApixels/DragonECS-Unity)
     * [自动依赖注入](https://github.com/DCFApixels/DragonECS-AutoInjections)
     * [经典C#多线程](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+    * [Recursivity](https://github.com/DCFApixels/DragonECS-Recursivity)
     * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
     * Graphs (Work in progress)
 * Utilities:

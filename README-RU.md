@@ -1003,6 +1003,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
     * [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
     * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
     * [Классическая C# многопоточность](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+    * [Recursivity](https://github.com/DCFApixels/DragonECS-Recursivity)
     * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
     * Графы (Work in progress)
 * Утилиты:
