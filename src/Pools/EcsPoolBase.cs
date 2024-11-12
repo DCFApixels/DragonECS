@@ -90,6 +90,12 @@ namespace DCFApixels.DragonECS.Internal
             throw new NullInstanceException();
 #endif
         }
+        void IEcsPool.AddEmpty(int entityID)
+        {
+#if (DEBUG && !DISABLE_DEBUG)
+            throw new NullInstanceException();
+#endif
+        }
         void IEcsPool.AddRaw(int entityID, object dataRaw)
         {
 #if (DEBUG && !DISABLE_DEBUG)
@@ -101,7 +107,7 @@ namespace DCFApixels.DragonECS.Internal
 #if (DEBUG && !DISABLE_DEBUG)
             throw new NullInstanceException();
 #else
-                return null;
+            return null;
 #endif
         }
         void IEcsPool.SetRaw(int entity, object dataRaw)
@@ -179,6 +185,7 @@ namespace DCFApixels.DragonECS
     public interface IEcsPool : IEcsReadonlyPool
     {
         #region Methods
+        void AddEmpty(int entityID);
         void AddRaw(int entityID, object dataRaw);
         void SetRaw(int entityID, object dataRaw);
         void Del(int entityID);
