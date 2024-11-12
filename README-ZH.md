@@ -469,6 +469,8 @@ class SomeSystem : IEcsRun
 EcsMask mask = _staticMask.ToMask(_world);
 ```
 
+</details>
+
 ## 方面
 这些是继承自 EcsAspect 的用户类，用于与实体进行交互。方面同时充当池的缓存和实体组件的过滤掩码。可以把方面视为系统处理哪些实体的描述。
 
