@@ -962,11 +962,42 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 
 # Projects powered by DragonECS
 ## With sources:
-[3D Platformer (Example) ![screenshot](https://i.ibb.co/hm7Lrm4/Platformer.png)](https://github.com/DCFApixels/3D-Platformer-DragonECS-Demo)
-[Tiny Aliens (Ludum Dare 56) ![screenshot](https://static.jam.host/raw/467/31/z/66681.png)](https://github.com/DCFApixels/LD_56_Tiny_Aliens)
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/DCFApixels/3D-Platformer-DragonECS-Demo">
+        3D Platformer (Example)
+        <img src="https://github.com/user-attachments/assets/c593dba7-eeaa-4706-a043-946f132f3f83" alt="screenshot">
+      </a> 
+    </td>
+    <td align="center">
+      <a href="https://github.com/DCFApixels/LD_56_Tiny_Aliens">
+        Tiny Aliens (Ludum Dare 56)
+        <img src="https://github.com/user-attachments/assets/1a8f06ed-c68d-483a-b880-c9faaf7e0b5f" alt="screenshot">
+      </a>
+    </td>
+  </tr>
+</table>
 
 ## Released games:
-[Башенки Смерти ![screenshot](https://avatars.mds.yandex.net/get-vh/6307101/2a00000184f744230c6a62e2c1f7b47fadeb/orig)](https://yandex.ru/games/app/206024?utm_source=game_popup_menu)
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://yandex.ru/games/app/206024?utm_source=game_popup_menu">
+        Башенки Смерти
+        <img src="https://github.com/user-attachments/assets/70fc55a0-c911-49f8-ba75-f503437f087f" alt="screenshot">
+      </a> 
+    </td>
+    <td align="center">
+      <span>
+        ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ
+        <img tabindex="-1" src="https://github.com/user-attachments/assets/3fa1ca6d-29f6-43e6-aafe-cc9648d20490" alt="screenshot">
+      </span> 
+    </td>
+  </tr>
+</table>
 
 </br>
 
