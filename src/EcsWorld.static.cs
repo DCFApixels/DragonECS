@@ -19,10 +19,10 @@ namespace DCFApixels.DragonECS
     {
         private const short NULL_WORLD_ID = 0;
 
-        private const short WAKE_UP_GEN_MASK = 0x7fff;
-        private const short SLEEP_GEN_MASK = ~WAKE_UP_GEN_MASK;
+        private const short GEN_STATUS_SEPARATOR = 0;
+        private const short GEN_WAKEUP_MASK = 0x7fff;
+        private const short GEN_SLEEP_MASK = ~GEN_WAKEUP_MASK;
 
-        private const short SLEEPING_GEN_FLAG = short.MinValue;
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 5;
         private const int DEL_ENT_BUFFER_MIN_SIZE = 64;
 

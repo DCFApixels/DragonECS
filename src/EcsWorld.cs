@@ -290,10 +290,9 @@ namespace DCFApixels.DragonECS
             _entitiesCount++;
             ref var slot = ref _entities[entityID];
             slot.isUsed = true;
-            if (slot.gen >= 0)
-            { //если gen был пробужен у не мертвой сущности, то для отличия от мертвой, нужно инкрементировать и усыпить
-                slot.gen++;
-                slot.gen &= SLEEP_GEN_MASK;
+            if (slot.gen >= GEN_STATUS_SEPARATOR)
+            { 
+                slot.gen |= GEN_SLEEP_MASK;
             }
             _entityListeners.InvokeOnNewEntity(entityID);
         }
@@ -374,10 +373,10 @@ namespace DCFApixels.DragonECS
             unchecked
             {
                 ref var slotGen = ref _entities[entityID].gen;
-                if (slotGen < 0)
-                { //если gen меньше 0 значит он спящий, спящие нужно инкремировать
+                if (slotGen < GEN_STATUS_SEPARATOR)
+                { //если gen меньше 0 значит он спящий, спящие нужно инкремировать перед выдачей
                     slotGen++;
-                    slotGen &= WAKE_UP_GEN_MASK;
+                    slotGen &= GEN_WAKEUP_MASK;
                 }
                 return slotGen;
             }
@@ -719,7 +718,7 @@ namespace DCFApixels.DragonECS
             {
                 int e = buffer[i];
                 _entityDispenser.Release(e);
-                _entities[e].gen |= SLEEPING_GEN_FLAG;
+                _entities[e].gen |= GEN_SLEEP_MASK;
             }
             Densify();
         }
@@ -1061,7 +1060,7 @@ namespace DCFApixels.DragonECS
         [StructLayout(LayoutKind.Sequential)]
         private struct EntitySlot
         {
-            public static readonly EntitySlot Empty = new EntitySlot(SLEEPING_GEN_FLAG, 0, false);
+            public static readonly EntitySlot Empty = new EntitySlot(GEN_SLEEP_MASK, 0, false);
             public short gen;
             public short componentsCount;
             public bool isUsed;
