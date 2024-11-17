@@ -200,7 +200,7 @@ namespace DCFApixels.DragonECS.Core
 
         public void Dispose()
         {
-
+            UnmanagedArrayUtility.Free(_versions);
         }
     }
 }

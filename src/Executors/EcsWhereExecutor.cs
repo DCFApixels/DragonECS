@@ -23,6 +23,8 @@ namespace DCFApixels.DragonECS.Internal
         private long _version;
         private WorldStateVersionsChecker _versionsChecker;
 
+        public bool _isDestroyed = false;
+
         #region Properties
         public sealed override long Version
         {
@@ -49,6 +51,8 @@ namespace DCFApixels.DragonECS.Internal
         }
         protected sealed override void OnDestroy()
         {
+            if (_isDestroyed) { return; }
+            _isDestroyed = true;
             _versionsChecker.Dispose();
         }
         #endregion

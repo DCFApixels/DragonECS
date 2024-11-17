@@ -497,7 +497,13 @@ namespace DCFApixels.DragonECS
         /// <summary> slised _sortIncChunckBuffer </summary>
         private readonly UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
-        private readonly bool _isOnlyInc;
+        private readonly MaskType _maskType;
+        private enum MaskType : byte
+        {
+            Empty,
+            OnlyInc,
+            IncExc,
+        }
 
         #region Constructors/Finalizator
         public unsafe EcsMaskIterator(EcsWorld source, EcsMask mask)
@@ -523,7 +529,14 @@ namespace DCFApixels.DragonECS
             _sortExcChunckBuffer = sortChunckBuffer.Slice(mask._incChunckMasks.Length, mask._excChunckMasks.Length);
             _sortExcChunckBuffer.CopyFromArray_Unchecked(mask._excChunckMasks);
 
-            _isOnlyInc = _sortExcBuffer.Length <= 0;
+            if (_sortExcBuffer.Length <= 0)
+            {
+                _maskType = mask.IsEmpty ? MaskType.Empty : MaskType.OnlyInc;
+            }
+            else
+            {
+                _maskType = MaskType.IncExc;
+            }
         }
         unsafe ~EcsMaskIterator()
         {
@@ -589,25 +602,36 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void IterateTo(EcsSpan source, EcsGroup group)
         {
-            if (_isOnlyInc)
+            switch (_maskType)
             {
-                IterateOnlyInc(source).CopyTo(group);
-            }
-            else
-            {
-                Iterate(source).CopyTo(group);
+                case MaskType.Empty:
+                    group.CopyFrom(source);
+                    break;
+                case MaskType.OnlyInc:
+                    IterateOnlyInc(source).CopyTo(group);
+                    break;
+                case MaskType.IncExc:
+                    Iterate(source).CopyTo(group);
+                    break;
+                default:
+                    Throw.UndefinedException();
+                    break;
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IterateTo(EcsSpan source, ref int[] array)
         {
-            if (_isOnlyInc)
+            switch (_maskType)
             {
-                return IterateOnlyInc(source).CopyTo(ref array);
-            }
-            else
-            {
-                return Iterate(source).CopyTo(ref array);
+                case MaskType.Empty:
+                    return source.ToArray(ref array);
+                case MaskType.OnlyInc:
+                    return IterateOnlyInc(source).CopyTo(ref array);
+                case MaskType.IncExc:
+                    return Iterate(source).CopyTo(ref array);
+                default:
+                    Throw.UndefinedException();
+                    return 0;
             }
         }
         #endregion

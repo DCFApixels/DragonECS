@@ -203,7 +203,9 @@ namespace DCFApixels.DragonECS.Internal
             byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
 
             for (int i = 0; i < newSize; i++)
+            {
                 *(newPointer + i) = 0;
+            }
 
             return (T*)newPointer;
         }
@@ -214,7 +216,9 @@ namespace DCFApixels.DragonECS.Internal
             byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
 
             for (int i = 0; i < newSize; i++)
+            {
                 *(newPointer + i) = 0;
+            }
 
             ptr = (T*)newPointer;
         }
@@ -250,8 +254,6 @@ namespace DCFApixels.DragonECS.Internal
                 new IntPtr(oldPointer),
                 new IntPtr(MetaCache<T>.Size * newCount))).ToPointer();
         }
-
-
     }
 
     public static class CollectionUtility
