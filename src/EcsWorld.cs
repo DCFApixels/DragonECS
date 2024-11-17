@@ -291,7 +291,7 @@ namespace DCFApixels.DragonECS
             ref var slot = ref _entities[entityID];
             slot.isUsed = true;
             if (slot.gen >= GEN_STATUS_SEPARATOR)
-            { 
+            {
                 slot.gen |= GEN_SLEEP_MASK;
             }
             _entityListeners.InvokeOnNewEntity(entityID);
@@ -668,11 +668,9 @@ namespace DCFApixels.DragonECS
         }
         public unsafe void ReleaseDelEntityBuffer(int count)
         {
-            if (_delEntBufferCount <= 0)
-            {
-                return;
-            }
+            if (_delEntBufferCount <= 0) { return; }
             unchecked { _version++; }
+
             count = Math.Max(0, Math.Min(count, _delEntBufferCount));
             _delEntBufferCount -= count;
             int slisedCount = count;
@@ -689,7 +687,9 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-            ReadOnlySpan<int> buffer = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);
+            //если фулл очистка то _delEntBufferCount будет 0
+
+            ReadOnlySpan<int> fullBuffer = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);
             if (slisedCount > 0)
             {
                 ReadOnlySpan<int> bufferSlised = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, slisedCount);
@@ -704,7 +704,7 @@ namespace DCFApixels.DragonECS
                 {
                     if (group.IsReleased)
                     {
-                        group.OnReleaseDelEntityBuffer_Internal(buffer);
+                        group.OnReleaseDelEntityBuffer_Internal(fullBuffer);
                     }
                 }
                 else
@@ -713,10 +713,10 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-            _listeners.InvokeOnReleaseDelEntityBuffer(buffer);
-            for (int i = 0; i < buffer.Length; i++)
+            _listeners.InvokeOnReleaseDelEntityBuffer(fullBuffer);
+            for (int i = 0; i < fullBuffer.Length; i++)
             {
-                int e = buffer[i];
+                int e = fullBuffer[i];
                 _entityDispenser.Release(e);
                 _entities[e].gen |= GEN_SLEEP_MASK;
             }
