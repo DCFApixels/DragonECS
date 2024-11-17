@@ -9,7 +9,7 @@ namespace DCFApixels.DragonECS
         EcsWorld World { get; }
         EcsSpan ToSpan();
     }
-    public static class Queries
+    public static class QueriesExtensions
     {
         #region Where
         public static EcsSpan Where<TCollection, TAspect>(this TCollection entities, out TAspect aspect)
