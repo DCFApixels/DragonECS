@@ -3,18 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 4)]
-    public struct EcsWorldCmp<T> where T : struct
-    {
-        private short _worldID;
-        public EcsWorldCmp(short worldID) { _worldID = worldID; }
-        public EcsWorld World { get { return EcsWorld.GetWorld(_worldID); } }
-        public ref T Value { get { return ref EcsWorld.GetData<T>(_worldID); } }
-    }
     public partial class EcsWorld
     {
         private const short NULL_WORLD_ID = 0;
