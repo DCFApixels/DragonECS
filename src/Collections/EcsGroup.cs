@@ -241,6 +241,17 @@ namespace DCFApixels.DragonECS
 #endif
                 return _dense[++index];
             }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set
+            {
+                // TODO добавить лок енумератора на изменение
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+                if (index < 0 || index >= Count) { Throw.ArgumentOutOfRange(); }
+#endif
+                var oldValue = _dense[index];
+                _dense[index] = value;
+                _sparse[oldValue] = 0;
+            }
         }
         #endregion
 
