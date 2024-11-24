@@ -276,8 +276,8 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
-            if (IsUsed(entityID)) { Throw.World_EntityIsAlreadyСontained(entityID); }
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (entityID < _entities.Length && IsUsed(entityID)) { Throw.World_EntityIsAlreadyСontained(entityID); }
 #endif
             _entityDispenser.Use(entityID);
             CreateConcreteEntity(entityID);
@@ -324,7 +324,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DelEntity(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (IsUsed(entityID) == false) { Throw.World_EntityIsNotContained(entityID); }
 #endif
             UpVersion();
@@ -393,7 +393,7 @@ namespace DCFApixels.DragonECS
         }
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (mask.WorldID != ID) { Throw.World_MaskDoesntBelongWorld(); }
 #endif
             for (int i = 0, iMax = mask._incs.Length; i < iMax; i++)
@@ -794,7 +794,7 @@ namespace DCFApixels.DragonECS
         }
         internal void ReleaseGroup(EcsGroup group)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !DISABLE_DRAGONECS_ASSERT_CHEKS
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (group.World != this) { Throw.World_GroupDoesNotBelongWorld(); }
 #endif
             group._isReleased = true;
