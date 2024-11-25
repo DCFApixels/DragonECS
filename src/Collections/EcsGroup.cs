@@ -258,6 +258,8 @@ namespace DCFApixels.DragonECS
         private int _count = 0;
         internal bool _isReleased = true;
 
+        private static readonly int* _nullPage = UnmanagedArrayUtility.NewAndInit<int>(PageSlot.SIZE);
+
         #region Properties
         public short WorldID
         {
@@ -334,7 +336,11 @@ namespace DCFApixels.DragonECS
             //_sparse = new int[world.Capacity];
             _totalCapacity = world.Capacity;
             _sparsePagesCount = CalcSparseSize(_totalCapacity);
-            _sparsePages = UnmanagedArrayUtility.NewAndInit<PageSlot>(_sparsePagesCount);
+            _sparsePages = UnmanagedArrayUtility.New<PageSlot>(_sparsePagesCount);
+            for (int i = 0; i < _sparsePagesCount; i++)
+            {
+                _sparsePages[i] = PageSlot.Empty;
+            }
         }
         public void Dispose()
         {
@@ -348,20 +354,14 @@ namespace DCFApixels.DragonECS
         {
             //return _sparse[entityID] != 0;
             PageSlot* page = _sparsePages + (entityID >> PageSlot.SHIFT);
-
-            ReadOnlySpan<int> span = default;
-            if (page->Indexes != null)
-            {
-                span = new ReadOnlySpan<int>(page->Indexes, PageSlot.SIZE);
-            }
-            return page->Indexes != null && page->Indexes[entityID & PageSlot.MASK] != 0;
+            return page->Indexes[entityID & PageSlot.MASK] != 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID)
         {
             //return _sparse[entityID];
             PageSlot* page = _sparsePages + (entityID >> PageSlot.SHIFT);
-            return page->Indexes != null ? page->Indexes[entityID & PageSlot.MASK] : 0;
+            return page->Indexes[entityID & PageSlot.MASK];
         }
         #endregion
 
@@ -404,11 +404,6 @@ namespace DCFApixels.DragonECS
             page->Indexes[entityID & PageSlot.MASK] = _count;
             page->IndexesXOR ^= _count;
             page->Count++;
-
-            //if (page->Count == 1)
-            //{
-            //    ReadOnlySpan<int> pageSpan = new ReadOnlySpan<int>(page->Indexes, PageSlot.SIZE);
-            //}
         }
 
         public void RemoveUnchecked(int entityID)
@@ -447,18 +442,13 @@ namespace DCFApixels.DragonECS
             if (--page->Count == 0)
             {
                 _source.ReturnPage(page->Indexes);
-                page->Indexes = null;
+                page->Indexes = _nullPage;
                 page->IndexesXOR = 0;
             }
             else
             {
                 page->IndexesXOR ^= page->Indexes[localEntityID];
                 page->Indexes[localEntityID] = 0;
-
-                if (page->Count == 1)
-                {
-                    ReadOnlySpan<int> pageSpan = new ReadOnlySpan<int>(page->Indexes, PageSlot.SIZE);
-                }
             }
         }
 
@@ -488,7 +478,7 @@ namespace DCFApixels.DragonECS
             for (int i = 0; i < _sparsePagesCount; i++)
             {
                 var page = _sparsePages + i;
-                if (page->Indexes != null)
+                if (page->Indexes != _nullPage)
                 {
                     //TODO тут надо оптимизировать отчисткой не всего а по dense списку
                     for (int j = 0; j < PageSlot.SIZE; j++)
@@ -496,7 +486,7 @@ namespace DCFApixels.DragonECS
                         page->Indexes[j] = 0;
                     }
                     _source.ReturnPage(page->Indexes);
-                    page->Indexes = null;
+                    page->Indexes = _nullPage;
                 }
                 page->IndexesXOR = 0;
                 page->Count = 0;
@@ -1449,7 +1439,11 @@ namespace DCFApixels.DragonECS
             _totalCapacity = newSize;
             var oldPagesCount = _sparsePagesCount;
             _sparsePagesCount = CalcSparseSize(_totalCapacity);
-            _sparsePages = UnmanagedArrayUtility.ResizeAndInit<PageSlot>(_sparsePages, oldPagesCount, _sparsePagesCount);
+            _sparsePages = UnmanagedArrayUtility.Resize<PageSlot>(_sparsePages, _sparsePagesCount);
+            for (int i = oldPagesCount; i < _sparsePagesCount; i++)
+            {
+                _sparsePages[i] = PageSlot.Empty;
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void OnReleaseDelEntityBuffer_Internal(ReadOnlySpan<int> buffer)
@@ -1511,9 +1505,17 @@ namespace DCFApixels.DragonECS
             public const int SIZE = 1 << SHIFT;
             public const int MASK = SIZE - 1;
 
+            public static readonly PageSlot Empty = new PageSlot(_nullPage, 0, 0);
+
             public int* Indexes;
             public int IndexesXOR;
             public byte Count;
+            public PageSlot(int* indexes, int indexesXOR, byte count)
+            {
+                Indexes = indexes;
+                IndexesXOR = indexesXOR;
+                Count = count;
+            }
         }
         #endregion
     }
