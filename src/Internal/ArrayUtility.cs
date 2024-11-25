@@ -188,6 +188,7 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T* New<T>(int capacity) where T : unmanaged
         {
+            Console.WriteLine($"{typeof(T).Name} - {Marshal.SizeOf<T>()} - {capacity} - {Marshal.SizeOf<T>() * capacity}");
             return (T*)Marshal.AllocHGlobal(Marshal.SizeOf<T>() * capacity).ToPointer();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -253,6 +254,24 @@ namespace DCFApixels.DragonECS.Internal
             return (T*)(Marshal.ReAllocHGlobal(
                 new IntPtr(oldPointer),
                 new IntPtr(MetaCache<T>.Size * newCount))).ToPointer();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T* ResizeAndInit<T>(void* oldPointer, int oldSize, int newSize) where T : unmanaged
+        {
+            int sizeT = MetaCache<T>.Size;
+            T* result = (T*)Marshal.ReAllocHGlobal(
+                new IntPtr(oldPointer),
+                new IntPtr(sizeT * newSize)).ToPointer();
+            Init((byte*)result, sizeT * oldSize, sizeT * newSize);
+            return result;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void Init(byte* pointer, int startByteIndex, int endByteIndex)
+        {
+            for (int i = startByteIndex; i < endByteIndex; i++)
+            {
+                *(pointer + i) = 0;
+            }
         }
     }
 

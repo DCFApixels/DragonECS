@@ -179,17 +179,49 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    public unsafe partial class EcsWorld
+    {
+        private int*[] _groupSparsePagePool = new int*[64];
+        private int _groupSparsePagePoolCount = 0;
+        internal int* TakePage()
+        {
+            if(_groupSparsePagePoolCount <= 0)
+            {
+                var x = UnmanagedArrayUtility.NewAndInit<int>(EcsGroup.PAGE_SIZE);
+                return x;
+            }
+            return _groupSparsePagePool[--_groupSparsePagePoolCount];
+        }
+        internal void ReternPage(int* page)
+        {
+            if (_groupSparsePagePoolCount >= _groupSparsePagePool.Length)
+            {
+                var old = _groupSparsePagePool;
+                _groupSparsePagePool = new int*[_groupSparsePagePoolCount << 1];
+                for (int j = 0; j < old.Length; j++)
+                {
+                    _groupSparsePagePool[j] = old[j];
+                }
+            }
+            _groupSparsePagePool[_groupSparsePagePoolCount++] = page;
+        }
+    }
+
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     //TODO переработать EcsGroup в структуру-обертку, чтобы когда вызывается Release то можно было занулить эту структуру, а может не перерабатывать, есть проблема с боксингом
-    public class EcsGroup : IDisposable, IEnumerable<int>, IEntityStorage, ISet<int>
+    public unsafe class EcsGroup : IDisposable, IEnumerable<int>, IEntityStorage, ISet<int>
     {
+        internal const int PAGE_SIZE = Page.SIZE;
+
         private EcsWorld _source;
         private int[] _dense;
-        private int[] _sparse; //Старший бит занят временной маркировкой в операциях над множествами
+        private Page* _sparse; //Старший бит занят временной маркировкой в операциях над множествами
+        private int _pagesCount;
+        private int _totalCapacity;
         private int _count = 0;
         internal bool _isReleased = true;
 
@@ -241,17 +273,17 @@ namespace DCFApixels.DragonECS
 #endif
                 return _dense[++index];
             }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
-                // TODO добавить лок енумератора на изменение
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (index < 0 || index >= Count) { Throw.ArgumentOutOfRange(); }
-#endif
-                var oldValue = _dense[index];
-                _dense[index] = value;
-                _sparse[oldValue] = 0;
-            }
+//            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+//            set
+//            {
+//                // TODO добавить лок енумератора на изменение
+//#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+//                if (index < 0 || index >= Count) { Throw.ArgumentOutOfRange(); }
+//#endif
+//                var oldValue = _dense[index];
+//                _dense[index] = value;
+//                _sparse[oldValue] = 0;
+//            }
         }
         #endregion
 
@@ -266,7 +298,10 @@ namespace DCFApixels.DragonECS
             _source = world;
             _source.RegisterGroup(this);
             _dense = new int[denseCapacity];
-            _sparse = new int[world.Capacity];
+            //_sparse = new int[world.Capacity];
+            _totalCapacity = world.Capacity;
+            _pagesCount = CalcSparseSize(_totalCapacity);
+            _sparse = UnmanagedArrayUtility.NewAndInit<Page>(_pagesCount);
         }
         public void Dispose()
         {
@@ -278,12 +313,22 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
         {
-            return _sparse[entityID] != 0;
+            //return _sparse[entityID] != 0;
+            Page* page = _sparse + (entityID >> Page.SHIFT);
+
+            ReadOnlySpan<int> span = default;
+            if (page->Indexes != null)
+            {
+                span = new ReadOnlySpan<int>(page->Indexes, Page.SIZE);
+            }
+            return page->Indexes != null && page->Indexes[entityID & Page.MASK] != 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID)
         {
-            return _sparse[entityID];
+            //return _sparse[entityID];
+            Page* page = _sparse + (entityID >> Page.SHIFT);
+            return page->Indexes != null ? page->Indexes[entityID & Page.MASK] : -1;
         }
         #endregion
 
@@ -312,7 +357,19 @@ namespace DCFApixels.DragonECS
                 Array.Resize(ref _dense, _dense.Length << 1);
             }
             _dense[_count] = entityID;
-            _sparse[entityID] = _count;
+
+            //_sparse[entityID] = _count;
+            Page* page = _sparse + (entityID >> Page.SHIFT);
+            if(page->Indexes == null)
+            {
+                page->Indexes = _source.TakePage();
+                if(page->Indexes == null)
+                {
+
+                }
+            }
+            page->Indexes[entityID & Page.MASK] = _count;
+            page->Count++;
         }
 
         public void RemoveUnchecked(int entityID)
@@ -334,9 +391,22 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Remove_Internal(int entityID)
         {
-            _dense[_sparse[entityID]] = _dense[_count];
-            _sparse[_dense[_count--]] = _sparse[entityID];
-            _sparse[entityID] = 0;
+            //_dense[_sparse[entityID]] = _dense[_count];
+            //_sparse[_dense[_count--]] = _sparse[entityID];
+            //_sparse[entityID] = 0;
+
+            Page* page = _sparse + (entityID >> Page.SHIFT);
+            int localEntityID = entityID & Page.MASK;
+
+            _dense[page->Indexes[localEntityID]] = _dense[_count];
+
+            int localLastIndex = _dense[_count--]; 
+            int* lastPageArray = (_sparse + (localLastIndex >> Page.SHIFT))->Indexes;
+            localLastIndex = localLastIndex & Page.MASK;
+
+            lastPageArray[localLastIndex] = page->Indexes[localEntityID];
+            page->Indexes[localEntityID] = 0;
+            page->Count--;
         }
 
         public void RemoveUnusedEntityIDs()
@@ -358,10 +428,26 @@ namespace DCFApixels.DragonECS
             {
                 return;
             }
-            for (int i = 1; i <= _count; i++)
+            //for (int i = 1; i <= _count; i++)
+            //{
+            //    _sparse[_dense[i]] = 0;
+            //}
+            for (int i = 0; i < _pagesCount; i++)
             {
-                _sparse[_dense[i]] = 0;
+                var page = _sparse + i;
+                if (page->Indexes != null)
+                {
+                    //TODO тут надо оптимизировать отчисткой не всего а по dense списку
+                    for (int j = 0; j < Page.SIZE; j++)
+                    {
+                        page->Indexes[j] = 0;
+                    }
+                    _source.ReternPage(page->Indexes);
+                    page->Indexes = null;
+                }
+                page->Count = 0;
             }
+
             _count = 0;
         }
         #endregion
@@ -1251,17 +1337,20 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Mark_Internal(int entityID)
         {
-            _sparse[entityID] |= int.MinValue;
+            throw new NotImplementedException();
+            //_sparse[entityID] |= int.MinValue;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsMark_Internal(int entityID)
         {
-            return (_sparse[entityID] & int.MinValue) == int.MinValue;
+            throw new NotImplementedException();
+            //return (_sparse[entityID] & int.MinValue) == int.MinValue;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Unmark_Internal(int entityID)
         {
-            _sparse[entityID] &= int.MaxValue;
+            throw new NotImplementedException();
+            //_sparse[entityID] &= int.MaxValue;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ClearUnmarked_Internal()
@@ -1302,7 +1391,11 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void OnWorldResize_Internal(int newSize)
         {
-            Array.Resize(ref _sparse, newSize);
+            //Array.Resize(ref _sparse, newSize);
+            _totalCapacity = newSize;
+            var oldPagesCount = _pagesCount;
+            _pagesCount = CalcSparseSize(_totalCapacity);
+            _sparse = UnmanagedArrayUtility.ResizeAndInit<Page>(_sparse, oldPagesCount, _pagesCount);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void OnReleaseDelEntityBuffer_Internal(ReadOnlySpan<int> buffer)
@@ -1352,5 +1445,25 @@ namespace DCFApixels.DragonECS
             public DebuggerProxy(EcsReadonlyGroup group) : this(group.GetSource_Internal()) { }
         }
         #endregion
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //private static (int, int) GetPage(int index)
+        //{
+        //    int pageIndex = index >> Page.SIZE;
+        //    return (_sparse + pageIndex, index & Page.MASK);
+        //}
+        private static int CalcSparseSize(int capacity)
+        {
+            return (capacity >> Page.SHIFT) + ((capacity & Page.MASK) == 0 ? 0 : 1);
+        }
+        private struct Page
+        {
+            public const int SHIFT = 6; // 64
+            public const int SIZE = 1 << SHIFT;
+            public const int MASK = SIZE - 1;
+
+            public int* Indexes;
+            public int Count;
+        }
     }
 }
