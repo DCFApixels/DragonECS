@@ -67,9 +67,6 @@ namespace DCFApixels.DragonECS
         //обновляется в NewEntity и в DelEntity
         private long _version = 0;
 
-        private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
-        private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
-
         private List<IEcsWorldEventListener> _listeners = new List<IEcsWorldEventListener>();
         private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
 
@@ -772,34 +769,6 @@ namespace DCFApixels.DragonECS
                 item.OnWorldResize(newSize);
             }
             _listeners.InvokeOnWorldResize(newSize);
-        }
-        #endregion
-
-        #region Groups Pool
-        private void RemoveGroupAt(int index)
-        {
-            int last = _groups.Count - 1;
-            _groups[index] = _groups[last];
-            _groups.RemoveAt(last);
-        }
-        internal void RegisterGroup(EcsGroup group)
-        {
-            _groups.Add(new WeakReference<EcsGroup>(group));
-        }
-        internal EcsGroup GetFreeGroup()
-        {
-            EcsGroup result = _groupsPool.Count <= 0 ? new EcsGroup(this, _configs.GetWorldConfigOrDefault().GroupCapacity) : _groupsPool.Pop();
-            result._isReleased = false;
-            return result;
-        }
-        internal void ReleaseGroup(EcsGroup group)
-        {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (group.World != this) { Throw.World_GroupDoesNotBelongWorld(); }
-#endif
-            group._isReleased = true;
-            group.Clear();
-            _groupsPool.Push(group);
         }
         #endregion
 
