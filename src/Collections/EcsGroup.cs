@@ -402,7 +402,13 @@ namespace DCFApixels.DragonECS
                 //}
             }
             page->Indexes[entityID & PageSlot.MASK] = _count;
+            page->IndexesXOR ^= _count;
             page->Count++;
+
+            //if (page->Count == 1)
+            //{
+            //    ReadOnlySpan<int> pageSpan = new ReadOnlySpan<int>(page->Indexes, PageSlot.SIZE);
+            //}
         }
 
         public void RemoveUnchecked(int entityID)
@@ -441,10 +447,18 @@ namespace DCFApixels.DragonECS
             if (--page->Count == 0)
             {
                 _source.ReturnPage(page->Indexes);
+                page->Indexes = null;
+                page->IndexesXOR = 0;
             }
             else
             {
+                page->IndexesXOR ^= page->Indexes[localEntityID];
                 page->Indexes[localEntityID] = 0;
+
+                if (page->Count == 1)
+                {
+                    ReadOnlySpan<int> pageSpan = new ReadOnlySpan<int>(page->Indexes, PageSlot.SIZE);
+                }
             }
         }
 
@@ -484,6 +498,7 @@ namespace DCFApixels.DragonECS
                     _source.ReturnPage(page->Indexes);
                     page->Indexes = null;
                 }
+                page->IndexesXOR = 0;
                 page->Count = 0;
             }
 
@@ -1497,6 +1512,7 @@ namespace DCFApixels.DragonECS
             public const int MASK = SIZE - 1;
 
             public int* Indexes;
+            public int IndexesXOR;
             public byte Count;
         }
         #endregion
