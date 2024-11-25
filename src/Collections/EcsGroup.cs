@@ -396,13 +396,9 @@ namespace DCFApixels.DragonECS
             if(page->Count == 0)
             {
                 page->Indexes = _source.TakePage();
-                //if(page->Indexes == null)
-                //{
-                //
-                //}
             }
             page->Indexes[entityID & PageSlot.MASK] = _count;
-            page->IndexesXOR ^= _count;
+            //page->IndexesXOR ^= _count;
             page->Count++;
         }
 
@@ -442,12 +438,12 @@ namespace DCFApixels.DragonECS
             if (--page->Count == 0)
             {
                 _source.ReturnPage(page->Indexes);
+                //page->IndexesXOR = 0;
                 page->Indexes = _nullPage;
-                page->IndexesXOR = 0;
             }
             else
             {
-                page->IndexesXOR ^= page->Indexes[localEntityID];
+                //page->IndexesXOR ^= page->Indexes[localEntityID];
                 page->Indexes[localEntityID] = 0;
             }
         }
@@ -488,7 +484,7 @@ namespace DCFApixels.DragonECS
                     _source.ReturnPage(page->Indexes);
                     page->Indexes = _nullPage;
                 }
-                page->IndexesXOR = 0;
+                //page->IndexesXOR = 0;
                 page->Count = 0;
             }
 
@@ -1508,12 +1504,12 @@ namespace DCFApixels.DragonECS
             public static readonly PageSlot Empty = new PageSlot(_nullPage, 0, 0);
 
             public int* Indexes;
-            public int IndexesXOR;
+            //public int IndexesXOR;
             public byte Count;
             public PageSlot(int* indexes, int indexesXOR, byte count)
             {
                 Indexes = indexes;
-                IndexesXOR = indexesXOR;
+                //IndexesXOR = indexesXOR;
                 Count = count;
             }
         }
