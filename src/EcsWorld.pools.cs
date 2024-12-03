@@ -83,6 +83,11 @@ namespace DCFApixels.DragonECS
         {
             return GetUnchecked<PoolCache<TPool>>(worldID).Instance;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public GetPoolInstanceMarker GetPoolInstance()
+        {
+            return new GetPoolInstanceMarker(this);
+        }
         #endregion
 
         #region ComponentInfo
@@ -417,6 +422,24 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             public bool locked;
 #endif
+        }
+        public readonly ref struct GetPoolInstanceMarker
+        {
+            public readonly EcsWorld World;
+            public GetPoolInstanceMarker(EcsWorld world)
+            {
+                World = world;
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public TPool GetInstance<TPool>() where TPool : IEcsPoolImplementation, new()
+            {
+                return World.GetPoolInstance<TPool>();
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public TPool GetInstanceUnchecked<TPool>() where TPool : IEcsPoolImplementation, new()
+            {
+                return World.GetPoolInstanceUnchecked<TPool>();
+            }
         }
         #endregion
     }

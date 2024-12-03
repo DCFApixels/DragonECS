@@ -291,6 +291,7 @@ namespace DCFApixels.DragonECS
         public static implicit operator EcsTagPool<T>(IncludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(ExcludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(OptionalMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
+        public static implicit operator EcsTagPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         #endregion
     }
     public static class EcsTagPoolExt
