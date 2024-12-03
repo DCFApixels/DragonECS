@@ -94,6 +94,10 @@ namespace DCFApixels.DragonECS
         {
             return DeclareOrGetComponentTypeID(EcsTypeCodeManager.Get(componentType));
         }
+        public Type GetComponentType(int componentTypeID)
+        {
+            return _pools[componentTypeID].ComponentType;
+        }
         public bool IsComponentTypeDeclared<TComponent>()
         {
             return _cmpTypeCode_2_CmpTypeIDs.Contains((int)EcsTypeCodeManager.Get<TComponent>());
@@ -102,6 +106,7 @@ namespace DCFApixels.DragonECS
         {
             return _cmpTypeCode_2_CmpTypeIDs.Contains((int)EcsTypeCodeManager.Get(componentType));
         }
+        //TODO пересмотреть нейминг или функцию
         public bool IsComponentTypeDeclared(int componentTypeID)
         {
             if (componentTypeID >= 0 && componentTypeID < _pools.Length)
@@ -109,10 +114,6 @@ namespace DCFApixels.DragonECS
                 return _pools[componentTypeID] != _nullPool;
             }
             return false;
-        }
-        public Type GetComponentType(int componentTypeID)
-        {
-            return _pools[componentTypeID].ComponentType;
         }
         #endregion
 
@@ -364,10 +365,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region LockPool/UnLockPool
-        public void LockPool_Debug(int ComponentTypeID)
+        public void LockPool_Debug(int componentTypeID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            ref var slot = ref _poolSlots[ComponentTypeID];
+            ref var slot = ref _poolSlots[componentTypeID];
             if (slot.locked == false)
             {
                 slot.locked = true;
@@ -376,14 +377,14 @@ namespace DCFApixels.DragonECS
                     ReleaseDelEntityBufferAll();
                 }
                 _lockedPoolCount++;
-                _pools[ComponentTypeID].OnLockedChanged_Debug(true);
+                _pools[componentTypeID].OnLockedChanged_Debug(true);
             }
 #endif
         }
-        public void UnlockPool_Debug(int ComponentTypeID)
+        public void UnlockPool_Debug(int componentTypeID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            ref var slot = ref _poolSlots[ComponentTypeID];
+            ref var slot = ref _poolSlots[componentTypeID];
             if (slot.locked == true)
             {
                 slot.locked = false;
@@ -394,21 +395,21 @@ namespace DCFApixels.DragonECS
                     _lockedPoolCount = 0;
                     Throw.OpeningClosingMethodsBalanceError();
                 }
-                _pools[ComponentTypeID].OnLockedChanged_Debug(false);
+                _pools[componentTypeID].OnLockedChanged_Debug(false);
             }
 #endif
         }
-        public bool CheckPoolLocked_Debug(int ComponentTypeID)
+        public bool CheckPoolLocked_Debug(int componentTypeID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            return _poolSlots[ComponentTypeID].locked;
+            return _poolSlots[componentTypeID].locked;
 #else
             return false;
 #endif
         }
         #endregion
 
-        #region PoolSlot
+        #region Utils
         internal struct PoolSlot
         {
             public int count;

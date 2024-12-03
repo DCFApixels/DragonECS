@@ -2,6 +2,7 @@
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.PoolsCore
@@ -58,6 +59,7 @@ namespace DCFApixels.DragonECS.Internal
     [MetaDescription(EcsConsts.AUTHOR, "A placeholder type, an instance of this type replaces the null ref.")]
     [MetaTags(MetaTags.HIDDEN)]
     [MetaID("460E547C9201227A4956AC297F67B484")]
+    [DebuggerDisplay("-")]
     public sealed class EcsNullPool : IEcsPoolImplementation<NullComponent>
     {
         public static readonly EcsNullPool instance = new EcsNullPool();

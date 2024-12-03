@@ -190,7 +190,7 @@ namespace DCFApixels.DragonECS
         #region Pages
         internal int* TakePage()
         {
-            if(_groupSparsePagePoolCount <= 0)
+            if (_groupSparsePagePoolCount <= 0)
             {
                 var x = UnmanagedArrayUtility.NewAndInit<int>(EcsGroup.PAGE_SIZE);
                 return x;
@@ -308,17 +308,17 @@ namespace DCFApixels.DragonECS
 #endif
                 return _dense[++index];
             }
-//            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//            set
-//            {
-//                // TODO добавить лок енумератора на изменение
-//#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-//                if (index < 0 || index >= Count) { Throw.ArgumentOutOfRange(); }
-//#endif
-//                var oldValue = _dense[index];
-//                _dense[index] = value;
-//                _sparse[oldValue] = 0;
-//            }
+            //            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            //            set
+            //            {
+            //                // TODO добавить лок енумератора на изменение
+            //#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            //                if (index < 0 || index >= Count) { Throw.ArgumentOutOfRange(); }
+            //#endif
+            //                var oldValue = _dense[index];
+            //                _dense[index] = value;
+            //                _sparse[oldValue] = 0;
+            //            }
         }
         #endregion
 
@@ -393,7 +393,7 @@ namespace DCFApixels.DragonECS
 
             //_sparse[entityID] = _count;
             PageSlot* page = _sparsePages + (entityID >> PageSlot.SHIFT);
-            if(page->Count == 0)
+            if (page->Count == 0)
             {
                 page->Indexes = _source.TakePage();
             }
@@ -430,7 +430,7 @@ namespace DCFApixels.DragonECS
 
             _dense[page->Indexes[localEntityID]] = _dense[_count];
 
-            int localLastIndex = _dense[_count--]; 
+            int localLastIndex = _dense[_count--];
             int* lastPageArray = (_sparsePages + (localLastIndex >> PageSlot.SHIFT))->Indexes;
             localLastIndex = localLastIndex & PageSlot.MASK;
 

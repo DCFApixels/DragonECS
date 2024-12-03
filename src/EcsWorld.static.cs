@@ -163,7 +163,7 @@ namespace DCFApixels.DragonECS
         }
         private sealed class NullWorld : EcsWorld
         {
-            internal NullWorld() : base(new EcsWorldConfig(4, 4, 4, 4, 4), 0) { }
+            internal NullWorld() : base(new EcsWorldConfig(4, 4, 4, 4, 4), null, 0) { }
         }
 
         #region Obsolete

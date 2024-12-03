@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+#if ENABLE_IL2CPP
+using Unity.IL2CPP.CompilerServices;
+#endif
 
 namespace DCFApixels.DragonECS
 {
 #if ENABLE_IL2CPP
-    using Unity.IL2CPP.CompilerServices;
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
@@ -41,10 +43,11 @@ namespace DCFApixels.DragonECS
     [MetaDescription(EcsConsts.AUTHOR, "It is a container for entities and components.")]
     [MetaID("AEF3557C92019C976FC48F90E95A9DA6")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public partial class EcsWorld : IEntityStorage, IEcsMember
+    public partial class EcsWorld : IEntityStorage, IEcsMember, INamedMember
     {
         public readonly short ID;
-        private IConfigContainer _configs;
+        private readonly IConfigContainer _configs;
+        private readonly string _name;
 
         private bool _isDestroyed = false;
 
@@ -73,12 +76,18 @@ namespace DCFApixels.DragonECS
         #region Properties
         EcsWorld IEntityStorage.World
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return this; }
         }
         public IConfigContainer Configs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _configs; }
+        }
+        public string Name
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _name; }
         }
         public long Version
         {
@@ -134,12 +143,15 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors/Destroy
-        public EcsWorld(EcsWorldConfig config, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), worldID) { }
-        public EcsWorld(IConfigContainer configs = null, short worldID = -1)
+        public EcsWorld() : this(ConfigContainer.Empty, null, -1) { }
+        public EcsWorld(EcsWorldConfig config = null, string name = null, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), name, worldID) { }
+        public EcsWorld(IConfigContainer configs, string name = null, short worldID = -1)
         {
             lock (_worldLock)
             {
                 if (configs == null) { configs = ConfigContainer.Empty; }
+                if (name == null) { name = string.Empty; }
+                _name = name;
                 bool nullWorld = this is NullWorld;
                 if (nullWorld == false && worldID == NULL_WORLD_ID)
                 {
@@ -264,6 +276,18 @@ namespace DCFApixels.DragonECS
 
         #region New/Del
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public entlong NewEntityLong()
+        {
+            int entityID = NewEntity();
+            return GetEntityLong(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public entlong NewEntityLong(int entityID)
+        {
+            NewEntity(entityID);
+            return GetEntityLong(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity()
         {
             int entityID = _entityDispenser.UseFree();
@@ -294,24 +318,26 @@ namespace DCFApixels.DragonECS
             _entityListeners.InvokeOnNewEntity(entityID);
         }
 
-        public entlong NewEntityLong()
-        {
-            int entityID = NewEntity();
-            return GetEntityLong(entityID);
-        }
-        public entlong NewEntityLong(int entityID)
-        {
-            NewEntity(entityID);
-            return GetEntityLong(entityID);
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TryDelEntity(int entityID)
+        public bool TryDelEntity(entlong entity)
+        {
+            if (entity.TryGetID(out int entityID))
+            {
+                TryDelEntity(entityID);
+                return true;
+            }
+            return false;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryDelEntity(int entityID)
         {
             if (IsUsed(entityID))
             {
                 DelEntity(entityID);
+                return true;
             }
+            return false;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DelEntity(entlong entity)
@@ -358,6 +384,15 @@ namespace DCFApixels.DragonECS
         {
             ref var slot = ref _entities[entityID];
             return slot.gen == gen && slot.isUsed;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsAlive(entlong entity)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (entity.GetWorldIDUnchecked() != ID) { Throw.World_MaskDoesntBelongWorld(); }
+#endif
+            ref var slot = ref _entities[entity.GetIDUnchecked()];
+            return slot.gen == entity.GetIDUnchecked() && slot.isUsed;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsUsed(int entityID)

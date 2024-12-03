@@ -10,8 +10,9 @@ namespace DCFApixels.DragonECS
     [MetaID("4EE3527C92015BAB0299CB7B4E2663D1")]
     public sealed class EcsDefaultWorld : EcsWorld, IInjectionUnit
     {
-        public EcsDefaultWorld(EcsWorldConfig config, short worldID = -1) : base(config, worldID) { }
-        public EcsDefaultWorld(IConfigContainer configs = null, short worldID = -1) : base(configs, worldID) { }
+        public EcsDefaultWorld() : base() { }
+        public EcsDefaultWorld(EcsWorldConfig config = null, string name = null, short worldID = -1) : base(config, name == null ? "Default" : name, worldID) { }
+        public EcsDefaultWorld(IConfigContainer configs, string name = null, short worldID = -1) : base(configs, name == null ? "Default" : name, worldID) { }
         void IInjectionUnit.InitInjectionNode(InjectionGraph nodes) { nodes.AddNode(this); }
     }
     /// <summary> EcsWrold for store event entities. </summary>
@@ -22,8 +23,9 @@ namespace DCFApixels.DragonECS
     [MetaID("D7CE527C920160BCD765EFA72DBF8B89")]
     public sealed class EcsEventWorld : EcsWorld, IInjectionUnit
     {
-        public EcsEventWorld(EcsWorldConfig config, short worldID = -1) : base(config, worldID) { }
-        public EcsEventWorld(IConfigContainer configs = null, short worldID = -1) : base(configs, worldID) { }
+        public EcsEventWorld() : base() { }
+        public EcsEventWorld(EcsWorldConfig config = null, string name = null, short worldID = -1) : base(config, name == null ? "Events" : name, worldID) { }
+        public EcsEventWorld(IConfigContainer configs, string name = null, short worldID = -1) : base(configs, name == null ? "Events" : name, worldID) { }
         void IInjectionUnit.InitInjectionNode(InjectionGraph nodes) { nodes.AddNode(this); }
     }
 }
