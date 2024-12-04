@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -402,21 +401,23 @@ namespace DCFApixels.DragonECS
             _dense[_count] = entityID;
 
             //_sparse[entityID] = _count;
+            //_count == new index
             ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
-            if(page.Count++ == 1)
+            page.Count++;
+            // page.Count != 0
+            if (page.Count == 1)
             {
-                int* x = _nullPage;
-                if (page.Indexes != x)
-                {
-
-                }
-
-                page.Indexes = _source.TakePage();
+                page.IndexesXOR = _count;
             }
-            if(page.Count != 1)
+            else // page.Count > 1
             {
-                page.Indexes[entityID & PageSlot.MASK] = _count;
+                if (page.Count == 2)
+                {
+                    page.Indexes = _source.TakePage();
+                    page.Indexes[_dense[page.IndexesXOR] & PageSlot.MASK] = page.IndexesXOR;
+                }
                 page.IndexesXOR ^= _count;
+                page.Indexes[entityID & PageSlot.MASK] = _count;
             }
 
             //if ((page.Count == 0 && page.IndexesXOR != 0) ||
