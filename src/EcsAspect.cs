@@ -113,9 +113,6 @@ namespace DCFApixels.DragonECS
             private EcsWorld _world;
             private EcsStaticMask.Builder _maskBuilder;
 
-            //private IEcsPool[] _poolsBuffer = new IEcsPool[8];
-            //private int _poolsBufferCount;
-
             #region Properties
             public IncludeMarker Inc
             {
@@ -219,11 +216,6 @@ namespace DCFApixels.DragonECS
             private TPool CachePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = _world.GetPoolInstance<TPool>();
-                //if (_poolsBufferCount >= _poolsBuffer.Length)
-                //{
-                //    Array.Resize(ref _poolsBuffer, _poolsBuffer.Length << 1);
-                //}
-                //_poolsBuffer[_poolsBufferCount++] = pool;
                 return pool;
             }
             private void IncludeImplicit(Type type)
@@ -374,25 +366,25 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    #region EcsAspectExtensions
-    //public static class EcsAspectExtensions
-    //{
-    //    public static EcsAspect.Builder Inc<TPool>(this EcsAspect.Builder self, ref TPool pool) where TPool : IEcsPoolImplementation, new()
-    //    {
-    //        pool = self.IncludePool<TPool>();
-    //        return self;
-    //    }
-    //    public static EcsAspect.Builder Exc<TPool>(this EcsAspect.Builder self, ref TPool pool) where TPool : IEcsPoolImplementation, new()
-    //    {
-    //        pool = self.ExcludePool<TPool>();
-    //        return self;
-    //    }
-    //    public static EcsAspect.Builder Opt<TPool>(this EcsAspect.Builder self, ref TPool pool) where TPool : IEcsPoolImplementation, new()
-    //    {
-    //        pool = self.OptionalPool<TPool>();
-    //        return self;
-    //    }
-    //}
+    #region EcsAspect.Builder.Extensions
+    public static class EcsAspectBuilderExtensions
+    {
+        public static EcsAspect.Builder Inc<TPool>(this EcsAspect.Builder self, ref TPool pool) where TPool : IEcsPoolImplementation, new()
+        {
+            pool = self.IncludePool<TPool>();
+            return self;
+        }
+        public static EcsAspect.Builder Exc<TPool>(this EcsAspect.Builder self, ref TPool pool) where TPool : IEcsPoolImplementation, new()
+        {
+            pool = self.ExcludePool<TPool>();
+            return self;
+        }
+        public static EcsAspect.Builder Opt<TPool>(this EcsAspect.Builder self, ref TPool pool) where TPool : IEcsPoolImplementation, new()
+        {
+            pool = self.OptionalPool<TPool>();
+            return self;
+        }
+    }
     #endregion
 
     #region Constraint Markers

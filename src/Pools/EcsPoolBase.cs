@@ -295,6 +295,34 @@ namespace DCFApixels.DragonECS
         {
             for (int i = 0; i < cachedCount; i++) self[i].OnDel(entityID);
         }
+
+        //
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void InvokeOnAdd(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        {
+            for (int i = 0; i < cachedCount; i++) self[i].OnAdd(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void InvokeOnAddAndGet(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        {
+            for (int i = 0; i < cachedCount; i++)
+            {
+                self[i].OnAdd(entityID);
+                self[i].OnGet(entityID);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void InvokeOnGet(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        {
+            for (int i = 1; i < cachedCount; i++) self[i].OnGet(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void InvokeOnDel(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        {
+            for (int i = 0; i < cachedCount; i++) self[i].OnDel(entityID);
+        }
     }
 #endif
     #endregion

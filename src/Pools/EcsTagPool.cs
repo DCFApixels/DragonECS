@@ -4,7 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
-
+using DCFApixels.DragonECS.Internal;
+using System.ComponentModel;
 #if (DEBUG && !DISABLE_DEBUG)
 using System.Reflection;
 #endif
@@ -41,7 +42,7 @@ namespace DCFApixels.DragonECS
         private int _count = 0;
 
 #if !DISABLE_POOLS_EVENTS
-        private List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
+        private StructList<IEcsPoolEventListener> _listeners = new StructList<IEcsPoolEventListener>(2);
         private int _listenersCachedCount = 0;
 #endif
         private bool _isLocked;
@@ -274,7 +275,7 @@ namespace DCFApixels.DragonECS
         public void RemoveListener(IEcsPoolEventListener listener)
         {
             if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
-            if (_listeners.Remove(listener))
+            if (_listeners.RemoveWithOrder(listener))
             {
                 _listenersCachedCount--;
             }
@@ -294,7 +295,8 @@ namespace DCFApixels.DragonECS
         public static implicit operator EcsTagPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         #endregion
     }
-    public static class EcsTagPoolExt
+
+    public static class EcsTagPoolExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> GetPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
@@ -308,15 +310,38 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> Inc<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.IncludePool<EcsTagPool<TTagComponent>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> Exc<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.ExcludePool<EcsTagPool<TTagComponent>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> Opt<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.OptionalPool<EcsTagPool<TTagComponent>>();
+        }
+
+        #region Obsolete
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Inc) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Include<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.IncludePool<EcsTagPool<TTagComponent>>();
         }
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Exc) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Exclude<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.ExcludePool<EcsTagPool<TTagComponent>>();
         }
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Opt) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Optional<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
@@ -325,31 +350,42 @@ namespace DCFApixels.DragonECS
 
         //---------------------------------------------------
 
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(GetPool) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> GetTagPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.GetPoolInstance<EcsTagPool<TTagComponent>>();
         }
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(GetPoolUnchecked) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> GetTagPoolUnchecked<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.GetPoolInstanceUnchecked<EcsTagPool<TTagComponent>>();
         }
 
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Inc) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> IncludeTag<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.IncludePool<EcsTagPool<TTagComponent>>();
         }
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Exc) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> ExcludeTag<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.ExcludePool<EcsTagPool<TTagComponent>>();
         }
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Opt) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> OptionalTag<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.OptionalPool<EcsTagPool<TTagComponent>>();
         }
+        #endregion
     }
 }

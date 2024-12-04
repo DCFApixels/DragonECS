@@ -3,6 +3,7 @@ using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
@@ -46,7 +47,7 @@ namespace DCFApixels.DragonECS
         private bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
 
 #if !DISABLE_POOLS_EVENTS
-        private readonly List<IEcsPoolEventListener> _listeners = new List<IEcsPoolEventListener>();
+        private readonly StructList<IEcsPoolEventListener> _listeners = new StructList<IEcsPoolEventListener>(2);
         private int _listenersCachedCount = 0;
 #endif
         private bool _isLocked;
@@ -102,11 +103,12 @@ namespace DCFApixels.DragonECS
                 }
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-            EnableComponent(ref _items[itemIndex]);
+            ref T result = ref _items[itemIndex];
+            EnableComponent(ref result);
 #if !DISABLE_POOLS_EVENTS
             _listeners.InvokeOnAddAndGet(entityID, _listenersCachedCount);
 #endif
-            return ref _items[itemIndex];
+            return ref result;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get(int entityID)
@@ -284,7 +286,7 @@ namespace DCFApixels.DragonECS
         public void RemoveListener(IEcsPoolEventListener listener)
         {
             if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
-            if (_listeners.Remove(listener))
+            if (_listeners.RemoveWithOrder(listener))
             {
                 _listenersCachedCount--;
             }
@@ -343,7 +345,8 @@ namespace DCFApixels.DragonECS
         public static implicit operator EcsPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsPool<T>>(); }
         #endregion
     }
-    public static class EcsPoolExt
+
+    public static class EcsPoolExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPool<TComponent> GetPool<TComponent>(this EcsWorld self) where TComponent : struct, IEcsComponent
@@ -357,19 +360,43 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPool<TComponent> Inc<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
+        {
+            return self.IncludePool<EcsPool<TComponent>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPool<TComponent> Exc<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
+        {
+            return self.ExcludePool<EcsPool<TComponent>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPool<TComponent> Opt<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
+        {
+            return self.OptionalPool<EcsPool<TComponent>>();
+        }
+
+        #region Obsolete
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Inc) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPool<TComponent> Include<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
         {
             return self.IncludePool<EcsPool<TComponent>>();
         }
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Exc) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPool<TComponent> Exclude<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
         {
             return self.ExcludePool<EcsPool<TComponent>>();
         }
+        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Opt) + "<T>()")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPool<TComponent> Optional<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
         {
             return self.OptionalPool<EcsPool<TComponent>>();
         }
+        #endregion
     }
 }

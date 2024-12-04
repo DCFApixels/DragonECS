@@ -374,40 +374,38 @@ namespace DCFApixels.DragonECS
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             ref var slot = ref _poolSlots[componentTypeID];
-            if (slot.locked == false)
+            if (slot.lockedCounter == 0)
             {
-                slot.locked = true;
-                if (_lockedPoolCount == 0)
-                {
-                    ReleaseDelEntityBufferAll();
-                }
+                //очистка буффера, чтобы она рандомно не сработала в блоке блоикровки пула
+                ReleaseDelEntityBufferAll();
                 _lockedPoolCount++;
-                _pools[componentTypeID].OnLockedChanged_Debug(true);
             }
+            slot.lockedCounter++;
+            _pools[componentTypeID].OnLockedChanged_Debug(true);
 #endif
         }
         public void UnlockPool_Debug(int componentTypeID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             ref var slot = ref _poolSlots[componentTypeID];
-            if (slot.locked == true)
+            slot.lockedCounter--;
+            if (slot.lockedCounter <= 0)
             {
-                slot.locked = false;
                 _lockedPoolCount--;
-
-                if (_lockedPoolCount < 0)
+                if (_lockedPoolCount < 0 || slot.lockedCounter < 0)
                 {
                     _lockedPoolCount = 0;
+                    slot.lockedCounter = 0;
                     Throw.OpeningClosingMethodsBalanceError();
                 }
-                _pools[componentTypeID].OnLockedChanged_Debug(false);
             }
+            _pools[componentTypeID].OnLockedChanged_Debug(false);
 #endif
         }
         public bool CheckPoolLocked_Debug(int componentTypeID)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            return _poolSlots[componentTypeID].locked;
+            return _poolSlots[componentTypeID].lockedCounter != 0;
 #else
             return false;
 #endif
@@ -417,10 +415,10 @@ namespace DCFApixels.DragonECS
         #region Utils
         internal struct PoolSlot
         {
-            public int count;
             public long version;
+            public int count;
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            public bool locked;
+            public int lockedCounter;
 #endif
         }
         public readonly ref struct GetPoolInstanceMarker
