@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
 #endif
@@ -16,14 +17,17 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
+    [Serializable]
+    [DataContract]
     public class EcsWorldConfig
     {
         public static readonly EcsWorldConfig Default = new EcsWorldConfig();
-        public readonly int EntitiesCapacity;
-        public readonly int GroupCapacity;
-        public readonly int PoolsCapacity;
-        public readonly int PoolComponentsCapacity;
-        public readonly int PoolRecycledComponentsCapacity;
+        [DataMember] public int EntitiesCapacity;
+        [DataMember] public int GroupCapacity;
+        [DataMember] public int PoolsCapacity;
+        [DataMember] public int PoolComponentsCapacity;
+        [DataMember] public int PoolRecycledComponentsCapacity;
+        public EcsWorldConfig() : this(512) { }
         public EcsWorldConfig(int entitiesCapacity = 512, int groupCapacity = 512, int poolsCapacity = 512, int poolComponentsCapacity = 512, int poolRecycledComponentsCapacity = 512 / 2)
         {
             EntitiesCapacity = entitiesCapacity;
@@ -40,7 +44,7 @@ namespace DCFApixels.DragonECS
 #endif
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.WORLDS_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "It is a container for entities and components.")]
+    [MetaDescription(EcsConsts.AUTHOR, "Container for entities and components.")]
     [MetaID("AEF3557C92019C976FC48F90E95A9DA6")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public partial class EcsWorld : IEntityStorage, IEcsMember, INamedMember
@@ -70,8 +74,8 @@ namespace DCFApixels.DragonECS
         //обновляется в NewEntity и в DelEntity
         private long _version = 0;
 
-        private List<IEcsWorldEventListener> _listeners = new List<IEcsWorldEventListener>();
-        private List<IEcsEntityEventListener> _entityListeners = new List<IEcsEntityEventListener>();
+        private StructList<IEcsWorldEventListener> _listeners = new StructList<IEcsWorldEventListener>(2);
+        private StructList<IEcsEntityEventListener> _entityListeners = new StructList<IEcsEntityEventListener>(2);
 
         #region Properties
         EcsWorld IEntityStorage.World
@@ -159,6 +163,14 @@ namespace DCFApixels.DragonECS
                 }
                 _configs = configs;
                 EcsWorldConfig config = configs.GetWorldConfigOrDefault();
+
+                // тут сложно однозначно посчитать, так как нужно еще место под аспекты и запросы
+                int controllersCount = config.PoolsCapacity * 4;
+                _worldComponentPools = new StructList<WorldComponentPoolAbstract>(controllersCount);
+                if (controllersCount < _allWorldComponentPools.Capacity)
+                {
+                    _allWorldComponentPools.Capacity = controllersCount;
+                }
 
                 if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
                 {
@@ -261,12 +273,12 @@ namespace DCFApixels.DragonECS
             return ref WorldComponentPool<T>.GetForWorldUnchecked(ID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T Get<T>(int worldID) where T : struct
+        public static ref T Get<T>(short worldID) where T : struct
         {
             return ref WorldComponentPool<T>.GetForWorld(worldID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T GetUnchecked<T>(int worldID) where T : struct
+        public static ref T GetUnchecked<T>(short worldID) where T : struct
         {
             return ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
         }
@@ -1078,11 +1090,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region DebuggerProxy
-        private EcsSpan GetSpan_Debug()
-        {
-            return _entityDispenser.UsedToEcsSpan(ID);
-        }
-        protected class DebuggerProxy
+        protected partial class DebuggerProxy
         {
             private EcsWorld _world;
             private List<MaskQueryExecutor> _queries;
@@ -1129,7 +1137,7 @@ namespace DCFApixels.DragonECS
     internal static class WorldEventListExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InvokeOnWorldResize(this List<IEcsWorldEventListener> self, int newSize)
+        public static void InvokeOnWorldResize(this ref StructList<IEcsWorldEventListener> self, int newSize)
         {
             for (int i = 0, iMax = self.Count; i < iMax; i++)
             {
@@ -1137,7 +1145,7 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InvokeOnReleaseDelEntityBuffer(this List<IEcsWorldEventListener> self, ReadOnlySpan<int> buffer)
+        public static void InvokeOnReleaseDelEntityBuffer(this ref StructList<IEcsWorldEventListener> self, ReadOnlySpan<int> buffer)
         {
             for (int i = 0, iMax = self.Count; i < iMax; i++)
             {
@@ -1145,7 +1153,7 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InvokeOnWorldDestroy(this List<IEcsWorldEventListener> self)
+        public static void InvokeOnWorldDestroy(this ref StructList<IEcsWorldEventListener> self)
         {
             for (int i = 0, iMax = self.Count; i < iMax; i++)
             {
@@ -1153,7 +1161,7 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InvokeOnNewEntity(this List<IEcsEntityEventListener> self, int entityID)
+        public static void InvokeOnNewEntity(this ref StructList<IEcsEntityEventListener> self, int entityID)
         {
             for (int i = 0, iMax = self.Count; i < iMax; i++)
             {
@@ -1161,7 +1169,7 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InvokeOnDelEntity(this List<IEcsEntityEventListener> self, int entityID)
+        public static void InvokeOnDelEntity(this ref StructList<IEcsEntityEventListener> self, int entityID)
         {
             for (int i = 0, iMax = self.Count; i < iMax; i++)
             {

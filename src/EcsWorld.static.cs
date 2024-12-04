@@ -2,12 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {
+        #region Consts
         private const short NULL_WORLD_ID = 0;
 
         private const short GEN_STATUS_SEPARATOR = 0;
@@ -16,50 +18,84 @@ namespace DCFApixels.DragonECS
 
         private const int DEL_ENT_BUFFER_SIZE_OFFSET = 5;
         private const int DEL_ENT_BUFFER_MIN_SIZE = 64;
+        #endregion
 
         private static EcsWorld[] _worlds = Array.Empty<EcsWorld>();
         private static IdDispenser _worldIdDispenser = new IdDispenser(4, 0, n => Array.Resize(ref _worlds, n));
 
-        private static List<DataReleaser> _dataReleaseres = new List<DataReleaser>();
-        //public static int Copacity => Worlds.Length;
-
+        private static StructList<WorldComponentPoolAbstract> _allWorldComponentPools = new StructList<WorldComponentPoolAbstract>(64);
+        private StructList<WorldComponentPoolAbstract> _worldComponentPools;
+        private int _builtinWorldComponentsCount = 0;
         private static readonly object _worldLock = new object();
 
         static EcsWorld()
         {
             _worlds[NULL_WORLD_ID] = new NullWorld();
         }
-        private static void ReleaseData(int worldID)
-        {// ts
-            lock (_worldLock)
-            {
-                for (int i = 0, iMax = _dataReleaseres.Count; i < iMax; i++)
-                {
-                    _dataReleaseres[i].Release(worldID);
-                }
-            }
-        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsWorld GetWorld(short worldID)
         {// ts
             return _worlds[worldID];
         }
 
+        private void ReleaseData(short worldID)
+        {// ts
+            lock (_worldLock)
+            {
+                foreach (var controller in _worldComponentPools)
+                {
+                    controller.Release(worldID);
+                }
+                _worldComponentPools.Clear();
+            }
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T GetData<T>(int worldID)
+        public static ref T GetData<T>(short worldID)
         {
             return ref WorldComponentPool<T>.GetForWorld(worldID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T GetDataUnchecked<T>(int worldID)
+        public static bool HasData<T>(short worldID)
+        {
+            return WorldComponentPool<T>.Has(worldID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T GetDataUnchecked<T>(short worldID)
         {
             return ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
         }
 
-
-        private abstract class DataReleaser
+        #region WorldComponentPool
+        public ReadOnlySpan<WorldComponentPoolAbstract> GetWorldComponents()
         {
-            public abstract void Release(int worldID);
+            return new ReadOnlySpan<WorldComponentPoolAbstract>(_worldComponentPools._items, 0, _builtinWorldComponentsCount);
+        }
+        public ReadOnlySpan<WorldComponentPoolAbstract> GetAllWorldComponents()
+        {
+            return _worldComponentPools.ToReadOnlySpan();
+        }
+        public abstract class WorldComponentPoolAbstract
+        {
+            protected static readonly Type[] _builtinTypes = new Type[]
+            {
+                typeof(AspectCache<>),
+                typeof(PoolCache<>),
+                typeof(WhereQueryCache<,>),
+                typeof(EcsMask.WorldMaskComponent),
+            };
+            internal readonly bool _isBuiltin;
+            protected WorldComponentPoolAbstract()
+            {
+                Type type = ComponentType;
+                if (type.IsGenericType) { type = type.GetGenericTypeDefinition(); }
+                _isBuiltin = Array.IndexOf(_builtinTypes, type) >= 0;
+            }
+            public abstract Type ComponentType { get; }
+            public abstract void Has(short worldID);
+            public abstract void Release(short worldID);
+            public abstract object GetRaw(short worldID);
+            public abstract void SetRaw(short worldID, object raw);
         }
         private static class WorldComponentPool<T>
         {
@@ -69,26 +105,30 @@ namespace DCFApixels.DragonECS
             private static short[] _recycledItems = new short[4];
             private static short _recycledItemsCount;
             private static IEcsWorldComponent<T> _interface = EcsWorldComponentHandler<T>.instance;
-
+            private static Abstract _controller = new Abstract();
+            static WorldComponentPool()
+            {
+                _allWorldComponentPools.Add(_controller);
+            }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetItem(int itemIndex)
             {// ts
                 return ref _items[itemIndex];
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ref T GetForWorld(int worldID)
+            public static ref T GetForWorld(short worldID)
             {// зависит от GetItemIndex
                 return ref GetItem(GetItemIndex(worldID));
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static ref T GetForWorldUnchecked(int worldID)
+            public static ref T GetForWorldUnchecked(short worldID)
             {// ts
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (_mapping[worldID] <= 0) { Throw.ArgumentOutOfRange(); }
 #endif
                 return ref _items[_mapping[worldID]];
             }
-            public static int GetItemIndex(int worldID)
+            public static int GetItemIndex(short worldID)
             {// ts
                 if (_mapping.Length < _worlds.Length)
                 {
@@ -126,13 +166,22 @@ namespace DCFApixels.DragonECS
                             }
 
                             _interface.Init(ref _items[itemIndex], _worlds[worldID]);
-                            _dataReleaseres.Add(new Releaser());
+
+                            var world = GetWorld(worldID);
+                            world._worldComponentPools.Add(_controller);
+                            if (_controller._isBuiltin)
+                            {
+                                world._builtinWorldComponentsCount++;
+                                world._worldComponentPools.SwapAt(
+                                    world._worldComponentPools.Count - 1,
+                                    world._builtinWorldComponentsCount - 1);
+                            }
                         }
                     }
                 }
                 return itemIndex;
             }
-            private static void Release(int worldID)
+            private static void Release(short worldID)
             {// ts
                 lock (_worldLock)
                 {
@@ -153,18 +202,74 @@ namespace DCFApixels.DragonECS
                     }
                 }
             }
-            private sealed class Releaser : DataReleaser
+            public static bool Has(short worldID)
+            {// ts
+                if (_mapping.Length < _worlds.Length)
+                {
+                    lock (_worldLock)
+                    {
+                        if (_mapping.Length < _worlds.Length)
+                        {
+                            Array.Resize(ref _mapping, _worlds.Length);
+                        }
+                    }
+                }
+                short itemIndex = _mapping[worldID];
+                return itemIndex > 0;
+            }
+            private sealed class Abstract : WorldComponentPoolAbstract
             {
-                public sealed override void Release(int worldID)
+                public sealed override Type ComponentType
+                {
+                    get { return typeof(T); }
+                }
+                public override void SetRaw(short worldID, object raw)
+                {
+                    WorldComponentPool<T>.GetItem(worldID) = (T)raw;
+                }
+                public sealed override void Has(short worldID)
+                {
+                    WorldComponentPool<T>.Has(worldID);
+                }
+                public sealed override object GetRaw(short worldID)
+                {
+                    return WorldComponentPool<T>.GetItem(worldID);
+                }
+                public sealed override void Release(short worldID)
                 {
                     WorldComponentPool<T>.Release(worldID);
                 }
             }
         }
+        #endregion
+
         private sealed class NullWorld : EcsWorld
         {
             internal NullWorld() : base(new EcsWorldConfig(4, 4, 4, 4, 4), null, 0) { }
         }
+
+        #region DebuggerProxy
+        protected partial class DebuggerProxy
+        {
+            private short _worldID;
+            public IEnumerable<object> WorldComponents
+            {
+                get
+                {
+                    _worldID = _world.ID;
+                    return _world._worldComponentPools.ToEnumerable().Skip(_world._builtinWorldComponentsCount).Select(o => o.GetRaw(_worldID));
+                }
+            }
+            public IEnumerable<object> AllWorldComponents
+            {
+                get
+                {
+                    _worldID = _world.ID;
+                    return _world._worldComponentPools.ToEnumerable().Select(o => o.GetRaw(_worldID));
+                }
+            }
+        }
+        #endregion
 
         #region Obsolete
         [EditorBrowsable(EditorBrowsableState.Never)]

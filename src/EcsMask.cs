@@ -236,7 +236,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Builder
-        private readonly struct WorldMaskComponent : IEcsWorldComponent<WorldMaskComponent>
+        internal readonly struct WorldMaskComponent : IEcsWorldComponent<WorldMaskComponent>
         {
             private readonly EcsWorld _world;
             private readonly Dictionary<OpMaskKey, EcsMask> _opMasks;
