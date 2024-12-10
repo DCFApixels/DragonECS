@@ -87,6 +87,12 @@
 #else
             false;
 #endif
+        public const bool DEV_MODE =
+#if DEV_MODE
+            true;
+#else
+            false;
+#endif
     }
 }
 //#if UNITY_2020_3_OR_NEWER
