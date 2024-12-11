@@ -148,6 +148,8 @@ namespace DCFApixels.DragonECS
 
         #region Constructors/Destroy
         public EcsWorld() : this(ConfigContainer.Empty, null, -1) { }
+        public EcsWorld(EcsWorldConfig config = null, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), null, worldID) { }
+        public EcsWorld(IConfigContainer configs, short worldID = -1) : this(configs, null, worldID) { }
         public EcsWorld(EcsWorldConfig config = null, string name = null, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), name, worldID) { }
         public EcsWorld(IConfigContainer configs, string name = null, short worldID = -1)
         {
