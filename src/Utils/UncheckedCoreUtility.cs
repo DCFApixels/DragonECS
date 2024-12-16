@@ -7,6 +7,16 @@ namespace DCFApixels.DragonECS.UncheckedCore
     public static class UncheckedCoreUtility
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static entlong CreateEntLong(int entityID, short gen, short worldID)
+        {
+            return new entlong(entityID, gen, worldID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static entlong CreateEntLong(long entityGenWorld)
+        {
+            return new entlong(entityGenWorld);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsSpan CreateSpan(short worldID, ReadOnlySpan<int> entitesArray)
         {
             return new EcsSpan(worldID, entitesArray);
