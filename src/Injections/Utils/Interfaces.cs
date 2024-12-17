@@ -9,6 +9,10 @@
     {
         void Inject(T obj);
     }
+    public interface IMonoWorldInject : IEcsProcess
+    {
+        EcsWorld World { get; set; }
+    }
     [MetaName(nameof(OnInitInjectionComplete))]
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DI_GROUP)]

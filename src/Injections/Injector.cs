@@ -167,6 +167,7 @@ namespace DCFApixels.DragonECS
             private EcsPipeline.Builder _source;
             private Injector _instance;
             private List<InitInjectBase> _initInjections = new List<InitInjectBase>(16);
+            private EcsWorld _monoWorld;
             internal Builder(EcsPipeline.Builder source)
             {
                 _source = source;
@@ -179,10 +180,34 @@ namespace DCFApixels.DragonECS
             }
             public EcsPipeline.Builder Inject<T>(T obj)
             {
+                if(obj is EcsWorld objWorld)
+                {
+                    if(_monoWorld == null)
+                    {
+                        _monoWorld = objWorld;
+                    }
+                    else
+                    {
+                        Type monoWorldType = _monoWorld.GetType();
+                        Type objWorldType = objWorld.GetType();
+                        if (monoWorldType != objWorldType)
+                        {
+                            if(objWorldType == typeof(EcsWorld))
+                            { // Екземпляр EcsWorld имеет самый больший приоритет.
+                                _monoWorld = objWorld;
+                            }
+                            if(objWorldType == typeof(EcsDefaultWorld) &&
+                                monoWorldType != typeof(EcsWorld))
+                            { // Екземпляр EcsDefaultWorld имеет приоритет больше других типов, но меньше приоритета EcsWorld.
+                                _monoWorld = objWorld;
+                            }
+                        }
+                    }
+                }
                 _initInjections.Add(new InitInject<T>(obj));
                 return _source;
             }
-            public EcsPipeline.Builder Extract<T>(ref T obj)//TODO проверить
+            public EcsPipeline.Builder Extract<T>(ref T obj) // TODO проверить
             {
                 Type type = typeof(T);
                 for (int i = _initInjections.Count - 1; i >= 0; i--)
@@ -199,6 +224,12 @@ namespace DCFApixels.DragonECS
             }
             public Injector Build(EcsPipeline pipeline)
             {
+                var monoWorldProcess = pipeline.GetProcess<IMonoWorldInject>(); // TODO Проверить IMonoWorldInject
+                foreach (var monoWorldSystem in monoWorldProcess)
+                {
+                    monoWorldSystem.World = _monoWorld;
+                }
+
                 _instance.Init(pipeline);
                 foreach (var item in _initInjections)
                 {
