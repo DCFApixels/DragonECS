@@ -6,6 +6,7 @@ namespace DCFApixels.DragonECS.UncheckedCore
 {
     public static class UncheckedCoreUtility
     {
+        #region CreateEntLong
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static entlong CreateEntLong(int entityID, short gen, short worldID)
         {
@@ -16,12 +17,14 @@ namespace DCFApixels.DragonECS.UncheckedCore
         {
             return new entlong(entityGenWorld);
         }
+        #endregion
+
+        #region CreateSpan
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsSpan CreateSpan(short worldID, ReadOnlySpan<int> entitesArray)
         {
             return new EcsSpan(worldID, entitesArray);
         }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsSpan CreateSpan(short worldID, int[] entitesArray, int startIndex, int length)
         {
@@ -54,6 +57,14 @@ namespace DCFApixels.DragonECS.UncheckedCore
             }
             return true;
         }
+        #endregion
+
+        #region EcsGroup
+        public static EcsGroup GetSourceInstance(EcsReadonlyGroup group)
+        {
+            return group.GetSource_Internal();
+        }
+        #endregion
     }
 
     public readonly struct EntitiesMatrix
