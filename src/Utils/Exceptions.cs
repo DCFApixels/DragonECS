@@ -113,6 +113,11 @@ namespace DCFApixels.DragonECS.Internal
         {
             throw new EcsFrameworkException("This world can't be destroyed");
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void World_MethodCalledAfterEntityCreation(string methodName)
+        {
+            throw new EcsFrameworkException($"The method {methodName} can only be executed before creating entities in the world.");
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Ent_ThrowIsNotAlive(entlong entity)

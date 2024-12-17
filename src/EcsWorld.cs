@@ -389,7 +389,16 @@ namespace DCFApixels.DragonECS
             return *(entlong*)&x;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe EntitySlotInfo GetEntitySlotInfoDebug(int entityID)
+        public void InitEntitySlot(int entityID, short gen)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (Count > 0) { Throw.World_MethodCalledAfterEntityCreation(nameof(InitEntitySlot)); }
+#endif
+            _entityDispenser.Upsize(entityID);
+            _entities[entityID].gen = gen;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EntitySlotInfo GetEntitySlotInfoDebug(int entityID)
         {
             return new EntitySlotInfo(entityID, _entities[entityID].gen, ID);
         }
