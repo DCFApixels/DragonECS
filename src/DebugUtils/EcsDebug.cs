@@ -92,6 +92,7 @@ namespace DCFApixels.DragonECS
         public static void PrintWarning(object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
+            OnPrint(DEBUG_WARNING_TAG, v);
             DebugService.CurrentThreadInstance.PrintWarning(v);
 #endif
         }
@@ -99,6 +100,7 @@ namespace DCFApixels.DragonECS
         public static void PrintError(object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
+            OnPrint(DEBUG_ERROR_TAG, v);
             DebugService.CurrentThreadInstance.PrintError(v);
 #endif
         }
@@ -106,6 +108,7 @@ namespace DCFApixels.DragonECS
         public static void PrintErrorAndBreak(object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
+            OnPrint(DEBUG_ERROR_TAG, v);
             DebugService.CurrentThreadInstance.PrintErrorAndBreak(v);
 #endif
         }
@@ -113,6 +116,7 @@ namespace DCFApixels.DragonECS
         public static void PrintPass(object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
+            OnPrint(DEBUG_PASS_TAG, v);
             DebugService.CurrentThreadInstance.PrintPass(v);
 #endif
         }
@@ -120,6 +124,7 @@ namespace DCFApixels.DragonECS
         public static void Print()
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
+            OnPrint(string.Empty, null);
             DebugService.CurrentThreadInstance.Print();
 #endif
         }
@@ -127,6 +132,7 @@ namespace DCFApixels.DragonECS
         public static void Print(object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
+            OnPrint(string.Empty, v);
             DebugService.CurrentThreadInstance.Print(v);
 #endif
         }
@@ -134,6 +140,7 @@ namespace DCFApixels.DragonECS
         public static void Print(string tag, object v)
         {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_DEBUGGER
+            OnPrint(tag, v);
             DebugService.CurrentThreadInstance.Print(tag, v);
 #endif
         }
@@ -144,6 +151,9 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.Break();
 #endif
         }
+
+        public static OnPrintHandler OnPrint = delegate { };
+        public delegate void OnPrintHandler(string tag, object v);
     }
 
     //------------------------------------------------------------------------------------------------------------//
@@ -315,7 +325,9 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        public static Action<DebugService> OnServiceChanged = delegate { };
+        public static OnServiceChangedHandler OnServiceChanged = delegate { };
+
+        public delegate void OnServiceChangedHandler(DebugService service);
     }
     public static class DebugServiceExtensions
     {
