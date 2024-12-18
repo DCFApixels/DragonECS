@@ -12,7 +12,7 @@ namespace DCFApixels.DragonECS
             public PoolCache(T instance) { Instance = instance; }
             void IEcsWorldComponent<PoolCache<T>>.Init(ref PoolCache<T> component, EcsWorld world)
             {
-                component = new PoolCache<T>(world.CreatePool<T>());
+                component = new PoolCache<T>(world.FindOrAutoCreatePool<T>());
             }
             void IEcsWorldComponent<PoolCache<T>>.OnDestroy(ref PoolCache<T> component, EcsWorld world)
             {

@@ -144,22 +144,43 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region CreatePool
-        private TPool CreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
+        #region FindOrAutoCreatePool/InitPool
+        public void InitPool(IEcsPoolImplementation poolImplementation)
+        {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (Count > 0) { Throw.World_MethodCalledAfterEntityCreation(nameof(InitEntitySlot)); }
+#endif
+            InitPool_Internal(poolImplementation);
+        }
+        private TPool FindOrAutoCreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
+        {
+            int poolTypeCode = (int)EcsTypeCodeManager.Get<TPool>();
+            if (_poolTypeCode_2_CmpTypeIDs.TryGetValue(poolTypeCode, out int cmpTypeID))
+            {
+                var pool = _pools[cmpTypeID];
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+                if ((pool is TPool) == false) { Throw.UndefinedException(); }
+#endif
+                return (TPool)pool;
+            }
+            TPool newPool = new TPool();
+            InitPool_Internal(newPool);
+            return newPool;
+        }
+        private void InitPool_Internal(IEcsPoolImplementation newPool)
         {
             lock (_worldLock)
             {
-                int poolTypeCode = (int)EcsTypeCodeManager.Get<TPool>();
+                int poolTypeCode = (int)EcsTypeCodeManager.Get(newPool.GetType());
                 if (_poolTypeCode_2_CmpTypeIDs.Contains(poolTypeCode))
                 {
                     Throw.World_PoolAlreadyCreated();
                 }
-                TPool newPool = new TPool();
 
                 Type componentType = newPool.ComponentType;
 #if DEBUG //проверка соответсвия типов
 #pragma warning disable IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
-                if (componentType != typeof(TPool).GetInterfaces()
+                if (componentType != newPool.GetType().GetInterfaces()
                     .First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>))
                     .GetGenericArguments()[0])
                 {
@@ -222,7 +243,7 @@ namespace DCFApixels.DragonECS
 
                 _pools[componentTypeID] = newPool;
                 newPool.OnInit(this, _poolsMediator, componentTypeID);
-                return newPool;
+                //return newPool;
             }
         }
         #endregion
