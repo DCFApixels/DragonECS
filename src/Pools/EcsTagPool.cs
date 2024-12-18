@@ -184,6 +184,7 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
+            if (_count <= 0) { return; }
             var span = _source.Where(out SingleAspect<EcsTagPool<T>> _);
             _count = 0;
             foreach (var entityID in span)

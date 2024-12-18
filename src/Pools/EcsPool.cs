@@ -215,9 +215,10 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
-            var span = _source.Where(out SingleAspect<EcsPool<T>> _);
+            _recycledItemsCount = 0; // спереди потому чтобы обнулялось, так как Del не обнуляет
+            if (_itemsCount <= 0) { return; }
             _itemsCount = 0;
-            _recycledItemsCount = 0;
+            var span = _source.Where(out SingleAspect<EcsPool<T>> _);
             foreach (var entityID in span)
             {
                 ref int itemIndex = ref _mapping[entityID];
