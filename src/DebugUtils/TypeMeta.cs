@@ -520,14 +520,23 @@ namespace DCFApixels.DragonECS
                     string id = atr.ID;
                     if (type.IsGenericType && type.IsGenericTypeDefinition == false)
                     {
-                        id = $"{id}<{string.Join(", ", type.GetGenericArguments().Select(o => GetMetaID(o)))}>";
+                        var metaIds = type.GetGenericArguments().Select(o => GetMetaID(o));
+                        if(metaIds.Any(o => string.IsNullOrEmpty(o)))
+                        {
+                            id = string.Empty;
+                        }
+                        else
+                        {
+                            id = $"{id}<{string.Join(", ", metaIds)}>";
+                        }
                     }
-                    if (_idTypePairs.TryGetValue(id, out Type otherType) && type != otherType) //этот ексепшен не работает, так как атрибуты не кешируются а пересоздаются
+                    if (string.IsNullOrEmpty(id) == false &&
+                        _idTypePairs.TryGetValue(id, out Type otherType) && type != otherType)
                     {
                         Throw.Exception($"Types {type.ToMeta().TypeName} and {otherType.ToMeta().TypeName} have duplicate {atr.ID} MetaID.");
                     }
-                    _idTypePairs[atr.ID] = type;
-                    return atr.ID;
+                    _idTypePairs[id] = type;
+                    return id;
                 }
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetMetaID)} method does not work.");

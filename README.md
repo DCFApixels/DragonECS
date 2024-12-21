@@ -1008,7 +1008,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
     * [Classic C# multithreading](https://github.com/DCFApixels/DragonECS-ClassicThreads)
     * [Recursivity](https://github.com/DCFApixels/DragonECS-Recursivity)
     * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
-    * Graphs (Work in progress)
+    * [Graphs](https://github.com/DCFApixels/DragonECS-Graphs)
 * Utilities:
     * [Simple syntax](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
     * [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
