@@ -925,6 +925,8 @@ namespace DCFApixels.DragonECS
 
             if (itemsCount <= 0) { return 0; }
 
+            const int LO_CHANK_HALF = 65535;
+            const int HI_CHANK_HALF = -65536;
             const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
             // проверка на itemsCount <= 0 не обяательна, алгоритм не ломается,
             // только впустую отрабатыват по всем чанкам,
@@ -944,7 +946,7 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
-                    if ((chunk & 0x0000FFFF) != 0)
+                    if ((chunk & LO_CHANK_HALF) != 0)
                     {
                         bit = 0x0000_0001;
                         while (bit < 0x0001_0000)
@@ -964,7 +966,7 @@ namespace DCFApixels.DragonECS
                     {
                         poolIndex += COMPONENT_MASK_CHUNK_SIZE_HALF;
                     }
-                    if ((chunk & -0x7FFF0000) != 0)
+                    if ((chunk & HI_CHANK_HALF) != 0)
                     {
                         bit = 0x0001_0000;
                         while (bit != 0x0000_0000)
@@ -991,6 +993,8 @@ namespace DCFApixels.DragonECS
         }
         private unsafe void GetComponentTypeIDsFor_Internal(int entityID, int* componentIDs, int itemsCount)
         {
+            const int LO_CHANK_HALF = 65535;
+            const int HI_CHANK_HALF = -65536;
             const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
             // проверка на itemsCount <= 0 не обяательна, алгоритм не ломается,
             // только впустую отрабатыват по всем чанкам,
@@ -1009,7 +1013,7 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
-                    if ((chunk & 0x0000FFFF) != 0)
+                    if ((chunk & LO_CHANK_HALF) != 0)
                     {
                         bit = 0x0000_0001;
                         while (bit < 0x0001_0000)
@@ -1030,7 +1034,7 @@ namespace DCFApixels.DragonECS
                     {
                         poolIndex += COMPONENT_MASK_CHUNK_SIZE_HALF;
                     }
-                    if ((chunk & -0x7FFF0000) != 0)
+                    if ((chunk & HI_CHANK_HALF) != 0)
                     {
                         bit = 0x0001_0000;
                         while (bit != 0x0000_0000)
