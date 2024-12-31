@@ -69,7 +69,11 @@ namespace DCFApixels.DragonECS
         #region WorldComponentPool
         public ReadOnlySpan<WorldComponentPoolAbstract> GetWorldComponents()
         {
-            return new ReadOnlySpan<WorldComponentPoolAbstract>(_worldComponentPools._items, 0, _builtinWorldComponentsCount);
+            return new ReadOnlySpan<WorldComponentPoolAbstract>(
+                _worldComponentPools._items,
+                _builtinWorldComponentsCount,
+                _worldComponentPools._count - _builtinWorldComponentsCount);
+            //return new ReadOnlySpan<WorldComponentPoolAbstract>(_worldComponentPools._items, 0, _builtinWorldComponentsCount);
         }
         public ReadOnlySpan<WorldComponentPoolAbstract> GetAllWorldComponents()
         {
