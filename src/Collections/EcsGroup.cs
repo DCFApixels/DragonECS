@@ -334,7 +334,6 @@ namespace DCFApixels.DragonECS
             _source = world;
             _source.RegisterGroup(this);
             _dense = new int[denseCapacity];
-            //_sparse = new int[world.Capacity];
             _totalCapacity = world.Capacity;
             _sparsePagesCount = CalcSparseSize(_totalCapacity);
             _sparsePages = UnmanagedArrayUtility.New<PageSlot>(_sparsePagesCount);
@@ -353,22 +352,12 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
         {
-            //return _sparse[entityID] != 0;
             ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
-
-            //Span<PageSlot> sparse = new Span<PageSlot>(_sparsePages, _sparsePagesCount);
-            //
-            //if(page.Count == 0 && (page.Indexes[entityID & PageSlot.MASK] != 0))
-            //{
-            //
-            //}
-
             return page.Count == 1 ? _dense[page.IndexesXOR] == entityID : page.Indexes[entityID & PageSlot.MASK] != 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID)
         {
-            //return _sparse[entityID];
             ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
             return page.Count == 1 ? page.IndexesXOR : page.Indexes[entityID & PageSlot.MASK];
         }
@@ -400,8 +389,6 @@ namespace DCFApixels.DragonECS
             }
             _dense[_count] = entityID;
 
-            //_sparse[entityID] = _count;
-            //_count == new index
             ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
             page.Count++;
             // page.Count != 0
@@ -419,15 +406,6 @@ namespace DCFApixels.DragonECS
                 page.IndexesXOR ^= _count;
                 page.Indexes[entityID & PageSlot.MASK] = _count;
             }
-
-            //if ((page.Count == 0 && page.IndexesXOR != 0) ||
-            //    (page.Count < 0) ||
-            //    (page.Count > 1 && page.Indexes == _nullPage) ||
-            //    (page.Count <= 1 && page.Indexes != _nullPage))
-            //{
-            //    throw new Exception();
-            //}
-            //Console.WriteLine($"+ {page.Count} {page.Indexes == _nullPage}");
         }
 
         public void RemoveUnchecked(int entityID)
@@ -447,51 +425,51 @@ namespace DCFApixels.DragonECS
             return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Remove_Internal(int entityID)
+        private void ChangeIndexInSparse(int entityID, int index)
         {
-            //_dense[_sparse[entityID]] = _dense[_count];
-            //_sparse[_dense[_count--]] = _sparse[entityID];
-            //_sparse[entityID] = 0;
-
             ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
-            int localEntityID = entityID & PageSlot.MASK;
-
-            _dense[page.Indexes[localEntityID]] = _dense[_count];
-
-            int localLastIndex = _dense[_count--];
-            int* lastPageArray = (_sparsePages + (localLastIndex >> PageSlot.SHIFT))->Indexes;
-            localLastIndex = localLastIndex & PageSlot.MASK;
-
-            lastPageArray[localLastIndex] = page.Indexes[localEntityID];
-            if (--page.Count == 0)
+#if DEBUG && DEV_MODE
+            if (page.Count == 0) { throw new Exception(); }
+#endif
+            if (page.Count == 1)
             {
-                page.IndexesXOR = 0;
-                page.Count = 0;
+                page.IndexesXOR = index;
             }
             else
             {
+                int localEntityID = entityID & PageSlot.MASK;
+#if DEBUG && DEV_MODE
+                if (page.Indexes[localEntityID] == 0) { throw new Exception(); }
+#endif
+                page.Indexes[localEntityID] = index;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Remove_Internal(int entityID)
+        {
+            ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
+            int localEntityID = entityID & PageSlot.MASK;
+
+            if (--page.Count == 0)
+            {
+                _dense[page.IndexesXOR] = _dense[_count]; //_dense[_sparse[entityID]] = _dense[_count];
+                ChangeIndexInSparse(_dense[_count], page.IndexesXOR); //_sparse[_dense[_count--]] = _sparse[entityID];
+                page.IndexesXOR = 0; //_sparse[entityID] = 0;
+            }
+            else
+            {
+                _dense[page.Indexes[localEntityID]] = _dense[_count]; //_dense[_sparse[entityID]] = _dense[_count];
+                ChangeIndexInSparse(_dense[_count], page.Indexes[localEntityID]); //_sparse[_dense[_count--]] = _sparse[entityID];
                 page.IndexesXOR ^= page.Indexes[localEntityID];
-                page.Indexes[localEntityID] = 0;
+                page.Indexes[localEntityID] = 0; //_sparse[entityID] = 0; 
                 if (page.Count == 1)
                 {
-                    int* x = _nullPage;
-                    if (page.Indexes == x)
-                    {
-
-                    }
                     _source.ReturnPage(page.Indexes);
                     page.Indexes = _nullPage;
                 }
             }
-
-            //if((page.Count == 0 && page.IndexesXOR != 0) || 
-            //    (page.Count < 0) || 
-            //    (page.Count > 1 && page.Indexes == _nullPage) || 
-            //    (page.Count <= 1 && page.Indexes != _nullPage))
-            //{
-            //    throw new Exception();
-            //}
-            //Console.WriteLine($"- {page.Count} {page.Indexes == _nullPage}");
+            _count--;
         }
 
         public void RemoveUnusedEntityIDs()
@@ -509,14 +487,7 @@ namespace DCFApixels.DragonECS
         #region Clear
         public void Clear()
         {
-            if (_count == 0)
-            {
-                return;
-            }
-            //for (int i = 1; i <= _count; i++)
-            //{
-            //    _sparse[_dense[i]] = 0;
-            //}
+            if (_count == 0) { return; }
             for (int i = 0; i < _sparsePagesCount; i++)
             {
                 ref PageSlot page = ref _sparsePages[i];
@@ -1031,12 +1002,17 @@ namespace DCFApixels.DragonECS
             int uniqueCount = 0;
             foreach (var entityID in span)
             {
-                if (Has(entityID) == false)
+                HashSet<int> thisHS = new HashSet<int>();
+                ToCollection(thisHS);
+#if DEBUG && DEV_MODE
+                if (thisHS.Contains(entityID) && Has(entityID) == false) { throw new Exception(); }
+#endif
+                if (Has(entityID))
                 {
                     uniqueCount++;
                 }
             }
-            return uniqueCount == Count;
+            return uniqueCount == this.Count;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsSubsetOf_Internal(IEnumerable<int> other)
@@ -1044,7 +1020,7 @@ namespace DCFApixels.DragonECS
             int uniqueCount = 0;
             foreach (var entityID in other)
             {
-                if (Has(entityID) == false)
+                if (Has(entityID))
                 {
                     uniqueCount++;
                 }
@@ -1459,10 +1435,10 @@ namespace DCFApixels.DragonECS
         {
             for (int i = _count; i > 0; i--)//итерация в обратном порядке исключает ошибки при удалении элементов
             {
-                int entityID = _dense[i];
                 if (IsMarkIndex_Internal(i))
                 {
                     UnmarkIndex_Internal(i); // Unmark_Internal должен быть до Remove_Internal
+                    int entityID = _dense[i];
                     Remove_Internal(entityID);
                 }
             }
@@ -1542,6 +1518,7 @@ namespace DCFApixels.DragonECS
             return (capacity >> PageSlot.SHIFT) + ((capacity & PageSlot.MASK) == 0 ? 0 : 1);
         }
         [DebuggerTypeProxy(typeof(DebuggerProxy))]
+        [DebuggerDisplay("Page: {Count}")]
         private struct PageSlot
         {
             public const int SHIFT = 6; // 64
@@ -1571,8 +1548,8 @@ namespace DCFApixels.DragonECS
                 public int IndexesXOR;
                 public sbyte Count;
 
-                public DebuggerProxy(PageSlot page) 
-                { 
+                public DebuggerProxy(PageSlot page)
+                {
                     _page = page;
                     Indexes = new int[SIZE];
                     for (int i = 0; i < SIZE; i++)
