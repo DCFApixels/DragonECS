@@ -440,9 +440,10 @@ namespace DCFApixels.DragonECS
 
         public readonly int chunkIndex;
         public readonly int mask;
-        public EcsMaskChunck(int chankIndex, int mask)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsMaskChunck(int chunkIndex, int mask)
         {
-            this.chunkIndex = chankIndex;
+            this.chunkIndex = chunkIndex;
             this.mask = mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

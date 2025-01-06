@@ -1399,9 +1399,6 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void MarkEntity_Internal(int entityID)
         {
-            //throw new NotImplementedException();
-            //_sparse[entityID] |= int.MinValue;
-
             _dense[IndexOf(entityID)] |= int.MinValue;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

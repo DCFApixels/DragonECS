@@ -521,7 +521,7 @@ namespace DCFApixels.DragonECS
                     if (type.IsGenericType && type.IsGenericTypeDefinition == false)
                     {
                         var metaIds = type.GetGenericArguments().Select(o => GetMetaID(o));
-                        if(metaIds.Any(o => string.IsNullOrEmpty(o)))
+                        if (metaIds.Any(o => string.IsNullOrEmpty(o)))
                         {
                             id = string.Empty;
                         }

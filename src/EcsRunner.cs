@@ -23,7 +23,7 @@ namespace DCFApixels.DragonECS
             #region CheckRunnerValide
             public static void CheckRunnerTypeIsValide(Type runnerType, Type processInterfaceType)
             {
-                #region DEBUG
+#if DEBUG
 #pragma warning disable IL2070 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.
                 Type targetInterface = processInterfaceType;
                 if (runnerType.IsAbstract || runnerType.IsInterface)
@@ -54,7 +54,7 @@ namespace DCFApixels.DragonECS
                     throw new EcsRunnerImplementationException($"Runner {GetGenericTypeFullName(runnerType, 1)} does not implement interface {GetGenericTypeFullName(baseTypeArgument, 1)}.");
                 }
 #pragma warning restore IL2070 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.
-                #endregion
+#endif
             }
             #endregion
         }
@@ -123,7 +123,7 @@ namespace DCFApixels.DragonECS
             protected virtual void OnSetup() { }
             #endregion
 
-            #region Simple
+            #region RunHelper
             public struct RunHelper
             {
                 private readonly EcsProcess<TProcess> _process;

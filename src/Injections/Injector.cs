@@ -180,9 +180,9 @@ namespace DCFApixels.DragonECS
             }
             public EcsPipeline.Builder Inject<T>(T obj)
             {
-                if(obj is EcsWorld objWorld)
+                if (obj is EcsWorld objWorld)
                 {
-                    if(_monoWorld == null)
+                    if (_monoWorld == null)
                     {
                         _monoWorld = objWorld;
                     }
@@ -192,11 +192,11 @@ namespace DCFApixels.DragonECS
                         Type objWorldType = objWorld.GetType();
                         if (monoWorldType != objWorldType)
                         {
-                            if(objWorldType == typeof(EcsWorld))
+                            if (objWorldType == typeof(EcsWorld))
                             { // Екземпляр EcsWorld имеет самый больший приоритет.
                                 _monoWorld = objWorld;
                             }
-                            if(objWorldType == typeof(EcsDefaultWorld) &&
+                            if (objWorldType == typeof(EcsDefaultWorld) &&
                                 monoWorldType != typeof(EcsWorld))
                             { // Екземпляр EcsDefaultWorld имеет приоритет больше других типов, но меньше приоритета EcsWorld.
                                 _monoWorld = objWorld;

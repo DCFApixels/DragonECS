@@ -10,9 +10,11 @@ namespace DCFApixels.DragonECS
     {
         private SparseArray<int> _poolTypeCode_2_CmpTypeIDs = new SparseArray<int>();
         private SparseArray<int> _cmpTypeCode_2_CmpTypeIDs = new SparseArray<int>();
-        private int _poolsCount;
+
         internal IEcsPoolImplementation[] _pools;
         internal PoolSlot[] _poolSlots;
+        private int _poolsCount;
+
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
         private int _lockedPoolCount = 0;
 #endif
@@ -154,18 +156,21 @@ namespace DCFApixels.DragonECS
         }
         private TPool FindOrAutoCreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
-            int poolTypeCode = (int)EcsTypeCodeManager.Get<TPool>();
-            if (_poolTypeCode_2_CmpTypeIDs.TryGetValue(poolTypeCode, out int cmpTypeID))
+            lock (_worldLock)
             {
-                var pool = _pools[cmpTypeID];
+                int poolTypeCode = (int)EcsTypeCodeManager.Get<TPool>();
+                if (_poolTypeCode_2_CmpTypeIDs.TryGetValue(poolTypeCode, out int cmpTypeID))
+                {
+                    var pool = _pools[cmpTypeID];
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if ((pool is TPool) == false) { Throw.UndefinedException(); }
+                    if ((pool is TPool) == false) { Throw.UndefinedException(); }
 #endif
-                return (TPool)pool;
+                    return (TPool)pool;
+                }
+                TPool newPool = new TPool();
+                InitPool_Internal(newPool);
+                return newPool;
             }
-            TPool newPool = new TPool();
-            InitPool_Internal(newPool);
-            return newPool;
         }
         private void InitPool_Internal(IEcsPoolImplementation newPool)
         {
@@ -243,7 +248,8 @@ namespace DCFApixels.DragonECS
 
                 _pools[componentTypeID] = newPool;
                 newPool.OnInit(this, _poolsMediator, componentTypeID);
-                //return newPool;
+
+                OnPoolInitialized?.Invoke(newPool);
             }
         }
         #endregion
@@ -460,6 +466,11 @@ namespace DCFApixels.DragonECS
                 return World.GetPoolInstanceUnchecked<TPool>();
             }
         }
+        #endregion
+
+        #region Events
+        public delegate void OnPoolInitializedHandler(IEcsPool pool);
+        public event OnPoolInitializedHandler OnPoolInitialized;
         #endregion
     }
 }

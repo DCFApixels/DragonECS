@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.PoolsCore
 {
-    /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
+    /// <summary> Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>. </summary>
     public interface IEcsPoolImplementation : IEcsPool
     {
         #region Methods
@@ -19,37 +19,50 @@ namespace DCFApixels.DragonECS.PoolsCore
         #endregion
     }
 
-    /// <summary>Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.</summary>
-    /// <typeparam name="T">Component type</typeparam>
+    /// <summary> Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>. </summary>
+    /// <typeparam name="T"> Component type. </typeparam>
     public interface IEcsPoolImplementation<T> : IEcsPoolImplementation { }
 
+    #region EcsPoolThrowHelper
     public static class EcsPoolThrowHelper
     {
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void ThrowDifferentTypes()
+        {
+            throw new EcsFrameworkException($"The component instance type and the pool component type are different.");
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowAlreadyHasComponent<T>(int entityID)
         {
             throw new EcsFrameworkException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNotHaveComponent<T>(int entityID)
         {
             throw new EcsFrameworkException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowAlreadyHasComponent(Type type, int entityID)
         {
             throw new EcsFrameworkException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName(type)}.");
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNotHaveComponent(Type type, int entityID)
         {
             throw new EcsFrameworkException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName(type)}.");
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNullListener()
         {
             throw new ArgumentNullException("listener is null");
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowPoolLocked()
         {
             throw new EcsFrameworkException("The pool is currently locked and cannot add or remove components.");
         }
     }
+    #endregion
 }
 
 namespace DCFApixels.DragonECS.Internal
@@ -63,6 +76,7 @@ namespace DCFApixels.DragonECS.Internal
     public sealed class EcsNullPool : IEcsPoolImplementation<NullComponent>
     {
         public static readonly EcsNullPool instance = new EcsNullPool();
+
         #region Properties
         int IEcsReadonlyPool.ComponentTypeID { get { return 0; } }//TODO Првоерить что NullComponent всегда имеет id 0 
         Type IEcsReadonlyPool.ComponentType { get { return typeof(NullComponent); } }
@@ -256,7 +270,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnAdd(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
-            for (int i = 0; i < cachedCount; i++) self[i].OnAdd(entityID);
+            for (int i = 0; i < cachedCount; i++) { self[i].OnAdd(entityID); }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -282,7 +296,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
-            for (int i = 1; i < cachedCount; i++) self[i].OnGet(entityID);
+            for (int i = 1; i < cachedCount; i++) { self[i].OnGet(entityID); }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -293,16 +307,30 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnDel(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
-            for (int i = 0; i < cachedCount; i++) self[i].OnDel(entityID);
+            for (int i = 0; i < cachedCount; i++) { self[i].OnDel(entityID); }
         }
 
         //
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void InvokeOnAdd(this StructList<IEcsPoolEventListener> self, int entityID)
+        {
+            for (int i = 0; i < self.Count; i++) { self[i].OnAdd(entityID); }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void InvokeOnAdd(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
-            for (int i = 0; i < cachedCount; i++) self[i].OnAdd(entityID);
+            for (int i = 0; i < cachedCount; i++) { self[i].OnAdd(entityID); }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void InvokeOnAddAndGet(this StructList<IEcsPoolEventListener> self, int entityID)
+        {
+            for (int i = 0; i < self.Count; i++)
+            {
+                self[i].OnAdd(entityID);
+                self[i].OnGet(entityID);
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void InvokeOnAddAndGet(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
@@ -314,14 +342,24 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void InvokeOnGet(this StructList<IEcsPoolEventListener> self, int entityID)
+        {
+            for (int i = 1; i < self.Count; i++) { self[i].OnGet(entityID); }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void InvokeOnGet(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
-            for (int i = 1; i < cachedCount; i++) self[i].OnGet(entityID);
+            for (int i = 1; i < cachedCount; i++) { self[i].OnGet(entityID); }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void InvokeOnDel(this StructList<IEcsPoolEventListener> self, int entityID)
+        {
+            for (int i = 0; i < self.Count; i++) { self[i].OnDel(entityID); }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void InvokeOnDel(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
-            for (int i = 0; i < cachedCount; i++) self[i].OnDel(entityID);
+            for (int i = 0; i < cachedCount; i++) { self[i].OnDel(entityID); }
         }
     }
 #endif
