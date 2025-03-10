@@ -21,7 +21,7 @@ namespace DCFApixels.DragonECS
 #else
     public readonly
 #endif
-        struct entlong : IEquatable<long>, IEquatable<entlong>
+        struct entlong : IEquatable<long>, IEquatable<entlong>, IComparable<entlong>
     {
         public static readonly entlong NULL = default;
         //[DataMember]
@@ -304,6 +304,16 @@ namespace DCFApixels.DragonECS
         public bool Equals(entlong other) { return _full == other._full; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(long other) { return _full == other; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int CompareTo(entlong other)
+        {
+            // NOTE: Because _id cannot be less than 0,
+            // the case “_id - other._id > MaxValue” is impossible.
+            return _id - other._id;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Compare(entlong left, entlong right) { return left.CompareTo(right); }
+
 
         internal class DebuggerProxy
         {
