@@ -600,6 +600,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IterateTo
+        //TODO Перемеиноваться в CacheTo
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void IterateTo(EcsSpan source, EcsGroup group)
         {
