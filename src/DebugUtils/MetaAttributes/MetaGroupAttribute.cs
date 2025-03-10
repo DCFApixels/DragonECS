@@ -28,8 +28,9 @@ namespace DCFApixels.DragonECS
     }
     public class MetaGroup
     {
-        public static readonly MetaGroup Empty = new MetaGroup("");
-        private static string _pattern = @"Module(?=/)";
+        public const string UNGROUPED = "<UNGROUPED>";
+        private const string PATTERN = @"Module(?=/)";
+        public static readonly MetaGroup Empty = new MetaGroup(UNGROUPED);
 
         public readonly string Name;
         private string[] _path = null;
@@ -48,7 +49,7 @@ namespace DCFApixels.DragonECS
         {
             if (string.IsNullOrEmpty(name))
             {
-                Name = string.Empty;
+                Name = UNGROUPED;
                 return;
             }
             name = name.Replace('\\', SEPARATOR);
@@ -56,7 +57,7 @@ namespace DCFApixels.DragonECS
             {
                 name += SEPARATOR;
             }
-            Name = Regex.Replace(name, _pattern, "");
+            Name = Regex.Replace(name, PATTERN, "");
             Name = string.Intern(Name);
         }
         public override string ToString() { return Name; }
