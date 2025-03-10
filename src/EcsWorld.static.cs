@@ -66,6 +66,21 @@ namespace DCFApixels.DragonECS
             return ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
         }
 
+        public static void DestroyAndClearAllWorlds()
+        {
+            for (int i = 1; i < _worlds.Length; i++)
+            {
+                var world = _worlds[i];
+                if (world == null) { continue; }
+
+                if(world.IsDestroyed == false)
+                {
+                    world.Destroy();
+                }
+                world = null;
+            }
+        }
+
         #region WorldComponentPool
         public ReadOnlySpan<WorldComponentPoolAbstract> GetWorldComponents()
         {
@@ -251,10 +266,13 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region NullWorld
         private sealed class NullWorld : EcsWorld
         {
             internal NullWorld() : base(new EcsWorldConfig(4, 4, 4, 4, 4), null, 0) { }
         }
+
+        #endregion
 
         #region DebuggerProxy
         protected partial class DebuggerProxy
