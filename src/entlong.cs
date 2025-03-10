@@ -265,10 +265,10 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator entlong((EcsWorld world, int entityID) a) { return Combine_Internal(a.entityID, a.world); }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator entlong((entlong entity, EcsWorld world) a) { return Combine_Internal(a.entity._id, a.world); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator entlong((EcsWorld world, entlong entity) a) { return Combine_Internal(a.entity._id, a.world); }
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public static implicit operator entlong((entlong entity, EcsWorld world) a) { return Combine_Internal(a.entity._id, a.world); }
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public static implicit operator entlong((EcsWorld world, entlong entity) a) { return Combine_Internal(a.entity._id, a.world); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static entlong Combine_Internal(int entityID, EcsWorld world)
