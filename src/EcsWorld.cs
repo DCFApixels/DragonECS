@@ -250,14 +250,21 @@ namespace DCFApixels.DragonECS
         [UnityEngine.Scripting.Preserve]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TAspect GetAspect<TAspect>() where TAspect : EcsAspect, new()
+        public TAspect GetAspect<TAspect>() where TAspect : new()
         {
             return Get<AspectCache<TAspect>>().Instance;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TAspect GetAspect<TAspect>(out EcsMask mask) where TAspect : new()
+        {
+            var result = Get<AspectCache<TAspect>>();
+            mask = result.Mask;
+            return result.Instance;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetQueryCache<TExecutor, TAspect>(out TExecutor executor, out TAspect aspect)
             where TExecutor : MaskQueryExecutor, new()
-            where TAspect : EcsAspect, new()
+            where TAspect : new()
         {
             ref var cmp = ref Get<WhereQueryCache<TExecutor, TAspect>>();
             executor = cmp.Executor;
@@ -270,6 +277,11 @@ namespace DCFApixels.DragonECS
             return ref WorldComponentPool<T>.GetForWorld(ID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Has<T>() where T : struct
+        {
+            return WorldComponentPool<T>.Has(ID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetUnchecked<T>() where T : struct
         {
             return ref WorldComponentPool<T>.GetForWorldUnchecked(ID);
@@ -278,6 +290,11 @@ namespace DCFApixels.DragonECS
         public static ref T Get<T>(short worldID) where T : struct
         {
             return ref WorldComponentPool<T>.GetForWorld(worldID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Has<T>(short worldID) where T : struct
+        {
+            return WorldComponentPool<T>.Has(worldID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetUnchecked<T>(short worldID) where T : struct
@@ -874,6 +891,8 @@ namespace DCFApixels.DragonECS
         #region Debug Components
         [ThreadStatic]
         private static int[] _componentIDsBuffer;
+        [ThreadStatic]
+        private static object[] _componentsBuffer;
         public ReadOnlySpan<int> GetComponentTypeIDsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
@@ -919,6 +938,19 @@ namespace DCFApixels.DragonECS
                     list.Add(_pools[poolIdsPtr[i]]);
                 }
             }
+        }
+        public ReadOnlySpan<object> GetComponentsFor(int entityID)
+        {
+            int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
+            if (_componentsBuffer == null || _componentsBuffer.Length < count)
+            {
+                _componentsBuffer = new object[count];
+            }
+            for (int i = 0; i < count; i++)
+            {
+                _componentsBuffer[i] = _pools[_componentIDsBuffer[i]].GetRaw(entityID);
+            }
+            return new ReadOnlySpan<object>(_componentsBuffer, 0, count);
         }
         public void GetComponentsFor(int entityID, List<object> list)
         {

@@ -68,7 +68,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _isInit; }
         }
-        public bool IsDestoryed
+        public bool IsDestroyed
         {
             get { return _isDestoryed; }
         }
@@ -250,7 +250,7 @@ namespace DCFApixels.DragonECS
     {
         public static bool IsNullOrDestroyed(this EcsPipeline self)
         {
-            return self == null || self.IsDestoryed;
+            return self == null || self.IsDestroyed;
         }
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsProcess> range, string layerName = null)
         {

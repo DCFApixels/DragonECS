@@ -25,7 +25,63 @@ namespace DCFApixels.DragonECS
 
         public static implicit operator Singleton<T>(SingletonMarker a) { return new Singleton<T>(a.Builder.World.ID); }
     }
-    public abstract class EcsAspect : ITemplateNode, IComponentMask
+    public interface IEcsAspect
+    {
+        EcsMask Mask { get; set; }
+    }
+
+    #region IEcsAspectExtensions tmp
+//    public static class IEcsAspectExtensions
+//    {
+//        public static void Apply(this IEcsAspect aspect, short worldID, int entityID)
+//        {
+//            EcsWorld world = EcsWorld.GetWorld(worldID);
+//            EcsMask mask = aspect.Mask;
+//            foreach (var incTypeID in mask._incs)
+//            {
+//                var pool = world.FindPoolInstance(incTypeID);
+//                if (pool != null)
+//                {
+//                    if (pool.Has(entityID) == false)
+//                    {
+//                        pool.AddEmpty(entityID);
+//                    }
+//                }
+//#if DEBUG
+//                else
+//                {
+//                    EcsDebug.PrintWarning("Component has not been added because the pool has not been initialized yet.");
+//                }
+//#endif
+//            }
+//            foreach (var excTypeID in mask._excs)
+//            {
+//                var pool = world.FindPoolInstance(excTypeID);
+//                if (pool != null && pool.Has(entityID))
+//                {
+//                    pool.Del(entityID);
+//                }
+//            }
+//        }
+//    }
+    #endregion
+
+    public static partial class API
+    {
+        public static IncludeMarker Inc
+        {
+            get { return EcsAspect.CurrentBuilder.Inc; }
+        }
+        public static ExcludeMarker Exc
+        {
+            get { return EcsAspect.CurrentBuilder.Exc; }
+        }
+        public static OptionalMarker Opt
+        {
+            get { return EcsAspect.CurrentBuilder.Opt; }
+        }
+    }
+    public abstract class EcsAspect : IEcsAspect, ITemplateNode, IComponentMask
     {
         #region Initialization Halpers
         [ThreadStatic]
@@ -43,7 +99,7 @@ namespace DCFApixels.DragonECS
                 return _constructorBuildersStack[_constructorBuildersStackIndex];
             }
         }
-        protected static Builder CurrentBuilder
+        public static Builder CurrentBuilder
         {
             get { return B; }
         }
@@ -77,6 +133,7 @@ namespace DCFApixels.DragonECS
         public EcsMask Mask
         {
             get { return _mask; }
+            set { }
         }
         public EcsWorld World
         {
@@ -138,7 +195,8 @@ namespace DCFApixels.DragonECS
 
             #region Constructors/New
             private Builder() { }
-            internal static unsafe TAspect New<TAspect>(EcsWorld world) where TAspect : EcsAspect, new()
+
+            internal static unsafe (TAspect aspect, EcsMask mask) New<TAspect>(EcsWorld world) where TAspect : new()
             {
                 //Get Builder
                 if (_constructorBuildersStack == null)
@@ -168,26 +226,34 @@ namespace DCFApixels.DragonECS
 
                 //Building
                 TAspect newAspect = new TAspect();
-                newAspect._source = world;
-                newAspect.Init(builder);
+                EcsAspect builtinAspect = newAspect as EcsAspect;
+                if(builtinAspect != null)
+                {
+                    builtinAspect._source = world;
+                    builtinAspect.Init(builder);
+                }
 
                 //Build Mask
                 if (staticMask == null)
                 {
                     staticMask = builder._maskBuilder.Build();
                     builder._maskBuilder = default;
-                    if (newAspect.IsStaticInitialization)
+                    if (builtinAspect == null || builtinAspect.IsStaticInitialization)
                     {
                         _staticMaskCache.Add(typeof(TAspect), staticMask);
                     }
                 }
-                newAspect._mask = staticMask.ToMask(world);
-                //var pools = new IEcsPool[builder._poolsBufferCount];
-                //Array.Copy(builder._poolsBuffer, pools, pools.Length);
-                newAspect._isBuilt = true;
+                EcsMask mask = staticMask.ToMask(world);
+                if(builtinAspect != null)
+                {
+                    builtinAspect._mask = mask;
+                    //var pools = new IEcsPool[builder._poolsBufferCount];
+                    //Array.Copy(builder._poolsBuffer, pools, pools.Length);
+                    builtinAspect._isBuilt = true;
+                }
 
                 _constructorBuildersStackIndex--;
-                return newAspect;
+                return (newAspect, mask);
             }
             #endregion
 
@@ -386,7 +452,9 @@ namespace DCFApixels.DragonECS
         }
     }
     #endregion
-
+}
+namespace DCFApixels.DragonECS.Core
+{
     #region Constraint Markers
     public readonly ref struct IncludeMarker
     {

@@ -13,7 +13,7 @@ namespace DCFApixels.DragonECS
     {
         #region Where
         public static EcsSpan Where<TCollection, TAspect>(this TCollection entities, out TAspect aspect)
-            where TAspect : EcsAspect, new()
+            where TAspect : new()
             where TCollection : IEntityStorage
         {
             if (ReferenceEquals(entities, entities.World))
@@ -24,12 +24,12 @@ namespace DCFApixels.DragonECS
             return entities.ToSpan().Where(out aspect);
         }
         public static EcsSpan Where<TAspect>(this EcsReadonlyGroup group, out TAspect aspect)
-            where TAspect : EcsAspect, new()
+            where TAspect : new()
         {
             return group.ToSpan().Where(out aspect);
         }
         public static EcsSpan Where<TAspect>(this EcsSpan span, out TAspect aspect)
-            where TAspect : EcsAspect, new()
+            where TAspect : new()
         {
             span.World.GetQueryCache(out EcsWhereExecutor executor, out aspect);
             return executor.ExecuteFor(span);
@@ -58,7 +58,7 @@ namespace DCFApixels.DragonECS
 
         #region Where with sort
         public static EcsSpan Where<TCollection, TAspect>(this TCollection entities, out TAspect aspect, Comparison<int> comparison)
-            where TAspect : EcsAspect, new()
+            where TAspect : new()
             where TCollection : IEntityStorage
         {
             if (ReferenceEquals(entities, entities.World))
@@ -69,12 +69,12 @@ namespace DCFApixels.DragonECS
             return entities.ToSpan().Where(out aspect, comparison);
         }
         public static EcsSpan Where<TAspect>(this EcsReadonlyGroup group, out TAspect aspect, Comparison<int> comparison)
-            where TAspect : EcsAspect, new()
+            where TAspect : new()
         {
             return group.ToSpan().Where(out aspect, comparison);
         }
         public static EcsSpan Where<TAspect>(this EcsSpan span, out TAspect aspect, Comparison<int> comparison)
-            where TAspect : EcsAspect, new()
+            where TAspect : new()
         {
             span.World.GetQueryCache(out EcsWhereExecutor executor, out aspect);
             return executor.ExecuteFor(span, comparison);
@@ -103,7 +103,7 @@ namespace DCFApixels.DragonECS
 
         #region WhereToGroup
         public static EcsReadonlyGroup WhereToGroup<TCollection, TAspect>(this TCollection entities, out TAspect aspect)
-            where TAspect : EcsAspect, new()
+            where TAspect : new()
             where TCollection : IEntityStorage
         {
             if (ReferenceEquals(entities, entities.World))
@@ -114,12 +114,12 @@ namespace DCFApixels.DragonECS
             return entities.ToSpan().WhereToGroup(out aspect);
         }
         public static EcsReadonlyGroup WhereToGroup<TAspect>(this EcsReadonlyGroup group, out TAspect aspect)
-            where TAspect : EcsAspect, new()
+            where TAspect : new()
         {
             return group.ToSpan().WhereToGroup(out aspect);
         }
         public static EcsReadonlyGroup WhereToGroup<TAspect>(this EcsSpan span, out TAspect aspect)
-            where TAspect : EcsAspect, new()
+            where TAspect : new()
         {
             span.World.GetQueryCache(out EcsWhereToGroupExecutor executor, out aspect);
             return executor.ExecuteFor(span);

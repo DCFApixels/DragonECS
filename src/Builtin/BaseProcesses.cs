@@ -30,6 +30,13 @@ namespace DCFApixels.DragonECS
     {
         void Run();
     }
+    [MetaName(nameof(RunFinally))]
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
+    public interface IEcsRunFinally : IEcsProcess
+    {
+        void RunFinally();
+    }
     [MetaName(nameof(Destroy))]
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
@@ -97,26 +104,45 @@ namespace DCFApixels.DragonECS.Internal
     [MetaID("2098527C9201F260C840BFD50BC7E0BA")]
     internal sealed class EcsRunRunner : EcsRunner<IEcsRun>, IEcsRun
     {
+        private readonly struct Pair
+        {
+            public readonly IEcsRun run;
+            public readonly IEcsRunFinally cleanup;
+            public Pair(IEcsRun run)
+            {
+                this.run = run;
+                cleanup = run as IEcsRunFinally;
+            }
+        }
+        private Pair[] _pairs;
 #if DEBUG && !DISABLE_DEBUG
         private EcsProfilerMarker[] _markers;
+#endif
         protected override void OnSetup()
         {
+            _pairs = new Pair[Process.Length];
+            for (int i = 0; i < Process.Length; i++)
+            {
+                _pairs[i] = new Pair(Process[i]);
+            }
+#if DEBUG && !DISABLE_DEBUG
             _markers = new EcsProfilerMarker[Process.Length];
             for (int i = 0; i < Process.Length; i++)
             {
                 _markers[i] = new EcsProfilerMarker($"{Process[i].GetMeta().Name}.{nameof(Run)}");
             }
-        }
 #endif
+        }
         public void Run()
         {
 #if DEBUG && !DISABLE_DEBUG
-            for (int i = 0, n = Process.Length < _markers.Length ? Process.Length : _markers.Length; i < n; i++)
+            for (int i = 0, n = _pairs.Length < _markers.Length ? _pairs.Length : _markers.Length; i < n; i++)
             {
+                var pair = _pairs[i];
                 _markers[i].Begin();
                 try
                 {
-                    Process[i].Run();
+                    pair.run.Run();
                 }
                 catch (Exception e)
                 {
@@ -124,6 +150,10 @@ namespace DCFApixels.DragonECS.Internal
                     throw;
 #endif
                     EcsDebug.PrintError(e);
+                }
+                finally
+                {
+                    pair.cleanup?.RunFinally();
                 }
                 _markers[i].End();
             }

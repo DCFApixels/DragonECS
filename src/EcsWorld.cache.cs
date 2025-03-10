@@ -20,13 +20,22 @@ namespace DCFApixels.DragonECS
             }
         }
         internal readonly struct AspectCache<T> : IEcsWorldComponent<AspectCache<T>>
-            where T : EcsAspect, new()
+            where T : new()
         {
             public readonly T Instance;
-            public AspectCache(T instance) { Instance = instance; }
+            public readonly EcsMask Mask;
+            public AspectCache(T instance, EcsMask mask)
+            {
+                Instance = instance;
+                Mask = mask;
+            }
             void IEcsWorldComponent<AspectCache<T>>.Init(ref AspectCache<T> component, EcsWorld world)
             {
-                component = new AspectCache<T>(EcsAspect.Builder.New<T>(world));
+#if DEBUG
+                AllowedInWorldsAttribute.CheckAllows<T>(world);
+#endif
+                var result = EcsAspect.Builder.New<T>(world);
+                component = new AspectCache<T>(result.aspect, result.mask);
             }
             void IEcsWorldComponent<AspectCache<T>>.OnDestroy(ref AspectCache<T> component, EcsWorld world)
             {
@@ -36,7 +45,7 @@ namespace DCFApixels.DragonECS
 
         internal readonly struct WhereQueryCache<TExecutor, TAspcet> : IEcsWorldComponent<WhereQueryCache<TExecutor, TAspcet>>
             where TExecutor : MaskQueryExecutor, new()
-            where TAspcet : EcsAspect, new()
+            where TAspcet : new()
         {
             public readonly TExecutor Executor;
             public readonly TAspcet Aspcet;
@@ -47,9 +56,9 @@ namespace DCFApixels.DragonECS
             }
             void IEcsWorldComponent<WhereQueryCache<TExecutor, TAspcet>>.Init(ref WhereQueryCache<TExecutor, TAspcet> component, EcsWorld world)
             {
-                TAspcet aspect = world.GetAspect<TAspcet>();
-                TExecutor instance = world.GetExecutorForMask<TExecutor>(aspect.Mask);
-                instance.Initialize(world, aspect.Mask);
+                TAspcet aspect = world.GetAspect<TAspcet>(out EcsMask mask);
+                TExecutor instance = world.GetExecutorForMask<TExecutor>(mask);
+                instance.Initialize(world, mask);
                 component = new WhereQueryCache<TExecutor, TAspcet>(instance, aspect);
             }
             void IEcsWorldComponent<WhereQueryCache<TExecutor, TAspcet>>.OnDestroy(ref WhereQueryCache<TExecutor, TAspcet> component, EcsWorld world)

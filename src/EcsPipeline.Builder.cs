@@ -214,7 +214,7 @@ namespace DCFApixels.DragonECS
                 {
                     case IEcsProcess system: return AddSystem_Internal(system, settedAddParams);
                     case IEcsModule module: return AddModule_Internal(module, settedAddParams);
-                    default: Throw.ArgumentException("Unsupported type"); return this;
+                    default: Throw.ArgumentException($"{raw.GetMeta().TypeName} Unsupported type"); return this;
                 }
             }
             #endregion

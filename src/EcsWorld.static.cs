@@ -169,6 +169,10 @@ namespace DCFApixels.DragonECS
                                 Array.Resize(ref _items, _items.Length << 1);
                             }
 
+#if DEBUG
+                            AllowedInWorldsAttribute.CheckAllows<T>(_worlds[worldID]);
+#endif
+
                             _interface.Init(ref _items[itemIndex], _worlds[worldID]);
 
                             var world = GetWorld(worldID);
