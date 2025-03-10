@@ -377,7 +377,7 @@ namespace DCFApixels.DragonECS
                         }
                         finally
                         {
-                            if(pair.runFinally != null)
+                            if (pair.runFinally != null)
                             {
                                 translationFinnalyCallback(pair.runFinally);
                             }

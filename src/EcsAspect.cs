@@ -31,39 +31,39 @@ namespace DCFApixels.DragonECS
     }
 
     #region IEcsAspectExtensions tmp
-//    public static class IEcsAspectExtensions
-//    {
-//        public static void Apply(this IEcsAspect aspect, short worldID, int entityID)
-//        {
-//            EcsWorld world = EcsWorld.GetWorld(worldID);
-//            EcsMask mask = aspect.Mask;
-//            foreach (var incTypeID in mask._incs)
-//            {
-//                var pool = world.FindPoolInstance(incTypeID);
-//                if (pool != null)
-//                {
-//                    if (pool.Has(entityID) == false)
-//                    {
-//                        pool.AddEmpty(entityID);
-//                    }
-//                }
-//#if DEBUG
-//                else
-//                {
-//                    EcsDebug.PrintWarning("Component has not been added because the pool has not been initialized yet.");
-//                }
-//#endif
-//            }
-//            foreach (var excTypeID in mask._excs)
-//            {
-//                var pool = world.FindPoolInstance(excTypeID);
-//                if (pool != null && pool.Has(entityID))
-//                {
-//                    pool.Del(entityID);
-//                }
-//            }
-//        }
-//    }
+    //    public static class IEcsAspectExtensions
+    //    {
+    //        public static void Apply(this IEcsAspect aspect, short worldID, int entityID)
+    //        {
+    //            EcsWorld world = EcsWorld.GetWorld(worldID);
+    //            EcsMask mask = aspect.Mask;
+    //            foreach (var incTypeID in mask._incs)
+    //            {
+    //                var pool = world.FindPoolInstance(incTypeID);
+    //                if (pool != null)
+    //                {
+    //                    if (pool.Has(entityID) == false)
+    //                    {
+    //                        pool.AddEmpty(entityID);
+    //                    }
+    //                }
+    //#if DEBUG
+    //                else
+    //                {
+    //                    EcsDebug.PrintWarning("Component has not been added because the pool has not been initialized yet.");
+    //                }
+    //#endif
+    //            }
+    //            foreach (var excTypeID in mask._excs)
+    //            {
+    //                var pool = world.FindPoolInstance(excTypeID);
+    //                if (pool != null && pool.Has(entityID))
+    //                {
+    //                    pool.Del(entityID);
+    //                }
+    //            }
+    //        }
+    //    }
     #endregion
 
     public static partial class API
@@ -227,7 +227,7 @@ namespace DCFApixels.DragonECS
                 //Building
                 TAspect newAspect = new TAspect();
                 EcsAspect builtinAspect = newAspect as EcsAspect;
-                if(builtinAspect != null)
+                if (builtinAspect != null)
                 {
                     builtinAspect._source = world;
                     builtinAspect.Init(builder);
@@ -244,7 +244,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 EcsMask mask = staticMask.ToMask(world);
-                if(builtinAspect != null)
+                if (builtinAspect != null)
                 {
                     builtinAspect._mask = mask;
                     //var pools = new IEcsPool[builder._poolsBufferCount];
