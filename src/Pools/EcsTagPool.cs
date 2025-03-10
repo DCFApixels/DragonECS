@@ -1,3 +1,4 @@
+using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections;
@@ -185,7 +186,7 @@ namespace DCFApixels.DragonECS
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
             if (_count <= 0) { return; }
-            var span = _source.Where(out SingleAspect<EcsTagPool<T>> _);
+            var span = _source.Where(out SingleTagAspect<T> _);
             _count = 0;
             foreach (var entityID in span)
             {
@@ -201,6 +202,10 @@ namespace DCFApixels.DragonECS
         #region Callbacks
         void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
+#if DEBUG
+            AllowedInWorldsAttribute.CheckAllows<T>(world);
+#endif
+
             _source = world;
             _mediator = mediator;
             _componentTypeID = componentTypeID;

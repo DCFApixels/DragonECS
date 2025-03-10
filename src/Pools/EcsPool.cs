@@ -1,3 +1,4 @@
+using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
@@ -27,7 +28,7 @@ namespace DCFApixels.DragonECS
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsComponent components.")]
     [MetaID("C501547C9201A4B03FC25632E4FAAFD7")]
-    [DebuggerDisplay("Count: {Count}")]
+    [DebuggerDisplay("{ComponentType}: {Count}")]
     public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
     {
@@ -218,7 +219,7 @@ namespace DCFApixels.DragonECS
             _recycledItemsCount = 0; // спереди потому чтобы обнулялось, так как Del не обнуляет
             if (_itemsCount <= 0) { return; }
             _itemsCount = 0;
-            var span = _source.Where(out SingleAspect<EcsPool<T>> _);
+            var span = _source.Where(out SingleAspect<T> _);
             foreach (var entityID in span)
             {
                 ref int itemIndex = ref _mapping[entityID];
@@ -235,6 +236,10 @@ namespace DCFApixels.DragonECS
         #region Callbacks
         void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
+#if DEBUG
+            AllowedInWorldsAttribute.CheckAllows<T>(world);
+#endif
+
             _source = world;
             _mediator = mediator;
             _componentTypeID = componentTypeID;
