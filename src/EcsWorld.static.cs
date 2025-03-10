@@ -21,7 +21,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         private static EcsWorld[] _worlds = Array.Empty<EcsWorld>();
-        private static IdDispenser _worldIdDispenser = new IdDispenser(4, 0, n => Array.Resize(ref _worlds, n));
+        private static readonly IdDispenser _worldIdDispenser = new IdDispenser(4, 0, n => Array.Resize(ref _worlds, n));
 
         private static StructList<WorldComponentPoolAbstract> _allWorldComponentPools = new StructList<WorldComponentPoolAbstract>(64);
         private StructList<WorldComponentPoolAbstract> _worldComponentPools;
@@ -66,7 +66,7 @@ namespace DCFApixels.DragonECS
             return ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
         }
 
-        public static void DestroyAndClearAllWorlds()
+        public static void ResetStaticState()
         {
             for (int i = 1; i < _worlds.Length; i++)
             {
@@ -79,6 +79,7 @@ namespace DCFApixels.DragonECS
                 }
                 world = null;
             }
+            _worldIdDispenser.ReleaseAll();
         }
 
         #region WorldComponentPool
