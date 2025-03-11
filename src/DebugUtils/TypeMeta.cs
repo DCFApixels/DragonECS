@@ -468,7 +468,7 @@ namespace DCFApixels.DragonECS
             public static MetaGroup GetGroup(Type type)
             {
 #if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                return type.TryGetAttribute(out MetaGroupAttribute atr) ? atr.Data : MetaGroup.Empty;
+                return type.TryGetAttribute(out MetaGroupAttribute atr) ? atr.Data : MetaGroup.FromNameSpace(type);
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetGroup)} method does not work.");
                 return MetaGroup.Empty;
