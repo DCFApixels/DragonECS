@@ -144,14 +144,12 @@ namespace DCFApixels.DragonECS
         public const uint SkyBlue = 0x_87ceeb_ff;
         /// <summary> color code Plum. RGB is (221, 160, 221)</summary>
         public const uint Plum = 0x_dda0dd_ff;
-        /// <summary> color code Khaki. RGB is (240, 230, 140)</summary>
+        /// <summary> color code Khaki. RGB is (213, 197, 138)</summary>
         public const uint Khaki = 0x_d5c58a_ff;
-        /// <summary> color code Beige. RGB is (245, 245, 220)</summary>
+        /// <summary> color code Beige. RGB is (237, 232, 208)</summary>
         public const uint Beige = 0x_ede8d0_ff;
         /// <summary> color code Lavender. RGB is (230, 230, 250)</summary>
         public const uint Lavender = 0x_e6e6fa_ff;
-
-
 
         /// <summary> color code Goldenrod. RGB is (218, 165, 32)</summary>
         public const uint Goldenrod = 0x_daa520_ff;
@@ -164,10 +162,9 @@ namespace DCFApixels.DragonECS
         /// <summary> color code AmericanRose. RGB is (255, 3, 62)</summary>
         public const uint AmericanRose = 0x_ff033e_ff;
 
-
-        /// <summary> RGB is (255, 78, 133) color code </summary>
+        /// <summary> color code DragonRose. RGB is (255, 78, 133)</summary>
         public const uint DragonRose = 0x_ff4e85_ff;
-        /// <summary> RGB is (0, 255, 156) color code </summary>
+        /// <summary> color code DragonCyan. RGB is (0, 255, 156)</summary>
         public const uint DragonCyan = 0x_00ff9c_ff;
         #endregion
 
