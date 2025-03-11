@@ -64,7 +64,7 @@ namespace DCFApixels.DragonECS
         {
             color = new MetaColor(r, g, b, 255);
         }
-        public MetaColorAttribute(int colorCode)
+        public MetaColorAttribute(uint colorCode)
         {
             color = new MetaColor(colorCode, true);
         }
@@ -78,57 +78,100 @@ namespace DCFApixels.DragonECS
         #region Consts
         public static readonly MetaColor BlackColor = new MetaColor(Black);
         /// <summary> color code Red. RGB is (255, 0, 0)</summary>
-        public const int Red = (255 << 24) | (000 << 16) | (000 << 8) | 255;
+        public const uint Red = 0x_ff0000_ff;
         /// <summary> color code Green. RGB is (0, 255, 0)</summary>
-        public const int Green = (000 << 24) | (255 << 16) | (000 << 8) | 255;
+        public const uint Green = 0x_00ff00_ff;
         /// <summary> color code Blue. RGB is (0, 0, 255)</summary>
-        public const int Blue = (000 << 24) | (000 << 16) | (255 << 8) | 255;
-
+        public const uint Blue = 0x_0000ff_ff;
         /// <summary> color code Yellow. RGB is (255, 255, 0)</summary>
-        public const int Yellow = (255 << 24) | (255 << 16) | (000 << 8) | 255;
+        public const uint Yellow = 0x_ffff00_ff;
         /// <summary> color code Cyan. RGB is (0, 255, 255)</summary>
-        public const int Cyan = (000 << 24) | (255 << 16) | (255 << 8) | 255;
+        public const uint Cyan = 0x_00ffff_ff;
         /// <summary> color code Magenta. RGB is (255, 0, 255)</summary>
-        public const int Magenta = (255 << 24) | (000 << 16) | (255 << 8) | 255;
-
-        /// <summary> color code Orange. RGB is (255, 165, 0)</summary>
-        public const int Orange = (255 << 24) | (165 << 16) | (000 << 8) | 255;
-        /// <summary> color code OrangeRed. RGB is (255, 69, 0)</summary>
-        public const int OrangeRed = (255 << 24) | (69 << 16) | (000 << 8) | 255;
-        /// <summary> color code Lime. RGB is (125, 255, 0)</summary>
-        public const int Lime = (125 << 24) | (255 << 16) | (000 << 8) | 255;
-        /// <summary> color code Aquamarine. RGB is (127, 255, 212)</summary>
-        public const int Aquamarine = (127 << 24) | (255 << 16) | (212 << 8) | 255;
-        /// <summary> color code Goldenrod. RGB is (218, 165, 32)</summary>
-        public const int Goldenrod = (218 << 24) | (165 << 16) | (32 << 8) | 255;
-        /// <summary> color code DeepPink. RGB is (255, 105, 180)</summary>
-        public const int DeepPink = (255 << 24) | (105 << 16) | (180 << 8) | 255;
-        /// <summary> color code Crimson. RGB is (220, 20, 60)</summary>
-        public const int Crimson = (220 << 24) | (20 << 16) | (60 << 8) | 255;
-        /// <summary> color code BlueViolet. RGB is (138, 43, 226)</summary>
-        public const int BlueViolet = (138 << 24) | (43 << 16) | (226 << 8) | 255;
-        /// <summary> color code AmericanRose. RGB is (255, 3, 62)</summary>
-        public const int AmericanRose = (255 << 24) | (3 << 16) | (62 << 8) | 255;
-
-        /// <summary> color code Grey/Gray. RGB is (127, 127, 127)</summary>
-        public const int Gray = (127 << 24) | (127 << 16) | (127 << 8) | 255;
-        /// <summary> color code Grey/Gray. RGB is (127, 127, 127)</summary>
-        public const int Grey = Gray;
-        /// <summary> color code Silver. RGB is (192, 192, 192)</summary>
-        public const int Silver = (192 << 24) | (192 << 16) | (192 << 8) | 255;
+        public const uint Magenta = 0x_ff00ff_ff;
         /// <summary> color code White. RGB is (255, 255, 255)</summary>
-        public const int White = -1;
+        public const uint White = 0x_ffffff_ff;
         /// <summary> color code Black. RGB is (0, 0, 0)</summary>
-        public const int Black = 0;
+        public const uint Black = 0x_000000_ff;
+
+        /// <summary> color code OrangeRed. RGB is (255, 69, 0)</summary>
+        public const uint OrangeRed = 0x_ff4500_ff;
+        /// <summary> color code Orange. RGB is (255, 165, 0)</summary>
+        public const uint Orange = 0x_ffa500_ff;
+        /// <summary> color code Purple. RGB is (128, 0, 128)</summary>
+        public const uint Purple = 0x_800080_ff;
+        /// <summary> color code Pink. RGB is (255, 192, 203)</summary>
+        public const uint Pink = 0x_ffc0cb_ff;
+        /// <summary> color code Brown. RGB is (165, 42, 42)</summary>
+        public const uint Brown = 0x_a52a2a_ff;
+        /// <summary> color code Grey/Gray. RGB is (128, 128, 128)</summary>
+        public const uint Gray = 0x_808080_ff;
+        /// <summary> color code Grey/Gray. RGB is (128, 128, 128)</summary>
+        public const uint Grey = Gray;
+        /// <summary> color code LightGray. RGB is (211, 211, 211)</summary>
+        public const uint LightGray = 0x_d3d3d3_ff;
+        /// <summary> color code DarkGray. RGB is (64, 64, 64)</summary>
+        public const uint DarkGray = 0x_404040_ff;
+        /// <summary> color code Lime. RGB is (125, 255, 0)</summary>
+        public const uint Lime = 0x_7dff00_ff;
+        /// <summary> color code Teal. RGB is (0, 128, 128)</summary>
+        public const uint Teal = 0x_008080_ff;
+        /// <summary> color code Olive. RGB is (128, 128, 0)</summary>
+        public const uint Olive = 0x_808000_ff;
+        /// <summary> color code Navy. RGB is (0, 0, 128)</summary>
+        public const uint Navy = 0x_000080_ff;
+        /// <summary> color code Maroon. RGB is (128, 0, 0)</summary>
+        public const uint Maroon = 0x_800000_ff;
+        /// <summary> color code Aquamarine. RGB is (127, 255, 212)</summary>
+        public const uint Aquamarine = 0x_7fffd4_ff;
+        /// <summary> color code Fuchsia. RGB is (255, 0, 255)</summary>
+        public const uint Fuchsia = 0x_ff00ff_ff;
+        /// <summary> color code Silver. RGB is (192, 192, 192)</summary>
+        public const uint Silver = 0x_c0c0c0_ff;
+        /// <summary> color code Gold. RGB is (255, 215, 0)</summary>
+        public const uint Gold = 0x_ffd700_ff;
+        /// <summary> color code Indigo. RGB is (75, 0, 130)</summary>
+        public const uint Indigo = 0x_4b0082_ff;
+        /// <summary> color code Violet. RGB is (238, 130, 238)</summary>
+        public const uint Violet = 0x_ee82ee_ff;
+        /// <summary> color code Coral. RGB is (255, 127, 80)</summary>
+        public const uint Coral = 0x_ff7f50_ff;
+        /// <summary> color code Salmon. RGB is (250, 128, 114)</summary>
+        public const uint Salmon = 0x_fa8072_ff;
+        /// <summary> color code Turquoise. RGB is (64, 224, 208)</summary>
+        public const uint Turquoise = 0x_40e0d0_ff;
+        /// <summary> color code SkyBlue. RGB is (135, 206, 235)</summary>
+        public const uint SkyBlue = 0x_87ceeb_ff;
+        /// <summary> color code Plum. RGB is (221, 160, 221)</summary>
+        public const uint Plum = 0x_dda0dd_ff;
+        /// <summary> color code Khaki. RGB is (240, 230, 140)</summary>
+        public const uint Khaki = 0x_d5c58a_ff;
+        /// <summary> color code Beige. RGB is (245, 245, 220)</summary>
+        public const uint Beige = 0x_ede8d0_ff;
+        /// <summary> color code Lavender. RGB is (230, 230, 250)</summary>
+        public const uint Lavender = 0x_e6e6fa_ff;
+
+
+
+        /// <summary> color code Goldenrod. RGB is (218, 165, 32)</summary>
+        public const uint Goldenrod = 0x_daa520_ff;
+        /// <summary> color code DeepPink. RGB is (255, 105, 180)</summary>
+        public const uint DeepPink = 0x_ff69b4_ff;
+        /// <summary> color code Crimson. RGB is (220, 20, 60)</summary>
+        public const uint Crimson = 0x_dc143c_ff;
+        /// <summary> color code BlueViolet. RGB is (138, 43, 226)</summary>
+        public const uint BlueViolet = 0x_8a2be2_ff;
+        /// <summary> color code AmericanRose. RGB is (255, 3, 62)</summary>
+        public const uint AmericanRose = 0x_ff033e_ff;
 
 
         /// <summary> RGB is (255, 78, 133) color code </summary>
-        public const int DragonRose = (255 << 24) | (78 << 16) | (133 << 8) | 255;
+        public const uint DragonRose = 0x_ff4e85_ff;
         /// <summary> RGB is (0, 255, 156) color code </summary>
-        public const int DragonCyan = (0 << 24) | (255 << 16) | (156 << 8) | 255;
+        public const uint DragonCyan = 0x_00ff9c_ff;
         #endregion
 
-        [FieldOffset(0), NonSerialized] public readonly int colorCode;
+        [FieldOffset(0), NonSerialized] public readonly uint colorCode;
         [FieldOffset(3), DataMember] public readonly byte r;
         [FieldOffset(2), DataMember] public readonly byte g;
         [FieldOffset(1), DataMember] public readonly byte b;
@@ -184,11 +227,11 @@ namespace DCFApixels.DragonECS
             this.b = b;
             this.a = a;
         }
-        public MetaColor(int colorCode) : this()
+        public MetaColor(uint colorCode) : this()
         {
             this.colorCode = colorCode;
         }
-        public MetaColor(int colorCode, bool withoutAlpha) : this()
+        public MetaColor(uint colorCode, bool withoutAlpha) : this()
         {
             this.colorCode = withoutAlpha ? colorCode | 255 : colorCode;
         }
@@ -200,7 +243,7 @@ namespace DCFApixels.DragonECS
                 uint colorCode = (uint)stringCode.GetHashCode();
                 colorCode ^= MAGIC_CONST;
                 colorCode = BitsUtility.NextXorShiftState(colorCode);
-                this.colorCode = (int)colorCode | 255;
+                this.colorCode = (uint)colorCode | 255;
                 this.colorCode = UpContrast().colorCode;
             }
         }
@@ -251,7 +294,7 @@ namespace DCFApixels.DragonECS
         #region Operators
         public static implicit operator MetaColor((byte, byte, byte) a) { return new MetaColor(a.Item1, a.Item2, a.Item3); }
         public static implicit operator MetaColor((byte, byte, byte, byte) a) { return new MetaColor(a.Item1, a.Item2, a.Item3, a.Item4); }
-        public static implicit operator MetaColor(int a) { return new MetaColor(a); }
+        public static implicit operator MetaColor(uint a) { return new MetaColor(a); }
         public static bool operator ==(MetaColor a, MetaColor b) { return a.colorCode == b.colorCode; }
         public static bool operator !=(MetaColor a, MetaColor b) { return a.colorCode != b.colorCode; }
 
@@ -349,7 +392,7 @@ namespace DCFApixels.DragonECS
         public override string ToString() { return $"({r}, {g}, {b}, {a})"; }
         public bool Equals(MetaColor other) { return colorCode == other.colorCode; }
         public override bool Equals(object obj) { return obj is MetaColor other && Equals(other); }
-        public override int GetHashCode() { return colorCode; }
+        public override int GetHashCode() { return unchecked((int)colorCode); }
         #endregion
     }
 }
