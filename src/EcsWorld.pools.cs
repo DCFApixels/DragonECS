@@ -8,8 +8,8 @@ namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {
-        private readonly SparseArray<int> _poolTypeCode_2_CmpTypeIDs = new SparseArray<int>();
-        private readonly SparseArray<int> _cmpTypeCode_2_CmpTypeIDs = new SparseArray<int>();
+        private SparseArray<int> _poolTypeCode_2_CmpTypeIDs = new SparseArray<int>();
+        private SparseArray<int> _cmpTypeCode_2_CmpTypeIDs = new SparseArray<int>();
 
         internal IEcsPoolImplementation[] _pools;
         internal PoolSlot[] _poolSlots;
