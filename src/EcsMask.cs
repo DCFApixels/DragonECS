@@ -498,7 +498,10 @@ namespace DCFApixels.DragonECS
         /// <summary> slised _sortIncChunckBuffer </summary>
         private readonly UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
+        private readonly bool _isSingleIncPoolWithEntityStorage;
+        private readonly bool _isHasAnyEntityStorage;
         private readonly MaskType _maskType;
+
         private enum MaskType : byte
         {
             Empty,
@@ -511,11 +514,6 @@ namespace DCFApixels.DragonECS
         {
             World = source;
             Mask = mask;
-
-            //_sortIncBuffer = UnsafeArray<int>.FromArray(mask._incs);
-            //_sortExcBuffer = UnsafeArray<int>.FromArray(mask._excs);
-            //_sortIncChunckBuffer = UnsafeArray<EcsMaskChunck>.FromArray(mask._incChunckMasks);
-            //_sortExcChunckBuffer = UnsafeArray<EcsMaskChunck>.FromArray(mask._excChunckMasks);
 
             var sortBuffer = new UnsafeArray<int>(mask._incs.Length + mask._excs.Length);
             var sortChunckBuffer = new UnsafeArray<EcsMaskChunck>(mask._incChunckMasks.Length + mask._excChunckMasks.Length);
@@ -530,6 +528,16 @@ namespace DCFApixels.DragonECS
             _sortExcChunckBuffer = sortChunckBuffer.Slice(mask._incChunckMasks.Length, mask._excChunckMasks.Length);
             _sortExcChunckBuffer.CopyFromArray_Unchecked(mask._excChunckMasks);
 
+            _isHasAnyEntityStorage = false;
+            var pools = source.AllPools;
+            for (int i = 0; i < _sortIncBuffer.Length; i++)
+            {
+                var pool = pools[_sortIncBuffer.ptr[i]];
+                _isHasAnyEntityStorage |= pool is IEntityStorage;
+                if (_isHasAnyEntityStorage) { break; }
+            }
+
+            _isSingleIncPoolWithEntityStorage = Mask.Excs.Length <= 0 && Mask.Incs.Length == 1;
             if (_sortExcBuffer.Length <= 0)
             {
                 _maskType = mask.IsEmpty ? MaskType.Empty : MaskType.OnlyInc;
@@ -594,8 +602,25 @@ namespace DCFApixels.DragonECS
             // Выражение мало IncCount < (AllEntitesCount - ExcCount) вероятно будет истинным.
             // ExcCount = максимальное количество ентитей с исключеющим ограничением и IncCount = минимальоне количество ентитей с включающим ограничением
             // Поэтому исключающее ограничение игнорируется для maxEntites.
-
             return maxEntites;
+        }
+        private unsafe bool TryGetEntityStorage(out IEntityStorage storage)
+        {
+            if (_isHasAnyEntityStorage)
+            {
+                var pools = World.AllPools;
+                for (int i = 0; i < _sortIncBuffer.Length; i++)
+                {
+                    var pool = pools[_sortIncBuffer.ptr[i]];
+                    storage = pool as IEntityStorage;
+                    if (storage != null)
+                    {
+                        return true;
+                    }
+                }
+            }
+            storage = null;
+            return false;
         }
         #endregion
 
@@ -694,7 +719,6 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Enumerator
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator GetEnumerator()
             {
                 if (_iterator.Mask.IsBroken)
@@ -706,7 +730,14 @@ namespace DCFApixels.DragonECS
                 {
                     return new Enumerator(_span.Slice(0, 0), _iterator);
                 }
-                return new Enumerator(_span, _iterator);
+                if (_iterator.TryGetEntityStorage(out IEntityStorage storage))
+                {
+                    return new Enumerator(storage.ToSpan(), _iterator);
+                }
+                else
+                {
+                    return new Enumerator(_span, _iterator);
+                }
             }
 
 #if ENABLE_IL2CPP
@@ -827,7 +858,6 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Enumerator
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator GetEnumerator()
             {
                 if (_iterator.Mask.IsBroken)
@@ -839,7 +869,14 @@ namespace DCFApixels.DragonECS
                 {
                     return new Enumerator(_span.Slice(0, 0), _iterator);
                 }
-                return new Enumerator(_span, _iterator);
+                if (_iterator.TryGetEntityStorage(out IEntityStorage storage))
+                {
+                    return new Enumerator(storage.ToSpan(), _iterator);
+                }
+                else
+                {
+                    return new Enumerator(_span, _iterator);
+                }
             }
 
 #if ENABLE_IL2CPP

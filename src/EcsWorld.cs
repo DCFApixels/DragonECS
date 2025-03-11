@@ -130,7 +130,7 @@ namespace DCFApixels.DragonECS
             get
             {
                 ReleaseDelEntityBufferAll();
-                return _entityDispenser.UsedToEcsSpan(ID);
+                return GetCurrentEntities_Internal();
             }
         }
         public int PoolsCount
@@ -1165,6 +1165,14 @@ namespace DCFApixels.DragonECS
                 _queries = new List<MaskQueryExecutor>();
                 world.GetMaskQueryExecutors(_queries, ref v);
             }
+        }
+        #endregion
+
+        #region Internal
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal EcsSpan GetCurrentEntities_Internal()
+        {
+            return _entityDispenser.UsedToEcsSpan(ID);
         }
         #endregion
     }

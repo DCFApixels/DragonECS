@@ -120,7 +120,7 @@ namespace DCFApixels.DragonECS.Core
             _world = mask.World;
             _maskInc = mask._incs;
             _maskExc = mask._excs;
-            _versions = UnmanagedArrayUtility.New<long>(1 + mask._incs.Length + mask._excs.Length);
+            _versions = UnmanagedArrayUtility.NewAndInit<long>(1 + mask._incs.Length + mask._excs.Length);
         }
         public bool Check()
         {
@@ -176,7 +176,7 @@ namespace DCFApixels.DragonECS.Core
 
             long* ptr = _versions;
             var slots = _world._poolSlots;
-            bool result = true;
+            bool result = _maskInc.Length > 0 || _maskExc.Length > 0;
             foreach (var slotIndex in _maskInc)
             {
                 ptr++;

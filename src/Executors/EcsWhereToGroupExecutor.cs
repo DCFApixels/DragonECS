@@ -90,6 +90,10 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup ExecuteFor(EcsSpan span)
         {
+            if (span.IsSourceEntities)
+            {
+                return Execute();
+            }
             ExecuteFor_Iternal(span);
             return _filteredGroup;
         }

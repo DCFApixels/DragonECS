@@ -91,6 +91,10 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ExecuteFor(EcsSpan span)
         {
+            if (span.IsSourceEntities)
+            {
+                return Execute();
+            }
             ExecuteFor_Iternal(span);
             return new EcsSpan(World.ID, _filteredEntities, _filteredEntitiesCount);
         }
@@ -105,6 +109,10 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ExecuteFor(EcsSpan span, Comparison<int> comparison)
         {
+            if (span.IsSourceEntities)
+            {
+                return Execute(comparison);
+            }
             ExecuteFor_Iternal(span);
             ArraySortHalperX<int>.Sort(_filteredEntities, comparison, _filteredEntitiesCount);
             return new EcsSpan(World.ID, _filteredEntities, _filteredEntitiesCount);

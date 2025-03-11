@@ -16,11 +16,6 @@ namespace DCFApixels.DragonECS
             where TAspect : new()
             where TCollection : IEntityStorage
         {
-            if (ReferenceEquals(entities, entities.World))
-            {
-                entities.World.GetQueryCache(out EcsWhereExecutor executor, out aspect);
-                return executor.Execute();
-            }
             return entities.ToSpan().Where(out aspect);
         }
         public static EcsSpan Where<TAspect>(this EcsReadonlyGroup group, out TAspect aspect)
@@ -38,11 +33,6 @@ namespace DCFApixels.DragonECS
         public static EcsSpan Where<TCollection>(this TCollection entities, IComponentMask mask)
             where TCollection : IEntityStorage
         {
-            if (ReferenceEquals(entities, entities.World))
-            {
-                var executor = entities.World.GetExecutorForMask<EcsWhereExecutor>(mask);
-                return executor.Execute();
-            }
             return entities.ToSpan().Where(mask);
         }
         public static EcsSpan Where(this EcsReadonlyGroup group, IComponentMask mask)
@@ -61,11 +51,6 @@ namespace DCFApixels.DragonECS
             where TAspect : new()
             where TCollection : IEntityStorage
         {
-            if (ReferenceEquals(entities, entities.World))
-            {
-                entities.World.GetQueryCache(out EcsWhereExecutor executor, out aspect);
-                return executor.Execute(comparison);
-            }
             return entities.ToSpan().Where(out aspect, comparison);
         }
         public static EcsSpan Where<TAspect>(this EcsReadonlyGroup group, out TAspect aspect, Comparison<int> comparison)
@@ -83,11 +68,6 @@ namespace DCFApixels.DragonECS
         public static EcsSpan Where<TCollection>(this TCollection entities, IComponentMask mask, Comparison<int> comparison)
             where TCollection : IEntityStorage
         {
-            if (ReferenceEquals(entities, entities.World))
-            {
-                EcsWhereExecutor executor = entities.World.GetExecutorForMask<EcsWhereExecutor>(mask);
-                return executor.Execute(comparison);
-            }
             return entities.ToSpan().Where(mask, comparison);
         }
         public static EcsSpan Where(this EcsReadonlyGroup group, IComponentMask mask, Comparison<int> comparison)
@@ -106,11 +86,6 @@ namespace DCFApixels.DragonECS
             where TAspect : new()
             where TCollection : IEntityStorage
         {
-            if (ReferenceEquals(entities, entities.World))
-            {
-                entities.World.GetQueryCache(out EcsWhereToGroupExecutor executor, out aspect);
-                return executor.Execute();
-            }
             return entities.ToSpan().WhereToGroup(out aspect);
         }
         public static EcsReadonlyGroup WhereToGroup<TAspect>(this EcsReadonlyGroup group, out TAspect aspect)
@@ -128,11 +103,6 @@ namespace DCFApixels.DragonECS
         public static EcsReadonlyGroup WhereToGroup<TCollection>(this TCollection entities, IComponentMask mask)
             where TCollection : IEntityStorage
         {
-            if (ReferenceEquals(entities, entities.World))
-            {
-                EcsWhereToGroupExecutor executor = entities.World.GetExecutorForMask<EcsWhereToGroupExecutor>(mask);
-                return executor.Execute();
-            }
             return entities.ToSpan().WhereToGroup(mask);
         }
         public static EcsReadonlyGroup WhereToGroup(this EcsReadonlyGroup group, IComponentMask mask)

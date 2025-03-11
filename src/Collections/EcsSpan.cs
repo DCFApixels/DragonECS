@@ -24,7 +24,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _worldID == 0; }
         }
-        public int WorldID
+        public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _worldID; }
@@ -42,6 +42,11 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new EcsLongsSpan(this); }
+        }
+        public bool IsSourceEntities
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return this == EcsWorld.GetWorld(_worldID).GetCurrentEntities_Internal(); }
         }
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.ArrayBoundsChecks, true)]
@@ -180,7 +185,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.IsNull; }
         }
-        public int WorldID
+        public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.WorldID; }
@@ -193,6 +198,11 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.Count; }
+        }
+        public bool IsSourceEntities
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _source.IsSourceEntities; }
         }
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.ArrayBoundsChecks, true)]

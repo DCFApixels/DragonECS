@@ -73,7 +73,7 @@ namespace DCFApixels.DragonECS
                 var world = _worlds[i];
                 if (world == null) { continue; }
 
-                if(world.IsDestroyed == false)
+                if (world.IsDestroyed == false)
                 {
                     world.Destroy();
                 }
