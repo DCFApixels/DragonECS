@@ -1,3 +1,6 @@
+#if DISABLE_DEBUG
+#undef DEBUG
+#endif
 using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
@@ -28,8 +31,8 @@ namespace DCFApixels.DragonECS
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsComponent components.")]
     [MetaID("C501547C9201A4B03FC25632E4FAAFD7")]
-    [DebuggerDisplay("{ComponentType}: {Count}")]
-    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
+    [DebuggerDisplay("Count: {Count} Type: {ComponentType}")]
+    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEntityStorage, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
     {
         private EcsWorld _source;
@@ -39,13 +42,17 @@ namespace DCFApixels.DragonECS
         private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private T[] _items; //dense
         private int _itemsCount = 0;
-        private int[] _recycledItems;
-        private int _recycledItemsCount = 0;
+        private int _capacity = 0;
 
-        private IEcsComponentLifecycle<T> _componentLifecycleHandler = EcsComponentResetHandler<T>.instance;
-        private bool _isHasComponentLifecycleHandler = EcsComponentResetHandler<T>.isHasHandler;
-        private IEcsComponentCopy<T> _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
-        private bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
+        private int[] _sparseEntities;
+        private int[] _denseEntitiesDelayed;
+        private int _denseEntitiesDelayedCount = 0;
+        private bool _isDenseEntitiesDelayedValid = false;
+
+        private readonly IEcsComponentLifecycle<T> _componentLifecycleHandler = EcsComponentResetHandler<T>.instance;
+        private readonly bool _isHasComponentLifecycleHandler = EcsComponentResetHandler<T>.isHasHandler;
+        private readonly IEcsComponentCopy<T> _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
+        private readonly bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
 
 #if !DISABLE_POOLS_EVENTS
         private readonly StructList<IEcsPoolEventListener> _listeners = new StructList<IEcsPoolEventListener>(2);
@@ -90,21 +97,10 @@ namespace DCFApixels.DragonECS
             if (itemIndex > 0) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
-            if (_recycledItemsCount > 0)
-            {
-                itemIndex = _recycledItems[--_recycledItemsCount];
-                _itemsCount++;
-            }
-            else
-            {
-                itemIndex = ++_itemsCount;
-                if (itemIndex >= _items.Length)
-                {
-                    Array.Resize(ref _items, _items.Length << 1);
-                }
-            }
+            itemIndex = GetFreeItemIndex(entityID);
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             ref T result = ref _items[itemIndex];
+            _sparseEntities[itemIndex] = entityID;
             EnableComponent(ref result);
 #if !DISABLE_POOLS_EVENTS
             _listeners.InvokeOnAddAndGet(entityID, _listenersCachedCount);
@@ -132,26 +128,15 @@ namespace DCFApixels.DragonECS
         }
         public ref T TryAddOrGet(int entityID)
         {
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
+#endif
             ref int itemIndex = ref _mapping[entityID];
             if (itemIndex <= 0)
             { //Add block
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
-#endif
-                if (_recycledItemsCount > 0)
-                {
-                    itemIndex = _recycledItems[--_recycledItemsCount];
-                    _itemsCount++;
-                }
-                else
-                {
-                    itemIndex = ++_itemsCount;
-                    if (itemIndex >= _items.Length)
-                    {
-                        Array.Resize(ref _items, _items.Length << 1);
-                    }
-                }
+                itemIndex = GetFreeItemIndex(entityID);
                 _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
+                _sparseEntities[itemIndex] = entityID;
                 EnableComponent(ref _items[itemIndex]);
 #if !DISABLE_POOLS_EVENTS
                 _listeners.InvokeOnAdd(entityID, _listenersCachedCount);
@@ -177,14 +162,11 @@ namespace DCFApixels.DragonECS
             if (itemIndex <= 0) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             DisableComponent(ref _items[itemIndex]);
-            if (_recycledItemsCount >= _recycledItems.Length)
-            {
-                Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
-            }
-            _recycledItems[_recycledItemsCount++] = itemIndex;
+            _sparseEntities[itemIndex] = 0;
             itemIndex = 0;
             _itemsCount--;
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
+            _isDenseEntitiesDelayedValid = false;
 #if !DISABLE_POOLS_EVENTS
             _listeners.InvokeOnDel(entityID, _listenersCachedCount);
 #endif
@@ -216,7 +198,6 @@ namespace DCFApixels.DragonECS
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
-            _recycledItemsCount = 0; // спереди потому чтобы обнулялось, так как Del не обнуляет
             if (_itemsCount <= 0) { return; }
             _itemsCount = 0;
             var span = _source.Where(out SingleAspect<T> _);
@@ -246,8 +227,15 @@ namespace DCFApixels.DragonECS
             _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
             _mapping = new int[world.Capacity];
-            _items = new T[ArrayUtility.NormalizeSizeToPowerOfTwo(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity)];
-            _recycledItems = new int[world.Configs.GetWorldConfigOrDefault().PoolRecycledComponentsCapacity];
+            Resize(ArrayUtility.NormalizeSizeToPowerOfTwo(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity));
+            //_capacity = ArrayUtility.NormalizeSizeToPowerOfTwo(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity);
+            //_items = new T[_capacity];
+            //_sparseEntities = new int[_capacity];
+            //_denseEntitiesDelayed = new int[_capacity];
+            //for (int i = 0; i < _capacity; i++)
+            //{// можно оптимизировать тем чтобы вместо заполнения, в методе выдачи free index-а если _denseEntitiesDelayed возвращает 0, то free index определять через инкремент
+            //    _denseEntitiesDelayed[i] = i;
+            //}
         }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
@@ -279,6 +267,72 @@ namespace DCFApixels.DragonECS
         {
             Get(entityID) = dataRaw == null ? default : (T)dataRaw;
         }
+
+
+        public EcsSpan ToSpan()
+        {
+            UpdateDenseEntities();
+            return new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
+        }
+        private bool IsDenseEntitiesDelayedValid()
+        {
+            return _isDenseEntitiesDelayedValid;//_itemsCount == _denseEntitiesDelayedCount;
+        }
+        private void UpdateDenseEntities()
+        {
+            //if (IsDenseEntitiesDelayedValid()) { return; }
+            _denseEntitiesDelayedCount = 0;
+            for (int i = 0, jRight = _itemsCount + 1; i < _capacity; i++)
+            {
+                if (_sparseEntities[i] == 0 && i != 0)
+                {
+                    _denseEntitiesDelayed[jRight] = i;
+                    jRight++;
+                }
+                else
+                {
+                    _denseEntitiesDelayed[_denseEntitiesDelayedCount++] = _sparseEntities[i];
+                }
+            }
+            _isDenseEntitiesDelayedValid = true;
+        }
+        private int GetFreeItemIndex(int entityID)
+        {
+            //if (_denseEntitiesDelayedCount >= _capacity - 1)
+            {
+                UpdateDenseEntities();
+            }
+
+            if (_itemsCount >= _capacity - 1)
+            {
+                Resize(_items.Length << 1);
+            }
+
+            int result = _denseEntitiesDelayed[_denseEntitiesDelayedCount];
+            _denseEntitiesDelayed[_denseEntitiesDelayedCount] = entityID;
+            _itemsCount++;
+            _denseEntitiesDelayedCount++;
+            if(result == 0)
+            {
+
+            }
+            return result;
+        }
+        private void CheckOrUpsize()
+        {
+            if (_itemsCount < _capacity) { return; }
+            Resize(_items.Length << 1);
+        }
+        private void Resize(int newSize)
+        {
+            if (newSize <= _capacity) { return; }
+            ArrayUtility.ResizeOrCreate(ref _sparseEntities, newSize);
+            ArrayUtility.ResizeOrCreate(ref _items, newSize);
+            _denseEntitiesDelayed = new int[newSize];
+            _denseEntitiesDelayedCount = 0;
+            _capacity = newSize;
+            UpdateDenseEntities();
+        }
         #endregion
 
         #region Listeners
@@ -298,7 +352,7 @@ namespace DCFApixels.DragonECS
             }
         }
 #endif
-        #endregion
+#endregion
 
         #region Enable/Disable/Copy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
