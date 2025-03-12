@@ -324,17 +324,14 @@ namespace DCFApixels.DragonECS
 #endif
             return span;
         }
-        private bool IsDenseEntitiesDelayedValid()
-        {
-            return _isDenseEntitiesDelayedValid;//_itemsCount == _denseEntitiesDelayedCount;
-        }
         private void UpdateDenseEntities()
         {
-            if (IsDenseEntitiesDelayedValid()) { return; }
-            _denseEntitiesDelayedCount = 0;
-            for (int i = 0, jRight = _itemsCount + 1; i < _capacity; i++)
+            if (_isDenseEntitiesDelayedValid) { return; }
+            _denseEntitiesDelayedCount = 1;
+            _denseEntitiesDelayed[0] = 0;
+            for (int i = 1, jRight = _itemsCount + 1; i < _capacity; i++)
             {
-                if (_sparseEntities[i] == 0 && i != 0)
+                if (_sparseEntities[i] == 0)
                 {
                     _denseEntitiesDelayed[jRight] = i;
                     jRight++;

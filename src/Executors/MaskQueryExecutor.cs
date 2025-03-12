@@ -176,7 +176,7 @@ namespace DCFApixels.DragonECS.Core
 
             long* ptr = _versions;
             var slots = _world._poolSlots;
-            bool result = _maskInc.Length > 0 || _maskExc.Length > 0;
+            bool result = _maskInc.Length != 0 | _maskExc.Length != 0; //тут возможно нужно оптимизировать
             foreach (var slotIndex in _maskInc)
             {
                 ptr++;
