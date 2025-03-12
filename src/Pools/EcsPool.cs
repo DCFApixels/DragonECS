@@ -303,13 +303,17 @@ namespace DCFApixels.DragonECS
             Get(entityID) = dataRaw == null ? default : (T)dataRaw;
         }
 
+#if DRAGONECS_DEEP_DEBUG
         private bool _lockToSpan = false;
+#endif
         public EcsSpan ToSpan()
         {
+#if DRAGONECS_DEEP_DEBUG
             if (_lockToSpan)
             {
                 return _source.Entities;
             }
+#endif
             UpdateDenseEntities();
             var span = new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
 #if DRAGONECS_DEEP_DEBUG
@@ -326,7 +330,7 @@ namespace DCFApixels.DragonECS
         }
         private void UpdateDenseEntities()
         {
-            //if (IsDenseEntitiesDelayedValid()) { return; }
+            if (IsDenseEntitiesDelayedValid()) { return; }
             _denseEntitiesDelayedCount = 0;
             for (int i = 0, jRight = _itemsCount + 1; i < _capacity; i++)
             {
@@ -378,7 +382,7 @@ namespace DCFApixels.DragonECS
         }
         private int GetFreeItemIndex(int entityID)
         {
-            //if (_denseEntitiesDelayedCount >= _capacity - 1)
+            if (_denseEntitiesDelayedCount >= _capacity - 1)
             {
                 UpdateDenseEntities();
             }
@@ -413,9 +417,10 @@ namespace DCFApixels.DragonECS
             _denseEntitiesDelayed = new int[newSize];
             _denseEntitiesDelayedCount = 0;
             _capacity = newSize;
+            _isDenseEntitiesDelayedValid = false;
             UpdateDenseEntities();
         }
-        #endregion
+#endregion
 
         #region Listeners
 #if !DISABLE_POOLS_EVENTS
@@ -434,7 +439,7 @@ namespace DCFApixels.DragonECS
             }
         }
 #endif
-        #endregion
+#endregion
 
         #region Enable/Disable/Copy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

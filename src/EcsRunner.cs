@@ -443,7 +443,7 @@ namespace DCFApixels.DragonECS
                     {
                         try
                         {
-                            translationCallback(pair.run, t0);
+                            translationCallback(pair.run, ref data);
                         }
                         catch (Exception e)
                         {
@@ -456,7 +456,7 @@ namespace DCFApixels.DragonECS
                         {
                             if (pair.runFinally != null)
                             {
-                                translationFinnalyCallback(pair.runFinally, t0);
+                                translationFinnalyCallback(pair.runFinally, ref data);
                             }
                         }
                     }
