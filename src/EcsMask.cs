@@ -869,7 +869,7 @@ namespace DCFApixels.DragonECS
                 {
                     return new Enumerator(_span.Slice(0, 0), _iterator);
                 }
-                if (_iterator.TryGetEntityStorage(out IEntityStorage storage))
+                if (_span.IsSourceEntities && _iterator.TryGetEntityStorage(out IEntityStorage storage))
                 {
                     return new Enumerator(storage.ToSpan(), _iterator);
                 }

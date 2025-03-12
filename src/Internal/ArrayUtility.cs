@@ -69,7 +69,7 @@ namespace DCFApixels.DragonECS.Internal
         //TODO потестить
         public static void ResizeOrCreate<T>(ref T[] array, int newSize)
         {
-            if(array == null)
+            if (array == null)
             {
                 array = new T[newSize];
             }

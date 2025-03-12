@@ -127,11 +127,7 @@ namespace DCFApixels.DragonECS
         public EcsSpan Entities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                ReleaseDelEntityBufferAll();
-                return GetCurrentEntities_Internal();
-            }
+            get { return ToSpan(); }
         }
         public int PoolsCount
         {
@@ -397,7 +393,7 @@ namespace DCFApixels.DragonECS
             {
                 ReleaseDelEntityBufferAll();
             }
-            return _entityDispenser.UsedToEcsSpan(ID);
+            return GetCurrentEntities_Internal();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe entlong GetEntityLong(int entityID)

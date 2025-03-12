@@ -94,6 +94,12 @@
 #else
             false;
 #endif
+        public const bool DRAGONECS_DEEP_DEBUG =
+#if DRAGONECS_DEV_MODE
+            true;
+#else
+            false;
+#endif
     }
 }
 //#if UNITY_2020_3_OR_NEWER
