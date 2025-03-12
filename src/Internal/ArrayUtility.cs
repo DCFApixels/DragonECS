@@ -66,6 +66,29 @@ namespace DCFApixels.DragonECS.Internal
 
     internal static class ArrayUtility
     {
+        //TODO потестить
+        public static void ResizeOrCreate<T>(ref T[] array, int newSize)
+        {
+            if(array == null)
+            {
+                array = new T[newSize];
+            }
+            {
+                Array.Resize(ref array, newSize);
+            }
+        }
+        internal static void UpsizeTwoHead<T>(ref T[] array, int newLength, int separationIndex)
+        {
+            UpsizeTwoHead(ref array, newLength, separationIndex, array.Length - separationIndex);
+        }
+        internal static void UpsizeTwoHead<T>(ref T[] array, int newLength, int leftHeadLength, int rightHeadLength)
+        {
+            if (array.Length > newLength) { return; }
+            var result = new T[newLength];
+            Array.Copy(array, result, leftHeadLength); // copy left head
+            Array.Copy(array, array.Length - rightHeadLength, result, array.Length - rightHeadLength, rightHeadLength); // copy right head
+            array = result;
+        }
         private static int GetHighBitNumber(uint bits)
         {
             if (bits == 0)
