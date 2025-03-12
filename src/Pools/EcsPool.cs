@@ -49,6 +49,7 @@ namespace DCFApixels.DragonECS
         private int[] _denseEntitiesDelayed;
         private int _denseEntitiesDelayedCount = 0;
         private bool _isDenseEntitiesDelayedValid = false;
+        private int _recycledCount = 0;
 
         private readonly IEcsComponentLifecycle<T> _componentLifecycleHandler = EcsComponentResetHandler<T>.instance;
         private readonly bool _isHasComponentLifecycleHandler = EcsComponentResetHandler<T>.isHasHandler;
@@ -56,7 +57,7 @@ namespace DCFApixels.DragonECS
         private readonly bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
 
 #if !DISABLE_POOLS_EVENTS
-        private readonly StructList<IEcsPoolEventListener> _listeners = new StructList<IEcsPoolEventListener>(2);
+        private StructList<IEcsPoolEventListener> _listeners = new StructList<IEcsPoolEventListener>(2);
         private int _listenersCachedCount = 0;
 #endif
         private bool _isLocked;
@@ -137,43 +138,43 @@ namespace DCFApixels.DragonECS
         }
         public ref T TryAddOrGet(int entityID)
         {
-            if (Has(entityID))
-            {
-                return ref Get(entityID);
-            }
-            else
-            {
-                return ref Add(entityID);
-            }
+            //if (Has(entityID))
+            //{
+            //    return ref Get(entityID);
+            //}
+            //else
+            //{
+            //    return ref Add(entityID);
+            //}
 
 
 
-            //#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            //            if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
-            //#endif
-            //            ref int itemIndex = ref _mapping[entityID];
-            //            if (itemIndex <= 0)
-            //            { //Add block
-            //                itemIndex = GetFreeItemIndex(entityID);
-            //                _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-            //                _sparseEntities[itemIndex] = entityID;
-            //                EnableComponent(ref _items[itemIndex]);
-            //#if !DISABLE_POOLS_EVENTS
-            //                _listeners.InvokeOnAdd(entityID, _listenersCachedCount);
-            //#endif
-            //            } //Add block end
-            //#if !DISABLE_POOLS_EVENTS
-            //            _listeners.InvokeOnGet(entityID, _listenersCachedCount);
-            //#endif
-            //
-            //
-            //#if DRAGONECS_DEEP_DEBUG
-            //            if (_mediator.GetComponentCount(_componentTypeID) != _itemsCount)
-            //            {
-            //                Throw.UndefinedException();
-            //            }
-            //#endif
-            //            return ref _items[itemIndex];
+#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+            if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
+#endif
+            ref int itemIndex = ref _mapping[entityID];
+            if (itemIndex <= 0)
+            { //Add block
+                itemIndex = GetFreeItemIndex(entityID);
+                _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
+                _sparseEntities[itemIndex] = entityID;
+                EnableComponent(ref _items[itemIndex]);
+#if !DISABLE_POOLS_EVENTS
+                _listeners.InvokeOnAdd(entityID, _listenersCachedCount);
+#endif
+            } //Add block end
+#if !DISABLE_POOLS_EVENTS
+            _listeners.InvokeOnGet(entityID, _listenersCachedCount);
+#endif
+
+
+#if DRAGONECS_DEEP_DEBUG
+             if (_mediator.GetComponentCount(_componentTypeID) != _itemsCount)
+             {
+                 Throw.UndefinedException();
+             }
+#endif
+            return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
@@ -329,12 +330,14 @@ namespace DCFApixels.DragonECS
             if (_isDenseEntitiesDelayedValid) { return; }
             _denseEntitiesDelayedCount = 1;
             _denseEntitiesDelayed[0] = 0;
-            for (int i = 1, jRight = _itemsCount + 1; i < _capacity; i++)
+            _recycledCount = 0;
+            for (int i = 1, jRight = _itemsCount + 1; _denseEntitiesDelayedCount <= _itemsCount; i++)
             {
                 if (_sparseEntities[i] == 0)
                 {
                     _denseEntitiesDelayed[jRight] = i;
                     jRight++;
+                    _recycledCount++;
                 }
                 else
                 {
@@ -366,7 +369,7 @@ namespace DCFApixels.DragonECS
                 }
             }
             _lockToSpan = false;
-            for (int i = _denseEntitiesDelayedCount; i < _capacity; i++)
+            for (int i = _denseEntitiesDelayedCount; i < _denseEntitiesDelayedCount + _recycledCount; i++)
             {
                 var index = _denseEntitiesDelayed[i];
                 if (_sparseEntities[index] != 0)
@@ -388,12 +391,25 @@ namespace DCFApixels.DragonECS
             {
                 Resize(_items.Length << 1);
             }
-
-            int result = _denseEntitiesDelayed[_denseEntitiesDelayedCount];
+            int result = 0;
+            if(_recycledCount > 0)
+            {
+                _recycledCount--;
+                result = _denseEntitiesDelayed[_denseEntitiesDelayedCount];
+            }
+            else
+            {
+                result = _denseEntitiesDelayedCount;
+            }
             _denseEntitiesDelayed[_denseEntitiesDelayedCount] = entityID;
             _itemsCount++;
             _denseEntitiesDelayedCount++;
+
 #if DRAGONECS_DEEP_DEBUG
+            if (_sparseEntities[result] != 0)
+            {
+                Throw.UndefinedException();
+            }
             if (result == 0)
             {
                 Throw.UndefinedException();
