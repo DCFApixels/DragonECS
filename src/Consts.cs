@@ -95,7 +95,7 @@
             false;
 #endif
         public const bool DRAGONECS_DEEP_DEBUG =
-#if DRAGONECS_DEV_MODE
+#if DRAGONECS_DEEP_DEBUG
             true;
 #else
             false;
