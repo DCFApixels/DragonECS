@@ -127,7 +127,6 @@ namespace DCFApixels.DragonECS
         internal EcsWorld _source;
         internal EcsMask _mask;
         private bool _isBuilt = false;
-        //private IEcsPool[] _pools;
 
         #region Properties
         public EcsMask Mask
@@ -232,6 +231,7 @@ namespace DCFApixels.DragonECS
                     builtinAspect._source = world;
                     builtinAspect.Init(builder);
                 }
+                OnInit(newAspect, builder);
 
                 //Build Mask
                 if (staticMask == null)
@@ -253,6 +253,9 @@ namespace DCFApixels.DragonECS
                 }
 
                 _constructorBuildersStackIndex--;
+
+                OnAfterInit(newAspect, mask);
+
                 return (newAspect, mask);
             }
             #endregion
@@ -429,6 +432,14 @@ namespace DCFApixels.DragonECS
                 return iterator.GetEnumerator();
             }
         }
+        #endregion
+
+        #region Events
+        public delegate void OnInitApectHandler(object aspect, Builder builder);
+        public static event OnInitApectHandler OnInit = delegate { };
+
+        public delegate void OnBuildApectHandler(object aspect, EcsMask mask);
+        public static event OnBuildApectHandler OnAfterInit = delegate { };
         #endregion
     }
 
