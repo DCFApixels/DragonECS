@@ -163,6 +163,10 @@ namespace DCFApixels.DragonECS
         {
             return world.Get<WorldMaskComponent>().ConvertFromStatic(abstractMask);
         }
+        public EcsStaticMask ToStatic()
+        {
+            return _staticMask;
+        }
         EcsMask IComponentMask.ToMask(EcsWorld world) { return this; }
         public EcsMaskIterator GetIterator()
         {
