@@ -299,12 +299,12 @@ namespace DCFApixels.DragonECS
 
             #region Build
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-            private static EcsProfilerMarker _buildBarker = new EcsProfilerMarker("EcsPipeline.Build");
+            private static EcsProfilerMarker _buildMarker = new EcsProfilerMarker("EcsPipeline.Build");
 #endif
             public EcsPipeline Build()
             {
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                _buildBarker.Begin();
+                _buildMarker.Begin();
 #endif
                 var it = new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
 
@@ -370,7 +370,7 @@ namespace DCFApixels.DragonECS
                     item.Declare(pipeline);
                 }
 #if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
-                _buildBarker.End();
+                _buildMarker.End();
 #endif
                 return pipeline;
             }
