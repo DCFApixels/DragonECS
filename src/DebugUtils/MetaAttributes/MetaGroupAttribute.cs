@@ -6,8 +6,6 @@ using System.Text.RegularExpressions;
 
 namespace DCFApixels.DragonECS
 {
-    using static MetaGroupAttribute;
-
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
     public sealed class MetaGroupAttribute : EcsMetaAttribute
     {
@@ -22,6 +20,7 @@ namespace DCFApixels.DragonECS
     [DebuggerDisplay("{Name}")]
     public class MetaGroup
     {
+        public const char SEPARATOR = MetaGroupAttribute.SEPARATOR;
         public const string UNGROUPED = "<UNGROUPED>";
         private const string PATTERN = @"Module(?=/)";
         public static readonly MetaGroup Empty = new MetaGroup(UNGROUPED);
@@ -38,6 +37,10 @@ namespace DCFApixels.DragonECS
                 }
                 return _path;
             }
+        }
+        public bool IsEmpty
+        {
+            get { return this == Empty; }
         }
         public MetaGroup(string name)
         {

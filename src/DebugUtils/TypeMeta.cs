@@ -153,7 +153,7 @@ namespace DCFApixels.DragonECS
         {
             if (_initFlags.HasFlag(InitFlag.Color) == false)
             {
-                (_color, _isCustomColor) = MetaGenerator.GetColor(_type);
+                (_color, _isCustomColor) = MetaGenerator.GetColor(this);
                 _initFlags |= InitFlag.Color;
             }
         }
@@ -406,15 +406,6 @@ namespace DCFApixels.DragonECS
         {
             private const int GENERIC_NAME_DEPTH = 3;
 
-            //private static HashSet<Type> _;
-
-            //#region GetMemberType
-            //public static EcsMemberType GetMemberType(Type type)
-            //{
-            //    throw new NotImplementedException();
-            //}
-            //#endregion
-
             #region GetMetaName/GetTypeName
             public static string GetTypeName(Type type)
             {
@@ -448,15 +439,25 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetColor
-            private static MetaColor AutoColor(Type type)
+
+            private static MetaColor AutoColor(TypeMeta meta)
             {
-                return new MetaColor(type.Name).UpContrast();//.Desaturate(0.48f) / 1.18f;
+                int hash;
+                if (meta.Group.IsEmpty)
+                {
+                    hash = meta.Type.Name.GetHashCode();
+                }
+                else
+                {
+                    hash = meta.Group.Name.GetHashCode();
+                }
+                return MetaColor.FromHashCode(hash).UpContrast();
             }
-            public static (MetaColor, bool) GetColor(Type type)
+            public static (MetaColor, bool) GetColor(TypeMeta meta)
             {
 #if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                bool isCustom = type.TryGetAttribute(out MetaColorAttribute atr);
-                return (isCustom ? atr.color : AutoColor(type), isCustom);
+                bool isCustom = meta.Type.TryGetAttribute(out MetaColorAttribute atr);
+                return (isCustom ? atr.color : AutoColor(meta), isCustom);
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetColor)} method does not work.");
                 return (AutoColor(type), false);
