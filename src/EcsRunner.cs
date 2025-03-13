@@ -75,6 +75,8 @@ namespace DCFApixels.DragonECS
             EcsProcessRaw ProcessRaw { get; }
             bool IsEmpty { get; }
         }
+
+        //TODO инъекция в раннеры
         //TODO добавить функцию фильтрации систем по string, за счет создания отдельных ранеров для отдельных string
         [MetaColor(MetaColor.DragonRose)]
         [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
