@@ -225,13 +225,14 @@ namespace DCFApixels.DragonECS
 
                 //Building
                 TAspect newAspect = new TAspect();
+                object newAspectObj = newAspect;
                 EcsAspect builtinAspect = newAspect as EcsAspect;
                 if (builtinAspect != null)
                 {
                     builtinAspect._source = world;
                     builtinAspect.Init(builder);
                 }
-                OnInit(newAspect, builder);
+                OnInit(newAspectObj, builder);
 
                 //Build Mask
                 if (staticMask == null)
@@ -254,9 +255,9 @@ namespace DCFApixels.DragonECS
 
                 _constructorBuildersStackIndex--;
 
-                OnAfterInit(newAspect, mask);
+                OnAfterInit(newAspectObj, mask);
 
-                return (newAspect, mask);
+                return ((TAspect)newAspectObj, mask);
             }
             #endregion
 
