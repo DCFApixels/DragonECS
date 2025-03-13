@@ -62,6 +62,15 @@ namespace DCFApixels.DragonECS
             }
             branch.Inject(raw);
         }
+        public void ExtractAllTo(object target)
+        {
+            if (target is IEcsInjectProcess == false) { return; }
+
+            foreach (var node in _nodes)
+            {
+                node.Value.ExtractTo(target);
+            }
+        }
         public T Extract<T>()
         {
             return (T)Extract_Internal(typeof(T));

@@ -1,11 +1,12 @@
 ﻿namespace DCFApixels.DragonECS
 {
+    public interface IEcsInjectProcess : IEcsProcess { }
     [MetaName(nameof(Inject))]
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DI_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "The interface of the dependency injection process.")]
     [MetaID("4C86537C92019AA24383CBF53CBD456C")]
-    public interface IEcsInject<T> : IEcsProcess
+    public interface IEcsInject<T> : IEcsInjectProcess
     {
         void Inject(T obj);
     }
