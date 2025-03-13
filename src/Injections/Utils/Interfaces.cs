@@ -20,6 +20,7 @@
     [MetaID("05C3537C920155AFC044C900E4F17D90")]
     public interface IOnInitInjectionComplete : IEcsProcess
     {
+        void OnBeforeInitInjection();
         void OnInitInjectionComplete();
     }
     public interface IInjector
