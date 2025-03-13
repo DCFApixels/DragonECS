@@ -109,6 +109,7 @@ namespace DCFApixels.DragonECS.Core
         // [-> _maskInc.Length]     inc versions
         // [-> _maskExc.Length]     exc versions
         private readonly long* _versions;
+        private readonly int _count;
         public long Version
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -120,7 +121,8 @@ namespace DCFApixels.DragonECS.Core
             _world = mask.World;
             _maskInc = mask._incs;
             _maskExc = mask._excs;
-            _versions = UnmanagedArrayUtility.NewAndInit<long>(1 + mask._incs.Length + mask._excs.Length);
+            _count = 1 + mask._incs.Length + mask._excs.Length;
+            _versions = UnmanagedArrayUtility.NewAndInit<long>(_count);
         }
         public bool Check()
         {
@@ -176,7 +178,7 @@ namespace DCFApixels.DragonECS.Core
 
             long* ptr = _versions;
             var slots = _world._poolSlots;
-            bool result = _maskInc.Length > 0 || _maskExc.Length > 0;
+            bool result = _count != 1;
             foreach (var slotIndex in _maskInc)
             {
                 ptr++;
