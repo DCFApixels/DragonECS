@@ -230,12 +230,18 @@ namespace DCFApixels.DragonECS
                     monoWorldSystem.World = _monoWorld;
                 }
 
+
+                var initInjectionCallbacks = pipeline.GetProcess<IOnInitInjectionComplete>();
+                foreach (var system in initInjectionCallbacks)
+                {
+                    system.OnBeforeInitInjection();
+                }
                 _instance.Init(pipeline);
                 foreach (var item in _initInjections)
                 {
                     item.InjectTo(_instance);
                 }
-                foreach (var system in pipeline.GetProcess<IOnInitInjectionComplete>())
+                foreach (var system in initInjectionCallbacks)
                 {
                     system.OnInitInjectionComplete();
                 }
