@@ -232,16 +232,17 @@ namespace DCFApixels.DragonECS
         {
             this.colorCode = withoutAlpha ? colorCode | 255 : colorCode;
         }
-        public MetaColor(string stringCode) : this()
+        public static MetaColor FromHashCode(int hash)
+        {
+            return FromHashCode(hash, false);
+        }
+        public static MetaColor FromHashCode(int hash, bool withoutAlpha)
         {
             unchecked
             {
-                const uint MAGIC_CONST = 0xA638_783E;
-                uint colorCode = (uint)stringCode.GetHashCode();
-                colorCode ^= MAGIC_CONST;
+                uint colorCode = (uint)hash;
                 colorCode = BitsUtility.NextXorShiftState(colorCode);
-                this.colorCode = (uint)colorCode | 255;
-                this.colorCode = UpContrast().colorCode;
+                return new MetaColor(colorCode, withoutAlpha);
             }
         }
         #endregion
