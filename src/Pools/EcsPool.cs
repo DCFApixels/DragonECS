@@ -80,6 +80,11 @@ namespace DCFApixels.DragonECS
         {
             get { return false; }
         }
+        public ref T this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ref Get(index); }
+        }
         #endregion
 
         #region Methods

@@ -91,6 +91,13 @@ namespace DCFApixels.DragonECS
         {
             get { return false; }
         }
+        public bool this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return Has(index); }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set { Set(index, value); }
+        }
         #endregion
 
         #region Method
