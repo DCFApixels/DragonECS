@@ -31,7 +31,7 @@ namespace DCFApixels.DragonECS
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsComponent components.")]
     [MetaID("C501547C9201A4B03FC25632E4FAAFD7")]
-    [DebuggerDisplay("{ComponentType}: {Count}")]
+    [DebuggerDisplay("Count: {Count} Type: {ComponentType}")]
     public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
     {
