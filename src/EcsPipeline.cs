@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections;
@@ -42,7 +45,7 @@ namespace DCFApixels.DragonECS
         private bool _isInit = false;
         private bool _isDestoryed = false;
 
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
         private static EcsProfilerMarker _initMarker = new EcsProfilerMarker("EcsPipeline.Init");
 #endif
 
@@ -137,7 +140,7 @@ namespace DCFApixels.DragonECS
                 return (TRunner)result;
             }
             TRunner runnerInstance = new TRunner();
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
             EcsRunner.CheckRunnerTypeIsValide(runnerType, runnerInstance.Interface);
 #endif
             runnerInstance.Init_Internal(this);
@@ -185,7 +188,7 @@ namespace DCFApixels.DragonECS
                 EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been initialized");
                 return;
             }
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             _initMarker.Begin();
 #endif
 
@@ -196,7 +199,7 @@ namespace DCFApixels.DragonECS
             _isInit = true;
 
             GC.Collect();
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             _initMarker.End();
 #endif
         }
@@ -204,7 +207,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run()
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run)); }
             if (_isDestoryed) { Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run)); }
 #endif
@@ -212,7 +215,7 @@ namespace DCFApixels.DragonECS
         }
         public void Destroy()
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Destroy)); }
 #endif
             if (_isDestoryed)

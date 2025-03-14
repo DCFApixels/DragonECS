@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Core;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
@@ -358,7 +361,7 @@ namespace DCFApixels.DragonECS
         #region Debug utils
         private static string CreateLogString(short worldID, int[] inc, int[] exc)
         {
-#if (DEBUG && !DISABLE_DEBUG)
+#if DEBUG
             string converter(int o) { return EcsDebugUtility.GetGenericTypeName(EcsWorld.GetWorld(worldID).AllPools[o].ComponentType, 1); }
             return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
 #else

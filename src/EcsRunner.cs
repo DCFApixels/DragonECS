@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Linq;
@@ -130,7 +133,7 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region RunHelper
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
             public
 #else
             public readonly
@@ -138,7 +141,7 @@ namespace DCFApixels.DragonECS
                 struct RunHelper
             {
                 private readonly EcsProcess<TProcess> _process;
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                 private Delegate _cacheCheck;
                 private bool _cacheCheckInit;
                 private readonly EcsProfilerMarker[] _markers;
@@ -146,7 +149,7 @@ namespace DCFApixels.DragonECS
 
                 #region Constructors
                 public RunHelper(EcsRunner<TProcess> runner) : this(runner,
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                     typeof(TProcess).ToMeta().Name)
 #else
                     string.Empty)
@@ -156,7 +159,7 @@ namespace DCFApixels.DragonECS
                 public RunHelper(EcsRunner<TProcess> runner, string methodName)
                 {
                     _process = runner.Process;
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                     _cacheCheck = null;
                     _cacheCheckInit = false;
                     _markers = new EcsProfilerMarker[_process.Length];
@@ -169,7 +172,7 @@ namespace DCFApixels.DragonECS
                 #endregion
 
                 #region Utils
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 private void CheckCache(Delegate d)
                 {
@@ -196,7 +199,7 @@ namespace DCFApixels.DragonECS
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public void Run(Action<TProcess> translationCallback)
                 {
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                     CheckCache(translationCallback);
                     for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
                     {
@@ -235,7 +238,7 @@ namespace DCFApixels.DragonECS
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public void Run<TData>(ActionWithData<TProcess, TData> translationCallback, ref TData data)
                 {
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                     CheckCache(translationCallback);
                     for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
                     {
@@ -275,7 +278,7 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region RunHelperWithFinally
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
             public
 #else
             public readonly
@@ -283,7 +286,7 @@ namespace DCFApixels.DragonECS
                 struct RunHelperWithFinally<TProcessFinally> where TProcessFinally : class, IEcsProcess
             {
                 private readonly Pair[] _pairs;
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                 private Delegate _cacheCheck;
                 private Delegate _cacheCheckF;
                 private bool _cacheCheckInit;
@@ -292,7 +295,7 @@ namespace DCFApixels.DragonECS
 
                 #region Constructors
                 public RunHelperWithFinally(EcsRunner<TProcess> runner) : this(runner,
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                     typeof(TProcess).ToMeta().Name)
 #else
                     string.Empty)
@@ -306,7 +309,7 @@ namespace DCFApixels.DragonECS
                     {
                         _pairs[i] = new Pair(runner.Process[i]);
                     }
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                     _cacheCheck = null;
                     _cacheCheckF = null;
                     _cacheCheckInit = false;
@@ -330,7 +333,7 @@ namespace DCFApixels.DragonECS
                         runFinally = run as TProcessFinally;
                     }
                 }
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 private void CheckCache(Delegate d, Delegate df)
                 {
@@ -360,7 +363,7 @@ namespace DCFApixels.DragonECS
                     Action<TProcess> translationCallback,
                     Action<TProcessFinally> translationFinnalyCallback)
                 {
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                     CheckCache(translationCallback, translationFinnalyCallback);
                     for (int i = 0, n = _pairs.Length < _markers.Length ? _pairs.Length : _markers.Length; i < n; i++)
                     {
@@ -414,7 +417,7 @@ namespace DCFApixels.DragonECS
                     ActionWithData<TProcessFinally, TData> translationFinnalyCallback,
                     ref TData data)
                 {
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
                     CheckCache(translationCallback, translationFinnalyCallback);
                     for (int i = 0, n = _pairs.Length < _markers.Length ? _pairs.Length : _markers.Length; i < n; i++)
                     {

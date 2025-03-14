@@ -88,9 +88,17 @@
 #else
             false;
 #endif
-        public const bool DEV_MODE =
-#if DEV_MODE
-            true;
+
+
+        public const bool DRAGONECS_PERF_MODE =
+#if DRAGONECS_PERF_MODE
+    true;
+#else
+            false;
+#endif
+        public const bool DRAGONECS_STAB_MODE =
+#if DRAGONECS_STAB_MODE
+    true;
 #else
             false;
 #endif

@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.RunnersCore;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.RunnersCore;
 using System;
 
 namespace DCFApixels.DragonECS
@@ -115,7 +118,7 @@ namespace DCFApixels.DragonECS.Internal
             }
         }
         private Pair[] _pairs;
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
         private EcsProfilerMarker[] _markers;
 #endif
         protected override void OnSetup()
@@ -125,7 +128,7 @@ namespace DCFApixels.DragonECS.Internal
             {
                 _pairs[i] = new Pair(Process[i]);
             }
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
             _markers = new EcsProfilerMarker[Process.Length];
             for (int i = 0; i < Process.Length; i++)
             {
@@ -135,7 +138,7 @@ namespace DCFApixels.DragonECS.Internal
         }
         public void Run()
         {
-#if DEBUG && !DISABLE_DEBUG
+#if DEBUG
             for (int i = 0, n = _pairs.Length < _markers.Length ? _pairs.Length : _markers.Length; i < n; i++)
             {
                 var pair = _pairs[i];

@@ -1,4 +1,7 @@
-﻿#pragma warning disable IDE1006
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+#pragma warning disable IDE1006
 #pragma warning disable CS8981
 using DCFApixels.DragonECS.Internal;
 using System;
@@ -56,7 +59,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
                 return _id;
@@ -67,7 +70,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
                 return _gen;
@@ -78,7 +81,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
                 return GetWorld_Internal();
@@ -89,7 +92,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
                 return _world;
@@ -141,7 +144,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(out int id, out EcsWorld world)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
             world = EcsWorld.GetWorld(_world);
@@ -150,7 +153,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(out int id, out short gen, out EcsWorld world)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
             world = EcsWorld.GetWorld(_world);
@@ -160,7 +163,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(out int id, out short worldID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
             worldID = _world;
@@ -169,7 +172,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(out int id, out short gen, out short worldID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!IsAlive) { Throw.Ent_ThrowIsNotAlive(this); }
 #endif
             worldID = _world;

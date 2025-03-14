@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
@@ -84,7 +87,7 @@ namespace DCFApixels.DragonECS.Internal
         {
             get
             {
-#if (DEBUG && !DISABLE_DEBUG)
+#if (DEBUG)
                 throw new NullInstanceException();
 #else
                     return EcsWorld.GetWorld(0);
@@ -102,25 +105,25 @@ namespace DCFApixels.DragonECS.Internal
         }
         void IEcsPool.Del(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG)
+#if (DEBUG)
             throw new NullInstanceException();
 #endif
         }
         void IEcsPool.AddEmpty(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG)
+#if (DEBUG)
             throw new NullInstanceException();
 #endif
         }
         void IEcsPool.AddRaw(int entityID, object dataRaw)
         {
-#if (DEBUG && !DISABLE_DEBUG)
+#if (DEBUG)
             throw new NullInstanceException();
 #endif
         }
         object IEcsReadonlyPool.GetRaw(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG)
+#if (DEBUG)
             throw new NullInstanceException();
 #else
             return null;
@@ -128,25 +131,25 @@ namespace DCFApixels.DragonECS.Internal
         }
         void IEcsPool.SetRaw(int entity, object dataRaw)
         {
-#if (DEBUG && !DISABLE_DEBUG)
+#if (DEBUG)
             throw new NullInstanceException();
 #endif
         }
         void IEcsReadonlyPool.Copy(int fromEntityID, int toEntityID)
         {
-#if (DEBUG && !DISABLE_DEBUG)
+#if (DEBUG)
             throw new NullInstanceException();
 #endif
         }
         void IEcsReadonlyPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
-#if (DEBUG && !DISABLE_DEBUG)
+#if (DEBUG)
             throw new NullInstanceException();
 #endif
         }
         void IEcsPool.ClearAll()
         {
-#if (DEBUG && !DISABLE_DEBUG)
+#if (DEBUG)
             throw new NullInstanceException();
 #endif
         }

@@ -1,3 +1,7 @@
+#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+
 namespace DCFApixels.DragonECS
 {
     public interface ITemplateNode

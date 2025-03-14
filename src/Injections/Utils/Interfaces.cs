@@ -1,4 +1,8 @@
-﻿namespace DCFApixels.DragonECS
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+
+namespace DCFApixels.DragonECS
 {
     public interface IEcsInjectProcess : IEcsProcess { }
     [MetaName(nameof(Inject))]

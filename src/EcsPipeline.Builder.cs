@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections;
@@ -298,12 +301,12 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Build
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             private static EcsProfilerMarker _buildMarker = new EcsProfilerMarker("EcsPipeline.Build");
 #endif
             public EcsPipeline Build()
             {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 _buildMarker.Begin();
 #endif
                 var it = new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
@@ -369,7 +372,7 @@ namespace DCFApixels.DragonECS
                 {
                     item.Declare(pipeline);
                 }
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 _buildMarker.End();
 #endif
                 return pipeline;

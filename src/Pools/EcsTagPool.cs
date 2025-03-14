@@ -1,3 +1,6 @@
+#if DISABLE_DEBUG
+#undef DEBUG
+#endif
 using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
@@ -7,9 +10,6 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using DCFApixels.DragonECS.Internal;
 using System.ComponentModel;
-#if (DEBUG && !DISABLE_DEBUG)
-using System.Reflection;
-#endif
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
 #endif
@@ -52,12 +52,12 @@ namespace DCFApixels.DragonECS
         private EcsWorld.PoolsMediator _mediator;
 
         #region CheckValide
-#if (DEBUG && !DISABLE_DEBUG)
+#if DEBUG
         private static bool _isInvalidType;
         static EcsTagPool()
         {
 #pragma warning disable IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
-            _isInvalidType = typeof(T).GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Length > 0;
+            _isInvalidType = typeof(T).GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic).Length > 0;
 #pragma warning restore IL2090
         }
         public EcsTagPool()
@@ -103,7 +103,7 @@ namespace DCFApixels.DragonECS
         #region Method
         public void Add(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (Has(entityID)) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
@@ -128,7 +128,7 @@ namespace DCFApixels.DragonECS
         }
         public void Del(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
@@ -149,14 +149,14 @@ namespace DCFApixels.DragonECS
         }
         public void Copy(int fromEntityID, int toEntityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(fromEntityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(fromEntityID); }
 #endif
             TryAdd(toEntityID);
         }
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!Has(fromEntityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(fromEntityID); }
 #endif
             toWorld.GetPool<T>().TryAdd(toEntityID);
@@ -189,7 +189,7 @@ namespace DCFApixels.DragonECS
 
         public void ClearAll()
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #endif
             if (_count <= 0) { return; }
@@ -245,14 +245,14 @@ namespace DCFApixels.DragonECS
         void IEcsPool.AddRaw(int entityID, object dataRaw) { Add(entityID); }
         object IEcsReadonlyPool.GetRaw(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (Has(entityID) == false) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             return _fakeComponent;
         }
         void IEcsPool.SetRaw(int entityID, object dataRaw)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (Has(entityID) == false) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
         }
@@ -263,14 +263,14 @@ namespace DCFApixels.DragonECS
         }
         ref readonly T IEcsStructPool<T>.Read(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (Has(entityID) == false) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             return ref _fakeComponent;
         }
         ref T IEcsStructPool<T>.Get(int entityID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (Has(entityID) == false) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             return ref _fakeComponent;
