@@ -45,13 +45,13 @@ namespace DCFApixels.DragonECS
         private int[] _recycledItems;
         private int _recycledItemsCount = 0;
 
-        private IEcsComponentLifecycle<T> _componentLifecycleHandler = EcsComponentResetHandler<T>.instance;
-        private bool _isHasComponentLifecycleHandler = EcsComponentResetHandler<T>.isHasHandler;
-        private IEcsComponentCopy<T> _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
-        private bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
+        private readonly IEcsComponentLifecycle<T> _componentLifecycleHandler = EcsComponentResetHandler<T>.instance;
+        private readonly bool _isHasComponentLifecycleHandler = EcsComponentResetHandler<T>.isHasHandler;
+        private readonly IEcsComponentCopy<T> _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
+        private readonly bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
 
 #if !DISABLE_POOLS_EVENTS
-        private readonly StructList<IEcsPoolEventListener> _listeners = new StructList<IEcsPoolEventListener>(2);
+        private StructList<IEcsPoolEventListener> _listeners = new StructList<IEcsPoolEventListener>(2);
         private int _listenersCachedCount = 0;
 #endif
         private bool _isLocked;

@@ -48,7 +48,7 @@ namespace DCFApixels.DragonECS
 #endif
         private bool _isLocked;
 
-        private T _fakeComponent;
+        private readonly T _fakeComponent = default;
         private EcsWorld.PoolsMediator _mediator;
 
         #region CheckValide
