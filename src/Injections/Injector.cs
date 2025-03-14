@@ -57,7 +57,7 @@ namespace DCFApixels.DragonECS
                     {
                         if (_nodes.ContainsKey(requiredInjectionType) == false)
                         {
-                            throw new EcsInjectionException($"A systems in the pipeline implements IEcsInject<{requiredInjectionType.Name}> interface, but no suitable injection node was found in the Injector. To create a node, use Injector.AddNode<{requiredInjectionType.Name}>() or implement the IInjectionUnit interface for type {objType.Name}.");
+                            throw new InjectionException($"A systems in the pipeline implements IEcsInject<{requiredInjectionType.Name}> interface, but no suitable injection node was found in the Injector. To create a node, use Injector.AddNode<{requiredInjectionType.Name}>() or implement the IInjectionUnit interface for type {objType.Name}.");
                         }
                     }
                 }
@@ -84,7 +84,7 @@ namespace DCFApixels.DragonECS
             {
                 return node.CurrentInjectedDependencyRaw;
             }
-            throw new EcsInjectionException($"The injection graph is missing a node for {type.Name} type. To create a node, use the Injector.AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
+            throw new InjectionException($"The injection graph is missing a node for {type.Name} type. To create a node, use the Injector.AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
         }
         public void AddNode<T>()
         {
@@ -232,7 +232,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 Throw.UndefinedException();
-                return _source;
+                return default;
             }
             public Injector Build(EcsPipeline pipeline)
             {

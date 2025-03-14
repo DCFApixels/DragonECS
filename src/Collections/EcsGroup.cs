@@ -432,7 +432,7 @@ namespace DCFApixels.DragonECS
         {
             ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
 #if DEBUG && DRAGONECS_DEEP_DEBUG
-            if (page.Count == 0) { throw new Exception(); }
+            if (page.Count == 0) { Throw.DeepDebugException(); }
 #endif
             if (page.Count == 1)
             {
@@ -442,7 +442,7 @@ namespace DCFApixels.DragonECS
             {
                 int localEntityID = entityID & PageSlot.MASK;
 #if DEBUG && DRAGONECS_DEEP_DEBUG
-                if (page.Indexes[localEntityID] == 0) { throw new Exception(); }
+                if (page.Indexes[localEntityID] == 0) { Throw.DeepDebugException(); }
 #endif
                 page.Indexes[localEntityID] = index;
             }
@@ -1005,10 +1005,10 @@ namespace DCFApixels.DragonECS
             int uniqueCount = 0;
             foreach (var entityID in span)
             {
+#if DEBUG && DRAGONECS_DEEP_DEBUG
                 HashSet<int> thisHS = new HashSet<int>();
                 ToCollection(thisHS);
-#if DEBUG && DRAGONECS_DEEP_DEBUG
-                if (thisHS.Contains(entityID) && Has(entityID) == false) { throw new Exception(); }
+                if (thisHS.Contains(entityID) && Has(entityID) == false) { Throw.DeepDebugException(); }
 #endif
                 if (Has(entityID))
                 {

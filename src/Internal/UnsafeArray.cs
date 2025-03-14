@@ -96,7 +96,7 @@ namespace DCFApixels.DragonECS.Internal
         {
             if ((uint)start > (uint)Length)
             {
-                throw new ArgumentOutOfRangeException();
+                Throw.ArgumentOutOfRange();
             }
             return new UnsafeArray<T>(ptr + start, Length - start);
         }
@@ -106,7 +106,7 @@ namespace DCFApixels.DragonECS.Internal
         {
             if ((uint)start > (uint)Length || (uint)length > (uint)(Length - start))
             {
-                throw new ArgumentOutOfRangeException();
+                Throw.ArgumentOutOfRange();
             }
             return new UnsafeArray<T>(ptr + start, length);
         }

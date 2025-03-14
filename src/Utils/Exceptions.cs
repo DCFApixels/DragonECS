@@ -7,32 +7,32 @@ using System.Runtime.CompilerServices;
 namespace DCFApixels.DragonECS
 {
     [Serializable]
-    public class EcsFrameworkException : Exception
+    public class DeepDebugException : Exception
     {
-        public EcsFrameworkException() { }
-        public EcsFrameworkException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
-        public EcsFrameworkException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
+        public DeepDebugException() { }
+        public DeepDebugException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
+        public DeepDebugException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
     }
     [Serializable]
-    public class NullInstanceException : EcsFrameworkException
+    public class NullInstanceException : Exception
     {
         public NullInstanceException() { }
         public NullInstanceException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
         public NullInstanceException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
     }
     [Serializable]
-    public class EcsRunnerImplementationException : EcsFrameworkException
+    public class ImplementationException : Exception
     {
-        public EcsRunnerImplementationException() { }
-        public EcsRunnerImplementationException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
-        public EcsRunnerImplementationException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
+        public ImplementationException() { }
+        public ImplementationException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
+        public ImplementationException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
     }
     [Serializable]
-    public class EcsInjectionException : Exception
+    public class InjectionException : Exception
     {
-        public EcsInjectionException() { }
-        public EcsInjectionException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
-        public EcsInjectionException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
+        public InjectionException() { }
+        public InjectionException(string message) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message) { }
+        public InjectionException(string message, Exception inner) : base(EcsConsts.EXCEPTION_MESSAGE_PREFIX + message, inner) { }
     }
 }
 
@@ -41,24 +41,20 @@ namespace DCFApixels.DragonECS.Internal
     internal static class Throw
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ConstraintIsAlreadyContainedInMask()
+        internal static void ConstraintIsAlreadyContainedInMask(EcsTypeCode typeCode)
         {
-            throw new EcsFrameworkException($"The constraint is already contained in the mask.");
-        }
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ConstraintIsAlreadyContainedInMask(Type type)
-        {
-            throw new EcsFrameworkException($"The {EcsDebugUtility.GetGenericTypeName(type)} constraint is already contained in the mask.");
+            string typeName = EcsDebugUtility.GetGenericTypeName(EcsTypeCodeManager.FindTypeOfCode(typeCode).Type);
+            throw new ArgumentException($"The {typeName} constraint is already contained in the mask.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Group_AlreadyContains(int entityID)
         {
-            throw new EcsFrameworkException($"This group already contains entity {entityID}.");
+            throw new ArgumentException($"This group already contains entity {entityID}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Group_DoesNotContain(int entityID)
         {
-            throw new EcsFrameworkException($"This group does not contain entity {entityID}.");
+            throw new ArgumentException($"This group does not contain entity {entityID}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Group_ArgumentDifferentWorldsException()
@@ -69,57 +65,57 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Pipeline_MethodCalledAfterInitialisation(string methodName)
         {
-            throw new MethodAccessException($"It is forbidden to call {methodName}, after initialization {nameof(EcsPipeline)}.");
+            throw new InvalidOperationException($"It is forbidden to call {methodName}, after initialization {nameof(EcsPipeline)}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Pipeline_MethodCalledBeforeInitialisation(string methodName)
         {
-            throw new MethodAccessException($"It is forbidden to call {methodName}, before initialization {nameof(EcsPipeline)}.");
+            throw new InvalidOperationException($"It is forbidden to call {methodName}, before initialization {nameof(EcsPipeline)}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Pipeline_MethodCalledAfterDestruction(string methodName)
         {
-            throw new MethodAccessException($"It is forbidden to call {methodName}, after destroying {nameof(EcsPipeline)}.");
+            throw new InvalidOperationException($"It is forbidden to call {methodName}, after destroying {nameof(EcsPipeline)}.");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void World_InvalidIncrementComponentsBalance()
         {
-            throw new MethodAccessException("Invalid increment components balance.");
+            throw new InvalidOperationException("Invalid increment components balance.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void World_GroupDoesNotBelongWorld()
         {
-            throw new MethodAccessException("The Group does not belong in this world.");
+            throw new InvalidOperationException("The Group does not belong in this world.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void World_MaskDoesntBelongWorld()
         {
-            throw new EcsFrameworkException($"The mask doesn't belong in this world");
+            throw new InvalidOperationException($"The mask doesn't belong in this world");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void World_EntityIsNotContained(int entityID)
         {
-            throw new EcsFrameworkException($"An entity with identifier {entityID} is not contained in this world");
+            throw new ArgumentException($"An entity with identifier {entityID} is not contained in this world");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void World_EntityIsAlreadyСontained(int entityID)
         {
-            throw new EcsFrameworkException($"An entity with identifier {entityID} is already contained in this world");
+            throw new ArgumentException($"An entity with identifier {entityID} is already contained in this world");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void World_PoolAlreadyCreated()
         {
-            throw new EcsFrameworkException("The pool has already been created.");
+            throw new ArgumentException("The pool has already been created.");
         }
         public static void World_WorldCantBeDestroyed()
         {
-            throw new EcsFrameworkException("This world can't be destroyed");
+            throw new InvalidOperationException("This world can't be destroyed");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void World_MethodCalledAfterEntityCreation(string methodName)
         {
-            throw new EcsFrameworkException($"The method {methodName} can only be executed before creating entities in the world.");
+            throw new InvalidOperationException($"The method {methodName} can only be executed before creating entities in the world.");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -127,11 +123,11 @@ namespace DCFApixels.DragonECS.Internal
         {
             if (entity.IsNull)
             {
-                throw new EcsFrameworkException($"The {entity} is null.");
+                throw new InvalidOperationException($"The {entity} is null.");
             }
             else
             {
-                throw new EcsFrameworkException($"The {entity} is not alive.");
+                throw new InvalidOperationException($"The {entity} is not alive.");
             }
         }
 
@@ -161,6 +157,11 @@ namespace DCFApixels.DragonECS.Internal
         internal static void UndefinedException()
         {
             throw new Exception();
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void DeepDebugException()
+        {
+            throw new DeepDebugException();
         }
         internal static void OpeningClosingMethodsBalanceError()
         {

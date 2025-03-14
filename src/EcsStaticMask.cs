@@ -343,14 +343,14 @@ namespace DCFApixels.DragonECS
             public void Inc(EcsTypeCode typeCode)
             {
 #if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(); }
+                if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(typeCode); }
 #endif
                 _inc.Add(typeCode);
             }
             public void Exc(EcsTypeCode typeCode)
             {
 #if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(); }
+                if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(typeCode); }
 #endif
                 _exc.Add(typeCode);
             }
@@ -494,9 +494,9 @@ namespace DCFApixels.DragonECS
 #if DEBUG
         private static void CheckConstraints(EcsTypeCode[] incs, EcsTypeCode[] excs)
         {
-            if (CheckRepeats(incs)) { throw new EcsFrameworkException("The values in the Include constraints are repeated."); }
-            if (CheckRepeats(excs)) { throw new EcsFrameworkException("The values in the Exclude constraints are repeated."); }
-            if (OverlapsArray(incs, excs)) { throw new EcsFrameworkException("Conflicting Include and Exclude constraints."); }
+            if (CheckRepeats(incs)) { throw new ArgumentException("The values in the Include constraints are repeated."); }
+            if (CheckRepeats(excs)) { throw new ArgumentException("The values in the Exclude constraints are repeated."); }
+            if (OverlapsArray(incs, excs)) { throw new ArgumentException("Conflicting Include and Exclude constraints."); }
         }
         private static bool CheckRepeats(EcsTypeCode[] array)
         {
