@@ -56,7 +56,7 @@ namespace DCFApixels.DragonECS
 
                 if (!runnerType.GetInterfaces().Any(o => o == targetInterface))
                 {
-                    throw new EcsRunnerImplementationException($"Runner {GetGenericTypeFullName(runnerType, 1)} does not implement interface {GetGenericTypeFullName(baseTypeArgument, 1)}.");
+                    throw new ImplementationException($"Runner {GetGenericTypeFullName(runnerType, 1)} does not implement interface {GetGenericTypeFullName(baseTypeArgument, 1)}.");
                 }
 #pragma warning restore IL2070 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.
 #endif

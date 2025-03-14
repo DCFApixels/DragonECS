@@ -64,7 +64,7 @@ namespace DCFApixels.DragonECS
         {
             if (_isInvalidType)
             {
-                throw new EcsFrameworkException($"{typeof(T).Name} type must not contain any data.");
+                throw new Exception($"{typeof(T).Name} type must not contain any data.");
             }
         }
 #endif

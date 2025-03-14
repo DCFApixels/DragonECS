@@ -32,27 +32,27 @@ namespace DCFApixels.DragonECS.PoolsCore
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowDifferentTypes()
         {
-            throw new EcsFrameworkException($"The component instance type and the pool component type are different.");
+            throw new ArgumentException($"The component instance type and the pool component type are different.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowAlreadyHasComponent<T>(int entityID)
         {
-            throw new EcsFrameworkException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName<T>()}.");
+            throw new ArgumentException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNotHaveComponent<T>(int entityID)
         {
-            throw new EcsFrameworkException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName<T>()}.");
+            throw new ArgumentException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowAlreadyHasComponent(Type type, int entityID)
         {
-            throw new EcsFrameworkException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName(type)}.");
+            throw new ArgumentException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName(type)}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNotHaveComponent(Type type, int entityID)
         {
-            throw new EcsFrameworkException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName(type)}.");
+            throw new ArgumentException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName(type)}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNullListener()
@@ -62,7 +62,7 @@ namespace DCFApixels.DragonECS.PoolsCore
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowPoolLocked()
         {
-            throw new EcsFrameworkException("The pool is currently locked and cannot add or remove components.");
+            throw new InvalidOperationException("The pool is currently locked and cannot add or remove components.");
         }
     }
     #endregion
@@ -87,7 +87,7 @@ namespace DCFApixels.DragonECS.Internal
         {
             get
             {
-#if (DEBUG)
+#if DEBUG
                 throw new NullInstanceException();
 #else
                     return EcsWorld.GetWorld(0);
@@ -105,25 +105,25 @@ namespace DCFApixels.DragonECS.Internal
         }
         void IEcsPool.Del(int entityID)
         {
-#if (DEBUG)
+#if DEBUG
             throw new NullInstanceException();
 #endif
         }
         void IEcsPool.AddEmpty(int entityID)
         {
-#if (DEBUG)
+#if DEBUG
             throw new NullInstanceException();
 #endif
         }
         void IEcsPool.AddRaw(int entityID, object dataRaw)
         {
-#if (DEBUG)
+#if DEBUG
             throw new NullInstanceException();
 #endif
         }
         object IEcsReadonlyPool.GetRaw(int entityID)
         {
-#if (DEBUG)
+#if DEBUG
             throw new NullInstanceException();
 #else
             return null;
@@ -131,25 +131,25 @@ namespace DCFApixels.DragonECS.Internal
         }
         void IEcsPool.SetRaw(int entity, object dataRaw)
         {
-#if (DEBUG)
+#if DEBUG
             throw new NullInstanceException();
 #endif
         }
         void IEcsReadonlyPool.Copy(int fromEntityID, int toEntityID)
         {
-#if (DEBUG)
+#if DEBUG
             throw new NullInstanceException();
 #endif
         }
         void IEcsReadonlyPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
-#if (DEBUG)
+#if DEBUG
             throw new NullInstanceException();
 #endif
         }
         void IEcsPool.ClearAll()
         {
-#if (DEBUG)
+#if DEBUG
             throw new NullInstanceException();
 #endif
         }
