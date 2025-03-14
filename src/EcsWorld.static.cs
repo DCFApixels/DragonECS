@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -143,7 +146,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetForWorldUnchecked(short worldID)
             {// ts
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (_mapping[worldID] <= 0) { Throw.ArgumentOutOfRange(); }
 #endif
                 return ref _items[_mapping[worldID]];

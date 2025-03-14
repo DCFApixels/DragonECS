@@ -1,6 +1,9 @@
-﻿using System;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using System;
 using System.Collections.Generic;
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+#if DEBUG || !REFLECTION_DISABLED
 using System.Reflection;
 #endif
 
@@ -8,7 +11,7 @@ namespace DCFApixels.DragonECS
 {
     public static class EcsDebugUtility
     {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+#if DEBUG || !REFLECTION_DISABLED
         private const BindingFlags RFL_FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 #endif
 
@@ -31,7 +34,7 @@ namespace DCFApixels.DragonECS
         }
         private static string GetGenericTypeName_Internal(Type type, int maxDepth, bool isFull)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
             string typeName = isFull ? type.FullName : type.Name;
             if (!type.IsGenericType || maxDepth == 0)
             {
@@ -68,7 +71,7 @@ namespace DCFApixels.DragonECS
 
         internal static string AutoToString(object target, Type type, bool isWriteName)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
 #pragma warning disable IL2070 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.
             var fields = type.GetFields(RFL_FLAGS);
 #pragma warning restore IL2070

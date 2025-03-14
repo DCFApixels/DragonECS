@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using System.Diagnostics;
 
 namespace DCFApixels.DragonECS
 {

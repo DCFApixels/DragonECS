@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Core;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Core;
 using System;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
@@ -71,7 +74,7 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ExecuteFor_Iternal(EcsSpan span)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
             if (span.WorldID != World.ID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
 #endif

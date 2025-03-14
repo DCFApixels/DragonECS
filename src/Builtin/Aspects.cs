@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.PoolsCore;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.PoolsCore;
 
 namespace DCFApixels.DragonECS
 {

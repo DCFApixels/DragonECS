@@ -1,10 +1,13 @@
-﻿using DCFApixels.DragonECS.Core;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+#if DEBUG || !REFLECTION_DISABLED
 using System.Reflection;
 #endif
 
@@ -326,7 +329,7 @@ namespace DCFApixels.DragonECS
         }
         private static bool CheckEcsMemener(Type checkedType)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+#if DEBUG || !REFLECTION_DISABLED
             return checkedType.IsInterface == false && checkedType.IsAbstract == false && typeof(IEcsMember).IsAssignableFrom(checkedType);
 #else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(CheckEcsMemener)} method does not work.");
@@ -335,7 +338,7 @@ namespace DCFApixels.DragonECS
         }
         public static bool IsHasMeta(Type type)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+#if DEBUG || !REFLECTION_DISABLED
             return CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(EcsMetaAttribute), false).Length > 0;
 #else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasMeta)} method does not work.");
@@ -344,7 +347,7 @@ namespace DCFApixels.DragonECS
         }
         public static bool IsHasMetaID(Type type)
         {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED
+#if DEBUG || !REFLECTION_DISABLED
             return type.HasAttribute<MetaIDAttribute>();
 #else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasMetaID)} method does not work.");
@@ -413,7 +416,7 @@ namespace DCFApixels.DragonECS
             }
             public static (string, bool) GetMetaName(Type type)
             {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 bool isCustom = type.TryGetAttribute(out MetaNameAttribute atr) && string.IsNullOrEmpty(atr.name) == false;
                 if (isCustom)
                 {
@@ -455,7 +458,7 @@ namespace DCFApixels.DragonECS
             }
             public static (MetaColor, bool) GetColor(TypeMeta meta)
             {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 bool isCustom = meta.Type.TryGetAttribute(out MetaColorAttribute atr);
                 return (isCustom ? atr.color : AutoColor(meta), isCustom);
 #else
@@ -468,7 +471,7 @@ namespace DCFApixels.DragonECS
             #region GetGroup
             public static MetaGroup GetGroup(Type type)
             {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 return type.TryGetAttribute(out MetaGroupAttribute atr) ? atr.Data : MetaGroup.FromNameSpace(type);
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetGroup)} method does not work.");
@@ -480,7 +483,7 @@ namespace DCFApixels.DragonECS
             #region GetDescription
             public static MetaDescription GetDescription(Type type)
             {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 bool isCustom = type.TryGetAttribute(out MetaDescriptionAttribute atr);
                 return isCustom ? atr.Data : MetaDescription.Empty;
 #else
@@ -493,7 +496,7 @@ namespace DCFApixels.DragonECS
             #region GetTags
             public static IReadOnlyList<string> GetTags(Type type)
             {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 var atr = type.GetCustomAttribute<MetaTagsAttribute>();
                 return atr != null ? atr.Tags : Array.Empty<string>();
 #else
@@ -504,12 +507,12 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetMetaID
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
             private static Dictionary<string, Type> _idTypePairs = new Dictionary<string, Type>();
 #endif
             public static string GetMetaID(Type type)
             {
-#if (DEBUG && !DISABLE_DEBUG) || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 var atr = type.GetCustomAttribute<MetaIDAttribute>();
 
                 if (atr == null)

@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +16,7 @@ namespace DCFApixels.DragonECS
         private Dictionary<Type, InjectionNodeBase> _nodes = new Dictionary<Type, InjectionNodeBase>(32);
         private bool _isInit = false;
 
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
         private HashSet<Type> _requiredInjectionTypes = new HashSet<Type>();
 #endif
 
@@ -47,7 +50,7 @@ namespace DCFApixels.DragonECS
                 branch = new InjectionBranch(this, objType);
                 InitBranch(branch);
 
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 foreach (var requiredInjectionType in _requiredInjectionTypes)
                 {
                     if (requiredInjectionType.IsAssignableFrom(objType))
@@ -61,6 +64,15 @@ namespace DCFApixels.DragonECS
 #endif
             }
             branch.Inject(raw);
+        }
+        public void ExtractAllTo(object target)
+        {
+            if (target is IEcsInjectProcess == false) { return; }
+
+            foreach (var node in _nodes)
+            {
+                node.Value.ExtractTo(target);
+            }
         }
         public T Extract<T>()
         {
@@ -132,7 +144,7 @@ namespace DCFApixels.DragonECS
             }
             _isInit = true;
 
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             var systems = _pipeline.AllSystems;
             var injectType = typeof(IEcsInject<>);
             foreach (var system in systems)

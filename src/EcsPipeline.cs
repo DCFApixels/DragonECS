@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections;
@@ -32,7 +35,6 @@ namespace DCFApixels.DragonECS
     public sealed partial class EcsPipeline
     {
         private readonly IConfigContainer _configs;
-        private Injector.Builder _injectorBuilder;
         private Injector _injector;
 
         private IEcsProcess[] _allSystems;
@@ -43,7 +45,7 @@ namespace DCFApixels.DragonECS
         private bool _isInit = false;
         private bool _isDestoryed = false;
 
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
         private static EcsProfilerMarker _initMarker = new EcsProfilerMarker("EcsPipeline.Init");
 #endif
 
@@ -79,8 +81,15 @@ namespace DCFApixels.DragonECS
         {
             _configs = configs;
             _allSystems = systems;
-            _injectorBuilder = injectorBuilder;
-            _injectorBuilder.Inject(this);
+            injectorBuilder.Inject(this);
+
+            var members = GetProcess<IEcsPipelineMember>();
+            for (int i = 0; i < members.Length; i++)
+            {
+                members[i].Pipeline = this;
+            }
+
+            _injector = injectorBuilder.Build(this);
         }
         #endregion
 
@@ -130,14 +139,18 @@ namespace DCFApixels.DragonECS
             {
                 return (TRunner)result;
             }
-            TRunner instance = new TRunner();
+            TRunner runnerInstance = new TRunner();
 #if DEBUG
-            EcsRunner.CheckRunnerTypeIsValide(runnerType, instance.Interface);
+            EcsRunner.CheckRunnerTypeIsValide(runnerType, runnerInstance.Interface);
 #endif
-            instance.Init_Internal(this);
-            _runners.Add(runnerType, instance);
-            _runners.Add(instance.Interface, instance);
-            return instance;
+            runnerInstance.Init_Internal(this);
+            _runners.Add(runnerType, runnerInstance);
+            _runners.Add(runnerInstance.Interface, runnerInstance);
+            Injector.ExtractAllTo(runnerInstance);
+
+            // init after.
+            Injector.Inject(runnerInstance);
+            return runnerInstance;
         }
         public T GetRunner<T>() where T : IEcsProcess
         {
@@ -175,16 +188,9 @@ namespace DCFApixels.DragonECS
                 EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been initialized");
                 return;
             }
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             _initMarker.Begin();
 #endif
-            var members = GetProcess<IEcsPipelineMember>();
-            for (int i = 0; i < members.Length; i++)
-            {
-                members[i].Pipeline = this;
-            }
-            _injector = _injectorBuilder.Build(this);
-            _injectorBuilder = null;
 
             GetRunnerInstance<EcsPreInitRunner>().PreInit();
             GetRunnerInstance<EcsInitRunner>().Init();
@@ -193,7 +199,7 @@ namespace DCFApixels.DragonECS
             _isInit = true;
 
             GC.Collect();
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             _initMarker.End();
 #endif
         }
@@ -201,7 +207,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run()
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run)); }
             if (_isDestoryed) { Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run)); }
 #endif
@@ -209,7 +215,7 @@ namespace DCFApixels.DragonECS
         }
         public void Destroy()
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Destroy)); }
 #endif
             if (_isDestoryed)

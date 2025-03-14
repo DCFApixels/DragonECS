@@ -1,4 +1,7 @@
-﻿using System;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using System;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.Internal

@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Core;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Concurrent;
@@ -339,14 +342,14 @@ namespace DCFApixels.DragonECS
             #region Inc/Exc/Combine/Except
             public void Inc(EcsTypeCode typeCode)
             {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(); }
 #endif
                 _inc.Add(typeCode);
             }
             public void Exc(EcsTypeCode typeCode)
             {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(); }
 #endif
                 _exc.Add(typeCode);
@@ -451,7 +454,7 @@ namespace DCFApixels.DragonECS
         #region Debug utils
         private static string CreateLogString(EcsTypeCode[] inc, EcsTypeCode[] exc)
         {
-#if (DEBUG && !DISABLE_DEBUG)
+#if DEBUG
             string converter(EcsTypeCode o) { return EcsTypeCodeManager.FindTypeOfCode(o).ToString(); }
             return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
 #else

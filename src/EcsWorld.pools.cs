@@ -1,4 +1,7 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Linq;
@@ -15,7 +18,7 @@ namespace DCFApixels.DragonECS
         internal PoolSlot[] _poolSlots;
         private int _poolsCount;
 
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
         private int _lockedPoolCount = 0;
 #endif
 
@@ -43,7 +46,7 @@ namespace DCFApixels.DragonECS
             ref var result = ref _pools[componentTypeID];
             if (result != _nullPool)
             {
-#if (DEBUG && !DISABLE_DEBUG)
+#if DEBUG
                 if (result.ComponentTypeID != componentTypeID) { Throw.UndefinedException(); }
 #endif
                 return result;
@@ -149,7 +152,7 @@ namespace DCFApixels.DragonECS
         #region FindOrAutoCreatePool/InitPool
         public void InitPool(IEcsPoolImplementation poolImplementation)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (Count > 0) { Throw.World_MethodCalledAfterEntityCreation(nameof(InitEntitySlot)); }
 #endif
             InitPool_Internal(poolImplementation);
@@ -162,7 +165,7 @@ namespace DCFApixels.DragonECS
                 if (_poolTypeCode_2_CmpTypeIDs.TryGetValue(poolTypeCode, out int cmpTypeID))
                 {
                     var pool = _pools[cmpTypeID];
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                     if ((pool is TPool) == false) { Throw.UndefinedException(); }
 #endif
                     return (TPool)pool;
@@ -279,7 +282,7 @@ namespace DCFApixels.DragonECS
             {
                 DelEntity(entityID);
             }
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
 #endif
         }
@@ -320,7 +323,7 @@ namespace DCFApixels.DragonECS
                 {
                     DelEntity(entityID);
                 }
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
                 if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
 #endif
                 return true;
@@ -399,7 +402,7 @@ namespace DCFApixels.DragonECS
         #region LockPool/UnLockPool
         public void LockPool_Debug(int componentTypeID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             ref var slot = ref _poolSlots[componentTypeID];
             if (slot.lockedCounter == 0)
             {
@@ -413,7 +416,7 @@ namespace DCFApixels.DragonECS
         }
         public void UnlockPool_Debug(int componentTypeID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             ref var slot = ref _poolSlots[componentTypeID];
             slot.lockedCounter--;
             if (slot.lockedCounter <= 0)
@@ -431,7 +434,7 @@ namespace DCFApixels.DragonECS
         }
         public bool CheckPoolLocked_Debug(int componentTypeID)
         {
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             return _poolSlots[componentTypeID].lockedCounter != 0;
 #else
             return false;
@@ -444,7 +447,7 @@ namespace DCFApixels.DragonECS
         {
             public long version;
             public int count;
-#if (DEBUG && !DISABLE_DEBUG) || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
             public int lockedCounter;
 #endif
         }

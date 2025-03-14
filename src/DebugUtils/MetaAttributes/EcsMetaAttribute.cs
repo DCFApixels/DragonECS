@@ -1,4 +1,7 @@
-﻿using System;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using System;
 
 namespace DCFApixels.DragonECS.Core
 {
