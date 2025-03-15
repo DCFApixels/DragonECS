@@ -881,13 +881,13 @@ using (_marker.Auto())
 </br>
 
 # Define Symbols
-+ `DISABLE_POOLS_EVENTS` - выключает реактивное поведение в пулах.
-+ `ENABLE_DRAGONECS_DEBUGGER` - включает работу EcsDebug в релизном билде.
-+ `ENABLE_DRAGONECS_ASSERT_CHECKS` - включает опускаемые в релизном билде проверки.
++ `DRAGONECS_DISABLE_POOLS_EVENTS` - выключает реактивное поведение в пулах.
++ `DRAGONECS_ENABLE_DEBUG_SERVICE` - включает работу EcsDebug в релизном билде.
++ `DRAGONECS_STABILITY_MODE` - включает опускаемые в релизном билде проверки.
++ `DRAGONECS_DISABLE_CATH_EXCEPTIONS` - Выключает поведение по умолчанию по обработке исключений. По умолчанию фреймворк будет ловить исключения с выводом информации из исключений через EcsDebug и продолжать работу.
 + `REFLECTION_DISABLED` - Полностью ограничивает работу фреймворка с Reflection.
 + `DISABLE_DEBUG` - Для среды где не поддерживается ручное отключение DEBUG, например Unity.
 + `ENABLE_DUMMY_SPAN` - На случай если в среде не поддерживаются Span типы, включает его замену.
-+ `DISABLE_CATH_EXCEPTIONS` - Выключает поведение по умолчанию по обработке исключений. По умолчанию фреймворк будет ловить исключения с выводом информации из исключений через EcsDebug и продолжать работу.
 
 </br>
 
