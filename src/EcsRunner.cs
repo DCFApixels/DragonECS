@@ -7,7 +7,6 @@ using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using static DCFApixels.DragonECS.EcsDebugUtility;
-#pragma warning disable CS0162 // Обнаружен недостижимый код
 
 namespace DCFApixels.DragonECS
 {
@@ -132,6 +131,7 @@ namespace DCFApixels.DragonECS
             protected virtual void OnSetup() { }
             #endregion
 
+
             #region RunHelper
 #if DEBUG
             public
@@ -227,9 +227,10 @@ namespace DCFApixels.DragonECS
                         catch (Exception e)
                         {
 #if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw;
-#endif
+                            throw e;
+#else
                             EcsDebug.PrintError(e);
+#endif
                         }
                     }
 #endif
@@ -266,9 +267,10 @@ namespace DCFApixels.DragonECS
                         catch (Exception e)
                         {
 #if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw;
-#endif
+                            throw e;
+#else
                             EcsDebug.PrintError(e);
+#endif
                         }
                     }
 #endif
@@ -399,9 +401,10 @@ namespace DCFApixels.DragonECS
                         catch (Exception e)
                         {
 #if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw;
-#endif
+                            throw e;
+#else
                             EcsDebug.PrintError(e);
+#endif
                         }
                         finally
                         {
@@ -453,9 +456,10 @@ namespace DCFApixels.DragonECS
                         catch (Exception e)
                         {
 #if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw;
-#endif
+                            throw e;
+#else
                             EcsDebug.PrintError(e);
+#endif
                         }
                         finally
                         {
