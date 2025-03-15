@@ -47,8 +47,8 @@ namespace DCFApixels.DragonECS
 
     public static class EcsDefines
     {
-        public const bool DRAGONECS_ENABLE_DRAGONECS_DEBUGGER =
-#if DRAGONECS_ENABLE_DRAGONECS_DEBUGGER
+        public const bool DRAGONECS_ENABLE_DEBUG_SERVICE =
+#if DRAGONECS_ENABLE_DEBUG_SERVICE
             true;
 #else
             false;
@@ -92,7 +92,7 @@ namespace DCFApixels.DragonECS
 
 
 
-        [Obsolete("DRAGONECS_ENABLE_DRAGONECS_DEBUGGER")]
+        [Obsolete("DRAGONECS_ENABLE_DEBUG_SERVICE")]
         public const bool ENABLE_DRAGONECS_DEBUGGER =
 #if ENABLE_DRAGONECS_DEBUGGER
             true;
