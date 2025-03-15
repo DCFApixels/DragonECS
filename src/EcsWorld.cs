@@ -331,8 +331,10 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity(int entityID)
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (entityID < _entities.Length && IsUsed(entityID)) { Throw.World_EntityIsAlreadyСontained(entityID); }
+#if DEBUG
+            if (IsUsed(entityID)) { Throw.World_EntityIsAlreadyСontained(entityID); }
+#elif DRAGONECS_STABILITY_MODE
+            if (IsUsed(entityID)) { return 0; }
 #endif
             _entityDispenser.Use(entityID);
             CreateConcreteEntity(entityID);
@@ -381,8 +383,10 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DelEntity(int entityID)
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (IsUsed(entityID) == false) { Throw.World_EntityIsNotContained(entityID); }
+#if DEBUG
+            if (IsUsed(entityID) == false) { Throw.World_EntityIsAlreadyСontained(entityID); }
+#elif DRAGONECS_STABILITY_MODE
+            if (IsUsed(entityID) == false) { return; }
 #endif
             UpVersion();
             _delEntBuffer[_delEntBufferCount++] = entityID;
@@ -411,8 +415,10 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void InitEntitySlot(int entityID, short gen)
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
             if (Count > 0) { Throw.World_MethodCalledAfterEntityCreation(nameof(InitEntitySlot)); }
+#elif DRAGONECS_STABILITY_MODE
+            if (Count > 0) { return; }
 #endif
             _entityDispenser.Upsize(entityID);
             _entities[entityID].gen = gen;
@@ -431,8 +437,10 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(entlong entity)
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
             if (entity.GetWorldIDUnchecked() != ID) { Throw.World_MaskDoesntBelongWorld(); }
+#elif DRAGONECS_STABILITY_MODE
+            if (entity.GetWorldIDUnchecked() != ID) { return false; }
 #endif
             ref var slot = ref _entities[entity.GetIDUnchecked()];
             return slot.gen == entity.GetIDUnchecked() && slot.isUsed;
@@ -468,8 +476,10 @@ namespace DCFApixels.DragonECS
         }
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
             if (mask.WorldID != ID) { Throw.World_MaskDoesntBelongWorld(); }
+#elif DRAGONECS_STABILITY_MODE
+            if (mask.WorldID != ID) { return false; }
 #endif
             for (int i = 0, iMax = mask._incs.Length; i < iMax; i++)
             {

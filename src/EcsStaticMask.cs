@@ -342,15 +342,19 @@ namespace DCFApixels.DragonECS
             #region Inc/Exc/Combine/Except
             public void Inc(EcsTypeCode typeCode)
             {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
                 if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(typeCode); }
+#elif DRAGONECS_STABILITY_MODE
+                if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { return; }
 #endif
                 _inc.Add(typeCode);
             }
             public void Exc(EcsTypeCode typeCode)
             {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
                 if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { Throw.ConstraintIsAlreadyContainedInMask(typeCode); }
+#elif DRAGONECS_STABILITY_MODE
+                if (_inc.Contains(typeCode) || _exc.Contains(typeCode)) { return; }
 #endif
                 _exc.Add(typeCode);
             }

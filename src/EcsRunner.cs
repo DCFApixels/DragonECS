@@ -210,7 +210,7 @@ namespace DCFApixels.DragonECS
                         }
                         catch (Exception e)
                         {
-#if DISABLE_CATH_EXCEPTIONS
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
                             throw;
 #endif
                             EcsDebug.PrintError(e);
@@ -226,7 +226,7 @@ namespace DCFApixels.DragonECS
                         }
                         catch (Exception e)
                         {
-#if DISABLE_CATH_EXCEPTIONS
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
                             throw;
 #endif
                             EcsDebug.PrintError(e);
@@ -249,7 +249,7 @@ namespace DCFApixels.DragonECS
                         }
                         catch (Exception e)
                         {
-#if DISABLE_CATH_EXCEPTIONS
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
                             throw;
 #endif
                             EcsDebug.PrintError(e);
@@ -265,7 +265,7 @@ namespace DCFApixels.DragonECS
                         }
                         catch (Exception e)
                         {
-#if DISABLE_CATH_EXCEPTIONS
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
                             throw;
 #endif
                             EcsDebug.PrintError(e);
@@ -375,7 +375,7 @@ namespace DCFApixels.DragonECS
                         }
                         catch (Exception e)
                         {
-#if DISABLE_CATH_EXCEPTIONS
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
                             throw;
 #endif
                             EcsDebug.PrintError(e);
@@ -398,7 +398,7 @@ namespace DCFApixels.DragonECS
                         }
                         catch (Exception e)
                         {
-#if DISABLE_CATH_EXCEPTIONS
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
                             throw;
 #endif
                             EcsDebug.PrintError(e);
@@ -429,7 +429,7 @@ namespace DCFApixels.DragonECS
                         }
                         catch (Exception e)
                         {
-#if DISABLE_CATH_EXCEPTIONS
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
                             throw;
 #endif
                             EcsDebug.PrintError(e);
@@ -452,7 +452,7 @@ namespace DCFApixels.DragonECS
                         }
                         catch (Exception e)
                         {
-#if DISABLE_CATH_EXCEPTIONS
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
                             throw;
 #endif
                             EcsDebug.PrintError(e);

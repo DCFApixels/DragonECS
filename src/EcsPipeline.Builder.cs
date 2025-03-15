@@ -301,12 +301,12 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Build
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
             private static EcsProfilerMarker _buildMarker = new EcsProfilerMarker("EcsPipeline.Build");
 #endif
             public EcsPipeline Build()
             {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
                 _buildMarker.Begin();
 #endif
                 var it = new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
@@ -372,7 +372,7 @@ namespace DCFApixels.DragonECS
                 {
                     item.Declare(pipeline);
                 }
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
                 _buildMarker.End();
 #endif
                 return pipeline;

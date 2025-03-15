@@ -1,4 +1,6 @@
-﻿namespace DCFApixels.DragonECS
+﻿using System;
+
+namespace DCFApixels.DragonECS
 {
     public static class EcsConsts
     {
@@ -23,6 +25,8 @@
 
         public const int MAGIC_PRIME = 314159;
 
+        public const int NULL_ENTITY_ID = 0;
+        public const short NULL_WORLD_ID = 0;
         /// meta subgroups
 
         public const string PACK_GROUP = "_" + FRAMEWORK_NAME + "/_Core";
@@ -44,27 +48,32 @@
     //TODO заменить ENABLE_DRAGONECS_ASSERT_CHEKS на DEV_MODE и добавить еще PERF_MODE и STAB_MODE
     public static class EcsDefines
     {
-        public const bool DISABLE_POOLS_EVENTS =
-#if DISABLE_POOLS_EVENTS
-            true;
-#else
-    false;
-#endif
-        public const bool ENABLE_DRAGONECS_DEBUGGER =
-#if ENABLE_DRAGONECS_DEBUGGER
+        public const bool DRAGONECS_ENABLE_DRAGONECS_DEBUGGER =
+#if DRAGONECS_ENABLE_DRAGONECS_DEBUGGER
             true;
 #else
             false;
 #endif
-        public const bool ENABLE_DRAGONECS_ASSERT_CHEKS =
-#if ENABLE_DRAGONECS_ASSERT_CHEKS
+        public const bool DRAGONECS_DISABLE_POOLS_EVENTS =
+#if DRAGONECS_DISABLE_POOLS_EVENTS
             true;
 #else
             false;
 #endif
-
-        public const bool REFLECTION_DISABLED =
-#if REFLECTION_DISABLED
+        public const bool DRAGONECS_DISABLE_CATH_EXCEPTIONS =
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
+            true;
+#else
+            false;
+#endif
+        public const bool DRAGONECS_STABILITY_MODE =
+#if DRAGONECS_STABILITY_MODE
+            true;
+#else
+            false;
+#endif
+        public const bool DRAGONECS_DEEP_DEBUG =
+#if DRAGONECS_DEEP_DEBUG
             true;
 #else
             false;
@@ -75,35 +84,46 @@
 #else
             false;
 #endif
-
-        public const bool ENABLE_DUMMY_SPAN =
-#if ENABLE_DUMMY_SPAN
+        public const bool REFLECTION_DISABLED =
+#if REFLECTION_DISABLED
             true;
 #else
             false;
 #endif
+
+
+
+        [Obsolete]
+        public const bool ENABLE_DRAGONECS_DEBUGGER =
+#if DRAGONECS_ENABLE_DRAGONECS_DEBUGGER
+            true;
+#else
+            false;
+#endif
+        [Obsolete]
+        public const bool DISABLE_POOLS_EVENTS =
+#if DRAGONECS_DISABLE_POOLS_EVENTS
+            true;
+#else
+            false;
+#endif
+        [Obsolete]
         public const bool DISABLE_CATH_EXCEPTIONS =
 #if DISABLE_CATH_EXCEPTIONS
             true;
 #else
             false;
 #endif
-
-
-        public const bool DRAGONECS_PERF_MODE =
-#if DRAGONECS_PERF_MODE
-    true;
+        [Obsolete]
+        public const bool ENABLE_DRAGONECS_ASSERT_CHEKS =
+#if ENABLE_DRAGONECS_ASSERT_CHEKS
+            true;
 #else
             false;
 #endif
-        public const bool DRAGONECS_STAB_MODE =
-#if DRAGONECS_STAB_MODE
-    true;
-#else
-            false;
-#endif
-        public const bool DRAGONECS_DEEP_DEBUG =
-#if DRAGONECS_DEEP_DEBUG
+        [Obsolete]
+        public const bool ENABLE_DUMMY_SPAN =
+#if ENABLE_DUMMY_SPAN
             true;
 #else
             false;

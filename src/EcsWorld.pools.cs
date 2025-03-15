@@ -18,7 +18,7 @@ namespace DCFApixels.DragonECS
         internal PoolSlot[] _poolSlots;
         private int _poolsCount;
 
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || DRAGONECS_STABILITY_MODE
         private int _lockedPoolCount = 0;
 #endif
 
@@ -152,8 +152,10 @@ namespace DCFApixels.DragonECS
         #region FindOrAutoCreatePool/InitPool
         public void InitPool(IEcsPoolImplementation poolImplementation)
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
             if (Count > 0) { Throw.World_MethodCalledAfterEntityCreation(nameof(InitEntitySlot)); }
+#elif DRAGONECS_STABILITY_MODE
+            if (Count > 0) { return; }
 #endif
             InitPool_Internal(poolImplementation);
         }
@@ -165,7 +167,7 @@ namespace DCFApixels.DragonECS
                 if (_poolTypeCode_2_CmpTypeIDs.TryGetValue(poolTypeCode, out int cmpTypeID))
                 {
                     var pool = _pools[cmpTypeID];
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || DRAGONECS_STABILITY_MODE
                     if ((pool is TPool) == false) { Throw.UndefinedException(); }
 #endif
                     return (TPool)pool;
@@ -282,11 +284,12 @@ namespace DCFApixels.DragonECS
             {
                 DelEntity(entityID);
             }
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
-            if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
-#endif
+            CheckUnregisterValid(count, entityID);
         }
-
+        private Span<int> GetEntityComponentMask(int entityID)
+        {
+            return new Span<int>(_entityComponentMasks, entityID << _entityComponentMaskLengthBitShift, _entityComponentMaskLength);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryRegisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
@@ -323,12 +326,25 @@ namespace DCFApixels.DragonECS
                 {
                     DelEntity(entityID);
                 }
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
-                if (count < 0) Throw.World_InvalidIncrementComponentsBalance();
-#endif
+                CheckUnregisterValid(count, entityID);
                 return true;
             }
             return false;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CheckUnregisterValid(int count, int entityID)
+        {
+#if DEBUG
+            if (count < 0) { Throw.World_InvalidIncrementComponentsBalance(); }
+#elif DRAGONECS_STABILITY_MODE
+            if (count < 0)
+            {
+                var mask = GetEntityComponentMask(entityID);
+                for (int i = 0; i < mask.Length; i++) { mask[i] = 0; }
+                //TODO добавить очистку пулов
+                _entities[entityID].componentsCount = 0;
+            }
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -402,7 +418,7 @@ namespace DCFApixels.DragonECS
         #region LockPool/UnLockPool
         public void LockPool_Debug(int componentTypeID)
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || DRAGONECS_STABILITY_MODE
             ref var slot = ref _poolSlots[componentTypeID];
             if (slot.lockedCounter == 0)
             {
@@ -416,7 +432,7 @@ namespace DCFApixels.DragonECS
         }
         public void UnlockPool_Debug(int componentTypeID)
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || DRAGONECS_STABILITY_MODE
             ref var slot = ref _poolSlots[componentTypeID];
             slot.lockedCounter--;
             if (slot.lockedCounter <= 0)
@@ -434,7 +450,7 @@ namespace DCFApixels.DragonECS
         }
         public bool CheckPoolLocked_Debug(int componentTypeID)
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || DRAGONECS_STABILITY_MODE
             return _poolSlots[componentTypeID].lockedCounter != 0;
 #else
             return false;
@@ -447,7 +463,7 @@ namespace DCFApixels.DragonECS
         {
             public long version;
             public int count;
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || DRAGONECS_STABILITY_MODE
             public int lockedCounter;
 #endif
         }
