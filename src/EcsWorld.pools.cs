@@ -286,11 +286,6 @@ namespace DCFApixels.DragonECS
             }
             CheckUnregisterValid(count, entityID);
         }
-        private Span<int> GetEntityComponentMask(int entityID)
-        {
-            return new Span<int>(_entityComponentMasks, entityID << _entityComponentMaskLengthBitShift, _entityComponentMaskLength);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryRegisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
         {
@@ -336,16 +331,19 @@ namespace DCFApixels.DragonECS
         {
 #if DEBUG
             if (count < 0) { Throw.World_InvalidIncrementComponentsBalance(); }
-#elif DRAGONECS_STABILITY_MODE
+//#elif DRAGONECS_STABILITY_MODE
             if (count < 0)
             {
-                var mask = GetEntityComponentMask(entityID);
-                for (int i = 0; i < mask.Length; i++) { mask[i] = 0; }
+                for (int i = entityID << _entityComponentMaskLengthBitShift, iMax = i + _entityComponentMaskLength; i < iMax; i++)
+                { 
+                    _entityComponentMasks[i] = 0; 
+                }
                 //TODO добавить очистку пулов
                 _entities[entityID].componentsCount = 0;
             }
 #endif
         }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetPoolComponentCount(int componentTypeID)
