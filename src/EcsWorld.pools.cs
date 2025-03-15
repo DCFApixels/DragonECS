@@ -331,7 +331,7 @@ namespace DCFApixels.DragonECS
         {
 #if DEBUG
             if (count < 0) { Throw.World_InvalidIncrementComponentsBalance(); }
-//#elif DRAGONECS_STABILITY_MODE
+#elif DRAGONECS_STABILITY_MODE
             if (count < 0)
             {
                 for (int i = entityID << _entityComponentMaskLengthBitShift, iMax = i + _entityComponentMaskLength; i < iMax; i++)
