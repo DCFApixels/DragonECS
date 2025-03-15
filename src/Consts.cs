@@ -92,28 +92,28 @@ namespace DCFApixels.DragonECS
 
 
 
-        [Obsolete]
+        [Obsolete("DRAGONECS_ENABLE_DRAGONECS_DEBUGGER")]
         public const bool ENABLE_DRAGONECS_DEBUGGER =
-#if DRAGONECS_ENABLE_DRAGONECS_DEBUGGER
+#if ENABLE_DRAGONECS_DEBUGGER
             true;
 #else
             false;
 #endif
-        [Obsolete]
+        [Obsolete("DRAGONECS_DISABLE_POOLS_EVENTS")]
         public const bool DISABLE_POOLS_EVENTS =
-#if DRAGONECS_DISABLE_POOLS_EVENTS
+#if DISABLE_POOLS_EVENTS
             true;
 #else
             false;
 #endif
-        [Obsolete]
+        [Obsolete("DRAGONECS_DISABLE_CATH_EXCEPTIONS")]
         public const bool DISABLE_CATH_EXCEPTIONS =
 #if DISABLE_CATH_EXCEPTIONS
             true;
 #else
             false;
 #endif
-        [Obsolete]
+        [Obsolete("DRAGONECS_STABILITY_MODE")]
         public const bool ENABLE_DRAGONECS_ASSERT_CHEKS =
 #if ENABLE_DRAGONECS_ASSERT_CHEKS
             true;
