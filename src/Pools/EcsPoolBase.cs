@@ -249,6 +249,18 @@ namespace DCFApixels.DragonECS
         {
             return self == null || self == EcsNullPool.instance;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T NewEntity<T>(this IEcsStructPool<T> self) where T : struct
+        {
+            var e = self.World.NewEntity();
+            return ref self.Add(e);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T NewEntity<T>(this IEcsStructPool<T> self, out int entityID) where T : struct
+        {
+            entityID = self.World.NewEntity();
+            return ref self.Add(entityID);
+        }
     }
     #endregion
 
