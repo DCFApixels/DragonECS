@@ -45,7 +45,6 @@ namespace DCFApixels.DragonECS
         public const string MODULES_GROUP = "Modules";
     }
 
-    //TODO заменить ENABLE_DRAGONECS_ASSERT_CHEKS на DEV_MODE и добавить еще PERF_MODE и STAB_MODE
     public static class EcsDefines
     {
         public const bool DRAGONECS_ENABLE_DRAGONECS_DEBUGGER =
