@@ -373,14 +373,14 @@ namespace DCFApixels.DragonECS
 
         //---------------------------------------------------
 
-        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(GetPool) + "<T>()")]
+        [Obsolete("Use " + nameof(EcsWorld) + "." + nameof(GetPool) + "<T>()")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> GetTagPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.GetPoolInstance<EcsTagPool<TTagComponent>>();
         }
-        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(GetPoolUnchecked) + "<T>()")]
+        [Obsolete("Use " + nameof(EcsWorld) + "." + nameof(GetPoolUnchecked) + "<T>()")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> GetTagPoolUnchecked<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
