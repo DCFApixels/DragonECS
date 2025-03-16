@@ -41,6 +41,15 @@ namespace DCFApixels.DragonECS
         {// ts
             return _worlds[worldID];
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryGetWorld(short worldID, out EcsWorld world)
+        {// ts
+            world = _worlds[worldID];
+            return
+                world != null &&
+                world.IsDestroyed != false &&
+                worldID != 0;
+        }
 
         private void ReleaseData(short worldID)
         {// ts
@@ -146,7 +155,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetForWorldUnchecked(short worldID)
             {// ts
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
                 if (_mapping[worldID] <= 0) { Throw.ArgumentOutOfRange(); }
 #endif
                 return ref _items[_mapping[worldID]];

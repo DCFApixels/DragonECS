@@ -8,7 +8,7 @@
     "displayName": "DragonECS",
     "description": "C# Entity Component System Framework",
     "unity": "2020.3",
-    "version": "0.9.1",
+    "version": "0.9.4",
     "repository": {
         "type": "git",
         "url": "https://github.com/DCFApixels/DragonECS.git"

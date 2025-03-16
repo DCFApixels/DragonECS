@@ -851,13 +851,14 @@ using (_marker.Auto())
 </br>
 
 # Define Symbols
-+ `DISABLE_POOLS_EVENTS` - disables reactive behavior in pools.
-+ `ENABLE_DRAGONECS_DEBUGGER` - enables EcsDebug functionality in release builds.
-+ `ENABLE_DRAGONECS_ASSERT_CHECKS` - enables omitted checks in the release build.
++ `DRAGONECS_DISABLE_POOLS_EVENTS` - Disables reactive behavior in pools.
++ `DRAGONECS_ENABLE_DEBUG_SERVICE` - Enables EcsDebug functionality in release builds.
++ `DRAGONECS_STABILITY_MODE` - By default, for optimization purposes, the framework skips many exception checks in the release build. This define, instead of disabling checks, replaces them with code that resolves errors. This increases stability but reduces execution speed.
++ `DRAGONECS_DISABLE_CATH_EXCEPTIONS` - Turns off the default exception handling behavior. By default, the framework will catch exceptions with the exception information output via EcsDebug and continue working.
 + `REFLECTION_DISABLED` - completely restricts the framework's use of Reflection.
 + `DISABLE_DEBUG` - for environments where manual DEBUG disabling is not supported, e.g., Unity.
 + `ENABLE_DUMMY_SPAN` - For environments where Span types are not supported, enables its replacement.
-+ `DISABLE_CATH_EXCEPTIONS` - Turns off the default exception handling behavior. By default, the framework will catch exceptions with the exception information output via EcsDebug and continue working.
+
 
 </br>
 

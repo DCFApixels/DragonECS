@@ -164,7 +164,7 @@ namespace DCFApixels.DragonECS.Internal
         #endregion
 
         #region Listeners
-#if !DISABLE_POOLS_EVENTS
+#if !DRAGONECS_DISABLE_POOLS_EVENTS
         void IEcsReadonlyPool.AddListener(IEcsPoolEventListener listener) { }
         void IEcsReadonlyPool.RemoveListener(IEcsPoolEventListener listener) { }
 #endif
@@ -193,7 +193,7 @@ namespace DCFApixels.DragonECS
         void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID);
         #endregion
 
-#if !DISABLE_POOLS_EVENTS
+#if !DRAGONECS_DISABLE_POOLS_EVENTS
         #region Add/Remove Listeners
         void AddListener(IEcsPoolEventListener listener);
         void RemoveListener(IEcsPoolEventListener listener);
@@ -249,6 +249,18 @@ namespace DCFApixels.DragonECS
         {
             return self == null || self == EcsNullPool.instance;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T NewEntity<T>(this IEcsStructPool<T> self) where T : struct
+        {
+            var e = self.World.NewEntity();
+            return ref self.Add(e);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T NewEntity<T>(this IEcsStructPool<T> self, out int entityID) where T : struct
+        {
+            entityID = self.World.NewEntity();
+            return ref self.Add(entityID);
+        }
     }
     #endregion
 
@@ -262,7 +274,7 @@ namespace DCFApixels.DragonECS
         /// <summary>Called after deleting an entity from the pool</summary>
         void OnDel(int entityID);
     }
-#if !DISABLE_POOLS_EVENTS
+#if !DRAGONECS_DISABLE_POOLS_EVENTS
     public static class PoolEventListExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

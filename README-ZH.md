@@ -844,13 +844,13 @@ using (_marker.Auto())
 </br>
 
 # Define Symbols
-+ `DISABLE_POOLS_EVENTS` - 禁用池子事件的响应行为。
-+ `ENABLE_DRAGONECS_DEBUGGER` - 在发布版中启用 EcsDebug 的工作。
-+ `ENABLE_DRAGONECS_ASSERT_CHECKS` - 在发布版中启用可忽略的检查和异常。
++ `DRAGONECS_DISABLE_POOLS_EVENTS` - 禁用池子事件的响应行为。
++ `DRAGONECS_ENABLE_DEBUG_SERVICE` - 在发布版中启用 EcsDebug 的工作。
++ `DRAGONECS_STABILITY_MODE` - 默认情况下，为了优化，框架在发布版本中跳过许多异常检查。此定义不是跳过检查，而是将其替换为能够解决错误的代码。这提高了稳定性，但降低了执行速度。
++ `DRAGONECS_DISABLE_CATH_EXCEPTIONS` - 禁用默认的异常处理行为。默认情况下，框架将捕获异常并通过 EcsDebug 输出异常信息，然后继续执行。
 + `REFLECTION_DISABLED` - 完全限制框架内部代码中的 Reflection 使用。
 + `DISABLE_DEBUG` - 用于不支持手动禁用 DEBUG 的环境，例如 Unity。
 + `ENABLE_DUMMY_SPAN` - 如果环境不支持 Span 类型，则启用它的替代。
-+ `DISABLE_CATH_EXCEPTIONS` - 禁用默认的异常处理行为。默认情况下，框架将捕获异常并通过 EcsDebug 输出异常信息，然后继续执行。
 
 </br>
 

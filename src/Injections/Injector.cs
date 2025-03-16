@@ -16,7 +16,7 @@ namespace DCFApixels.DragonECS
         private Dictionary<Type, InjectionNodeBase> _nodes = new Dictionary<Type, InjectionNodeBase>(32);
         private bool _isInit = false;
 
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
         private HashSet<Type> _requiredInjectionTypes = new HashSet<Type>();
 #endif
 
@@ -50,7 +50,7 @@ namespace DCFApixels.DragonECS
                 branch = new InjectionBranch(this, objType);
                 InitBranch(branch);
 
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
                 foreach (var requiredInjectionType in _requiredInjectionTypes)
                 {
                     if (requiredInjectionType.IsAssignableFrom(objType))
@@ -144,7 +144,7 @@ namespace DCFApixels.DragonECS
             }
             _isInit = true;
 
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
             var systems = _pipeline.AllSystems;
             var injectType = typeof(IEcsInject<>);
             foreach (var system in systems)

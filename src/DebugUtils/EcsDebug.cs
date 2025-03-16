@@ -13,39 +13,39 @@ namespace DCFApixels.DragonECS
     using static EcsConsts;
     public readonly struct EcsProfilerMarker
     {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
         public readonly int id;
 #endif
         internal EcsProfilerMarker(int id)
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             this.id = id;
 #endif
         }
         public EcsProfilerMarker(string name)
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             id = DebugService.CurrentThreadInstance.RegisterMark(name);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Begin()
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             DebugService.CurrentThreadInstance.ProfilerMarkBegin(id);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void End()
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             DebugService.CurrentThreadInstance.ProfilerMarkEnd(id);
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AutoScope Auto()
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             return new AutoScope(id);
 #else
             return default;
@@ -53,13 +53,13 @@ namespace DCFApixels.DragonECS
         }
         public readonly ref struct AutoScope
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             private readonly int _id;
 #endif
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public AutoScope(int id)
             {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
                 _id = id;
                 DebugService.CurrentThreadInstance.ProfilerMarkBegin(id);
 #endif
@@ -67,7 +67,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
             {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
                 DebugService.CurrentThreadInstance.ProfilerMarkEnd(_id);
 #endif
             }
@@ -94,7 +94,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintWarning(object v)
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             OnPrint(DEBUG_WARNING_TAG, v);
             DebugService.CurrentThreadInstance.PrintWarning(v);
 #endif
@@ -102,7 +102,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintError(object v)
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             OnPrint(DEBUG_ERROR_TAG, v);
             DebugService.CurrentThreadInstance.PrintError(v);
 #endif
@@ -110,7 +110,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintErrorAndBreak(object v)
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             OnPrint(DEBUG_ERROR_TAG, v);
             DebugService.CurrentThreadInstance.PrintErrorAndBreak(v);
 #endif
@@ -118,7 +118,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintPass(object v)
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             OnPrint(DEBUG_PASS_TAG, v);
             DebugService.CurrentThreadInstance.PrintPass(v);
 #endif
@@ -126,7 +126,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print()
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             OnPrint(string.Empty, null);
             DebugService.CurrentThreadInstance.Print();
 #endif
@@ -134,7 +134,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(object v)
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             OnPrint(string.Empty, v);
             DebugService.CurrentThreadInstance.Print(v);
 #endif
@@ -142,7 +142,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(string tag, object v)
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             OnPrint(tag, v);
             DebugService.CurrentThreadInstance.Print(tag, v);
 #endif
@@ -150,7 +150,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Break()
         {
-#if DEBUG || ENABLE_DRAGONECS_DEBUGGER
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
             DebugService.CurrentThreadInstance.Break();
 #endif
         }

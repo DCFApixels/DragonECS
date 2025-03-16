@@ -149,7 +149,7 @@ namespace DCFApixels.DragonECS.Internal
                 }
                 catch (Exception e)
                 {
-#if DISABLE_CATH_EXCEPTIONS
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
                     throw;
 #endif
                     EcsDebug.PrintError(e);
@@ -166,10 +166,11 @@ namespace DCFApixels.DragonECS.Internal
                 try { item.Run(); }
                 catch (Exception e)
                 {
-#if DISABLE_CATH_EXCEPTIONS
-                    throw;
-#endif
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
+                    throw e;
+#else
                     EcsDebug.PrintError(e);
+#endif
                 }
             }
 #endif

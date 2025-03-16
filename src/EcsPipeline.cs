@@ -45,7 +45,7 @@ namespace DCFApixels.DragonECS
         private bool _isInit = false;
         private bool _isDestoryed = false;
 
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
         private static EcsProfilerMarker _initMarker = new EcsProfilerMarker("EcsPipeline.Init");
 #endif
 
@@ -188,7 +188,7 @@ namespace DCFApixels.DragonECS
                 EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been initialized");
                 return;
             }
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
             _initMarker.Begin();
 #endif
 
@@ -199,7 +199,7 @@ namespace DCFApixels.DragonECS
             _isInit = true;
 
             GC.Collect();
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG
             _initMarker.End();
 #endif
         }
@@ -207,7 +207,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run()
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || DRAGONECS_STABILITY_MODE
             if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run)); }
             if (_isDestoryed) { Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run)); }
 #endif
@@ -215,7 +215,7 @@ namespace DCFApixels.DragonECS
         }
         public void Destroy()
         {
-#if DEBUG || ENABLE_DRAGONECS_ASSERT_CHEKS
+#if DEBUG || DRAGONECS_STABILITY_MODE
             if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Destroy)); }
 #endif
             if (_isDestoryed)
