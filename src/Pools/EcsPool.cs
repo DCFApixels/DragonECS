@@ -396,14 +396,15 @@ namespace DCFApixels.DragonECS
 #endif
             _isDenseEntitiesDelayedValid = true;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetFreeItemIndex(int entityID)
         {
-            if (_denseEntitiesDelayedCount >= _capacity - 1)
+            if (_denseEntitiesDelayedCount >= _capacity)
             {
                 UpdateDenseEntities();
             }
 
-            if (_itemsCount >= _capacity - 1)
+            if (_itemsCount + 1 >= _capacity)
             {
                 Resize(_items.Length << 1);
             }
