@@ -14,6 +14,7 @@ using static DCFApixels.DragonECS.EcsConsts;
 namespace DCFApixels.DragonECS
 {
     public interface IEcsMember { }
+    public interface IEcsComponentMember : IEcsMember { }
     public interface INamedMember
     {
         string Name { get; }

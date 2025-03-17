@@ -65,6 +65,9 @@ namespace DCFApixels.DragonECS
         private string _metaID;
         private EcsTypeCode _typeCode;
 
+        private bool _isProcess;
+        private bool _isComponent;
+
         private InitFlag _initFlags = InitFlag.None;
 
         #region Constructors
@@ -287,6 +290,33 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region ReflectionInfo
+        public bool IsComponent
+        {
+            get
+            {
+                if (_initFlags.HasFlag(InitFlag.ReflectionInfo) == false)
+                {
+                    MetaGenerator.GetReflectionInfo(this);
+                    _initFlags |= InitFlag.ReflectionInfo;
+                }
+                return _isComponent;
+            }
+        }
+        public bool IsProcess
+        {
+            get
+            {
+                if (_initFlags.HasFlag(InitFlag.ReflectionInfo) == false)
+                {
+                    MetaGenerator.GetReflectionInfo(this);
+                    _initFlags |= InitFlag.ReflectionInfo;
+                }
+                return _isProcess;
+            }
+        }
+        #endregion
+
         #region InitializeAll
         public TypeMeta InitializeAll()
         {
@@ -316,9 +346,10 @@ namespace DCFApixels.DragonECS
             Tags = 1 << 4,
             MetaID = 1 << 5,
             TypeCode = 1 << 6,
-            //MemberType = 1 << 7,
+            ReflectionInfo = 1 << 7,
+            //MemberType = 1 << 8,
 
-            All = Name | Group | Color | Description | Tags | TypeCode | MetaID //| MemberType
+            All = Name | Group | Color | Description | Tags | TypeCode | MetaID | ReflectionInfo //| MemberType
         }
         #endregion
 
@@ -546,6 +577,15 @@ namespace DCFApixels.DragonECS
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetMetaID)} method does not work.");
                 return string.Empty;
 #endif
+            }
+            #endregion
+
+            #region GetReflectionInfo
+            public static void GetReflectionInfo(TypeMeta meta)
+            {
+                var interfaces = meta.Type.GetInterfaces();
+                meta._isComponent = Array.IndexOf(interfaces, typeof(IEcsComponentMember)) >= 0;
+                meta._isProcess = Array.IndexOf(interfaces, typeof(IEcsProcess)) >= 0;
             }
             #endregion
         }
