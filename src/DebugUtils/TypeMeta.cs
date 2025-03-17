@@ -538,9 +538,6 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetMetaID
-#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-            private static Dictionary<string, Type> _idTypePairs = new Dictionary<string, Type>();
-#endif
             public static string GetMetaID(Type type)
             {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
@@ -565,12 +562,6 @@ namespace DCFApixels.DragonECS
                             id = $"{id}<{string.Join(", ", metaIds)}>";
                         }
                     }
-                    if (string.IsNullOrEmpty(id) == false &&
-                        _idTypePairs.TryGetValue(id, out Type otherType) && type != otherType)
-                    {
-                        Throw.Exception($"Types {type.ToMeta().TypeName} and {otherType.ToMeta().TypeName} have duplicate {atr.ID} MetaID.");
-                    }
-                    _idTypePairs[id] = type;
                     return id;
                 }
 #else

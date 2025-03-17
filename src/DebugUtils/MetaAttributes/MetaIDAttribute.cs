@@ -41,11 +41,16 @@ namespace DCFApixels.DragonECS
         [ThreadStatic]
         private static bool _isInit;
 
+
+        public static bool TryFindMetaIDCollisions(IEnumerable<TypeMeta> metas, out CollisionList collisions)
+        {
+            collisions = new CollisionList(metas);
+            return collisions.IsHasAnyCollision;
+        }
         public static CollisionList FindMetaIDCollisions(IEnumerable<TypeMeta> metas)
         {
             return new CollisionList(metas);
         }
-
 
         public static bool IsGenericID(string id)
         {
@@ -87,17 +92,18 @@ namespace DCFApixels.DragonECS
 
         #region CollisionList
         [DebuggerTypeProxy(typeof(DebuggerProxy))]
-        public class CollisionList : IEnumerable<CollisionList.List>
+        [DebuggerDisplay("HasAnyCollision: {IsHasAnyCollision} ListsCount: {ListsCount}")]
+        public class CollisionList : IEnumerable<CollisionList.Collision>
         {
-            private ListInternal[] _linkedLists;
-            private Entry[] _linkedEntries;
+            private LinkedList[] _linkedLists;
+            private Entry[] _entries;
             private int _collisionsCount;
             private int _listsCount;
             public int CollisionsCount
             {
                 get { return _collisionsCount; }
             }
-            public int ListsCount
+            public int Count
             {
                 get { return _listsCount; }
             }
@@ -105,13 +111,21 @@ namespace DCFApixels.DragonECS
             {
                 get { return _listsCount > 0; }
             }
+            public Collision this[int index]
+            {
+                get
+                {
+                    var list = _linkedLists[index];
+                    return new Collision(this, list.headNode, list.count);
+                }
+            }
 
             public CollisionList(IEnumerable<TypeMeta> metas)
             {
                 var metasCount = metas.Count();
                 Dictionary<string, int> listIndexes = new Dictionary<string, int>(metasCount);
-                _linkedLists = new ListInternal[metasCount];
-                _linkedEntries = new Entry[metasCount];
+                _linkedLists = new LinkedList[metasCount];
+                _entries = new Entry[metasCount];
 
                 bool hasCollision = false;
 
@@ -127,15 +141,21 @@ namespace DCFApixels.DragonECS
                         headIndex = _listsCount++;
                         listIndexes.Add(meta.MetaID, headIndex);
                     }
-                    ref var list = ref _linkedLists[headIndex];
                     int nodeIndex = _collisionsCount++;
-                    ref Entry entry = ref _linkedEntries[nodeIndex];
+
+                    ref var list = ref _linkedLists[headIndex];
+                    ref Entry entry = ref _entries[nodeIndex];
                     if (list.count == 0)
                     {
                         entry.next = -1;
                     }
+                    else
+                    {
+                        entry.next = list.headNode;
+                    }
                     entry.meta = meta;
-                    list.head = headIndex;
+                    list.headNode = nodeIndex;
+                    listIndexes[meta.MetaID] = headIndex;
                     list.count++;
                 }
 
@@ -146,7 +166,7 @@ namespace DCFApixels.DragonECS
                         ref var list = ref _linkedLists[i];
                         if (list.count <= 1)
                         {
-                            _linkedLists[i] = _linkedLists[--_listsCount];
+                            _linkedLists[i--] = _linkedLists[--_listsCount];
                         }
                     }
                 }
@@ -156,11 +176,13 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-            private struct ListInternal
+            [DebuggerDisplay("Count: {count}")]
+            private struct LinkedList
             {
                 public int count;
-                public int head;
+                public int headNode;
             }
+            [DebuggerDisplay("ID: {meta.MetaID} next: {next}")]
             public struct Entry
             {
                 public TypeMeta meta;
@@ -168,20 +190,20 @@ namespace DCFApixels.DragonECS
             }
 
             #region Enumerator
-            public Enumerator GetEnumerator() { return new Enumerator(); }
+            public Enumerator GetEnumerator() { return new Enumerator(this, _listsCount); }
             IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
-            IEnumerator<List> IEnumerable<List>.GetEnumerator() { return GetEnumerator(); }
-            public struct Enumerator : IEnumerator<List>
+            IEnumerator<Collision> IEnumerable<Collision>.GetEnumerator() { return GetEnumerator(); }
+            public struct Enumerator : IEnumerator<Collision>
             {
                 private readonly CollisionList _collisions;
                 private readonly int _count;
                 private int _index;
-                public List Current
+                public Collision Current
                 {
                     get
                     {
                         var list = _collisions._linkedLists[_index];
-                        return new List(_collisions, list.head, list.count);
+                        return new Collision(_collisions, list.headNode, list.count);
                     }
                 }
                 object IEnumerator.Current { get { return Current; } }
@@ -191,31 +213,46 @@ namespace DCFApixels.DragonECS
                     _count = count;
                     _index = -1;
                 }
-                public bool MoveNext() { return _index++ < _count; }
+                public bool MoveNext() { return ++_index < _count; }
                 public void Dispose() { }
                 public void Reset() { _index = -1; }
             }
             #endregion
 
-            public readonly struct List : IEnumerable<TypeMeta>
+            [DebuggerDisplay("Count: {Count}")]
+            public readonly struct Collision : IEnumerable<TypeMeta>
             {
                 private readonly CollisionList _collisions;
+                private readonly string _metaID;
                 private readonly int _head;
                 private readonly int _count;
                 public int Count
                 {
                     get { return _count; }
                 }
-                internal List(CollisionList collisions, int head, int count)
+                public string MetaID
+                {
+                    get { return _metaID; }
+                }
+                internal Collision(CollisionList collisions, int head, int count)
                 {
                     _collisions = collisions;
-                    _head = count == 0 ? -1 : head;
+                    if(count == 0)
+                    {
+                        _head = 0;
+                        _metaID = string.Empty;
+                    }
+                    else
+                    {
+                        _head = head;
+                        _metaID = collisions._entries[_head].meta.MetaID;
+                    }
                     _head = head;
                     _count = count;
                 }
 
                 #region Enumerator
-                public Enumerator GetEnumerator() { return new Enumerator(_collisions._linkedEntries, _head); }
+                public Enumerator GetEnumerator() { return new Enumerator(_collisions._entries, _head); }
                 IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
                 IEnumerator<TypeMeta> IEnumerable<TypeMeta>.GetEnumerator() { return GetEnumerator(); }
                 public struct Enumerator : IEnumerator<TypeMeta>
@@ -253,20 +290,18 @@ namespace DCFApixels.DragonECS
             #region DebuggerProxy
             private class DebuggerProxy
             {
-                private CollisionList _collisions;
-                public TypeMeta[][] Lists;
+                public string[][] Lists;
                 public DebuggerProxy(CollisionList collisions)
                 {
-                    _collisions = collisions;
-                    Lists = new TypeMeta[collisions.ListsCount][];
+                    Lists = new string[collisions.Count][];
                     int i = 0;
                     foreach (var list in collisions)
                     {
                         int j = 0;
-                        Lists[i] = new TypeMeta[list.Count];
+                        Lists[i] = new string[list.Count];
                         foreach (var typeMeta in list)
                         {
-                            Lists[i][j] = typeMeta;
+                            Lists[i][j] = typeMeta.MetaID;
                             j++;
                         }
                         i++;
