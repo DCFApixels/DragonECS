@@ -40,6 +40,17 @@ namespace DCFApixels.DragonECS
         {
             return FindPoolInstance_Internal(GetComponentTypeID(componentType));
         }
+        public bool TryFindPoolInstance(int componentTypeID, out IEcsPool pool)
+        {
+            pool = FindPoolInstance(componentTypeID);
+            return pool.IsNullOrDummy() == false;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryFindPoolInstance(Type componentType, out IEcsPool pool)
+        {
+            pool = FindPoolInstance(componentType);
+            return pool.IsNullOrDummy() == false;
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IEcsPool FindPoolInstance_Internal(int componentTypeID)
         {
