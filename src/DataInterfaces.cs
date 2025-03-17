@@ -3,7 +3,7 @@
 #endif
 using System.Runtime.CompilerServices;
 
-namespace DCFApixels.DragonECS
+namespace DCFApixels.DragonECS.Core
 {
     #region IEcsWorldComponent
     public interface IEcsWorldComponent<T>
@@ -44,11 +44,11 @@ namespace DCFApixels.DragonECS
         void Enable(ref T component);
         void Disable(ref T component);
     }
-    public static class EcsComponentResetHandler<T>
+    public static class EcsComponentLifecycleHandler<T>
     {
         public static readonly IEcsComponentLifecycle<T> instance;
         public static readonly bool isHasHandler;
-        static EcsComponentResetHandler()
+        static EcsComponentLifecycleHandler()
         {
             T def = default;
             if (def is IEcsComponentLifecycle<T> intrf)

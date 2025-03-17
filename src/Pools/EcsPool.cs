@@ -45,8 +45,8 @@ namespace DCFApixels.DragonECS
         private int[] _recycledItems;
         private int _recycledItemsCount = 0;
 
-        private readonly IEcsComponentLifecycle<T> _componentLifecycleHandler = EcsComponentResetHandler<T>.instance;
-        private readonly bool _isHasComponentLifecycleHandler = EcsComponentResetHandler<T>.isHasHandler;
+        private readonly IEcsComponentLifecycle<T> _componentLifecycleHandler = EcsComponentLifecycleHandler<T>.instance;
+        private readonly bool _isHasComponentLifecycleHandler = EcsComponentLifecycleHandler<T>.isHasHandler;
         private readonly IEcsComponentCopy<T> _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
         private readonly bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
 
