@@ -74,7 +74,7 @@ namespace DCFApixels.DragonECS.Internal
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "A placeholder type, an instance of this type replaces the null ref.")]
     [MetaTags(MetaTags.HIDDEN)]
-    [MetaID("460E547C9201227A4956AC297F67B484")]
+    [MetaID("DragonECS_460E547C9201227A4956AC297F67B484")]
     [DebuggerDisplay("-")]
     public sealed class EcsNullPool : IEcsPoolImplementation<NullComponent>
     {

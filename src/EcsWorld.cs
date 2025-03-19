@@ -48,7 +48,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.WORLDS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Container for entities and components.")]
-    [MetaID("AEF3557C92019C976FC48F90E95A9DA6")]
+    [MetaID("DragonECS_AEF3557C92019C976FC48F90E95A9DA6")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public partial class EcsWorld : IEntityStorage, IEcsMember, INamedMember
     {

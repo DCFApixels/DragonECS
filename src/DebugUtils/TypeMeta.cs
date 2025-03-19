@@ -37,7 +37,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DEBUG_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Intended for extending meta information of types, for customization of type display in the editor. You can get it by using the object.GetMeta() or Type.ToMeta() extension method. Meta information is collected from meta attributes.")]
-    [MetaID("248D587C9201EAEA881F27871B4D18A6")]
+    [MetaID("DragonECS_248D587C9201EAEA881F27871B4D18A6")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class TypeMeta : ITypeMeta
     {

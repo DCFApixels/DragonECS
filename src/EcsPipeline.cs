@@ -23,7 +23,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "...")]
-    [MetaID("F064557C92010419AB677453893D00AE")]
+    [MetaID("DragonECS_F064557C92010419AB677453893D00AE")]
     public interface IEcsPipelineMember : IEcsProcess
     {
         EcsPipeline Pipeline { get; set; }
@@ -32,7 +32,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "Container and engine for systems. Responsible for configuring the execution order of systems, providing a mechanism for messaging between systems, and a dependency injection mechanism.")]
-    [MetaID("9F5A557C9201C5C3D9BCAC2FF1CC07D4")]
+    [MetaID("DragonECS_9F5A557C9201C5C3D9BCAC2FF1CC07D4")]
     public sealed partial class EcsPipeline
     {
         private readonly IConfigContainer _configs;
@@ -289,7 +289,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.Black)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "An auxiliary type of system for dividing a pipeline into layers. This system is automatically added to the EcsPipeline.")]
-    [MetaID("42596C7C9201D0B85D1335E6E4704B57")]
+    [MetaID("DragonECS_42596C7C9201D0B85D1335E6E4704B57")]
     public class SystemsLayerMarkerSystem : IEcsProcess
     {
         public readonly string name;

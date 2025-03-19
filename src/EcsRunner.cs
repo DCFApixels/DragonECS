@@ -14,7 +14,7 @@ namespace DCFApixels.DragonECS
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "...")]
     [MetaTags(MetaTags.HIDDEN)]
-    [MetaID("EF8A557C9201E6F04D4A76DC670BDE19")]
+    [MetaID("DragonECS_EF8A557C9201E6F04D4A76DC670BDE19")]
     public interface IEcsProcess : IEcsMember { }
 
     namespace RunnersCore
@@ -69,7 +69,7 @@ namespace DCFApixels.DragonECS
         [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
         [MetaDescription(EcsConsts.AUTHOR, "...")]
         [MetaTags(MetaTags.HIDDEN)]
-        [MetaID("E49B557C92010E46DF1602972BC988BC")]
+        [MetaID("DragonECS_E49B557C92010E46DF1602972BC988BC")]
         public interface IEcsRunner : IEcsProcess
         {
             EcsPipeline Pipeline { get; }
@@ -84,7 +84,7 @@ namespace DCFApixels.DragonECS
         [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
         [MetaDescription(EcsConsts.AUTHOR, "...")]
         [MetaTags(MetaTags.HIDDEN)]
-        [MetaID("7DB3557C9201F85E0E1C17D7B19D9CEE")]
+        [MetaID("DragonECS_7DB3557C9201F85E0E1C17D7B19D9CEE")]
         public abstract class EcsRunner<TProcess> : EcsRunner, IEcsRunner, IEcsProcess
             where TProcess : IEcsProcess
         {

@@ -79,7 +79,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, DEBUG_GROUP)]
     [MetaDescription(AUTHOR, "Debugging utility. To modify or change the behavior, create a new class inherited from DebugService and set this service using DebugService.Set<T>().")]
-    [MetaID("10A4587C92013B55820D8604D718A1C3")]
+    [MetaID("DragonECS_10A4587C92013B55820D8604D718A1C3")]
     public static class EcsDebug
     {
         public static void Set<T>() where T : DebugService, new()
