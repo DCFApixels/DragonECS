@@ -37,18 +37,18 @@ namespace DCFApixels.DragonECS
     {
         public const string ALLOWED_CHARSET = "_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-        public static bool IsFixedNameType(Type type)
-        {
-            if (type.IsPrimitive)
-            {
-                return true;
-            }
-            if(type == typeof(string))
-            {
-                return true;
-            }
-            return false;
-        }
+        //public static bool IsFixedNameType(Type type)
+        //{
+        //    if (type.IsPrimitive)
+        //    {
+        //        return true;
+        //    }
+        //    if(type == typeof(string))
+        //    {
+        //        return true;
+        //    }
+        //    return false;
+        //}
         public static bool IsGenericID(string id)
         {
             return Regex.IsMatch(id, @"^[^,<>\s]*$");
