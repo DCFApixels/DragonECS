@@ -566,16 +566,17 @@ namespace DCFApixels.DragonECS
                     string id = atr.ID;
                     if (type.IsGenericType && type.IsGenericTypeDefinition == false)
                     {
-                        var metaIds = type.GetGenericArguments().Select(o => GetMetaID(o));
-                        if (metaIds.Any(o => string.IsNullOrEmpty(o)))
+                        var metaIDs = type.GetGenericArguments().Select(o => GetMetaID(o));
+                        if (metaIDs.Any(o => string.IsNullOrEmpty(o)))
                         {
                             id = string.Empty;
                         }
                         else
                         {
-                            id = $"{id}<{string.Join(", ", metaIds)}>";
+                            id = $"{id}<{string.Join(", ", metaIDs)}>";
                         }
                     }
+                    id = string.Intern(id);
                     return id;
                 }
 #else
