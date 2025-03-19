@@ -21,25 +21,124 @@ namespace DCFApixels.DragonECS
         {
             if (string.IsNullOrEmpty(id))
             {
-                Throw.ArgumentNull(nameof(id));
+                EcsDebug.PrintError("The identifier cannot be empty or null");
+                id = string.Empty;
             }
-            if (MetaID.IsGenericID(id) == false)
+            if (MetaID.IsValidID(id) == false)
             {
-                Throw.ArgumentException($"Identifier {id} contains invalid characters: ,<>");
+                EcsDebug.PrintError($"Identifier {id} contains invalid characters. Allowed charset: {MetaID.ALLOWED_CHARSET}");
+                id = string.Empty;
             }
-            id = string.Intern(id);
             ID = id;
         }
     }
 
-    public static class MetaID
+    public static unsafe class MetaID
     {
+        public const string ALLOWED_CHARSET = "_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        public static bool IsFixedNameType(Type type)
+        {
+            if (type.IsPrimitive)
+            {
+                return true;
+            }
+            if(type == typeof(string))
+            {
+                return true;
+            }
+            return false;
+        }
+        public static bool IsGenericID(string id)
+        {
+            return Regex.IsMatch(id, @"^[^,<>\s]*$");
+        }
+        public static bool IsValidID(string input)
+        {
+            return input[input.Length - 1] == '>' || Regex.IsMatch(input, @"^[a-zA-Z0-9_]+$");
+        }
+
+
         [ThreadStatic]
-        private static Random _randon;
-        [ThreadStatic]
-        private static byte[] _buffer;
-        [ThreadStatic]
-        private static bool _isInit;
+        private static uint _randonState;
+        public static string GenerateNewUniqueID()
+        {
+            const int BYTES = 16;
+            const int CHARS = BYTES * 2;
+            const string CHARSET = "0123456789ABCDEF";
+
+            if (_randonState == 0)
+            {
+                IntPtr prt = Marshal.AllocHGlobal(1);
+                long alloc = (long)prt;
+                Marshal.FreeHGlobal(prt);
+                _randonState = (uint)alloc ^ (uint)DateTime.Now.Millisecond;
+            }
+
+            byte* bytes = stackalloc byte[BYTES];
+            Span<byte> x = new Span<byte>(bytes, BYTES);
+            long* bytesLong = (long*)bytes;
+            uint* bytesUInt = (uint*)bytes;
+            bytesLong[0] = DateTime.Now.Ticks;
+            _randonState = BitsUtility.NextXorShiftState(_randonState);
+            bytesUInt[2] = _randonState;
+            _randonState = BitsUtility.NextXorShiftState(_randonState);
+            bytesUInt[3] = _randonState;
+
+
+            char* str = stackalloc char[CHARS];
+            for (int i = 0, j = 0; i < BYTES; i++)
+            {
+                byte b = bytes[i];
+                str[j++] = CHARSET[b & 0x0000_000F];
+                str[j++] = CHARSET[(b >> 4) & 0x0000_000F];
+            }
+
+            return new string(str, 0, CHARS);
+        }
+        public static string IDToAttribute(string id)
+        {
+            return $"[MetaID(\"{id}\")]";
+        }
+        public static string ConvertIDToTypeName(string id)
+        {
+            id = id.Replace("_1", "__");
+            id = id.Replace("_2", "__");
+            id = id.Replace("_3", "__");
+
+            id = id.Replace("<", "_1");
+            id = id.Replace(">", "_2");
+            id = id.Replace(",", "_3");
+            return "_" + id;
+        }
+        public static string ParseIDFromTypeName(string name)
+        {
+            char* buffer = TempBuffer<char>.Get(name.Length);
+            int count = 0;
+            //skip name[0] char
+            for (int i = 1, iMax = name.Length; i < iMax; i++)
+            {
+                char current = name[i];
+                if (current == '_')
+                {
+                    if (++i >= iMax) { break; }
+                    current = name[i];
+                    switch (current)
+                    {
+                        case '1': current = '<'; break;
+                        case '2': current = '>'; break;
+                        case '3': current = ','; break;
+                    }
+                }
+                buffer[count++] = current;
+            }
+            return new string(buffer, 0, count);
+        }
+
+        public static string GenerateNewUniqueIDWithAttribute()
+        {
+            return IDToAttribute(GenerateNewUniqueID());
+        }
 
 
         public static bool TryFindMetaIDCollisions(IEnumerable<TypeMeta> metas, out CollisionList collisions)
@@ -50,44 +149,6 @@ namespace DCFApixels.DragonECS
         public static CollisionList FindMetaIDCollisions(IEnumerable<TypeMeta> metas)
         {
             return new CollisionList(metas);
-        }
-
-        public static bool IsGenericID(string id)
-        {
-            return Regex.IsMatch(id, @"^[^,<>\s]*$");
-        }
-
-        public static unsafe string GenerateNewUniqueID()
-        {
-            if (_isInit == false)
-            {
-                IntPtr prt = Marshal.AllocHGlobal(1);
-                long alloc = (long)prt;
-                Marshal.Release(prt);
-                _randon = new Random((int)alloc);
-                _buffer = new byte[8];
-                _isInit = true;
-            }
-
-            byte* hibits = stackalloc byte[8];
-            long* hibitsL = (long*)hibits;
-            hibitsL[0] = DateTime.Now.Ticks;
-            hibitsL[1] = _randon.Next();
-
-            for (int i = 0; i < 8; i++)
-            {
-                _buffer[i] = hibits[i];
-            }
-
-            return BitConverter.ToString(_buffer).Replace("-", "");
-        }
-        public static string IDToAttribute(string id)
-        {
-            return $"[MetaID(\"id\")]";
-        }
-        public static string GenerateNewUniqueIDWithAttribute()
-        {
-            return IDToAttribute(GenerateNewUniqueID());
         }
 
         #region CollisionList
