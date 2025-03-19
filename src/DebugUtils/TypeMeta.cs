@@ -3,6 +3,7 @@
 #endif
 using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -67,6 +68,7 @@ namespace DCFApixels.DragonECS
 
         private bool _isProcess;
         private bool _isComponent;
+        private bool _isPool;
 
         private InitFlag _initFlags = InitFlag.None;
 
@@ -313,6 +315,18 @@ namespace DCFApixels.DragonECS
                     _initFlags |= InitFlag.ReflectionInfo;
                 }
                 return _isProcess;
+            }
+        }
+        public bool IsPool
+        {
+            get
+            {
+                if (_initFlags.HasFlag(InitFlag.ReflectionInfo) == false)
+                {
+                    MetaGenerator.GetReflectionInfo(this);
+                    _initFlags |= InitFlag.ReflectionInfo;
+                }
+                return _isPool;
             }
         }
         #endregion
@@ -574,9 +588,9 @@ namespace DCFApixels.DragonECS
             #region GetReflectionInfo
             public static void GetReflectionInfo(TypeMeta meta)
             {
-                var interfaces = meta.Type.GetInterfaces();
-                meta._isComponent = Array.IndexOf(interfaces, typeof(IEcsComponentMember)) >= 0;
-                meta._isProcess = Array.IndexOf(interfaces, typeof(IEcsProcess)) >= 0;
+                meta._isComponent = typeof(IEcsComponentMember).IsAssignableFrom(meta.Type);
+                meta._isProcess = typeof(IEcsProcess).IsAssignableFrom(meta.Type);
+                meta._isPool = typeof(IEcsPoolImplementation).IsAssignableFrom(meta.Type);
             }
             #endregion
         }
