@@ -21,7 +21,7 @@ namespace DCFApixels.DragonECS
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Standard component.")]
     [MetaID("DragonECS_84D2537C9201D6F6B92FEC1C8883A07A")]
-    public interface IEcsComponent : IEcsMember { }
+    public interface IEcsComponent : IEcsComponentMember { }
 
     /// <summary>Pool for IEcsComponent components</summary>
 #if ENABLE_IL2CPP
