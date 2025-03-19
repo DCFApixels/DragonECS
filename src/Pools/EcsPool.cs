@@ -370,6 +370,17 @@ namespace DCFApixels.DragonECS
         public static implicit operator EcsPool<T>(OptionalMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator EcsPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsPool<T>>(); }
         #endregion
+
+        #region Apply
+        public static void Apply(ref T component, int entityID, short worldID)
+        {
+            EcsWorld.GetPoolInstance<EcsPool<T>>(worldID).TryAddOrGet(entityID) = component;
+        }
+        public static void Apply(ref T component, int entityID, EcsPool<T> pool)
+        {
+            pool.TryAddOrGet(entityID) = component;
+        }
+        #endregion
     }
 
     public static class EcsPoolExtensions
