@@ -198,12 +198,12 @@ namespace DCFApixels.DragonECS
 
                 _poolsMediator = new PoolsMediator(this);
 
-                int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.PoolsCapacity);
+                int poolsCapacity = ArrayUtility.NextPow2(config.PoolsCapacity);
                 _pools = new IEcsPoolImplementation[poolsCapacity];
                 _poolSlots = new PoolSlot[poolsCapacity];
                 ArrayUtility.Fill(_pools, _nullPool);
 
-                int entitiesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.EntitiesCapacity);
+                int entitiesCapacity = ArrayUtility.NextPow2(config.EntitiesCapacity);
                 _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
 
                 _executorCoures = new Dictionary<(Type, object), IQueryExecutorImplementation>(config.PoolComponentsCapacity);

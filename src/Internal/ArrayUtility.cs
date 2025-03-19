@@ -92,58 +92,33 @@ namespace DCFApixels.DragonECS.Internal
             Array.Copy(array, array.Length - rightHeadLength, result, array.Length - rightHeadLength, rightHeadLength); // copy right head
             array = result;
         }
-        private static int GetHighBitNumber(uint bits)
-        {
-            if (bits == 0)
-            {
-                return -1;
-            }
-            int bit = 0;
-            if ((bits & 0xFFFF0000) != 0)
-            {
-                bits >>= 16;
-                bit |= 16;
-            }
-            if ((bits & 0xFF00) != 0)
-            {
-                bits >>= 8;
-                bit |= 8;
-            }
-            if ((bits & 0xF0) != 0)
-            {
-                bits >>= 4;
-                bit |= 4;
-            }
-            if ((bits & 0xC) != 0)
-            {
-                bits >>= 2;
-                bit |= 2;
-            }
-            if ((bits & 0x2) != 0)
-            {
-                bit |= 1;
-            }
-            return bit;
-        }
-        public static int NormalizeSizeToPowerOfTwo(int minSize)
+
+        public static int NextPow2(int v)
         {
             unchecked
             {
-                return 1 << (GetHighBitNumber((uint)minSize - 1u) + 1);
+                v--;
+                v |= v >> 1;
+                v |= v >> 2;
+                v |= v >> 4;
+                v |= v >> 8;
+                v |= v >> 16;
+                return ++v;
             }
         }
-        public static int NormalizeSizeToPowerOfTwo_ClampOverflow(int minSize)
+        public static int NextPow2_ClampOverflow(int v)
         {
             unchecked
             {
-                int hibit = (GetHighBitNumber((uint)minSize - 1u) + 1);
-                if (hibit >= 32)
+                const int NO_SIGN_HIBIT = 0x40000000;
+                if ((v & NO_SIGN_HIBIT) != 0)
                 {
                     return int.MaxValue;
                 }
-                return 1 << hibit;
+                return NextPow2(v);
             }
         }
+
         public static void Fill<T>(T[] array, T value, int startIndex = 0, int length = -1)
         {
             if (length < 0)

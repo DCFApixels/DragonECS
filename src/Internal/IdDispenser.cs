@@ -247,7 +247,7 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void Upsize_Internal(int minSize)
         {
-            Resize(ArrayUtility.NormalizeSizeToPowerOfTwo_ClampOverflow(minSize));
+            Resize(ArrayUtility.NextPow2_ClampOverflow(minSize));
         }
         private void Resize(int newSize)
         {
