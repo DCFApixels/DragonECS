@@ -261,6 +261,12 @@ namespace DCFApixels.DragonECS
             entityID = self.World.NewEntity();
             return ref self.Add(entityID);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T NewEntityLong<T>(this IEcsStructPool<T> self, out entlong entity) where T : struct
+        {
+            entity = self.World.NewEntityLong();
+            return ref self.Add(entity.GetIDUnchecked());
+        }
     }
     #endregion
 
