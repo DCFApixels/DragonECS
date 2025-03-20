@@ -92,7 +92,7 @@ namespace DCFApixels.DragonECS
         }
 
 #if UNITY_2021_3_OR_NEWER
-        [HideInCallstack]
+        [UnityEngine.HideInCallstack]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintWarning(object v)
@@ -103,7 +103,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
 #if UNITY_2021_3_OR_NEWER
-        [HideInCallstack]
+        [UnityEngine.HideInCallstack]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintError(object v)
@@ -114,7 +114,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
 #if UNITY_2021_3_OR_NEWER
-        [HideInCallstack]
+        [UnityEngine.HideInCallstack]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintErrorAndBreak(object v)
@@ -125,7 +125,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
 #if UNITY_2021_3_OR_NEWER
-        [HideInCallstack]
+        [UnityEngine.HideInCallstack]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintPass(object v)
@@ -136,7 +136,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
 #if UNITY_2021_3_OR_NEWER
-        [HideInCallstack]
+        [UnityEngine.HideInCallstack]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print()
@@ -147,7 +147,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
 #if UNITY_2021_3_OR_NEWER
-        [HideInCallstack]
+        [UnityEngine.HideInCallstack]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(object v)
@@ -158,7 +158,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
 #if UNITY_2021_3_OR_NEWER
-        [HideInCallstack]
+        [UnityEngine.HideInCallstack]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(string tag, object v)
