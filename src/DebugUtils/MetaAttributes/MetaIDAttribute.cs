@@ -160,6 +160,8 @@ namespace DCFApixels.DragonECS
             private Entry[] _entries;
             private int _collisionsCount;
             private int _listsCount;
+            private HashSet<string> _collidingIDs;
+
             public int CollisionsCount
             {
                 get { return _collisionsCount; }
@@ -179,6 +181,15 @@ namespace DCFApixels.DragonECS
                     var list = _linkedLists[index];
                     return new Collision(this, list.headNode, list.count);
                 }
+            }
+
+            public bool IsCollidingID(string id)
+            {
+                if(_collidingIDs== null)
+                {
+                    return false;
+                }
+                return _collidingIDs.Contains(id);
             }
 
             public CollisionList(IEnumerable<TypeMeta> metas)
@@ -223,6 +234,7 @@ namespace DCFApixels.DragonECS
 
                 if (hasCollision)
                 {
+                    _collidingIDs = new HashSet<string>();
                     for (int i = 0; i < _listsCount; i++)
                     {
                         ref var list = ref _linkedLists[i];
@@ -230,6 +242,10 @@ namespace DCFApixels.DragonECS
                         {
                             _linkedLists[i--] = _linkedLists[--_listsCount];
                         }
+                    }
+                    for (int i = 0; i < _listsCount; i++)
+                    {
+                        _collidingIDs.Add(this[i].MetaID);
                     }
                 }
                 else
