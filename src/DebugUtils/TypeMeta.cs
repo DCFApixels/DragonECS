@@ -6,6 +6,7 @@ using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 #if DEBUG || !REFLECTION_DISABLED
@@ -275,6 +276,7 @@ namespace DCFApixels.DragonECS
                 return _metaID;
             }
         }
+        public bool IsHasMetaID() { return string.IsNullOrEmpty(MetaID) == false; }
         #endregion
 
         #region TypeCode
@@ -381,7 +383,17 @@ namespace DCFApixels.DragonECS
             return false;
 #endif
         }
-        public static bool IsHasMeta(Type type)
+        public static bool TryGetCustomMeta(Type type, out TypeMeta meta)
+        {
+            if (IsHasCustomMeta(type))
+            {
+                meta = type.ToMeta();
+                return true;
+            }
+            meta = null;
+            return false;
+        }
+        public static bool IsHasCustomMeta(Type type)
         {
 #if DEBUG || !REFLECTION_DISABLED
             return CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(EcsMetaAttribute), false).Length > 0;
@@ -393,7 +405,7 @@ namespace DCFApixels.DragonECS
         public static bool IsHasMetaID(Type type)
         {
 #if DEBUG || !REFLECTION_DISABLED
-            return type.HasAttribute<MetaIDAttribute>();
+            return TryGetCustomMeta(type, out TypeMeta meta) && meta.IsHasMetaID();
 #else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasMetaID)} method does not work.");
             return false;
@@ -446,6 +458,15 @@ namespace DCFApixels.DragonECS
             {
                 _meta = meta;
             }
+        }
+        #endregion
+
+        #region Obsolete
+        [Obsolete("Use TryGetCustomMeta(type)")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool IsHasMeta(Type type)
+        {
+            return IsHasCustomMeta(type);
         }
         #endregion
 

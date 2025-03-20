@@ -51,11 +51,11 @@ namespace DCFApixels.DragonECS
         //}
         public static bool IsGenericID(string id)
         {
-            return Regex.IsMatch(id, @"^[^,<>\s]*$");
+            return id[id.Length - 1] == '>' || Regex.IsMatch(id, @"^[^,<>\s]*$");
         }
-        public static bool IsValidID(string input)
+        public static bool IsValidID(string id)
         {
-            return input[input.Length - 1] == '>' || Regex.IsMatch(input, @"^[a-zA-Z0-9_]+$");
+            return Regex.IsMatch(id, @"^[a-zA-Z0-9_]+$");
         }
 
 
@@ -153,7 +153,7 @@ namespace DCFApixels.DragonECS
 
         #region CollisionList
         [DebuggerTypeProxy(typeof(DebuggerProxy))]
-        [DebuggerDisplay("HasAnyCollision: {IsHasAnyCollision} ListsCount: {ListsCount}")]
+        [DebuggerDisplay("HasAnyCollision: {IsHasAnyCollision} ListsCount: {Count}")]
         public class CollisionList : IEnumerable<CollisionList.Collision>
         {
             private LinkedList[] _linkedLists;
@@ -193,6 +193,7 @@ namespace DCFApixels.DragonECS
                 _listsCount = 0;
                 foreach (var meta in metas)
                 {
+                    if (meta.IsHasMetaID() == false) { continue; }
                     if (listIndexes.TryGetValue(meta.MetaID, out int headIndex))
                     {
                         hasCollision = true;
@@ -281,6 +282,7 @@ namespace DCFApixels.DragonECS
             #endregion
 
             [DebuggerDisplay("Count: {Count}")]
+            [DebuggerTypeProxy(typeof(DebuggerProxy))]
             public readonly struct Collision : IEnumerable<TypeMeta>
             {
                 private readonly CollisionList _collisions;
@@ -298,7 +300,7 @@ namespace DCFApixels.DragonECS
                 internal Collision(CollisionList collisions, int head, int count)
                 {
                     _collisions = collisions;
-                    if(count == 0)
+                    if (count == 0)
                     {
                         _head = 0;
                         _metaID = string.Empty;
@@ -346,8 +348,18 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 #endregion
-            }
 
+                #region DebuggerProxy
+                private class DebuggerProxy
+                {
+                    public Type[] Types;
+                    public DebuggerProxy(Collision collision)
+                    {
+                        Types = collision.Select(o => o.Type).ToArray();
+                    }
+                }
+                #endregion
+            }
             #region DebuggerProxy
             private class DebuggerProxy
             {
