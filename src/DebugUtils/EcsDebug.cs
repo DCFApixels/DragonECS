@@ -262,7 +262,7 @@ namespace DCFApixels.DragonECS
                     {
                         service.OnNewProfilerMark(record.Value, record.Key);
                     }
-                    oldService.OnDisableBaseService(service);
+                    oldService?.OnDisableBaseService(service);
                     service.OnEnableBaseService(oldService);
                     OnServiceChanged(service);
                 }
