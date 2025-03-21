@@ -228,7 +228,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Constructors
+        #region Static Constructor
         static DebugService()
         {
             Set(new DefaultDebugService());
@@ -262,15 +262,17 @@ namespace DCFApixels.DragonECS
                     {
                         service.OnNewProfilerMark(record.Value, record.Key);
                     }
-                    service.OnServiceSetup(oldService);
+                    oldService.OnDisableBaseService(service);
+                    service.OnEnableBaseService(oldService);
                     OnServiceChanged(service);
                 }
             }
         }
         #endregion
 
-        #region OnServiceSetup/CreateThreadInstance
-        protected virtual void OnServiceSetup(DebugService oldService) { }
+        #region OnEnable/OnDisable/CreateThreadInstance
+        protected virtual void OnEnableBaseService(DebugService prevService) { }
+        protected virtual void OnDisableBaseService(DebugService nextService) { }
         protected abstract DebugService CreateThreadInstance();
         #endregion
 
@@ -349,9 +351,11 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        public static OnServiceChangedHandler OnServiceChanged = delegate { };
+        #region Events
+        public static event OnServiceChangedHandler OnServiceChanged = delegate { };
 
         public delegate void OnServiceChangedHandler(DebugService service);
+        #endregion
     }
     public static class DebugServiceExtensions
     {
