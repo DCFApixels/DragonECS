@@ -13,24 +13,12 @@ namespace DCFApixels.DragonECS
     public sealed class MetaGroupAttribute : EcsMetaAttribute
     {
         public const char SEPARATOR = MetaGroup.SEPARATOR;
-        public readonly Type InheritingGroupType = null;
-        public readonly string RelativeName = string.Empty;
+        public readonly string Name = string.Empty;
 
         [Obsolete(EcsMetaAttributeHalper.EMPTY_NO_SENSE_MESSAGE)]
         public MetaGroupAttribute() { }
-        public MetaGroupAttribute(string name) { RelativeName = name; }
-        public MetaGroupAttribute(params string[] path) { RelativeName = string.Join(SEPARATOR, path); }
-        public MetaGroupAttribute(Type inheritingGroupType) { InheritingGroupType = inheritingGroupType; }
-        public MetaGroupAttribute(Type inheritingGroupType, string relativeName)
-        {
-            InheritingGroupType = inheritingGroupType;
-            RelativeName = relativeName;
-        }
-        public MetaGroupAttribute(Type inheritingGroupType, params string[] relativePath)
-        {
-            InheritingGroupType = inheritingGroupType;
-            RelativeName = string.Join(SEPARATOR, relativePath);
-        }
+        public MetaGroupAttribute(string name) { Name = name; }
+        public MetaGroupAttribute(params string[] path) { Name = string.Join(SEPARATOR, path); }
     }
     [DebuggerDisplay("{Name}")]
     public class MetaGroup
@@ -39,9 +27,8 @@ namespace DCFApixels.DragonECS
         private const string SEPARATOR_STR = "/";
         public const string UNGROUPED = "<UNGROUPED>";
         private const string PATTERN = @"Module(?=/)";
-        public static readonly MetaGroup Empty = new MetaGroup(null, UNGROUPED);
+        public static readonly MetaGroup Empty = new MetaGroup(UNGROUPED);
 
-        public readonly MetaGroup ParentGroup;
         public readonly string Name;
         private string[] _splited = null;
         public IReadOnlyCollection<string> Splited
@@ -59,7 +46,7 @@ namespace DCFApixels.DragonECS
         {
             get { return this == Empty; }
         }
-        private MetaGroup(MetaGroup parentGroup, string name)
+        private MetaGroup(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -80,26 +67,11 @@ namespace DCFApixels.DragonECS
         }
         public static MetaGroup FromName(string name)
         {
-            return FromName(null, name);
-        }
-        public static MetaGroup FromName(MetaGroup parentGroup, string name)
-        {
-            if(parentGroup == null || parentGroup == Empty)
+            if (string.IsNullOrWhiteSpace(name))
             {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    return Empty;
-                }
-                return new MetaGroup(null, name);
+                return Empty;
             }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    return new MetaGroup(parentGroup, parentGroup.Name);
-                }
-                return new MetaGroup(parentGroup, parentGroup.Name + name);
-            }
+            return new MetaGroup(name);
         }
         public static MetaGroup FromNameSpace(Type type)
         {
@@ -107,7 +79,7 @@ namespace DCFApixels.DragonECS
             {
                 return Empty;
             }
-            return new MetaGroup(null, type.Namespace.Replace('.', SEPARATOR));
+            return new MetaGroup(type.Namespace.Replace('.', SEPARATOR));
         }
         public override string ToString() { return Name; }
     }

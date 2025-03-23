@@ -521,19 +521,11 @@ namespace DCFApixels.DragonECS
                 }
                 return MetaColor.FromHashCode(hash).UpContrast();
             }
-            private static MetaColor GetColorFromAttribute(MetaColorAttribute atr)
-            {
-                if(atr.InheritingColorType == null)
-                {
-                    return atr.color;
-                }
-                return atr.InheritingColorType.ToMeta().Color;
-            }
             public static (MetaColor, bool) GetColor(TypeMeta meta)
             {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 bool isCustom = meta.Type.TryGetAttribute(out MetaColorAttribute atr);
-                return (isCustom ? GetColorFromAttribute(atr) : AutoColor(meta), isCustom);
+                return (isCustom ? atr.color : AutoColor(meta), isCustom);
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetColor)} method does not work.");
                 return (MetaColor.White, false);
@@ -545,7 +537,14 @@ namespace DCFApixels.DragonECS
             public static MetaGroup GetGroup(Type type)
             {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                return type.TryGetAttribute(out MetaGroupAttribute atr) ? MetaGroup.FromName(atr.InheritingGroupType.GetMeta().Group, atr.RelativeName) : MetaGroup.FromNameSpace(type);
+                if (type.TryGetAttribute(out MetaGroupAttribute atr))
+                {
+                    return MetaGroup.FromName(atr.Name);
+                }
+                else
+                {
+                    return MetaGroup.FromNameSpace(type);
+                }
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetGroup)} method does not work.");
                 return MetaGroup.Empty;
