@@ -26,6 +26,7 @@ namespace DCFApixels.DragonECS
     public sealed class MetaColorAttribute : EcsMetaAttribute, IMetaColor
     {
         public readonly MetaColor color;
+        public readonly Type InheritingColorType;
 
         #region Properties
         public byte R
@@ -70,6 +71,10 @@ namespace DCFApixels.DragonECS
         public MetaColorAttribute(uint colorCode)
         {
             color = new MetaColor(colorCode, true);
+        }
+        public MetaColorAttribute(Type inheritingColorType)
+        {
+            InheritingColorType = inheritingColorType;
         }
         #endregion
     }

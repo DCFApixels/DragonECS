@@ -86,7 +86,7 @@ namespace DCFApixels.DragonECS
                 _typeName = NULL_NAME,
                 _color = new MetaColor(MetaColor.Black),
                 _description = new MetaDescription("", NULL_NAME),
-                _group = new MetaGroup(""),
+                _group = MetaGroup.Empty,
                 _tags = Array.Empty<string>(),
                 _metaID = string.Empty,
                 _typeCode = EcsTypeCodeManager.Get(typeof(void)),
@@ -508,7 +508,6 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetColor
-
             private static MetaColor AutoColor(TypeMeta meta)
             {
                 int hash;
@@ -522,14 +521,22 @@ namespace DCFApixels.DragonECS
                 }
                 return MetaColor.FromHashCode(hash).UpContrast();
             }
+            private static MetaColor GetColorFromAttribute(MetaColorAttribute atr)
+            {
+                if(atr.InheritingColorType == null)
+                {
+                    return atr.color;
+                }
+                return atr.InheritingColorType.ToMeta().Color;
+            }
             public static (MetaColor, bool) GetColor(TypeMeta meta)
             {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 bool isCustom = meta.Type.TryGetAttribute(out MetaColorAttribute atr);
-                return (isCustom ? atr.color : AutoColor(meta), isCustom);
+                return (isCustom ? GetColorFromAttribute(atr) : AutoColor(meta), isCustom);
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetColor)} method does not work.");
-                return (AutoColor(type), false);
+                return (MetaColor.White, false);
 #endif
             }
             #endregion
@@ -538,7 +545,7 @@ namespace DCFApixels.DragonECS
             public static MetaGroup GetGroup(Type type)
             {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                return type.TryGetAttribute(out MetaGroupAttribute atr) ? atr.Data : MetaGroup.FromNameSpace(type);
+                return type.TryGetAttribute(out MetaGroupAttribute atr) ? MetaGroup.FromName(atr.InheritingGroupType.GetMeta().Group, atr.RelativeName) : MetaGroup.FromNameSpace(type);
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetGroup)} method does not work.");
                 return MetaGroup.Empty;
