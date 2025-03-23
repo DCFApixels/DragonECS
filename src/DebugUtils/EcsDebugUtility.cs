@@ -1,6 +1,7 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 #if DEBUG || !REFLECTION_DISABLED
@@ -312,6 +313,9 @@ namespace DCFApixels.DragonECS
     {
         public static TypeMeta GetMeta(this object self)
         {
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+            if (self is Type type) { Throw.DeepDebugException(); }
+#endif
             return EcsDebugUtility.GetTypeMeta(self);
         }
         public static TypeMeta ToMeta(this Type self)
