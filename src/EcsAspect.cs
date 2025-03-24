@@ -125,7 +125,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         //Инициализация аспектов проходит в синхронизированном состоянии, поэтому использование _staticMaskCache потоко безопасно.
-        private static Dictionary<Type, EcsStaticMask> _staticMaskCache = new Dictionary<Type, EcsStaticMask>();
+        private readonly static Dictionary<Type, EcsStaticMask> _staticMaskCache = new Dictionary<Type, EcsStaticMask>();
 
         internal EcsWorld _source;
         internal EcsMask _mask;

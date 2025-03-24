@@ -26,11 +26,11 @@ namespace DCFApixels.DragonECS
 
         private static EcsWorld[] _worlds = Array.Empty<EcsWorld>();
         private static readonly IdDispenser _worldIdDispenser = new IdDispenser(4, 0, n => Array.Resize(ref _worlds, n));
-
         private static StructList<WorldComponentPoolAbstract> _allWorldComponentPools = new StructList<WorldComponentPoolAbstract>(64);
+        private static readonly object _worldLock = new object();
+
         private StructList<WorldComponentPoolAbstract> _worldComponentPools;
         private int _builtinWorldComponentsCount = 0;
-        private static readonly object _worldLock = new object();
 
         static EcsWorld()
         {
@@ -92,6 +92,7 @@ namespace DCFApixels.DragonECS
                 }
                 world = null;
             }
+            _worlds = Array.Empty<EcsWorld>();
             _worldIdDispenser.ReleaseAll();
         }
 
@@ -137,8 +138,8 @@ namespace DCFApixels.DragonECS
             private static short _count;
             private static short[] _recycledItems = new short[4];
             private static short _recycledItemsCount;
-            private static IEcsWorldComponent<T> _interface = EcsWorldComponentHandler<T>.instance;
-            private static Abstract _controller = new Abstract();
+            private static readonly IEcsWorldComponent<T> _interface = EcsWorldComponentHandler<T>.instance;
+            private static readonly Abstract _controller = new Abstract();
             static WorldComponentPool()
             {
                 _allWorldComponentPools.Add(_controller);

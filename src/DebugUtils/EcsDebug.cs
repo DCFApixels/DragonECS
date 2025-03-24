@@ -1,16 +1,18 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
+using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using static DCFApixels.DragonECS.EcsConsts;
 
 namespace DCFApixels.DragonECS
 {
-    using static EcsConsts;
+    #region EcsProfilerMarker
     public readonly struct EcsProfilerMarker
     {
 #if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
@@ -75,6 +77,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator EcsProfilerMarker(string markerName) { return new EcsProfilerMarker(markerName); }
     }
+    #endregion
 
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, DEBUG_GROUP)]
@@ -82,6 +85,7 @@ namespace DCFApixels.DragonECS
     [MetaID("DragonECS_10A4587C92013B55820D8604D718A1C3")]
     public static class EcsDebug
     {
+        #region Set
         public static void Set<T>() where T : DebugService, new()
         {
             DebugService.Set<T>();
@@ -90,7 +94,9 @@ namespace DCFApixels.DragonECS
         {
             DebugService.Set(service);
         }
+        #endregion
 
+        #region Print
 #if UNITY_2021_3_OR_NEWER
         [UnityEngine.HideInCallstack]
 #endif
@@ -168,6 +174,9 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.Print(tag, v);
 #endif
         }
+        #endregion
+
+        #region Other
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Break()
         {
@@ -175,9 +184,12 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.Break();
 #endif
         }
+        #endregion
 
+        #region Events
         public static OnPrintHandler OnPrint = delegate { };
         public delegate void OnPrintHandler(string tag, object v);
+        #endregion
     }
 
     //------------------------------------------------------------------------------------------------------------//
@@ -185,19 +197,23 @@ namespace DCFApixels.DragonECS
     public abstract class DebugService
     {
         private static DebugService _instance;
-        private static object _lock = new object();
+        private readonly static object _lock = new object();
 
-        private static HashSet<DebugService> _threadServiceClonesSet = new HashSet<DebugService>();
+        private readonly static HashSet<DebugService> _threadServiceClonesSet = new HashSet<DebugService>();
 
         [ThreadStatic]
         private static DebugService _currentThreadInstanceClone;
         [ThreadStatic]
         private static DebugService _currentThreadInstance; // для сравнения
 
-        private static IdDispenser _idDispenser = new IdDispenser(16, 0);
-        private static Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
+        private readonly static IdDispenser _idDispenser = new IdDispenser(16, 0);
+        private readonly static Dictionary<string, int> _nameIdTable = new Dictionary<string, int>();
 
         #region Properties
+        public static bool IsNullOrDefault
+        {
+            get { return _instance == null || _instance is NullDebugService || _instance is DefaultDebugService; }
+        }
         public static DebugService Instance
         {
             get { return _instance; }
@@ -231,7 +247,11 @@ namespace DCFApixels.DragonECS
         #region Static Constructor
         static DebugService()
         {
+#if !UNITY_5_3_OR_NEWER
+            Set(new NullDebugService());
+#else
             Set(new DefaultDebugService());
+#endif
         }
         #endregion
 
@@ -357,6 +377,11 @@ namespace DCFApixels.DragonECS
         public delegate void OnServiceChangedHandler(DebugService service);
         #endregion
     }
+}
+
+namespace DCFApixels.DragonECS.Core
+{
+    #region DebugServiceExtensions
     public static class DebugServiceExtensions
     {
         public static void PrintWarning(this DebugService self, object v)
@@ -386,7 +411,9 @@ namespace DCFApixels.DragonECS
         }
         //TODO PrintJson возможно будет добавлено когда-то
     }
+    #endregion
 
+    #region DefaultServices
     //------------------------------------------------------------------------------------------------------------//
 
     public sealed class NullDebugService : DebugService
@@ -404,7 +431,6 @@ namespace DCFApixels.DragonECS
 
     public sealed class DefaultDebugService : DebugService
     {
-#if !UNITY_5_3_OR_NEWER
         private const string PROFILER_MARKER = "ProfilerMark";
         private const string PROFILER_MARKER_CACHE = "[" + PROFILER_MARKER + "] ";
 
@@ -573,14 +599,6 @@ namespace DCFApixels.DragonECS
                 return this.AutoToString();
             }
         }
-#else
-        protected sealed override DebugService CreateThreadInstance() { return this; }
-        public sealed override void Break() { }
-        public sealed override void Print(string tag, object v) { }
-        public sealed override void ProfilerMarkBegin(int id) { }
-        public sealed override void ProfilerMarkEnd(int id) { }
-        protected sealed override void OnDelProfilerMark(int id) { }
-        protected sealed override void OnNewProfilerMark(int id, string name) { }
-#endif
     }
+    #endregion
 }

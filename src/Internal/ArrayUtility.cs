@@ -134,6 +134,39 @@ namespace DCFApixels.DragonECS.Internal
                 array[i] = value;
             }
         }
+
+
+        public static void UpsizeWithoutCopy<T>(ref T[] array, int minSize)
+        {
+            if (array == null || minSize > array.Length)
+            {
+                array = new T[minSize];
+            }
+        }
+        public static void Upsize<T>(ref T[] array, int minSize)
+        {
+            if (array == null)
+            {
+                array = new T[minSize];
+            }
+            else if (minSize > array.Length)
+            {
+                Array.Resize(ref array, minSize);
+            }
+        }
+        public static void UpsizeToNextPow2<T>(ref T[] array, int minSize)
+        {
+            if (array == null)
+            {
+                minSize = NextPow2(minSize);
+                array = new T[minSize];
+            }
+            else if (minSize > array.Length)
+            {
+                minSize = NextPow2(minSize);
+                Array.Resize(ref array, minSize);
+            }
+        }
     }
     internal readonly struct EnumerableInt : IEnumerable<int>
     {

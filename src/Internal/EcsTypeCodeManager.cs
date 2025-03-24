@@ -22,7 +22,7 @@ namespace DCFApixels.DragonECS.Internal
     {
         private static readonly Dictionary<EcsTypeCodeKey, EcsTypeCode> _codes = new Dictionary<EcsTypeCodeKey, EcsTypeCode>();
         private static int _increment = 1;
-        private static object _lock = new object();
+        private static readonly object _lock = new object();
         public static int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

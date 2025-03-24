@@ -114,20 +114,18 @@ namespace DCFApixels.DragonECS
         private static IEcsProcess[] _buffer;
         private T[] CreateProcess<T>() where T : IEcsProcess
         {
-            if (_buffer == null || _buffer.Length < _allSystems.Length)
-            {
-                Array.Resize(ref _buffer, _allSystems.Length);
-            }
-            int l = 0;
+            ArrayUtility.UpsizeWithoutCopy(ref _buffer, _allSystems.Length);
+            int bufferLength = 0;
             for (int i = 0, iMax = _allSystems.Length; i < iMax; i++)
             {
                 if (_allSystems[i] is T)
                 {
-                    _buffer[l++] = _allSystems[i];
+                    _buffer[bufferLength++] = _allSystems[i];
                 }
             }
-            T[] result = new T[l];
-            Array.Copy(_buffer, result, l);
+            T[] result = new T[bufferLength];
+            Array.Copy(_buffer, result, bufferLength);
+            Array.Clear(_buffer, 0, bufferLength);
             return result;
         }
         #endregion

@@ -955,10 +955,8 @@ namespace DCFApixels.DragonECS
         public ReadOnlySpan<object> GetComponentsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
-            if (_componentsBuffer == null || _componentsBuffer.Length < count)
-            {
-                _componentsBuffer = new object[count];
-            }
+            ArrayUtility.UpsizeWithoutCopy(ref _componentIDsBuffer, count);
+
             for (int i = 0; i < count; i++)
             {
                 _componentsBuffer[i] = _pools[_componentIDsBuffer[i]].GetRaw(entityID);
@@ -986,14 +984,7 @@ namespace DCFApixels.DragonECS
         private unsafe int GetComponentTypeIDsFor_Internal(int entityID, ref int[] componentIDs)
         {
             var itemsCount = GetComponentsCount(entityID);
-            if (componentIDs == null)
-            {
-                componentIDs = new int[itemsCount];
-            }
-            if (componentIDs.Length < itemsCount)
-            {
-                Array.Resize(ref componentIDs, itemsCount);
-            }
+            ArrayUtility.UpsizeWithoutCopy(ref componentIDs, itemsCount);
 
             if (itemsCount <= 0) { return 0; }
 
@@ -1170,6 +1161,7 @@ namespace DCFApixels.DragonECS
             public long Version { get { return _world.Version; } }
             public IEcsPool[] Pools { get { return _world._pools; } }
             public short ID { get { return _world.ID; } }
+            public bool IsDestroyed { get { return _world._isDestroyed; } }
             public List<MaskQueryExecutor> MaskQueries { get { return _queries; } }
             public DebuggerProxy(EcsWorld world)
             {

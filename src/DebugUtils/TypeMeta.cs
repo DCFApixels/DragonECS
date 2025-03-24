@@ -45,7 +45,7 @@ namespace DCFApixels.DragonECS
         private const string NULL_NAME = "NULL";
         public static readonly TypeMeta NullTypeMeta;
 
-        private static object _lock = new object();
+        private static readonly object _lock = new object();
         private static readonly Dictionary<Type, TypeMeta> _metaCache = new Dictionary<Type, TypeMeta>();
         private static int _increment = 1;
 
@@ -84,7 +84,7 @@ namespace DCFApixels.DragonECS
 
                 _name = NULL_NAME,
                 _typeName = NULL_NAME,
-                _color = new MetaColor(MetaColor.Black),
+                _color = MetaColor.Black,
                 _description = new MetaDescription("", NULL_NAME),
                 _group = MetaGroup.Empty,
                 _tags = Array.Empty<string>(),

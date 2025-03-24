@@ -44,6 +44,7 @@ namespace DCFApixels.DragonECS.Internal
             }
         }
     }
+
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
