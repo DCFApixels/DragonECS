@@ -81,6 +81,7 @@ namespace DCFApixels.DragonECS
 
         public static void ResetStaticState()
         {
+            var nullworld = _worlds[0];
             for (int i = 1; i < _worlds.Length; i++)
             {
                 var world = _worlds[i];
@@ -92,7 +93,8 @@ namespace DCFApixels.DragonECS
                 }
                 world = null;
             }
-            _worlds = Array.Empty<EcsWorld>();
+            _worlds = new EcsWorld[_worldIdDispenser.Capacity];
+            _worlds[0] = nullworld;
             _worldIdDispenser.ReleaseAll();
         }
 
