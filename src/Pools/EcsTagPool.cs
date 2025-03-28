@@ -333,6 +333,7 @@ namespace DCFApixels.DragonECS
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
 #endif
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public readonly struct ReadonlyEcsTagPool<T> : IEcsReadonlyPool //IEnumerable<T> - IntelliSense hack
     where T : struct, IEcsTagComponent
     {
