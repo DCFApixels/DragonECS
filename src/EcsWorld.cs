@@ -481,20 +481,60 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (mask.WorldID != ID) { return false; }
 #endif
-            for (int i = 0, iMax = mask._incs.Length; i < iMax; i++)
+
+
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+            bool IsMatchesMaskDeepDebug(EcsMask mask_, int entityID_)
             {
-                if (!_pools[mask._incs[i]].Has(entityID))
+                for (int i = 0, iMax = mask_._incs.Length; i < iMax; i++)
                 {
+                    if (!_pools[mask_._incs[i]].Has(entityID_))
+                    {
+                        return false;
+                    }
+                }
+                for (int i = 0, iMax = mask_._excs.Length; i < iMax; i++)
+                {
+                    if (_pools[mask_._excs[i]].Has(entityID_))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            bool deepDebug = IsMatchesMaskDeepDebug(mask, entityID);
+#endif
+
+            var incChuncks = mask._incChunckMasks;
+            var excChuncks = mask._excChunckMasks;
+            var componentMaskStartIndex = entityID << _entityComponentMaskLengthBitShift;
+
+            for (int i = 0; i < incChuncks.Length; i++)
+            {
+                var bit = incChuncks[i];
+                if ((_entityComponentMasks[componentMaskStartIndex + bit.chunkIndex] & bit.mask) != bit.mask)
+                {
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                    if (false != deepDebug) { Throw.DeepDebugException(); }
+#endif
                     return false;
                 }
             }
-            for (int i = 0, iMax = mask._excs.Length; i < iMax; i++)
+            for (int i = 0; i < excChuncks.Length; i++)
             {
-                if (_pools[mask._excs[i]].Has(entityID))
+                var bit = excChuncks[i];
+                if ((_entityComponentMasks[componentMaskStartIndex + bit.chunkIndex] & bit.mask) != 0)
                 {
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                    if (false != deepDebug) { Throw.DeepDebugException(); }
+#endif
                     return false;
                 }
             }
+
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+            if (true != deepDebug) { Throw.DeepDebugException(); }
+#endif
             return true;
         }
         #endregion
@@ -999,8 +1039,8 @@ namespace DCFApixels.DragonECS
             int arrayIndex = 0;
             for (int chunkIndex = entityID << _entityComponentMaskLengthBitShift,
                     chunkIndexMax = chunkIndex + _entityComponentMaskLength;
-                chunkIndex < chunkIndexMax;
-                chunkIndex++)
+                    chunkIndex < chunkIndexMax;
+                    chunkIndex++)
             {
                 int chunk = _entityComponentMasks[chunkIndex];
                 if (chunk == 0)
