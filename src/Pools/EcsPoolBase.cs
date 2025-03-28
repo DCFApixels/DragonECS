@@ -135,13 +135,13 @@ namespace DCFApixels.DragonECS.Internal
             throw new NullInstanceException();
 #endif
         }
-        void IEcsReadonlyPool.Copy(int fromEntityID, int toEntityID)
+        void IEcsPool.Copy(int fromEntityID, int toEntityID)
         {
 #if DEBUG
             throw new NullInstanceException();
 #endif
         }
-        void IEcsReadonlyPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        void IEcsPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if DEBUG
             throw new NullInstanceException();
@@ -189,11 +189,10 @@ namespace DCFApixels.DragonECS
         #region Methods
         bool Has(int entityID);
         object GetRaw(int entityID);
-        void Copy(int fromEntityID, int toEntityID);
-        void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID);
         #endregion
 
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
+
         #region Add/Remove Listeners
         void AddListener(IEcsPoolEventListener listener);
         void RemoveListener(IEcsPoolEventListener listener);
@@ -209,6 +208,8 @@ namespace DCFApixels.DragonECS
         void SetRaw(int entityID, object dataRaw);
         void Del(int entityID);
         void ClearAll();
+        void Copy(int fromEntityID, int toEntityID);
+        void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID);
         #endregion
     }
 
