@@ -20,6 +20,20 @@ namespace DCFApixels.DragonECS
             self.Apply(worldID, entityID);
             return (EcsWorld.GetWorld(worldID), entityID);
         }
+        public static void Apply(this ITemplateNode self, EcsWorld world, int entityID)
+        {
+            self.Apply(world.ID, entityID);
+        }
+        public static int ApplyAndReturn(this ITemplateNode self, EcsWorld world, int entityID)
+        {
+            self.Apply(world.ID, entityID);
+            return entityID;
+        }
+        public static entlong ApplyAndReturnLong(this ITemplateNode self, EcsWorld world, int entityID)
+        {
+            self.Apply(world.ID, entityID);
+            return (world, entityID);
+        }
         public static int NewEntity(this EcsWorld world, ITemplateNode template)
         {
             int e = world.NewEntity();
