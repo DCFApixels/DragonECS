@@ -294,7 +294,7 @@ namespace DCFApixels.DragonECS
         {
             Add(entityID) = dataRaw == null ? default : (T)dataRaw;
         }
-        object IEcsReadonlyPool.GetRaw(int entityID) { return Get(entityID); }
+        object IEcsReadonlyPool.GetRaw(int entityID) { return Read(entityID); }
         void IEcsPool.SetRaw(int entityID, object dataRaw)
         {
             Get(entityID) = dataRaw == null ? default : (T)dataRaw;
@@ -364,7 +364,7 @@ namespace DCFApixels.DragonECS
         IEnumerator IEnumerable.GetEnumerator() { throw new NotImplementedException(); }
         #endregion
 
-        #region MarkersConverter
+        #region Convertors
         public static implicit operator EcsPool<T>(IncludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator EcsPool<T>(ExcludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator EcsPool<T>(OptionalMarker a) { return a.GetInstance<EcsPool<T>>(); }
@@ -382,6 +382,74 @@ namespace DCFApixels.DragonECS
         }
         #endregion
     }
+
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+#endif
+    public readonly struct ReadonlyEcsPool<T> : IEcsReadonlyPool //IEnumerable<T> - IntelliSense hack
+        where T : struct, IEcsComponent
+    {
+        private readonly EcsPool<T> _pool;
+
+        #region Properties
+        public int ComponentTypeID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.ComponentTypeID; }
+        }
+        public Type ComponentType
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.ComponentType; }
+        }
+        public EcsWorld World
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.World; }
+        }
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.Count; }
+        }
+        public bool IsReadOnly
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.IsReadOnly; }
+        }
+        #endregion
+
+        #region Constructors
+        internal ReadonlyEcsPool(EcsPool<T> pool)
+        {
+            _pool = pool;
+        }
+        #endregion
+
+        #region Methods
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Has(int entityID) { return _pool.Has(entityID); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly T Get(int entityID) { return ref _pool.Read(entityID); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly T Read(int entityID) { return ref _pool.Read(entityID); }
+        object IEcsReadonlyPool.GetRaw(int entityID) { return _pool.Read(entityID); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+        #endregion
+
+        #region Convertors
+        public static implicit operator ReadonlyEcsPool<T>(EcsPool<T> a) { return new ReadonlyEcsPool<T>(a); }
+        public static implicit operator ReadonlyEcsPool<T>(IncludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        public static implicit operator ReadonlyEcsPool<T>(ExcludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        public static implicit operator ReadonlyEcsPool<T>(OptionalMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        public static implicit operator ReadonlyEcsPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        #endregion
+    }
+
 
     public static class EcsPoolExtensions
     {

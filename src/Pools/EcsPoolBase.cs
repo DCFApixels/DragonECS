@@ -26,6 +26,13 @@ namespace DCFApixels.DragonECS.PoolsCore
     /// <typeparam name="T"> Component type. </typeparam>
     public interface IEcsPoolImplementation<T> : IEcsPoolImplementation { }
 
+    //TODO
+    //public interface IEcsReadonlyPoolImplementation<TPool> : IEcsReadonlyPool
+    //    where TPool : IEcsReadonlyPoolImplementation<TPool>
+    //{
+    //    void Init(ref TPool pool);
+    //}
+
     #region EcsPoolThrowHelper
     public static class EcsPoolThrowHelper
     {
