@@ -365,6 +365,10 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.IsReadOnly; }
         }
+        public bool this[int entityID]
+        {
+            get { return _pool.Has(entityID); }
+        }
         #endregion
 
         #region Constructors
