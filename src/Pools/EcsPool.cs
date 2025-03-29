@@ -440,11 +440,13 @@ namespace DCFApixels.DragonECS
         public ref readonly T Read(int entityID) { return ref _pool.Read(entityID); }
         object IEcsReadonlyPool.GetRaw(int entityID) { return _pool.Read(entityID); }
 
+#if !DRAGONECS_DISABLE_POOLS_EVENTS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
-        #endregion
+#endif
+#endregion
 
         #region Convertors
         public static implicit operator ReadonlyEcsPool<T>(EcsPool<T> a) { return new ReadonlyEcsPool<T>(a); }

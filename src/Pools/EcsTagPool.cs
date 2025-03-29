@@ -389,10 +389,12 @@ namespace DCFApixels.DragonECS
             return default;
         }
 
+#if !DRAGONECS_DISABLE_POOLS_EVENTS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+#endif
         #endregion
 
         #region Convertors

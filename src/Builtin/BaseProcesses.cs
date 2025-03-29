@@ -150,9 +150,10 @@ namespace DCFApixels.DragonECS.Internal
                 catch (Exception e)
                 {
 #if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                    throw;
-#endif
+                    throw e;
+#else
                     EcsDebug.PrintError(e);
+#endif
                 }
                 finally
                 {
