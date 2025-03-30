@@ -158,17 +158,17 @@ namespace DCFApixels.DragonECS.Core
         {
             *_versions = _world.Version;
 
-            long* ptr = _versions;
+            long* versionsPtr = _versions;
             var slots = _world._poolSlots;
             foreach (var slotIndex in _maskInc)
             {
-                ptr++;
-                *ptr = slots[slotIndex].version;
+                versionsPtr++;
+                *versionsPtr = slots[slotIndex].version;
             }
             foreach (var slotIndex in _maskExc)
             {
-                ptr++;
-                *ptr = slots[slotIndex].version;
+                versionsPtr++;
+                *versionsPtr = slots[slotIndex].version;
             }
         }
         public bool CheckAndNext()
@@ -179,26 +179,28 @@ namespace DCFApixels.DragonECS.Core
             }
             *_versions = _world.Version;
 
-            long* ptr = _versions;
+            long* versionsPtr = _versions;
             var slots = _world._poolSlots;
             bool result = _count != 1;
             foreach (var slotIndex in _maskInc)
             {
-                ptr++;
-                if (*ptr != slots[slotIndex].version)
+                versionsPtr++;
+                if (*versionsPtr != slots[slotIndex].version)
                 {
                     result = false;
-                    *ptr = slots[slotIndex].version;
+                    *versionsPtr = slots[slotIndex].version;
                 }
             }
             foreach (var slotIndex in _maskExc)
             {
-                ptr++;
-                if (*ptr != slots[slotIndex].version)
-                {
-                    result = false;
-                    *ptr = slots[slotIndex].version;
-                }
+                return false; //TODO hotfix, не правильная логика проверки версия для EXC, потому сейчас она скипается
+                
+                //versionsPtr++;
+                //if (*versionsPtr != slots[slotIndex].version)
+                //{
+                //    result = false;
+                //    *versionsPtr = slots[slotIndex].version;
+                //}
             }
             return result;
         }

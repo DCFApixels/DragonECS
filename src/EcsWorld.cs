@@ -257,6 +257,38 @@ namespace DCFApixels.DragonECS
         {
             return Get<AspectCache<TAspect>>().Instance;
         }
+        public void GetAspects<TAspect0>(out TAspect0 a0)
+            where TAspect0 : new()
+        {
+            a0 = GetAspect<TAspect0>();
+        }
+        public void GetAspects<TAspect0, TAspect1>(out TAspect0 a0, out TAspect1 a1)
+            where TAspect0 : new()
+            where TAspect1 : new()
+        {
+            a0 = GetAspect<TAspect0>();
+            a1 = GetAspect<TAspect1>();
+        }
+        public void GetAspects<TAspect0, TAspect1, TAspect2>(out TAspect0 a0, out TAspect1 a1, out TAspect2 a2)
+            where TAspect0 : new()
+            where TAspect1 : new()
+            where TAspect2 : new()
+        {
+            a0 = GetAspect<TAspect0>();
+            a1 = GetAspect<TAspect1>();
+            a2 = GetAspect<TAspect2>();
+        }
+        public void GetAspects<TAspect0, TAspect1, TAspect2, TAspect3>(out TAspect0 a0, out TAspect1 a1, out TAspect2 a2, out TAspect3 a3)
+            where TAspect0 : new()
+            where TAspect1 : new()
+            where TAspect2 : new()
+            where TAspect3 : new()
+        {
+            a0 = GetAspect<TAspect0>();
+            a1 = GetAspect<TAspect1>();
+            a2 = GetAspect<TAspect2>();
+            a3 = GetAspect<TAspect3>();
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TAspect GetAspect<TAspect>(out EcsMask mask) where TAspect : new()
         {
@@ -1185,6 +1217,7 @@ namespace DCFApixels.DragonECS
         {
             private EcsWorld _world;
             private List<MaskQueryExecutor> _queries;
+            public string Name { get { return _world.Name; } }
             public EntitySlotInfo[] Entities
             {
                 get
