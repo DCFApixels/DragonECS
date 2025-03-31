@@ -125,6 +125,7 @@ namespace DCFApixels.DragonECS.Core
             _maskInc = mask._incs;
             _maskExc = mask._excs;
             _count = 1 + mask._incs.Length + mask._excs.Length;
+     
             _versions = UnmanagedArrayUtility.NewAndInit<long>(_count);
         }
         public bool Check()
@@ -181,7 +182,9 @@ namespace DCFApixels.DragonECS.Core
 
             long* versionsPtr = _versions;
             var slots = _world._poolSlots;
-            bool result = _count != 1;
+            // Так как проверки EXC работают не правильно при отсутсвии INC,
+            // то проверки без INC должны всегда возвращать false.
+            bool result = _maskInc.Length > 0;
             foreach (var slotIndex in _maskInc)
             {
                 versionsPtr++;
@@ -193,14 +196,12 @@ namespace DCFApixels.DragonECS.Core
             }
             foreach (var slotIndex in _maskExc)
             {
-                return false; //TODO hotfix, не правильная логика проверки версия для EXC, потому сейчас она скипается
-                
-                //versionsPtr++;
-                //if (*versionsPtr != slots[slotIndex].version)
-                //{
-                //    result = false;
-                //    *versionsPtr = slots[slotIndex].version;
-                //}
+                versionsPtr++;
+                if (*versionsPtr != slots[slotIndex].version)
+                {
+                    result = false;
+                    *versionsPtr = slots[slotIndex].version;
+                }
             }
             return result;
         }
