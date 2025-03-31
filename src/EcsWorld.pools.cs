@@ -278,7 +278,11 @@ namespace DCFApixels.DragonECS
             ref PoolSlot slot = ref _poolSlots[componentTypeID];
             slot.count++;
             slot.version++;
-            _entities[entityID].componentsCount++;
+            var count = _entities[entityID].componentsCount++;
+            if (count == 0 && IsUsed(entityID))
+            {
+                RemoveFromEmptyEntities(entityID);
+            }
             _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex] |= maskBit.mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -293,7 +297,7 @@ namespace DCFApixels.DragonECS
 
             if (count == 0 && IsUsed(entityID))
             {
-                DelEntity(entityID);
+                MoveToEmptyEntities(entityID);
             }
             CheckUnregisterValid(count, entityID);
         }
@@ -309,7 +313,11 @@ namespace DCFApixels.DragonECS
                 ref PoolSlot slot = ref _poolSlots[componentTypeID];
                 slot.count++;
                 slot.version++;
-                _entities[entityID].componentsCount++;
+                var count = _entities[entityID].componentsCount++;
+                if(count == 0 && IsUsed(entityID))
+                {
+                    RemoveFromEmptyEntities(entityID);
+                }
                 return true;
             }
             return false;
@@ -330,7 +338,7 @@ namespace DCFApixels.DragonECS
 
                 if (count == 0 && IsUsed(entityID))
                 {
-                    DelEntity(entityID);
+                    MoveToEmptyEntities(entityID);
                 }
                 CheckUnregisterValid(count, entityID);
                 return true;
