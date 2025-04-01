@@ -1,12 +1,11 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
+using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
@@ -25,7 +24,7 @@ namespace DCFApixels.DragonECS
 
     public sealed partial class EcsPipeline
     {
-        public class Builder : IEcsModule
+        public partial class Builder : IEcsModule
         {
             private SystemNode[] _systemNodes = new SystemNode[256];
             private int _startIndex = -1;
@@ -37,7 +36,7 @@ namespace DCFApixels.DragonECS
             private readonly Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>(8);
             private readonly List<InitDeclaredRunner> _initDeclaredRunners = new List<InitDeclaredRunner>(4);
 
-            public readonly LayerList Layers;
+            public readonly LayersMap Layers;
             public readonly Injector.Builder Injector;
             public readonly Configurator Configs;
 
@@ -64,7 +63,7 @@ namespace DCFApixels.DragonECS
                 Injector.AddNode<EcsAspect>();
                 Injector.AddNode<EcsPipeline>();
 
-                Layers = new LayerList(this, PRE_BEGIN_LAYER, BEGIN_LAYER, BASIC_LAYER, END_LAYER, POST_END_LAYER);
+                Layers = new LayersMap(this, PRE_BEGIN_LAYER, BEGIN_LAYER, BASIC_LAYER, END_LAYER, POST_END_LAYER);
             }
             #endregion
 
@@ -245,7 +244,7 @@ namespace DCFApixels.DragonECS
                 }
                 Layers.MergeWith(other.Layers);
 
-                foreach (ref readonly SystemNode otherRecord in new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex))
+                foreach (ref readonly SystemNode otherRecord in new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex))
                 {
                     AddNode_Internal(otherRecord.system, otherRecord.layerName, otherRecord.sortOrder, otherRecord.isUnique);
                 }
@@ -309,7 +308,7 @@ namespace DCFApixels.DragonECS
 #if DEBUG
                 _buildMarker.Begin();
 #endif
-                var it = new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
+                var it = new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
 
                 LayerSystemsList basicLayerList;
                 if (_layerLists.TryGetValue(BASIC_LAYER, out basicLayerList) == false)
@@ -354,7 +353,7 @@ namespace DCFApixels.DragonECS
                 IEcsProcess[] allSystems = new IEcsProcess[allSystemsLength];
                 {
                     int i = 0;
-                    foreach (var item in Layers)
+                    foreach (var item in Layers.Build())
                     {
                         if (_layerLists.TryGetValue(item, out var list) && list.IsInit)
                         {
@@ -413,217 +412,10 @@ namespace DCFApixels.DragonECS
                     return _builder;
                 }
             }
+
             #endregion
 
-            #region LayerList
-            public class LayerList : IEnumerable<string>
-            {
-                private Builder _source;
-                private List<string> _layers;
-                private string _basicLayerName;
-                private string _addLayerName;
-
-                #region Properties
-                public int Count { get { return _layers.Count; } }
-                public object this[int index] { get { return _layers[index]; } }
-                #endregion
-
-                #region Constructors
-                public LayerList(Builder source, string basicLayerName)
-                {
-                    _source = source;
-                    _layers = new List<string>(16) { basicLayerName };
-                    _basicLayerName = basicLayerName;
-                    _addLayerName = _basicLayerName;
-                }
-                public LayerList(Builder source, string preBeginlayer, string beginlayer, string basicLayer, string endLayer, string postEndLayer)
-                {
-                    _source = source;
-                    _layers = new List<string>(16) { preBeginlayer, beginlayer, basicLayer, endLayer, postEndLayer };
-                    _basicLayerName = basicLayer;
-                    _addLayerName = _basicLayerName;
-                }
-                #endregion
-
-                #region Edit
-
-                #region Single
-                public Builder Add(string newLayer)
-                {
-                    InsertAfter(_addLayerName, newLayer);
-                    _addLayerName = newLayer;
-                    return _source;
-                }
-                public Builder Insert(string targetLayer, string newLayer)
-                {
-                    if (Contains(newLayer)) { return _source; }
-
-                    int index = _layers.IndexOf(targetLayer);
-                    if (index < 0)
-                    {
-                        throw new KeyNotFoundException($"Layer {targetLayer} not found");
-                    }
-                    _layers.Insert(index, newLayer);
-                    return _source;
-                }
-                public Builder InsertAfter(string targetLayer, string newLayer)
-                {
-                    if (Contains(newLayer)) { return _source; }
-
-                    int index = _layers.IndexOf(targetLayer);
-                    if (index < 0)
-                    {
-                        throw new KeyNotFoundException($"Layer {targetLayer} not found");
-                    }
-
-                    _layers.Insert(++index, newLayer);
-                    return _source;
-                }
-                public Builder Move(string targetLayer, string movingLayer)
-                {
-                    _layers.Remove(movingLayer);
-                    return Insert(targetLayer, movingLayer);
-                }
-                public Builder MoveAfter(string targetLayer, string movingLayer)
-                {
-                    _layers.Remove(movingLayer);
-                    return InsertAfter(targetLayer, movingLayer);
-                }
-                #endregion
-
-                #region Range
-                public Builder Add(params string[] newLayers)
-                {
-                    InsertAfter(_addLayerName, newLayers);
-                    _addLayerName = newLayers[newLayers.Length - 1];
-                    return _source;
-                }
-                public Builder Insert(string targetLayer, params string[] newLayers)
-                {
-                    int index = _layers.IndexOf(targetLayer);
-                    if (index < 0)
-                    {
-                        throw new KeyNotFoundException($"Layer {targetLayer} not found");
-                    }
-                    _layers.InsertRange(index, newLayers.Where(o => !Contains(o)));
-                    return _source;
-                }
-                public Builder InsertAfter(string targetLayer, params string[] newLayers)
-                {
-                    int index = _layers.IndexOf(targetLayer);
-                    if (index < 0)
-                    {
-                        throw new KeyNotFoundException($"Layer {targetLayer} not found");
-                    }
-
-                    _layers.InsertRange(++index, newLayers.Where(o => !Contains(o)));
-                    return _source;
-                }
-                public Builder Move(string targetLayer, params string[] movingLayers)
-                {
-                    foreach (var movingLayer in movingLayers)
-                    {
-                        _layers.Remove(movingLayer);
-                    }
-                    return Insert(targetLayer, movingLayers);
-                }
-                public Builder MoveAfter(string targetLayer, params string[] movingLayers)
-                {
-                    foreach (var movingLayer in movingLayers)
-                    {
-                        _layers.Remove(movingLayer);
-                    }
-                    return InsertAfter(targetLayer, movingLayers);
-                }
-                #endregion
-
-                #endregion
-
-                #region MergeWith
-                private static bool CheckOverlapsOrder(List<string> listA, IReadOnlyList<string> listB)
-                {
-                    int lastIndexof = 0;
-                    for (int i = 0; i < listB.Count; i++)
-                    {
-                        var a = listB[i];
-                        int indexof = listA.IndexOf(a);
-
-                        if (indexof < 0) { continue; }
-                        if (indexof < lastIndexof)
-                        {
-                            return false;
-                        }
-                        lastIndexof = indexof;
-                    }
-                    return true;
-                }
-                public void MergeWith(IReadOnlyList<string> other)
-                {
-                    List<string> listA = _layers;
-                    IReadOnlyList<string> listB = other;
-
-                    if (CheckOverlapsOrder(listA, listB) == false)
-                    {
-                        //Для слияния списков слоев, нужно чтобы в пересечении порядок записей совпадал
-                        Throw.Exception("To merge layer lists, the names of the layers present in both lists must appear in the same order in both lists.");
-                    }
-
-                    HashSet<string> seen = new HashSet<string>();
-                    List<string> result = new List<string>();
-
-                    foreach (string item in listA)
-                    {
-                        seen.Add(item);
-                    }
-                    foreach (string item in listB)
-                    {
-                        if (seen.Add(item) == false)
-                        {
-                            seen.Remove(item);
-                        }
-                    }
-
-                    int i = 0, j = 0;
-                    while (i < listA.Count || j < listB.Count)
-                    {
-                        while (i < listA.Count && seen.Contains(listA[i]))
-                        {
-                            result.Add(listA[i]);
-                            i++;
-                        }
-                        while (j < listB.Count && seen.Contains(listB[j]))
-                        {
-                            result.Add(listB[j]);
-                            j++;
-                        }
-
-                        if (i < listA.Count) { i++; }
-                        if (j < listB.Count)
-                        {
-                            result.Add(listB[j]);
-                            j++;
-                        }
-                    }
-
-                    _layers = result;
-                }
-                public void MergeWith(LayerList other)
-                {
-                    MergeWith(other._layers);
-                }
-                #endregion
-
-                #region Other
-                public bool Contains(string layer) { return _layers.Contains(layer); }
-
-                public List<string>.Enumerator GetEnumerator() { return _layers.GetEnumerator(); }
-                IEnumerator<string> IEnumerable<string>.GetEnumerator() { return _layers.GetEnumerator(); }
-                IEnumerator IEnumerable.GetEnumerator() { return _layers.GetEnumerator(); }
-                #endregion
-            }
-            #endregion
-
-            #region SystemsList
+            #region LayerSystemsList
             private class LayerSystemsList
             {
                 public int lasyInitSystemsCount = 0;
@@ -726,7 +518,7 @@ namespace DCFApixels.DragonECS
             #region SerializableTemplate
             public EcsPipelineTemplate GenerateSerializableTemplate()
             {
-                var it = new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
+                var it = new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
                 EcsPipelineTemplate result = new EcsPipelineTemplate();
                 result.layers = new string[Layers.Count];
                 result.records = new EcsPipelineTemplate.Record[it.Count];
@@ -766,6 +558,15 @@ namespace DCFApixels.DragonECS
                 {
                     return this.AutoToString();
                 }
+            }
+            #endregion
+
+            #region Obsolete
+            [Obsolete("Use LayersMap")]
+            public class LayerList : LayersMap
+            {
+                public LayerList(Builder source, string basicLayerName) : base(source, basicLayerName) { }
+                public LayerList(Builder source, string preBeginlayer, string beginlayer, string basicLayer, string endLayer, string postEndLayer) : base(source, preBeginlayer, beginlayer, basicLayer, endLayer, postEndLayer) { }
             }
             #endregion
         }
