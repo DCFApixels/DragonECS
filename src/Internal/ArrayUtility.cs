@@ -14,13 +14,13 @@ namespace DCFApixels.DragonECS.Internal
     {
         int Next { get; }
     }
-    internal readonly struct LinkedListIterator<T> : IEnumerable<T>
+    internal readonly struct LinkedListCountIterator<T> : IEnumerable<T>
         where T : ILinkedNext
     {
         public readonly T[] Array;
         public readonly int Count;
         public readonly int StartIndex;
-        public LinkedListIterator(T[] array, int count, int startIndex)
+        public LinkedListCountIterator(T[] array, int count, int startIndex)
         {
             Array = array;
             Count = count;
@@ -66,6 +66,58 @@ namespace DCFApixels.DragonECS.Internal
             void IEnumerator.Reset() { throw new NotSupportedException(); }
         }
     }
+    internal readonly struct LinkedListIterator<T> : IEnumerable<T>
+        where T : ILinkedNext
+    {
+        public readonly T[] Array;
+        public readonly int EndIndex;
+        public readonly int StartIndex;
+        public LinkedListIterator(T[] array, int endIndex, int startIndex)
+        {
+            Array = array;
+            EndIndex = endIndex;
+            StartIndex = startIndex;
+        }
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(Array, EndIndex, StartIndex);
+        }
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+        public struct Enumerator : IEnumerator<T>
+        {
+            private readonly T[] _array;
+            private readonly int _endIndex;
+            private readonly int _startIndex;
+            private int _nextIndex;
+            private int _index;
+            public ref T Current { get { return ref _array[_index]; } }
+            T IEnumerator<T>.Current { get { return Current; } }
+            object IEnumerator.Current { get { return Current; } }
+            public Enumerator(T[] array, int endIndex, int head)
+            {
+                _array = array;
+                _startIndex = head;
+                _nextIndex = _startIndex;
+                _endIndex = endIndex;
+                _index = _endIndex;
+            }
+            public bool MoveNext()
+            {
+                if (_nextIndex < 0) { return false; }
+                _index = _nextIndex;
+                _nextIndex = _array[_index].Next;
+                return true;
+            }
+            public void Dispose() { }
+            public void Reset()
+            {
+                _nextIndex = _startIndex;
+                _index = _endIndex;
+            }
+        }
+    }
+
 
     internal static class ArrayUtility
     {
