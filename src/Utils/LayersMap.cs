@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace DCFApixels.DragonECS.Core
@@ -27,6 +28,7 @@ namespace DCFApixels.DragonECS.Core
         {
             return ref _layerInfos._items[(int)layerID];
         }
+        [DebuggerDisplay("{name}")]
         private struct LayerInfo
         {
             public string name;
@@ -339,14 +341,17 @@ namespace DCFApixels.DragonECS.Core
 
             if (_basicLayerID != LayerID.NULL)
             {
-                int ind = _dependencies.Count;
                 var basicLayerAdjacencyList = adjacency[(int)_basicLayerID];
+                int inserIndex = basicLayerAdjacencyList.Count;
+                //for (int i = _layerInfos.Count - 1; i >= 0; i--)
                 for (int i = 0; i < _layerInfos.Count; i++)
                 {
+                    var id = (LayerID)i;
                     ref var toInfo = ref _layerInfos._items[i];
                     if(toInfo.isContained && toInfo.hasAnyDependency == false)
                     {
-                        basicLayerAdjacencyList.Add(((LayerID)i, ind++));
+                        toInfo.insertionIndex = -toInfo.insertionIndex;
+                        basicLayerAdjacencyList.Insert(inserIndex, (id, toInfo.insertionIndex));
                         toInfo.inDegree += 1;
                     }
                 }
@@ -362,10 +367,15 @@ namespace DCFApixels.DragonECS.Core
             {
                 var current = zeroInDegree[0];
                 zeroInDegree.RemoveAt(0);
+
                 result.Add(GetLayerInfo(current).name);
 
-                foreach (var (neighbor, _) in adjacency[(int)current])
+
+                var adjacencyList = adjacency[(int)current];
+                //for (int i = adjacencyList.Count - 1; i >= 0; i--)
+                for (int i = 0; i < adjacencyList.Count; i++)
                 {
+                    var (neighbor, _) = adjacencyList[i];
                     ref var neighborInfo = ref GetLayerInfo(neighbor);
                     neighborInfo.inDegree--;
                     if (neighborInfo.inDegree == 0)
@@ -374,6 +384,9 @@ namespace DCFApixels.DragonECS.Core
                         int insertIndex = zeroInDegree.FindIndex(id => GetLayerInfo(id).insertionIndex < neighborInsertionIndex);
                         insertIndex = insertIndex < 0 ? 0 : insertIndex;
                         zeroInDegree.Insert(insertIndex, neighbor);
+
+                        //zeroInDegree.Add(neighbor);
+                        //zeroInDegree = zeroInDegree.OrderBy(id => GetLayerInfo(id).insertionIndex).ToList();
                     }
                 }
             }
