@@ -45,7 +45,8 @@ namespace DCFApixels.DragonECS.Core
         }
 
         private readonly EcsPipeline.Builder _source;
-        private StructList<(LayerID From, LayerID To)> _dependencies = new StructList<(LayerID, LayerID)>(16);
+        private List<(LayerID From, LayerID To)> _dependencies = new List<(LayerID, LayerID)>(16);
+        private readonly LayerID _rootLayerID;
         private readonly LayerID _basicLayerID;
         private int _increment = 0;
         private int _count;
@@ -62,6 +63,8 @@ namespace DCFApixels.DragonECS.Core
         {
             GetLayerID("");
             _source = source;
+            _rootLayerID = LayerID.NULL;
+            _basicLayerID = LayerID.NULL;
         }
         public LayersMap(EcsPipeline.Builder source, string basicLayerName)
         {
@@ -70,6 +73,7 @@ namespace DCFApixels.DragonECS.Core
 
             Add(basicLayerName);
 
+            _rootLayerID = LayerID.NULL;
             _basicLayerID = GetLayerID(basicLayerName);
             LockLayer(basicLayerName);
         }
@@ -92,6 +96,7 @@ namespace DCFApixels.DragonECS.Core
             Add(postEndLayer)
                 .After(endLayer);
 
+            _rootLayerID = GetLayerID(preBeginlayer);
             _basicLayerID = GetLayerID(basicLayer);
             LockLayer(preBeginlayer);
             LockLayer(beginlayer);
@@ -128,23 +133,32 @@ namespace DCFApixels.DragonECS.Core
             }
             info.insertionIndex = 0;
         }
-        private void AddDependency_Internal(LayerID from, LayerID to)
+        private void AddDependency_Internal(LayerID from, LayerID to, bool isBefore = false)
         {
             GetLayerInfo(from).hasAnyDependency = true;
+
             GetLayerInfo(to).hasAnyDependency = true;
+            if (isBefore)
+            {
+                GetLayerInfo(from).insertionIndex = int.MaxValue - (_increment++);
+            }
+            else
+            {
+            }
             _dependencies.Add((from, to));
+            //_dependencies.Insert(0, (from, to));
         }
-        private void AddDependency_Internal(LayerID from, string to)
+        private void AddDependency_Internal(LayerID from, string to, bool isBefore = false)
         {
-            AddDependency_Internal(from, GetLayerID(to));
+            AddDependency_Internal(from, GetLayerID(to), isBefore);
         }
-        private void AddDependency_Internal(string from, LayerID to)
+        private void AddDependency_Internal(string from, LayerID to, bool isBefore = false)
         {
-            AddDependency_Internal(GetLayerID(from), to);
+            AddDependency_Internal(GetLayerID(from), to, isBefore);
         }
-        private void AddDependency_Internal(string from, string to)
+        private void AddDependency_Internal(string from, string to, bool isBefore = false)
         {
-            AddDependency_Internal(GetLayerID(from), GetLayerID(to));
+            AddDependency_Internal(GetLayerID(from), GetLayerID(to), isBefore);
         }
         #endregion
 
@@ -264,13 +278,13 @@ namespace DCFApixels.DragonECS.Core
             {
                 if (_id != LayerID.NULL)
                 {
-                    _source.AddDependency_Internal(_id, targetLayer);
+                    _source.AddDependency_Internal(_id, targetLayer, true);
                 }
                 if (_layersRange != null)
                 {
                     foreach (var layer in _layersRange)
                     {
-                        _source.AddDependency_Internal(layer, targetLayer);
+                        _source.AddDependency_Internal(layer, targetLayer, true);
                     }
                 }
                 return this;
@@ -350,13 +364,12 @@ namespace DCFApixels.DragonECS.Core
                     ref var toInfo = ref _layerInfos._items[i];
                     if(toInfo.isContained && toInfo.hasAnyDependency == false)
                     {
-                        toInfo.insertionIndex = -toInfo.insertionIndex;
+                        //toInfo.insertionIndex = -toInfo.insertionIndex;
                         basicLayerAdjacencyList.Insert(inserIndex, (id, toInfo.insertionIndex));
                         toInfo.inDegree += 1;
                     }
                 }
             }
-
 
             List<LayerID> zeroInDegree = new List<LayerID>(nodes.Length);
             zeroInDegree.AddRange(nodes.Where(id => GetLayerInfo(id).inDegree == 0).OrderBy(id => GetLayerInfo(id).insertionIndex));
