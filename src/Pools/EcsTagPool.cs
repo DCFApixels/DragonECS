@@ -108,7 +108,7 @@ namespace DCFApixels.DragonECS
             if (Has(entityID)) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
-            if (Has(entityID) || _isLocked) { return; }
+            if (Has(entityID) || _source.IsUsed(entityID) == false || _isLocked) { return; }
 #endif
             _count++;
             _mapping[entityID] = true;
