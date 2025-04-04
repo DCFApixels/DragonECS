@@ -100,7 +100,7 @@ namespace DCFApixels.DragonECS
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
             if (itemIndex > 0) { return ref Get(entityID); }
-            if (_isLocked || _source.IsUsed(entityID) == false) { return ref _items[0]; }
+            if (_isLocked | _source.IsUsed(entityID) == false) { return ref _items[0]; }
 #endif
             if (_recycledItemsCount > 0)
             {
