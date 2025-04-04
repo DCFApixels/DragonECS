@@ -91,10 +91,22 @@ namespace DCFApixels.DragonECS.Internal
             Execute_Iternal();
 #if DEBUG || DRAGONECS_DEEP_DEBUG
             var newSpan = new EcsSpan(World.ID, _filteredAllEntities, _filteredAllEntitiesCount);
-            foreach (var e in newSpan)
+            using (EcsGroup group = EcsGroup.New(World))
             {
-                if (World.IsMatchesMask(Mask, e) == false)
+                foreach (var e in World.Entities)
                 {
+                    if (World.IsMatchesMask(Mask, e))
+                    {
+                        group.Add(e);
+                    }
+                }
+
+                if (group.SetEquals(newSpan) == false)
+                {
+                    int[] array = new int[_filteredAllEntities.Length];
+                    var count = _iterator.IterateTo(World.Entities, ref array);
+
+                    EcsDebug.PrintError(newSpan.ToString() + "\r\n" + group.ToSpan().ToString());
                     Throw.DeepDebugException();
                 }
             }

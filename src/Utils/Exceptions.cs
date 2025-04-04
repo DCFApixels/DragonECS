@@ -119,6 +119,11 @@ namespace DCFApixels.DragonECS.Internal
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void Ent_ThrowIsNotAlive(EcsWorld world, int entityID)
+        {
+            Ent_ThrowIsNotAlive((world, entityID));
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Ent_ThrowIsNotAlive(entlong entity)
         {
             if (entity.IsNull)

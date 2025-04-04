@@ -365,6 +365,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity(int entityID)
         {
+            _entityDispenser.Upsize(entityID + 1);
 #if DEBUG
             if (IsUsed(entityID)) { Throw.World_EntityIsAlreadyСontained(entityID); }
 #elif DRAGONECS_STABILITY_MODE
@@ -1257,9 +1258,12 @@ namespace DCFApixels.DragonECS
                 {
                     EntitySlotInfo[] result = new EntitySlotInfo[_world.Count];
                     int i = 0;
-                    foreach (var e in _world.ToSpan())
+                    using (_world.DisableAutoReleaseDelEntBuffer())
                     {
-                        result[i++] = _world.GetEntitySlotInfoDebug(e);
+                        foreach (var e in _world.ToSpan())
+                        {
+                            result[i++] = _world.GetEntitySlotInfoDebug(e);
+                        }
                     }
                     return result;
                 }
