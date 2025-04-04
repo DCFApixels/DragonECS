@@ -104,10 +104,11 @@ namespace DCFApixels.DragonECS
         public void Add(int entityID)
         {
 #if DEBUG
+            if (_source.IsUsed(entityID) == false) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
             if (Has(entityID)) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
-            if (Has(entityID) || _isLocked) { return; }
+            if (Has(entityID) | _source.IsUsed(entityID) == false | _isLocked) { return; }
 #endif
             _count++;
             _mapping[entityID] = true;
