@@ -962,29 +962,30 @@ namespace DCFApixels.DragonECS.Internal
         internal const int STACK_BUFFER_THRESHOLD = 100;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void ConvertToChuncks(EcsMaskChunck* ptr, UnsafeArray<int> input, UnsafeArray<EcsMaskChunck> output)
+        internal static void ConvertToChuncks(EcsMaskChunck* bufferPtr, UnsafeArray<int> input, UnsafeArray<EcsMaskChunck> output)
         {
             for (int i = 0; i < input.Length; i++)
             {
-                ptr[i] = EcsMaskChunck.FromID(input.ptr[i]);
+                bufferPtr[i] = EcsMaskChunck.FromID(input.ptr[i]);
             }
 
-            for (int inputI = 0, outputI = 0; outputI < output.Length; inputI++, ptr++)
+            for (int inputI = 0, outputI = 0; outputI < output.Length; inputI++, bufferPtr++)
             {
-                int maskX = ptr->mask;
-                if (maskX == 0) { continue; }
-                int chunkIndexX = ptr->chunkIndex;
+                int stackingMask = bufferPtr->mask;
+                if (stackingMask == 0) { continue; }
+                int stackingChunkIndex = bufferPtr->chunkIndex;
 
-                EcsMaskChunck* subptr = ptr;
-                for (int j = 1; j < input.Length - inputI; j++, subptr++)
+                EcsMaskChunck* bufferSpanPtr = bufferPtr + 1;
+                for (int j = 1; j < input.Length - inputI; j++, bufferSpanPtr++)
                 {
-                    if (subptr->chunkIndex == chunkIndexX)
+                    if (bufferSpanPtr->chunkIndex == stackingChunkIndex)
                     {
-                        maskX |= subptr->mask;
-                        *subptr = default;
+                        stackingMask |= bufferSpanPtr->mask;
+                        *bufferSpanPtr = default;
                     }
                 }
-                output.ptr[outputI] = new EcsMaskChunck(chunkIndexX, maskX);
+
+                output.ptr[outputI] = new EcsMaskChunck(stackingChunkIndex, stackingMask);
                 outputI++;
             }
         }
