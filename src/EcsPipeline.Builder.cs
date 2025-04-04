@@ -726,7 +726,7 @@ namespace DCFApixels.DragonECS
             #region SerializableTemplate
             public EcsPipelineTemplate GenerateSerializableTemplate()
             {
-                var it = new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
+                var it = new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
                 EcsPipelineTemplate result = new EcsPipelineTemplate();
                 result.layers = new string[Layers.Count];
                 result.records = new EcsPipelineTemplate.Record[it.Count];
