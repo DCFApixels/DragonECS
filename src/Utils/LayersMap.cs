@@ -32,9 +32,10 @@ namespace DCFApixels.DragonECS.Core
         private struct LayerInfo
         {
             public string name;
+            public int insertionIndex;
             public bool isLocked;
             public bool isContained;
-            public int insertionIndex;
+            public bool isBefore;
             //build
             public int inDegree;
             public bool hasAnyDependency;
@@ -50,6 +51,14 @@ namespace DCFApixels.DragonECS.Core
         private readonly LayerID _basicLayerID;
         private int _increment = 0;
         private int _count;
+
+        public IEnumerable<(string from, string to)> Deps
+        {
+            get
+            {
+                return _dependencies.Select(o => (GetLayerInfo(o.From).name, GetLayerInfo(o.To).name));
+            }
+        }
 
         #region Properties
         public int Count
@@ -82,17 +91,17 @@ namespace DCFApixels.DragonECS.Core
             GetLayerID("");
             _source = source;
 
-            Add(preBeginlayer)
-                .Before(beginlayer);
+            Add(preBeginlayer);
+                //.Before(beginlayer);
             Add(beginlayer)
-                .After(preBeginlayer)
-                .Before(basicLayer);
+                //.Before(basicLayer)
+                .After(preBeginlayer);
             Add(basicLayer)
-                .After(beginlayer)
-                .Before(endLayer);
+                //.Before(endLayer)
+                .After(beginlayer);
             Add(endLayer)
-                .After(basicLayer)
-                .Before(postEndLayer);
+                //.Before(postEndLayer)
+                .After(basicLayer);
             Add(postEndLayer)
                 .After(endLayer);
 
@@ -136,17 +145,22 @@ namespace DCFApixels.DragonECS.Core
         private void AddDependency_Internal(LayerID from, LayerID to, bool isBefore = false)
         {
             GetLayerInfo(from).hasAnyDependency = true;
-
             GetLayerInfo(to).hasAnyDependency = true;
+
             if (isBefore)
             {
-                GetLayerInfo(from).insertionIndex = int.MaxValue - (_increment++);
+                //GetLayerInfo(from).insertionIndex = 1000 - (_increment++);
+                GetLayerInfo(from).isBefore = true;
+                //_dependencies.Insert(0, (from, to));
             }
             else
             {
+                //GetLayerInfo(from).insertionIndex = _increment++;
+                GetLayerInfo(from).isBefore = false;
+                //_dependencies.Add((from, to));
             }
-            _dependencies.Add((from, to));
             //_dependencies.Insert(0, (from, to));
+            _dependencies.Add((from, to));
         }
         private void AddDependency_Internal(LayerID from, string to, bool isBefore = false)
         {
@@ -353,23 +367,24 @@ namespace DCFApixels.DragonECS.Core
                 }
             }
 
-            if (_basicLayerID != LayerID.NULL)
-            {
-                var basicLayerAdjacencyList = adjacency[(int)_basicLayerID];
-                int inserIndex = basicLayerAdjacencyList.Count;
-                //for (int i = _layerInfos.Count - 1; i >= 0; i--)
-                for (int i = 0; i < _layerInfos.Count; i++)
-                {
-                    var id = (LayerID)i;
-                    ref var toInfo = ref _layerInfos._items[i];
-                    if(toInfo.isContained && toInfo.hasAnyDependency == false)
-                    {
-                        //toInfo.insertionIndex = -toInfo.insertionIndex;
-                        basicLayerAdjacencyList.Insert(inserIndex, (id, toInfo.insertionIndex));
-                        toInfo.inDegree += 1;
-                    }
-                }
-            }
+            //// добавление зависимостей для нод без зависимостей.
+            //if (_basicLayerID != LayerID.NULL)
+            //{
+            //    var basicLayerAdjacencyList = adjacency[(int)_basicLayerID];
+            //    int inserIndex = basicLayerAdjacencyList.Count;
+            //    //for (int i = _layerInfos.Count - 1; i >= 0; i--)
+            //    for (int i = 0; i < _layerInfos.Count; i++)
+            //    {
+            //        var id = (LayerID)i;
+            //        ref var toInfo = ref _layerInfos._items[i];
+            //        if(toInfo.isContained && toInfo.hasAnyDependency == false)
+            //        {
+            //            //toInfo.insertionIndex = -toInfo.insertionIndex;
+            //            basicLayerAdjacencyList.Insert(inserIndex, (id, toInfo.insertionIndex));
+            //            toInfo.inDegree += 1;
+            //        }
+            //    }
+            //}
 
             List<LayerID> zeroInDegree = new List<LayerID>(nodes.Length);
             zeroInDegree.AddRange(nodes.Where(id => GetLayerInfo(id).inDegree == 0).OrderBy(id => GetLayerInfo(id).insertionIndex));
@@ -397,11 +412,32 @@ namespace DCFApixels.DragonECS.Core
                         int insertIndex = zeroInDegree.FindIndex(id => GetLayerInfo(id).insertionIndex < neighborInsertionIndex);
                         insertIndex = insertIndex < 0 ? 0 : insertIndex;
                         zeroInDegree.Insert(insertIndex, neighbor);
-
+                
                         //zeroInDegree.Add(neighbor);
                         //zeroInDegree = zeroInDegree.OrderBy(id => GetLayerInfo(id).insertionIndex).ToList();
                     }
                 }
+
+                //var adjacencyList = adjacency[(int)current];
+                ////var adjacencyListSort = adjacencyList.OrderBy(o => GetLayerInfo(o.To).insertionIndex);
+                //var adjacencyListSort = adjacencyList;
+                //foreach (var item in adjacencyListSort)
+                //{
+                //    var (neighbor, _) = item;
+                //    ref var neighborInfo = ref GetLayerInfo(neighbor);
+                //    neighborInfo.inDegree--;
+                //    if (neighborInfo.inDegree == 0)
+                //    {
+                //        //var neighborInsertionIndex = neighborInfo.insertionIndex;
+                //        //int insertIndex = zeroInDegree.FindIndex(id => GetLayerInfo(id).insertionIndex > neighborInsertionIndex);
+                //        //insertIndex = insertIndex < 0 ? 0 : insertIndex;
+                //        //
+                //        //zeroInDegree.Insert(insertIndex, neighbor);
+                //
+                //        zeroInDegree.Add(neighbor);
+                //        zeroInDegree = zeroInDegree.OrderBy(id => GetLayerInfo(id).insertionIndex).ToList();
+                //    }
+                //}
             }
 
             if (result.Count != nodes.Length)
