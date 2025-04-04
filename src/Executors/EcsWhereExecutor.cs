@@ -89,6 +89,16 @@ namespace DCFApixels.DragonECS.Internal
         public EcsSpan Execute()
         {
             Execute_Iternal();
+#if DEBUG || DRAGONECS_DEEP_DEBUG
+            var newSpan = new EcsSpan(World.ID, _filteredAllEntities, _filteredAllEntitiesCount);
+            foreach (var e in newSpan)
+            {
+                if (World.IsMatchesMask(Mask, e) == false)
+                {
+                    Throw.DeepDebugException();
+                }
+            }
+#endif
             return new EcsSpan(World.ID, _filteredAllEntities, _filteredAllEntitiesCount);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -99,6 +109,16 @@ namespace DCFApixels.DragonECS.Internal
                 return Execute();
             }
             ExecuteFor_Iternal(span);
+#if DEBUG || DRAGONECS_DEEP_DEBUG
+            var newSpan = new EcsSpan(World.ID, _filteredEntities, _filteredEntitiesCount);
+            foreach (var e in newSpan)
+            {
+                if (World.IsMatchesMask(Mask, e) == false)
+                {
+                    Throw.DeepDebugException();
+                }
+            }
+#endif
             return new EcsSpan(World.ID, _filteredEntities, _filteredEntitiesCount);
         }
 
