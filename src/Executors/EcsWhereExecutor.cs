@@ -89,7 +89,7 @@ namespace DCFApixels.DragonECS.Internal
         public EcsSpan Execute()
         {
             Execute_Iternal();
-#if DEBUG || DRAGONECS_DEEP_DEBUG
+#if DEBUG && DRAGONECS_DEEP_DEBUG
             var newSpan = new EcsSpan(World.ID, _filteredAllEntities, _filteredAllEntitiesCount);
             using (EcsGroup group = EcsGroup.New(World))
             {
@@ -121,7 +121,7 @@ namespace DCFApixels.DragonECS.Internal
                 return Execute();
             }
             ExecuteFor_Iternal(span);
-#if DEBUG || DRAGONECS_DEEP_DEBUG
+#if DEBUG && DRAGONECS_DEEP_DEBUG
             var newSpan = new EcsSpan(World.ID, _filteredEntities, _filteredEntitiesCount);
             foreach (var e in newSpan)
             {
