@@ -21,7 +21,8 @@ namespace DCFApixels.DragonECS
         [DataMember] public Record[] records;
         void IEcsModule.Import(EcsPipeline.Builder b)
         {
-            b.Layers.MergeWith(layers);
+            throw new NotImplementedException();
+            //b.Layers.MergeWith(layers);
             foreach (var s in records)
             {
                 if (s.target == null) { continue; }

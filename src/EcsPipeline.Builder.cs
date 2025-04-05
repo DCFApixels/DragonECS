@@ -63,7 +63,7 @@ namespace DCFApixels.DragonECS
                 Injector.AddNode<EcsAspect>();
                 Injector.AddNode<EcsPipeline>();
 
-                Layers = new LayersMap(this, PRE_BEGIN_LAYER, BEGIN_LAYER, BASIC_LAYER, END_LAYER, POST_END_LAYER);
+                //Layers = new DependencyGraph(this, PRE_BEGIN_LAYER, BEGIN_LAYER, BASIC_LAYER, END_LAYER, POST_END_LAYER);
             }
             #endregion
 
@@ -233,21 +233,22 @@ namespace DCFApixels.DragonECS
             }
             private void MergeWith(Builder other)
             {
-                Injector.Add(other.Injector);
-                foreach (var declaredRunners in other._initDeclaredRunners)
-                {
-                    _initDeclaredRunners.Add(declaredRunners);
-                }
-                foreach (var config in other.Configs.Instance.GetAllConfigs())
-                {
-                    Configs.Instance.Set(config.Key, config.Value);
-                }
-                Layers.MergeWith(other.Layers);
-
-                foreach (ref readonly SystemNode otherRecord in new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex))
-                {
-                    AddNode_Internal(otherRecord.system, otherRecord.layerName, otherRecord.sortOrder, otherRecord.isUnique);
-                }
+                throw new NotImplementedException();
+                //Injector.Add(other.Injector);
+                //foreach (var declaredRunners in other._initDeclaredRunners)
+                //{
+                //    _initDeclaredRunners.Add(declaredRunners);
+                //}
+                //foreach (var config in other.Configs.Instance.GetAllConfigs())
+                //{
+                //    Configs.Instance.Set(config.Key, config.Value);
+                //}
+                //Layers.MergeWith(other.Layers);
+                //
+                //foreach (ref readonly SystemNode otherRecord in new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex))
+                //{
+                //    AddNode_Internal(otherRecord.system, otherRecord.layerName, otherRecord.sortOrder, otherRecord.isUnique);
+                //}
             }
             #endregion
 
@@ -565,8 +566,11 @@ namespace DCFApixels.DragonECS
             [Obsolete("Use LayersMap")]
             public class LayerList : LayersMap
             {
-                public LayerList(Builder source, string basicLayerName) : base(source, basicLayerName) { }
-                public LayerList(Builder source, string preBeginlayer, string beginlayer, string basicLayer, string endLayer, string postEndLayer) : base(source, preBeginlayer, beginlayer, basicLayer, endLayer, postEndLayer) { }
+                //public LayerList(Builder source, string basicLayerName) : base(source, basicLayerName) { }
+                //public LayerList(Builder source, string preBeginlayer, string beginlayer, string basicLayer, string endLayer, string postEndLayer) : base(source, preBeginlayer, beginlayer, basicLayer, endLayer, postEndLayer) { }
+                public LayerList(IDependencyGraph<string> graph, Builder pipelineBuilder) : base(graph, pipelineBuilder)
+                {
+                }
             }
             #endregion
         }
