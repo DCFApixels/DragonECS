@@ -63,7 +63,8 @@ namespace DCFApixels.DragonECS
                 Injector.AddNode<EcsAspect>();
                 Injector.AddNode<EcsPipeline>();
 
-                //Layers = new DependencyGraph(this, PRE_BEGIN_LAYER, BEGIN_LAYER, BASIC_LAYER, END_LAYER, POST_END_LAYER);
+                var graph = new DependencyGraph(BASIC_LAYER);
+                Layers = new LayersMap(graph, this, PRE_BEGIN_LAYER, BEGIN_LAYER, BASIC_LAYER, END_LAYER, POST_END_LAYER);
             }
             #endregion
 

@@ -7,25 +7,16 @@ using System.Linq;
 
 namespace DCFApixels.DragonECS.Core
 {
-    using VertextID = DependencyGraphVertextID;
-    public enum DependencyGraphVertextID : short { NULL = 0 }
-    public interface IDependencyGraph<T> : IReadOnlyCollection<string>
-    {
-        VertextID AddVertex(T vertex, bool isLocked);
-        bool ContainsVertex(T vertex);
-        VertextID GetVertexID(T vertex);
-        bool RemoveVertex(T vertex);
-        void AddDependency(VertextID fromID, VertextID toID, bool moveToRight);
-        T[] Sort();
-    }
+    using VertexID = DependencyGraphVertextID;
     public class LayersMap : IDependencyGraph<string>
     {
         #region IDependencyGraph
-        VertextID IDependencyGraph<string>.AddVertex(string vertex, bool isLocked) { return _graph.AddVertex(vertex, isLocked); }
+        VertexID IDependencyGraph<string>.AddVertex(string vertex, bool isLocked) { return _graph.AddVertex(vertex, isLocked); }
         bool IDependencyGraph<string>.ContainsVertex(string vertex) { return _graph.ContainsVertex(vertex); }
-        VertextID IDependencyGraph<string>.GetVertexID(string vertex) { return _graph.GetVertexID(vertex); }
+        VertexID IDependencyGraph<string>.GetVertexID(string vertex) { return _graph.GetVertexID(vertex); }
+        string IDependencyGraph<string>.GetVertexFromID(VertexID vertexID) { return _graph.GetVertexFromID(vertexID); }
         bool IDependencyGraph<string>.RemoveVertex(string vertex) { return _graph.RemoveVertex(vertex); }
-        void IDependencyGraph<string>.AddDependency(VertextID fromID, VertextID toID, bool moveToRight) { _graph.AddDependency(fromID, toID, moveToRight); }
+        void IDependencyGraph<string>.AddDependency(VertexID fromID, VertexID toID, bool moveToRight) { _graph.AddDependency(fromID, toID, moveToRight); }
         string[] IDependencyGraph<string>.Sort() { return _graph.Sort(); }
         #endregion
 
@@ -40,6 +31,10 @@ namespace DCFApixels.DragonECS.Core
         public int Count
         {
             get { return _graph.Count; }
+        }
+        public ReadonlyDependenciesCollection<string> Dependencies
+        {
+            get { return _graph.Dependencies; }
         }
         #endregion
 
@@ -61,7 +56,7 @@ namespace DCFApixels.DragonECS.Core
             graph.AddVertex(postEndLayer, true);
 
             Move(preBeginlayer);
-                //.Before(beginlayer);
+            //.Before(beginlayer);
             Move(beginlayer)
                 //.Before(basicLayer)
                 .After(preBeginlayer);
@@ -79,7 +74,7 @@ namespace DCFApixels.DragonECS.Core
         #region Add
         public MoveHandler Add(string layer)
         {
-            VertextID id = _graph.AddVertex(layer, false);
+            VertexID id = _graph.AddVertex(layer, false);
             return new MoveHandler(_graph, _pipelineBuilder, id);
         }
         public MoveHandler Add(params string[] layers)
@@ -99,7 +94,7 @@ namespace DCFApixels.DragonECS.Core
         #region Move
         public MoveHandler Move(string layer)
         {
-            VertextID id = _graph.GetVertexID(layer);
+            VertexID id = _graph.GetVertexID(layer);
             return new MoveHandler(_graph, _pipelineBuilder, id);
         }
         public MoveHandler Move(params string[] layers)
@@ -117,7 +112,7 @@ namespace DCFApixels.DragonECS.Core
         {
             private readonly IDependencyGraph<string> _graph;
             private readonly EcsPipeline.Builder _pipelineBuilder;
-            private readonly VertextID _layerID;
+            private readonly VertexID _layerID;
             private readonly IEnumerable<string> _layersRange;
 
             #region Properties
@@ -128,7 +123,7 @@ namespace DCFApixels.DragonECS.Core
             #endregion
 
             #region Constructors
-            public MoveHandler(IDependencyGraph<string> graph, EcsPipeline.Builder pipelineBuilder, VertextID id)
+            public MoveHandler(IDependencyGraph<string> graph, EcsPipeline.Builder pipelineBuilder, VertexID id)
             {
                 _graph = graph;
                 _pipelineBuilder = pipelineBuilder;
@@ -139,7 +134,7 @@ namespace DCFApixels.DragonECS.Core
             {
                 _graph = graph;
                 _pipelineBuilder = pipelineBuilder;
-                _layerID = VertextID.NULL;
+                _layerID = VertexID.NULL;
                 _layersRange = layersRange;
             }
             #endregion
@@ -159,7 +154,7 @@ namespace DCFApixels.DragonECS.Core
             }
             public MoveHandler Before(string targetLayer)
             {
-                if (_layerID != VertextID.NULL)
+                if (_layerID != VertexID.NULL)
                 {
                     _graph.AddDependency(_layerID, _graph.GetVertexID(targetLayer), true);
                 }
@@ -189,7 +184,7 @@ namespace DCFApixels.DragonECS.Core
             }
             public MoveHandler After(string targetLayer)
             {
-                if (_layerID != VertextID.NULL)
+                if (_layerID != VertexID.NULL)
                 {
                     _graph.AddDependency(_graph.GetVertexID(targetLayer), _layerID, false);
                 }
@@ -206,10 +201,17 @@ namespace DCFApixels.DragonECS.Core
         }
         #endregion
 
+        #region MergeWith
+        public void MergeWith(IDependencyGraph<string> other)
+        {
+            _graph.MergeWith(other);
+        }
+        #endregion;
+
         #region Other
-        public bool Contains(string layer) 
-        { 
-            return _graph.ContainsVertex(layer); 
+        public bool Contains(string layer)
+        {
+            return _graph.ContainsVertex(layer);
         }
         public IEnumerator<string> GetEnumerator() { return _graph.GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return _graph.GetEnumerator(); }
@@ -300,89 +302,83 @@ namespace DCFApixels.DragonECS.Core
         #endregion
     }
 
-    public unsafe partial class DependencyGraph : IEnumerable<string>, IDependencyGraph<string>
+    public enum DependencyGraphVertextID : short { NULL = 0 }
+    public interface IDependencyGraph<T> : IReadOnlyCollection<string>
     {
-        #region IDependencyGraph<string>
-        VertextID IDependencyGraph<string>.AddVertex(string vertex, bool isLocked)
+        ReadonlyDependenciesCollection<T> Dependencies { get; }
+        VertexID AddVertex(T vertex, bool isLocked);
+        bool ContainsVertex(T vertex);
+        VertexID GetVertexID(T vertex);
+        T GetVertexFromID(VertexID vertexID);
+        bool RemoveVertex(T vertex);
+        void AddDependency(VertexID fromID, VertexID toID, bool moveToRight);
+        void MergeWith(IDependencyGraph<T> other);
+        T[] Sort();
+    }
+    public static class DependencyGraphExtensions
+    {
+        public static void AddDependency<T>(this IDependencyGraph<T> self, T from, T to, bool moveToRight)
         {
-            var result = GetVertexID(vertex);
-            Add_Internal(result);
-            if (isLocked)
+            self.AddDependency(self.GetVertexID(from), self.GetVertexID(to), moveToRight);
+        }
+    }
+    public struct ReadonlyDependenciesCollection<T> : IReadOnlyCollection<(T from, T to)>
+    {
+        private IDependencyGraph<T> _graph;
+        private IReadOnlyCollection<(VertexID from, VertexID to)> _source;
+        public int Count
+        {
+            get { return _source.Count; }
+        }
+        public ReadonlyDependenciesCollection(IDependencyGraph<T> graph, IReadOnlyCollection<(VertexID from, VertexID to)> source)
+        {
+            _graph = graph;
+            _source = source;
+        }
+        public Enumerator GetEnumerator() { return new Enumerator(_graph, _source.GetEnumerator()); }
+        IEnumerator<(T from, T to)> IEnumerable<(T from, T to)>.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+        public struct Enumerator : IEnumerator<(T from, T to)>
+        {
+            private IDependencyGraph<T> _graph;
+            private IEnumerator<(VertexID from, VertexID to)> _source;
+            public Enumerator(IDependencyGraph<T> graph, IEnumerator<(VertexID from, VertexID to)> source)
             {
-                LockVertex(vertex);
+                _graph = graph;
+                _source = source;
             }
-            return result;
+            public (T from, T to) Current
+            {
+                get
+                {
+                    var (from, to) = _source.Current;
+                    return (_graph.GetVertexFromID(from), _graph.GetVertexFromID(to));
+                }
+            }
+            object IEnumerator.Current { get { return Current; } }
+            public bool MoveNext() { return _source.MoveNext(); }
+            public void Reset() { _source.Reset(); }
+            public void Dispose() { }
         }
-        bool IDependencyGraph<string>.ContainsVertex(string vertex)
-        {
-            return GetVertexInfo(GetVertexID(vertex)).isContained;
-        }
-        VertextID IDependencyGraph<string>.GetVertexID(string vertex)
-        {
-            return GetVertexID(vertex);
-        }
-        bool IDependencyGraph<string>.RemoveVertex(string vertex)
-        {
-            var result = GetVertexID(vertex);
-            return Remove_Internal(result);
-        }
-        #endregion
-
-        private readonly Dictionary<string, VertextID> _vertexIDs = new Dictionary<string, VertextID>(32);
+    }
+    public unsafe partial class DependencyGraph : IDependencyGraph<string>
+    {
+        private readonly Dictionary<string, VertexID> _vertexIDs = new Dictionary<string, VertexID>(32);
         private StructList<VertexInfo> _vertexInfos = new StructList<VertexInfo>(32);
-        private VertextID GetVertexID(string vertext)
-        {
-            if (_vertexIDs.TryGetValue(vertext, out VertextID layerID) == false)
-            {
-                layerID = (VertextID)_vertexInfos.Count;
-                _vertexInfos.Add(default);
 
-                _vertexIDs[vertext] = layerID;
-                ref var layerInfo = ref GetVertexInfo(layerID);
-                layerInfo.name = vertext;
-            }
-            return layerID;
-        }
-        private ref VertexInfo GetVertexInfo(VertextID vertexID)
-        {
-            return ref _vertexInfos._items[(int)vertexID];
-        }
-        [DebuggerDisplay("{name}")]
-        private struct VertexInfo
-        {
-            public string name;
-            public int insertionIndex;
-            public bool isLocked;
-            public bool isContained;
-            public bool isBefore;
-            //build
-            public bool hasAnyDependency;
-            public int inDegree;
-            public int sortingIndex;
-            public int leftBeforeIndex;
-            public VertexInfo(string name) : this()
-            {
-                this.name = name;
-            }
-        }
-
-        private List<(VertextID from, VertextID to)> _dependencies = new List<(VertextID, VertextID)>(16);
-        private readonly VertextID _basicVertexID;
+        private List<(VertexID from, VertexID to)> _dependencies = new List<(VertexID, VertexID)>(16);
+        private readonly VertexID _basicVertexID;
         private int _increment = 0;
         private int _count;
-
-        public IEnumerable<(string from, string to)> Deps
-        {
-            get
-            {
-                return _dependencies.Select(o => (GetVertexInfo(o.from).name, GetVertexInfo(o.to).name));
-            }
-        }
 
         #region Properties
         public int Count
         {
             get { return _count; }
+        }
+        public ReadonlyDependenciesCollection<string> Dependencies
+        {
+            get { return new ReadonlyDependenciesCollection<string>(this, _dependencies); }
         }
         #endregion
 
@@ -390,7 +386,7 @@ namespace DCFApixels.DragonECS.Core
         public DependencyGraph()
         {
             GetVertexID("");
-            _basicVertexID = VertextID.NULL;
+            _basicVertexID = VertexID.NULL;
         }
         public DependencyGraph(string basicVertexName)
         {
@@ -401,25 +397,73 @@ namespace DCFApixels.DragonECS.Core
         #endregion
 
         #region Methods
-        private void LockVertex(string veretex)
+        public VertexID GetVertexID(string vertext)
         {
-            GetVertexInfo(GetVertexID(veretex)).isLocked = true;
+            if (_vertexIDs.TryGetValue(vertext, out VertexID layerID) == false)
+            {
+                layerID = (VertexID)_vertexInfos.Count;
+                _vertexInfos.Add(default);
+
+                _vertexIDs[vertext] = layerID;
+                ref var layerInfo = ref GetVertexInfo(layerID);
+                layerInfo.value = vertext;
+            }
+            return layerID;
         }
-        private void Add_Internal(VertextID id)
+        public string GetVertexFromID(VertexID vertexID)
+        {
+            return GetVertexInfo(vertexID).value;
+        }
+        private ref VertexInfo GetVertexInfo(VertexID vertexID)
+        {
+            return ref _vertexInfos._items[(int)vertexID];
+        }
+        private ref VertexInfo GetVertexInfo(int vertexID)
+        {
+            return ref _vertexInfos._items[(int)vertexID];
+        }
+        private int GetVertexInfosCount()
+        {
+            return _vertexInfos.Count;
+        }
+        public VertexID AddVertex(string vertex, bool isLocked)
+        {
+            var result = GetVertexID(vertex);
+            AddVertexByID(result);
+            if (isLocked)
+            {
+                LockVertex(result);
+            }
+            return result;
+        }
+        private void LockVertex(string vertex)
+        {
+            LockVertex(GetVertexID(vertex));
+        }
+        private void LockVertex(VertexID vertexID)
+        {
+            GetVertexInfo(vertexID).isLocked = true;
+        }
+        private void AddVertexByID(VertexID id)
         {
             ref var info = ref GetVertexInfo(id);
             if (info.isContained == false || info.isLocked == false)
             {
                 _count++;
                 info.isContained = true;
-                info.insertionIndex = _increment++;
             }
+            info.insertionIndex = _increment++;
         }
-        private bool Remove_Internal(VertextID id)
+        public bool RemoveVertex(string vertex)
+        {
+            var result = GetVertexID(vertex);
+            return RemoveVertexByID(result);
+        }
+        private bool RemoveVertexByID(VertexID id)
         {
             ref var info = ref GetVertexInfo(id);
             bool result = false;
-            if (info.isLocked) { throw new Exception($"The {info.name} vertex cannot be removed"); }
+            if (info.isLocked) { throw new Exception($"The {info.value} vertex cannot be removed"); }
             if (info.isContained)
             {
                 _count--;
@@ -429,63 +473,77 @@ namespace DCFApixels.DragonECS.Core
             info.insertionIndex = 0;
             return result;
         }
-        public void AddDependency(VertextID fromVertexID, VertextID toVertexID, bool moveToRight)
+        public void AddDependency(VertexID fromVertexID, VertexID toVertexID, bool moveToRight)
         {
-
             ref var fromInfo = ref GetVertexInfo(fromVertexID);
             ref var toInfo = ref GetVertexInfo(toVertexID);
             fromInfo.hasAnyDependency = true;
             toInfo.hasAnyDependency = true;
-
-            if (moveToRight)
-            {
-                //GetLayerInfo(from).insertionIndex = 1000 - (_increment++);
-                fromInfo.isBefore = true;
-                //_dependencies.Insert(0, (from, to));
-            }
-            else
-            {
-                //GetLayerInfo(from).insertionIndex = _increment++;
-                fromInfo.isBefore = false;
-                //_dependencies.Add((from, to));
-            }
-            //_dependencies.Insert(0, (from, to));
+            fromInfo.moveToRight = moveToRight;
             _dependencies.Add((fromVertexID, toVertexID));
-        }
-        private void AddDependency_Internal(string from, string to, bool isBefore = false)
-        {
-            AddDependency(GetVertexID(from), GetVertexID(to), isBefore);
         }
         #endregion
 
         #region MergeWith
-        public void MergeWith(DependencyGraph other)
+        public void MergeWith(IDependencyGraph<string> other)
         {
-            foreach (var otherDependency in other._dependencies)
+            if(other is DependencyGraph graph)
             {
-                AddDependency_Internal(other.GetVertexInfo(otherDependency.from).name, other.GetVertexInfo(otherDependency.to).name);
+                foreach (var otherDependency in graph._dependencies)
+                {
+                    this.AddDependency(graph.GetVertexFromID(otherDependency.from), graph.GetVertexFromID(otherDependency.to), false);
+                }
+                for (int i = 0; i < graph.GetVertexInfosCount(); i++)
+                {
+                    ref var otherLayerInfo = ref graph.GetVertexInfo(i);
+                    AddVertexByID(GetVertexID(graph.GetVertexFromID((VertexID)i)));
+                }
             }
-            for (int i = 0; i < other._vertexInfos.Count; i++)
+            foreach (var otherDependency in other.Dependencies)
             {
-                VertextID otherLayerID = (VertextID)i;
-                ref var otherLayerInfo = ref other.GetVertexInfo(otherLayerID);
-                Add_Internal(GetVertexID(otherLayerInfo.name));
+                this.AddDependency(otherDependency.from, otherDependency.to, false);
+            }
+            foreach (var vertex in other)
+            {
+                AddVertex(vertex, false);
             }
         }
         #endregion
 
-        #region Build
-        private void TopoSorting(UnsafeArray<VertextID> sortingBuffer)
+        #region Sort
+        public string[] Sort()
         {
-            VertextID[] nodes = new VertextID[_count];
-            var adjacency = new List<(VertextID To, int DependencyIndex)>[_vertexInfos.Count];
-
-            for (int i = 0, j = 0; i < _vertexInfos.Count; i++)
+            const int BUFFER_THRESHOLD = 256;
+            if (_count <= BUFFER_THRESHOLD)
             {
-                VertextID layerID = (VertextID)i;
+                var ptr = stackalloc VertexID[_count];
+                var buffer = UnsafeArray<VertexID>.Manual(ptr, _count);
+                TopoSorting(buffer);
+                ReoderInsertionIndexes(buffer);
+                TopoSorting(buffer);
+                return ConvertIdsToStringsArray(buffer);
+            }
+            else
+            {
+                var ptr = TempBuffer<VertexID>.Get(_count);
+                var buffer = UnsafeArray<VertexID>.Manual(ptr, _count);
+                TopoSorting(buffer);
+                ReoderInsertionIndexes(buffer);
+                TopoSorting(buffer);
+                return ConvertIdsToStringsArray(buffer);
+            }
+        }
+        private void TopoSorting(UnsafeArray<VertexID> sortingBuffer)
+        {
+            VertexID[] nodes = new VertexID[_count];
+            var adjacency = new List<(VertexID To, int DependencyIndex)>[GetVertexInfosCount()];
+
+            for (int i = 0, j = 0; i < GetVertexInfosCount(); i++)
+            {
+                VertexID layerID = (VertexID)i;
                 ref var info = ref GetVertexInfo(layerID);
-                adjacency[(int)layerID] = new List<(VertextID To, int DependencyIndex)>();
-                _vertexInfos._items[(int)layerID].inDegree = 0;
+                adjacency[(int)layerID] = new List<(VertexID To, int DependencyIndex)>();
+                GetVertexInfo(layerID).inDegree = 0;
                 if (info.isContained)
                 {
                     nodes[j++] = layerID;
@@ -505,29 +563,26 @@ namespace DCFApixels.DragonECS.Core
                 }
             }
 
-            //// добавление зависимостей для нод без зависимостей.
-            //if (_basicLayerID != LayerID.NULL)
-            //{
-            //    var basicLayerAdjacencyList = adjacency[(int)_basicLayerID];
-            //    int inserIndex = basicLayerAdjacencyList.Count;
-            //    //for (int i = _layerInfos.Count - 1; i >= 0; i--)
-            //    for (int i = 0; i < _layerInfos.Count; i++)
-            //    {
-            //        var id = (LayerID)i;
-            //        ref var toInfo = ref _layerInfos._items[i];
-            //        if(toInfo.isContained && toInfo.hasAnyDependency == false)
-            //        {
-            //            //toInfo.insertionIndex = -toInfo.insertionIndex;
-            //            basicLayerAdjacencyList.Insert(inserIndex, (id, toInfo.insertionIndex));
-            //            toInfo.inDegree += 1;
-            //        }
-            //    }
-            //}
+            // добавление зависимостей для нод без зависимостей.
+            if (_basicVertexID != VertexID.NULL)
+            {
+                var basicLayerAdjacencyList = adjacency[(int)_basicVertexID];
+                int inserIndex = basicLayerAdjacencyList.Count;
+                for (int i = 0; i < GetVertexInfosCount(); i++)
+                {
+                    var toID = (VertexID)i;
+                    ref var toInfo = ref GetVertexInfo(i);
+                    if(toInfo.isContained && toInfo.hasAnyDependency == false)
+                    {
+                        basicLayerAdjacencyList.Insert(inserIndex, (toID, toInfo.insertionIndex));
+                        toInfo.inDegree += 1;
+                    }
+                }
+            }
 
-            List<VertextID> zeroInDegree = new List<VertextID>(nodes.Length);
+            List<VertexID> zeroInDegree = new List<VertexID>(nodes.Length);
             zeroInDegree.AddRange(nodes.Where(id => GetVertexInfo(id).inDegree == 0).OrderBy(id => GetVertexInfo(id).insertionIndex));
 
-            //List<string> result = new List<string>(nodes.Length);
             int resultCount = 0;
 
             while (zeroInDegree.Count > 0)
@@ -535,12 +590,10 @@ namespace DCFApixels.DragonECS.Core
                 var current = zeroInDegree[0];
                 zeroInDegree.RemoveAt(0);
 
-                //result.Add(GetVertexInfo(current).name);
                 GetVertexInfo(current).sortingIndex = resultCount;
                 sortingBuffer.ptr[resultCount++] = current;
 
                 var adjacencyList = adjacency[(int)current];
-                //for (int i = adjacencyList.Count - 1; i >= 0; i--)
                 for (int i = 0; i < adjacencyList.Count; i++)
                 {
                     var (neighbor, _) = adjacencyList[i];
@@ -552,9 +605,6 @@ namespace DCFApixels.DragonECS.Core
                         int insertIndex = zeroInDegree.FindIndex(id => GetVertexInfo(id).insertionIndex < neighborInsertionIndex);
                         insertIndex = insertIndex < 0 ? 0 : insertIndex;
                         zeroInDegree.Insert(insertIndex, neighbor);
-
-                        //zeroInDegree.Add(neighbor);
-                        //zeroInDegree = zeroInDegree.OrderBy(id => GetLayerInfo(id).insertionIndex).ToList();
                     }
                 }
             }
@@ -571,19 +621,19 @@ namespace DCFApixels.DragonECS.Core
                 throw new InvalidOperationException("Cyclic dependency detected." + details);
             }
         }
-        private void ReoderInsertionIndexes(UnsafeArray<VertextID> sortingBuffer)
+        private void ReoderInsertionIndexes(UnsafeArray<VertexID> sortingBuffer)
         {
-            for (int i = 0; i < _vertexInfos.Count; i++)
+            for (int i = 0; i < GetVertexInfosCount(); i++)
             {
-                ref var info = ref _vertexInfos._items[i];
+                ref var info = ref GetVertexInfo(i);
                 if (info.isContained == false) { continue; }
-                info.leftBeforeIndex = info.isBefore ? int.MaxValue : 0;
+                info.leftBeforeIndex = info.moveToRight ? int.MaxValue : 0;
             }
 
             foreach (var dependency in _dependencies)
             {
                 ref var fromInfo = ref GetVertexInfo(dependency.from);
-                if (fromInfo.isBefore)
+                if (fromInfo.moveToRight)
                 {
                     ref var toInfo = ref GetVertexInfo(dependency.to);
                     fromInfo.leftBeforeIndex = Math.Min(toInfo.sortingIndex, fromInfo.leftBeforeIndex);
@@ -594,7 +644,7 @@ namespace DCFApixels.DragonECS.Core
             {
                 var id = sortingBuffer.ptr[i];
                 ref var info = ref GetVertexInfo(id);
-                if (info.isBefore)
+                if (info.moveToRight)
                 {
                     if (info.leftBeforeIndex < sortingBuffer.Length)
                     {
@@ -612,10 +662,9 @@ namespace DCFApixels.DragonECS.Core
         }
         private static void MoveElement<T>(ref UnsafeArray<T> array, int oldIndex, int newIndex) where T : unmanaged
         {
-            var ptr = array.ptr;
             if (oldIndex == newIndex) return;
 
-            // Сохраняем элемент для перемещения
+            var ptr = array.ptr;
             T item = ptr[oldIndex];
 
             int elementSize = sizeof(T);
@@ -637,55 +686,28 @@ namespace DCFApixels.DragonECS.Core
                 source = (byte*)(ptr + newIndex);
                 destination = (byte*)(ptr + newIndex + 1);
             }
-
-            // Копируем память
             Buffer.MemoryCopy(source: source, destination: destination, destinationSizeInBytes: bytesToCopy, sourceBytesToCopy: bytesToCopy);
 
-            // Вставляем сохраненный элемент
             ptr[newIndex] = item;
         }
-
-        public string[] Sort()
-        {
-            const int BUFFER_THRESHOLD = 256;
-            if(_count <= BUFFER_THRESHOLD)
-            {
-                var ptr = stackalloc VertextID[_count];
-                var buffer = UnsafeArray<VertextID>.Manual(ptr, _count);
-                TopoSorting(buffer);
-                ReoderInsertionIndexes(buffer);
-                TopoSorting(buffer);
-                return ConvertIdsToStringsArray(buffer);
-            }
-            else
-            {
-                var ptr = TempBuffer<VertextID>.Get(_count);
-                var buffer = UnsafeArray<VertextID>.Manual(ptr, _count);
-                TopoSorting(buffer);
-                ReoderInsertionIndexes(buffer);
-                TopoSorting(buffer);
-                return ConvertIdsToStringsArray(buffer);
-            }
-        }
-
-        private string[] ConvertIdsToStringsArray(UnsafeArray<VertextID> buffer)
+        private string[] ConvertIdsToStringsArray(UnsafeArray<VertexID> buffer)
         {
             string[] result = new string[buffer.Length];
             for (int i = 0; i < result.Length; i++)
             {
-                result[i] = GetVertexInfo(buffer.ptr[i]).name;
+                result[i] = GetVertexInfo(buffer.ptr[i]).value;
             }
             return result;
         }
         #endregion
 
         #region FindCycles
-        private List<VertextID> FindCycle(
-            List<(VertextID To, int DependencyIndex)>[] adjacency,
-            VertextID[] nodes)
+        private List<VertexID> FindCycle(
+            List<(VertexID To, int DependencyIndex)>[] adjacency,
+            VertexID[] nodes)
         {
-            var visited = new Dictionary<VertextID, bool>();
-            var recursionStack = new Stack<VertextID>();
+            var visited = new Dictionary<VertexID, bool>();
+            var recursionStack = new Stack<VertexID>();
 
             foreach (var node in nodes)
             {
@@ -697,10 +719,10 @@ namespace DCFApixels.DragonECS.Core
             return null;
         }
         private bool FindCycleDFS(
-            VertextID node,
-            List<(VertextID To, int DependencyIndex)>[] adjacency,
-            Dictionary<VertextID, bool> visited,
-            Stack<VertextID> recursionStack)
+            VertexID node,
+            List<(VertexID To, int DependencyIndex)>[] adjacency,
+            Dictionary<VertexID, bool> visited,
+            Stack<VertexID> recursionStack)
         {
             if (!visited.TryGetValue(node, out bool isVisited))
             {
@@ -727,10 +749,10 @@ namespace DCFApixels.DragonECS.Core
         }
 
         private string[] GetCycleDependencies(
-            List<VertextID> cycle,
-            List<(VertextID To, int DependencyIndex)>[] adjacency)
+            List<VertexID> cycle,
+            List<(VertexID To, int DependencyIndex)>[] adjacency)
         {
-            var cycleEdges = new HashSet<(VertextID, VertextID)>();
+            var cycleEdges = new HashSet<(VertexID, VertexID)>();
             for (int i = 0; i < cycle.Count - 1; i++)
             {
                 cycleEdges.Add((cycle[i], cycle[i + 1]));
@@ -744,7 +766,7 @@ namespace DCFApixels.DragonECS.Core
                     if (cycleEdges.Contains((from, to)) && _dependencies.Count > depIndex)
                     {
                         var dep = _dependencies[depIndex];
-                        dependencies.Add($"{GetVertexInfo(dep.from).name}->{GetVertexInfo(dep.to).name}");
+                        dependencies.Add($"{GetVertexInfo(dep.from).value}->{GetVertexInfo(dep.to).value}");
                     }
                 }
             }
@@ -753,8 +775,10 @@ namespace DCFApixels.DragonECS.Core
         #endregion
 
         #region Other
-        public bool Contains(string layer) { return GetVertexInfo(GetVertexID(layer)).isContained; }
-
+        public bool ContainsVertex(string vertex)
+        {
+            return GetVertexInfo(GetVertexID(vertex)).isContained;
+        }
         public Enumerator GetEnumerator() { return new Enumerator(this); }
         IEnumerator<string> IEnumerable<string>.GetEnumerator() { return GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
@@ -769,13 +793,13 @@ namespace DCFApixels.DragonECS.Core
             }
             public string Current
             {
-                get { return _map._vertexInfos._items[_index].name; }
+                get { return _map.GetVertexInfo(_index).value; }
             }
             object IEnumerator.Current { get { return Current; } }
             public bool MoveNext()
             {
-                if (_index++ >= _map._vertexInfos.Count) { return false; }
-                ref var info = ref _map._vertexInfos._items[_index];
+                if (_index++ >= _map.GetVertexInfosCount()) { return false; }
+                ref var info = ref _map.GetVertexInfo(_index);
                 if(info.isContained == false)
                 {
                     return MoveNext();
@@ -787,6 +811,27 @@ namespace DCFApixels.DragonECS.Core
             }
             public void Reset() { _index = -1; }
             public void Dispose() { }
+        }
+        #endregion
+
+        #region VertexInfo
+        [DebuggerDisplay("{value}")]
+        private struct VertexInfo
+        {
+            public string value;
+            public int insertionIndex;
+            public bool isLocked;
+            public bool isContained;
+            public bool moveToRight;
+            //build
+            public bool hasAnyDependency;
+            public int inDegree;
+            public int sortingIndex;
+            public int leftBeforeIndex;
+            public VertexInfo(string name) : this()
+            {
+                this.value = name;
+            }
         }
         #endregion
     }
