@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "...")]
-    [MetaID("FC38597C9201C15D1A14D133237BD67F")]
+    [MetaID("DragonECS_FC38597C9201C15D1A14D133237BD67F")]
     public interface IEcsDefaultAddParams
     {
         AddParams AddParams { get; }
@@ -726,7 +726,7 @@ namespace DCFApixels.DragonECS
             #region SerializableTemplate
             public EcsPipelineTemplate GenerateSerializableTemplate()
             {
-                var it = new LinkedListIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
+                var it = new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
                 EcsPipelineTemplate result = new EcsPipelineTemplate();
                 result.layers = new string[Layers.Count];
                 result.records = new EcsPipelineTemplate.Record[it.Count];

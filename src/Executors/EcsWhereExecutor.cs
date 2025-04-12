@@ -89,6 +89,28 @@ namespace DCFApixels.DragonECS.Internal
         public EcsSpan Execute()
         {
             Execute_Iternal();
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+            var newSpan = new EcsSpan(World.ID, _filteredAllEntities, _filteredAllEntitiesCount);
+            using (EcsGroup group = EcsGroup.New(World))
+            {
+                foreach (var e in World.Entities)
+                {
+                    if (World.IsMatchesMask(Mask, e))
+                    {
+                        group.Add(e);
+                    }
+                }
+
+                if (group.SetEquals(newSpan) == false)
+                {
+                    int[] array = new int[_filteredAllEntities.Length];
+                    var count = _iterator.IterateTo(World.Entities, ref array);
+
+                    EcsDebug.PrintError(newSpan.ToString() + "\r\n" + group.ToSpan().ToString());
+                    Throw.DeepDebugException();
+                }
+            }
+#endif
             return new EcsSpan(World.ID, _filteredAllEntities, _filteredAllEntitiesCount);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -99,6 +121,16 @@ namespace DCFApixels.DragonECS.Internal
                 return Execute();
             }
             ExecuteFor_Iternal(span);
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+            var newSpan = new EcsSpan(World.ID, _filteredEntities, _filteredEntitiesCount);
+            foreach (var e in newSpan)
+            {
+                if (World.IsMatchesMask(Mask, e) == false)
+                {
+                    Throw.DeepDebugException();
+                }
+            }
+#endif
             return new EcsSpan(World.ID, _filteredEntities, _filteredEntitiesCount);
         }
 

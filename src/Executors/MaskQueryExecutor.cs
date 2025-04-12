@@ -125,6 +125,7 @@ namespace DCFApixels.DragonECS.Core
             _maskInc = mask._incs;
             _maskExc = mask._excs;
             _count = 1 + mask._incs.Length + mask._excs.Length;
+     
             _versions = UnmanagedArrayUtility.NewAndInit<long>(_count);
         }
         public bool Check()
@@ -158,17 +159,17 @@ namespace DCFApixels.DragonECS.Core
         {
             *_versions = _world.Version;
 
-            long* ptr = _versions;
+            long* versionsPtr = _versions;
             var slots = _world._poolSlots;
             foreach (var slotIndex in _maskInc)
             {
-                ptr++;
-                *ptr = slots[slotIndex].version;
+                versionsPtr++;
+                *versionsPtr = slots[slotIndex].version;
             }
             foreach (var slotIndex in _maskExc)
             {
-                ptr++;
-                *ptr = slots[slotIndex].version;
+                versionsPtr++;
+                *versionsPtr = slots[slotIndex].version;
             }
         }
         public bool CheckAndNext()
@@ -179,25 +180,27 @@ namespace DCFApixels.DragonECS.Core
             }
             *_versions = _world.Version;
 
-            long* ptr = _versions;
+            long* versionsPtr = _versions;
             var slots = _world._poolSlots;
-            bool result = _count != 1;
+            // Так как проверки EXC работают не правильно при отсутсвии INC,
+            // то проверки без INC должны всегда возвращать false.
+            bool result = _maskInc.Length > 0;
             foreach (var slotIndex in _maskInc)
             {
-                ptr++;
-                if (*ptr != slots[slotIndex].version)
+                versionsPtr++;
+                if (*versionsPtr != slots[slotIndex].version)
                 {
                     result = false;
-                    *ptr = slots[slotIndex].version;
+                    *versionsPtr = slots[slotIndex].version;
                 }
             }
             foreach (var slotIndex in _maskExc)
             {
-                ptr++;
-                if (*ptr != slots[slotIndex].version)
+                versionsPtr++;
+                if (*versionsPtr != slots[slotIndex].version)
                 {
                     result = false;
-                    *ptr = slots[slotIndex].version;
+                    *versionsPtr = slots[slotIndex].version;
                 }
             }
             return result;

@@ -40,6 +40,17 @@ namespace DCFApixels.DragonECS
         {
             return FindPoolInstance_Internal(GetComponentTypeID(componentType));
         }
+        public bool TryFindPoolInstance(int componentTypeID, out IEcsPool pool)
+        {
+            pool = FindPoolInstance(componentTypeID);
+            return pool.IsNullOrDummy() == false;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryFindPoolInstance(Type componentType, out IEcsPool pool)
+        {
+            pool = FindPoolInstance(componentType);
+            return pool.IsNullOrDummy() == false;
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IEcsPool FindPoolInstance_Internal(int componentTypeID)
         {
@@ -267,7 +278,11 @@ namespace DCFApixels.DragonECS
             ref PoolSlot slot = ref _poolSlots[componentTypeID];
             slot.count++;
             slot.version++;
-            _entities[entityID].componentsCount++;
+            var count = _entities[entityID].componentsCount++;
+            if (count == 0 && IsUsed(entityID))
+            {
+                RemoveFromEmptyEntities(entityID);
+            }
             _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex] |= maskBit.mask;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -282,7 +297,7 @@ namespace DCFApixels.DragonECS
 
             if (count == 0 && IsUsed(entityID))
             {
-                DelEntity(entityID);
+                MoveToEmptyEntities(entityID);
             }
             CheckUnregisterValid(count, entityID);
         }
@@ -298,7 +313,11 @@ namespace DCFApixels.DragonECS
                 ref PoolSlot slot = ref _poolSlots[componentTypeID];
                 slot.count++;
                 slot.version++;
-                _entities[entityID].componentsCount++;
+                var count = _entities[entityID].componentsCount++;
+                if(count == 0 && IsUsed(entityID))
+                {
+                    RemoveFromEmptyEntities(entityID);
+                }
                 return true;
             }
             return false;
@@ -319,7 +338,7 @@ namespace DCFApixels.DragonECS
 
                 if (count == 0 && IsUsed(entityID))
                 {
-                    DelEntity(entityID);
+                    MoveToEmptyEntities(entityID);
                 }
                 CheckUnregisterValid(count, entityID);
                 return true;

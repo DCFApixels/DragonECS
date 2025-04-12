@@ -26,6 +26,13 @@ namespace DCFApixels.DragonECS.PoolsCore
     /// <typeparam name="T"> Component type. </typeparam>
     public interface IEcsPoolImplementation<T> : IEcsPoolImplementation { }
 
+    //TODO
+    //public interface IEcsReadonlyPoolImplementation<TPool> : IEcsReadonlyPool
+    //    where TPool : IEcsReadonlyPoolImplementation<TPool>
+    //{
+    //    void Init(ref TPool pool);
+    //}
+
     #region EcsPoolThrowHelper
     public static class EcsPoolThrowHelper
     {
@@ -74,7 +81,7 @@ namespace DCFApixels.DragonECS.Internal
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "A placeholder type, an instance of this type replaces the null ref.")]
     [MetaTags(MetaTags.HIDDEN)]
-    [MetaID("460E547C9201227A4956AC297F67B484")]
+    [MetaID("DragonECS_460E547C9201227A4956AC297F67B484")]
     [DebuggerDisplay("-")]
     public sealed class EcsNullPool : IEcsPoolImplementation<NullComponent>
     {
@@ -135,13 +142,13 @@ namespace DCFApixels.DragonECS.Internal
             throw new NullInstanceException();
 #endif
         }
-        void IEcsReadonlyPool.Copy(int fromEntityID, int toEntityID)
+        void IEcsPool.Copy(int fromEntityID, int toEntityID)
         {
 #if DEBUG
             throw new NullInstanceException();
 #endif
         }
-        void IEcsReadonlyPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
+        void IEcsPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if DEBUG
             throw new NullInstanceException();
@@ -189,11 +196,10 @@ namespace DCFApixels.DragonECS
         #region Methods
         bool Has(int entityID);
         object GetRaw(int entityID);
-        void Copy(int fromEntityID, int toEntityID);
-        void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID);
         #endregion
 
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
+
         #region Add/Remove Listeners
         void AddListener(IEcsPoolEventListener listener);
         void RemoveListener(IEcsPoolEventListener listener);
@@ -209,6 +215,8 @@ namespace DCFApixels.DragonECS
         void SetRaw(int entityID, object dataRaw);
         void Del(int entityID);
         void ClearAll();
+        void Copy(int fromEntityID, int toEntityID);
+        void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID);
         #endregion
     }
 
@@ -260,6 +268,12 @@ namespace DCFApixels.DragonECS
         {
             entityID = self.World.NewEntity();
             return ref self.Add(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T NewEntityLong<T>(this IEcsStructPool<T> self, out entlong entity) where T : struct
+        {
+            entity = self.World.NewEntityLong();
+            return ref self.Add(entity.GetIDUnchecked());
         }
     }
     #endregion

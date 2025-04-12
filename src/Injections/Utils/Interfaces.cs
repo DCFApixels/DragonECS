@@ -9,7 +9,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DI_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "The interface of the dependency injection process.")]
-    [MetaID("4C86537C92019AA24383CBF53CBD456C")]
+    [MetaID("DragonECS_4C86537C92019AA24383CBF53CBD456C")]
     public interface IEcsInject<T> : IEcsInjectProcess
     {
         void Inject(T obj);
@@ -22,7 +22,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.DI_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "The process interface that signals the completion of injection during pipeline initialization via the EcsPipeline.Init() method.")]
-    [MetaID("05C3537C920155AFC044C900E4F17D90")]
+    [MetaID("DragonECS_05C3537C920155AFC044C900E4F17D90")]
     public interface IOnInitInjectionComplete : IEcsProcess
     {
         void OnBeforeInitInjection();

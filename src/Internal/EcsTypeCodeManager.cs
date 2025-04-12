@@ -12,46 +12,6 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace DCFApixels.DragonECS.Internal
 {
-#if ENABLE_IL2CPP
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-#endif
-    [DebuggerDisplay("{" + nameof(GetDebuggerDisplay) + "(),nq}")]
-    internal readonly struct EcsTypeCodeKey : IEquatable<EcsTypeCodeKey>
-    {
-        public readonly Type Type;
-        public readonly string NameKey;
-        public EcsTypeCodeKey(Type type, string nameKey)
-        {
-            Type = type;
-            NameKey = nameKey;
-        }
-        public bool Equals(EcsTypeCodeKey other)
-        {
-            return Type == other.Type && NameKey == other.NameKey;
-        }
-        public override bool Equals(object obj)
-        {
-            return obj is EcsTypeCodeKey other && Equals(other);
-        }
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Type, NameKey);
-        }
-        public override string ToString()
-        {
-            if (string.IsNullOrEmpty(NameKey))
-            {
-                return Type.ToString();
-            }
-            return $"{Type} {NameKey}";
-        }
-        public static implicit operator EcsTypeCodeKey(Type type) { return new EcsTypeCodeKey(type, string.Empty); }
-        private string GetDebuggerDisplay()
-        {
-            return ToString();
-        }
-    }
     //TODO разработать возможность ручного устанавливания ID типам.
     //это может быть полезно как детерминированность для сети
 #if ENABLE_IL2CPP
@@ -62,7 +22,7 @@ namespace DCFApixels.DragonECS.Internal
     {
         private static readonly Dictionary<EcsTypeCodeKey, EcsTypeCode> _codes = new Dictionary<EcsTypeCodeKey, EcsTypeCode>();
         private static int _increment = 1;
-        private static object _lock = new object();
+        private static readonly object _lock = new object();
         public static int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,7 +43,6 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTypeCode Get<T>() { return EcsTypeCodeCache<T>.code; }
         public static bool Has(Type type) { return _codes.ContainsKey(type); }
-        public static bool Has<T>() { return _codes.ContainsKey(typeof(T)); }
         public static EcsTypeCodeKey FindTypeOfCode(EcsTypeCode typeCode)
         {
             foreach (var item in _codes)
@@ -122,5 +81,41 @@ namespace DCFApixels.DragonECS.Internal
         {
             return this.AutoToString(false);
         }
+    }
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+    [DebuggerDisplay("{" + nameof(ToString) + "()}")]
+    internal readonly struct EcsTypeCodeKey : IEquatable<EcsTypeCodeKey>
+    {
+        public readonly Type Type;
+        public readonly string NameKey;
+        public EcsTypeCodeKey(Type type, string nameKey)
+        {
+            Type = type;
+            NameKey = nameKey;
+        }
+        public bool Equals(EcsTypeCodeKey other)
+        {
+            return Type == other.Type && NameKey == other.NameKey;
+        }
+        public override bool Equals(object obj)
+        {
+            return obj is EcsTypeCodeKey other && Equals(other);
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Type, NameKey);
+        }
+        public override string ToString()
+        {
+            if (string.IsNullOrEmpty(NameKey))
+            {
+                return Type.ToString();
+            }
+            return $"{Type} {NameKey}";
+        }
+        public static implicit operator EcsTypeCodeKey(Type type) { return new EcsTypeCodeKey(type, string.Empty); }
     }
 }

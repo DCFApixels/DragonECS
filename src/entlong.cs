@@ -148,6 +148,20 @@ namespace DCFApixels.DragonECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Unpack(out int id)
+        {
+#if DEBUG
+            if (IsAlive == false) { Throw.Ent_ThrowIsNotAlive(this); }
+#elif DRAGONECS_STABILITY_MODE
+            if (IsAlive == false)
+            {
+                id = EcsConsts.NULL_ENTITY_ID;
+                return;
+            }
+#endif
+            id = _id;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(out int id, out EcsWorld world)
         {
 #if DEBUG
@@ -216,6 +230,12 @@ namespace DCFApixels.DragonECS
             id = _id;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(out int id)
+        {
+            id = _id;
+            return IsAlive;
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUnpack(out int id, out EcsWorld world)
         {

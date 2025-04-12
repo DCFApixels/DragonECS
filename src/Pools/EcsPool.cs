@@ -21,8 +21,8 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Standard component.")]
-    [MetaID("84D2537C9201D6F6B92FEC1C8883A07A")]
-    public interface IEcsComponent : IEcsMember { }
+    [MetaID("DragonECS_84D2537C9201D6F6B92FEC1C8883A07A")]
+    public interface IEcsComponent : IEcsComponentMember { }
 
     /// <summary>Pool for IEcsComponent components</summary>
 #if ENABLE_IL2CPP
@@ -31,7 +31,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsComponent components.")]
-    [MetaID("C501547C9201A4B03FC25632E4FAAFD7")]
+    [MetaID("DragonECS_C501547C9201A4B03FC25632E4FAAFD7")]
     [DebuggerDisplay("Count: {Count} Type: {ComponentType}")]
     public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEntityStorage, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
@@ -51,8 +51,8 @@ namespace DCFApixels.DragonECS
         private bool _isDenseEntitiesDelayedValid = false;
         private int _recycledCount = 0;
 
-        private readonly IEcsComponentLifecycle<T> _componentLifecycleHandler = EcsComponentResetHandler<T>.instance;
-        private readonly bool _isHasComponentLifecycleHandler = EcsComponentResetHandler<T>.isHasHandler;
+        private readonly IEcsComponentLifecycle<T> _componentLifecycleHandler = EcsComponentLifecycleHandler<T>.instance;
+        private readonly bool _isHasComponentLifecycleHandler = EcsComponentLifecycleHandler<T>.isHasHandler;
         private readonly IEcsComponentCopy<T> _componentCopyHandler = EcsComponentCopyHandler<T>.instance;
         private readonly bool _isHasComponentCopyHandler = EcsComponentCopyHandler<T>.isHasHandler;
 
@@ -101,11 +101,12 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if DEBUG
+            if (_source.IsUsed(entityID) == false) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
             if (itemIndex > 0) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
             if (itemIndex > 0) { return ref Get(entityID); }
-            if (_isLocked) { return ref _items[0]; }
+            if (_isLocked | _source.IsUsed(entityID) == false) { return ref _items[0]; }
 #endif
             itemIndex = GetFreeItemIndex(entityID);
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
@@ -279,15 +280,7 @@ namespace DCFApixels.DragonECS
             _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
             _mapping = new int[world.Capacity];
-            Resize(ArrayUtility.NormalizeSizeToPowerOfTwo(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity));
-            //_capacity = ArrayUtility.NormalizeSizeToPowerOfTwo(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity);
-            //_items = new T[_capacity];
-            //_sparseEntities = new int[_capacity];
-            //_denseEntitiesDelayed = new int[_capacity];
-            //for (int i = 0; i < _capacity; i++)
-            //{// ����� �������������� ��� ����� ������ ����������, � ������ ������ free index-� ���� _denseEntitiesDelayed ���������� 0, �� free index ���������� ����� ���������
-            //    _denseEntitiesDelayed[i] = i;
-            //}
+            Resize(ArrayUtility.NextPow2(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity));
         }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
@@ -314,7 +307,7 @@ namespace DCFApixels.DragonECS
         {
             Add(entityID) = dataRaw == null ? default : (T)dataRaw;
         }
-        object IEcsReadonlyPool.GetRaw(int entityID) { return Get(entityID); }
+        object IEcsReadonlyPool.GetRaw(int entityID) { return Read(entityID); }
         void IEcsPool.SetRaw(int entityID, object dataRaw)
         {
             Get(entityID) = dataRaw == null ? default : (T)dataRaw;
@@ -515,13 +508,99 @@ namespace DCFApixels.DragonECS
         IEnumerator IEnumerable.GetEnumerator() { throw new NotImplementedException(); }
         #endregion
 
-        #region MarkersConverter
+        #region Convertors
         public static implicit operator EcsPool<T>(IncludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator EcsPool<T>(ExcludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator EcsPool<T>(OptionalMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator EcsPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsPool<T>>(); }
         #endregion
+
+        #region Apply
+        public static void Apply(ref T component, int entityID, short worldID)
+        {
+            EcsWorld.GetPoolInstance<EcsPool<T>>(worldID).TryAddOrGet(entityID) = component;
+        }
+        public static void Apply(ref T component, int entityID, EcsPool<T> pool)
+        {
+            pool.TryAddOrGet(entityID) = component;
+        }
+        #endregion
     }
+
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+#endif
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public readonly struct ReadonlyEcsPool<T> : IEcsReadonlyPool //IEnumerable<T> - IntelliSense hack
+        where T : struct, IEcsComponent
+    {
+        private readonly EcsPool<T> _pool;
+
+        #region Properties
+        public int ComponentTypeID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.ComponentTypeID; }
+        }
+        public Type ComponentType
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.ComponentType; }
+        }
+        public EcsWorld World
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.World; }
+        }
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.Count; }
+        }
+        public bool IsReadOnly
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.IsReadOnly; }
+        }
+        public ref readonly T this[int entityID]
+        {
+            get { return ref _pool.Read(entityID); }
+        }
+        #endregion
+
+        #region Constructors
+        internal ReadonlyEcsPool(EcsPool<T> pool)
+        {
+            _pool = pool;
+        }
+        #endregion
+
+        #region Methods
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Has(int entityID) { return _pool.Has(entityID); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly T Get(int entityID) { return ref _pool.Read(entityID); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly T Read(int entityID) { return ref _pool.Read(entityID); }
+        object IEcsReadonlyPool.GetRaw(int entityID) { return _pool.Read(entityID); }
+
+#if !DRAGONECS_DISABLE_POOLS_EVENTS
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+#endif
+#endregion
+
+        #region Convertors
+        public static implicit operator ReadonlyEcsPool<T>(EcsPool<T> a) { return new ReadonlyEcsPool<T>(a); }
+        public static implicit operator ReadonlyEcsPool<T>(IncludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        public static implicit operator ReadonlyEcsPool<T>(ExcludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        public static implicit operator ReadonlyEcsPool<T>(OptionalMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        public static implicit operator ReadonlyEcsPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        #endregion
+    }
+
 
     public static class EcsPoolExtensions
     {

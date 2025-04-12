@@ -26,7 +26,7 @@ namespace DCFApixels.DragonECS.Internal
             set
             {
                 if (value <= _items.Length) { return; }
-                value = ArrayUtility.NormalizeSizeToPowerOfTwo(value);
+                value = ArrayUtility.NextPow2(value);
                 Array.Resize(ref _items, value);
             }
         }
@@ -53,7 +53,7 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StructList(int capacity)
         {
-            _items = new T[ArrayUtility.NormalizeSizeToPowerOfTwo(capacity)];
+            _items = new T[ArrayUtility.NextPow2(capacity)];
             _count = 0;
         }
 

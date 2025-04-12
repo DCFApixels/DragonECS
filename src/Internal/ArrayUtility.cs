@@ -14,13 +14,13 @@ namespace DCFApixels.DragonECS.Internal
     {
         int Next { get; }
     }
-    internal readonly struct LinkedListIterator<T> : IEnumerable<T>
+    internal readonly struct LinkedListCountIterator<T> : IEnumerable<T>
         where T : ILinkedNext
     {
         public readonly T[] Array;
         public readonly int Count;
         public readonly int StartIndex;
-        public LinkedListIterator(T[] array, int count, int startIndex)
+        public LinkedListCountIterator(T[] array, int count, int startIndex)
         {
             Array = array;
             Count = count;
@@ -66,6 +66,58 @@ namespace DCFApixels.DragonECS.Internal
             void IEnumerator.Reset() { throw new NotSupportedException(); }
         }
     }
+    internal readonly struct LinkedListIterator<T> : IEnumerable<T>
+        where T : ILinkedNext
+    {
+        public readonly T[] Array;
+        public readonly int EndIndex;
+        public readonly int StartIndex;
+        public LinkedListIterator(T[] array, int endIndex, int startIndex)
+        {
+            Array = array;
+            EndIndex = endIndex;
+            StartIndex = startIndex;
+        }
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(Array, EndIndex, StartIndex);
+        }
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() { return GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+        public struct Enumerator : IEnumerator<T>
+        {
+            private readonly T[] _array;
+            private readonly int _endIndex;
+            private readonly int _startIndex;
+            private int _nextIndex;
+            private int _index;
+            public ref T Current { get { return ref _array[_index]; } }
+            T IEnumerator<T>.Current { get { return Current; } }
+            object IEnumerator.Current { get { return Current; } }
+            public Enumerator(T[] array, int endIndex, int head)
+            {
+                _array = array;
+                _startIndex = head;
+                _nextIndex = _startIndex;
+                _endIndex = endIndex;
+                _index = _endIndex;
+            }
+            public bool MoveNext()
+            {
+                if (_nextIndex < 0) { return false; }
+                _index = _nextIndex;
+                _nextIndex = _array[_index].Next;
+                return true;
+            }
+            public void Dispose() { }
+            public void Reset()
+            {
+                _nextIndex = _startIndex;
+                _index = _endIndex;
+            }
+        }
+    }
+
 
     internal static class ArrayUtility
     {
@@ -92,58 +144,33 @@ namespace DCFApixels.DragonECS.Internal
             Array.Copy(array, array.Length - rightHeadLength, result, array.Length - rightHeadLength, rightHeadLength); // copy right head
             array = result;
         }
-        private static int GetHighBitNumber(uint bits)
-        {
-            if (bits == 0)
-            {
-                return -1;
-            }
-            int bit = 0;
-            if ((bits & 0xFFFF0000) != 0)
-            {
-                bits >>= 16;
-                bit |= 16;
-            }
-            if ((bits & 0xFF00) != 0)
-            {
-                bits >>= 8;
-                bit |= 8;
-            }
-            if ((bits & 0xF0) != 0)
-            {
-                bits >>= 4;
-                bit |= 4;
-            }
-            if ((bits & 0xC) != 0)
-            {
-                bits >>= 2;
-                bit |= 2;
-            }
-            if ((bits & 0x2) != 0)
-            {
-                bit |= 1;
-            }
-            return bit;
-        }
-        public static int NormalizeSizeToPowerOfTwo(int minSize)
+
+        public static int NextPow2(int v)
         {
             unchecked
             {
-                return 1 << (GetHighBitNumber((uint)minSize - 1u) + 1);
+                v--;
+                v |= v >> 1;
+                v |= v >> 2;
+                v |= v >> 4;
+                v |= v >> 8;
+                v |= v >> 16;
+                return ++v;
             }
         }
-        public static int NormalizeSizeToPowerOfTwo_ClampOverflow(int minSize)
+        public static int NextPow2_ClampOverflow(int v)
         {
             unchecked
             {
-                int hibit = (GetHighBitNumber((uint)minSize - 1u) + 1);
-                if (hibit >= 32)
+                const int NO_SIGN_HIBIT = 0x40000000;
+                if ((v & NO_SIGN_HIBIT) != 0)
                 {
                     return int.MaxValue;
                 }
-                return 1 << hibit;
+                return NextPow2(v);
             }
         }
+
         public static void Fill<T>(T[] array, T value, int startIndex = 0, int length = -1)
         {
             if (length < 0)
@@ -157,6 +184,39 @@ namespace DCFApixels.DragonECS.Internal
             for (int i = startIndex; i < length; i++)
             {
                 array[i] = value;
+            }
+        }
+
+
+        public static void UpsizeWithoutCopy<T>(ref T[] array, int minSize)
+        {
+            if (array == null || minSize > array.Length)
+            {
+                array = new T[minSize];
+            }
+        }
+        public static void Upsize<T>(ref T[] array, int minSize)
+        {
+            if (array == null)
+            {
+                array = new T[minSize];
+            }
+            else if (minSize > array.Length)
+            {
+                Array.Resize(ref array, minSize);
+            }
+        }
+        public static void UpsizeToNextPow2<T>(ref T[] array, int minSize)
+        {
+            if (array == null)
+            {
+                minSize = NextPow2(minSize);
+                array = new T[minSize];
+            }
+            else if (minSize > array.Length)
+            {
+                minSize = NextPow2(minSize);
+                Array.Resize(ref array, minSize);
             }
         }
     }

@@ -97,7 +97,7 @@ namespace DCFApixels.DragonECS
         {
             if (dynamicBuffer.Length < _values.Length)
             {
-                Array.Resize(ref dynamicBuffer, ArrayUtility.NormalizeSizeToPowerOfTwo(_values.Length));
+                Array.Resize(ref dynamicBuffer, ArrayUtility.NextPow2(_values.Length));
             }
             int i = 0;
             foreach (var e in this)
@@ -246,7 +246,7 @@ namespace DCFApixels.DragonECS
         {
             if (dynamicBuffer.Length < _source.Count)
             {
-                Array.Resize(ref dynamicBuffer, ArrayUtility.NormalizeSizeToPowerOfTwo(_source.Count));
+                Array.Resize(ref dynamicBuffer, ArrayUtility.NextPow2(_source.Count));
             }
             int i = 0;
             foreach (var e in this)

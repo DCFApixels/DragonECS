@@ -48,7 +48,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.WORLDS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Container for entities and components.")]
-    [MetaID("AEF3557C92019C976FC48F90E95A9DA6")]
+    [MetaID("DragonECS_AEF3557C92019C976FC48F90E95A9DA6")]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public partial class EcsWorld : IEntityStorage, IEcsMember, INamedMember
     {
@@ -65,6 +65,8 @@ namespace DCFApixels.DragonECS
 
         private int[] _delEntBuffer = Array.Empty<int>();
         private int _delEntBufferCount = 0;
+        private int[] _emptyEntities = Array.Empty<int>();
+        private int _emptyEntitiesCount = 0;
         private bool _isEnableAutoReleaseDelEntBuffer = true;
 
         internal int _entityComponentMaskLength;
@@ -194,12 +196,12 @@ namespace DCFApixels.DragonECS
 
                 _poolsMediator = new PoolsMediator(this);
 
-                int poolsCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.PoolsCapacity);
+                int poolsCapacity = ArrayUtility.NextPow2(config.PoolsCapacity);
                 _pools = new IEcsPoolImplementation[poolsCapacity];
                 _poolSlots = new PoolSlot[poolsCapacity];
                 ArrayUtility.Fill(_pools, _nullPool);
 
-                int entitiesCapacity = ArrayUtility.NormalizeSizeToPowerOfTwo(config.EntitiesCapacity);
+                int entitiesCapacity = ArrayUtility.NextPow2(config.EntitiesCapacity);
                 _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
 
                 _executorCoures = new Dictionary<(Type, object), IQueryExecutorImplementation>(config.PoolComponentsCapacity);
@@ -252,6 +254,38 @@ namespace DCFApixels.DragonECS
         public TAspect GetAspect<TAspect>() where TAspect : new()
         {
             return Get<AspectCache<TAspect>>().Instance;
+        }
+        public void GetAspects<TAspect0>(out TAspect0 a0)
+            where TAspect0 : new()
+        {
+            a0 = GetAspect<TAspect0>();
+        }
+        public void GetAspects<TAspect0, TAspect1>(out TAspect0 a0, out TAspect1 a1)
+            where TAspect0 : new()
+            where TAspect1 : new()
+        {
+            a0 = GetAspect<TAspect0>();
+            a1 = GetAspect<TAspect1>();
+        }
+        public void GetAspects<TAspect0, TAspect1, TAspect2>(out TAspect0 a0, out TAspect1 a1, out TAspect2 a2)
+            where TAspect0 : new()
+            where TAspect1 : new()
+            where TAspect2 : new()
+        {
+            a0 = GetAspect<TAspect0>();
+            a1 = GetAspect<TAspect1>();
+            a2 = GetAspect<TAspect2>();
+        }
+        public void GetAspects<TAspect0, TAspect1, TAspect2, TAspect3>(out TAspect0 a0, out TAspect1 a1, out TAspect2 a2, out TAspect3 a3)
+            where TAspect0 : new()
+            where TAspect1 : new()
+            where TAspect2 : new()
+            where TAspect3 : new()
+        {
+            a0 = GetAspect<TAspect0>();
+            a1 = GetAspect<TAspect1>();
+            a2 = GetAspect<TAspect2>();
+            a3 = GetAspect<TAspect3>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TAspect GetAspect<TAspect>(out EcsMask mask) where TAspect : new()
@@ -327,6 +361,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity(int entityID)
         {
+            _entityDispenser.Upsize(entityID + 1);
 #if DEBUG
             if (IsUsed(entityID)) { Throw.World_EntityIsAlreadyСontained(entityID); }
 #elif DRAGONECS_STABILITY_MODE
@@ -348,6 +383,7 @@ namespace DCFApixels.DragonECS
                 slot.gen |= GEN_SLEEP_MASK;
             }
             _entityListeners.InvokeOnNewEntity(entityID);
+            MoveToEmptyEntities(entityID);
         }
 
 
@@ -380,7 +416,7 @@ namespace DCFApixels.DragonECS
         public void DelEntity(int entityID)
         {
 #if DEBUG
-            if (IsUsed(entityID) == false) { Throw.World_EntityIsAlreadyСontained(entityID); }
+            if (IsUsed(entityID) == false) { Throw.World_EntityIsNotContained(entityID); }
 #elif DRAGONECS_STABILITY_MODE
             if (IsUsed(entityID) == false) { return; }
 #endif
@@ -389,6 +425,24 @@ namespace DCFApixels.DragonECS
             _entities[entityID].isUsed = false;
             _entitiesCount--;
             _entityListeners.InvokeOnDelEntity(entityID);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void MoveToEmptyEntities(int entityID)
+        {
+            _emptyEntities[_emptyEntitiesCount++] = entityID;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool RemoveFromEmptyEntities(int entityID)
+        {
+            for (int i = _emptyEntitiesCount - 1; i >= 0; i--)
+            {
+                if(_emptyEntities[i] == entityID)
+                {
+                    _emptyEntities[i] = _emptyEntities[--_emptyEntitiesCount];
+                    return true;
+                }
+            }
+            return false;
         }
         #endregion
 
@@ -477,20 +531,60 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (mask.WorldID != ID) { return false; }
 #endif
-            for (int i = 0, iMax = mask._incs.Length; i < iMax; i++)
+
+
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+            bool IsMatchesMaskDeepDebug(EcsMask mask_, int entityID_)
             {
-                if (!_pools[mask._incs[i]].Has(entityID))
+                for (int i = 0, iMax = mask_._incs.Length; i < iMax; i++)
                 {
+                    if (!_pools[mask_._incs[i]].Has(entityID_))
+                    {
+                        return false;
+                    }
+                }
+                for (int i = 0, iMax = mask_._excs.Length; i < iMax; i++)
+                {
+                    if (_pools[mask_._excs[i]].Has(entityID_))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            bool deepDebug = IsMatchesMaskDeepDebug(mask, entityID);
+#endif
+
+            var incChuncks = mask._incChunckMasks;
+            var excChuncks = mask._excChunckMasks;
+            var componentMaskStartIndex = entityID << _entityComponentMaskLengthBitShift;
+
+            for (int i = 0; i < incChuncks.Length; i++)
+            {
+                var bit = incChuncks[i];
+                if ((_entityComponentMasks[componentMaskStartIndex + bit.chunkIndex] & bit.mask) != bit.mask)
+                {
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                    if (false != deepDebug) { Throw.DeepDebugException(); }
+#endif
                     return false;
                 }
             }
-            for (int i = 0, iMax = mask._excs.Length; i < iMax; i++)
+            for (int i = 0; i < excChuncks.Length; i++)
             {
-                if (_pools[mask._excs[i]].Has(entityID))
+                var bit = excChuncks[i];
+                if ((_entityComponentMasks[componentMaskStartIndex + bit.chunkIndex] & bit.mask) != 0)
                 {
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                    if (false != deepDebug) { Throw.DeepDebugException(); }
+#endif
                     return false;
                 }
             }
+
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+            if (true != deepDebug) { Throw.DeepDebugException(); }
+#endif
             return true;
         }
         #endregion
@@ -745,12 +839,23 @@ namespace DCFApixels.DragonECS
         }
         public void ReleaseDelEntityBufferAll()
         {
-            ReleaseDelEntityBuffer(_delEntBufferCount);
+            ReleaseDelEntityBuffer(-1);
         }
         public unsafe void ReleaseDelEntityBuffer(int count)
         {
-            if (_delEntBufferCount <= 0) { return; }
+            if (_emptyEntitiesCount <= 0 && _delEntBufferCount <= 0) { return; }
             unchecked { _version++; }
+
+            for (int i = 0; i < _emptyEntitiesCount; i++)
+            {
+                TryDelEntity(_emptyEntities[i]);
+            }
+            _emptyEntitiesCount = 0;
+
+            if(count < 0)
+            {
+                count = _delEntBufferCount;
+            }
 
             count = Math.Max(0, Math.Min(count, _delEntBufferCount));
             _delEntBufferCount -= count;
@@ -831,6 +936,7 @@ namespace DCFApixels.DragonECS
             SetEntityComponentMaskLength(CalcEntityComponentMaskLength()); //_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
             Array.Resize(ref _entities, newSize);
             Array.Resize(ref _delEntBuffer, newSize);
+            Array.Resize(ref _emptyEntities, newSize);
             Array.Resize(ref _entityComponentMasks, newSize * _entityComponentMaskLength);
 
             ArrayUtility.Fill(_entities, EntitySlot.Empty, _entitiesCapacity);
@@ -951,10 +1057,8 @@ namespace DCFApixels.DragonECS
         public ReadOnlySpan<object> GetComponentsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
-            if (_componentsBuffer == null || _componentsBuffer.Length < count)
-            {
-                _componentsBuffer = new object[count];
-            }
+            ArrayUtility.UpsizeWithoutCopy(ref _componentIDsBuffer, count);
+
             for (int i = 0; i < count; i++)
             {
                 _componentsBuffer[i] = _pools[_componentIDsBuffer[i]].GetRaw(entityID);
@@ -982,14 +1086,7 @@ namespace DCFApixels.DragonECS
         private unsafe int GetComponentTypeIDsFor_Internal(int entityID, ref int[] componentIDs)
         {
             var itemsCount = GetComponentsCount(entityID);
-            if (componentIDs == null)
-            {
-                componentIDs = new int[itemsCount];
-            }
-            if (componentIDs.Length < itemsCount)
-            {
-                Array.Resize(ref componentIDs, itemsCount);
-            }
+            ArrayUtility.UpsizeWithoutCopy(ref componentIDs, itemsCount);
 
             if (itemsCount <= 0) { return 0; }
 
@@ -1004,8 +1101,8 @@ namespace DCFApixels.DragonECS
             int arrayIndex = 0;
             for (int chunkIndex = entityID << _entityComponentMaskLengthBitShift,
                     chunkIndexMax = chunkIndex + _entityComponentMaskLength;
-                chunkIndex < chunkIndexMax;
-                chunkIndex++)
+                    chunkIndex < chunkIndexMax;
+                    chunkIndex++)
             {
                 int chunk = _entityComponentMasks[chunkIndex];
                 if (chunk == 0)
@@ -1150,15 +1247,19 @@ namespace DCFApixels.DragonECS
         {
             private EcsWorld _world;
             private List<MaskQueryExecutor> _queries;
+            public string Name { get { return _world.Name; } }
             public EntitySlotInfo[] Entities
             {
                 get
                 {
                     EntitySlotInfo[] result = new EntitySlotInfo[_world.Count];
                     int i = 0;
-                    foreach (var e in _world.ToSpan())
+                    using (_world.DisableAutoReleaseDelEntBuffer())
                     {
-                        result[i++] = _world.GetEntitySlotInfoDebug(e);
+                        foreach (var e in _world.ToSpan())
+                        {
+                            result[i++] = _world.GetEntitySlotInfoDebug(e);
+                        }
                     }
                     return result;
                 }
@@ -1166,6 +1267,7 @@ namespace DCFApixels.DragonECS
             public long Version { get { return _world.Version; } }
             public IEcsPool[] Pools { get { return _world._pools; } }
             public short ID { get { return _world.ID; } }
+            public bool IsDestroyed { get { return _world._isDestroyed; } }
             public List<MaskQueryExecutor> MaskQueries { get { return _queries; } }
             public DebuggerProxy(EcsWorld world)
             {

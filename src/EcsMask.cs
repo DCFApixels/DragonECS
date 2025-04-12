@@ -488,7 +488,7 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public class EcsMaskIterator
+    public class EcsMaskIterator : IDisposable
     {
         // TODO есть идея перенести эти ChunckBuffer-ы в стек,
         // для этого нужно проработать дизайн так чтобы память в стеке выделялась за пределами итератора и GetEnumerator,
@@ -556,6 +556,15 @@ namespace DCFApixels.DragonECS
         }
         unsafe ~EcsMaskIterator()
         {
+            Cleanup(false);
+        }
+        public void Dispose()
+        {
+            Cleanup(true);
+            GC.SuppressFinalize(this);
+        }
+        private void Cleanup(bool disposing)
+        {
             _sortIncBuffer.ReadonlyDispose();
             //_sortExcBuffer.ReadonlyDispose();// использует общую памяять с _sortIncBuffer;
             _sortIncChunckBuffer.ReadonlyDispose();
@@ -563,7 +572,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region SortConstraints
+        #region SortConstraints/TryFindEntityStorage
         private unsafe int SortConstraints_Internal()
         {
             UnsafeArray<int> sortIncBuffer = _sortIncBuffer;
@@ -611,7 +620,7 @@ namespace DCFApixels.DragonECS
             // Поэтому исключающее ограничение игнорируется для maxEntites.
             return maxEntites;
         }
-        private unsafe bool TryGetEntityStorage(out IEntityStorage storage)
+        private unsafe bool TryFindEntityStorage(out IEntityStorage storage)
         {
             if (_isHasAnyEntityStorage)
             {
@@ -737,7 +746,7 @@ namespace DCFApixels.DragonECS
                 {
                     return new Enumerator(_span.Slice(0, 0), _iterator);
                 }
-                if (_iterator.TryGetEntityStorage(out IEntityStorage storage))
+                if (_iterator.TryFindEntityStorage(out IEntityStorage storage))
                 {
                     return new Enumerator(storage.ToSpan(), _iterator);
                 }
@@ -811,6 +820,7 @@ namespace DCFApixels.DragonECS
         #region Iterate/Enumerable OnlyInc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public OnlyIncEnumerable IterateOnlyInc(EcsSpan span) { return new OnlyIncEnumerable(this, span); }
+
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -952,29 +962,30 @@ namespace DCFApixels.DragonECS.Internal
         internal const int STACK_BUFFER_THRESHOLD = 100;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void ConvertToChuncks(EcsMaskChunck* ptr, UnsafeArray<int> input, UnsafeArray<EcsMaskChunck> output)
+        internal static void ConvertToChuncks(EcsMaskChunck* bufferPtr, UnsafeArray<int> input, UnsafeArray<EcsMaskChunck> output)
         {
             for (int i = 0; i < input.Length; i++)
             {
-                ptr[i] = EcsMaskChunck.FromID(input.ptr[i]);
+                bufferPtr[i] = EcsMaskChunck.FromID(input.ptr[i]);
             }
 
-            for (int inputI = 0, outputI = 0; outputI < output.Length; inputI++, ptr++)
+            for (int inputI = 0, outputI = 0; outputI < output.Length; inputI++, bufferPtr++)
             {
-                int maskX = ptr->mask;
-                if (maskX == 0) { continue; }
-                int chunkIndexX = ptr->chunkIndex;
+                int stackingMask = bufferPtr->mask;
+                if (stackingMask == 0) { continue; }
+                int stackingChunkIndex = bufferPtr->chunkIndex;
 
-                EcsMaskChunck* subptr = ptr;
-                for (int j = 1; j < input.Length - inputI; j++, subptr++)
+                EcsMaskChunck* bufferSpanPtr = bufferPtr + 1;
+                for (int j = 1; j < input.Length - inputI; j++, bufferSpanPtr++)
                 {
-                    if (subptr->chunkIndex == chunkIndexX)
+                    if (bufferSpanPtr->chunkIndex == stackingChunkIndex)
                     {
-                        maskX |= subptr->mask;
-                        *subptr = default;
+                        stackingMask |= bufferSpanPtr->mask;
+                        *bufferSpanPtr = default;
                     }
                 }
-                output.ptr[outputI] = new EcsMaskChunck(chunkIndexX, maskX);
+
+                output.ptr[outputI] = new EcsMaskChunck(stackingChunkIndex, stackingMask);
                 outputI++;
             }
         }

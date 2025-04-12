@@ -20,8 +20,8 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Tag component or component without data.")]
-    [MetaID("8D3E547C92013C6A2C2DFC8D2F1FA297")]
-    public interface IEcsTagComponent : IEcsMember { }
+    [MetaID("DragonECS_8D3E547C92013C6A2C2DFC8D2F1FA297")]
+    public interface IEcsTagComponent : IEcsComponentMember { }
 
     /// <summary> Pool for IEcsTagComponent components. </summary>
 #if ENABLE_IL2CPP
@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsTagComponent components. EcsTagPool is optimized for storing tag components or components without data.")]
-    [MetaID("9D80547C9201E852E4F17324EAC1E15A")]
+    [MetaID("DragonECS_9D80547C9201E852E4F17324EAC1E15A")]
     [DebuggerDisplay("Count: {Count} Type: {ComponentType}")]
     public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
@@ -104,10 +104,11 @@ namespace DCFApixels.DragonECS
         public void Add(int entityID)
         {
 #if DEBUG
+            if (_source.IsUsed(entityID) == false) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
             if (Has(entityID)) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
-            if (Has(entityID) || _isLocked) { return; }
+            if (Has(entityID) | _source.IsUsed(entityID) == false | _isLocked) { return; }
 #endif
             _count++;
             _mapping[entityID] = true;
@@ -311,11 +312,98 @@ namespace DCFApixels.DragonECS
         IEnumerator IEnumerable.GetEnumerator() { throw new NotImplementedException(); }
         #endregion
 
-        #region MarkersConverter
+        #region Convertors
         public static implicit operator EcsTagPool<T>(IncludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(ExcludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(OptionalMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
+        #endregion
+
+        #region Apply
+        public static void Apply(ref T component, int entityID, short worldID)
+        {
+            EcsWorld.GetPoolInstance<EcsTagPool<T>>(worldID).TryAdd(entityID);
+        }
+        public static void Apply(ref T component, int entityID, EcsTagPool<T> pool)
+        {
+            pool.TryAdd(entityID);
+        }
+        #endregion
+    }
+
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+#endif
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public readonly struct ReadonlyEcsTagPool<T> : IEcsReadonlyPool //IEnumerable<T> - IntelliSense hack
+    where T : struct, IEcsTagComponent
+    {
+        private readonly EcsTagPool<T> _pool;
+
+        #region Properties
+        public int ComponentTypeID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.ComponentTypeID; }
+        }
+        public Type ComponentType
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.ComponentType; }
+        }
+        public EcsWorld World
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.World; }
+        }
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.Count; }
+        }
+        public bool IsReadOnly
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _pool.IsReadOnly; }
+        }
+        public bool this[int entityID]
+        {
+            get { return _pool.Has(entityID); }
+        }
+        #endregion
+
+        #region Constructors
+        internal ReadonlyEcsTagPool(EcsTagPool<T> pool)
+        {
+            _pool = pool;
+        }
+        #endregion
+
+        #region Methods
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Has(int entityID) { return _pool.Has(entityID); }
+        object IEcsReadonlyPool.GetRaw(int entityID)
+        {
+#if DEBUG
+            if (Has(entityID) == false) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
+#endif
+            return default;
+        }
+
+#if !DRAGONECS_DISABLE_POOLS_EVENTS
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+#endif
+        #endregion
+
+        #region Convertors
+        public static implicit operator ReadonlyEcsTagPool<T>(EcsTagPool<T> a) { return new ReadonlyEcsTagPool<T>(a); }
+        public static implicit operator ReadonlyEcsTagPool<T>(IncludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
+        public static implicit operator ReadonlyEcsTagPool<T>(ExcludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
+        public static implicit operator ReadonlyEcsTagPool<T>(OptionalMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
+        public static implicit operator ReadonlyEcsTagPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         #endregion
     }
 

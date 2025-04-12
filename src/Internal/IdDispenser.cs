@@ -35,7 +35,7 @@ namespace DCFApixels.DragonECS.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _usedCount; }
         }
-        public int Size
+        public int Capacity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _size; }
@@ -247,7 +247,7 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void Upsize_Internal(int minSize)
         {
-            Resize(ArrayUtility.NormalizeSizeToPowerOfTwo_ClampOverflow(minSize));
+            Resize(ArrayUtility.NextPow2_ClampOverflow(minSize));
         }
         private void Resize(int newSize)
         {
@@ -339,7 +339,7 @@ namespace DCFApixels.DragonECS.Internal
             {
                 get
                 {
-                    Pair[] result = new Pair[_target.Size];
+                    Pair[] result = new Pair[_target.Capacity];
                     for (int i = 0; i < result.Length; i++)
                     {
                         result[i] = new Pair(
@@ -354,7 +354,7 @@ namespace DCFApixels.DragonECS.Internal
             {
                 get
                 {
-                    ID[] result = new ID[_target.Size];
+                    ID[] result = new ID[_target.Capacity];
                     for (int i = 0; i < result.Length; i++)
                     {
                         int id = _target._dense[i];
@@ -365,7 +365,7 @@ namespace DCFApixels.DragonECS.Internal
             }
             public bool IsValid => _target.IsValid();
             public int Count => _target.Count;
-            public int Size => _target.Size;
+            public int Capacity => _target.Capacity;
             public int NullID => _target._nullID;
             internal readonly struct ID
             {

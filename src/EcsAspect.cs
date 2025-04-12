@@ -125,7 +125,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         //Инициализация аспектов проходит в синхронизированном состоянии, поэтому использование _staticMaskCache потоко безопасно.
-        private static Dictionary<Type, EcsStaticMask> _staticMaskCache = new Dictionary<Type, EcsStaticMask>();
+        private readonly static Dictionary<Type, EcsStaticMask> _staticMaskCache = new Dictionary<Type, EcsStaticMask>();
 
         internal EcsWorld _source;
         internal EcsMask _mask;
@@ -272,13 +272,13 @@ namespace DCFApixels.DragonECS
             public TPool IncludePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = CachePool<TPool>();
-                IncludeImplicit(pool.ComponentType);
+                SetMaskInclude(pool.ComponentType);
                 return pool;
             }
             public TPool ExcludePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = CachePool<TPool>();
-                ExcludeImplicit(pool.ComponentType);
+                SetMaskExclude(pool.ComponentType);
                 return pool;
             }
             public TPool OptionalPool<TPool>() where TPool : IEcsPoolImplementation, new()
@@ -291,14 +291,14 @@ namespace DCFApixels.DragonECS
                 var pool = _world.GetPoolInstance<TPool>();
                 return pool;
             }
-            private void IncludeImplicit(Type type)
+            public void SetMaskInclude(Type type)
             {
                 if (_maskBuilder.IsNull == false)
                 {
                     _maskBuilder.Inc(type);
                 }
             }
-            private void ExcludeImplicit(Type type)
+            public void SetMaskExclude(Type type)
             {
                 if (_maskBuilder.IsNull == false)
                 {
@@ -334,8 +334,8 @@ namespace DCFApixels.DragonECS
                 IncludePool<TPool>();
                 ExcludePool<TPool>();
                 OptionalPool<TPool>();
-                IncludeImplicit(null);
-                ExcludeImplicit(null);
+                SetMaskInclude(null);
+                SetMaskExclude(null);
             }
             #endregion
         }
