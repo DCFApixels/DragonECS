@@ -45,10 +45,15 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetWorld(short worldID, out EcsWorld world)
         {// ts
+            if(worldID >= _worlds.Length)
+            {
+                world = null;
+                return false;
+            }
             world = _worlds[worldID];
             return
                 world != null &&
-                world.IsDestroyed != false &&
+                world.IsDestroyed == false &&
                 worldID != 0;
         }
 
