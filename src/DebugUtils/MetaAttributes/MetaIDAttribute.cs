@@ -185,7 +185,7 @@ namespace DCFApixels.DragonECS
 
             public bool IsCollidingID(string id)
             {
-                if(_collidingIDs== null)
+                if (_collidingIDs == null)
                 {
                     return false;
                 }
