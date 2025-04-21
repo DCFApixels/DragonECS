@@ -464,6 +464,8 @@ namespace DCFApixels.DragonECS
                 a.gen != b.gen ||
                 a.world != b.world;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator EntitySlotInfo(entlong a) { return new EntitySlotInfo(a._full); }
         #endregion
 
         #region Other

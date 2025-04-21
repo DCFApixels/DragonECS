@@ -436,7 +436,7 @@ namespace DCFApixels.DragonECS
         {
             for (int i = _emptyEntitiesCount - 1; i >= 0; i--)
             {
-                if(_emptyEntities[i] == entityID)
+                if (_emptyEntities[i] == entityID)
                 {
                     _emptyEntities[i] = _emptyEntities[--_emptyEntitiesCount];
                     return true;
@@ -852,7 +852,7 @@ namespace DCFApixels.DragonECS
             }
             _emptyEntitiesCount = 0;
 
-            if(count < 0)
+            if (count < 0)
             {
                 count = _delEntBufferCount;
             }

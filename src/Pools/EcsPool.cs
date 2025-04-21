@@ -590,7 +590,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
 #endif
-#endregion
+        #endregion
 
         #region Convertors
         public static implicit operator ReadonlyEcsPool<T>(EcsPool<T> a) { return new ReadonlyEcsPool<T>(a); }
