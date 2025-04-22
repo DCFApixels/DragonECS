@@ -4,7 +4,6 @@
 using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
-using DCFApixels.DragonECS.UncheckedCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -45,8 +44,9 @@ namespace DCFApixels.DragonECS
         private int _itemsCount = 0;
         private int _capacity = 0;
 
-        private int[] _sparseEntities;
-        private int[] _denseEntitiesDelayed;
+        //private int[] _sparseEntities;
+        //private int[] _denseEntitiesDelayed;
+        private int[] _table;
         private int _denseEntitiesDelayedCount = 0;
         private bool _isDenseEntitiesDelayedValid = false;
         private int _recycledCount = 0;
@@ -111,7 +111,8 @@ namespace DCFApixels.DragonECS
             itemIndex = GetFreeItemIndex(entityID);
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             ref T result = ref _items[itemIndex];
-            _sparseEntities[itemIndex] = entityID;
+            //_sparseEntities[itemIndex] = entityID;
+            _table[itemIndex] = entityID;
             EnableComponent(ref result);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             _listeners.InvokeOnAddAndGet(entityID, _listenersCachedCount);
@@ -167,7 +168,8 @@ namespace DCFApixels.DragonECS
 #endif
                 itemIndex = GetFreeItemIndex(entityID);
                 _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-                _sparseEntities[itemIndex] = entityID;
+                //_sparseEntities[itemIndex] = entityID;
+                _table[itemIndex] = entityID;
                 EnableComponent(ref _items[itemIndex]);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
                 _listeners.InvokeOnAdd(entityID, _listenersCachedCount);
@@ -202,7 +204,8 @@ namespace DCFApixels.DragonECS
             if (_isLocked) { return; }
 #endif
             DisableComponent(ref _items[itemIndex]);
-            _sparseEntities[itemIndex] = 0;
+            //_sparseEntities[itemIndex] = 0;
+            _table[itemIndex] = 0;
             itemIndex = 0;
             _itemsCount--;
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
@@ -325,37 +328,48 @@ namespace DCFApixels.DragonECS
             }
 #endif
             UpdateDenseEntities();
-            var span = new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
+            //var span = new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
+            var span = new EcsSpan(_source.ID, _table, 1 + _capacity, _itemsCount);
 #if DRAGONECS_DEEP_DEBUG
-            if (UncheckedCoreUtility.CheckSpanValideDebug(span) == false)
+            if (DCFApixels.DragonECS.UncheckedCore.UncheckedCoreUtility.CheckSpanValideDebug(span) == false)
             {
                 Throw.UndefinedException();
             }
 #endif
             return span;
         }
-        private void UpdateDenseEntities()
+        private unsafe void UpdateDenseEntities()
         {
             if (_isDenseEntitiesDelayedValid) { return; }
-            _denseEntitiesDelayedCount = 1;
-            _denseEntitiesDelayed[0] = 0;
+            //_denseEntitiesDelayedCount = 1;
+            _denseEntitiesDelayedCount = 1 + _capacity;
+            //_denseEntitiesDelayed[0] = 0;
+            _table[_capacity] = 0;
             _recycledCount = 0;
-            for (int i = 1, jRight = _itemsCount + 1; _denseEntitiesDelayedCount <= _itemsCount; i++)
+            //for (int i = 1, jRight = _capacity + _itemsCount + 1; _denseEntitiesDelayedCount <= _itemsCount; i++)
+            for (int i = 1, jRight = _capacity + _itemsCount + 1, max = _itemsCount + _capacity; _denseEntitiesDelayedCount <= max; i++)
             {
-                if (_sparseEntities[i] == 0)
+                //if (_sparseEntities[i] == 0)
+                if (_table[i] == 0)
                 {
-                    _denseEntitiesDelayed[jRight] = i;
+                    //_denseEntitiesDelayed[jRight] = i;
+                    _table[jRight] = i;
                     jRight++;
                     _recycledCount++;
                 }
                 else
                 {
-                    _denseEntitiesDelayed[_denseEntitiesDelayedCount++] = _sparseEntities[i];
+                    //_denseEntitiesDelayed[_denseEntitiesDelayedCount++] = _sparseEntities[i];
+                    //_table[_denseEntitiesDelayedCount++ + _capacity] = _table[i];
+                    _table[_denseEntitiesDelayedCount++] = _table[i];
                 }
             }
+            _denseEntitiesDelayedCount -= _capacity;
+
 #if DRAGONECS_DEEP_DEBUG
             _lockToSpan = true;
-            if (_denseEntitiesDelayed[0] != 0)
+            //if (_denseEntitiesDelayed[0] != 0)
+            if (_table[_capacity] != 0)
             {
                 Throw.UndefinedException();
             }
@@ -371,7 +385,8 @@ namespace DCFApixels.DragonECS
             using (_source.DisableAutoReleaseDelEntBuffer()) using (var group = EcsGroup.New(_source))
             {
                 EcsStaticMask.Inc<T>().Build().ToMask(_source).GetIterator().IterateTo(World.Entities, group);
-                var span = new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
+                //var span = new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
+                var span = new EcsSpan(_source.ID, _table, 1 + _capacity, _itemsCount);
                 if (group.SetEquals(span) == false)
                 {
                     Throw.UndefinedException();
@@ -380,8 +395,10 @@ namespace DCFApixels.DragonECS
             _lockToSpan = false;
             for (int i = _denseEntitiesDelayedCount; i < _denseEntitiesDelayedCount + _recycledCount; i++)
             {
-                var index = _denseEntitiesDelayed[i];
-                if (_sparseEntities[index] != 0)
+                //var index = _denseEntitiesDelayed[i];
+                var index = _table[i + _capacity];
+                //if (_sparseEntities[index] != 0)
+                if (_table[index] != 0)
                 {
                     Throw.UndefinedException();
                 }
@@ -392,12 +409,12 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetFreeItemIndex(int entityID)
         {
-            if (_denseEntitiesDelayedCount >= _capacity)
+            if (_denseEntitiesDelayedCount >= _items.Length)
             {
                 UpdateDenseEntities();
             }
 
-            if (_itemsCount + 1 >= _capacity)
+            if (_itemsCount + 1 >= _items.Length)
             {
                 Resize(_items.Length << 1);
             }
@@ -405,18 +422,21 @@ namespace DCFApixels.DragonECS
             if(_recycledCount > 0)
             {
                 _recycledCount--;
-                result = _denseEntitiesDelayed[_denseEntitiesDelayedCount];
+                //result = _denseEntitiesDelayed[_denseEntitiesDelayedCount];
+                result = _table[_denseEntitiesDelayedCount + _capacity];
             }
             else
             {
                 result = _denseEntitiesDelayedCount;
             }
-            _denseEntitiesDelayed[_denseEntitiesDelayedCount] = entityID;
+            //_denseEntitiesDelayed[_denseEntitiesDelayedCount] = entityID;
+            _table[_denseEntitiesDelayedCount + _capacity] = entityID;
             _itemsCount++;
             _denseEntitiesDelayedCount++;
 
 #if DRAGONECS_DEEP_DEBUG
-            if (_sparseEntities[result] != 0)
+            //if (_sparseEntities[result] != 0)
+            if (_table[result] != 0)
             {
                 Throw.UndefinedException();
             }
@@ -427,17 +447,27 @@ namespace DCFApixels.DragonECS
 #endif
             return result;
         }
-        private void CheckOrUpsize()
-        {
-            if (_itemsCount < _capacity) { return; }
-            Resize(_items.Length << 1);
-        }
+        //private void CheckOrUpsize()
+        //{
+        //    if (_itemsCount < _capacity) { return; }
+        //    Resize(_items.Length << 1);
+        //}
         private void Resize(int newSize)
         {
             if (newSize <= _capacity) { return; }
-            ArrayUtility.ResizeOrCreate(ref _sparseEntities, newSize);
+
+            //ArrayUtility.ResizeOrCreate(ref _sparseEntities, newSize);
+            //ArrayUtility.ResizeOrCreate(ref _items, newSize);
+            //_denseEntitiesDelayed = new int[newSize];
+
             ArrayUtility.ResizeOrCreate(ref _items, newSize);
-            _denseEntitiesDelayed = new int[newSize];
+            var newTable = new int[newSize * 2];
+            if(_table != null)
+            {
+                Array.Copy(_table, newTable, _table.Length / 2);
+            }
+            _table = newTable;
+
             _denseEntitiesDelayedCount = 0;
             _capacity = newSize;
             _isDenseEntitiesDelayedValid = false;

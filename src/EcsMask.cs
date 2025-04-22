@@ -620,7 +620,7 @@ namespace DCFApixels.DragonECS
             // Поэтому исключающее ограничение игнорируется для maxEntites.
             return maxEntites;
         }
-        private unsafe bool TryFindEntityStorage(out IEntityStorage storage)
+        private unsafe bool TryGetEntityStorage(out IEntityStorage storage)
         {
             if (_isHasAnyEntityStorage)
             {
@@ -746,7 +746,7 @@ namespace DCFApixels.DragonECS
                 {
                     return new Enumerator(_span.Slice(0, 0), _iterator);
                 }
-                if (_iterator.TryFindEntityStorage(out IEntityStorage storage))
+                if (_span.IsSourceEntities && _iterator.TryGetEntityStorage(out IEntityStorage storage))
                 {
                     return new Enumerator(storage.ToSpan(), _iterator);
                 }
