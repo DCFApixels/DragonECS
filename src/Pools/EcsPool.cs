@@ -48,6 +48,7 @@ namespace DCFApixels.DragonECS
         //private int[] _denseEntitiesDelayed;
         private int[] _table;
         private int _denseEntitiesDelayedCount = 0;
+        private int _denseEntitiesDelayedPtr = 0;
         private bool _isDenseEntitiesDelayedValid = false;
         private int _recycledCount = 0;
 
@@ -342,12 +343,12 @@ namespace DCFApixels.DragonECS
         {
             if (_isDenseEntitiesDelayedValid) { return; }
             //_denseEntitiesDelayedCount = 1;
-            _denseEntitiesDelayedCount = 1 + _capacity;
+            _denseEntitiesDelayedCount = 1 | _capacity;
             //_denseEntitiesDelayed[0] = 0;
             _table[_capacity] = 0;
             _recycledCount = 0;
             //for (int i = 1, jRight = _capacity + _itemsCount + 1; _denseEntitiesDelayedCount <= _itemsCount; i++)
-            for (int i = 1, jRight = _capacity + _itemsCount + 1, max = _itemsCount + _capacity; _denseEntitiesDelayedCount <= max; i++)
+            for (int i = 1, jRight = _itemsCount + 1 + _capacity, max = _itemsCount | _capacity; _denseEntitiesDelayedCount <= max; i++)
             {
                 //if (_sparseEntities[i] == 0)
                 if (_table[i] == 0)
@@ -423,14 +424,14 @@ namespace DCFApixels.DragonECS
             {
                 _recycledCount--;
                 //result = _denseEntitiesDelayed[_denseEntitiesDelayedCount];
-                result = _table[_denseEntitiesDelayedCount + _capacity];
+                result = _table[_denseEntitiesDelayedCount | _capacity];
             }
             else
             {
                 result = _denseEntitiesDelayedCount;
             }
             //_denseEntitiesDelayed[_denseEntitiesDelayedCount] = entityID;
-            _table[_denseEntitiesDelayedCount + _capacity] = entityID;
+            _table[_denseEntitiesDelayedCount | _capacity] = entityID;
             _itemsCount++;
             _denseEntitiesDelayedCount++;
 
@@ -468,8 +469,9 @@ namespace DCFApixels.DragonECS
             }
             _table = newTable;
 
-            _denseEntitiesDelayedCount = 0;
             _capacity = newSize;
+            _denseEntitiesDelayedCount = 0;
+            //_denseEntitiesDelayedPtr = _capacity;
             _isDenseEntitiesDelayedValid = false;
             UpdateDenseEntities();
         }
