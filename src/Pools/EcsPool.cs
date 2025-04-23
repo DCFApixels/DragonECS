@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
@@ -47,7 +48,7 @@ namespace DCFApixels.DragonECS
         //private int[] _sparseEntities;
         //private int[] _denseEntitiesDelayed;
         private int[] _table;
-        private int _denseEntitiesDelayedCount = 0;
+        private int _denseEntitiesDelayePtr = 0;
         private bool _isDenseEntitiesDelayedValid = false;
         private int _recycledCount = 0;
 
@@ -124,6 +125,7 @@ namespace DCFApixels.DragonECS
             {
                 Throw.UndefinedException();
             }
+            //CheckValid();
 #endif
             return ref result;
         }
@@ -148,14 +150,14 @@ namespace DCFApixels.DragonECS
         }
         public ref T TryAddOrGet(int entityID)
         {
-            //if (Has(entityID))
-            //{
-            //    return ref Get(entityID);
-            //}
-            //else
-            //{
-            //    return ref Add(entityID);
-            //}
+            if (Has(entityID))
+            {
+                return ref Get(entityID);
+            }
+            else
+            {
+                return ref Add(entityID);
+            }
 
 
             ref int itemIndex = ref _mapping[entityID];
@@ -219,6 +221,7 @@ namespace DCFApixels.DragonECS
             {
                 Throw.UndefinedException();
             }
+            //CheckValid();
 #endif
         }
         public void TryDel(int entityID)
@@ -305,6 +308,37 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        private void CheckValid()
+        {
+#if DRAGONECS_DEEP_DEBUG
+            //if (_denseEntitiesEndPtr - _capacity - 1 != _itemsCount)
+            //{
+            //    Throw.UndefinedException();
+            //}
+            HashSet<int> set = new HashSet<int>();
+            foreach (var item in _mapping.Where(o => o != 0))
+            {
+                if (set.Add(item) == false)
+                {
+                    Throw.UndefinedException();
+                }
+            }
+
+            for (int entity = 0; entity < _mapping.Length; entity++)
+            {
+                var itemIndex = _mapping[entity];
+                if (itemIndex != 0)
+                {
+                    var entityBufferIndex = _table[itemIndex];
+                    var dense = _table[entityBufferIndex];
+                    if (dense != entity)
+                    {
+                        Throw.UndefinedException();
+                    }
+                }
+            }
+#endif
+        }
         void IEcsPool.AddEmpty(int entityID) { Add(entityID); }
         void IEcsPool.AddRaw(int entityID, object dataRaw)
         {
@@ -341,30 +375,22 @@ namespace DCFApixels.DragonECS
         private unsafe void UpdateDenseEntities()
         {
             if (_isDenseEntitiesDelayedValid) { return; }
-            //_denseEntitiesDelayedCount = 1;
-            _denseEntitiesDelayedCount = 1 | _capacity;
-            //_denseEntitiesDelayed[0] = 0;
+            _denseEntitiesDelayePtr = 1 + _capacity;
             _table[_capacity] = 0;
             _recycledCount = 0;
-            //for (int i = 1, jRight = _capacity + _itemsCount + 1; _denseEntitiesDelayedCount <= _itemsCount; i++)
-            for (int i = 1, jRight = _itemsCount + 1 + _capacity, max = _itemsCount | _capacity; _denseEntitiesDelayedCount <= max; i++)
+            for (int i = 1, jRight = _itemsCount + 1 + _capacity, max = _itemsCount | _capacity; _denseEntitiesDelayePtr <= max; i++)
             {
-                //if (_sparseEntities[i] == 0)
                 if (_table[i] == 0)
                 {
-                    //_denseEntitiesDelayed[jRight] = i;
                     _table[jRight] = i;
                     jRight++;
                     _recycledCount++;
                 }
                 else
                 {
-                    //_denseEntitiesDelayed[_denseEntitiesDelayedCount++] = _sparseEntities[i];
-                    //_table[_denseEntitiesDelayedCount++ + _capacity] = _table[i];
-                    _table[_denseEntitiesDelayedCount++] = _table[i];
+                    _table[_denseEntitiesDelayePtr++] = _table[i];
                 }
             }
-            _denseEntitiesDelayedCount -= _capacity;
 
 #if DRAGONECS_DEEP_DEBUG
             _lockToSpan = true;
@@ -373,7 +399,7 @@ namespace DCFApixels.DragonECS
             {
                 Throw.UndefinedException();
             }
-            if (_denseEntitiesDelayedCount != _itemsCount + 1)
+            if (_denseEntitiesDelayePtr != _itemsCount + 1 + _capacity)
             {
                 Throw.UndefinedException();
             }
@@ -393,10 +419,10 @@ namespace DCFApixels.DragonECS
                 }
             }
             _lockToSpan = false;
-            for (int i = _denseEntitiesDelayedCount; i < _denseEntitiesDelayedCount + _recycledCount; i++)
+            for (int i = _denseEntitiesDelayePtr; i < _denseEntitiesDelayePtr + _recycledCount; i++)
             {
                 //var index = _denseEntitiesDelayed[i];
-                var index = _table[i + _capacity];
+                var index = _table[i];
                 //if (_sparseEntities[index] != 0)
                 if (_table[index] != 0)
                 {
@@ -409,7 +435,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetFreeItemIndex(int entityID)
         {
-            if (_denseEntitiesDelayedCount == _capacity)
+            if (_denseEntitiesDelayePtr == _table.Length)
             {
                 UpdateDenseEntities();
                 if (_itemsCount + 1 == _capacity)
@@ -418,23 +444,18 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-
             int result = 0;
-            //ref int tf = ref _table[_denseEntitiesDelayedCount | _capacity];
             if (_recycledCount != 0)
             {
                 _recycledCount--;
-                //result = _denseEntitiesDelayed[_denseEntitiesDelayedCount];
-                result = _table[_denseEntitiesDelayedCount | _capacity];
+                result = _table[_denseEntitiesDelayePtr];
             }
             else
             {
-                result = _denseEntitiesDelayedCount;
+                result = _denseEntitiesDelayePtr - _capacity;
             }
 
-
 #if DRAGONECS_DEEP_DEBUG
-            //if (_sparseEntities[result] != 0)
             if (_table[result] != 0)
             {
                 Throw.UndefinedException();
@@ -443,20 +464,17 @@ namespace DCFApixels.DragonECS
             {
                 Throw.UndefinedException();
             }
+            if (result > _items.Length)
+            {
+                Throw.UndefinedException();
+            }
 #endif
-
-            //_denseEntitiesDelayed[_denseEntitiesDelayedCount] = entityID;
-            _table[result] = _table[_denseEntitiesDelayedCount | _capacity] = entityID;
+            _table[result] = _table[_denseEntitiesDelayePtr] = entityID;
             _itemsCount++;
-            _denseEntitiesDelayedCount++;
-            //_isDenseEntitiesDelayedValid = false;
+            _denseEntitiesDelayePtr++;
             return result;
         }
-        //private void CheckOrUpsize()
-        //{
-        //    if (_itemsCount < _capacity) { return; }
-        //    Resize(_items.Length << 1);
-        //}
+
         private void Resize(int newSize)
         {
             if (newSize <= _capacity) { return; }
@@ -474,7 +492,7 @@ namespace DCFApixels.DragonECS
             _table = newTable;
 
             _capacity = newSize;
-            _denseEntitiesDelayedCount = 0;
+            _denseEntitiesDelayePtr = _capacity + 1;
             //_denseEntitiesDelayedPtr = _capacity;
             _isDenseEntitiesDelayedValid = false;
             UpdateDenseEntities();
