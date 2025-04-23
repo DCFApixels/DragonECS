@@ -45,8 +45,6 @@ namespace DCFApixels.DragonECS
         private int _itemsCount = 0;
         private int _capacity = 0;
 
-        //private int[] _sparseEntities;
-        //private int[] _denseEntitiesDelayed;
         private int[] _table;
         private int _denseEntitiesDelayePtr = 0;
         private bool _isDenseEntitiesDelayedValid = false;
@@ -463,6 +461,7 @@ namespace DCFApixels.DragonECS
                 Throw.UndefinedException();
             }
 #endif
+
             _table[result] = _table[_denseEntitiesDelayePtr] = entityID;
             _itemsCount++;
             _denseEntitiesDelayePtr++;
