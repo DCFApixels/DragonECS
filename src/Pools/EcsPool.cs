@@ -112,8 +112,6 @@ namespace DCFApixels.DragonECS
             itemIndex = GetFreeItemIndex(entityID);
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             ref T result = ref _items[itemIndex];
-            //_sparseEntities[itemIndex] = entityID;
-            //_table[itemIndex] = entityID;
             EnableComponent(ref result);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             _listeners.InvokeOnAddAndGet(entityID, _listenersCachedCount);
@@ -362,7 +360,6 @@ namespace DCFApixels.DragonECS
             }
 #endif
             UpdateDenseEntities();
-            //var span = new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
             var span = new EcsSpan(_source.ID, _table, 1 + _capacity, _itemsCount);
 #if DRAGONECS_DEEP_DEBUG
             if (DCFApixels.DragonECS.UncheckedCore.UncheckedCoreUtility.CheckSpanValideDebug(span) == false)
@@ -411,7 +408,6 @@ namespace DCFApixels.DragonECS
             using (_source.DisableAutoReleaseDelEntBuffer()) using (var group = EcsGroup.New(_source))
             {
                 EcsStaticMask.Inc<T>().Build().ToMask(_source).GetIterator().IterateTo(World.Entities, group);
-                //var span = new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
                 var span = new EcsSpan(_source.ID, _table, 1 + _capacity, _itemsCount);
                 if (group.SetEquals(span) == false)
                 {
@@ -421,9 +417,7 @@ namespace DCFApixels.DragonECS
             _lockToSpan = false;
             for (int i = _denseEntitiesDelayePtr; i < _denseEntitiesDelayePtr + _recycledCount; i++)
             {
-                //var index = _denseEntitiesDelayed[i];
                 var index = _table[i];
-                //if (_sparseEntities[index] != 0)
                 if (_table[index] != 0)
                 {
                     Throw.UndefinedException();
@@ -445,14 +439,14 @@ namespace DCFApixels.DragonECS
             }
 
             int result = 0;
-            if (_recycledCount != 0)
+            if (_recycledCount == 0)
             {
-                _recycledCount--;
-                result = _table[_denseEntitiesDelayePtr];
+                result = _denseEntitiesDelayePtr - _capacity;
             }
             else
             {
-                result = _denseEntitiesDelayePtr - _capacity;
+                _recycledCount--;
+                result = _table[_denseEntitiesDelayePtr];
             }
 
 #if DRAGONECS_DEEP_DEBUG
