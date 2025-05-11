@@ -101,6 +101,7 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if DEBUG
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
             if (_source.IsUsed(entityID) == false) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
             if (itemIndex > 0) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
@@ -158,6 +159,9 @@ namespace DCFApixels.DragonECS
             //}
 
 
+#if DEBUG
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
+#endif
             ref int itemIndex = ref _mapping[entityID];
             if (itemIndex <= 0)
             { //Add block
@@ -197,6 +201,7 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if DEBUG
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
             if (itemIndex <= 0) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
@@ -254,8 +259,8 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (_isLocked) { return; }
 #endif
+            _recycledItemsCount = 0; // ������� ����� ����������, ��� ��� Del �� ��������
             if (_itemsCount <= 0) { return; }
-            _itemsCount = 0;
             var span = _source.Where(out SingleAspect<T> _);
             foreach (var entityID in span)
             {
@@ -267,6 +272,8 @@ namespace DCFApixels.DragonECS
                 _listeners.InvokeOnDel(entityID, _listenersCachedCount);
 #endif
             }
+            _itemsCount = 0;
+            _recycledItemsCount = 0;
         }
         #endregion
 
