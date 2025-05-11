@@ -538,7 +538,7 @@ namespace DCFApixels.DragonECS.Internal
                 state ^= state >> 17;
                 state ^= state << 5;
                 return state;
-            };
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long NextXorShiftState(long state)
