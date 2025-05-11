@@ -3,9 +3,9 @@
 #endif
 #pragma warning disable IDE1006
 #pragma warning disable CS8981
+using DCFApixels.DragonECS.Core.Unchecked;
 using DCFApixels.DragonECS.Internal;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -53,6 +53,11 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _full == 0L; }
+        }
+        public bool IsDeadOrNull
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return IsAlive == false; }
         }
         public int ID
         {
@@ -370,152 +375,20 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(long other) { return _full == other; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int CompareTo(entlong other)
+        public int CompareTo(entlong other) { return Compare(_id, other._id); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Compare(entlong left, entlong right) { return left.CompareTo(right); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Compare(int left, int right)
         {
             // NOTE: Because _id cannot be less than 0,
             // the case “_id - other._id > MaxValue” is impossible.
-            return _id - other._id;
+            return left - right;
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Compare(entlong left, entlong right) { return left.CompareTo(right); }
 
-
-        internal class DebuggerProxy
+        internal class DebuggerProxy : EntityDebuggerProxy
         {
-            private List<object> _componentsList = new List<object>();
-            private entlong _value;
-            public long full { get { return _value._full; } }
-            public int id { get { return _value._id; } }
-            public short gen { get { return _value._gen; } }
-            public short world { get { return _value._world; } }
-            public EntState State { get { return _value.IsNull ? EntState.Null : _value.IsAlive ? EntState.Alive : EntState.Dead; } }
-            public EcsWorld EcsWorld { get { return EcsWorld.GetWorld(world); } }
-            public IEnumerable<object> components
-            {
-                get
-                {
-                    _value.World.GetComponentsFor(_value.ID, _componentsList);
-                    return _componentsList;
-                }
-            }
-            public DebuggerProxy(entlong value)
-            {
-                _value = value;
-            }
-            public DebuggerProxy(EntitySlotInfo value)
-            {
-                _value = new entlong(value.id, value.gen, value.world);
-            }
-            public enum EntState { Null, Dead, Alive, }
-        }
-        #endregion
-    }
-}
-
-namespace DCFApixels.DragonECS
-{
-    [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    public readonly struct EntitySlotInfo : IEquatable<EntitySlotInfo>
-    {
-        private readonly long _full;
-        public readonly int id;
-        public readonly short gen;
-        public readonly short world;
-
-        #region Properties
-        private EcsWorld World { get { return EcsWorld.GetWorld(world); } }
-        private EntState State { get { return _full == 0 ? EntState.Null : World.IsAlive(id, gen) ? EntState.Alive : EntState.Dead; } }
-
-        #endregion
-
-        #region Constructors
-        public EntitySlotInfo(long full)
-        {
-            unchecked
-            {
-                ulong ufull = (ulong)full;
-                id = (int)((ufull >> 0) & 0x0000_0000_FFFF_FFFF);
-                gen = (short)((ufull >> 32) & 0x0000_0000_0000_FFFF);
-                world = (short)((ufull >> 48) & 0x0000_0000_0000_FFFF);
-                _full = full;
-            }
-        }
-        public EntitySlotInfo(int id, short gen, short world)
-        {
-            this.id = id;
-            this.gen = gen;
-            this.world = world;
-            _full = ((long)world << 48 | (long)gen << 32 | (long)id);
-        }
-        #endregion
-
-        #region Operators
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(EntitySlotInfo a, EntitySlotInfo b)
-        {
-            return a.id == b.id &&
-                a.gen == b.gen &&
-                a.world == b.world;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(EntitySlotInfo a, EntitySlotInfo b)
-        {
-            return a.id != b.id ||
-                a.gen != b.gen ||
-                a.world != b.world;
-        }
-        #endregion
-
-        #region Other
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() { return unchecked(id ^ gen ^ (world * EcsConsts.MAGIC_PRIME)); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override string ToString() { return $"slot(id:{id} g:{gen} w:{world} {(State == EntState.Null ? "null" : State == EntState.Alive ? "alive" : "not alive")})"; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool Equals(object obj) { return obj is EntitySlotInfo other && this == other; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(EntitySlotInfo other) { return this == other; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(out int id, out int gen, out int world)
-        {
-            id = this.id;
-            gen = this.gen;
-            world = this.world;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(out int id, out int world)
-        {
-            id = this.id;
-            world = this.world;
-        }
-        public enum EntState { Null, Dead, Alive, }
-        internal class DebuggerProxy
-        {
-            private List<object> _componentsList = new List<object>();
-            private EntitySlotInfo _source;
-            public long full { get { return _source._full; } }
-            public int id { get { return _source.id; } }
-            public short gen { get { return _source.gen; } }
-            public short world { get { return _source.world; } }
-            public EntState State { get { return _source.State; } }
-            public EcsWorld World { get { return _source.World; } }
-            public IEnumerable<object> Components
-            {
-                get
-                {
-                    if (State == EntState.Alive)
-                    {
-                        World.GetComponentsFor(id, _componentsList);
-                        return _componentsList;
-                    }
-                    return Array.Empty<object>();
-                }
-            }
-            public DebuggerProxy(EntitySlotInfo value)
-            {
-                _source = value;
-            }
+            public DebuggerProxy(entlong entity) : base(entity._id, entity._gen, entity._world) { }
         }
         #endregion
     }

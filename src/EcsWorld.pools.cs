@@ -314,7 +314,7 @@ namespace DCFApixels.DragonECS
                 slot.count++;
                 slot.version++;
                 var count = _entities[entityID].componentsCount++;
-                if(count == 0 && IsUsed(entityID))
+                if (count == 0 && IsUsed(entityID))
                 {
                     RemoveFromEmptyEntities(entityID);
                 }

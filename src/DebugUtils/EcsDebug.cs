@@ -247,7 +247,7 @@ namespace DCFApixels.DragonECS
         #region Static Constructor
         static DebugService()
         {
-#if !UNITY_5_3_OR_NEWER
+#if UNITY_5_3_OR_NEWER
             Set(new NullDebugService());
 #else
             Set(new DefaultDebugService());

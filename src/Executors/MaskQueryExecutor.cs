@@ -125,7 +125,7 @@ namespace DCFApixels.DragonECS.Core
             _maskInc = mask._incs;
             _maskExc = mask._excs;
             _count = 1 + mask._incs.Length + mask._excs.Length;
-     
+
             _versions = UnmanagedArrayUtility.NewAndInit<long>(_count);
         }
         public bool Check()

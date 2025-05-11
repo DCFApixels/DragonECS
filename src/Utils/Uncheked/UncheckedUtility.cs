@@ -1,13 +1,13 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
-
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.UncheckedCore
 {
+    [Obsolete("Use DCFApixels.DragonECS.Core.UncheckedUtility")]
     public static class UncheckedCoreUtility
     {
         #region CreateEntLong
@@ -70,42 +70,70 @@ namespace DCFApixels.DragonECS.UncheckedCore
         }
         #endregion
     }
+}
 
-    public readonly struct EntitiesMatrix
+namespace DCFApixels.DragonECS.Core.Unchecked
+{
+    public static class UncheckedUtility
     {
-        private readonly EcsWorld _world;
-        public EntitiesMatrix(EcsWorld world)
+        #region CreateEntLong
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static entlong CreateEntLong(int entityID, short gen, short worldID)
         {
-            _world = world;
+            return new entlong(entityID, gen, worldID);
         }
-        public int PoolsCount
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static entlong CreateEntLong(long entityGenWorld)
         {
-            get { return _world.PoolsCount; }
+            return new entlong(entityGenWorld);
         }
-        public int EntitesCount
+        #endregion
+
+        #region CreateSpan
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsSpan CreateSpan(short worldID, ReadOnlySpan<int> entitesArray)
         {
-            get { return _world.Capacity; }
+            return new EcsSpan(worldID, entitesArray);
         }
-        public int GetEntityComponentsCount(int entityID)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsSpan CreateSpan(short worldID, int[] entitesArray, int startIndex, int length)
         {
-            return _world.GetComponentsCount(entityID);
+            return new EcsSpan(worldID, entitesArray, startIndex, length);
         }
-        public int GetEntityGen(int entityID)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsSpan CreateSpan(short worldID, int[] entitesArray, int length)
         {
-            return _world.GetGen(entityID);
+            return new EcsSpan(worldID, entitesArray, length);
         }
-        public bool IsEntityUsed(int entityID)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsSpan CreateSpan(short worldID, int[] entitesArray)
         {
-            return _world.IsUsed(entityID);
+            return new EcsSpan(worldID, entitesArray);
         }
-        public bool this[int entityID, int poolID]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsSpan CreateEmptySpan(short worldID)
         {
-            get
+            return new EcsSpan(worldID, Array.Empty<int>());
+        }
+        public static bool CheckSpanValideDebug(EcsSpan span)
+        {
+            HashSet<int> set = new HashSet<int>();
+            foreach (var e in span)
             {
-                int entityStartChunkIndex = entityID << _world._entityComponentMaskLengthBitShift;
-                var chunkInfo = EcsMaskChunck.FromID(poolID);
-                return (_world._entityComponentMasks[entityStartChunkIndex + chunkInfo.chunkIndex] & chunkInfo.mask) != 0;
+                if (set.Add(e) == false)
+                {
+                    return false;
+                }
             }
+            return true;
         }
+        #endregion
+
+        #region EcsGroup
+        public static EcsGroup GetSourceInstance(EcsReadonlyGroup group)
+        {
+            return group.GetSource_Internal();
+        }
+        #endregion
     }
 }

@@ -69,19 +69,19 @@ namespace DCFApixels.DragonECS.Internal
                 _version++;
                 _iterator.IterateTo(World.Entities, _filteredAllGroup);
 #if DEBUG && DRAGONECS_DEEP_DEBUG
-                if(_filteredGroup == null)
+                if (_filteredGroup == null)
                 {
                     _filteredGroup = EcsGroup.New(World);
                 }
                 _filteredGroup.Clear();
                 foreach (var e in World.Entities)
                 {
-                    if(World.IsMatchesMask(Mask, e))
+                    if (World.IsMatchesMask(Mask, e))
                     {
                         _filteredGroup.Add(e);
                     }
                 }
-                if(_filteredAllGroup.SetEquals(_filteredGroup) == false)
+                if (_filteredAllGroup.SetEquals(_filteredGroup) == false)
                 {
                     throw new System.InvalidOperationException();
                 }
