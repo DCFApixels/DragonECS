@@ -259,7 +259,7 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (_isLocked) { return; }
 #endif
-            _recycledItemsCount = 0; // ������� ����� ����������, ��� ��� Del �� ��������
+            //_recycledItemsCount = 0; // ������� ����� ����������, ��� ��� Del �� ��������
             if (_itemsCount <= 0) { return; }
             var span = _source.Where(out SingleAspect<T> _);
             foreach (var entityID in span)
@@ -273,7 +273,7 @@ namespace DCFApixels.DragonECS
 #endif
             }
             _itemsCount = 0;
-            _recycledItemsCount = 0;
+            //_recycledItemsCount = 0;
         }
         #endregion
 
