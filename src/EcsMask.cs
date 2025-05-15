@@ -758,7 +758,7 @@ namespace DCFApixels.DragonECS
             [Il2CppSetOption(Option.NullChecks, false)]
             [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-            public unsafe ref struct Enumerator
+            public ref struct Enumerator
             {
                 private ReadOnlySpan<int>.Enumerator _span;
 
@@ -784,7 +784,7 @@ namespace DCFApixels.DragonECS
                     get { return _span.Current; }
                 }
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public bool MoveNext()
+                public unsafe bool MoveNext()
                 {
                     while (_span.MoveNext())
                     {

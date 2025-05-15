@@ -196,10 +196,12 @@ namespace DCFApixels.DragonECS
         {
             if (_groupSparsePagePoolCount <= 0)
             {
-                var x = UnmanagedArrayUtility.NewAndInit<int>(EcsGroup.PAGE_SIZE);
-                return x;
+                var newPage = UnmanagedArrayUtility.NewAndInit<int>(EcsGroup.PAGE_SIZE);
+                return newPage;
             }
-            return _groupSparsePagePool[--_groupSparsePagePoolCount];
+            var takedPage = _groupSparsePagePool[--_groupSparsePagePoolCount];
+            _groupSparsePagePool[_groupSparsePagePoolCount] = null;
+            return takedPage;
         }
         internal void ReturnPage(int* page)
         {
@@ -213,6 +215,16 @@ namespace DCFApixels.DragonECS
                 }
             }
             _groupSparsePagePool[_groupSparsePagePoolCount++] = page;
+        }
+        private void DisposeGroupPages()
+        {
+            foreach (var page in _groupSparsePagePool)
+            {
+                if (page != null)
+                {
+                    UnmanagedArrayUtility.Free(page);
+                }
+            }
         }
         #endregion
 

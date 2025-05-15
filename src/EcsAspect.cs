@@ -198,7 +198,7 @@ namespace DCFApixels.DragonECS
             #region Constructors/New
             private Builder() { }
 
-            internal static unsafe (TAspect aspect, EcsMask mask) New<TAspect>(EcsWorld world) where TAspect : new()
+            internal static (TAspect aspect, EcsMask mask) New<TAspect>(EcsWorld world) where TAspect : new()
             {
                 //Get Builder
                 if (_constructorBuildersStack == null)

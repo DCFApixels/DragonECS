@@ -236,6 +236,7 @@ namespace DCFApixels.DragonECS
                 _isDestroyed = true;
                 _poolTypeCode_2_CmpTypeIDs = null;
                 _cmpTypeCode_2_CmpTypeIDs = null;
+                DisposeGroupPages();
 
                 foreach (var item in _executorCoures)
                 {
@@ -1053,6 +1054,11 @@ namespace DCFApixels.DragonECS
                 {
                     list.Add(_pools[poolIdsPtr[i]]);
                 }
+            }
+
+            if (count >= BUFFER_THRESHOLD)
+            {
+                UnmanagedArrayUtility.Free(poolIdsPtr);
             }
         }
         public ReadOnlySpan<object> GetComponentsFor(int entityID)

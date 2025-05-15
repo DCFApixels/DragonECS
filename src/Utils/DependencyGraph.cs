@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.Core
 {
@@ -70,7 +71,7 @@ namespace DCFApixels.DragonECS.Core
 
 
 
-    public unsafe class DependencyGraph<T> : IDependencyGraph<T>
+    public class DependencyGraph<T> : IDependencyGraph<T>
     {
         private readonly Dictionary<T, VertexID> _vertexIDs = new Dictionary<T, VertexID>(32);
         private StructList<VertexInfo> _vertexInfos = new StructList<VertexInfo>(32);
@@ -226,7 +227,7 @@ namespace DCFApixels.DragonECS.Core
         #endregion
 
         #region Sort
-        public T[] Sort()
+        public unsafe T[] Sort()
         {
             const int BUFFER_THRESHOLD = 256;
             if (_count <= BUFFER_THRESHOLD)
@@ -248,7 +249,7 @@ namespace DCFApixels.DragonECS.Core
                 return ConvertIdsToTsArray(buffer);
             }
         }
-        private void TopoSorting(UnsafeArray<VertexID> sortingBuffer)
+        private unsafe void TopoSorting(UnsafeArray<VertexID> sortingBuffer)
         {
             VertexID[] nodes = new VertexID[_count];
             var adjacency = new List<(VertexID To, int DependencyIndex)>[GetVertexInfosCount()];
@@ -336,7 +337,7 @@ namespace DCFApixels.DragonECS.Core
                 throw new InvalidOperationException("Cyclic dependency detected." + details);
             }
         }
-        private void ReoderInsertionIndexes(UnsafeArray<VertexID> sortingBuffer)
+        private unsafe void ReoderInsertionIndexes(UnsafeArray<VertexID> sortingBuffer)
         {
             for (int i = 0; i < GetVertexInfosCount(); i++)
             {
@@ -375,7 +376,7 @@ namespace DCFApixels.DragonECS.Core
 
             }
         }
-        private static void MoveElement<TValue>(ref UnsafeArray<TValue> array, int oldIndex, int newIndex) where TValue : unmanaged
+        private static unsafe void MoveElement<TValue>(ref UnsafeArray<TValue> array, int oldIndex, int newIndex) where TValue : unmanaged
         {
             if (oldIndex == newIndex) return;
 
@@ -405,7 +406,7 @@ namespace DCFApixels.DragonECS.Core
 
             ptr[newIndex] = item;
         }
-        private T[] ConvertIdsToTsArray(UnsafeArray<VertexID> buffer)
+        private unsafe T[] ConvertIdsToTsArray(UnsafeArray<VertexID> buffer)
         {
             T[] result = new T[buffer.Length];
             for (int i = 0; i < result.Length; i++)
