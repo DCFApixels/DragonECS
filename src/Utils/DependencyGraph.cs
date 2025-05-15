@@ -158,12 +158,16 @@ namespace DCFApixels.DragonECS.Core
         private void AddVertexByID(VertexID id)
         {
             ref var info = ref GetVertexInfo(id);
-            if (info.isContained == false || info.isLocked == false)
+
+            if (info.isContained == false && info.isLocked || info.isLocked == false)
+            {
+                info.insertionIndex = _increment++;
+            }
+            if (info.isContained == false)
             {
                 _count++;
                 info.isContained = true;
             }
-            info.insertionIndex = _increment++;
         }
         public bool RemoveVertex(T vertex)
         {
