@@ -284,6 +284,7 @@ namespace DCFApixels.DragonECS
                     }
                     oldService?.OnDisableBaseService(service);
                     service.OnEnableBaseService(oldService);
+                    _threadServiceClonesSet.Clear();
                     OnServiceChanged(service);
                 }
             }

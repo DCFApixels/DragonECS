@@ -565,10 +565,8 @@ namespace DCFApixels.DragonECS
         }
         private void Cleanup(bool disposing)
         {
-            _sortIncBuffer.ReadonlyDispose();
-            //_sortExcBuffer.ReadonlyDispose();// использует общую памяять с _sortIncBuffer;
-            _sortIncChunckBuffer.ReadonlyDispose();
-            //_sortExcChunckBuffer.ReadonlyDispose();// использует общую памяять с _sortIncChunckBuffer;
+            _sortIncBuffer.ReadonlyDispose(); // использует общую памяять с _sortExcBuffer;
+            _sortIncChunckBuffer.ReadonlyDispose(); // использует общую памяять с _sortExcChunckBuffer;
         }
         #endregion
 

@@ -92,6 +92,12 @@ namespace DCFApixels.DragonECS
 
             _injector = injectorBuilder.Build(this);
         }
+        ~EcsPipeline()
+        {
+            if (_isDestoryed) { return; }
+            if (_isInit == false) { Init(); }
+            Destroy();
+        }
         #endregion
 
         #region GetProcess
