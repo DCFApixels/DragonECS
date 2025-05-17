@@ -16,6 +16,7 @@ namespace DCFApixels.DragonECS.Internal
 #endif
     [Serializable]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
+    [DebuggerDisplay("Count: {Count}")]
     internal class IdDispenser : IEnumerable<int>, IReadOnlyCollection<int>
     {
         private const int MIN_SIZE = 4;

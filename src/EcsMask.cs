@@ -2,6 +2,7 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
@@ -505,6 +506,9 @@ namespace DCFApixels.DragonECS
         /// <summary> slised _sortIncChunckBuffer </summary>
         private readonly UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
 
+        private MemoryAllocator.Handler _bufferHandler;
+        private MemoryAllocator.Handler _chunckBufferHandler;
+
         private readonly bool _isSingleIncPoolWithEntityStorage;
         private readonly bool _isHasAnyEntityStorage;
         private readonly MaskType _maskType;
@@ -522,13 +526,20 @@ namespace DCFApixels.DragonECS
             World = source;
             Mask = mask;
 
-            var sortBuffer = new UnsafeArray<int>(mask._incs.Length + mask._excs.Length);
-            var sortChunckBuffer = new UnsafeArray<EcsMaskChunck>(mask._incChunckMasks.Length + mask._excChunckMasks.Length);
+            int bufferLength = mask._incs.Length + mask._excs.Length;
+            int chunckBufferLength = mask._incChunckMasks.Length + mask._excChunckMasks.Length;
+            _bufferHandler = MemoryAllocator.AllocAndInit<int>(bufferLength);
+            _chunckBufferHandler = MemoryAllocator.AllocAndInit<EcsMaskChunck>(chunckBufferLength);
+            var sortBuffer = UnsafeArray<int>.Manual(_bufferHandler.As<int>(), bufferLength);
+            var sortChunckBuffer = UnsafeArray<EcsMaskChunck>.Manual(_chunckBufferHandler.As<EcsMaskChunck>(), chunckBufferLength);
 
             _sortIncBuffer = sortBuffer.Slice(0, mask._incs.Length);
             _sortIncBuffer.CopyFromArray_Unchecked(mask._incs);
             _sortExcBuffer = sortBuffer.Slice(mask._incs.Length, mask._excs.Length);
             _sortExcBuffer.CopyFromArray_Unchecked(mask._excs);
+
+            //EcsDebug.PrintError(_sortIncBuffer.ToArray());
+            //EcsDebug.PrintError(new Span<int>(_bufferHandler.GetPtrAs<int>(), _sortIncBuffer.Length).ToArray());
 
             _sortIncChunckBuffer = sortChunckBuffer.Slice(0, mask._incChunckMasks.Length);
             _sortIncChunckBuffer.CopyFromArray_Unchecked(mask._incChunckMasks);
@@ -565,8 +576,10 @@ namespace DCFApixels.DragonECS
         }
         private void Cleanup(bool disposing)
         {
-            _sortIncBuffer.ReadonlyDispose(); // использует общую памяять с _sortExcBuffer;
-            _sortIncChunckBuffer.ReadonlyDispose(); // использует общую памяять с _sortExcChunckBuffer;
+            _bufferHandler.Dispose();
+            _chunckBufferHandler.Dispose();
+            //_sortIncBuffer.ReadonlyDispose(); // использует общую памяять с _sortExcBuffer;
+            //_sortIncChunckBuffer.ReadonlyDispose(); // использует общую памяять с _sortExcChunckBuffer;
         }
         #endregion
 

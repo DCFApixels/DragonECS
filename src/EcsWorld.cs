@@ -226,6 +226,7 @@ namespace DCFApixels.DragonECS
 #endif
                     return;
                 }
+                _isDestroyed = true;
                 _listeners.InvokeOnWorldDestroy();
                 _entityDispenser = null;
                 _pools = null;
@@ -233,10 +234,9 @@ namespace DCFApixels.DragonECS
                 _worlds[ID] = null;
                 ReleaseData(ID);
                 _worldIdDispenser.Release(ID);
-                _isDestroyed = true;
                 _poolTypeCode_2_CmpTypeIDs = null;
                 _cmpTypeCode_2_CmpTypeIDs = null;
-                DisposeGroupPages();
+                DisposeGroups();
 
                 foreach (var item in _executorCoures)
                 {
