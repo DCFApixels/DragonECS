@@ -207,7 +207,7 @@ namespace DCFApixels.DragonECS
         {
 #if DEBUG && DRAGONECS_DEEP_DEBUG
             var h = MemoryAllocator.Handler.FromDataPtr(page);
-            if (h.GetID() == 0 || page == null)
+            if (h.GetID_Debug() == 0 || page == null)
             {
                 Throw.DeepDebugException();
             }
