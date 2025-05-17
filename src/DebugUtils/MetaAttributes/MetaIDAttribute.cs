@@ -114,28 +114,26 @@ namespace DCFApixels.DragonECS
         }
         public static string ParseIDFromTypeName(string name)
         {
-            using (StackAllocator.Alloc(name.Length, out char* buffer))
+            char* buffer = TempBuffer<MetaIDAttribute, char>.Get(name.Length);
+            int count = 0;
+            //skip name[0] char
+            for (int i = 1, iMax = name.Length; i < iMax; i++)
             {
-                int count = 0;
-                //skip name[0] char
-                for (int i = 1, iMax = name.Length; i < iMax; i++)
+                char current = name[i];
+                if (current == '_')
                 {
-                    char current = name[i];
-                    if (current == '_')
+                    if (++i >= iMax) { break; }
+                    current = name[i];
+                    switch (current)
                     {
-                        if (++i >= iMax) { break; }
-                        current = name[i];
-                        switch (current)
-                        {
-                            case '1': current = '<'; break;
-                            case '2': current = '>'; break;
-                            case '3': current = ','; break;
-                        }
+                        case '1': current = '<'; break;
+                        case '2': current = '>'; break;
+                        case '3': current = ','; break;
                     }
-                    buffer[count++] = current;
                 }
-                return new string(buffer, 0, count);
+                buffer[count++] = current;
             }
+            return new string(buffer, 0, count);
         }
 
         public static string GenerateNewUniqueIDWithAttribute()
