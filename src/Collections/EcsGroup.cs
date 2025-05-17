@@ -396,6 +396,7 @@ namespace DCFApixels.DragonECS
                     page.IndexesXOR = 0;
                     page.Count = 0;
                 }
+                _sparsePagesHandler.Dispose();
             }
         }
         public void Dispose()
