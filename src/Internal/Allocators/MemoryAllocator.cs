@@ -38,7 +38,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         public static Handler AllocAndInit_Internal(int byteLength, Type type)
         {
             Handler handler = Alloc_Internal(byteLength, type);
-            ClearAllocatedMemory(handler.Ptr, 0, byteLength);
+            AllocatorUtility.ClearAllocatedMemory(handler.Ptr, 0, byteLength);
             return handler;
         }
         #endregion
@@ -103,7 +103,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         private static Handler ReallocAndInit_Internal(Handler target, int oldByteLength, int newByteLength, Type newType)
         {
             Handler handler = Realloc_Internal(target, newByteLength, newType);
-            ClearAllocatedMemory(handler.Ptr, oldByteLength, newByteLength - oldByteLength);
+            AllocatorUtility.ClearAllocatedMemory(handler.Ptr, oldByteLength, newByteLength - oldByteLength);
             return handler;
         }
         #endregion
@@ -174,11 +174,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
             return result;
         }
-        private static unsafe void ClearAllocatedMemory(IntPtr ptr, int startByte, int lengthInBytes)
-        {
-            Span<byte> memorySpan = new Span<byte>((byte*)ptr + startByte, lengthInBytes);
-            memorySpan.Clear();
-        }
+
         internal struct Meta
         {
 #if DEBUG
@@ -209,7 +205,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay()}")]
         [System.Diagnostics.DebuggerTypeProxy(typeof(DebuggerProxy))]
 #endif
-        public readonly struct Handler
+        public readonly struct Handler : IDisposable
         {
             public static readonly Handler Empty = new Handler();
             internal readonly Meta* Data; // Data[-1] is meta;
@@ -237,6 +233,8 @@ namespace DCFApixels.DragonECS.Core.Internal
             public bool IsEmpty { get { return Data == null; } }
             public IntPtr Ptr { get { return (IntPtr)Data; } }
             public T* As<T>() where T : unmanaged { return (T*)Ptr; }
+
+            void IDisposable.Dispose() { Free((void*)Ptr); }
 
             #region Debugger
 #if DEBUG

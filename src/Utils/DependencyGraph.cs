@@ -1,4 +1,5 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Core.Internal;
+using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -241,7 +242,7 @@ namespace DCFApixels.DragonECS.Core
             }
             else
             {
-                var ptr = TempBuffer<VertexID>.Get(_count);
+                var ptr = TempBuffer<VertexID, VertexID>.Get(_count);
                 var buffer = UnsafeArray<VertexID>.Manual(ptr, _count);
                 TopoSorting(buffer);
                 ReoderInsertionIndexes(buffer);

@@ -601,7 +601,7 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                preSortingBuffer = TempBuffer<EcsMaskChunck>.Get(maxBufferSize);
+                preSortingBuffer = TempBuffer<EcsMaskIterator, EcsMaskChunck>.Get(maxBufferSize);
             }
 
             if (_sortIncChunckBuffer.Length > 1)

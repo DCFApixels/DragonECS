@@ -16,39 +16,6 @@ namespace DCFApixels.DragonECS.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public static unsafe class TempBuffer<T> where T : unmanaged
-    {
-        [ThreadStatic] private static T* _ptr;
-        [ThreadStatic] private static int _size;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T* Get(int size)
-        {
-            if (_size < size)
-            {
-                if (_ptr != null)
-                {
-                    UnmanagedArrayUtility.Free(_ptr);
-                }
-                _ptr = UnmanagedArrayUtility.New<T>(size);
-                _size = size;
-            }
-            return _ptr;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Clear()
-        {
-            for (int i = 0; i < _size; i++)
-            {
-                _ptr[i] = default;
-            }
-        }
-    }
-
-#if ENABLE_IL2CPP
-    [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-#endif
     [DebuggerTypeProxy(typeof(UnsafeArray<>.DebuggerProxy))]
     internal unsafe struct UnsafeArray<T> : IDisposable, IEnumerable<T>
         where T : unmanaged
