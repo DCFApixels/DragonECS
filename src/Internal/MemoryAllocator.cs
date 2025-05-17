@@ -1,16 +1,18 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿#if DISABLE_DEBUG
+#undef DEBUG
+#endif
+using DCFApixels.DragonECS.Internal;
 using System;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS.Core.Internal
 {
     internal unsafe static class MemoryAllocator
     {
+#if DEBUG
         private static IdDispenser _idDispenser;
         private static HandlerDebugInfo[] _debugInfos;
-        //private static ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+#endif
 
         static MemoryAllocator()
         {
@@ -18,8 +20,10 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         private static void StaticInit()
         {
+#if DEBUG
             _idDispenser = new IdDispenser();
             _debugInfos = new HandlerDebugInfo[32];
+#endif
         }
 
         #region AllocAndInit
@@ -33,9 +37,9 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         public static Handler AllocAndInit_Internal(int byteLength, Type type)
         {
-            Handler result = Alloc_Internal(byteLength, type);
-            ClearAllocatedMemory(result.Ptr, 0, byteLength);
-            return result;
+            Handler handler = Alloc_Internal(byteLength, type);
+            ClearAllocatedMemory(handler.Ptr, 0, byteLength);
+            return handler;
         }
         #endregion
 
@@ -51,6 +55,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         public static Handler Alloc_Internal(int byteLength, Type type)
         {
             byteLength = byteLength == 0 ? 1 : byteLength;
+#if DEBUG
             int id = 0;
             lock (_idDispenser)
             {
@@ -60,15 +65,18 @@ namespace DCFApixels.DragonECS.Core.Internal
                 }
                 id = _idDispenser.UseFree();
             }
+#endif
             Meta* newHandledPtr = (Meta*)Marshal.AllocHGlobal(byteLength + sizeof(Meta));
+            Handler handler = Handler.FromHandledPtr(newHandledPtr);
 
+#if DEBUG
             newHandledPtr->ID = id;
             newHandledPtr->ByteLength = byteLength;
 
-            Handler handler = Handler.FromHandledPtr(newHandledPtr);
             _debugInfos[id].stackTrace = new StackTrace();
             _debugInfos[id].type = type;
             _debugInfos[id].handler = handler;
+#endif
 
             return handler;
         }
@@ -94,9 +102,9 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         private static Handler ReallocAndInit_Internal(Handler target, int oldByteLength, int newByteLength, Type newType)
         {
-            Handler result = Realloc_Internal(target, newByteLength, newType);
-            ClearAllocatedMemory(result.Ptr, oldByteLength, newByteLength - oldByteLength);
-            return result;
+            Handler handler = Realloc_Internal(target, newByteLength, newType);
+            ClearAllocatedMemory(handler.Ptr, oldByteLength, newByteLength - oldByteLength);
+            return handler;
         }
         #endregion
 
@@ -121,11 +129,13 @@ namespace DCFApixels.DragonECS.Core.Internal
         {
             newByteLength = newByteLength == 0 ? 1 : newByteLength;
             Meta* newHandledPtr = (Meta*)Marshal.ReAllocHGlobal((IntPtr)target.GetHandledPtr(), (IntPtr)newByteLength + sizeof(Meta));
-            Handler result = Handler.FromHandledPtr(newHandledPtr);
+            Handler handler = Handler.FromHandledPtr(newHandledPtr);
+#if DEBUG
             _debugInfos[newHandledPtr->ID].stackTrace = new StackTrace();
             _debugInfos[newHandledPtr->ID].type = newType;
-            _debugInfos[newHandledPtr->ID].handler = result;
-            return result;
+            _debugInfos[newHandledPtr->ID].handler = handler;
+#endif
+            return handler;
         }
         #endregion
 
@@ -141,6 +151,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         private static void Free_Internal(Meta* handledPtr)
         {
+#if DEBUG
             lock (_idDispenser)
             {
                 _idDispenser.Release(handledPtr->ID);
@@ -148,6 +159,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
             handledPtr->ID = default;
             handledPtr->ByteLength = default;
+#endif
             Marshal.FreeHGlobal((IntPtr)handledPtr);
         }
         #endregion
@@ -156,8 +168,10 @@ namespace DCFApixels.DragonECS.Core.Internal
         internal static StateDebugInfo GetHandlerInfos_Debug()
         {
             StateDebugInfo result = default;
+#if DEBUG
             result.idDispenser = _idDispenser;
             result.debugInfos = _debugInfos;
+#endif
             return result;
         }
         private static unsafe void ClearAllocatedMemory(IntPtr ptr, int startByte, int lengthInBytes)
@@ -167,8 +181,10 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         internal struct Meta
         {
+#if DEBUG
             public int ID;
             public int ByteLength;
+#endif
         }
 
 #if DEBUG
@@ -176,41 +192,17 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
         internal struct HandlerDebugInfo
         {
+#if DEBUG
             public StackTrace stackTrace;
             public Type type;
             public Handler handler;
+#endif
         }
         internal struct StateDebugInfo
         {
             public HandlerDebugInfo[] debugInfos;
             public IdDispenser idDispenser;
         }
-        //private readonly struct AddLocker : IDisposable
-        //{
-        //    private readonly ReaderWriterLockSlim _readerWriterLockSlim;
-        //    public AddLocker(ReaderWriterLockSlim readerWriterLockSlim)
-        //    {
-        //        _readerWriterLockSlim = readerWriterLockSlim;
-        //        readerWriterLockSlim.EnterWriteLock();
-        //    }
-        //    public void Dispose()
-        //    {
-        //        _readerWriterLockSlim.ExitWriteLock();
-        //    }
-        //}
-        //private readonly struct RemoveLocker : IDisposable
-        //{
-        //    private readonly ReaderWriterLockSlim _readerWriterLockSlim;
-        //    public RemoveLocker(ReaderWriterLockSlim readerWriterLockSlim)
-        //    {
-        //        _readerWriterLockSlim = readerWriterLockSlim;
-        //        readerWriterLockSlim.EnterReadLock();   
-        //    }
-        //    public void Dispose()
-        //    {
-        //        _readerWriterLockSlim.ExitReadLock();
-        //    }
-        //}
         #endregion
 
 #if DEBUG
@@ -225,8 +217,22 @@ namespace DCFApixels.DragonECS.Core.Internal
             public static Handler FromHandledPtr(void* ptr) { return new Handler(((Meta*)ptr) + 1); }
             public static Handler FromDataPtr(void* ptr) { return new Handler((Meta*)ptr); }
             internal Meta* GetHandledPtr() { return Data - 1; }
-            internal int GetID() { return GetHandledPtr()->ID; }
-            internal int GetByteLength() { return GetHandledPtr()->ByteLength; }
+            internal int GetID_Debug() 
+            {
+#if DEBUG
+                return GetHandledPtr()->ID; 
+#else
+                return 0;
+#endif
+            }
+            internal int GetByteLength_Debug() 
+            {
+#if DEBUG
+                return GetHandledPtr()->ByteLength; 
+#else
+                return 0;
+#endif
+            }
 
             public bool IsEmpty { get { return Data == null; } }
             public IntPtr Ptr { get { return (IntPtr)Data; } }
