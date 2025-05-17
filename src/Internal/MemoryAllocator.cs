@@ -234,7 +234,6 @@ namespace DCFApixels.DragonECS.Core.Internal
 
             #region Debugger
 #if DEBUG
-            [RequiresDynamicCode("Calls System.Runtime.InteropServices.Marshal.SizeOf(Type)")]
             internal unsafe string DebuggerDisplay()
             {
                 if(Data == null)
@@ -252,7 +251,6 @@ namespace DCFApixels.DragonECS.Core.Internal
 
                 return $"Count: {meta.ByteLength / Marshal.SizeOf(info.type)} {info.type.Name}";
             }
-            [RequiresDynamicCode("Calls System.Runtime.InteropServices.Marshal.SizeOf(Type)")]
             internal static Array CreateArray_Debug(Type type, int count, byte* data, int byteLength)
             {
                 var array = Array.CreateInstance(type, count);
@@ -291,7 +289,6 @@ namespace DCFApixels.DragonECS.Core.Internal
 
                 public HandlerDebugInfo[] OtherHandlersInfo;
 
-                [RequiresDynamicCode("Calls System.Runtime.InteropServices.Marshal.SizeOf(Type)")]
                 public unsafe DebuggerProxy(Handler handler)
                 {
                     IsAlive = handler.Ptr.ToPointer() != null;
