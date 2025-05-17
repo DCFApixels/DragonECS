@@ -234,6 +234,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 
             #region Debugger
 #if DEBUG
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
             internal unsafe string DebuggerDisplay()
             {
                 if(Data == null)
@@ -315,6 +316,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                     OtherHandlersInfo = _debugInfos;
                 }
             }
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 #endif
             #endregion
         }
