@@ -73,7 +73,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             newHandledPtr->ID = id;
             newHandledPtr->ByteLength = byteLength;
 
-            _debugInfos[id].stackTrace = new StackTrace();
+            _debugInfos[id].stackTrace = new System.Diagnostics.StackTrace();
             _debugInfos[id].type = type;
             _debugInfos[id].handler = handler;
 #endif
@@ -131,7 +131,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             Meta* newHandledPtr = (Meta*)Marshal.ReAllocHGlobal((IntPtr)target.GetHandledPtr(), (IntPtr)newByteLength + sizeof(Meta));
             Handler handler = Handler.FromHandledPtr(newHandledPtr);
 #if DEBUG
-            _debugInfos[newHandledPtr->ID].stackTrace = new StackTrace();
+            _debugInfos[newHandledPtr->ID].stackTrace = new System.Diagnostics.StackTrace();
             _debugInfos[newHandledPtr->ID].type = newType;
             _debugInfos[newHandledPtr->ID].handler = handler;
 #endif
@@ -188,12 +188,12 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
 
 #if DEBUG
-        [DebuggerDisplay("{handler.DebuggerDisplay()}")]
+        [System.Diagnostics.DebuggerDisplay("{handler.DebuggerDisplay()}")]
 #endif
         internal struct HandlerDebugInfo
         {
 #if DEBUG
-            public StackTrace stackTrace;
+            public System.Diagnostics.StackTrace stackTrace;
             public Type type;
             public Handler handler;
 #endif
@@ -206,8 +206,8 @@ namespace DCFApixels.DragonECS.Core.Internal
         #endregion
 
 #if DEBUG
-        [DebuggerDisplay("{DebuggerDisplay()}")]
-        [DebuggerTypeProxy(typeof(DebuggerProxy))]
+        [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay()}")]
+        [System.Diagnostics.DebuggerTypeProxy(typeof(DebuggerProxy))]
 #endif
         public readonly struct Handler
         {
