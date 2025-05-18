@@ -72,7 +72,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             newHandledPtr->ID = id;
             newHandledPtr->ByteLength = byteLength;
 
+#if DRAGONECS_DEEP_DEBUG
             _debugInfos[id].stackTrace = new System.Diagnostics.StackTrace();
+#endif
             _debugInfos[id].type = type;
             _debugInfos[id].handler = handler;
 #endif
@@ -130,7 +132,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             Meta* newHandledPtr = (Meta*)Marshal.ReAllocHGlobal((IntPtr)target.GetHandledPtr(), (IntPtr)newByteLength + sizeof(Meta));
             Handler handler = Handler.FromHandledPtr(newHandledPtr);
 #if DEBUG
+#if DRAGONECS_DEEP_DEBUG
             _debugInfos[newHandledPtr->ID].stackTrace = new System.Diagnostics.StackTrace();
+#endif
             _debugInfos[newHandledPtr->ID].type = newType;
             _debugInfos[newHandledPtr->ID].handler = handler;
 #endif
@@ -188,7 +192,9 @@ namespace DCFApixels.DragonECS.Core.Internal
         internal struct HandlerDebugInfo
         {
 #if DEBUG
+#if DRAGONECS_DEEP_DEBUG
             public System.Diagnostics.StackTrace stackTrace;
+#endif
             public Type type;
             public Handler handler;
 #endif
