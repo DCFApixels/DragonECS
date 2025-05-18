@@ -3,7 +3,6 @@
 #endif
 using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
-using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -961,7 +960,7 @@ namespace DCFApixels.DragonECS
     #endregion
 }
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     #region EcsMaskIteratorUtility
 #if ENABLE_IL2CPP

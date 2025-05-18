@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 using Unity.IL2CPP.CompilerServices;
 #endif
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     internal interface IStructComparer<T> : IComparer<T>
     {

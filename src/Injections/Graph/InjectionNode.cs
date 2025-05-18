@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
         public abstract void Init(EcsPipeline pipeline);
     }
 }
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     internal sealed class InjectionNode<T> : InjectionNodeBase
     {

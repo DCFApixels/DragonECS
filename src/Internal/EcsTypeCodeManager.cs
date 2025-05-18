@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 using Unity.IL2CPP.CompilerServices;
 #endif
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     //TODO разработать возможность ручного устанавливания ID типам.
     //это может быть полезно как детерминированность для сети

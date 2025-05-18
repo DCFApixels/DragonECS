@@ -9,7 +9,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
 #if ENABLE_IL2CPP
     using Unity.IL2CPP.CompilerServices;

@@ -1,7 +1,6 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
-using DCFApixels.DragonECS.Internal;
 using System;
 using System.Runtime.InteropServices;
 
@@ -213,18 +212,18 @@ namespace DCFApixels.DragonECS.Core.Internal
             public static Handler FromHandledPtr(void* ptr) { return new Handler(((Meta*)ptr) + 1); }
             public static Handler FromDataPtr(void* ptr) { return new Handler((Meta*)ptr); }
             internal Meta* GetHandledPtr() { return Data - 1; }
-            internal int GetID_Debug() 
+            internal int GetID_Debug()
             {
 #if DEBUG
-                return GetHandledPtr()->ID; 
+                return GetHandledPtr()->ID;
 #else
                 return 0;
 #endif
             }
-            internal int GetByteLength_Debug() 
+            internal int GetByteLength_Debug()
             {
 #if DEBUG
-                return GetHandledPtr()->ByteLength; 
+                return GetHandledPtr()->ByteLength;
 #else
                 return 0;
 #endif
@@ -241,7 +240,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 #pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
             internal unsafe string DebuggerDisplay()
             {
-                if(Data == null)
+                if (Data == null)
                 {
                     return "-";
                 }
@@ -328,9 +327,9 @@ namespace DCFApixels.DragonECS.Core.Internal
 
     internal static class MemoryAllocatorHandlerExtensions
     {
-        public static void Dispose(this ref MemoryAllocator.Handler self) 
+        public static void Dispose(this ref MemoryAllocator.Handler self)
         {
-            MemoryAllocator.Free(ref self); 
+            MemoryAllocator.Free(ref self);
         }
     }
 }

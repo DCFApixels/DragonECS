@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 using Unity.IL2CPP.CompilerServices;
 #endif
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
