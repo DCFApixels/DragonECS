@@ -90,6 +90,39 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region Constructors/Init/Destroy
+        public EcsPool() { }
+        public EcsPool(int capacity, int recycledCapacity = -1)
+        {
+            capacity = ArrayUtility.NextPow2(capacity);
+            if (recycledCapacity < 0)
+            {
+                recycledCapacity = capacity / 2;
+            }
+            _items = new T[capacity];
+            _recycledItems = new int[recycledCapacity];
+        }
+        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
+        {
+            _source = world;
+            _mediator = mediator;
+            _componentTypeID = componentTypeID;
+            _maskBit = EcsMaskChunck.FromID(componentTypeID);
+
+            _mapping = new int[world.Capacity];
+            var worldConfig = world.Configs.GetWorldConfigOrDefault();
+            if (_items == null)
+            {
+                _items = new T[ArrayUtility.NextPow2(worldConfig.PoolComponentsCapacity)];
+            }
+            if (_recycledItems == null)
+            {
+                _recycledItems = new int[worldConfig.PoolRecycledComponentsCapacity];
+            }
+        }
+        void IEcsPoolImplementation.OnWorldDestroy() { }
+        #endregion
+
         #region Methods
         public ref T Add(int entityID)
         {
@@ -261,26 +294,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Callbacks
-        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
-        {
-#if DEBUG
-            AllowedInWorldsAttribute.CheckAllows<T>(world);
-#endif
 
-            _source = world;
-            _mediator = mediator;
-            _componentTypeID = componentTypeID;
-            _maskBit = EcsMaskChunck.FromID(componentTypeID);
-
-            _mapping = new int[world.Capacity];
-            _items = new T[ArrayUtility.NextPow2(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity)];
-            _recycledItems = new int[world.Configs.GetWorldConfigOrDefault().PoolRecycledComponentsCapacity];
-        }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);
         }
-        void IEcsPoolImplementation.OnWorldDestroy() { }
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
         {
             if (_itemsCount <= 0)

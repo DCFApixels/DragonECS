@@ -31,9 +31,13 @@ namespace DCFApixels.DragonECS
         [DataMember] public int PoolsCapacity;
         [DataMember] public int PoolComponentsCapacity;
         [DataMember] public int PoolRecycledComponentsCapacity;
-        public EcsWorldConfig() : this(512) { }
-        public EcsWorldConfig(int entitiesCapacity = 512, int groupCapacity = 512, int poolsCapacity = 512, int poolComponentsCapacity = 512, int poolRecycledComponentsCapacity = 512 / 2)
+        public EcsWorldConfig(int entitiesCapacity = 512, int groupCapacity = 512, int poolsCapacity = 512, int poolComponentsCapacity = 512, int poolRecycledComponentsCapacity = -1)
         {
+            if (poolRecycledComponentsCapacity < 0)
+            {
+                poolComponentsCapacity = poolComponentsCapacity / 4;
+            }
+
             EntitiesCapacity = entitiesCapacity;
             GroupCapacity = groupCapacity;
             PoolsCapacity = poolsCapacity;

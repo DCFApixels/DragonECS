@@ -207,7 +207,7 @@ namespace DCFApixels.DragonECS
                             }
 
 #if DEBUG
-                            AllowedInWorldsAttribute.CheckAllows<T>(_worlds[worldID]);
+                            AllowedInWorldsAttribute.CheckAllows(_worlds[worldID], typeof(T));
 #endif
 
                             _interface.Init(ref _items[itemIndex], _worlds[worldID]);
