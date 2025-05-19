@@ -556,6 +556,24 @@ namespace DCFApixels.DragonECS
                         return false;
                     }
                 }
+
+                //TODO оптимизировать
+                if (mask_._anys.Length != 0)
+                {
+                    int count = 0;
+                    for (int i = 0, iMax = mask_._anys.Length; i < iMax; i++)
+                    {
+                        if (_pools[mask_._anys[i]].Has(entityID_))
+                        {
+                            count++;
+                        }
+                    }
+                    if(count == 0)
+                    {
+                        return false;
+                    }
+                }
+                
                 return true;
             }
             bool deepDebug = IsMatchesMaskDeepDebug(mask, entityID);
@@ -563,6 +581,7 @@ namespace DCFApixels.DragonECS
 
             var incChuncks = mask._incChunckMasks;
             var excChuncks = mask._excChunckMasks;
+            var anyChuncks = mask._anyChunckMasks;
             var componentMaskStartIndex = entityID << _entityComponentMaskLengthBitShift;
 
             for (int i = 0; i < incChuncks.Length; i++)
@@ -587,6 +606,27 @@ namespace DCFApixels.DragonECS
                     return false;
                 }
             }
+            //TODO оптимизировать
+            if (anyChuncks.Length > 0)
+            {
+                int count = 0;
+                for (int i = 0; i < anyChuncks.Length; i++)
+                {
+                    var bit = anyChuncks[i];
+                    if ((_entityComponentMasks[componentMaskStartIndex + bit.chunkIndex] & bit.mask) == bit.mask)
+                    {
+                        count++;
+                    }
+                }
+                if (count == 0)
+                {
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                    if (false != deepDebug) { Throw.DeepDebugException(); }
+#endif
+                    return false;
+                }
+            }
+
 
 #if DEBUG && DRAGONECS_DEEP_DEBUG
             if (true != deepDebug) { Throw.DeepDebugException(); }

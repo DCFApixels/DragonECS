@@ -79,6 +79,10 @@ namespace DCFApixels.DragonECS
         {
             get { return EcsAspect.CurrentBuilder.Exc; }
         }
+        public static AnyMarker Any
+        {
+            get { return EcsAspect.CurrentBuilder.Any; }
+        }
         public static OptionalMarker Opt
         {
             get { return EcsAspect.CurrentBuilder.Opt; }
@@ -113,6 +117,10 @@ namespace DCFApixels.DragonECS
         protected static ExcludeMarker Exc
         {
             get { return B.Exc; }
+        }
+        protected static AnyMarker Any
+        {
+            get { return B.Any; }
         }
         protected static OptionalMarker Opt
         {
@@ -180,6 +188,10 @@ namespace DCFApixels.DragonECS
             public ExcludeMarker Exc
             {
                 get { return new ExcludeMarker(this); }
+            }
+            public AnyMarker Any
+            {
+                get { return new AnyMarker(this); }
             }
             public OptionalMarker Opt
             {
@@ -281,6 +293,12 @@ namespace DCFApixels.DragonECS
                 SetMaskExclude(pool.ComponentType);
                 return pool;
             }
+            public TPool AnyPool<TPool>() where TPool : IEcsPoolImplementation, new()
+            {
+                var pool = CachePool<TPool>();
+                SetMaskAny(pool.ComponentType);
+                return pool;
+            }
             public TPool OptionalPool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 return CachePool<TPool>();
@@ -303,6 +321,13 @@ namespace DCFApixels.DragonECS
                 if (_maskBuilder.IsNull == false)
                 {
                     _maskBuilder.Exc(type);
+                }
+            }
+            public void SetMaskAny(Type type)
+            {
+                if (_maskBuilder.IsNull == false)
+                {
+                    _maskBuilder.Any(type);
                 }
             }
             public TOtherAspect Combine<TOtherAspect>(int order = 0) where TOtherAspect : EcsAspect, new()
@@ -493,6 +518,18 @@ namespace DCFApixels.DragonECS.Core
         public T GetInstance<T>() where T : IEcsPoolImplementation, new()
         {
             return _builder.ExcludePool<T>();
+        }
+    }
+    public readonly ref struct AnyMarker
+    {
+        private readonly EcsAspect.Builder _builder;
+        public AnyMarker(EcsAspect.Builder builder)
+        {
+            _builder = builder;
+        }
+        public T GetInstance<T>() where T : IEcsPoolImplementation, new()
+        {
+            return _builder.AnyPool<T>();
         }
     }
     public readonly ref struct OptionalMarker

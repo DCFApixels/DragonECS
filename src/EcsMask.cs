@@ -38,10 +38,13 @@ namespace DCFApixels.DragonECS
         internal readonly EcsStaticMask _staticMask;
         internal readonly EcsMaskChunck[] _incChunckMasks;
         internal readonly EcsMaskChunck[] _excChunckMasks;
+        internal readonly EcsMaskChunck[] _anyChunckMasks;
         /// <summary> Sorted </summary>
         internal readonly int[] _incs;
         /// <summary> Sorted </summary>
         internal readonly int[] _excs;
+        /// <summary> Sorted </summary>
+        internal readonly int[] _anys;
 
         private EcsMaskIterator _iterator;
 
@@ -78,22 +81,24 @@ namespace DCFApixels.DragonECS
         public static Builder New(EcsWorld world) { return new Builder(world); }
         internal static EcsMask CreateEmpty(int id, short worldID)
         {
-            return new EcsMask(EcsStaticMask.Empty, id, worldID, new int[0], new int[0]);
+            return new EcsMask(EcsStaticMask.Empty, id, worldID, new int[0], new int[0], new int[0]);
         }
         internal static EcsMask CreateBroken(int id, short worldID)
         {
-            return new EcsMask(EcsStaticMask.Broken, id, worldID, new int[1] { 1 }, new int[1] { 1 });
+            return new EcsMask(EcsStaticMask.Broken, id, worldID, new int[1] { 1 }, new int[1] { 1 }, new int[0]);
         }
-        private EcsMask(EcsStaticMask staticMask, int id, short worldID, int[] inc, int[] exc)
+        private EcsMask(EcsStaticMask staticMask, int id, short worldID, int[] incs, int[] excs, int[] anys)
         {
             _staticMask = staticMask;
             ID = id;
-            _incs = inc;
-            _excs = exc;
+            _incs = incs;
+            _excs = excs;
+            _anys = anys;
             WorldID = worldID;
 
-            _incChunckMasks = MakeMaskChuncsArray(inc);
-            _excChunckMasks = MakeMaskChuncsArray(exc);
+            _incChunckMasks = MakeMaskChuncsArray(incs);
+            _excChunckMasks = MakeMaskChuncsArray(excs);
+            _anyChunckMasks = MakeMaskChuncsArray(anys);
         }
 
         private unsafe EcsMaskChunck[] MakeMaskChuncsArray(int[] sortedArray)
@@ -145,7 +150,7 @@ namespace DCFApixels.DragonECS
         #region Object
         public override string ToString()
         {
-            return CreateLogString(WorldID, _incs, _excs);
+            return CreateLogString(WorldID, _incs, _excs, _anys);
         }
         public bool Equals(EcsMask mask)
         {
@@ -324,8 +329,9 @@ namespace DCFApixels.DragonECS
                 {
                     int[] incs = ConvertTypeCodeToComponentTypeID(staticMask.IncTypeCodes, _world);
                     int[] excs = ConvertTypeCodeToComponentTypeID(staticMask.ExcTypeCodes, _world);
+                    int[] anys = ConvertTypeCodeToComponentTypeID(staticMask.AnyTypeCodes, _world);
 
-                    result = new EcsMask(staticMask, _staticMasks.Count, _world.ID, incs, excs);
+                    result = new EcsMask(staticMask, _staticMasks.Count, _world.ID, incs, excs, anys);
 
                     _staticMasks.Add(staticMask.ID, result);
                 }
@@ -347,10 +353,13 @@ namespace DCFApixels.DragonECS
 
             public Builder Inc<T>() { _builder.Inc<T>(); return this; }
             public Builder Exc<T>() { _builder.Exc<T>(); return this; }
+            public Builder Any<T>() { _builder.Any<T>(); return this; }
             public Builder Inc(Type type) { _builder.Inc(type); return this; }
             public Builder Exc(Type type) { _builder.Exc(type); return this; }
+            public Builder Any(Type type) { _builder.Any(type); return this; }
             public Builder Inc(EcsTypeCode typeCode) { _builder.Inc(typeCode); return this; }
             public Builder Exc(EcsTypeCode typeCode) { _builder.Exc(typeCode); return this; }
+            public Builder Any(EcsTypeCode typeCode) { _builder.Any(typeCode); return this; }
             public Builder Combine(EcsMask mask) { _builder.Combine(mask._staticMask); return this; }
             public Builder Except(EcsMask mask) { _builder.Except(mask._staticMask); return this; }
 
@@ -359,11 +368,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Debug utils
-        private static string CreateLogString(short worldID, int[] inc, int[] exc)
+        //TODO доработать дебаг с учетом Any
+        private static string CreateLogString(short worldID, int[] incs, int[] excs, int[] anys)
         {
 #if DEBUG
             string converter(int o) { return EcsDebugUtility.GetGenericTypeName(EcsWorld.GetWorld(worldID).AllPools[o].ComponentType, 1); }
-            return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
+            return $"Inc({string.Join(", ", incs.Select(converter))}) Exc({string.Join(", ", excs.Select(converter))}) Any({string.Join(", ", anys.Select(converter))})";
 #else
             return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
 #endif
@@ -378,10 +388,13 @@ namespace DCFApixels.DragonECS
             private readonly short _worldID;
             public readonly EcsMaskChunck[] includedChunkMasks;
             public readonly EcsMaskChunck[] excludedChunkMasks;
+            public readonly EcsMaskChunck[] anyChunkMasks;
             public readonly int[] included;
             public readonly int[] excluded;
+            public readonly int[] any;
             public readonly Type[] includedTypes;
             public readonly Type[] excludedTypes;
+            public readonly Type[] anyTypes;
 
             public bool IsEmpty { get { return _source.IsEmpty; } }
             public bool IsBroken { get { return _source.IsBroken; } }
@@ -395,15 +408,18 @@ namespace DCFApixels.DragonECS
                 _worldID = mask.WorldID;
                 includedChunkMasks = mask._incChunckMasks;
                 excludedChunkMasks = mask._excChunckMasks;
+                anyChunkMasks = mask._anyChunckMasks;
                 included = mask._incs;
                 excluded = mask._excs;
+                any = mask._anys;
                 Type converter(int o) { return world.GetComponentType(o); }
                 includedTypes = included.Select(converter).ToArray();
                 excludedTypes = excluded.Select(converter).ToArray();
+                anyTypes = any.Select(converter).ToArray();
             }
             public override string ToString()
             {
-                return CreateLogString(_worldID, included, excluded);
+                return CreateLogString(_worldID, included, excluded, any);
             }
         }
         #endregion
@@ -498,12 +514,12 @@ namespace DCFApixels.DragonECS
         public readonly EcsMask Mask;
 
         private readonly UnsafeArray<int> _sortIncBuffer;
-        /// <summary> slised _sortIncBuffer </summary>
         private readonly UnsafeArray<int> _sortExcBuffer;
+        private readonly UnsafeArray<int> _sortAnyBuffer;
 
         private readonly UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
-        /// <summary> slised _sortIncChunckBuffer </summary>
         private readonly UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
+        private readonly UnsafeArray<EcsMaskChunck> _sortAnyChunckBuffer;
 
         private MemoryAllocator.Handler _bufferHandler;
         private MemoryAllocator.Handler _chunckBufferHandler;
@@ -525,8 +541,8 @@ namespace DCFApixels.DragonECS
             World = source;
             Mask = mask;
 
-            int bufferLength = mask._incs.Length + mask._excs.Length;
-            int chunckBufferLength = mask._incChunckMasks.Length + mask._excChunckMasks.Length;
+            int bufferLength = mask._incs.Length + mask._excs.Length + mask._anys.Length;
+            int chunckBufferLength = mask._incChunckMasks.Length + mask._excChunckMasks.Length + mask._anyChunckMasks.Length;
             _bufferHandler = MemoryAllocator.AllocAndInit<int>(bufferLength);
             _chunckBufferHandler = MemoryAllocator.AllocAndInit<EcsMaskChunck>(chunckBufferLength);
             var sortBuffer = UnsafeArray<int>.Manual(_bufferHandler.As<int>(), bufferLength);
@@ -536,6 +552,8 @@ namespace DCFApixels.DragonECS
             _sortIncBuffer.CopyFromArray_Unchecked(mask._incs);
             _sortExcBuffer = sortBuffer.Slice(mask._incs.Length, mask._excs.Length);
             _sortExcBuffer.CopyFromArray_Unchecked(mask._excs);
+            _sortAnyBuffer = sortBuffer.Slice(mask._incs.Length + mask._excs.Length, mask._anys.Length);
+            _sortAnyBuffer.CopyFromArray_Unchecked(mask._anys);
 
             //EcsDebug.PrintError(_sortIncBuffer.ToArray());
             //EcsDebug.PrintError(new Span<int>(_bufferHandler.GetPtrAs<int>(), _sortIncBuffer.Length).ToArray());
@@ -544,6 +562,8 @@ namespace DCFApixels.DragonECS
             _sortIncChunckBuffer.CopyFromArray_Unchecked(mask._incChunckMasks);
             _sortExcChunckBuffer = sortChunckBuffer.Slice(mask._incChunckMasks.Length, mask._excChunckMasks.Length);
             _sortExcChunckBuffer.CopyFromArray_Unchecked(mask._excChunckMasks);
+            _sortAnyChunckBuffer = sortChunckBuffer.Slice(mask._incChunckMasks.Length + mask._excChunckMasks.Length, mask._anyChunckMasks.Length);
+            _sortAnyChunckBuffer.CopyFromArray_Unchecked(mask._anyChunckMasks);
 
             _isHasAnyEntityStorage = false;
             var pools = source.AllPools;
@@ -555,13 +575,13 @@ namespace DCFApixels.DragonECS
             }
 
             _isSingleIncPoolWithEntityStorage = Mask.Excs.Length <= 0 && Mask.Incs.Length == 1;
-            if (_sortExcBuffer.Length <= 0)
+            if (_sortIncBuffer.Length > 0 && _sortExcBuffer.Length == 0 && _sortAnyBuffer.Length == 0)
             {
-                _maskType = mask.IsEmpty ? MaskType.Empty : MaskType.OnlyInc;
+                _maskType = MaskType.OnlyInc;
             }
             else
             {
-                _maskType = MaskType.IncExc;
+                _maskType = mask.IsEmpty ? MaskType.Empty : MaskType.IncExc;
             }
         }
         unsafe ~EcsMaskIterator()
@@ -577,8 +597,6 @@ namespace DCFApixels.DragonECS
         {
             _bufferHandler.Dispose();
             _chunckBufferHandler.Dispose();
-            //_sortIncBuffer.ReadonlyDispose(); // использует общую памяять с _sortExcBuffer;
-            //_sortIncChunckBuffer.ReadonlyDispose(); // использует общую памяять с _sortExcChunckBuffer;
         }
         #endregion
 
@@ -587,9 +605,10 @@ namespace DCFApixels.DragonECS
         {
             UnsafeArray<int> sortIncBuffer = _sortIncBuffer;
             UnsafeArray<int> sortExcBuffer = _sortExcBuffer;
+            UnsafeArray<int> sortAnyBuffer = _sortAnyBuffer;
 
             EcsWorld.PoolSlot[] counts = World._poolSlots;
-            int maxBufferSize = sortIncBuffer.Length > sortExcBuffer.Length ? sortIncBuffer.Length : sortExcBuffer.Length;
+            int maxBufferSize = Math.Max(Math.Max(sortIncBuffer.Length, sortExcBuffer.Length), sortAnyBuffer.Length);
             int maxEntites = int.MaxValue;
 
             EcsMaskChunck* preSortingBuffer;
@@ -625,9 +644,18 @@ namespace DCFApixels.DragonECS
                 UnsafeArraySortHalperX<int>.InsertionSort(sortExcBuffer.ptr, sortExcBuffer.Length, ref comparer);
                 ConvertToChuncks(preSortingBuffer, sortExcBuffer, _sortExcChunckBuffer);
             }
-            // Выражение мало IncCount < (AllEntitesCount - ExcCount) вероятно будет истинным.
+            // Выражение IncCount < (AllEntitesCount - ExcCount) мало вероятно будет истинным.
             // ExcCount = максимальное количество ентитей с исключеющим ограничением и IncCount = минимальоне количество ентитей с включающим ограничением
             // Поэтому исключающее ограничение игнорируется для maxEntites.
+
+
+            if (_sortAnyChunckBuffer.Length > 1)
+            {
+                //TODO проверить для Any
+                ExcCountComparer comparer = new ExcCountComparer(counts);
+                UnsafeArraySortHalperX<int>.InsertionSort(sortAnyBuffer.ptr, sortAnyBuffer.Length, ref comparer);
+                ConvertToChuncks(preSortingBuffer, sortAnyBuffer, _sortAnyChunckBuffer);
+            }
             return maxEntites;
         }
         private unsafe bool TryGetEntityStorage(out IEntityStorage storage)
@@ -776,6 +804,7 @@ namespace DCFApixels.DragonECS
 
                 private readonly UnsafeArray<EcsMaskChunck> _sortIncChunckBuffer;
                 private readonly UnsafeArray<EcsMaskChunck> _sortExcChunckBuffer;
+                private readonly UnsafeArray<EcsMaskChunck> _sortAnyChunckBuffer;
 
                 private readonly int[] _entityComponentMasks;
                 private readonly int _entityComponentMaskLengthBitShift;
@@ -784,6 +813,7 @@ namespace DCFApixels.DragonECS
                 {
                     _sortIncChunckBuffer = iterator._sortIncChunckBuffer;
                     _sortExcChunckBuffer = iterator._sortExcChunckBuffer;
+                    _sortAnyChunckBuffer = iterator._sortAnyChunckBuffer;
 
                     _entityComponentMasks = iterator.World._entityComponentMasks;
                     _entityComponentMaskLengthBitShift = iterator.World._entityComponentMaskLengthBitShift;
@@ -817,6 +847,25 @@ namespace DCFApixels.DragonECS
                                 goto skip;
                             }
                         }
+
+                        //можно подумать над оптимизацией через кеширование bool значения, if с bool работает быстрее прочего
+                        if(_sortAnyChunckBuffer.Length > 0)
+                        {
+                            int anyCount = 0;
+                            for (int i = 0; i < _sortAnyChunckBuffer.Length; i++)
+                            {
+                                var bit = _sortAnyChunckBuffer.ptr[i];
+                                if ((_entityComponentMasks[entityLineStartIndex + bit.chunkIndex] & bit.mask) == bit.mask)
+                                {
+                                    anyCount++;
+                                }
+                            }
+                            if (anyCount == 0)
+                            {
+                                goto skip;
+                            }
+                        }
+
                         return true;
                         skip: continue;
                     }
