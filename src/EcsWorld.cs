@@ -35,7 +35,7 @@ namespace DCFApixels.DragonECS
         {
             if (poolRecycledComponentsCapacity < 0)
             {
-                poolComponentsCapacity = poolComponentsCapacity / 4;
+                poolRecycledComponentsCapacity = poolComponentsCapacity / 4;
             }
 
             EntitiesCapacity = entitiesCapacity;
