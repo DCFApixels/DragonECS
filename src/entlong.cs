@@ -47,7 +47,10 @@ namespace DCFApixels.DragonECS
         public bool IsAlive
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return EcsWorld.GetWorld(_world).IsAlive(_id, _gen); }
+            get 
+            {
+                return EcsWorld.TryGetWorld(_world, out EcsWorld world) && world.IsAlive(_id, _gen);
+            }
         }
         public bool IsNull
         {
