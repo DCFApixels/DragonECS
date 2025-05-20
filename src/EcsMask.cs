@@ -550,20 +550,14 @@ namespace DCFApixels.DragonECS
 
         private readonly bool _isSingleIncPoolWithEntityStorage;
         private readonly bool _isHasAnyEntityStorage;
-        private readonly MaskType _maskType;
-
-        private enum MaskType : byte
-        {
-            Empty,
-            OnlyInc,
-            IncExc,
-        }
+        private readonly EcsMaskFlags _maskFlags;
 
         #region Constructors/Finalizator
         public unsafe EcsMaskIterator(EcsWorld source, EcsMask mask)
         {
             World = source;
             Mask = mask;
+            _maskFlags = mask.Flags;
 
             int bufferLength = mask._incs.Length + mask._excs.Length + mask._anys.Length;
             int chunckBufferLength = mask._incChunckMasks.Length + mask._excChunckMasks.Length + mask._anyChunckMasks.Length;
@@ -599,14 +593,6 @@ namespace DCFApixels.DragonECS
             }
 
             _isSingleIncPoolWithEntityStorage = Mask.Excs.Length <= 0 && Mask.Incs.Length == 1;
-            if (_sortIncBuffer.Length > 0 && _sortExcBuffer.Length == 0 && _sortAnyBuffer.Length == 0)
-            {
-                _maskType = MaskType.OnlyInc;
-            }
-            else
-            {
-                _maskType = mask.IsEmpty ? MaskType.Empty : MaskType.IncExc;
-            }
         }
         unsafe ~EcsMaskIterator()
         {
@@ -707,33 +693,48 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void IterateTo(EcsSpan source, EcsGroup group)
         {
-            switch (_maskType)
+            switch (_maskFlags)
             {
-                case MaskType.Empty:
+                case EcsMaskFlags.Empty:
                     group.CopyFrom(source);
                     break;
-                case MaskType.OnlyInc:
+                case EcsMaskFlags.Inc:
                     IterateOnlyInc(source).CopyTo(group);
                     break;
-                case MaskType.IncExc:
+                case EcsMaskFlags.Exc:
+                case EcsMaskFlags.Any:
+                case EcsMaskFlags.IncExc:
+                case EcsMaskFlags.IncAny:
+                case EcsMaskFlags.ExcAny:
+                case EcsMaskFlags.IncExcAny:
                     Iterate(source).CopyTo(group);
+                    break;
+                case EcsMaskFlags.Broken:
+                    group.Clear();
                     break;
                 default:
                     Throw.UndefinedException();
-                    break;
+                    return;
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IterateTo(EcsSpan source, ref int[] array)
         {
-            switch (_maskType)
+            switch (_maskFlags)
             {
-                case MaskType.Empty:
+                case EcsMaskFlags.Empty:
                     return source.ToArray(ref array);
-                case MaskType.OnlyInc:
+                case EcsMaskFlags.Inc:
                     return IterateOnlyInc(source).CopyTo(ref array);
-                case MaskType.IncExc:
+                case EcsMaskFlags.Exc:
+                case EcsMaskFlags.Any:
+                case EcsMaskFlags.IncExc:
+                case EcsMaskFlags.IncAny:
+                case EcsMaskFlags.ExcAny:
+                case EcsMaskFlags.IncExcAny:
                     return Iterate(source).CopyTo(ref array);
+                case EcsMaskFlags.Broken:
+                    return new EcsSpan(World.ID, Array.Empty<int>()).ToArray(ref array);
                 default:
                     Throw.UndefinedException();
                     return 0;
@@ -1033,6 +1034,7 @@ namespace DCFApixels.DragonECS
     #endregion
 }
 
+#region Utils
 namespace DCFApixels.DragonECS.Core.Internal
 {
     #region EcsMaskIteratorUtility
@@ -1113,3 +1115,4 @@ namespace DCFApixels.DragonECS.Core.Internal
     }
     #endregion
 }
+#endregion
