@@ -50,6 +50,8 @@ namespace DCFApixels.DragonECS
         /// <summary> Sorted </summary>
         private readonly EcsTypeCode[] _anys;
 
+        private readonly EcsMaskFlags _flags;
+
         #region Properties
         /// <summary> Sorted set including constraints presented as global type codes. </summary>
         public ReadOnlySpan<EcsTypeCode> IncTypeCodes
@@ -69,14 +71,19 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _anys; }
         }
+        public EcsMaskFlags Flags
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _flags; }
+        }
         public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _incs.Length == 0 && _excs.Length == 0; }
+            get { return _flags == EcsMaskFlags.Empty; }
         }
         public bool IsBroken
         {
-            get { return (_incs.Length & _excs.Length) == 1 && _incs[0] == _excs[0]; }
+            get { return (_flags & EcsMaskFlags.Broken) != 0; }
         }
         #endregion
 
@@ -87,6 +94,13 @@ namespace DCFApixels.DragonECS
             _incs = key.Incs;
             _excs = key.Excs;
             _anys = key.Anys;
+            if (_incs.Length > 0) { _flags |= EcsMaskFlags.Inc; }
+            if (_excs.Length > 0) { _flags |= EcsMaskFlags.Exc; }
+            if (_anys.Length > 0) { _flags |= EcsMaskFlags.Any; }
+            if ((_incs.Length & _excs.Length) == 1 && _incs[0] == _excs[0])
+            {
+                _flags = EcsMaskFlags.Broken;
+            }
         }
         public static Builder New() { return Builder.New(); }
         public static Builder Inc<T>() { return Builder.New().Inc<T>(); }
@@ -107,7 +121,7 @@ namespace DCFApixels.DragonECS
                     if (_ids.TryGetValue(key, out result) == false)
                     {
 #if DEBUG
-                        CheckConstraints(key.Incs, key.Excs); //TODO сделать прроверку для key.Anys
+                        CheckConstraints(key.Incs, key.Excs, key.Anys);
 #endif
                         result = new EcsStaticMask(_idDIspenser.UseFree(), key);
                         _ids[key] = result;
@@ -119,6 +133,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Checks
+        //TODO доработать проверки с учетом Any
         public bool IsSubmaskOf(EcsStaticMask otherMask)
         {
             return IsSubmask(otherMask, this);
@@ -129,11 +144,11 @@ namespace DCFApixels.DragonECS
         }
         public bool IsConflictWith(EcsStaticMask otherMask)
         {
-            return OverlapsArray(_incs, otherMask._excs) || OverlapsArray(_excs, otherMask._incs);
+            return OverlapsArray(_incs, otherMask._excs) || OverlapsArray(_excs, otherMask._incs) || OverlapsArray(_anys, otherMask._excs) || OverlapsArray(_anys, otherMask._incs);
         }
         private static bool IsSubmask(EcsStaticMask super, EcsStaticMask sub)
         {
-            return IsSubarray(sub._incs, super._incs) && IsSuperarray(sub._excs, super._excs);
+            return IsSubarray(sub._incs, super._incs) && IsSuperarray(sub._excs, super._excs) && IsSubarray(sub._anys, super._anys);
         }
 
         private static bool OverlapsArray(EcsTypeCode[] l, EcsTypeCode[] r)
@@ -544,11 +559,14 @@ namespace DCFApixels.DragonECS
         }
 
 #if DEBUG
-        private static void CheckConstraints(EcsTypeCode[] incs, EcsTypeCode[] excs)
+        private static void CheckConstraints(EcsTypeCode[] incs, EcsTypeCode[] excs, EcsTypeCode[] anys)
         {
             if (CheckRepeats(incs)) { throw new ArgumentException("The values in the Include constraints are repeated."); }
             if (CheckRepeats(excs)) { throw new ArgumentException("The values in the Exclude constraints are repeated."); }
+            if (CheckRepeats(anys)) { throw new ArgumentException("The values in the Any constraints are repeated."); }
             if (OverlapsArray(incs, excs)) { throw new ArgumentException("Conflicting Include and Exclude constraints."); }
+            if (OverlapsArray(incs, anys)) { throw new ArgumentException("Conflicting Include and Any constraints."); }
+            if (OverlapsArray(anys, excs)) { throw new ArgumentException("Conflicting Any and Exclude constraints."); }
         }
         private static bool CheckRepeats(EcsTypeCode[] array)
         {

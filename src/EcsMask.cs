@@ -46,6 +46,8 @@ namespace DCFApixels.DragonECS
         /// <summary> Sorted </summary>
         internal readonly int[] _anys;
 
+        internal readonly EcsMaskFlags _flags;
+
         private EcsMaskIterator _iterator;
 
         #region Properties
@@ -66,14 +68,19 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _excs; }
         }
+        public EcsMaskFlags Flags
+        { 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _flags; }
+        }
         public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _incs.Length == 0 && _excs.Length == 0; }
+            get { return _flags == EcsMaskFlags.Empty; }
         }
         public bool IsBroken
         {
-            get { return (_incs.Length & _excs.Length) == 1 && _incs[0] == _excs[0]; }
+            get { return (_flags & EcsMaskFlags.Broken) != 0; }
         }
         #endregion
 
@@ -81,20 +88,38 @@ namespace DCFApixels.DragonECS
         public static Builder New(EcsWorld world) { return new Builder(world); }
         internal static EcsMask CreateEmpty(int id, short worldID)
         {
-            return new EcsMask(EcsStaticMask.Empty, id, worldID, new int[0], new int[0], new int[0]);
+            return new EcsMask(EcsStaticMask.Empty, id, worldID);
         }
         internal static EcsMask CreateBroken(int id, short worldID)
         {
-            return new EcsMask(EcsStaticMask.Broken, id, worldID, new int[1] { 1 }, new int[1] { 1 }, new int[0]);
+            return new EcsMask(EcsStaticMask.Broken, id, worldID);
         }
-        private EcsMask(EcsStaticMask staticMask, int id, short worldID, int[] incs, int[] excs, int[] anys)
+        private EcsMask(EcsStaticMask staticMask, int id, short worldID)
         {
+            int[] ConvertTypeCodeToComponentTypeID(ReadOnlySpan<EcsTypeCode> from_, EcsWorld world_)
+            {
+                int[] to = new int[from_.Length];
+                for (int i = 0; i < to.Length; i++)
+                {
+                    to[i] = world_.DeclareOrGetComponentTypeID(from_[i]);
+                }
+                Array.Sort(to);
+                return to;
+            }
+
             _staticMask = staticMask;
             ID = id;
+            WorldID = worldID;
+            _flags = staticMask.Flags;
+
+            EcsWorld world = EcsWorld.GetWorld(worldID);
+            int[] incs = ConvertTypeCodeToComponentTypeID(staticMask.IncTypeCodes, world);
+            int[] excs = ConvertTypeCodeToComponentTypeID(staticMask.ExcTypeCodes, world);
+            int[] anys = ConvertTypeCodeToComponentTypeID(staticMask.AnyTypeCodes, world);
+
             _incs = incs;
             _excs = excs;
             _anys = anys;
-            WorldID = worldID;
 
             _incChunckMasks = MakeMaskChuncsArray(incs);
             _excChunckMasks = MakeMaskChuncsArray(excs);
@@ -314,25 +339,11 @@ namespace DCFApixels.DragonECS
 
             internal EcsMask ConvertFromStatic(EcsStaticMask staticMask)
             {
-                int[] ConvertTypeCodeToComponentTypeID(ReadOnlySpan<EcsTypeCode> from, EcsWorld world)
-                {
-                    int[] to = new int[from.Length];
-                    for (int i = 0; i < to.Length; i++)
-                    {
-                        to[i] = world.DeclareOrGetComponentTypeID(from[i]);
-                    }
-                    Array.Sort(to);
-                    return to;
-                }
+
 
                 if (_staticMasks.TryGetValue(staticMask.ID, out EcsMask result) == false)
                 {
-                    int[] incs = ConvertTypeCodeToComponentTypeID(staticMask.IncTypeCodes, _world);
-                    int[] excs = ConvertTypeCodeToComponentTypeID(staticMask.ExcTypeCodes, _world);
-                    int[] anys = ConvertTypeCodeToComponentTypeID(staticMask.AnyTypeCodes, _world);
-
-                    result = new EcsMask(staticMask, _staticMasks.Count, _world.ID, incs, excs, anys);
-
+                    result = new EcsMask(staticMask, _staticMasks.Count, _world.ID);
                     _staticMasks.Add(staticMask.ID, result);
                 }
                 return result;
@@ -368,14 +379,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Debug utils
-        //TODO доработать дебаг с учетом Any
         private static string CreateLogString(short worldID, int[] incs, int[] excs, int[] anys)
         {
 #if DEBUG
             string converter(int o) { return EcsDebugUtility.GetGenericTypeName(EcsWorld.GetWorld(worldID).AllPools[o].ComponentType, 1); }
-            return $"Inc({string.Join(", ", incs.Select(converter))}) Exc({string.Join(", ", excs.Select(converter))}) Any({string.Join(", ", anys.Select(converter))})";
+            return $"Inc({string.Join(", ", incs.Select(converter))}); Exc({string.Join(", ", excs.Select(converter))}); Any({string.Join(", ", anys.Select(converter))})";
 #else
-            return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
+            return $"Inc({string.Join(", ", incs)}); Exc({string.Join(", ", excs)}; Any({string.Join(", ", anys)})"; // Release optimization
 #endif
         }
 
@@ -451,6 +461,20 @@ namespace DCFApixels.DragonECS
             [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Exc(int componentTypeID) { Exc(_world.GetComponentType(componentTypeID)); return this; }
         }
         #endregion
+    }
+
+    [Flags]
+    public enum EcsMaskFlags : byte
+    {
+        Empty = 0,
+        Inc = 1 << 0,
+        Exc = 1 << 1,
+        Any = 1 << 2,
+        IncExc = Inc | Exc,
+        IncAny = Inc | Any,
+        ExcAny = Exc | Any,
+        IncExcAny = Inc | Exc | Any,
+        Broken = IncExcAny + 1,
     }
 
     #region EcsMaskChunck

@@ -556,8 +556,6 @@ namespace DCFApixels.DragonECS
                         return false;
                     }
                 }
-
-                //TODO оптимизировать
                 if (mask_._anys.Length != 0)
                 {
                     int count = 0;

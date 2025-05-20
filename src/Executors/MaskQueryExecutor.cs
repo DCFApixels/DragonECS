@@ -103,6 +103,8 @@ namespace DCFApixels.DragonECS.Core
         protected abstract void OnDestroy();
     }
 
+
+    //TODO добавить Any
     public readonly unsafe struct WorldStateVersionsChecker : IDisposable
     {
         private readonly EcsWorld _world;
