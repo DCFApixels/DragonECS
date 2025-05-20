@@ -68,6 +68,12 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _excs; }
         }
+        /// <summary> Sorted set any constraints. </summary>
+        public ReadOnlySpan<int> Anys
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _anys; }
+        }
         public EcsMaskFlags Flags
         { 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -592,7 +598,7 @@ namespace DCFApixels.DragonECS
                 if (_isHasAnyEntityStorage) { break; }
             }
 
-            _isSingleIncPoolWithEntityStorage = Mask.Excs.Length <= 0 && Mask.Incs.Length == 1;
+            _isSingleIncPoolWithEntityStorage = Mask.Excs.Length <= 0 && Mask.Anys.Length <= 0 && Mask.Incs.Length == 1;
         }
         unsafe ~EcsMaskIterator()
         {
