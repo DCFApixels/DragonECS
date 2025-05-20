@@ -301,14 +301,7 @@ namespace DCFApixels.DragonECS
             }
             public static Builder New()
             {
-                lock (_lock)
-                {
-                    if (_buildersPool.TryPop(out BuilderInstance builderInstance) == false)
-                    {
-                        builderInstance = new BuilderInstance();
-                    }
-                    return new Builder(builderInstance);
-                }
+                return new Builder(BuilderInstance.TakeFromPool());
             }
             #endregion
 
@@ -357,17 +350,15 @@ namespace DCFApixels.DragonECS
                 if (_version != _builder._version) { Throw.CantReuseBuilder(); }
                 lock (_lock)
                 {
-                    _buildersPool.Push(_builder);
-                    return _builder.Build();
+                    var result = _builder.Build();
+                    BuilderInstance.ReturnToPool(_builder);
+                    return result;
                 }
             }
             public void Cancel()
             {
                 if (_version != _builder._version) { Throw.CantReuseBuilder(); }
-                lock (_lock)
-                {
-                    _buildersPool.Push(_builder);
-                }
+                BuilderInstance.ReturnToPool(_builder);
             }
             #endregion
         }
@@ -382,8 +373,33 @@ namespace DCFApixels.DragonECS
 
             internal int _version;
 
-            #region Constrcutors
+            #region Constrcutors/Take/Return
             internal BuilderInstance() { }
+            internal static BuilderInstance TakeFromPool()
+            {
+                lock (_lock)
+                {
+                    if (_buildersPool.TryPop(out BuilderInstance builderInstance) == false)
+                    {
+                        builderInstance = new BuilderInstance();
+                    }
+                    return builderInstance;
+                }
+            }
+            internal static void ReturnToPool(BuilderInstance instance)
+            {
+                lock (_lock)
+                {
+                    instance.Clear();
+                    _buildersPool.Push(instance);
+                }
+            }
+            private void Clear()
+            {
+                _incsSet.Clear();
+                _excsSet.Clear();
+                _anysSet.Clear();
+            }
             #endregion
 
             #region Inc/Exc/Combine/Except
@@ -432,15 +448,20 @@ namespace DCFApixels.DragonECS
             #region Build
             public EcsStaticMask Build()
             {
-                HashSet<EcsTypeCode> combinedIncs = _incsSet;
-                HashSet<EcsTypeCode> combinedExcs = _excsSet;
-                HashSet<EcsTypeCode> combinedAnys = _anysSet;
+                HashSet<EcsTypeCode> combinedIncs;
+                HashSet<EcsTypeCode> combinedExcs;
+                HashSet<EcsTypeCode> combinedAnys;
 
                 if (_combineds.Count > 0)
                 {
-                    combinedIncs = new HashSet<EcsTypeCode>();
-                    combinedExcs = new HashSet<EcsTypeCode>();
-                    //combinedAnys = new HashSet<EcsTypeCode>(); //TODO разработать комбинацию для any
+                    var combinerBuilder = TakeFromPool();
+                    combinedIncs = combinerBuilder._incsSet;
+                    combinedExcs = combinerBuilder._excsSet;
+                    combinedAnys = combinerBuilder._anysSet;
+                    combinedIncs.Union(_incsSet);
+                    combinedExcs.Union(_excsSet);
+                    combinedAnys.Union(_anysSet);
+
                     if (_sortedCombinedChecker == false)
                     {
                         _combineds.Sort((a, b) => a.order - b.order);
@@ -448,27 +469,31 @@ namespace DCFApixels.DragonECS
                     foreach (var item in _combineds)
                     {
                         EcsStaticMask submask = item.mask;
-                        combinedIncs.ExceptWith(submask._excs);//удаляю конфликтующие ограничения
-                        combinedExcs.ExceptWith(submask._incs);//удаляю конфликтующие ограничения
-                        combinedIncs.UnionWith(submask._incs);
-                        combinedExcs.UnionWith(submask._excs);
+                        _incsSet.ExceptWith(submask._excs);//удаляю конфликтующие ограничения
+                        _excsSet.ExceptWith(submask._incs);//удаляю конфликтующие ограничения
+                        _anysSet.ExceptWith(submask._excs);//удаляю конфликтующие ограничения
+                        _anysSet.ExceptWith(submask._incs);//удаляю конфликтующие ограничения
+                        _incsSet.UnionWith(submask._incs);
+                        _excsSet.UnionWith(submask._excs);
+                        _anysSet.UnionWith(submask._anys);
                     }
-                    combinedIncs.ExceptWith(_excsSet);//удаляю конфликтующие ограничения
-                    combinedExcs.ExceptWith(_incsSet);//удаляю конфликтующие ограничения
-                    combinedIncs.UnionWith(_incsSet);
-                    combinedExcs.UnionWith(_excsSet);
+                    _incsSet.ExceptWith(combinedExcs);//удаляю конфликтующие ограничения
+                    _excsSet.ExceptWith(combinedIncs);//удаляю конфликтующие ограничения
+                    _anysSet.ExceptWith(combinedExcs);//удаляю конфликтующие ограничения
+                    _anysSet.ExceptWith(combinedIncs);//удаляю конфликтующие ограничения
+                    _incsSet.UnionWith(combinedIncs);
+                    _excsSet.UnionWith(combinedExcs);
+                    _anysSet.UnionWith(combinedAnys);
                     _combineds.Clear();
+                    ReturnToPool(combinerBuilder);
                 }
-                else
-                {
-                    combinedIncs = _incsSet;
-                    combinedExcs = _excsSet;
-                    combinedAnys = _anysSet;
-                }
+
+                combinedIncs = _incsSet;
+                combinedExcs = _excsSet;
+                combinedAnys = _anysSet;
 
                 if (_excepteds.Count > 0)
                 {
-                    //TODO разработать вычитание для any
                     foreach (var item in _excepteds)
                     {
                         //if (combinedIncs.Overlaps(item.mask._exc) || combinedExcs.Overlaps(item.mask._inc))
@@ -477,6 +502,7 @@ namespace DCFApixels.DragonECS
                         //}
                         combinedIncs.ExceptWith(item.mask._incs);
                         combinedExcs.ExceptWith(item.mask._excs);
+                        combinedAnys.ExceptWith(item.mask._anys);
                     }
                     _excepteds.Clear();
                 }
@@ -491,10 +517,6 @@ namespace DCFApixels.DragonECS
 
                 var key = new Key(inc, exc, any);
                 EcsStaticMask result = CreateMask(key);
-
-                _incsSet.Clear();
-                _excsSet.Clear();
-                _anysSet.Clear();
 
                 _version++;
                 return result;
