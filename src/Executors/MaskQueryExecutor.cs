@@ -6,6 +6,10 @@ using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+#if ENABLE_IL2CPP
+using Unity.IL2CPP.CompilerServices;
+#endif
 
 namespace DCFApixels.DragonECS
 {
@@ -105,16 +109,22 @@ namespace DCFApixels.DragonECS.Core
 
 
     //TODO добавить Any
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     public readonly unsafe struct WorldStateVersionsChecker : IDisposable
     {
         private readonly EcsWorld _world;
-        private readonly int[] _maskInc;
-        private readonly int[] _maskExc;
-        // [0]                      world version
-        // [-> _maskInc.Length]     inc versions
-        // [-> _maskExc.Length]     exc versions
+        private readonly MemoryAllocator.Handler _handler;
+        private readonly int* _componentIDs;
+        // _versions[0]                          world version
+        // _versions[-> EcsMask.Inc.Length]      inc versions
+        // _versions[-> EcsMask.Exc.Length]      exc versions
+        // _versions[-> EcsMask.Any.Length]      any versions
         private readonly long* _versions;
         private readonly int _count;
+        private readonly bool _isNotOnlyExc;
         public long Version
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -124,11 +134,20 @@ namespace DCFApixels.DragonECS.Core
         public WorldStateVersionsChecker(EcsMask mask)
         {
             _world = mask.World;
-            _maskInc = mask._incs;
-            _maskExc = mask._excs;
-            _count = 1 + mask._incs.Length + mask._excs.Length;
+            _count = 1 + mask._incs.Length + mask._excs.Length + mask._anys.Length;
 
-            _versions = UnmanagedArrayUtility.NewAndInit<long>(_count);
+            _handler = MemoryAllocator.AllocAndInit<int>(_count * 2 + _count);
+            _versions = _handler.As<long>();
+            _componentIDs = (int*)(_handler.As<long>() + _count);
+
+            var ptr = _componentIDs + 1;
+            Marshal.Copy(mask._incs, 0, (IntPtr)ptr, mask._incs.Length);
+            ptr += mask._incs.Length;
+            Marshal.Copy(mask._excs, 0, (IntPtr)ptr, mask._excs.Length);
+            ptr += mask._excs.Length;
+            Marshal.Copy(mask._anys, 0, (IntPtr)ptr, mask._anys.Length);
+
+            _isNotOnlyExc = mask._incs.Length > 0 || mask._anys.Length > 0;
         }
         public bool Check()
         {
@@ -137,20 +156,10 @@ namespace DCFApixels.DragonECS.Core
                 return true;
             }
 
-            long* versionsPtr = _versions;
             var slots = _world._poolSlots;
-            foreach (var slotIndex in _maskInc)
+            for (int i = 1; i < _count; i++)
             {
-                versionsPtr++;
-                if (*versionsPtr != slots[slotIndex].version)
-                {
-                    return false;
-                }
-            }
-            foreach (var slotIndex in _maskExc)
-            {
-                versionsPtr++;
-                if (*versionsPtr != slots[slotIndex].version)
+                if(_versions[i] == slots[_componentIDs[i]].version)
                 {
                     return false;
                 }
@@ -161,17 +170,10 @@ namespace DCFApixels.DragonECS.Core
         {
             *_versions = _world.Version;
 
-            long* versionsPtr = _versions;
             var slots = _world._poolSlots;
-            foreach (var slotIndex in _maskInc)
+            for (int i = 1; i < _count; i++)
             {
-                versionsPtr++;
-                *versionsPtr = slots[slotIndex].version;
-            }
-            foreach (var slotIndex in _maskExc)
-            {
-                versionsPtr++;
-                *versionsPtr = slots[slotIndex].version;
+                _versions[i] = slots[_componentIDs[i]].version;
             }
         }
         public bool CheckAndNext()
@@ -182,27 +184,14 @@ namespace DCFApixels.DragonECS.Core
             }
             *_versions = _world.Version;
 
-            long* versionsPtr = _versions;
             var slots = _world._poolSlots;
-            // Так как проверки EXC работают не правильно при отсутсвии INC,
-            // то проверки без INC должны всегда возвращать false.
-            bool result = _maskInc.Length > 0;
-            foreach (var slotIndex in _maskInc)
+            bool result = _isNotOnlyExc;
+            for (int i = 1; i < _count; i++)
             {
-                versionsPtr++;
-                if (*versionsPtr != slots[slotIndex].version)
+                if (_versions[i] != slots[_componentIDs[i]].version)
                 {
                     result = false;
-                    *versionsPtr = slots[slotIndex].version;
-                }
-            }
-            foreach (var slotIndex in _maskExc)
-            {
-                versionsPtr++;
-                if (*versionsPtr != slots[slotIndex].version)
-                {
-                    result = false;
-                    *versionsPtr = slots[slotIndex].version;
+                    _versions[i] = slots[_componentIDs[i]].version;
                 }
             }
             return result;
@@ -210,7 +199,7 @@ namespace DCFApixels.DragonECS.Core
 
         public void Dispose()
         {
-            UnmanagedArrayUtility.Free(_versions);
+            MemoryAllocator.Free(_handler);
         }
     }
 }

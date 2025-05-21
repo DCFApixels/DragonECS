@@ -230,7 +230,7 @@ namespace DCFApixels.DragonECS
                 ref var page = ref _groupSparsePagePool[i];
                 if (page.IsEmpty == false)
                 {
-                    MemoryAllocator.Free(ref page);
+                    MemoryAllocator.FreeAndClear(ref page);
                 }
             }
             _groupSparsePagePoolCount = 0;

@@ -143,7 +143,11 @@ namespace DCFApixels.DragonECS.Core.Internal
         #endregion
 
         #region Free
-        public static void Free(ref Handler target)
+        public static void Free(Handler target)
+        {
+            Free_Internal(target.GetHandledPtr());
+        }
+        public static void FreeAndClear(ref Handler target)
         {
             Free_Internal(target.GetHandledPtr());
             target = default;
@@ -335,7 +339,7 @@ namespace DCFApixels.DragonECS.Core.Internal
     {
         public static void Dispose(this ref MemoryAllocator.Handler self)
         {
-            MemoryAllocator.Free(ref self);
+            MemoryAllocator.FreeAndClear(ref self);
         }
     }
 }
