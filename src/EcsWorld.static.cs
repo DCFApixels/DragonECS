@@ -182,7 +182,6 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 short itemIndex = _mapping[worldID];
-
                 if (itemIndex == 0)
                 {
                     lock (_worldLock)

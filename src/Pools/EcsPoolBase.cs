@@ -81,7 +81,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         public static readonly EcsNullPool instance = new EcsNullPool();
 
         #region Properties
-        int IEcsReadonlyPool.ComponentTypeID { get { return 0; } }//TODO Првоерить что NullComponent всегда имеет id 0 
+        int IEcsReadonlyPool.ComponentTypeID { get { return 0; } }
         Type IEcsReadonlyPool.ComponentType { get { return typeof(NullComponent); } }
         EcsWorld IEcsReadonlyPool.World
         {

@@ -536,10 +536,6 @@ namespace DCFApixels.DragonECS
 #endif
     public class EcsMaskIterator : IDisposable
     {
-        // TODO есть идея перенести эти ChunckBuffer-ы в стек,
-        // для этого нужно проработать дизайн так чтобы память в стеке выделялась за пределами итератора и GetEnumerator,
-        // а далее передавались поинтеры, в противном случае использовался бы стандартный подход
-
         public readonly EcsWorld World;
         public readonly EcsMask Mask;
 
@@ -644,7 +640,6 @@ namespace DCFApixels.DragonECS
                 UnsafeArraySortHalperX<int>.InsertionSort(sortIncBuffer.ptr, sortIncBuffer.Length, ref comparer);
                 ConvertToChuncks(preSortingBuffer, sortIncBuffer, _sortIncChunckBuffer);
             }
-
             if (_sortIncChunckBuffer.Length > 0)
             {
                 maxEntites = counts[_sortIncBuffer.ptr[0]].count;
@@ -667,11 +662,12 @@ namespace DCFApixels.DragonECS
 
             if (_sortAnyChunckBuffer.Length > 1)
             {
-                //TODO проверить для Any
                 ExcCountComparer comparer = new ExcCountComparer(counts);
                 UnsafeArraySortHalperX<int>.InsertionSort(sortAnyBuffer.ptr, sortAnyBuffer.Length, ref comparer);
                 ConvertToChuncks(preSortingBuffer, sortAnyBuffer, _sortAnyChunckBuffer);
             }
+            // Any не влияет на maxEntites если есть Inc и сложно высчитывается если нет Inc
+
             return maxEntites;
         }
         private unsafe bool TryGetEntityStorage(out IEntityStorage storage)
@@ -759,6 +755,7 @@ namespace DCFApixels.DragonECS
         {
             private readonly EcsMaskIterator _iterator;
             private readonly EcsSpan _span;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerable(EcsMaskIterator iterator, EcsSpan span)
             {
                 _iterator = iterator;
@@ -879,28 +876,23 @@ namespace DCFApixels.DragonECS
                             }
                         }
 
-                        //можно подумать над оптимизацией через кеширование bool значения, if с bool работает быстрее прочего
-                        if(_sortAnyChunckBuffer.Length > 0)
+                        if(_sortAnyChunckBuffer.Length != 0)
                         {
-                            int anyCount = 0;
                             for (int i = 0; i < _sortAnyChunckBuffer.Length; i++)
                             {
                                 var bit = _sortAnyChunckBuffer.ptr[i];
                                 if ((_entityComponentMasks[entityLineStartIndex + bit.chunkIndex] & bit.mask) == bit.mask)
                                 {
-                                    anyCount++;
+                                    return true;
                                 }
                             }
-                            if (anyCount == 0)
-                            {
-                                goto skip;
-                            }
+                            goto skip;
                         }
 
                         return true;
                         skip: continue;
                     }
-                    return false;
+                    return false; //exit
                 }
             }
             #endregion

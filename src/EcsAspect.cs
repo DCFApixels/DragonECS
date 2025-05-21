@@ -431,12 +431,10 @@ namespace DCFApixels.DragonECS
         {
             public readonly short worldID;
             public readonly EcsMaskIterator.Enumerable iterator;
-            private EcsSpan _span;
 
             public Iterator(EcsMaskIterator iterator, EcsSpan span)
             {
                 worldID = iterator.World.ID;
-                _span = span;
                 this.iterator = iterator.Iterate(span);
             }
 

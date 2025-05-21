@@ -410,7 +410,6 @@ namespace DCFApixels.DragonECS.Core
         {
             self.Print("");
         }
-        //TODO PrintJson возможно будет добавлено когда-то
     }
     #endregion
 

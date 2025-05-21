@@ -279,7 +279,6 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    //TODO переработать EcsGroup в структуру-обертку, чтобы когда вызывается Release то можно было занулить эту структуру, а может не перерабатывать, есть проблема с боксингом
     public unsafe class EcsGroup : IDisposable, IEnumerable<int>, ISet<int>, IEntityStorage
     {
         internal const int PAGE_SIZE = PageSlot.SIZE;

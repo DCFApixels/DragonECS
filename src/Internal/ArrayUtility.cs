@@ -121,7 +121,6 @@ namespace DCFApixels.DragonECS.Core.Internal
 
     internal static class ArrayUtility
     {
-        //TODO потестить
         public static void ResizeOrCreate<T>(ref T[] array, int newSize)
         {
             if (array == null)

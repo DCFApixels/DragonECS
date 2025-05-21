@@ -604,25 +604,24 @@ namespace DCFApixels.DragonECS
                     return false;
                 }
             }
-            //TODO оптимизировать
+
             if (anyChuncks.Length > 0)
             {
-                int count = 0;
                 for (int i = 0; i < anyChuncks.Length; i++)
                 {
                     var bit = anyChuncks[i];
                     if ((_entityComponentMasks[componentMaskStartIndex + bit.chunkIndex] & bit.mask) == bit.mask)
                     {
-                        count++;
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                        if (true != deepDebug) { Throw.DeepDebugException(); }
+#endif
+                        return true;
                     }
                 }
-                if (count == 0)
-                {
 #if DEBUG && DRAGONECS_DEEP_DEBUG
-                    if (false != deepDebug) { Throw.DeepDebugException(); }
+                if (false != deepDebug) { Throw.DeepDebugException(); }
 #endif
-                    return false;
-                }
+                return false;
             }
 
 

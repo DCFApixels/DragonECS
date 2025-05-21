@@ -107,8 +107,6 @@ namespace DCFApixels.DragonECS.Core
         protected abstract void OnDestroy();
     }
 
-
-    //TODO добавить Any
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]

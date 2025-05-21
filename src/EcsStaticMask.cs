@@ -133,7 +133,6 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Checks
-        //TODO доработать проверки с учетом Any
         public bool IsSubmaskOf(EcsStaticMask otherMask)
         {
             return IsSubmask(otherMask, this);
