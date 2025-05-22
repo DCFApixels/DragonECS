@@ -1,8 +1,8 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.Core.Unchecked;
-using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -188,7 +188,7 @@ namespace DCFApixels.DragonECS
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
 
-        private int*[] _groupSparsePagePool = new int*[64];
+        private MemoryAllocator.Handler[] _groupSparsePagePool = new MemoryAllocator.Handler[64];
         private int _groupSparsePagePoolCount = 0;
 
         #region Pages
@@ -196,23 +196,44 @@ namespace DCFApixels.DragonECS
         {
             if (_groupSparsePagePoolCount <= 0)
             {
-                var x = UnmanagedArrayUtility.NewAndInit<int>(EcsGroup.PAGE_SIZE);
-                return x;
+                return MemoryAllocator.AllocAndInit<int>(EcsGroup.PAGE_SIZE).As<int>();
             }
-            return _groupSparsePagePool[--_groupSparsePagePoolCount];
+            var takedPage = _groupSparsePagePool[--_groupSparsePagePoolCount];
+            _groupSparsePagePool[_groupSparsePagePoolCount] = MemoryAllocator.Handler.Empty;
+            return takedPage.As<int>();
         }
         internal void ReturnPage(int* page)
         {
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+            var h = MemoryAllocator.Handler.FromDataPtr(page);
+            if (h.GetID_Debug() == 0 || page == null)
+            {
+                Throw.DeepDebugException();
+            }
+#endif
+
             if (_groupSparsePagePoolCount >= _groupSparsePagePool.Length)
             {
                 var old = _groupSparsePagePool;
-                _groupSparsePagePool = new int*[_groupSparsePagePoolCount << 1];
+                _groupSparsePagePool = new MemoryAllocator.Handler[_groupSparsePagePoolCount << 1];
                 for (int j = 0; j < old.Length; j++)
                 {
                     _groupSparsePagePool[j] = old[j];
                 }
             }
-            _groupSparsePagePool[_groupSparsePagePoolCount++] = page;
+            _groupSparsePagePool[_groupSparsePagePoolCount++] = MemoryAllocator.Handler.FromDataPtr(page);
+        }
+        private void DisposeGroups()
+        {
+            for (int i = 0; i < _groupSparsePagePoolCount; i++)
+            {
+                ref var page = ref _groupSparsePagePool[i];
+                if (page.IsEmpty == false)
+                {
+                    MemoryAllocator.FreeAndClear(ref page);
+                }
+            }
+            _groupSparsePagePoolCount = 0;
         }
         #endregion
 
@@ -258,19 +279,19 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
-    //TODO переработать EcsGroup в структуру-обертку, чтобы когда вызывается Release то можно было занулить эту структуру, а может не перерабатывать, есть проблема с боксингом
     public unsafe class EcsGroup : IDisposable, IEnumerable<int>, ISet<int>, IEntityStorage
     {
         internal const int PAGE_SIZE = PageSlot.SIZE;
         private EcsWorld _source;
         private int[] _dense; // 0 индекс для нулевой записи
         private PageSlot* _sparsePages; //Старший бит занят временной маркировкой в операциях над множествами
+        private MemoryAllocator.Handler _sparsePagesHandler; //Старший бит занят временной маркировкой в операциях над множествами
         private int _sparsePagesCount;
         private int _totalCapacity;
         private int _count = 0;
         internal bool _isReleased = true;
 
-        internal static readonly int* _nullPage = UnmanagedArrayUtility.NewAndInit<int>(PageSlot.SIZE);
+        internal static readonly int* _nullPage = MemoryAllocator.AllocAndInit<int>(PageSlot.SIZE).As<int>();
         internal static readonly long _nullPagePtrFake = (long)_nullPage;
 
         #region Properties
@@ -350,10 +371,30 @@ namespace DCFApixels.DragonECS
             _dense = new int[denseCapacity];
             _totalCapacity = world.Capacity;
             _sparsePagesCount = CalcSparseSize(_totalCapacity);
-            _sparsePages = UnmanagedArrayUtility.New<PageSlot>(_sparsePagesCount);
+            _sparsePagesHandler = MemoryAllocator.Alloc<PageSlot>(_sparsePagesCount);
+            _sparsePages = _sparsePagesHandler.As<PageSlot>();
             for (int i = 0; i < _sparsePagesCount; i++)
             {
                 _sparsePages[i] = PageSlot.Empty;
+            }
+        }
+        ~EcsGroup()
+        {
+            lock (this)
+            {
+                for (int i = 0; i < _sparsePagesCount; i++)
+                {
+                    ref PageSlot page = ref _sparsePages[i];
+                    if (page.Indexes != _nullPage)
+                    {
+                        MemoryAllocator.Free(page.Indexes);
+                        page = default;
+                        page.Indexes = _nullPage;
+                    }
+                    page.IndexesXOR = 0;
+                    page.Count = 0;
+                }
+                _sparsePagesHandler.Dispose();
             }
         }
         public void Dispose()
@@ -506,24 +547,27 @@ namespace DCFApixels.DragonECS
         public void Clear()
         {
             if (_count == 0) { return; }
-            for (int i = 0; i < _sparsePagesCount; i++)
-            {
-                ref PageSlot page = ref _sparsePages[i];
-                if (page.Indexes != _nullPage)
-                {
-                    //TODO тут надо оптимизировать отчисткой не всего а по dense списку
-                    for (int j = 0; j < PageSlot.SIZE; j++)
-                    {
-                        page.Indexes[j] = 0;
-                    }
-                    _source.ReturnPage(page.Indexes);
-                    page.Indexes = _nullPage;
-                }
-                page.IndexesXOR = 0;
-                page.Count = 0;
-            }
 
-            _count = 0;
+            if (_source.IsDestroyed == false)
+            {
+                for (int i = 0; i < _sparsePagesCount; i++)
+                {
+                    ref PageSlot page = ref _sparsePages[i];
+                    if (page.Indexes != _nullPage)
+                    {
+                        //TODO тут надо оптимизировать отчисткой не всего а по dense списку
+                        for (int j = 0; j < PageSlot.SIZE; j++)
+                        {
+                            page.Indexes[j] = 0;
+                        }
+                        _source.ReturnPage(page.Indexes);
+                        page.Indexes = _nullPage;
+                    }
+                    page.IndexesXOR = 0;
+                    page.Count = 0;
+                }
+                _count = 0;
+            }
         }
         #endregion
 
@@ -1538,7 +1582,9 @@ namespace DCFApixels.DragonECS
             _totalCapacity = newSize;
             var oldPagesCount = _sparsePagesCount;
             _sparsePagesCount = CalcSparseSize(_totalCapacity);
-            _sparsePages = UnmanagedArrayUtility.Resize<PageSlot>(_sparsePages, _sparsePagesCount);
+            _sparsePagesHandler = MemoryAllocator.Realloc<PageSlot>(_sparsePagesHandler, _sparsePagesCount);
+            _sparsePages = _sparsePagesHandler.As<PageSlot>();
+            //_sparsePages = UnmanagedArrayUtility.Resize<PageSlot>(_sparsePages, _sparsePagesCount);
             for (int i = oldPagesCount; i < _sparsePagesCount; i++)
             {
                 _sparsePages[i] = PageSlot.Empty;
@@ -1622,24 +1668,35 @@ namespace DCFApixels.DragonECS
                 private PageSlot _page;
                 public int[] Indexes;
                 public IntPtr IndexesPtr;
-                public bool IsNullPage
-                {
-                    get { return IndexesPtr == (IntPtr)_nullPagePtrFake; }
-                }
+                public bool IsNullPage;
                 public int IndexesXOR;
                 public sbyte Count;
 
                 public DebuggerProxy(PageSlot page)
                 {
-                    _page = page;
-                    Indexes = new int[SIZE];
-                    for (int i = 0; i < SIZE; i++)
+                    //if (page.Indexes == null) { return; }
+                    //try
                     {
-                        Indexes[i] = page.Indexes[i];
+                        _page = page;
+                        Indexes = new int[SIZE];
+                        for (int i = 0; i < SIZE; i++)
+                        {
+                            Indexes[i] = page.Indexes[i];
+                        }
+                        IndexesPtr = (IntPtr)page.Indexes;
+                        IndexesXOR = page.IndexesXOR;
+                        Count = page.Count;
+                        IsNullPage = IndexesPtr == (IntPtr)_nullPagePtrFake;
                     }
-                    IndexesPtr = (IntPtr)page.Indexes;
-                    IndexesXOR = page.IndexesXOR;
-                    Count = page.Count;
+                    //catch (Exception)
+                    //{
+                    //    _page = default;
+                    //    Indexes = null;
+                    //    IndexesPtr = default;
+                    //    IndexesXOR = default;
+                    //    Count = default;
+                    //    IsNullPage = default;
+                    //}
                 }
             }
         }

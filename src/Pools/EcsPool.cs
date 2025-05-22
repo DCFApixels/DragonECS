@@ -2,7 +2,7 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections;
@@ -94,6 +94,48 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return ref Get(index); }
         }
+        #endregion
+
+        #region Constructors/Init/Destroy
+        public EcsPool() { }
+        public EcsPool(int capacity, int recycledCapacity = -1)
+        {
+            capacity = ArrayUtility.NextPow2(capacity);
+            if (recycledCapacity < 0)
+            {
+                recycledCapacity = capacity / 2;
+            }
+            _items = new T[capacity];
+            _recycledItems = new int[recycledCapacity];
+        }
+        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
+        {
+            _source = world;
+            _mediator = mediator;
+            _componentTypeID = componentTypeID;
+            _maskBit = EcsMaskChunck.FromID(componentTypeID);
+
+            _mapping = new int[world.Capacity];
+            var worldConfig = world.Configs.GetWorldConfigOrDefault();
+            if (_items == null)
+            {
+                _items = new T[ArrayUtility.NextPow2(worldConfig.PoolComponentsCapacity)];
+            }
+            if (_recycledItems == null)
+            {
+                _recycledItems = new int[worldConfig.PoolRecycledComponentsCapacity];
+            }
+        }
+        /*
+                    _source = world;
+            _mediator = mediator;
+            _componentTypeID = componentTypeID;
+            _maskBit = EcsMaskChunck.FromID(componentTypeID);
+
+            _mapping = new int[world.Capacity];
+            Resize(ArrayUtility.NextPow2(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity));
+            */
+        void IEcsPoolImplementation.OnWorldDestroy() { }
         #endregion
 
         #region Methods
@@ -278,25 +320,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Callbacks
-        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
-        {
-#if DEBUG
-            AllowedInWorldsAttribute.CheckAllows<T>(world);
-#endif
 
-            _source = world;
-            _mediator = mediator;
-            _componentTypeID = componentTypeID;
-            _maskBit = EcsMaskChunck.FromID(componentTypeID);
-
-            _mapping = new int[world.Capacity];
-            Resize(ArrayUtility.NextPow2(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity));
-        }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);
         }
-        void IEcsPoolImplementation.OnWorldDestroy() { }
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
         {
             if (_itemsCount <= 0)
@@ -554,6 +582,7 @@ namespace DCFApixels.DragonECS
         #region Convertors
         public static implicit operator EcsPool<T>(IncludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator EcsPool<T>(ExcludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        public static implicit operator EcsPool<T>(AnyMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator EcsPool<T>(OptionalMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator EcsPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsPool<T>>(); }
         #endregion
@@ -639,6 +668,7 @@ namespace DCFApixels.DragonECS
         public static implicit operator ReadonlyEcsPool<T>(EcsPool<T> a) { return new ReadonlyEcsPool<T>(a); }
         public static implicit operator ReadonlyEcsPool<T>(IncludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator ReadonlyEcsPool<T>(ExcludeMarker a) { return a.GetInstance<EcsPool<T>>(); }
+        public static implicit operator ReadonlyEcsPool<T>(AnyMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator ReadonlyEcsPool<T>(OptionalMarker a) { return a.GetInstance<EcsPool<T>>(); }
         public static implicit operator ReadonlyEcsPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsPool<T>>(); }
         #endregion
@@ -672,6 +702,11 @@ namespace DCFApixels.DragonECS
         public static EcsPool<TComponent> Opt<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
         {
             return self.OptionalPool<EcsPool<TComponent>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsPool<TComponent> Any<TComponent>(this EcsAspect.Builder self) where TComponent : struct, IEcsComponent
+        {
+            return self.AnyPool<EcsPool<TComponent>>();
         }
 
         #region Obsolete

@@ -2,7 +2,7 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -113,7 +113,7 @@ namespace DCFApixels.DragonECS
         }
         public static string ParseIDFromTypeName(string name)
         {
-            char* buffer = TempBuffer<char>.Get(name.Length);
+            char* buffer = TempBuffer<MetaIDAttribute, char>.Get(name.Length);
             int count = 0;
             //skip name[0] char
             for (int i = 1, iMax = name.Length; i < iMax; i++)

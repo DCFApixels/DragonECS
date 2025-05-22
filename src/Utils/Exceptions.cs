@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS
     }
 }
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     internal static class Throw
     {

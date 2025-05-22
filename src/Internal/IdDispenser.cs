@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
 #if ENABLE_IL2CPP
     using Unity.IL2CPP.CompilerServices;
@@ -16,6 +16,7 @@ namespace DCFApixels.DragonECS.Internal
 #endif
     [Serializable]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
+    [DebuggerDisplay("Count: {Count}")]
     internal class IdDispenser : IEnumerable<int>, IReadOnlyCollection<int>
     {
         private const int MIN_SIZE = 4;

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     internal interface ILinkedNext
     {
@@ -121,7 +121,6 @@ namespace DCFApixels.DragonECS.Internal
 
     internal static class ArrayUtility
     {
-        //TODO потестить
         public static void ResizeOrCreate<T>(ref T[] array, int newSize)
         {
             if (array == null)
@@ -275,50 +274,56 @@ namespace DCFApixels.DragonECS.Internal
         public static T* New<T>(int capacity) where T : unmanaged
         {
             //Console.WriteLine($"{typeof(T).Name} - {Marshal.SizeOf<T>()} - {capacity} - {Marshal.SizeOf<T>() * capacity}");
-            return (T*)Marshal.AllocHGlobal(Marshal.SizeOf<T>() * capacity).ToPointer();
+            //return (T*)Marshal.AllocHGlobal(Marshal.SizeOf<T>() * capacity).ToPointer();
+            return MemoryAllocator.Alloc<T>(capacity).As<T>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void New<T>(out T* ptr, int capacity) where T : unmanaged
         {
-            ptr = (T*)Marshal.AllocHGlobal(Marshal.SizeOf<T>() * capacity).ToPointer();
+            //ptr = (T*)Marshal.AllocHGlobal(Marshal.SizeOf<T>() * capacity).ToPointer();
+            ptr = MemoryAllocator.Alloc<T>(capacity).As<T>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T* NewAndInit<T>(int capacity) where T : unmanaged
         {
-            int newSize = MetaCache<T>.Size * capacity;
-            byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
-
-            for (int i = 0; i < newSize; i++)
-            {
-                *(newPointer + i) = 0;
-            }
-
-            return (T*)newPointer;
+            //int newSize = MetaCache<T>.Size * capacity;
+            //byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
+            //
+            //for (int i = 0; i < newSize; i++)
+            //{
+            //    *(newPointer + i) = 0;
+            //}
+            //
+            //return (T*)newPointer;
+            return MemoryAllocator.AllocAndInit<T>(capacity).As<T>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void NewAndInit<T>(out T* ptr, int capacity) where T : unmanaged
         {
-            int newSize = MetaCache<T>.Size * capacity;
-            byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
-
-            for (int i = 0; i < newSize; i++)
-            {
-                *(newPointer + i) = 0;
-            }
-
-            ptr = (T*)newPointer;
+            //int newSize = MetaCache<T>.Size * capacity;
+            //byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
+            //
+            //for (int i = 0; i < newSize; i++)
+            //{
+            //    *(newPointer + i) = 0;
+            //}
+            //
+            //ptr = (T*)newPointer;
+            ptr = MemoryAllocator.AllocAndInit<T>(capacity).As<T>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Free(void* pointer)
         {
-            Marshal.FreeHGlobal(new IntPtr(pointer));
+            //Marshal.FreeHGlobal(new IntPtr(pointer));
+            MemoryAllocator.Free(dataPtr: pointer);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Free<T>(ref T* pointer, ref int length) where T : unmanaged
         {
-            Marshal.FreeHGlobal(new IntPtr(pointer));
+            //Marshal.FreeHGlobal(new IntPtr(pointer));
+            MemoryAllocator.Free(dataPtr: pointer);
             pointer = null;
             length = 0;
         }
@@ -337,19 +342,21 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T* Resize<T>(void* oldPointer, int newCount) where T : unmanaged
         {
-            return (T*)(Marshal.ReAllocHGlobal(
-                new IntPtr(oldPointer),
-                new IntPtr(MetaCache<T>.Size * newCount))).ToPointer();
+            //return (T*)(Marshal.ReAllocHGlobal(
+            //    new IntPtr(oldPointer),
+            //    new IntPtr(MetaCache<T>.Size * newCount))).ToPointer();
+            return MemoryAllocator.Realloc<T>(MemoryAllocator.Handler.FromDataPtr(oldPointer), newCount).As<T>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T* ResizeAndInit<T>(void* oldPointer, int oldSize, int newSize) where T : unmanaged
         {
-            int sizeT = MetaCache<T>.Size;
-            T* result = (T*)Marshal.ReAllocHGlobal(
-                new IntPtr(oldPointer),
-                new IntPtr(sizeT * newSize)).ToPointer();
-            Init((byte*)result, sizeT * oldSize, sizeT * newSize);
-            return result;
+            //int sizeT = MetaCache<T>.Size;
+            //T* result = (T*)Marshal.ReAllocHGlobal(
+            //    new IntPtr(oldPointer),
+            //    new IntPtr(sizeT * newSize)).ToPointer();
+            //Init((byte*)result, sizeT * oldSize, sizeT * newSize);
+            //return result;
+            return MemoryAllocator.ReallocAndInit<T>(MemoryAllocator.Handler.FromDataPtr(oldPointer), oldSize, newSize).As<T>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Init(byte* pointer, int startByteIndex, int endByteIndex)

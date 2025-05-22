@@ -2,7 +2,7 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -182,7 +182,6 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 short itemIndex = _mapping[worldID];
-
                 if (itemIndex == 0)
                 {
                     lock (_worldLock)
@@ -207,7 +206,7 @@ namespace DCFApixels.DragonECS
                             }
 
 #if DEBUG
-                            AllowedInWorldsAttribute.CheckAllows<T>(_worlds[worldID]);
+                            AllowedInWorldsAttribute.CheckAllows(_worlds[worldID], typeof(T));
 #endif
 
                             _interface.Init(ref _items[itemIndex], _worlds[worldID]);

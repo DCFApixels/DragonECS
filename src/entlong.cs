@@ -3,8 +3,8 @@
 #endif
 #pragma warning disable IDE1006
 #pragma warning disable CS8981
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.Core.Unchecked;
-using DCFApixels.DragonECS.Internal;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -47,7 +47,10 @@ namespace DCFApixels.DragonECS
         public bool IsAlive
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return EcsWorld.GetWorld(_world).IsAlive(_id, _gen); }
+            get 
+            {
+                return EcsWorld.TryGetWorld(_world, out EcsWorld world) && world.IsAlive(_id, _gen);
+            }
         }
         public bool IsNull
         {

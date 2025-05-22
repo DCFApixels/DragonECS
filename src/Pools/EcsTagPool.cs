@@ -2,7 +2,7 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections;
@@ -60,13 +60,6 @@ namespace DCFApixels.DragonECS
             _isInvalidType = typeof(T).GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic).Length > 0;
 #pragma warning restore IL2090
         }
-        public EcsTagPool()
-        {
-            if (_isInvalidType)
-            {
-                throw new Exception($"{typeof(T).Name} type must not contain any data.");
-            }
-        }
 #endif
         #endregion
 
@@ -98,6 +91,25 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { Set(index, value); }
         }
+        #endregion
+
+        #region Constructors/Init/Destroy
+        public EcsTagPool()
+        {
+#if DEBUG
+            if (_isInvalidType) { Throw.Exception($"{typeof(T).Name} type must not contain any data."); }
+#endif
+        }
+        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
+        {
+            _source = world;
+            _mediator = mediator;
+            _componentTypeID = componentTypeID;
+            _maskBit = EcsMaskChunck.FromID(componentTypeID);
+
+            _mapping = new bool[world.Capacity];
+        }
+        void IEcsPoolImplementation.OnWorldDestroy() { }
         #endregion
 
         #region Method
@@ -218,24 +230,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Callbacks
-        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
-        {
-#if DEBUG
-            AllowedInWorldsAttribute.CheckAllows<T>(world);
-#endif
 
-            _source = world;
-            _mediator = mediator;
-            _componentTypeID = componentTypeID;
-            _maskBit = EcsMaskChunck.FromID(componentTypeID);
-
-            _mapping = new bool[world.Capacity];
-        }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);
         }
-        void IEcsPoolImplementation.OnWorldDestroy() { }
 
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
         {
@@ -315,6 +314,7 @@ namespace DCFApixels.DragonECS
         #region Convertors
         public static implicit operator EcsTagPool<T>(IncludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(ExcludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
+        public static implicit operator EcsTagPool<T>(AnyMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(OptionalMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         #endregion
@@ -402,6 +402,7 @@ namespace DCFApixels.DragonECS
         public static implicit operator ReadonlyEcsTagPool<T>(EcsTagPool<T> a) { return new ReadonlyEcsTagPool<T>(a); }
         public static implicit operator ReadonlyEcsTagPool<T>(IncludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator ReadonlyEcsTagPool<T>(ExcludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
+        public static implicit operator ReadonlyEcsTagPool<T>(AnyMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator ReadonlyEcsTagPool<T>(OptionalMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator ReadonlyEcsTagPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         #endregion
@@ -429,6 +430,11 @@ namespace DCFApixels.DragonECS
         public static EcsTagPool<TTagComponent> Exc<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.ExcludePool<EcsTagPool<TTagComponent>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> Any<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.AnyPool<EcsTagPool<TTagComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Opt<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent

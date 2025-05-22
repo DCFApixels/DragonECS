@@ -1,7 +1,7 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using System;
 
 namespace DCFApixels.DragonECS
@@ -15,10 +15,8 @@ namespace DCFApixels.DragonECS
             AllowedWorlds = allowedWorlds;
         }
 
-
-        public static void CheckAllows<T>(EcsWorld world)
+        public static void CheckAllows(EcsWorld world, Type componentType)
         {
-            Type componentType = typeof(T);
             Type worldType = world.GetType();
             if (componentType.TryGetAttribute(out AllowedInWorldsAttribute attribute))
             {

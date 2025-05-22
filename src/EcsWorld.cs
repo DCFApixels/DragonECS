@@ -2,8 +2,8 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.Core.Unchecked;
-using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
@@ -31,9 +31,13 @@ namespace DCFApixels.DragonECS
         [DataMember] public int PoolsCapacity;
         [DataMember] public int PoolComponentsCapacity;
         [DataMember] public int PoolRecycledComponentsCapacity;
-        public EcsWorldConfig() : this(512) { }
-        public EcsWorldConfig(int entitiesCapacity = 512, int groupCapacity = 512, int poolsCapacity = 512, int poolComponentsCapacity = 512, int poolRecycledComponentsCapacity = 512 / 2)
+        public EcsWorldConfig(int entitiesCapacity = 512, int groupCapacity = 512, int poolsCapacity = 512, int poolComponentsCapacity = 512, int poolRecycledComponentsCapacity = -1)
         {
+            if (poolRecycledComponentsCapacity < 0)
+            {
+                poolRecycledComponentsCapacity = poolComponentsCapacity / 4;
+            }
+
             EntitiesCapacity = entitiesCapacity;
             GroupCapacity = groupCapacity;
             PoolsCapacity = poolsCapacity;
@@ -226,6 +230,7 @@ namespace DCFApixels.DragonECS
 #endif
                     return;
                 }
+                _isDestroyed = true;
                 _listeners.InvokeOnWorldDestroy();
                 _entityDispenser = null;
                 _pools = null;
@@ -233,9 +238,9 @@ namespace DCFApixels.DragonECS
                 _worlds[ID] = null;
                 ReleaseData(ID);
                 _worldIdDispenser.Release(ID);
-                _isDestroyed = true;
                 _poolTypeCode_2_CmpTypeIDs = null;
                 _cmpTypeCode_2_CmpTypeIDs = null;
+                DisposeGroups();
 
                 foreach (var item in _executorCoures)
                 {
@@ -551,6 +556,22 @@ namespace DCFApixels.DragonECS
                         return false;
                     }
                 }
+                if (mask_._anys.Length != 0)
+                {
+                    int count = 0;
+                    for (int i = 0, iMax = mask_._anys.Length; i < iMax; i++)
+                    {
+                        if (_pools[mask_._anys[i]].Has(entityID_))
+                        {
+                            count++;
+                        }
+                    }
+                    if(count == 0)
+                    {
+                        return false;
+                    }
+                }
+                
                 return true;
             }
             bool deepDebug = IsMatchesMaskDeepDebug(mask, entityID);
@@ -558,6 +579,7 @@ namespace DCFApixels.DragonECS
 
             var incChuncks = mask._incChunckMasks;
             var excChuncks = mask._excChunckMasks;
+            var anyChuncks = mask._anyChunckMasks;
             var componentMaskStartIndex = entityID << _entityComponentMaskLengthBitShift;
 
             for (int i = 0; i < incChuncks.Length; i++)
@@ -582,6 +604,26 @@ namespace DCFApixels.DragonECS
                     return false;
                 }
             }
+
+            if (anyChuncks.Length > 0)
+            {
+                for (int i = 0; i < anyChuncks.Length; i++)
+                {
+                    var bit = anyChuncks[i];
+                    if ((_entityComponentMasks[componentMaskStartIndex + bit.chunkIndex] & bit.mask) == bit.mask)
+                    {
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                        if (true != deepDebug) { Throw.DeepDebugException(); }
+#endif
+                        return true;
+                    }
+                }
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                if (false != deepDebug) { Throw.DeepDebugException(); }
+#endif
+                return false;
+            }
+
 
 #if DEBUG && DRAGONECS_DEEP_DEBUG
             if (true != deepDebug) { Throw.DeepDebugException(); }
@@ -1053,6 +1095,11 @@ namespace DCFApixels.DragonECS
                 {
                     list.Add(_pools[poolIdsPtr[i]]);
                 }
+            }
+
+            if (count >= BUFFER_THRESHOLD)
+            {
+                UnmanagedArrayUtility.Free(poolIdsPtr);
             }
         }
         public ReadOnlySpan<object> GetComponentsFor(int entityID)

@@ -35,7 +35,7 @@ namespace DCFApixels.DragonECS
             void IEcsWorldComponent<AspectCache<T>>.Init(ref AspectCache<T> component, EcsWorld world)
             {
 #if DEBUG
-                AllowedInWorldsAttribute.CheckAllows<T>(world);
+                AllowedInWorldsAttribute.CheckAllows(world, typeof(T));
 #endif
                 var result = EcsAspect.Builder.New<T>(world);
                 component = new AspectCache<T>(result.aspect, result.mask);

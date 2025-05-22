@@ -1,7 +1,7 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections;
@@ -91,6 +91,12 @@ namespace DCFApixels.DragonECS
             }
 
             _injector = injectorBuilder.Build(this);
+        }
+        ~EcsPipeline()
+        {
+            if (_isDestoryed) { return; }
+            if (_isInit == false) { Init(); }
+            Destroy();
         }
         #endregion
 

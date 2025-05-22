@@ -1,4 +1,4 @@
-﻿using DCFApixels.DragonECS.Internal;
+﻿using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -70,7 +70,7 @@ namespace DCFApixels.DragonECS.Core
 
 
 
-    public unsafe class DependencyGraph<T> : IDependencyGraph<T>
+    public class DependencyGraph<T> : IDependencyGraph<T>
     {
         private readonly Dictionary<T, VertexID> _vertexIDs = new Dictionary<T, VertexID>(32);
         private StructList<VertexInfo> _vertexInfos = new StructList<VertexInfo>(32);
@@ -158,12 +158,16 @@ namespace DCFApixels.DragonECS.Core
         private void AddVertexByID(VertexID id)
         {
             ref var info = ref GetVertexInfo(id);
-            if (info.isContained == false || info.isLocked == false)
+
+            if (info.isContained == false && info.isLocked || info.isLocked == false)
+            {
+                info.insertionIndex = _increment++;
+            }
+            if (info.isContained == false)
             {
                 _count++;
                 info.isContained = true;
             }
-            info.insertionIndex = _increment++;
         }
         public bool RemoveVertex(T vertex)
         {
@@ -222,7 +226,7 @@ namespace DCFApixels.DragonECS.Core
         #endregion
 
         #region Sort
-        public T[] Sort()
+        public unsafe T[] Sort()
         {
             const int BUFFER_THRESHOLD = 256;
             if (_count <= BUFFER_THRESHOLD)
@@ -236,7 +240,7 @@ namespace DCFApixels.DragonECS.Core
             }
             else
             {
-                var ptr = TempBuffer<VertexID>.Get(_count);
+                var ptr = TempBuffer<VertexID, VertexID>.Get(_count);
                 var buffer = UnsafeArray<VertexID>.Manual(ptr, _count);
                 TopoSorting(buffer);
                 ReoderInsertionIndexes(buffer);
@@ -244,7 +248,7 @@ namespace DCFApixels.DragonECS.Core
                 return ConvertIdsToTsArray(buffer);
             }
         }
-        private void TopoSorting(UnsafeArray<VertexID> sortingBuffer)
+        private unsafe void TopoSorting(UnsafeArray<VertexID> sortingBuffer)
         {
             VertexID[] nodes = new VertexID[_count];
             var adjacency = new List<(VertexID To, int DependencyIndex)>[GetVertexInfosCount()];
@@ -332,7 +336,7 @@ namespace DCFApixels.DragonECS.Core
                 throw new InvalidOperationException("Cyclic dependency detected." + details);
             }
         }
-        private void ReoderInsertionIndexes(UnsafeArray<VertexID> sortingBuffer)
+        private unsafe void ReoderInsertionIndexes(UnsafeArray<VertexID> sortingBuffer)
         {
             for (int i = 0; i < GetVertexInfosCount(); i++)
             {
@@ -371,7 +375,7 @@ namespace DCFApixels.DragonECS.Core
 
             }
         }
-        private static void MoveElement<TValue>(ref UnsafeArray<TValue> array, int oldIndex, int newIndex) where TValue : unmanaged
+        private static unsafe void MoveElement<TValue>(ref UnsafeArray<TValue> array, int oldIndex, int newIndex) where TValue : unmanaged
         {
             if (oldIndex == newIndex) return;
 
@@ -401,7 +405,7 @@ namespace DCFApixels.DragonECS.Core
 
             ptr[newIndex] = item;
         }
-        private T[] ConvertIdsToTsArray(UnsafeArray<VertexID> buffer)
+        private unsafe T[] ConvertIdsToTsArray(UnsafeArray<VertexID> buffer)
         {
             T[] result = new T[buffer.Length];
             for (int i = 0; i < result.Length; i++)

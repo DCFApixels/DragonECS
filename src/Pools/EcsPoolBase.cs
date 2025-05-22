@@ -1,7 +1,7 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
@@ -25,13 +25,6 @@ namespace DCFApixels.DragonECS.PoolsCore
     /// <summary> Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>. </summary>
     /// <typeparam name="T"> Component type. </typeparam>
     public interface IEcsPoolImplementation<T> : IEcsPoolImplementation { }
-
-    //TODO
-    //public interface IEcsReadonlyPoolImplementation<TPool> : IEcsReadonlyPool
-    //    where TPool : IEcsReadonlyPoolImplementation<TPool>
-    //{
-    //    void Init(ref TPool pool);
-    //}
 
     #region EcsPoolThrowHelper
     public static class EcsPoolThrowHelper
@@ -75,7 +68,7 @@ namespace DCFApixels.DragonECS.PoolsCore
     #endregion
 }
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
@@ -88,7 +81,7 @@ namespace DCFApixels.DragonECS.Internal
         public static readonly EcsNullPool instance = new EcsNullPool();
 
         #region Properties
-        int IEcsReadonlyPool.ComponentTypeID { get { return 0; } }//TODO Првоерить что NullComponent всегда имеет id 0 
+        int IEcsReadonlyPool.ComponentTypeID { get { return 0; } }
         Type IEcsReadonlyPool.ComponentType { get { return typeof(NullComponent); } }
         EcsWorld IEcsReadonlyPool.World
         {

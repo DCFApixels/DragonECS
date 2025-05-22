@@ -5,7 +5,7 @@ using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     internal static class ReflectionUtility
     {
