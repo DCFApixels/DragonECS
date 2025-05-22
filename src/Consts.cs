@@ -89,7 +89,12 @@ namespace DCFApixels.DragonECS
 #else
             false;
 #endif
-
+        public const bool ENABLE_DUMMY_SPAN =
+#if ENABLE_DUMMY_SPAN
+            true;
+#else
+            false;
+#endif
 
 
         [Obsolete("DRAGONECS_ENABLE_DEBUG_SERVICE")]
