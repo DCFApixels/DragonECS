@@ -98,15 +98,10 @@ namespace DCFApixels.DragonECS
 
         #region Constructors/Init/Destroy
         public EcsPool() { }
-        public EcsPool(int capacity, int recycledCapacity = -1)
+        public EcsPool(int capacity)
         {
             capacity = ArrayUtility.NextPow2(capacity);
-            if (recycledCapacity < 0)
-            {
-                recycledCapacity = capacity / 2;
-            }
             _items = new T[capacity];
-            _recycledItems = new int[recycledCapacity];
         }
         void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
@@ -117,14 +112,7 @@ namespace DCFApixels.DragonECS
 
             _mapping = new int[world.Capacity];
             var worldConfig = world.Configs.GetWorldConfigOrDefault();
-            if (_items == null)
-            {
-                _items = new T[ArrayUtility.NextPow2(worldConfig.PoolComponentsCapacity)];
-            }
-            if (_recycledItems == null)
-            {
-                _recycledItems = new int[worldConfig.PoolRecycledComponentsCapacity];
-            }
+            Resize(ArrayUtility.NextPow2(worldConfig.PoolComponentsCapacity));
         }
         /*
                     _source = world;
@@ -366,7 +354,7 @@ namespace DCFApixels.DragonECS
             //var span = new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
             var span = new EcsSpan(_source.ID, _table, 1 + _capacity, _itemsCount);
 #if DRAGONECS_DEEP_DEBUG
-            if (DCFApixels.DragonECS.UncheckedCore.UncheckedCoreUtility.CheckSpanValideDebug(span) == false)
+            if (Core.Unchecked.UncheckedUtility.CheckSpanValideDebug(span) == false)
             {
                 Throw.UndefinedException();
             }
