@@ -6,6 +6,7 @@
 using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.Core.Unchecked;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -47,7 +48,7 @@ namespace DCFApixels.DragonECS
         public bool IsAlive
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get 
+            get
             {
                 return EcsWorld.TryGetWorld(_world, out EcsWorld world) && world.IsAlive(_id, _gen);
             }
@@ -391,7 +392,14 @@ namespace DCFApixels.DragonECS
 
         internal class DebuggerProxy : EntityDebuggerProxy
         {
-            public DebuggerProxy(entlong entity) : base(entity._id, entity._gen, entity._world) { }
+            public override long full => base.full;
+            public override int id => base.id;
+            public override short gen => base.gen;
+            public override short worldID => base.worldID;
+            public override EntitySlotInfo.StateFlag State => base.State;
+            public override EcsWorld World => base.World;
+            public override IEnumerable<object> Components { get => base.Components; set => base.Components = value; }
+            public DebuggerProxy(entlong entity) : base(entity) { }
         }
         #endregion
     }
