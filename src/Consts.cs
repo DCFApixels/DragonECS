@@ -125,13 +125,6 @@ namespace DCFApixels.DragonECS
 #else
             false;
 #endif
-        [Obsolete]
-        public const bool ENABLE_DUMMY_SPAN =
-#if ENABLE_DUMMY_SPAN
-            true;
-#else
-            false;
-#endif
     }
 }
 //#if UNITY_2020_3_OR_NEWER
