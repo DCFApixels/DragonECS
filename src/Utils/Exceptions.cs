@@ -141,6 +141,11 @@ namespace DCFApixels.DragonECS.Core.Internal
         {
             throw new ArgumentException("The groups belong to different worlds.");
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentDifferentWorldsException()
+        {
+            throw new ArgumentException("The groups belong to different worlds.");
+        }
 
 
         [MethodImpl(MethodImplOptions.NoInlining)]
