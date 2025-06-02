@@ -84,19 +84,17 @@ namespace DCFApixels.DragonECS.Core.Unchecked
         #endregion
     }
 
-
-
     internal class EntityDebuggerProxy
     {
         private List<object> _componentsList = new List<object>();
         private EntitySlotInfo _info;
-        public long full { get { return _info.full; } }
-        public int id { get { return _info.id; } }
-        public short gen { get { return _info.gen; } }
-        public short worldID { get { return _info.worldID; } }
-        public EntitySlotInfo.StateFlag State { get { return _info.State; } }
-        public EcsWorld World { get { return _info.World; } }
-        public IEnumerable<object> Components
+        public virtual long full { get { return _info.full; } }
+        public virtual int id { get { return _info.id; } }
+        public virtual short gen { get { return _info.gen; } }
+        public virtual short worldID { get { return _info.worldID; } }
+        public virtual EntitySlotInfo.StateFlag State { get { return _info.State; } }
+        public virtual EcsWorld World { get { return _info.World; } }
+        public virtual IEnumerable<object> Components
         {
             get
             {
@@ -128,6 +126,10 @@ namespace DCFApixels.DragonECS.Core.Unchecked
         public EntityDebuggerProxy(EntitySlotInfo info)
         {
             _info = info;
+        }
+        public EntityDebuggerProxy(entlong info)
+        {
+            _info = (EntitySlotInfo)info;
         }
         public EntityDebuggerProxy(int entityID, short gen, short worldID)
         {
