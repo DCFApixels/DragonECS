@@ -212,7 +212,7 @@ namespace DCFApixels.DragonECS
         {
             if (mask.WorldID != _world) { Throw.ArgumentDifferentWorldsException(); }
             id = _id;
-            return mask.World.IsAlive(_id, _gen);
+            return mask.World.IsAlive(_id, _gen) && mask.World.IsMatchesMask(mask, _id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUnpack(EcsMask mask, out int id, out short gen)
@@ -220,14 +220,14 @@ namespace DCFApixels.DragonECS
             if (mask.WorldID != _world) { Throw.ArgumentDifferentWorldsException(); }
             gen = _gen;
             id = _id;
-            return mask.World.IsAlive(_id, _gen);
+            return mask.World.IsAlive(_id, _gen) && mask.World.IsMatchesMask(mask, _id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUnpack(EcsAspect aspect, out int id)
         {
             if (aspect.World.ID != _world) { Throw.ArgumentDifferentWorldsException(); }
             id = _id;
-            return aspect.World.IsAlive(_id, _gen);
+            return aspect.World.IsAlive(_id, _gen) && aspect.IsMatches(_id);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUnpack(EcsAspect aspect, out int id, out short gen)
@@ -235,7 +235,7 @@ namespace DCFApixels.DragonECS
             if (aspect.World.ID != _world) { Throw.ArgumentDifferentWorldsException(); }
             gen = _gen;
             id = _id;
-            return aspect.World.IsAlive(_id, _gen);
+            return aspect.World.IsAlive(_id, _gen) && aspect.IsMatches(_id);
         }
         #endregion
 
