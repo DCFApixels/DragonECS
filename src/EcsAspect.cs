@@ -87,6 +87,10 @@ namespace DCFApixels.DragonECS
         {
             get { return EcsAspect.CurrentBuilder.Opt; }
         }
+        public static EcsMask.Builder GetMask()
+        {
+            return EcsAspect.CurrentBuilder.GetMask();
+        }
     }
     public abstract class EcsAspect : IEcsAspect, ITemplateNode, IComponentMask
     {
@@ -129,6 +133,10 @@ namespace DCFApixels.DragonECS
         protected static SingletonMarker Singleton
         {
             get { return B.Singleton; }
+        }
+        protected static EcsMask.Builder GetMask()
+        {
+            return B.GetMask();
         }
         #endregion
 
@@ -277,6 +285,10 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Include/Exclude/Optional/Combine/Except
+            public EcsMask.Builder GetMask()
+            {
+                return EcsMask.New(_world);
+            }
             public Singleton<T> Get<T>() where T : struct
             {
                 return new Singleton<T>(_world.ID);
