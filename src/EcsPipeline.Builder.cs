@@ -44,45 +44,6 @@ namespace DCFApixels.DragonECS
 
             private HashSet<Type> _uniqueSystemsSet = new HashSet<Type>();
 
-
-            #region InitInjector
-            public readonly struct InitInjectionList
-            {
-                private readonly Builder _pipelineBuilder;
-                public readonly Injector.InjectionList Instance;
-                public InitInjectionList(Injector.InjectionList instance, Builder pipelineBuilder)
-                {
-                    Instance = instance;
-                    _pipelineBuilder = pipelineBuilder;
-                }
-                public Builder AddNode<T>()
-                {
-                    Instance.AddNode<T>();
-                    return _pipelineBuilder;
-                }
-                public Builder Inject<T>(T obj)
-                {
-                    Instance.Inject(obj);
-                    return _pipelineBuilder;
-                }
-                public Builder Extract<T>(ref T obj)
-                {
-                    Instance.Extract(ref obj);
-                    return _pipelineBuilder;
-                }
-                public Builder Merge(Injector.InjectionList other)
-                {
-                    Instance.MergeWith(other);
-                    return _pipelineBuilder;
-                }
-                public Builder Merge(InitInjectionList other)
-                {
-                    Instance.MergeWith(other.Instance);
-                    return _pipelineBuilder;
-                }
-            }
-            #endregion
-
             #region Properties
             //private ReadOnlySpan<SystemNode> SystemRecords
             //{
@@ -274,22 +235,21 @@ namespace DCFApixels.DragonECS
             }
             private void MergeWith(Builder other)
             {
-                throw new NotImplementedException();
-                //Injector.Add(other.Injector);
-                //foreach (var declaredRunners in other._initDeclaredRunners)
-                //{
-                //    _initDeclaredRunners.Add(declaredRunners);
-                //}
-                //foreach (var config in other.Configs.Instance.GetAllConfigs())
-                //{
-                //    Configs.Instance.Set(config.Key, config.Value);
-                //}
-                //Layers.MergeWith(other.Layers);
-                //
-                //foreach (ref readonly SystemNode otherRecord in new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex))
-                //{
-                //    AddNode_Internal(otherRecord.system, otherRecord.layerName, otherRecord.sortOrder, otherRecord.isUnique);
-                //}
+                Injections.MergeWith(other.Injections);
+                foreach (var declaredRunners in other._initDeclaredRunners)
+                {
+                    _initDeclaredRunners.Add(declaredRunners);
+                }
+                foreach (var config in other.Configs.Instance.GetAllConfigs())
+                {
+                    Configs.Instance.Set(config.Key, config.Value);
+                }
+                Layers.MergeWith(other.Layers);
+                
+                foreach (ref readonly SystemNode otherRecord in new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex))
+                {
+                    AddNode_Internal(otherRecord.system, otherRecord.layerName, otherRecord.sortOrder, otherRecord.isUnique);
+                }
             }
             #endregion
 
@@ -430,6 +390,44 @@ namespace DCFApixels.DragonECS
                 public override void Declare(EcsPipeline pipeline)
                 {
                     pipeline.GetRunnerInstance<T>();
+                }
+            }
+            #endregion
+
+            #region InitInjector
+            public readonly struct InitInjectionList
+            {
+                private readonly Builder _pipelineBuilder;
+                public readonly Injector.InjectionList Instance;
+                public InitInjectionList(Injector.InjectionList instance, Builder pipelineBuilder)
+                {
+                    Instance = instance;
+                    _pipelineBuilder = pipelineBuilder;
+                }
+                public Builder AddNode<T>()
+                {
+                    Instance.AddNode<T>();
+                    return _pipelineBuilder;
+                }
+                public Builder Inject<T>(T obj)
+                {
+                    Instance.Inject(obj);
+                    return _pipelineBuilder;
+                }
+                public Builder Extract<T>(ref T obj)
+                {
+                    Instance.Extract(ref obj);
+                    return _pipelineBuilder;
+                }
+                public Builder Merge(Injector.InjectionList other)
+                {
+                    Instance.MergeWith(other);
+                    return _pipelineBuilder;
+                }
+                public Builder MergeWith(InitInjectionList other)
+                {
+                    Instance.MergeWith(other.Instance);
+                    return _pipelineBuilder;
                 }
             }
             #endregion
