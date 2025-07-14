@@ -368,7 +368,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
 
-                EcsPipeline pipeline = new EcsPipeline(allSystems, Configs.Instance.GetContainer(), Injections.Instance);
+                EcsPipeline pipeline = new EcsPipeline((ReadOnlySpan<IEcsProcess>)allSystems, Configs.Instance.GetContainer(), Injections.Instance);
                 foreach (var item in _initDeclaredRunners)
                 {
                     item.Declare(pipeline);
