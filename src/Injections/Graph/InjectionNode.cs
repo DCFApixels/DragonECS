@@ -60,8 +60,6 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         private void ExtractTo_Internal(object target)
         {
-            var type = target.GetType();
-            var intrfs = type.GetInterfaces();
             if (target is IEcsInject<T> intrf)
             {
                 intrf.Inject(_currentInjectedDependency);

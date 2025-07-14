@@ -11,14 +11,59 @@ namespace DCFApixels.DragonECS
 {
     public class Injector : IInjector
     {
-        private EcsPipeline _pipeline;
-        private Dictionary<Type, InjectionBranch> _branches = new Dictionary<Type, InjectionBranch>(32);
-        private Dictionary<Type, InjectionNodeBase> _nodes = new Dictionary<Type, InjectionNodeBase>(32);
-        private bool _isInit = false;
+        private readonly EcsPipeline _pipeline;
+        private readonly Dictionary<Type, InjectionBranch> _branches = new Dictionary<Type, InjectionBranch>(32);
+        private readonly Dictionary<Type, InjectionNodeBase> _nodes = new Dictionary<Type, InjectionNodeBase>(32);
+        private ReadOnlySpan<InjectionNodeBase> GetNodes(Type type)
+        {
+            if(_branches.TryGetValue(type, out InjectionBranch branch))
+            {
+                return branch.Nodes;
+            }
+            return Array.Empty<InjectionNodeBase>();
+        }
 
-#if DEBUG
-        private HashSet<Type> _requiredInjectionTypes = new HashSet<Type>();
-#endif
+        #region InjectionTempHistory
+        private StructList<object> _injectionTempHistory = new StructList<object>(32);
+        private int _injectionTempHistoryReadersCount = 0;
+        private int StartReadHistory_Internal()
+        {
+            _injectionTempHistoryReadersCount++;
+            return _injectionTempHistory.Count;
+        }
+        private ReadOnlySpan<object> EndReadHistory_Internal(int startIndex)
+        {
+            _injectionTempHistoryReadersCount--;
+            if(_injectionTempHistoryReadersCount < 0)
+            {
+                Throw.OpeningClosingMethodsBalanceError();
+            }
+            var result = _injectionTempHistory.AsReadOnlySpan().Slice(startIndex);
+            if (_injectionTempHistoryReadersCount == 0)
+            {
+                _injectionTempHistory.Recreate();
+            }
+            return result;
+        }
+        public readonly struct InjectionHistorySpanReader 
+        {
+            private readonly Injector _injector;
+            private readonly int _startIndex;
+            public InjectionHistorySpanReader(Injector injector)
+            {
+                _injector = injector;
+                _startIndex = _injector.StartReadHistory_Internal();
+            }
+            public ReadOnlySpan<object> StopReadAndGetHistorySpan()
+            {
+                return _injector.EndReadHistory_Internal(_startIndex);
+            }
+        }
+        public InjectionHistorySpanReader StartReadHistory()
+        {
+            return new InjectionHistorySpanReader(this);
+        }
+        #endregion
 
         public EcsPipeline Pipelie
         {
@@ -26,12 +71,14 @@ namespace DCFApixels.DragonECS
             get { return _pipeline; }
         }
 
-        private Injector() { }
+        public Injector(EcsPipeline pipeline)
+        {
+            _pipeline = pipeline;
+        }
 
         #region Inject/Extract/AddNode
         public void Inject<T>(T obj)
         {
-            object raw = obj;
             Type tType = typeof(T);
             Type objType = obj.GetType();
             if (_branches.TryGetValue(objType, out InjectionBranch branch) == false)
@@ -40,30 +87,31 @@ namespace DCFApixels.DragonECS
                 {
                     InitNode(new InjectionNode<T>());
                 }
-                bool hasNode = _nodes.ContainsKey(objType);
-                if (hasNode == false && obj is IInjectionUnit unit)
+                bool hasObjTypeNode = _nodes.ContainsKey(objType);
+                if (hasObjTypeNode == false && obj is IInjectionUnit unit)
                 {
                     unit.InitInjectionNode(new InjectionGraph(this));
-                    hasNode = _nodes.ContainsKey(objType);
+                    hasObjTypeNode = _nodes.ContainsKey(objType);
                 }
 
-                branch = new InjectionBranch(this, objType);
+                branch = new InjectionBranch(objType);
                 InitBranch(branch);
-
-#if DEBUG
-                foreach (var requiredInjectionType in _requiredInjectionTypes)
-                {
-                    if (requiredInjectionType.IsAssignableFrom(objType))
-                    {
-                        if (_nodes.ContainsKey(requiredInjectionType) == false)
-                        {
-                            throw new InjectionException($"A systems in the pipeline implements IEcsInject<{requiredInjectionType.Name}> interface, but no suitable injection node was found in the Injector. To create a node, use Injector.AddNode<{requiredInjectionType.Name}>() or implement the IInjectionUnit interface for type {objType.Name}.");
-                        }
-                    }
-                }
-#endif
             }
-            branch.Inject(raw);
+
+
+            var branchNodes = branch.Nodes;
+            for (int i = 0; i < branchNodes.Length; i++)
+            {
+                branchNodes[i].Inject(obj);
+            }
+            if (_injectionTempHistoryReadersCount > 0)
+            {
+                _injectionTempHistory.Add(obj);
+            }
+            if (obj is IInjectionBlock block)
+            {
+                block.InjectTo(this);
+            }
         }
         public void ExtractAllTo(object target)
         {
@@ -86,12 +134,11 @@ namespace DCFApixels.DragonECS
             }
             throw new InjectionException($"The injection graph is missing a node for {type.Name} type. To create a node, use the Injector.AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
         }
-        public void AddNode<T>()
+        public bool AddNode<T>()
         {
-            if (_nodes.ContainsKey(typeof(T)) == false)
-            {
-                InitNode(new InjectionNode<T>());
-            }
+            if (_nodes.ContainsKey(typeof(T))) { return false; }
+            InitNode(new InjectionNode<T>());
+            return true;
         }
         #endregion
 
@@ -126,71 +173,121 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-        private bool IsCanInstantiated(Type type)
-        {
-            return !type.IsAbstract && !type.IsInterface;
-        }
         #endregion
 
-        #region Build
-        private void Init(EcsPipeline pipeline)
+        #region InjectionList
+        public class InjectionList : IInjector
         {
-            if (_isInit) { Throw.Exception("Already initialized"); }
+            public static readonly InjectionList _Empty_Internal = new InjectionList();
 
-            _pipeline = pipeline;
-            foreach (var pair in _nodes)
+            private StructList<InjectionBase> _injections = new StructList<InjectionBase>(32);
+            private StructList<NodeBase> _nodes = new StructList<NodeBase>(32);
+            private EcsWorld _monoWorld;
+            public void AddNode<T>()
             {
-                pair.Value.Init(pipeline);
+                _nodes.Add(new Node<T>());
             }
-            _isInit = true;
-
-#if DEBUG
-            var systems = _pipeline.AllSystems;
-            var injectType = typeof(IEcsInject<>);
-            foreach (var system in systems)
+            public void Inject<T>(T obj)
             {
-                var type = system.GetType();
-                foreach (var requiredInjectionType in type.GetInterfaces().Where(o => o.IsGenericType && o.GetGenericTypeDefinition() == injectType).Select(o => o.GenericTypeArguments[0]))
+                FindMonoWorld(obj);
+                _injections.Add(new Injection<T>(obj));
+            }
+            public void Extract<T>(ref T obj) // TODO проверить
+            {
+                Type type = typeof(T);
+                for (int i = _injections.Count - 1; i >= 0; i--)
                 {
-                    _requiredInjectionTypes.Add(requiredInjectionType);
+                    var item = _injections[i];
+                    if (type.IsAssignableFrom(item.Type))
+                    {
+                        obj = (T)item.Raw;
+                        return;
+                    }
+                }
+                Throw.UndefinedException();
+            }
+            public void MergeWith(InjectionList other)
+            {
+                foreach (var item in other._injections)
+                {
+                    FindMonoWorld(item);
+                    _injections.Add(item);
+                }
+                foreach (var item in other._nodes)
+                {
+                    _nodes.Add(item);
                 }
             }
-#endif
-        }
-        private bool TryDeclare<T>()
-        {
-            Type type = typeof(T);
-            if (_nodes.ContainsKey(type))
+            public void InitInjectTo(Injector injector, EcsPipeline pipeline)
             {
-                return false;
-            }
-            InitNode(new InjectionNode<T>());
-#if !REFLECTION_DISABLED
-            if (IsCanInstantiated(type))
+#if DEBUG
+                HashSet<Type> requiredInjectionTypes = new HashSet<Type>();
+                var systems = pipeline.AllSystems;
+                var injectType = typeof(IEcsInject<>);
+                foreach (var system in systems)
+                {
+                    var type = system.GetType();
+                    foreach (var requiredInjectionType in type.GetInterfaces().Where(o => o.IsGenericType && o.GetGenericTypeDefinition() == injectType).Select(o => o.GenericTypeArguments[0]))
+                    {
+                        requiredInjectionTypes.Add(requiredInjectionType);
+                    }
+                }
+                var reader = injector.StartReadHistory();
 #endif
-            {
-                InitBranch(new InjectionBranch(this, type));
-            }
-            return true;
-        }
 
-        public class Builder : IInjector
-        {
-            private EcsPipeline.Builder _source;
-            private Injector _instance;
-            private List<InitInjectBase> _initInjections = new List<InitInjectBase>(16);
-            private EcsWorld _monoWorld;
-            internal Builder(EcsPipeline.Builder source)
-            {
-                _source = source;
-                _instance = new Injector();
+
+                var initInjectionCallbacks = pipeline.GetProcess<IOnInitInjectionComplete>();
+                foreach (var system in initInjectionCallbacks)
+                {
+                    system.OnBeforeInitInjection();
+                }
+
+                injector.Inject(pipeline);
+                injector.AddNode<object>();
+                InjectTo(injector, pipeline);
+
+                foreach (var system in initInjectionCallbacks)
+                {
+                    system.OnInitInjectionComplete();
+                }
+
+
+#if DEBUG
+                var injectionHistory = reader.StopReadAndGetHistorySpan();
+                foreach (var injection in injectionHistory)
+                {
+                    foreach (var node in injector.GetNodes(injection.GetType()))
+                    {
+                        requiredInjectionTypes.Remove(node.Type);
+                    }
+                }
+                if (requiredInjectionTypes.Count > 0)
+                {
+                    foreach (var requiredInjectionType in requiredInjectionTypes)
+                    {
+                        throw new InjectionException($"A systems in the pipeline implements IEcsInject<{requiredInjectionType.Name}> interface, but no suitable injection node was found in the Injector. To create a node, use Injector.AddNode<{requiredInjectionType.Name}>() or implement the IInjectionUnit interface for the type being injected.");
+                    }
+                }
+#endif
             }
-            public EcsPipeline.Builder AddNode<T>()
+            public void InjectTo(Injector injector, EcsPipeline pipeline)
             {
-                _instance.TryDeclare<T>();
-                return _source;
+                var monoWorldProcess = pipeline.GetProcess<IMonoWorldInject>(); // TODO Проверить IMonoWorldInject
+                foreach (var monoWorldSystem in monoWorldProcess)
+                {
+                    monoWorldSystem.World = _monoWorld;
+                }
+                foreach (var item in _nodes)
+                {
+                    item.AddNodeTo(injector);
+                }
+                foreach (var item in _injections)
+                {
+                    item.InjectTo(injector);
+                }
             }
-            public EcsPipeline.Builder Inject<T>(T obj)
+
+            private void FindMonoWorld(object obj)
             {
                 if (obj is EcsWorld objWorld)
                 {
@@ -216,55 +313,6 @@ namespace DCFApixels.DragonECS
                         }
                     }
                 }
-                _initInjections.Add(new InitInject<T>(obj));
-                return _source;
-            }
-            public EcsPipeline.Builder Extract<T>(ref T obj) // TODO проверить
-            {
-                Type type = typeof(T);
-                for (int i = _initInjections.Count - 1; i >= 0; i--)
-                {
-                    var item = _initInjections[i];
-                    if (type.IsAssignableFrom(item.Type))
-                    {
-                        obj = (T)item.Raw;
-                        return _source;
-                    }
-                }
-                Throw.UndefinedException();
-                return default;
-            }
-            public Injector Build(EcsPipeline pipeline)
-            {
-                var monoWorldProcess = pipeline.GetProcess<IMonoWorldInject>(); // TODO Проверить IMonoWorldInject
-                foreach (var monoWorldSystem in monoWorldProcess)
-                {
-                    monoWorldSystem.World = _monoWorld;
-                }
-
-
-                var initInjectionCallbacks = pipeline.GetProcess<IOnInitInjectionComplete>();
-                foreach (var system in initInjectionCallbacks)
-                {
-                    system.OnBeforeInitInjection();
-                }
-                _instance.Init(pipeline);
-                foreach (var item in _initInjections)
-                {
-                    item.InjectTo(_instance);
-                }
-                foreach (var system in initInjectionCallbacks)
-                {
-                    system.OnInitInjectionComplete();
-                }
-                return _instance;
-            }
-            public void Add(Builder other)
-            {
-                foreach (var item in other._initInjections)
-                {
-                    _initInjections.Add(item);
-                }
             }
 
             void IInjector.Inject<T>(T obj) { Inject(obj); }
@@ -275,24 +323,38 @@ namespace DCFApixels.DragonECS
                 return result;
             }
 
-            private abstract class InitInjectBase
+            private abstract class NodeBase
+            {
+                public abstract Type Type { get; }
+                public abstract void AddNodeTo(Injector instance);
+            }
+            private sealed class Node<T> : NodeBase
+            {
+                public override Type Type { get { return typeof(T); } }
+                public override void AddNodeTo(Injector instance)
+                {
+                    instance.AddNode<T>();
+                }
+            }
+
+            private abstract class InjectionBase
             {
                 public abstract Type Type { get; }
                 public abstract object Raw { get; }
                 public abstract void InjectTo(Injector instance);
             }
-            private sealed class InitInject<T> : InitInjectBase
+            private sealed class Injection<T> : InjectionBase
             {
                 private T _injectedData;
                 public override Type Type { get { return typeof(T); } }
                 public override object Raw { get { return _injectedData; } }
-                public InitInject(T injectedData)
+                public Injection(T injectedData)
                 {
                     _injectedData = injectedData;
                 }
                 public override void InjectTo(Injector instance)
                 {
-                    instance.Inject<T>(_injectedData);
+                    instance.Inject(_injectedData);
                 }
             }
         }

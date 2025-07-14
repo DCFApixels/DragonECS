@@ -78,11 +78,21 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        private EcsPipeline(IConfigContainer configs, Injector.Builder injectorBuilder, IEcsProcess[] systems)
+        public EcsPipeline(IEnumerable<IEcsProcess> systems, IConfigContainer configs = null, Injector.InjectionList injectionList = null)
         {
+            if(systems == null) { Throw.ArgumentNull(nameof(systems)); }
+
+            if(configs == null)
+            {
+                configs = new ConfigContainer();
+            }
+            if(injectionList == null)
+            {
+                injectionList = Injector.InjectionList._Empty_Internal;
+            }
+
             _configs = configs;
-            _allSystems = systems;
-            injectorBuilder.Inject(this);
+            _allSystems = systems.ToArray();
 
             var members = GetProcess<IEcsPipelineMember>();
             for (int i = 0; i < members.Length; i++)
@@ -90,8 +100,10 @@ namespace DCFApixels.DragonECS
                 members[i].Pipeline = this;
             }
 
-            _injector = injectorBuilder.Build(this);
+            _injector = new Injector(this);
+            injectionList.InitInjectTo(_injector, this);
         }
+
         ~EcsPipeline()
         {
             if (_isDestoryed) { return; }

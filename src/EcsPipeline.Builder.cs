@@ -34,15 +34,54 @@ namespace DCFApixels.DragonECS
             private int _freeNodesCount = 0;
 
             private readonly Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>(8);
-            private readonly List<InitDeclaredRunner> _initDeclaredRunners = new List<InitDeclaredRunner>(4);
+            private readonly StructList<InitDeclaredRunner> _initDeclaredRunners = new StructList<InitDeclaredRunner>(4);
 
             public readonly LayersMap Layers;
-            public readonly Injector.Builder Injector;
+            public readonly InitInjectionList Injections;
             public readonly Configurator Configs;
 
             private AddParams _defaultAddParams = new AddParams(BASIC_LAYER, 0, false);
 
             private HashSet<Type> _uniqueSystemsSet = new HashSet<Type>();
+
+
+            #region InitInjector
+            public readonly struct InitInjectionList
+            {
+                private readonly Builder _pipelineBuilder;
+                public readonly Injector.InjectionList Instance;
+                public InitInjectionList(Injector.InjectionList instance, Builder pipelineBuilder)
+                {
+                    Instance = instance;
+                    _pipelineBuilder = pipelineBuilder;
+                }
+                public Builder AddNode<T>()
+                {
+                    Instance.AddNode<T>();
+                    return _pipelineBuilder;
+                }
+                public Builder Inject<T>(T obj)
+                {
+                    Instance.Inject(obj);
+                    return _pipelineBuilder;
+                }
+                public Builder Extract<T>(ref T obj)
+                {
+                    Instance.Extract(ref obj);
+                    return _pipelineBuilder;
+                }
+                public Builder Merge(Injector.InjectionList other)
+                {
+                    Instance.MergeWith(other);
+                    return _pipelineBuilder;
+                }
+                public Builder Merge(InitInjectionList other)
+                {
+                    Instance.MergeWith(other.Instance);
+                    return _pipelineBuilder;
+                }
+            }
+            #endregion
 
             #region Properties
             //private ReadOnlySpan<SystemNode> SystemRecords
@@ -57,11 +96,12 @@ namespace DCFApixels.DragonECS
                 if (config == null) { config = new ConfigContainer(); }
                 Configs = new Configurator(config, this);
 
-                Injector = new Injector.Builder(this);
-                Injector.AddNode<object>();
-                Injector.AddNode<EcsWorld>();
-                Injector.AddNode<EcsAspect>();
-                Injector.AddNode<EcsPipeline>();
+                var injectorBuilder = new Injector.InjectionList();
+                Injections = new InitInjectionList(injectorBuilder, this);
+                Injections.AddNode<object>();
+                Injections.AddNode<EcsWorld>();
+                Injections.AddNode<EcsAspect>();
+                Injections.AddNode<EcsPipeline>();
 
                 var graph = new DependencyGraph<string>(BASIC_LAYER);
                 Layers = new LayersMap(graph, this, PRE_BEGIN_LAYER, BEGIN_LAYER, BASIC_LAYER, END_LAYER, POST_END_LAYER);
@@ -201,7 +241,7 @@ namespace DCFApixels.DragonECS
                     _defaultAddParams = oldDefaultAddParams;
                 }
 
-                Injector.Inject(module);
+                Injections.Inject(module);
                 return this;
             }
             #endregion
@@ -351,7 +391,7 @@ namespace DCFApixels.DragonECS
                     //}
                 }
 
-
+                
                 IEcsProcess[] allSystems = new IEcsProcess[allSystemsLength];
                 {
                     int i = 0;
@@ -368,7 +408,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
 
-                EcsPipeline pipeline = new EcsPipeline(Configs.Instance.GetContainer(), Injector, allSystems);
+                EcsPipeline pipeline = new EcsPipeline(allSystems, Configs.Instance.GetContainer(), Injections.Instance);
                 foreach (var item in _initDeclaredRunners)
                 {
                     item.Declare(pipeline);
@@ -395,7 +435,7 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Configurator
-            public class Configurator
+            public readonly struct Configurator
             {
                 private readonly IConfigContainerWriter _configs;
                 private readonly Builder _builder;
@@ -564,6 +604,8 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Obsolete
+            [Obsolete("Use " + nameof(Injections))]
+            public readonly InitInjectionList Injector;
             [Obsolete("Use LayersMap")]
             public class LayerList : LayersMap
             {
