@@ -114,7 +114,7 @@ namespace DCFApixels.DragonECS
         }
         public ReadOnlySpan<WorldComponentPoolAbstract> GetAllWorldComponents()
         {
-            return _worldComponentPools.ToReadOnlySpan();
+            return _worldComponentPools.AsReadOnlySpan();
         }
         public abstract class WorldComponentPoolAbstract
         {

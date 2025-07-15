@@ -12,8 +12,12 @@ namespace DCFApixels.DragonECS.Core.Internal
     [DebuggerDisplay("Count: {Count}")]
     internal struct StructList<T>
     {
+        internal readonly static bool _IsManaged = RuntimeHelpers.IsReferenceOrContainsReferences<T>();
+
         internal T[] _items;
         internal int _count;
+
+        #region Properties
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -29,6 +33,11 @@ namespace DCFApixels.DragonECS.Core.Internal
                 value = ArrayUtility.NextPow2(value);
                 Array.Resize(ref _items, value);
             }
+        }
+        public bool IsNull
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _items == null; }
         }
         public T this[int index]
         {
@@ -49,13 +58,16 @@ namespace DCFApixels.DragonECS.Core.Internal
                 _items[index] = value;
             }
         }
+        #endregion
 
+        #region Constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StructList(int capacity)
         {
             _items = new T[ArrayUtility.NextPow2(capacity)];
             _count = 0;
         }
+        #endregion
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(T item)
@@ -64,12 +76,22 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 Array.Resize(ref _items, _items.Length << 1);
             }
+            AddFixed(item);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddFixed(T item)
+        {
             _items[_count++] = item;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(T item)
         {
             return Array.IndexOf(_items, item, 0, _count);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Contains(T item)
+        {
+            return _count != 0 && IndexOf(item) >= 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SwapAt(int idnex1, int idnex2)
@@ -93,7 +115,10 @@ namespace DCFApixels.DragonECS.Core.Internal
             if (index < 0 || index >= _count) { Throw.ArgumentOutOfRange(); }
 #endif
             _items[index] = _items[--_count];
-            _items[_count] = default;
+            if (_IsManaged)
+            {
+                _items[_count] = default;
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveAtWithOrder(int index)
@@ -129,6 +154,56 @@ namespace DCFApixels.DragonECS.Core.Internal
             return false;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Peek()
+        {
+#if DEBUG
+            if (_count <= 0) { Throw.EmptyStack(); }
+#endif
+            return _items[_count - 1];
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryPeek(out T result)
+        {
+            if (_count <= 0)
+            {
+                result = default;
+                return false;
+            }
+            result = _items[_count - 1];
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Pop()
+        {
+#if DEBUG
+            if (_count <= 0) { Throw.EmptyStack(); }
+#endif
+
+            T result = _items[--_count];
+            if (_IsManaged)
+            {
+                _items[_count] = default;
+            }
+            return result;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryPop(out T result)
+        {
+            if (_count <= 0)
+            {
+                result = default;
+                return false;
+            }
+            result = _items[--_count];
+            if (_IsManaged)
+            {
+                _items[_count] = default;
+            }
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void FastClear()
         {
             _count = 0;
@@ -136,10 +211,22 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-            for (int i = 0; i < _count; i++)
+            if (_IsManaged)
             {
-                _items[i] = default;
+                Array.Clear(_items, 0, _count);
             }
+            _count = 0;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Recreate()
+        {
+            _items = new T[_items.Length];
+            _count = 0;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Recreate(int newSize)
+        {
+            _items = new T[ArrayUtility.NextPow2(newSize)];
             _count = 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -148,7 +235,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             return new ReadOnlySpan<T>(_items, 0, _count).GetEnumerator();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ReadOnlySpan<T> ToReadOnlySpan()
+        public ReadOnlySpan<T> AsReadOnlySpan()
         {
             return new ReadOnlySpan<T>(_items, 0, _count);
         }
@@ -156,6 +243,14 @@ namespace DCFApixels.DragonECS.Core.Internal
         public IEnumerable<T> ToEnumerable()
         {
             return _items.Take(_count);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T[] ToArray()
+        {
+            if (_count <= 0) { return Array.Empty<T>(); }
+            T[] result = new T[_count];
+            Array.Copy(_items, result, _count);
+            return result;
         }
     }
 }

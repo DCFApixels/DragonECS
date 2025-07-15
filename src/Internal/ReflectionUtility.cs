@@ -31,5 +31,9 @@ namespace DCFApixels.DragonECS.Core.Internal
         {
             return self.GetCustomAttribute<T>(inherit) != null;
         }
+        public static bool IsCanInstantiated(this Type type)
+        {
+            return !type.IsAbstract && !type.IsInterface;
+        }
     }
 }

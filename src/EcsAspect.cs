@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS
     }
     public interface IEcsAspect
     {
-        EcsMask Mask { get; set; }
+        EcsMask Mask { get; }
     }
 
     #region IEcsAspectExtensions tmp
@@ -143,7 +143,6 @@ namespace DCFApixels.DragonECS
         public EcsMask Mask
         {
             get { return _mask; }
-            set { }
         }
         public EcsWorld World
         {

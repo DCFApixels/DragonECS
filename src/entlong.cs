@@ -136,7 +136,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Unpacking
+        #region Unpacking Try
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetID(out int id)
         {
@@ -156,6 +156,90 @@ namespace DCFApixels.DragonECS
             return IsAlive;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(out int id)
+        {
+            id = _id;
+            return IsAlive;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(out int id, out EcsWorld world)
+        {
+            world = GetWorld_Internal();
+            id = _id;
+            return IsAlive;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(out int id, out short gen, out EcsWorld world)
+        {
+            world = GetWorld_Internal();
+            gen = _gen;
+            id = _id;
+            return IsAlive;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(out int id, out short worldID)
+        {
+            worldID = _world;
+            id = _id;
+            return IsAlive;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(out int id, out short gen, out short worldID)
+        {
+            worldID = _world;
+            gen = _gen;
+            id = _id;
+            return IsAlive;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(EcsWorld world, out int id)
+        {
+            if (world.ID != _world) { Throw.ArgumentDifferentWorldsException(); }
+            id = _id;
+            return world.IsAlive(_id, _gen);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(EcsWorld world, out int id, out short gen)
+        {
+            if (world.ID != _world) { Throw.ArgumentDifferentWorldsException(); }
+            gen = _gen;
+            id = _id;
+            return world.IsAlive(_id, _gen);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(EcsMask mask, out int id)
+        {
+            if (mask.WorldID != _world) { Throw.ArgumentDifferentWorldsException(); }
+            id = _id;
+            return mask.World.IsAlive(_id, _gen) && mask.World.IsMatchesMask(mask, _id);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(EcsMask mask, out int id, out short gen)
+        {
+            if (mask.WorldID != _world) { Throw.ArgumentDifferentWorldsException(); }
+            gen = _gen;
+            id = _id;
+            return mask.World.IsAlive(_id, _gen) && mask.World.IsMatchesMask(mask, _id);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(EcsAspect aspect, out int id)
+        {
+            if (aspect.World.ID != _world) { Throw.ArgumentDifferentWorldsException(); }
+            id = _id;
+            return aspect.World.IsAlive(_id, _gen) && aspect.IsMatches(_id);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryUnpack(EcsAspect aspect, out int id, out short gen)
+        {
+            if (aspect.World.ID != _world) { Throw.ArgumentDifferentWorldsException(); }
+            gen = _gen;
+            id = _id;
+            return aspect.World.IsAlive(_id, _gen) && aspect.IsMatches(_id);
+        }
+        #endregion
+
+        #region Unpacking/Deconstruct
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(out int id)
         {
@@ -238,46 +322,13 @@ namespace DCFApixels.DragonECS
             gen = _gen;
             id = _id;
         }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryUnpack(out int id)
-        {
-            id = _id;
-            return IsAlive;
-        }
+        public void Deconstruct(out int id, out short gen, out short worldID) { Unpack(out id, out gen, out worldID); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryUnpack(out int id, out EcsWorld world)
-        {
-            world = GetWorld_Internal();
-            id = _id;
-            return IsAlive;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryUnpack(out int id, out short gen, out EcsWorld world)
-        {
-            world = GetWorld_Internal();
-            gen = _gen;
-            id = _id;
-            return IsAlive;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryUnpack(out int id, out short worldID)
-        {
-            worldID = _world;
-            id = _id;
-            return IsAlive;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryUnpack(out int id, out short gen, out short worldID)
-        {
-            worldID = _world;
-            gen = _gen;
-            id = _id;
-            return IsAlive;
-        }
+        public void Deconstruct(out int id, out EcsWorld world) { Unpack(out id, out world); }
         #endregion
 
-        #region Unpacking
+        #region Unpacking Unchecked
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetIDUnchecked()
         {
@@ -350,13 +401,6 @@ namespace DCFApixels.DragonECS
         public static explicit operator entlong(long a) { return new entlong(a); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator int(entlong a) { return a.ID; }
-        #endregion
-
-        #region Deconstruct
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(out int id, out short gen, out short worldID) { Unpack(out id, out gen, out worldID); }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(out int id, out EcsWorld world) { Unpack(out id, out world); }
         #endregion
 
         #region Other
