@@ -2,6 +2,7 @@
 #undef DEBUG
 #endif
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace DCFApixels.DragonECS.Core.Internal
@@ -110,6 +111,21 @@ namespace DCFApixels.DragonECS.Core.Internal
         #endregion
 
         #region Realloc
+        public static Handler ReallocOrAlloc<T>(void* target, int newCount) where T : unmanaged
+        {
+            if (target == null) { return Alloc<T>(newCount); }
+            return Realloc<T>(Handler.FromDataPtr(target), Marshal.SizeOf<T>() * newCount);
+        }
+        public static Handler ReallocOrAlloc(void* target, int newByteLength)
+        {
+            if (target == null) { return Alloc(newByteLength); }
+            return Realloc(Handler.FromDataPtr(target), newByteLength);
+        }
+        public static Handler ReallocOrAlloc<T>(Handler target, int newCount) where T : unmanaged
+        {
+            if (target.IsEmpty) { return Alloc<T>(newCount); }
+            return Realloc_Internal(target, Marshal.SizeOf<T>() * newCount, typeof(T));
+        }
         public static Handler Realloc<T>(void* target, int newCount) where T : unmanaged
         {
             return Realloc<T>(Handler.FromDataPtr(target), Marshal.SizeOf<T>() * newCount);
@@ -332,6 +348,50 @@ namespace DCFApixels.DragonECS.Core.Internal
 #pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 #endif
             #endregion
+        }
+    }
+
+    internal ref struct AllocBuilder
+    {
+        //[ThreadStatic]
+        //private static Stack<AllocBuilder> _buildersPool;
+        //private AllocBuilder() { }
+        //public static AllocBuilder New()
+        //{
+        //    if (_buildersPool == null) { _buildersPool = new Stack<AllocBuilder>(4); }
+        //    if(_buildersPool.TryPop(out var result) == false)
+        //    {
+        //        result = new AllocBuilder();
+        //    }
+        //    return result;
+        //}
+
+        public static AllocBuilder New()
+        {
+            return new AllocBuilder(0);
+        }
+
+        private int _byteLength;
+        private AllocBuilder(int byteLength)
+        {
+            _byteLength = byteLength;
+        }
+        public void Add<T>(int count) where T : unmanaged
+        {
+            Add(Marshal.SizeOf<T>());
+        }
+        public void Add(int byteLength)
+        {
+            _byteLength += byteLength;
+        }
+
+        public MemoryAllocator.Handler Alloc()
+        {
+            return MemoryAllocator.Alloc(_byteLength);
+        }
+        public MemoryAllocator.Handler Realloc(MemoryAllocator.Handler handler)
+        {
+            return MemoryAllocator.Realloc(handler, _byteLength);
         }
     }
 
