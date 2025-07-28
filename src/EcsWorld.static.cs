@@ -241,6 +241,7 @@ namespace DCFApixels.DragonECS
                         {
                             Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
                         }
+                        _items[itemIndex] = default;
                         _recycledItems[_recycledItemsCount++] = itemIndex;
                         itemIndex = 0;
                     }
