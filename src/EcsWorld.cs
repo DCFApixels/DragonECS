@@ -1105,7 +1105,7 @@ namespace DCFApixels.DragonECS
         public ReadOnlySpan<object> GetComponentsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
-            ArrayUtility.UpsizeWithoutCopy(ref _componentIDsBuffer, count);
+            ArrayUtility.UpsizeWithoutCopy(ref _componentsBuffer, count);
 
             for (int i = 0; i < count; i++)
             {
