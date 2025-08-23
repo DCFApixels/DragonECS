@@ -45,6 +45,11 @@ namespace DCFApixels.DragonECS.PoolsCore
             throw new ArgumentException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowEntityIsNotAlive(EcsWorld world, int entityID)
+        {
+            Throw.Ent_ThrowIsNotAlive((world, entityID));
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowAlreadyHasComponent(Type type, int entityID)
         {
             throw new ArgumentException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName(type)}.");
@@ -316,7 +321,7 @@ namespace DCFApixels.DragonECS
             self.InvokeOnGet(entityID, self.Count);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        public static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
             for (int i = 1; i < cachedCount; i++) { self[i].OnGet(entityID); }
         }

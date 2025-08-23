@@ -182,7 +182,11 @@ namespace DCFApixels.DragonECS
 
                 if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
                 {
-                    worldID = (short)_worldIdDispenser.UseFree();
+                    int newID = _worldIdDispenser.UseFree();
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                    if (newID > short.MaxValue) { Throw.DeepDebugException(); }
+#endif
+                    worldID = (short)newID;
                 }
                 else
                 {
