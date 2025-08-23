@@ -45,7 +45,7 @@ namespace DCFApixels.DragonECS.PoolsCore
             throw new ArgumentException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowEntityIsNotAlive(EcsWorld world, int entityID)
+        public static void ThrowEntityIsNotAlive(EcsWorld world, int entityID)
         {
             Throw.Ent_ThrowIsNotAlive((world, entityID));
         }
