@@ -157,7 +157,7 @@ namespace DCFApixels.DragonECS.Core
             var slots = _world._poolSlots;
             for (int i = 1; i < _count; i++)
             {
-                if(_versions[i] == slots[_componentIDs[i]].version)
+                if (_versions[i] == slots[_componentIDs[i]].version)
                 {
                     return false;
                 }

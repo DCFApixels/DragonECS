@@ -94,7 +94,7 @@ namespace DCFApixels.DragonECS
         public EcsPool() { }
         public EcsPool(int capacity, int recycledCapacity = -1)
         {
-            capacity = ArrayUtility.NextPow2(capacity);
+            capacity = ArrayUtility.CeilPow2Safe(capacity);
             if (recycledCapacity < 0)
             {
                 recycledCapacity = capacity / 2;
@@ -113,7 +113,7 @@ namespace DCFApixels.DragonECS
             var worldConfig = world.Configs.GetWorldConfigOrDefault();
             if (_items == null)
             {
-                _items = new T[ArrayUtility.NextPow2(worldConfig.PoolComponentsCapacity)];
+                _items = new T[ArrayUtility.CeilPow2Safe(worldConfig.PoolComponentsCapacity)];
             }
             if (_recycledItems == null)
             {
@@ -128,8 +128,8 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
-            if (_source.IsUsed(entityID) == false) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_source, entityID); }
+            if (_source.IsUsed(entityID) == false) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_source, entityID); }
             if (itemIndex > 0) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
@@ -146,7 +146,7 @@ namespace DCFApixels.DragonECS
                 itemIndex = ++_itemsCount;
                 if (itemIndex >= _items.Length)
                 {
-                    Array.Resize(ref _items, _items.Length << 1);
+                    Array.Resize(ref _items, ArrayUtility.NextPow2(itemIndex));
                 }
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
@@ -179,7 +179,7 @@ namespace DCFApixels.DragonECS
         public ref T TryAddOrGet(int entityID)
         {
 #if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_source, entityID); }
 #endif
             ref int itemIndex = ref _mapping[entityID];
             if (itemIndex <= 0)
@@ -199,7 +199,7 @@ namespace DCFApixels.DragonECS
                     itemIndex = ++_itemsCount;
                     if (itemIndex >= _items.Length)
                     {
-                        Array.Resize(ref _items, _items.Length << 1);
+                        Array.Resize(ref _items, ArrayUtility.NextPow2(itemIndex));
                     }
                 }
                 _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
@@ -222,7 +222,7 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_source, entityID); }
             if (itemIndex <= 0) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
@@ -232,7 +232,7 @@ namespace DCFApixels.DragonECS
             DisableComponent(ref _items[itemIndex]);
             if (_recycledItemsCount >= _recycledItems.Length)
             {
-                Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
+                Array.Resize(ref _recycledItems, ArrayUtility.NextPow2Safe(_recycledItemsCount));
             }
             _recycledItems[_recycledItemsCount++] = itemIndex;
             itemIndex = 0;

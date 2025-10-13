@@ -75,7 +75,7 @@ namespace DCFApixels.DragonECS
             get { return _anys; }
         }
         public EcsMaskFlags Flags
-        { 
+        {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _flags; }
         }
@@ -876,7 +876,7 @@ namespace DCFApixels.DragonECS
                             }
                         }
 
-                        if(_sortAnyChunckBuffer.Length != 0)
+                        if (_sortAnyChunckBuffer.Length != 0)
                         {
                             for (int i = 0; i < _sortAnyChunckBuffer.Length; i++)
                             {

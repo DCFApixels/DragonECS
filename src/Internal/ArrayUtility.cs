@@ -144,7 +144,19 @@ namespace DCFApixels.DragonECS.Core.Internal
             array = result;
         }
 
+        public static int NextPow2Safe(int v, int min = 4)
+        {
+            return NextPow2(v < min ? min : v);
+        }
         public static int NextPow2(int v)
+        {
+            return CeilPow2(v | 1);
+        }
+        public static int CeilPow2Safe(int v, int min = 4)
+        {
+            return CeilPow2(v < min ? min : v);
+        }
+        public static int CeilPow2(int v)
         {
             unchecked
             {
@@ -157,7 +169,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 return ++v;
             }
         }
-        public static int NextPow2_ClampOverflow(int v)
+        public static int CeilPow2_ClampOverflow(int v)
         {
             unchecked
             {
@@ -166,7 +178,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 {
                     return int.MaxValue;
                 }
-                return NextPow2(v);
+                return CeilPow2(v);
             }
         }
 
@@ -205,19 +217,18 @@ namespace DCFApixels.DragonECS.Core.Internal
                 Array.Resize(ref array, minSize);
             }
         }
-        public static void UpsizeToNextPow2<T>(ref T[] array, int minSize)
-        {
-            if (array == null)
-            {
-                minSize = NextPow2(minSize);
-                array = new T[minSize];
-            }
-            else if (minSize > array.Length)
-            {
-                minSize = NextPow2(minSize);
-                Array.Resize(ref array, minSize);
-            }
-        }
+        //public static void UpsizeToCeilPow2<T>(ref T[] array, int newSize, int minSize = 4)
+        //{
+        //    newSize = CeilPow2(newSize < minSize ? minSize : newSize);
+        //    if (array == null)
+        //    {
+        //        array = new T[newSize];
+        //    }
+        //    else if (newSize > array.Length)
+        //    {
+        //        Array.Resize(ref array, newSize);
+        //    }
+        //}
     }
     internal readonly struct EnumerableInt : IEnumerable<int>
     {

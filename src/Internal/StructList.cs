@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             set
             {
                 if (value <= _items.Length) { return; }
-                value = ArrayUtility.NextPow2(value);
+                value = ArrayUtility.CeilPow2Safe(value);
                 Array.Resize(ref _items, value);
             }
         }
@@ -64,7 +64,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StructList(int capacity)
         {
-            _items = new T[ArrayUtility.NextPow2(capacity)];
+            _items = new T[ArrayUtility.CeilPow2Safe(capacity)];
             _count = 0;
         }
         #endregion
@@ -226,7 +226,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Recreate(int newSize)
         {
-            _items = new T[ArrayUtility.NextPow2(newSize)];
+            _items = new T[ArrayUtility.CeilPow2Safe(newSize)];
             _count = 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

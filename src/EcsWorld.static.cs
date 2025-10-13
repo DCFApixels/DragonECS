@@ -202,7 +202,7 @@ namespace DCFApixels.DragonECS
 
                             if (_items.Length <= itemIndex)
                             {
-                                Array.Resize(ref _items, _items.Length << 1);
+                                Array.Resize(ref _items, ArrayUtility.NextPow2(itemIndex));
                             }
 
 #if DEBUG
@@ -234,14 +234,21 @@ namespace DCFApixels.DragonECS
                         Array.Resize(ref _mapping, _worlds.Length);
                     }
                     ref short itemIndex = ref _mapping[worldID];
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                    if (itemIndex >= _worlds.Length)
+                    {
+                        Throw.UndefinedException();
+                    }
+#endif
                     if (itemIndex != 0)
                     {
                         _interface.OnDestroy(ref _items[itemIndex], _worlds[worldID]);
                         if (_recycledItemsCount >= _recycledItems.Length)
                         {
-                            Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
+                            Array.Resize(ref _recycledItems, ArrayUtility.NextPow2(_recycledItemsCount));
                         }
                         _recycledItems[_recycledItemsCount++] = itemIndex;
+                        _items[itemIndex] = default;
                         itemIndex = 0;
                     }
                 }

@@ -442,7 +442,7 @@ namespace DCFApixels.DragonECS
         {
             if (++_count >= _dense.Length)
             {
-                Array.Resize(ref _dense, ArrayUtility.NextPow2(_count << 1));
+                Array.Resize(ref _dense, ArrayUtility.NextPow2(_count));
             }
             _dense[_count] = entityID;
 
@@ -576,7 +576,7 @@ namespace DCFApixels.DragonECS
         {
             if (minSize >= _dense.Length)
             {
-                Array.Resize(ref _dense, ArrayUtility.NextPow2_ClampOverflow(minSize));
+                Array.Resize(ref _dense, ArrayUtility.CeilPow2_ClampOverflow(minSize));
             }
         }
 
@@ -663,7 +663,7 @@ namespace DCFApixels.DragonECS
         {
             if (dynamicBuffer.Length < _count)
             {
-                Array.Resize(ref dynamicBuffer, ArrayUtility.NextPow2(_count));
+                Array.Resize(ref dynamicBuffer, ArrayUtility.CeilPow2(_count));
             }
             int i = 0;
             foreach (var e in this)

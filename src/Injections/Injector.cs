@@ -16,7 +16,7 @@ namespace DCFApixels.DragonECS
         private readonly Dictionary<Type, InjectionNodeBase> _nodes = new Dictionary<Type, InjectionNodeBase>(32);
         private ReadOnlySpan<InjectionNodeBase> GetNodes(Type type)
         {
-            if(_branches.TryGetValue(type, out InjectionBranch branch))
+            if (_branches.TryGetValue(type, out InjectionBranch branch))
             {
                 return branch.Nodes;
             }
@@ -34,7 +34,7 @@ namespace DCFApixels.DragonECS
         private ReadOnlySpan<object> EndReadHistory_Internal(int startIndex)
         {
             _injectionTempHistoryReadersCount--;
-            if(_injectionTempHistoryReadersCount < 0)
+            if (_injectionTempHistoryReadersCount < 0)
             {
                 Throw.OpeningClosingMethodsBalanceError();
             }
@@ -45,7 +45,7 @@ namespace DCFApixels.DragonECS
             }
             return result;
         }
-        public readonly struct InjectionHistorySpanReader 
+        public readonly struct InjectionHistorySpanReader
         {
             private readonly Injector _injector;
             private readonly int _startIndex;

@@ -182,7 +182,11 @@ namespace DCFApixels.DragonECS
 
                 if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
                 {
-                    worldID = (short)_worldIdDispenser.UseFree();
+                    int newID = _worldIdDispenser.UseFree();
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                    if (newID > short.MaxValue) { Throw.DeepDebugException(); }
+#endif
+                    worldID = (short)newID;
                 }
                 else
                 {
@@ -201,12 +205,12 @@ namespace DCFApixels.DragonECS
 
                 _poolsMediator = new PoolsMediator(this);
 
-                int poolsCapacity = ArrayUtility.NextPow2(config.PoolsCapacity);
+                int poolsCapacity = ArrayUtility.CeilPow2Safe(config.PoolsCapacity);
                 _pools = new IEcsPoolImplementation[poolsCapacity];
                 _poolSlots = new PoolSlot[poolsCapacity];
                 ArrayUtility.Fill(_pools, _nullPool);
 
-                int entitiesCapacity = ArrayUtility.NextPow2(config.EntitiesCapacity);
+                int entitiesCapacity = ArrayUtility.CeilPow2Safe(config.EntitiesCapacity);
                 _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
 
                 _executorCoures = new Dictionary<(Type, object), IQueryExecutorImplementation>(config.PoolComponentsCapacity);
@@ -566,12 +570,12 @@ namespace DCFApixels.DragonECS
                             count++;
                         }
                     }
-                    if(count == 0)
+                    if (count == 0)
                     {
                         return false;
                     }
                 }
-                
+
                 return true;
             }
             bool deepDebug = IsMatchesMaskDeepDebug(mask, entityID);
@@ -1105,7 +1109,7 @@ namespace DCFApixels.DragonECS
         public ReadOnlySpan<object> GetComponentsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
-            ArrayUtility.UpsizeWithoutCopy(ref _componentIDsBuffer, count);
+            ArrayUtility.UpsizeWithoutCopy(ref _componentsBuffer, count);
 
             for (int i = 0; i < count; i++)
             {

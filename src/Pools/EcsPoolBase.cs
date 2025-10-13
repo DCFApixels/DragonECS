@@ -45,6 +45,11 @@ namespace DCFApixels.DragonECS.PoolsCore
             throw new ArgumentException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName<T>()}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void ThrowEntityIsNotAlive(EcsWorld world, int entityID)
+        {
+            Throw.Ent_ThrowIsNotAlive((world, entityID));
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowAlreadyHasComponent(Type type, int entityID)
         {
             throw new ArgumentException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName(type)}.");
@@ -316,7 +321,7 @@ namespace DCFApixels.DragonECS
             self.InvokeOnGet(entityID, self.Count);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        public static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
             for (int i = 1; i < cachedCount; i++) { self[i].OnGet(entityID); }
         }
@@ -336,17 +341,17 @@ namespace DCFApixels.DragonECS
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnAdd(this StructList<IEcsPoolEventListener> self, int entityID)
+        internal static void InvokeOnAdd(ref this StructList<IEcsPoolEventListener> self, int entityID)
         {
             for (int i = 0; i < self.Count; i++) { self[i].OnAdd(entityID); }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnAdd(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        internal static void InvokeOnAdd(ref this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
             for (int i = 0; i < cachedCount; i++) { self[i].OnAdd(entityID); }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnAddAndGet(this StructList<IEcsPoolEventListener> self, int entityID)
+        internal static void InvokeOnAddAndGet(ref this StructList<IEcsPoolEventListener> self, int entityID)
         {
             for (int i = 0; i < self.Count; i++)
             {
@@ -355,7 +360,7 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnAddAndGet(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        internal static void InvokeOnAddAndGet(ref this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
             for (int i = 0; i < cachedCount; i++)
             {
@@ -364,22 +369,22 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnGet(this StructList<IEcsPoolEventListener> self, int entityID)
+        internal static void InvokeOnGet(ref this StructList<IEcsPoolEventListener> self, int entityID)
         {
             for (int i = 1; i < self.Count; i++) { self[i].OnGet(entityID); }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnGet(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        internal static void InvokeOnGet(ref this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
             for (int i = 1; i < cachedCount; i++) { self[i].OnGet(entityID); }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnDel(this StructList<IEcsPoolEventListener> self, int entityID)
+        internal static void InvokeOnDel(ref this StructList<IEcsPoolEventListener> self, int entityID)
         {
             for (int i = 0; i < self.Count; i++) { self[i].OnDel(entityID); }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnDel(this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
+        internal static void InvokeOnDel(ref this StructList<IEcsPoolEventListener> self, int entityID, int cachedCount)
         {
             for (int i = 0; i < cachedCount; i++) { self[i].OnDel(entityID); }
         }

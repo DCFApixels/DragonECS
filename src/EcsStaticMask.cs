@@ -457,9 +457,9 @@ namespace DCFApixels.DragonECS
                     combinedIncs = combinerBuilder._incsSet;
                     combinedExcs = combinerBuilder._excsSet;
                     combinedAnys = combinerBuilder._anysSet;
-                    combinedIncs.Union(_incsSet);
-                    combinedExcs.Union(_excsSet);
-                    combinedAnys.Union(_anysSet);
+                    combinedIncs.UnionWith(_incsSet);
+                    combinedExcs.UnionWith(_excsSet);
+                    combinedAnys.UnionWith(_anysSet);
 
                     if (_sortedCombinedChecker == false)
                     {

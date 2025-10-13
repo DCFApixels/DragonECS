@@ -245,7 +245,7 @@ namespace DCFApixels.DragonECS
                     Configs.Instance.Set(config.Key, config.Value);
                 }
                 Layers.MergeWith(other.Layers);
-                
+
                 foreach (ref readonly SystemNode otherRecord in new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex))
                 {
                     AddNode_Internal(otherRecord.system, otherRecord.layerName, otherRecord.sortOrder, otherRecord.isUnique);
@@ -351,7 +351,7 @@ namespace DCFApixels.DragonECS
                     //}
                 }
 
-                
+
                 IEcsProcess[] allSystems = new IEcsProcess[allSystemsLength];
                 {
                     int i = 0;

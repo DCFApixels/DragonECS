@@ -61,7 +61,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 if (_debugInfos.Length <= _idDispenser.Count)
                 {
-                    Array.Resize(ref _debugInfos, _debugInfos.Length << 1);
+                    Array.Resize(ref _debugInfos, ArrayUtility.NextPow2(_idDispenser.Count));
                 }
                 id = _idDispenser.UseFree();
             }
