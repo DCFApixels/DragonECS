@@ -201,7 +201,9 @@ namespace DCFApixels.DragonECS
                     CheckCache(translationCallback);
                     for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
                     {
+#if !DRAGONECS_DISABLE_PROFILER_MARKERS
                         _markers[i].Begin();
+#endif
                         try
                         {
                             translationCallback(_process[i]);
@@ -214,7 +216,9 @@ namespace DCFApixels.DragonECS
                             EcsDebug.PrintError(e);
 #endif
                         }
+#if !DRAGONECS_DISABLE_PROFILER_MARKERS
                         _markers[i].End();
+#endif
                     }
 #else
                     foreach (var item in _process)
@@ -242,7 +246,9 @@ namespace DCFApixels.DragonECS
                     CheckCache(translationCallback);
                     for (int i = 0, n = _process.Length < _markers.Length ? _process.Length : _markers.Length; i < n; i++)
                     {
+#if !DRAGONECS_DISABLE_PROFILER_MARKERS
                         _markers[i].Begin();
+#endif
                         try
                         {
                             translationCallback(_process[i], ref data);
@@ -255,7 +261,9 @@ namespace DCFApixels.DragonECS
                             EcsDebug.PrintError(e);
 #endif
                         }
+#if !DRAGONECS_DISABLE_PROFILER_MARKERS
                         _markers[i].End();
+#endif
                     }
 #else
                     foreach (var item in _process)
@@ -370,7 +378,9 @@ namespace DCFApixels.DragonECS
                     for (int i = 0, n = _pairs.Length < _markers.Length ? _pairs.Length : _markers.Length; i < n; i++)
                     {
                         var pair = _pairs[i];
+#if !DRAGONECS_DISABLE_PROFILER_MARKERS
                         _markers[i].Begin();
+#endif
                         try
                         {
                             translationCallback(pair.run);
@@ -390,7 +400,9 @@ namespace DCFApixels.DragonECS
                                 translationFinnalyCallback(pair.runFinally);
                             }
                         }
+#if !DRAGONECS_DISABLE_PROFILER_MARKERS
                         _markers[i].End();
+#endif
                     }
 #else
                     foreach (var item in _pairs)
@@ -426,7 +438,9 @@ namespace DCFApixels.DragonECS
                     for (int i = 0, n = _pairs.Length < _markers.Length ? _pairs.Length : _markers.Length; i < n; i++)
                     {
                         var pair = _pairs[i];
+#if !DRAGONECS_DISABLE_PROFILER_MARKERS
                         _markers[i].Begin();
+#endif
                         try
                         {
                             translationCallback(pair.run, ref data);
@@ -446,7 +460,9 @@ namespace DCFApixels.DragonECS
                                 translationFinnalyCallback(pair.runFinally, ref data);
                             }
                         }
+#if !DRAGONECS_DISABLE_PROFILER_MARKERS
                         _markers[i].End();
+#endif
                     }
 #else
                     foreach (var pair in _pairs)

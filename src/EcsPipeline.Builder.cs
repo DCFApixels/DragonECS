@@ -307,7 +307,7 @@ namespace DCFApixels.DragonECS
 #endif
             public EcsPipeline Build()
             {
-#if DEBUG
+#if DEBUG && !DRAGONECS_DISABLE_PROFILER_MARKERS
                 _buildMarker.Begin();
 #endif
                 var it = new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
@@ -373,7 +373,7 @@ namespace DCFApixels.DragonECS
                 {
                     item.Declare(pipeline);
                 }
-#if DEBUG
+#if DEBUG && !DRAGONECS_DISABLE_PROFILER_MARKERS
                 _buildMarker.End();
 #endif
                 return pipeline;

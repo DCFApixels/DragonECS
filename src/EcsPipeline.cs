@@ -208,7 +208,7 @@ namespace DCFApixels.DragonECS
                 EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been initialized");
                 return;
             }
-#if DEBUG
+#if DEBUG && !DRAGONECS_DISABLE_PROFILER_MARKERS
             _initMarker.Begin();
 #endif
 
@@ -219,7 +219,7 @@ namespace DCFApixels.DragonECS
             _isInit = true;
 
             GC.Collect();
-#if DEBUG
+#if DEBUG && !DRAGONECS_DISABLE_PROFILER_MARKERS
             _initMarker.End();
 #endif
         }

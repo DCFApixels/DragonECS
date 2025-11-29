@@ -142,7 +142,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             for (int i = 0, n = _pairs.Length < _markers.Length ? _pairs.Length : _markers.Length; i < n; i++)
             {
                 var pair = _pairs[i];
+#if !DRAGONECS_DISABLE_PROFILER_MARKERS
                 _markers[i].Begin();
+#endif
                 try
                 {
                     pair.run.Run();
@@ -159,7 +161,9 @@ namespace DCFApixels.DragonECS.Core.Internal
                 {
                     pair.cleanup?.RunFinally();
                 }
+#if !DRAGONECS_DISABLE_PROFILER_MARKERS
                 _markers[i].End();
+#endif
             }
 #else
             foreach (var item in Process)
