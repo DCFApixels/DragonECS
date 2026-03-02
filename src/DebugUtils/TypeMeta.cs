@@ -623,5 +623,13 @@ namespace DCFApixels.DragonECS
             #endregion
         }
         #endregion
+        
+        internal static void Clear()
+        {
+            lock (_lock)
+            {
+                _metaCache.Clear();
+            }
+        }
     }
 }

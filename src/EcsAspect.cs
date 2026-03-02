@@ -467,6 +467,11 @@ namespace DCFApixels.DragonECS
         public delegate void OnBuildApectHandler(object aspect, EcsMask mask);
         public static event OnBuildApectHandler OnAfterInit = delegate { };
         #endregion
+        
+        internal static void Clear()
+        {
+            _staticMaskCache.Clear();
+        }
     }
 
     #region EcsAspect.Builder.Extensions

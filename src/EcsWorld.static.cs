@@ -346,5 +346,10 @@ namespace DCFApixels.DragonECS
             return FindPoolInstance(componentType);
         }
         #endregion
+        
+        internal static void Clear()
+        {
+            _allWorldComponentPools.Clear();
+        }
     }
 }
