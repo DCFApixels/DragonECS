@@ -239,6 +239,7 @@ namespace DCFApixels.DragonECS
                 {
                     DelEntity(Entities[i]);
                 }
+                ReleaseDelEntityBufferAll();
 
                 _isDestroyed = true;
                 _listeners.InvokeOnWorldDestroy();
