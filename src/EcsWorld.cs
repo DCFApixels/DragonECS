@@ -234,6 +234,12 @@ namespace DCFApixels.DragonECS
 #endif
                     return;
                 }
+
+                for (int i = Entities.Count - 1; i >= 0; i--)
+                {
+                    DelEntity(Entities[i]);
+                }
+
                 _isDestroyed = true;
                 _listeners.InvokeOnWorldDestroy();
                 _entityDispenser = null;
@@ -253,7 +259,6 @@ namespace DCFApixels.DragonECS
                 //_entities - не обнуляется для работы entlong.IsAlive
             }
         }
-        //public void Clear() { }
         #endregion
 
         #region Getters
