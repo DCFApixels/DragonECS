@@ -234,14 +234,14 @@ namespace DCFApixels.DragonECS
 #endif
                     return;
                 }
+
+                for (int i = Entities.Count - 1; i >= 0; i--)
+                {
+                    DelEntity(Entities[i]);
+                }
+
                 _isDestroyed = true;
                 _listeners.InvokeOnWorldDestroy();
-                foreach (var e in Entities)
-                {
-                    var count = GetComponentTypeIDsFor_Internal(e, ref _componentIDsBuffer);
-                    var span = _componentIDsBuffer.AsSpan(0, count);
-                    RemoveComponents(e, span);
-                }
                 _entityDispenser = null;
                 _pools = null;
                 _nullPool = null;
@@ -259,7 +259,6 @@ namespace DCFApixels.DragonECS
                 //_entities - не обнуляется для работы entlong.IsAlive
             }
         }
-        //public void Clear() { }
         #endregion
 
         #region Getters
