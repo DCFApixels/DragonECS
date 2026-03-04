@@ -102,11 +102,6 @@ namespace DCFApixels.DragonECS
         {
             return GetAllConfigs().GetEnumerator();
         }
-        
-        internal static void Clear()
-        {
-            Empty._storage.Clear();
-        }
     }
     public static class ConfigContainerExtensions
     {

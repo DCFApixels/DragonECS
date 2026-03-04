@@ -411,6 +411,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        public static void ClearCache()
+        {
+            _staticMaskCache.Clear();
+        }
         EcsMask IComponentMask.ToMask(EcsWorld world) { return _mask; }
         #endregion
 
@@ -467,11 +471,6 @@ namespace DCFApixels.DragonECS
         public delegate void OnBuildApectHandler(object aspect, EcsMask mask);
         public static event OnBuildApectHandler OnAfterInit = delegate { };
         #endregion
-        
-        internal static void Clear()
-        {
-            _staticMaskCache.Clear();
-        }
     }
 
     #region EcsAspect.Builder.Extensions

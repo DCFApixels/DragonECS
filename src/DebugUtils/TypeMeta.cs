@@ -370,6 +370,14 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        public static void ClearCache()
+        {
+            lock (_lock)
+            {
+                _metaCache.Clear();
+                _metaCache.Add(typeof(void), NullTypeMeta);
+            }
+        }
         ITypeMeta ITypeMeta.BaseMeta
         {
             get { return null; }
@@ -623,13 +631,5 @@ namespace DCFApixels.DragonECS
             #endregion
         }
         #endregion
-        
-        internal static void Clear()
-        {
-            lock (_lock)
-            {
-                _metaCache.Clear();
-            }
-        }
     }
 }

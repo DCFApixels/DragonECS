@@ -147,10 +147,7 @@ namespace DCFApixels.DragonECS
             private static short _recycledItemsCount;
             private static readonly IEcsWorldComponent<T> _interface = EcsWorldComponentHandler<T>.instance;
             private static readonly Abstract _controller = new Abstract();
-            static WorldComponentPool()
-            {
-                _allWorldComponentPools.Add(_controller);
-            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetItem(int itemIndex)
             {// ts
@@ -346,10 +343,5 @@ namespace DCFApixels.DragonECS
             return FindPoolInstance(componentType);
         }
         #endregion
-        
-        internal static void Clear()
-        {
-            _allWorldComponentPools.Clear();
-        }
     }
 }
