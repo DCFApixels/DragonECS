@@ -175,10 +175,6 @@ namespace DCFApixels.DragonECS
                 // тут сложно однозначно посчитать, так как нужно еще место под аспекты и запросы
                 int controllersCount = config.PoolsCapacity * 4;
                 _worldComponentPools = new StructList<WorldComponentPoolAbstract>(controllersCount);
-                if (controllersCount < _allWorldComponentPools.Capacity)
-                {
-                    _allWorldComponentPools.Capacity = controllersCount;
-                }
 
                 if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
                 {

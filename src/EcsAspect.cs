@@ -411,6 +411,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        public static void ClearCache()
+        {
+            _staticMaskCache.Clear();
+        }
         EcsMask IComponentMask.ToMask(EcsWorld world) { return _mask; }
         #endregion
 
