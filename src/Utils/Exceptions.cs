@@ -139,12 +139,12 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Quiery_ArgumentDifferentWorldsException()
         {
-            throw new ArgumentException("The groups belong to different worlds.");
+            ArgumentDifferentWorldsException();
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ArgumentDifferentWorldsException()
         {
-            throw new ArgumentException("The groups belong to different worlds.");
+            throw new ArgumentException("World ID mismatch: the expected and actual world identifiers do not match.");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
