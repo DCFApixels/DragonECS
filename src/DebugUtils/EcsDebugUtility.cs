@@ -322,7 +322,11 @@ namespace DCFApixels.DragonECS
 #endif
             return EcsDebugUtility.GetTypeMeta(self);
         }
-        public static TypeMeta ToMeta(this Type self)
+        public static TypeMeta GetMeta(this Type self)
+        {
+            return EcsDebugUtility.GetTypeMeta(self);
+        }
+        public static TypeMeta GetMeta(this RuntimeTypeHandle self)
         {
             return EcsDebugUtility.GetTypeMeta(self);
         }
