@@ -46,7 +46,7 @@ namespace DCFApixels.DragonECS
         public static readonly TypeMeta NullTypeMeta;
 
         private static readonly object _lock = new object();
-        private static readonly Dictionary<Type, TypeMeta> _metaCache = new Dictionary<Type, TypeMeta>();
+        private static readonly Dictionary<RuntimeTypeHandle, TypeMeta> _metaCache = new Dictionary<RuntimeTypeHandle, TypeMeta>();
         private static int _increment = 1;
 
         private readonly int _uniqueID;
@@ -93,16 +93,17 @@ namespace DCFApixels.DragonECS
 
                 _initFlags = InitFlag.All,
             };
-            _metaCache.Add(typeof(void), NullTypeMeta);
+            _metaCache.Add(typeof(void).TypeHandle, NullTypeMeta);
         }
-        public static TypeMeta Get(Type type)
+        public static TypeMeta Get(Type type) { return Get(type.TypeHandle); }
+        public static TypeMeta Get(RuntimeTypeHandle typeHandle)
         {
             lock (_lock) //TODO посмотреть можно ли тут убрать лок
             {
-                if (_metaCache.TryGetValue(type, out TypeMeta result) == false)
+                if (_metaCache.TryGetValue(typeHandle, out TypeMeta result) == false)
                 {
-                    result = new TypeMeta(type);
-                    _metaCache.Add(type, result);
+                    result = new TypeMeta(Type.GetTypeFromHandle(typeHandle));
+                    _metaCache.Add(typeHandle, result);
                 }
                 return result;
             }
@@ -375,7 +376,7 @@ namespace DCFApixels.DragonECS
             lock (_lock)
             {
                 _metaCache.Clear();
-                _metaCache.Add(typeof(void), NullTypeMeta);
+                _metaCache.Add(typeof(void).TypeHandle, NullTypeMeta);
             }
         }
         ITypeMeta ITypeMeta.BaseMeta
@@ -395,7 +396,7 @@ namespace DCFApixels.DragonECS
         {
             if (IsHasCustomMeta(type))
             {
-                meta = type.ToMeta();
+                meta = type.GetMeta();
                 return true;
             }
             meta = null;
@@ -466,15 +467,6 @@ namespace DCFApixels.DragonECS
             {
                 _meta = meta;
             }
-        }
-        #endregion
-
-        #region Obsolete
-        [Obsolete("Use TryGetCustomMeta(type)")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static bool IsHasMeta(Type type)
-        {
-            return IsHasCustomMeta(type);
         }
         #endregion
 

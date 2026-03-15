@@ -34,6 +34,7 @@ namespace DCFApixels.DragonECS
     {
         public readonly int ID;
         public readonly short WorldID;
+        public readonly EcsWorld World;
 
         internal readonly EcsStaticMask _staticMask;
         internal readonly EcsMaskChunck[] _incChunckMasks;
@@ -51,11 +52,6 @@ namespace DCFApixels.DragonECS
         private EcsMaskIterator _iterator;
 
         #region Properties
-        public EcsWorld World
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return EcsWorld.GetWorld(WorldID); }
-        }
         /// <summary> Sorted set excluding constraints. </summary>
         public ReadOnlySpan<int> Incs
         {
@@ -73,6 +69,25 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _anys; }
+        }
+
+        /// <summary> Sorted set including constraints presented as global type codes. </summary>
+        public ReadOnlySpan<EcsTypeCode> IncTypeCodes
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ToStatic().IncTypeCodes; }
+        }
+        /// <summary> Sorted set excluding constraints presented as global type codes. </summary>
+        public ReadOnlySpan<EcsTypeCode> ExcTypeCodes
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ToStatic().ExcTypeCodes; }
+        }
+        /// <summary> Sorted set any constraints presented as global type codes. </summary>
+        public ReadOnlySpan<EcsTypeCode> AnyTypeCodes
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ToStatic().AnyTypeCodes; }
         }
         public EcsMaskFlags Flags
         {
@@ -116,6 +131,7 @@ namespace DCFApixels.DragonECS
             _staticMask = staticMask;
             ID = id;
             WorldID = worldID;
+            World = EcsWorld.GetWorld(worldID);
             _flags = staticMask.Flags;
 
             EcsWorld world = EcsWorld.GetWorld(worldID);
@@ -345,8 +361,6 @@ namespace DCFApixels.DragonECS
 
             internal EcsMask ConvertFromStatic(EcsStaticMask staticMask)
             {
-
-
                 if (_staticMasks.TryGetValue(staticMask.ID, out EcsMask result) == false)
                 {
                     result = new EcsMask(staticMask, _staticMasks.Count, _world.ID);
@@ -367,20 +381,42 @@ namespace DCFApixels.DragonECS
                 _world = world;
                 _builder = EcsStaticMask.New();
             }
-
+            public Builder Inc() { return this; }
+            public Builder Exc() { return this; }
+            public Builder Any() { return this; }
             public Builder Inc<T>() { _builder.Inc<T>(); return this; }
             public Builder Exc<T>() { _builder.Exc<T>(); return this; }
             public Builder Any<T>() { _builder.Any<T>(); return this; }
             public Builder Inc(Type type) { _builder.Inc(type); return this; }
             public Builder Exc(Type type) { _builder.Exc(type); return this; }
             public Builder Any(Type type) { _builder.Any(type); return this; }
+            public Builder Inc(params Type[] types) { _builder.Inc(types); return this; }
+            public Builder Exc(params Type[] types) { _builder.Exc(types); return this; }
+            public Builder Any(params Type[] types) { _builder.Any(types); return this; }
+            public Builder Inc(ReadOnlySpan<Type> types) { _builder.Inc(types); return this; }
+            public Builder Exc(ReadOnlySpan<Type> types) { _builder.Exc(types); return this; }
+            public Builder Any(ReadOnlySpan<Type> types) { _builder.Any(types); return this; }
+            public Builder Inc(IEnumerable<Type> types) { _builder.Inc(types); return this; }
+            public Builder Exc(IEnumerable<Type> types) { _builder.Exc(types); return this; }
+            public Builder Any(IEnumerable<Type> types) { _builder.Any(types); return this; }
             public Builder Inc(EcsTypeCode typeCode) { _builder.Inc(typeCode); return this; }
             public Builder Exc(EcsTypeCode typeCode) { _builder.Exc(typeCode); return this; }
             public Builder Any(EcsTypeCode typeCode) { _builder.Any(typeCode); return this; }
+            public Builder Inc(params EcsTypeCode[] typeCodes) { _builder.Inc(typeCodes); return this; }
+            public Builder Exc(params EcsTypeCode[] typeCodes) { _builder.Exc(typeCodes); return this; }
+            public Builder Any(params EcsTypeCode[] typeCodes) { _builder.Any(typeCodes); return this; }
+            public Builder Inc(ReadOnlySpan<EcsTypeCode> typeCodes) { _builder.Inc(typeCodes); return this; }
+            public Builder Exc(ReadOnlySpan<EcsTypeCode> typeCodes) { _builder.Exc(typeCodes); return this; }
+            public Builder Any(ReadOnlySpan<EcsTypeCode> typeCodes) { _builder.Any(typeCodes); return this; }
+            public Builder Inc(IEnumerable<EcsTypeCode> typeCodes) { _builder.Inc(typeCodes); return this; }
+            public Builder Exc(IEnumerable<EcsTypeCode> typeCodes) { _builder.Exc(typeCodes); return this; }
+            public Builder Any(IEnumerable<EcsTypeCode> typeCodes) { _builder.Any(typeCodes); return this; }
+
             public Builder Combine(EcsMask mask) { _builder.Combine(mask._staticMask); return this; }
             public Builder Except(EcsMask mask) { _builder.Except(mask._staticMask); return this; }
 
             public EcsMask Build() { return _world.Get<WorldMaskComponent>().ConvertFromStatic(_builder.Build()); }
+            public static implicit operator EcsMask(Builder a) { return a.Build(); }
         }
         #endregion
 

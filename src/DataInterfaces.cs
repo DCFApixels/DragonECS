@@ -11,63 +11,84 @@ namespace DCFApixels.DragonECS.Core
         void Init(ref T component, EcsWorld world);
         void OnDestroy(ref T component, EcsWorld world);
     }
-    public static class EcsWorldComponentHandler<T>
+    public static class EcsWorldComponent<T> where T : struct
     {
-        public static readonly IEcsWorldComponent<T> instance;
-        public static readonly bool isHasHandler;
-        static EcsWorldComponentHandler()
+        public static readonly IEcsWorldComponent<T> CustomHandler;
+        public static readonly bool IsCustom;
+        static EcsWorldComponent()
         {
-            T def = default;
-            if (def is IEcsWorldComponent<T> intrf)
+            T raw = default;
+            if (raw is IEcsWorldComponent<T> handler)
             {
-                isHasHandler = true;
-                instance = intrf;
+                IsCustom = true;
+                CustomHandler = handler;
             }
             else
             {
-                isHasHandler = false;
-                instance = new DummyHandler();
+                IsCustom = false;
+                CustomHandler = new DummyHandler();
             }
         }
-        private class DummyHandler : IEcsWorldComponent<T>
+        private sealed class DummyHandler : IEcsWorldComponent<T>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Init(ref T component, EcsWorld world) { }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void OnDestroy(ref T component, EcsWorld world) { }
         }
     }
     #endregion
 
-    #region IEcsComponentReset
+    #region IEcsComponentLifecycle
     public interface IEcsComponentLifecycle<T>
     {
-        void Enable(ref T component);
-        void Disable(ref T component);
+        void OnAdd(ref T component, short worldID, int entityID);
+        void OnDel(ref T component, short worldID, int entityID);
     }
-    public static class EcsComponentLifecycleHandler<T>
+    public static class EcsComponentLifecycle<T> where T : struct
     {
-        public static readonly IEcsComponentLifecycle<T> instance;
-        public static readonly bool isHasHandler;
-        static EcsComponentLifecycleHandler()
+        public static readonly IEcsComponentLifecycle<T> CustomHandler;
+        public static readonly bool IsCustom;
+        static EcsComponentLifecycle()
         {
-            T def = default;
-            if (def is IEcsComponentLifecycle<T> intrf)
+            T raw = default;
+            if (raw is IEcsComponentLifecycle<T> handler)
             {
-                isHasHandler = true;
-                instance = intrf;
+                IsCustom = true;
+                CustomHandler = handler;
             }
             else
             {
-                isHasHandler = false;
-                instance = new DummyHandler();
+                IsCustom = false;
+                CustomHandler = new DummyHandler();
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void OnAdd(bool isCustom, IEcsComponentLifecycle<T> custom, ref T component, short worldID, int entityID)
+        {
+            if (isCustom)
+            {
+                custom.OnAdd(ref component, worldID, entityID);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void OnDel(bool isCustom, IEcsComponentLifecycle<T> custom, ref T component, short worldID, int entityID)
+        {
+            if (isCustom)
+            {
+                custom.OnDel(ref component, worldID, entityID);
+            }
+            else
+            {
+                component = default;
             }
         }
         private sealed class DummyHandler : IEcsComponentLifecycle<T>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Enable(ref T component) { component = default; }
+            public void OnAdd(ref T component, short worldID, int entityID) { component = default; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Disable(ref T component) { component = default; }
+            public void OnDel(ref T component, short worldID, int entityID) { component = default; }
         }
     }
     #endregion
@@ -77,22 +98,34 @@ namespace DCFApixels.DragonECS.Core
     {
         void Copy(ref T from, ref T to);
     }
-    public static class EcsComponentCopyHandler<T>
+    public static class EcsComponentCopy<T> where T : struct
     {
-        public static readonly IEcsComponentCopy<T> instance;
-        public static readonly bool isHasHandler;
-        static EcsComponentCopyHandler()
+        public static readonly IEcsComponentCopy<T> CustomHandler;
+        public static readonly bool IsCustom;
+        static EcsComponentCopy()
         {
-            T def = default;
-            if (def is IEcsComponentCopy<T> intrf)
+            T raw = default;
+            if (raw is IEcsComponentCopy<T> handler)
             {
-                isHasHandler = true;
-                instance = intrf;
+                IsCustom = true;
+                CustomHandler = handler;
             }
             else
             {
-                isHasHandler = false;
-                instance = new DummyHandler();
+                IsCustom = false;
+                CustomHandler = new DummyHandler();
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Copy(bool isCustom, IEcsComponentCopy<T> custom, ref T from, ref T to)
+        {
+            if (isCustom)
+            {
+                custom.Copy(ref from, ref to);
+            }
+            else
+            {
+                to = from;
             }
         }
         private sealed class DummyHandler : IEcsComponentCopy<T>

@@ -26,7 +26,6 @@ namespace DCFApixels.DragonECS
 
         private static EcsWorld[] _worlds = Array.Empty<EcsWorld>();
         private static readonly IdDispenser _worldIdDispenser = new IdDispenser(4, 0, n => Array.Resize(ref _worlds, n));
-        private static StructList<WorldComponentPoolAbstract> _allWorldComponentPools = new StructList<WorldComponentPoolAbstract>(64);
         private static readonly object _worldLock = new object();
 
         private StructList<WorldComponentPoolAbstract> _worldComponentPools;
@@ -145,7 +144,7 @@ namespace DCFApixels.DragonECS
             private static short _count;
             private static short[] _recycledItems = new short[4];
             private static short _recycledItemsCount;
-            private static readonly IEcsWorldComponent<T> _interface = EcsWorldComponentHandler<T>.instance;
+            private static readonly IEcsWorldComponent<T> _interface = EcsWorldComponent<T>.CustomHandler;
             private static readonly Abstract _controller = new Abstract();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -319,28 +318,6 @@ namespace DCFApixels.DragonECS
                     return _world._worldComponentPools.ToEnumerable().Select(o => o.GetRaw(_worldID));
                 }
             }
-        }
-        #endregion
-
-        #region Obsolete
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Use EcsWorld.ID")]
-        public short id
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return ID; }
-        }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("The GetPoolInstance(int componentTypeID) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
-        public IEcsPool GetPoolInstance(int componentTypeID)
-        {
-            return FindPoolInstance(componentTypeID);
-        }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("The GetPoolInstance(Type componentType) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
-        public IEcsPool GetPoolInstance(Type componentType)
-        {
-            return FindPoolInstance(componentType);
         }
         #endregion
     }
