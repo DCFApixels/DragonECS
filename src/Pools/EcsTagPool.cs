@@ -116,6 +116,7 @@ namespace DCFApixels.DragonECS
         public void Add(int entityID)
         {
 #if DEBUG
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
             if (_world.IsUsed(entityID) == false) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
             if (Has(entityID)) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
@@ -144,6 +145,7 @@ namespace DCFApixels.DragonECS
         public void Del(int entityID)
         {
 #if DEBUG
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
             if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE

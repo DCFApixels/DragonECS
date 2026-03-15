@@ -125,6 +125,7 @@ https://github.com/DCFApixels/DragonECS.git
     * [Графы](https://github.com/DCFApixels/DragonECS-Graphs)
 * Утилиты:
     * [Упрощенный синтаксис](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
+    * [EcsRefPool](https://gist.github.com/DCFApixels/73e392ccabdd98b3d4a517017d8a3f22)
     * [Таймеры](https://gist.github.com/DCFApixels/71a416275660c465ece76242290400df)
     * [Однокадровые компоненты](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
     * [Шаблоны кода IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [для Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)

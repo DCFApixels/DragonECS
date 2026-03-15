@@ -62,7 +62,12 @@ namespace DCFApixels.DragonECS.PoolsCore
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNullListener()
         {
-            throw new ArgumentNullException("listener is null");
+            throw new ArgumentNullException("Listener is null");
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void ThrowNullComponent()
+        {
+            throw new ArgumentNullException("Component is null");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowPoolLocked()
