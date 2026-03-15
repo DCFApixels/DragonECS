@@ -37,7 +37,7 @@ namespace DCFApixels.DragonECS
                         return;
                     }
                 }
-                throw new InvalidOperationException($"Using component {componentType.ToMeta().TypeName} is not allowed in the {worldType.ToMeta().TypeName} world.");
+                throw new InvalidOperationException($"Using component {componentType.GetMeta().TypeName} is not allowed in the {worldType.GetMeta().TypeName} world.");
             }
         }
     }

@@ -11,7 +11,7 @@ namespace DCFApixels.DragonECS.Core
         void Init(ref T component, EcsWorld world);
         void OnDestroy(ref T component, EcsWorld world);
     }
-    public static class EcsWorldComponent<T> where T : struct
+    public static class EcsWorldComponent<T>
     {
         public static readonly IEcsWorldComponent<T> CustomHandler;
         public static readonly bool IsCustom;
