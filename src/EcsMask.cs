@@ -475,34 +475,6 @@ namespace DCFApixels.DragonECS
             }
         }
         #endregion
-
-        #region Obsolete
-        /// <summary> Sorted set including constraints. </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Use Incs")]
-        public ReadOnlySpan<int> Inc
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _incs; }
-        }
-        /// <summary> Sorted set excluding constraints. </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Use Excs")]
-        public ReadOnlySpan<int> Exc
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _excs; }
-        }
-        public partial struct Builder
-        {
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Include<T>() { return Inc<T>(); }
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Exclude<T>() { return Exc<T>(); }
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Include(Type type) { return Inc(type); }
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Exclude(Type type) { return Exc(type); }
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Inc(int componentTypeID) { Inc(_world.GetComponentType(componentTypeID)); return this; }
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Exc(int componentTypeID) { Exc(_world.GetComponentType(componentTypeID)); return this; }
-        }
-        #endregion
     }
 
     [Flags]

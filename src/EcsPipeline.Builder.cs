@@ -600,20 +600,6 @@ namespace DCFApixels.DragonECS
                 }
             }
             #endregion
-
-            #region Obsolete
-            [Obsolete("Use " + nameof(Injections))]
-            public readonly InitInjectionList Injector;
-            [Obsolete("Use LayersMap")]
-            public class LayerList : LayersMap
-            {
-                //public LayerList(Builder source, string basicLayerName) : base(source, basicLayerName) { }
-                //public LayerList(Builder source, string preBeginlayer, string beginlayer, string basicLayer, string endLayer, string postEndLayer) : base(source, preBeginlayer, beginlayer, basicLayer, endLayer, postEndLayer) { }
-                public LayerList(IDependencyGraph<string> graph, Builder pipelineBuilder) : base(graph, pipelineBuilder)
-                {
-                }
-            }
-            #endregion
         }
     }
 

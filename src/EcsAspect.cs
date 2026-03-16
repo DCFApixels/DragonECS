@@ -418,52 +418,6 @@ namespace DCFApixels.DragonECS
         EcsMask IComponentMask.ToMask(EcsWorld world) { return _mask; }
         #endregion
 
-        #region Obsolete
-        [Obsolete("Use EcsMask.GetIterator()")]
-        public Iterator GetIterator()
-        {
-            return new Iterator(Mask.GetIterator(), _source.Entities);
-        }
-        [Obsolete("Use EcsMask.GetIterator().Iterate(span)")]
-        public Iterator GetIteratorFor(EcsSpan span)
-        {
-            return new Iterator(Mask.GetIterator(), span);
-        }
-        [Obsolete("Use EcsMaskIterator")]
-        public ref struct Iterator
-        {
-            public readonly short worldID;
-            public readonly EcsMaskIterator.Enumerable iterator;
-
-            public Iterator(EcsMaskIterator iterator, EcsSpan span)
-            {
-                worldID = iterator.World.ID;
-                this.iterator = iterator.Iterate(span);
-            }
-
-            #region CopyTo
-            public void CopyTo(EcsGroup group)
-            {
-                iterator.CopyTo(group);
-            }
-            public int CopyTo(ref int[] array)
-            {
-                return iterator.CopyTo(ref array);
-            }
-            public EcsSpan CopyToSpan(ref int[] array)
-            {
-                int count = CopyTo(ref array);
-                return new EcsSpan(worldID, array, count);
-            }
-            #endregion
-
-            public EcsMaskIterator.Enumerable.Enumerator GetEnumerator()
-            {
-                return iterator.GetEnumerator();
-            }
-        }
-        #endregion
-
         #region Events
         public delegate void OnInitApectHandler(object aspect, Builder builder);
         public static event OnInitApectHandler OnInit = delegate { };
