@@ -122,7 +122,6 @@ namespace DCFApixels.DragonECS
             }
             private void InsertAfterNode_Internal(int insertAfterIndex, IEcsProcess system, string layer, int sortOrder, bool isUnique)
             {
-                //TODO нужно потестить
                 if (isUnique && _uniqueSystemsSet.Add(system.GetType()) == false)
                 {
                     //EcsDebug.PrintWarning($"The pipeline already contains a unique instance of {system.GetType().Name}");

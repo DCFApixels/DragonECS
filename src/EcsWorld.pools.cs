@@ -127,7 +127,6 @@ namespace DCFApixels.DragonECS
         {
             return _cmpTypeCode_2_CmpTypeIDs.Contains((int)EcsTypeCodeManager.Get(componentType));
         }
-        //TODO пересмотреть нейминг или функцию
         public bool IsComponentTypeDeclared(int componentTypeID)
         {
             if (componentTypeID >= 0 && componentTypeID < _pools.Length)

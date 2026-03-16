@@ -98,7 +98,7 @@ namespace DCFApixels.DragonECS
         public static TypeMeta Get(Type type) { return Get(type.TypeHandle); }
         public static TypeMeta Get(RuntimeTypeHandle typeHandle)
         {
-            lock (_lock) //TODO посмотреть можно ли тут убрать лок
+            lock (_lock) 
             {
                 if (_metaCache.TryGetValue(typeHandle, out TypeMeta result) == false)
                 {

@@ -964,7 +964,6 @@ using (_marker.Auto())
 + `DRAGONECS_DISABLE_CATH_EXCEPTIONS` - Выключает поведение по умолчанию по обработке исключений. По умолчанию фреймворк будет ловить исключения с выводом информации из исключений через EcsDebug и продолжать работу.
 + `REFLECTION_DISABLED` - Полностью ограничивает работу фреймворка с Reflection.
 + `DISABLE_DEBUG` - Для среды где не поддерживается ручное отключение DEBUG, например Unity.
-+ `ENABLE_DUMMY_SPAN` - На случай если в среде не поддерживаются Span типы, включает его замену.
 
 </br>
 
@@ -1123,13 +1122,6 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 
  
 # FAQ
-
-## 'ReadOnlySpan<>' could not be found
-В версии Unity 2020.1.х в консоли может выпадать ошибка:
-```
-The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing a using directive or an assembly reference?)
-``` 
-Чтобы починить добавьте директиву `ENABLE_DUMMY_SPAN` в `Project Settings/Player/Other Settings/Scripting Define Symbols`.
 
 ## Как Выключать/Включать системы?
 Напрямую - никак. </br>
