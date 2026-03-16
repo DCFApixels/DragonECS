@@ -281,29 +281,4 @@ namespace DCFApixels.DragonECS.Core.Internal
             return $"{name}({range.Count()}) {{{string.Join(", ", range.Select(o => o.ToString()))}}})";
         }
     }
-
-    internal static class SpanUtility
-    {
-        internal static StructComparison<T> ToStruct<T>(this Comparison<T> self)
-        {
-            return new StructComparison<T>(self);
-        }
-        public static void Sort<T>(Span<T> span, Comparison<T> comparison)
-        {
-            var c = comparison.ToStruct();
-            ArraySortUtility<T, StructComparison<T>>.Sort(span, ref c);
-        }
-    }
-    internal readonly struct StructComparison<T> : IComparer<T>
-    {
-        public readonly Comparison<T> Comparison;
-        public StructComparison(Comparison<T> comparison)
-        {
-            Comparison = comparison;
-        }
-        public int Compare(T x, T y)
-        {
-            return Comparison(x, y);
-        }
-    }
 }

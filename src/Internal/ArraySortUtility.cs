@@ -12,6 +12,38 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace DCFApixels.DragonECS.Core.Internal
 {
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+    internal static class ArraySortUtility
+    {
+        internal static StructComparison<T> ToStruct<T>(this Comparison<T> self)
+        {
+            return new StructComparison<T>(self);
+        }
+        public static void Sort<T>(Span<T> span, Comparison<T> comparison)
+        {
+            var c = comparison.ToStruct();
+            ArraySortUtility<T, StructComparison<T>>.Sort(span, ref c);
+        }
+    }
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+    internal readonly struct StructComparison<T> : IComparer<T>
+    {
+        public readonly Comparison<T> Comparison;
+        public StructComparison(Comparison<T> comparison)
+        {
+            Comparison = comparison;
+        }
+        public int Compare(T x, T y)
+        {
+            return Comparison(x, y);
+        }
+    }
     // a > b = return > 0
     // int Compare(T a, T b);
 
