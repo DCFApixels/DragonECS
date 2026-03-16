@@ -1086,7 +1086,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-        internal readonly struct IncCountComparer : IStructComparer<int>
+        internal readonly struct IncCountComparer : IComparer<int>
         {
             public readonly EcsWorld.PoolSlot[] counts;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1105,7 +1105,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-        internal readonly struct ExcCountComparer : IStructComparer<int>
+        internal readonly struct ExcCountComparer : IComparer<int>
         {
             public readonly EcsWorld.PoolSlot[] counts;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
