@@ -643,7 +643,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortIncChunckBuffer.Length > 1)
             {
-                ArraySortUtility.Sort(sortIncBuffer.AsSpan(), new IncCountComparer(counts));
+                SortHalper.Sort(sortIncBuffer.AsSpan(), new IncCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortIncBuffer, _sortIncChunckBuffer);
             }
             if (_sortIncChunckBuffer.Length > 0)
@@ -657,7 +657,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortExcChunckBuffer.Length > 1)
             {
-                ArraySortUtility.Sort(sortExcBuffer.AsSpan(), new ExcCountComparer(counts));
+                SortHalper.Sort(sortExcBuffer.AsSpan(), new ExcCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortExcBuffer, _sortExcChunckBuffer);
             }
             // Выражение IncCount < (AllEntitesCount - ExcCount) мало вероятно будет истинным.
@@ -667,7 +667,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortAnyChunckBuffer.Length > 1)
             {
-                ArraySortUtility.Sort(sortAnyBuffer.AsSpan(), new ExcCountComparer(counts));
+                SortHalper.Sort(sortAnyBuffer.AsSpan(), new ExcCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortAnyBuffer, _sortAnyChunckBuffer);
             }
             // Any не влияет на maxEntites если есть Inc и сложно высчитывается если нет Inc

@@ -146,7 +146,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         public EcsUnsafeSpan Execute(Comparison<int> comparison)
         {
             Execute_Iternal();
-            ArraySortUtility.Sort(_filteredAllEntities.AsSpan(_filteredAllEntitiesCount), comparison);
+            SortHalper.Sort(_filteredAllEntities.AsSpan(_filteredAllEntitiesCount), comparison);
             return new EcsUnsafeSpan(World.ID, _filteredAllEntities.Ptr, _filteredAllEntitiesCount);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -157,7 +157,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 return Execute(comparison);
             }
             ExecuteFor_Iternal(source);
-            ArraySortUtility.Sort(_filteredEntities.AsSpan(_filteredEntitiesCount), comparison);
+            SortHalper.Sort(_filteredEntities.AsSpan(_filteredEntitiesCount), comparison);
             return new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount);
         }
         #endregion

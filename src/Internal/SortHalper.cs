@@ -15,7 +15,7 @@ namespace DCFApixels.DragonECS.Core.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal static unsafe class ArraySortUtility
+    internal static unsafe class SortHalper
     {
         internal static StructComparison<T> ToStruct<T>(this Comparison<T> self)
         {
@@ -28,27 +28,27 @@ namespace DCFApixels.DragonECS.Core.Internal
         public static void Sort<T>(Span<T> span)
         {
             var c = Comparer<T>.Default.ToStruct();
-            ArraySortUtility<T, StructComparer<T>>.Sort(span, ref c);
+            SortHalper<T, StructComparer<T>>.Sort(span, ref c);
         }
         public static void Sort<T>(Span<T> span, Comparer<T> comparer)
         {
             var c = comparer.ToStruct();
-            ArraySortUtility<T, StructComparer<T>>.Sort(span, ref c);
+            SortHalper<T, StructComparer<T>>.Sort(span, ref c);
         }
         public static void Sort<T>(Span<T> span, Comparison<T> comparison)
         {
             var c = comparison.ToStruct();
-            ArraySortUtility<T, StructComparison<T>>.Sort(span, ref c);
+            SortHalper<T, StructComparison<T>>.Sort(span, ref c);
         }
         public static void Sort<T, TComparer>(Span<T> span, ref TComparer comparer)
             where TComparer : struct, IComparer<T>
         {
-            ArraySortUtility<T, TComparer>.Sort(span, ref comparer);
+            SortHalper<T, TComparer>.Sort(span, ref comparer);
         }
         public static void Sort<T, TComparer>(Span<T> span, TComparer comparer)
             where TComparer : struct, IComparer<T>
         {
-            ArraySortUtility<T, TComparer>.Sort(span, ref comparer);
+            SortHalper<T, TComparer>.Sort(span, ref comparer);
         }
 
 
@@ -139,7 +139,7 @@ namespace DCFApixels.DragonECS.Core.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal static class ArraySortUtility<T, TComparer>
+    internal static class SortHalper<T, TComparer>
         where TComparer : struct, IComparer<T>
     {
         private const int IntrosortSizeThreshold = 16;
@@ -209,7 +209,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             //Debug.Assert(comparer != null);
             if (keys.Length > 1)
             {
-                IntroSort(keys, 2 * (ArraySortUtility.Log2((uint)keys.Length) + 1), ref comparer);
+                IntroSort(keys, 2 * (SortHalper.Log2((uint)keys.Length) + 1), ref comparer);
             }
         }
 
