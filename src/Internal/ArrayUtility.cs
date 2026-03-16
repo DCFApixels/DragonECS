@@ -284,21 +284,26 @@ namespace DCFApixels.DragonECS.Core.Internal
 
     internal static class SpanUtility
     {
+        internal static StructComparison<T> ToStruct<T>(this Comparison<T> self)
+        {
+            return new StructComparison<T>(self);
+        }
         public static void Sort<T>(Span<T> span, Comparison<T> comparison)
         {
-            span.Sort(new StructComparison<T>(comparison));
+            var c = comparison.ToStruct();
+            ArraySortUtility<T, StructComparison<T>>.Sort(span, ref c);
         }
-        private readonly struct StructComparison<T> : IComparer<T>
+    }
+    internal readonly struct StructComparison<T> : IComparer<T>
+    {
+        public readonly Comparison<T> Comparison;
+        public StructComparison(Comparison<T> comparison)
         {
-            public readonly Comparison<T> Comparison;
-            public StructComparison(Comparison<T> comparison)
-            {
-                Comparison = comparison;
-            }
-            public int Compare(T x, T y)
-            {
-                return Comparison(x, y);
-            }
+            Comparison = comparison;
+        }
+        public int Compare(T x, T y)
+        {
+            return Comparison(x, y);
         }
     }
 }
