@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
@@ -16,16 +15,88 @@ namespace DCFApixels.DragonECS.Core.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal static class ArraySortUtility
+    internal static unsafe class ArraySortUtility
     {
         internal static StructComparison<T> ToStruct<T>(this Comparison<T> self)
         {
             return new StructComparison<T>(self);
         }
+        internal static StructComparer<T> ToStruct<T>(this Comparer<T> self)
+        {
+            return new StructComparer<T>(self);
+        }
+        public static void Sort<T>(Span<T> span)
+        {
+            var c = Comparer<T>.Default.ToStruct();
+            ArraySortUtility<T, StructComparer<T>>.Sort(span, ref c);
+        }
+        public static void Sort<T>(Span<T> span, Comparer<T> comparer)
+        {
+            var c = comparer.ToStruct();
+            ArraySortUtility<T, StructComparer<T>>.Sort(span, ref c);
+        }
         public static void Sort<T>(Span<T> span, Comparison<T> comparison)
         {
             var c = comparison.ToStruct();
             ArraySortUtility<T, StructComparison<T>>.Sort(span, ref c);
+        }
+        public static void Sort<T, TComparer>(Span<T> span, ref TComparer comparer)
+            where TComparer : struct, IComparer<T>
+        {
+            ArraySortUtility<T, TComparer>.Sort(span, ref comparer);
+        }
+        public static void Sort<T, TComparer>(Span<T> span, TComparer comparer)
+            where TComparer : struct, IComparer<T>
+        {
+            ArraySortUtility<T, TComparer>.Sort(span, ref comparer);
+        }
+
+
+        // Таблица для De Bruijn-умножения (позиция старшего бита для чисел 0..31)
+        private const int Log2DeBruijn32_Length = 32;
+        private static readonly uint* Log2DeBruijn32 = MemoryAllocator.From(new uint[Log2DeBruijn32_Length]
+        {
+            0, 9, 1, 10, 13, 21, 2, 29, 11, 14,
+            16, 18, 22, 25, 3, 30, 8, 12, 20, 28,
+            15, 17, 24, 7, 19, 27, 23, 6, 26, 5,
+            4, 31
+            //0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
+            //8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
+        }).Ptr;
+
+        /// <summary>32-битный логарифм по основанию 2 (округление вниз). Для value = 0 возвращает 0.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Log2(uint value)
+        {
+            // Для нуля сразу возвращаем 0 (по договорённости, чтобы избежать исключения)
+            if (value == 0) return 0;
+
+            // Заполняем все биты справа от старшего единицей: превращаем число в 2^n - 1
+            value |= value >> 1;
+            value |= value >> 2;
+            value |= value >> 4;
+            value |= value >> 8;
+            value |= value >> 16;
+
+            // Умножение на константу De Bruijn и сдвиг для получения индекса в таблице
+            return (int)Log2DeBruijn32[(value * 0x07C4ACDDu) >> 27];
+        }
+
+        /// <summary>64-битный логарифм по основанию 2 (округление вниз). Для value = 0 возвращает 0.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Log2(ulong value)
+        {
+            if (value == 0) { return 0; }
+
+            uint high = (uint)(value >> 32);
+            if (high == 0)
+            {
+                return Log2((uint)value);
+            }
+            else
+            {
+                return 32 + Log2(high);
+            }
         }
     }
 #if ENABLE_IL2CPP
@@ -42,6 +113,18 @@ namespace DCFApixels.DragonECS.Core.Internal
         public int Compare(T x, T y)
         {
             return Comparison(x, y);
+        }
+    }
+    internal readonly struct StructComparer<T> : IComparer<T>
+    {
+        public readonly Comparer<T> Comparer;
+        public StructComparer(Comparer<T> comparer)
+        {
+            Comparer = comparer;
+        }
+        public int Compare(T x, T y)
+        {
+            return Comparer.Compare(x, y);
         }
     }
     // a > b = return > 0
@@ -126,7 +209,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             //Debug.Assert(comparer != null);
             if (keys.Length > 1)
             {
-                IntroSort(keys, 2 * (BitOperations.Log2((uint)keys.Length) + 1), ref comparer);
+                IntroSort(keys, 2 * (ArraySortUtility.Log2((uint)keys.Length) + 1), ref comparer);
             }
         }
 

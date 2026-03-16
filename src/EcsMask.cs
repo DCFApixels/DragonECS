@@ -5,7 +5,6 @@ using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -644,7 +643,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortIncChunckBuffer.Length > 1)
             {
-                sortIncBuffer.AsSpan().Sort(new IncCountComparer(counts));
+                ArraySortUtility.Sort(sortIncBuffer.AsSpan(), new IncCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortIncBuffer, _sortIncChunckBuffer);
             }
             if (_sortIncChunckBuffer.Length > 0)
@@ -658,7 +657,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortExcChunckBuffer.Length > 1)
             {
-                sortExcBuffer.AsSpan().Sort(new ExcCountComparer(counts));
+                ArraySortUtility.Sort(sortExcBuffer.AsSpan(), new ExcCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortExcBuffer, _sortExcChunckBuffer);
             }
             // Выражение IncCount < (AllEntitesCount - ExcCount) мало вероятно будет истинным.
@@ -668,7 +667,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortAnyChunckBuffer.Length > 1)
             {
-                sortAnyBuffer.AsSpan().Sort(new ExcCountComparer(counts));
+                ArraySortUtility.Sort(sortAnyBuffer.AsSpan(), new ExcCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortAnyBuffer, _sortAnyChunckBuffer);
             }
             // Any не влияет на maxEntites если есть Inc и сложно высчитывается если нет Inc

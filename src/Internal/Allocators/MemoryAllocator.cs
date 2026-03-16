@@ -180,6 +180,11 @@ namespace DCFApixels.DragonECS.Core.Internal
         {
             return From<T>(new ReadOnlySpan<T>(ptr, length));
         }
+        public static HMem<T> From<T>(T[] source)
+            where T : unmanaged
+        {
+            return From(new ReadOnlySpan<T>(source));
+        }
         public static HMem<T> From<T>(ReadOnlySpan<T> source)
             where T : unmanaged
         {
