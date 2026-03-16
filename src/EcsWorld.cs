@@ -698,7 +698,7 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+                poolIdsPtr = MemoryAllocator.Alloc<int>(count).Ptr;
             }
 
             UnsafeArray<int> ua = UnsafeArray<int>.Manual(poolIdsPtr, count);
@@ -711,7 +711,7 @@ namespace DCFApixels.DragonECS
 
             if (count >= BUFFER_THRESHOLD)
             {
-                UnmanagedArrayUtility.Free(poolIdsPtr);
+                MemoryAllocator.Free(poolIdsPtr);
             }
 
 
@@ -748,7 +748,7 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+                poolIdsPtr = MemoryAllocator.Alloc<int>(count).Ptr;
             }
 
             GetComponentTypeIDsFor_Internal(fromEntityID, poolIdsPtr, count);
@@ -759,7 +759,7 @@ namespace DCFApixels.DragonECS
 
             if (count >= BUFFER_THRESHOLD)
             {
-                UnmanagedArrayUtility.Free(poolIdsPtr);
+                MemoryAllocator.Free(poolIdsPtr);
             }
 
             //foreach (var pool in _pools)
@@ -1082,7 +1082,7 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+                poolIdsPtr = MemoryAllocator.Alloc<int>(count).Ptr;
             }
 
             GetComponentTypeIDsFor_Internal(entityID, poolIdsPtr, count);
@@ -1105,7 +1105,7 @@ namespace DCFApixels.DragonECS
 
             if (count >= BUFFER_THRESHOLD)
             {
-                UnmanagedArrayUtility.Free(poolIdsPtr);
+                MemoryAllocator.Free(poolIdsPtr);
             }
         }
         public ReadOnlySpan<object> GetComponentsFor(int entityID)

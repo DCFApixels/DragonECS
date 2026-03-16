@@ -62,6 +62,14 @@ namespace DCFApixels.DragonECS.Core.Unchecked
         }
         #endregion
 
+        #region Unsafe Span
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe EcsUnsafeSpan CreateUnsafeSpan(short worldID, int* ptr, int length)
+        {
+            return new EcsUnsafeSpan(worldID, ptr, length);
+        }
+        #endregion
+
         #region EcsGroup
         public static EcsGroup GetSourceInstance(EcsReadonlyGroup group)
         {

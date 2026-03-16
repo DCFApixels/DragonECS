@@ -615,8 +615,8 @@ namespace DCFApixels.DragonECS
         }
         private void Cleanup(bool disposing)
         {
-            _bufferHandler.Dispose();
-            _chunckBufferHandler.Dispose();
+            _bufferHandler.DisposeAndReset();
+            _chunckBufferHandler.DisposeAndReset();
         }
         #endregion
 
@@ -644,8 +644,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortIncChunckBuffer.Length > 1)
             {
-                var comparer = new IncCountComparer(counts);
-                UnsafeArraySortHalperX<int>.InsertionSort(sortIncBuffer.ptr, sortIncBuffer.Length, ref comparer);
+                sortIncBuffer.AsSpan().Sort(new IncCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortIncBuffer, _sortIncChunckBuffer);
             }
             if (_sortIncChunckBuffer.Length > 0)
@@ -659,8 +658,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortExcChunckBuffer.Length > 1)
             {
-                ExcCountComparer comparer = new ExcCountComparer(counts);
-                UnsafeArraySortHalperX<int>.InsertionSort(sortExcBuffer.ptr, sortExcBuffer.Length, ref comparer);
+                sortExcBuffer.AsSpan().Sort(new ExcCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortExcBuffer, _sortExcChunckBuffer);
             }
             // Выражение IncCount < (AllEntitesCount - ExcCount) мало вероятно будет истинным.
@@ -670,8 +668,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortAnyChunckBuffer.Length > 1)
             {
-                ExcCountComparer comparer = new ExcCountComparer(counts);
-                UnsafeArraySortHalperX<int>.InsertionSort(sortAnyBuffer.ptr, sortAnyBuffer.Length, ref comparer);
+                sortAnyBuffer.AsSpan().Sort(new ExcCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortAnyBuffer, _sortAnyChunckBuffer);
             }
             // Any не влияет на maxEntites если есть Inc и сложно высчитывается если нет Inc
@@ -699,9 +696,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IterateTo
-        //TODO Перемеиноваться в CacheTo
+        public EcsMaskFlags MaskFlags
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _maskFlags; }
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void IterateTo(EcsSpan source, EcsGroup group)
+        public void CacheTo(EcsSpan source, EcsGroup group)
         {
             switch (_maskFlags)
             {
@@ -709,7 +710,7 @@ namespace DCFApixels.DragonECS
                     group.CopyFrom(source);
                     break;
                 case EcsMaskFlags.Inc:
-                    IterateOnlyInc(source).CopyTo(group);
+                    IterateOnlyInc(source).CacheTo(group);
                     break;
                 case EcsMaskFlags.Exc:
                 case EcsMaskFlags.Any:
@@ -717,7 +718,7 @@ namespace DCFApixels.DragonECS
                 case EcsMaskFlags.IncAny:
                 case EcsMaskFlags.ExcAny:
                 case EcsMaskFlags.IncExcAny:
-                    Iterate(source).CopyTo(group);
+                    Iterate(source).CacheTo(group);
                     break;
                 case EcsMaskFlags.Broken:
                     group.Clear();
@@ -728,21 +729,21 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int IterateTo(EcsSpan source, ref int[] array)
+        public int CacheTo(EcsSpan source, ref int[] array)
         {
             switch (_maskFlags)
             {
                 case EcsMaskFlags.Empty:
                     return source.ToArray(ref array);
                 case EcsMaskFlags.Inc:
-                    return IterateOnlyInc(source).CopyTo(ref array);
+                    return IterateOnlyInc(source).CacheTo(ref array);
                 case EcsMaskFlags.Exc:
                 case EcsMaskFlags.Any:
                 case EcsMaskFlags.IncExc:
                 case EcsMaskFlags.IncAny:
                 case EcsMaskFlags.ExcAny:
                 case EcsMaskFlags.IncExcAny:
-                    return Iterate(source).CopyTo(ref array);
+                    return Iterate(source).CacheTo(ref array);
                 case EcsMaskFlags.Broken:
                     return new EcsSpan(World.ID, Array.Empty<int>()).ToArray(ref array);
                 default:
@@ -772,7 +773,7 @@ namespace DCFApixels.DragonECS
 
             #region CopyTo
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void CopyTo(EcsGroup group)
+            public void CacheTo(EcsGroup group)
             {
                 group.Clear();
                 var enumerator = GetEnumerator();
@@ -782,7 +783,7 @@ namespace DCFApixels.DragonECS
                 }
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int CopyTo(ref int[] array)
+            public int CacheTo(ref int[] array)
             {
                 int count = 0;
                 var enumerator = GetEnumerator();
@@ -928,7 +929,7 @@ namespace DCFApixels.DragonECS
 
             #region CopyTo
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void CopyTo(EcsGroup group)
+            public void CacheTo(EcsGroup group)
             {
                 group.Clear();
                 var enumerator = GetEnumerator();
@@ -938,7 +939,7 @@ namespace DCFApixels.DragonECS
                 }
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int CopyTo(ref int[] array)
+            public int CacheTo(ref int[] array)
             {
                 int count = 0;
                 var enumerator = GetEnumerator();

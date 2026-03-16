@@ -5,7 +5,6 @@ using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -31,6 +30,10 @@ namespace DCFApixels.DragonECS
         private StructList<WorldComponentPoolAbstract> _worldComponentPools;
         private int _builtinWorldComponentsCount = 0;
 
+        public static int AllWorldsCount
+        {
+            get { return _worldIdDispenser.Count; }
+        }
         static EcsWorld()
         {
             _worlds[NULL_WORLD_ID] = new NullWorld();

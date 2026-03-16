@@ -54,7 +54,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 {
                     MemoryAllocator.Free(_ptr);
                 }
-                _ptr = MemoryAllocator.Alloc<byte>(byteSize).As<byte>();
+                _ptr = MemoryAllocator.Alloc<byte>(byteSize).Ptr;
                 _byteSize = byteSize;
             }
             return (T*)_ptr;

@@ -196,7 +196,7 @@ namespace DCFApixels.DragonECS
         {
             if (_groupSparsePagePoolCount <= 0)
             {
-                return MemoryAllocator.AllocAndInit<int>(EcsGroup.PAGE_SIZE).As<int>();
+                return MemoryAllocator.AllocAndInit<int>(EcsGroup.PAGE_SIZE).Ptr;
             }
             var takedPage = _groupSparsePagePool[--_groupSparsePagePoolCount];
             _groupSparsePagePool[_groupSparsePagePoolCount] = MemoryAllocator.Handler.Empty;
@@ -228,7 +228,7 @@ namespace DCFApixels.DragonECS
             for (int i = 0; i < _groupSparsePagePoolCount; i++)
             {
                 ref var page = ref _groupSparsePagePool[i];
-                if (page.IsEmpty == false)
+                if (page.IsCreated)
                 {
                     MemoryAllocator.FreeAndClear(ref page);
                 }
@@ -291,7 +291,7 @@ namespace DCFApixels.DragonECS
         private int _count = 0;
         internal bool _isReleased = true;
 
-        internal static readonly int* _nullPage = MemoryAllocator.AllocAndInit<int>(PageSlot.SIZE).As<int>();
+        internal static readonly int* _nullPage = MemoryAllocator.AllocAndInit<int>(PageSlot.SIZE).Ptr;
         internal static readonly long _nullPagePtrFake = (long)_nullPage;
 
         #region Properties
@@ -344,17 +344,6 @@ namespace DCFApixels.DragonECS
 #endif
                 return _dense[++index];
             }
-            //            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            //            set
-            //            {
-            //                // TODO добавить лок енумератора на изменение
-            //#if DEBUG || DRAGONECS_STABILITY_MODE
-            //                if (index < 0 || index >= Count) { Throw.ArgumentOutOfRange(); }
-            //#endif
-            //                var oldValue = _dense[index];
-            //                _dense[index] = value;
-            //                _sparse[oldValue] = 0;
-            //            }
         }
         #endregion
 
@@ -394,7 +383,7 @@ namespace DCFApixels.DragonECS
                     page.IndexesXOR = 0;
                     page.Count = 0;
                 }
-                _sparsePagesHandler.Dispose();
+                _sparsePagesHandler.DisposeAndReset();
             }
         }
         public void Dispose()
@@ -555,7 +544,6 @@ namespace DCFApixels.DragonECS
                     ref PageSlot page = ref _sparsePages[i];
                     if (page.Indexes != _nullPage)
                     {
-                        //TODO тут надо оптимизировать отчисткой не всего а по dense списку
                         for (int j = 0; j < PageSlot.SIZE; j++)
                         {
                             page.Indexes[j] = 0;
