@@ -89,12 +89,12 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
 Обязательные требования:
 + Минимальная версия C# 7.3;
 
-Опционально:
-+ Поддержка NativeAOT
+Поддерживает:
++ NativeAOT;
 + Игровые движки с C#: Unity, Godot, MonoGame и т.д.
 
 Протестировано:
-+ **Unity:** Минимальная версия 2020.3.0;
++ **Unity:** Минимальная версия 2021.2.0;
 
 ## Установка для Unity
 > Рекомендуется так же установить расширение [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
