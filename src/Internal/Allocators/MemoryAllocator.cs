@@ -86,7 +86,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         #endregion
 
         #region ReallocAndInit
-        public static HMem<T> ReallocAndInit<T>(void* target, int oldCount, int newCount) where T : unmanaged
+        public static HMem<T> ReallocAndInit<T>(T* target, int oldCount, int newCount) where T : unmanaged
         {
             return ReallocAndInit<T>(Handler.FromDataPtr(target), oldCount, newCount);
         }
@@ -117,7 +117,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         #endregion
 
         #region Realloc
-        public static HMem<T> Realloc<T>(void* target, int newCount) where T : unmanaged
+        public static HMem<T> Realloc<T>(T* target, int newCount) where T : unmanaged
         {
             return Realloc<T>(Handler.FromDataPtr(target), Marshal.SizeOf<T>() * newCount);
         }
