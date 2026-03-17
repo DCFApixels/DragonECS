@@ -20,7 +20,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Standard component.")]
-    [MetaID("DragonECS_84D2537C9201D6F6B92FEC1C8883A07A")]
+    [MetaID("DragonECS_B053D6FA9C01208AFD1922E6A1D57D83")]
     public interface IEcsValueComponent : IEcsComponentMember { }
 
     /// <summary>Pool for IEcsValueComponent components</summary>
@@ -31,7 +31,7 @@ namespace DCFApixels.DragonECS
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsValueComponent components.")]
-    [MetaID("DragonECS_C501547C9201A4B03FC25632E4FAAFD7")]
+    [MetaID("DragonECS_5097D6FA9C0109349197EEAC3A0D2858")]
     [DebuggerDisplay("Count: {Count} Type: {ComponentType}")]
     public sealed unsafe class EcsValuePool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : unmanaged, IEcsValueComponent
