@@ -19,7 +19,7 @@ namespace DCFApixels.DragonECS
     /// <summary>Value type component</summary>
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "Standard component.")]
+    [MetaDescription(EcsConsts.AUTHOR, "Value type component.")]
     [MetaID("DragonECS_B053D6FA9C01208AFD1922E6A1D57D83")]
     public interface IEcsValueComponent : IEcsComponentMember { }
 
