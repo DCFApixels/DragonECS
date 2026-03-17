@@ -278,6 +278,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             public readonly T* Ptr;
             public readonly int Length;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal HMem(Handler handler, int length)
             {
                 Ptr = handler.As<T>();
@@ -300,8 +301,8 @@ namespace DCFApixels.DragonECS.Core.Internal
                 get { return Handler.FromDataPtr(Ptr); }
             }
 
-            public HMem<U> As<U>()
-                where U : unmanaged
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public HMem<U> As<U>() where U : unmanaged
             {
                 if (IsCreated)
                 {
@@ -329,7 +330,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
 
 #if DEBUG
-            public override string ToString() { return DebuggerDisplay(); }
+            public override string ToString() { return Handler.DebuggerDisplay(); }
 #endif
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public override int GetHashCode() { return RawPtr.GetHashCode(); }
@@ -342,7 +343,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static bool operator !=(HMem<T> a, HMem<T> b) { return a.Ptr != b.Ptr; }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Span<T> AsSpan() { return new Span<T>(Ptr, Length); }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Span<T> AsSpan(int length)
             {
 #if DEBUG
@@ -350,6 +353,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
                 return new Span<T>(Ptr, length);
             }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Handler(HMem<T> memory) { return memory.Handler; }
         }
 

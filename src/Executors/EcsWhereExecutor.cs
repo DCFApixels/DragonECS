@@ -97,8 +97,8 @@ namespace DCFApixels.DragonECS.Core.Internal
         public EcsUnsafeSpan Execute()
         {
             Execute_Iternal();
-            var result = new EcsUnsafeSpan(World.ID, _filteredAllEntities.Ptr, _filteredAllEntitiesCount);
 #if DEBUG && DRAGONECS_DEEP_DEBUG
+            var result = new EcsUnsafeSpan(World.ID, _filteredAllEntities.Ptr, _filteredAllEntitiesCount);
             using (EcsGroup group = EcsGroup.New(World))
             {
                 foreach (var e in World.Entities)
@@ -119,7 +119,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 }
             }
 #endif
-            return result;
+            return new EcsUnsafeSpan(World.ID, _filteredAllEntities.Ptr, _filteredAllEntitiesCount); ;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsUnsafeSpan ExecuteFor(EcsSpan span)
@@ -129,8 +129,8 @@ namespace DCFApixels.DragonECS.Core.Internal
                 return Execute();
             }
             ExecuteFor_Iternal(span);
-            var result = new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount);
 #if DEBUG && DRAGONECS_DEEP_DEBUG
+            var result = new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount);
             foreach (var e in result)
             {
                 if (World.IsMatchesMask(Mask, e) == false)
@@ -139,7 +139,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 }
             }
 #endif
-            return result;
+            return new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount); ;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
