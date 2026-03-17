@@ -151,7 +151,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
 #endif
             Meta* newHandledPtr = (Meta*)Marshal.ReAllocHGlobal(
-                (IntPtr)target.GetHandledPtr(), 
+                (IntPtr)target.GetHandledPtr(),
                 (IntPtr)newByteLength + sizeof(Meta));
             Handler handler = Handler.FromHandledPtr(newHandledPtr);
 #if DEBUG
@@ -328,7 +328,9 @@ namespace DCFApixels.DragonECS.Core.Internal
                 Handler.Dispose();
             }
 
-            public override string ToString() { return Handler.DebuggerDisplay(); }
+#if DEBUG
+            public override string ToString() { return DebuggerDisplay(); }
+#endif
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public override int GetHashCode() { return RawPtr.GetHashCode(); }
             public override bool Equals(object obj) { return obj is Handler h && h == this; }
@@ -395,7 +397,9 @@ namespace DCFApixels.DragonECS.Core.Internal
 
             public void Dispose() { Free((void*)RawPtr); }
 
+#if DEBUG
             public override string ToString() { return DebuggerDisplay(); }
+#endif
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public override int GetHashCode() { return RawPtr.GetHashCode(); }
             public override bool Equals(object obj) { return obj is Handler h && h == this; }
