@@ -71,6 +71,7 @@ namespace DCFApixels.DragonECS
         private int[] _delEntBuffer = Array.Empty<int>();
         private int _delEntBufferCount = 0;
         private int[] _emptyEntities = Array.Empty<int>();
+        private int _emptyEntitiesLength = 0;
         private int _emptyEntitiesCount = 0;
         private bool _isEnableAutoReleaseDelEntBuffer = true;
 
@@ -441,20 +442,37 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void MoveToEmptyEntities(int entityID)
         {
-            _emptyEntities[_emptyEntitiesCount++] = entityID;
+            _emptyEntities[_emptyEntitiesLength++] = entityID;
+            _emptyEntitiesCount++;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool RemoveFromEmptyEntities(int entityID)
+        private void RemoveFromEmptyEntities(int entityID)
         {
-            for (int i = _emptyEntitiesCount - 1; i >= 0; i--)
+            const int THRESHOLD = 16;
+            _emptyEntitiesCount--;
+
+            if (_emptyEntitiesLength < THRESHOLD)
             {
-                if (_emptyEntities[i] == entityID)
+                for (int i = _emptyEntitiesLength - 1; i >= 0; i--)
                 {
-                    _emptyEntities[i] = _emptyEntities[--_emptyEntitiesCount];
-                    return true;
+                    if (_emptyEntities[i] == entityID)
+                    {
+                        _emptyEntities[i] = _emptyEntities[--_emptyEntitiesLength];
+                    }
                 }
             }
-            return false;
+
+#if DRAGONECS_DEEP_DEBUG
+            if (_emptyEntitiesCount < 0)
+            {
+                Throw.DeepDebugException();
+            }
+#endif
+            if (_emptyEntitiesCount == 0)
+            {
+                _emptyEntitiesCount = 0;
+                _emptyEntitiesLength = 0;
+            }
         }
         #endregion
 
@@ -890,16 +908,21 @@ namespace DCFApixels.DragonECS
         {
             ReleaseDelEntityBuffer(-1);
         }
-        public unsafe void ReleaseDelEntityBuffer(int count)
+        public void ReleaseDelEntityBuffer(int count)
         {
-            if (_emptyEntitiesCount <= 0 && _delEntBufferCount <= 0) { return; }
+            if (_emptyEntitiesLength <= 0 && _delEntBufferCount <= 0) { return; }
             unchecked { _version++; }
 
-            for (int i = 0; i < _emptyEntitiesCount; i++)
+            for (int i = 0; i < _emptyEntitiesLength; i++)
             {
-                TryDelEntity(_emptyEntities[i]);
+                var entityID = _emptyEntities[i];
+                if (IsUsed(entityID) && _entities[entityID].componentsCount == 0)
+                {
+                    DelEntity(entityID);
+                }
             }
             _emptyEntitiesCount = 0;
+            _emptyEntitiesLength = 0;
 
             if (count < 0)
             {
