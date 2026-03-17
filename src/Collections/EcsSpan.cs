@@ -51,7 +51,7 @@ namespace DCFApixels.DragonECS
         public bool IsSourceEntities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return this == EcsWorld.GetWorld(_worldID).GetCurrentEntities_Internal(); }
+            get { return _values == EcsWorld.GetWorld(_worldID).GetCurrentEntities_Internal()._values; }
         }
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.ArrayBoundsChecks, true)]
@@ -118,8 +118,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region operators
-        public static bool operator ==(EcsSpan left, EcsSpan right) { return left._values == right._values; }
-        public static bool operator !=(EcsSpan left, EcsSpan right) { return left._values != right._values; }
+        public static bool operator ==(EcsSpan left, EcsSpan right) { return left._values == right._values && left._worldID == right._worldID; }
+        public static bool operator !=(EcsSpan left, EcsSpan right) { return left._values != right._values || left._worldID != right._worldID; }
         #endregion
 
         #region Enumerator
@@ -363,7 +363,7 @@ namespace DCFApixels.DragonECS.Core
         public bool IsSourceEntities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return ToSpan() == EcsWorld.GetWorld(_worldID).GetCurrentEntities_Internal(); }
+            get { return ToSpan().IsSourceEntities; }
         }
 
         public int this[int index]
@@ -445,8 +445,8 @@ namespace DCFApixels.DragonECS.Core
         #endregion
 
         #region operators
-        public static bool operator ==(EcsUnsafeSpan left, EcsUnsafeSpan right) { return left._values == right._values; }
-        public static bool operator !=(EcsUnsafeSpan left, EcsUnsafeSpan right) { return left._values != right._values; }
+        public static bool operator ==(EcsUnsafeSpan left, EcsUnsafeSpan right) { return left._values == right._values && left._length == right._length && left._worldID == right._worldID; }
+        public static bool operator !=(EcsUnsafeSpan left, EcsUnsafeSpan right) { return left._values != right._values || left._length != right._length || left._worldID != right._worldID; }
         public static implicit operator EcsSpan(EcsUnsafeSpan a) { return a.ToSpan(); }
         #endregion
 
