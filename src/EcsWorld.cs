@@ -175,10 +175,6 @@ namespace DCFApixels.DragonECS
                 // тут сложно однозначно посчитать, так как нужно еще место под аспекты и запросы
                 int controllersCount = config.PoolsCapacity * 4;
                 _worldComponentPools = new StructList<WorldComponentPoolAbstract>(controllersCount);
-                if (controllersCount < _allWorldComponentPools.Capacity)
-                {
-                    _allWorldComponentPools.Capacity = controllersCount;
-                }
 
                 if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
                 {
@@ -234,6 +230,13 @@ namespace DCFApixels.DragonECS
 #endif
                     return;
                 }
+
+                for (int i = Entities.Count - 1; i >= 0; i--)
+                {
+                    DelEntity(Entities[i]);
+                }
+                ReleaseDelEntityBufferAll();
+
                 _isDestroyed = true;
                 _listeners.InvokeOnWorldDestroy();
                 _entityDispenser = null;
@@ -253,7 +256,6 @@ namespace DCFApixels.DragonECS
                 //_entities - не обнуляется для работы entlong.IsAlive
             }
         }
-        //public void Clear() { }
         #endregion
 
         #region Getters
