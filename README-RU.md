@@ -613,9 +613,9 @@ class Aspect : EcsAspect
     public EcsPool<Velocity> velocities;
     protected override void Init(Builder b)
     {
-        poses = b.IncludePool<Pose>();
-        velocities = b.IncludePool<Velocity>();
-        b.ExcludePool<FreezedTag>();
+        poses = b.Inc<Pose>();
+        velocities = b.Inc<Velocity>();
+        b.Exc<FreezedTag>();
     }
 }
 ```
@@ -639,8 +639,8 @@ class Aspect : EcsAspect
         otherAspect1 = b.Combine<OtherAspect1>(1);
         // Хотя для OtherAspect1 метод Combine был вызван раньше, сначала будет скомбинирован с OtherAspect2, так как по умолчанию order = 0.
         otherAspect2 = b.Combine<OtherAspect2>();
-        // Если в OtherAspect1 или в OtherAspect2 было условие b.Exclude<Pose>() тут оно будет заменено на b.Include<Pose>().
-        poses = b.Include<Pose>();
+        // Если в OtherAspect1 или в OtherAspect2 было условие b.Exc<Pose>() тут оно будет заменено на b.Inc<Pose>().
+        poses = b.Inc<Pose>();
     }
 }
 ```
