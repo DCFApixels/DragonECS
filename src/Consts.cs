@@ -89,42 +89,6 @@ namespace DCFApixels.DragonECS
 #else
             false;
 #endif
-        public const bool ENABLE_DUMMY_SPAN =
-#if ENABLE_DUMMY_SPAN
-            true;
-#else
-            false;
-#endif
-
-
-        [Obsolete("DRAGONECS_ENABLE_DEBUG_SERVICE")]
-        public const bool ENABLE_DRAGONECS_DEBUGGER =
-#if ENABLE_DRAGONECS_DEBUGGER
-            true;
-#else
-            false;
-#endif
-        [Obsolete("DRAGONECS_DISABLE_POOLS_EVENTS")]
-        public const bool DISABLE_POOLS_EVENTS =
-#if DISABLE_POOLS_EVENTS
-            true;
-#else
-            false;
-#endif
-        [Obsolete("DRAGONECS_DISABLE_CATH_EXCEPTIONS")]
-        public const bool DISABLE_CATH_EXCEPTIONS =
-#if DISABLE_CATH_EXCEPTIONS
-            true;
-#else
-            false;
-#endif
-        [Obsolete("DRAGONECS_STABILITY_MODE")]
-        public const bool ENABLE_DRAGONECS_ASSERT_CHEKS =
-#if ENABLE_DRAGONECS_ASSERT_CHEKS
-            true;
-#else
-            false;
-#endif
     }
 }
 //#if UNITY_2020_3_OR_NEWER

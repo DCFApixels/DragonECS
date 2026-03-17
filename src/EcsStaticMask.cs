@@ -65,7 +65,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _excs; }
         }
-        /// <summary> Sorted set excluding constraints presented as global type codes. </summary>
+        /// <summary> Sorted set any constraints presented as global type codes. </summary>
         public ReadOnlySpan<EcsTypeCode> AnyTypeCodes
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -109,9 +109,15 @@ namespace DCFApixels.DragonECS
         public static Builder Inc(Type type) { return Builder.New().Inc(type); }
         public static Builder Exc(Type type) { return Builder.New().Exc(type); }
         public static Builder Any(Type type) { return Builder.New().Any(type); }
+        public static Builder Inc(params Type[] types) { return Builder.New().Inc(types); }
+        public static Builder Exc(params Type[] types) { return Builder.New().Exc(types); }
+        public static Builder Any(params Type[] types) { return Builder.New().Any(types); }
         public static Builder Inc(EcsTypeCode typeCode) { return Builder.New().Inc(typeCode); }
         public static Builder Exc(EcsTypeCode typeCode) { return Builder.New().Exc(typeCode); }
         public static Builder Any(EcsTypeCode typeCode) { return Builder.New().Any(typeCode); }
+        public static Builder Inc(params EcsTypeCode[] typeCodes) { return Builder.New().Inc(typeCodes); }
+        public static Builder Exc(params EcsTypeCode[] typeCodes) { return Builder.New().Exc(typeCodes); }
+        public static Builder Any(params EcsTypeCode[] typeCodes) { return Builder.New().Any(typeCodes); }
         private static EcsStaticMask CreateMask(Key key)
         {
             if (_ids.TryGetValue(key, out EcsStaticMask result) == false)
@@ -305,12 +311,24 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Inc/Exc/Combine/Except
+            public Builder Inc() { return this; }
+            public Builder Exc() { return this; }
+            public Builder Any() { return this; }
             public Builder Inc<T>() { return Inc(EcsTypeCodeManager.Get<T>()); }
             public Builder Exc<T>() { return Exc(EcsTypeCodeManager.Get<T>()); }
             public Builder Any<T>() { return Any(EcsTypeCodeManager.Get<T>()); }
             public Builder Inc(Type type) { return Inc(EcsTypeCodeManager.Get(type)); }
             public Builder Exc(Type type) { return Exc(EcsTypeCodeManager.Get(type)); }
             public Builder Any(Type type) { return Any(EcsTypeCodeManager.Get(type)); }
+            public Builder Inc(params Type[] types) { foreach (var type in types) { Inc(type); } return this; }
+            public Builder Exc(params Type[] types) { foreach (var type in types) { Exc(type); } return this; }
+            public Builder Any(params Type[] types) { foreach (var type in types) { Any(type); } return this; }
+            public Builder Inc(ReadOnlySpan<Type> types) { foreach (var type in types) { Inc(type); } return this; }
+            public Builder Exc(ReadOnlySpan<Type> types) { foreach (var type in types) { Exc(type); } return this; }
+            public Builder Any(ReadOnlySpan<Type> types) { foreach (var type in types) { Any(type); } return this; }
+            public Builder Inc(IEnumerable<Type> types) { foreach (var type in types) { Inc(type); } return this; }
+            public Builder Exc(IEnumerable<Type> types) { foreach (var type in types) { Exc(type); } return this; }
+            public Builder Any(IEnumerable<Type> types) { foreach (var type in types) { Any(type); } return this; }
             public Builder Inc(EcsTypeCode typeCode)
             {
                 if (_version != _builder._version) { Throw.CantReuseBuilder(); }
@@ -329,6 +347,15 @@ namespace DCFApixels.DragonECS
                 _builder.Any(typeCode);
                 return this;
             }
+            public Builder Inc(params EcsTypeCode[] typeCodes) { foreach (var typeCode in typeCodes) { Inc(typeCode); } return this; }
+            public Builder Exc(params EcsTypeCode[] typeCodes) { foreach (var typeCode in typeCodes) { Exc(typeCode); } return this; }
+            public Builder Any(params EcsTypeCode[] typeCodes) { foreach (var typeCode in typeCodes) { Any(typeCode); } return this; }
+            public Builder Inc(ReadOnlySpan<EcsTypeCode> typeCodes) { foreach (var typeCode in typeCodes) { Inc(typeCode); } return this; }
+            public Builder Exc(ReadOnlySpan<EcsTypeCode> typeCodes) { foreach (var typeCode in typeCodes) { Exc(typeCode); } return this; }
+            public Builder Any(ReadOnlySpan<EcsTypeCode> typeCodes) { foreach (var typeCode in typeCodes) { Any(typeCode); } return this; }
+            public Builder Inc(IEnumerable<EcsTypeCode> typeCodes) { foreach (var typeCode in typeCodes) { Inc(typeCode); } return this; }
+            public Builder Exc(IEnumerable<EcsTypeCode> typeCodes) { foreach (var typeCode in typeCodes) { Exc(typeCode); } return this; }
+            public Builder Any(IEnumerable<EcsTypeCode> typeCodes) { foreach (var typeCode in typeCodes) { Any(typeCode); } return this; }
             public Builder Combine(EcsStaticMask mask)
             {
                 if (_version != _builder._version) { Throw.CantReuseBuilder(); }
@@ -354,6 +381,7 @@ namespace DCFApixels.DragonECS
                     return result;
                 }
             }
+            public static implicit operator EcsStaticMask(Builder a) { return a.Build(); }
             public void Cancel()
             {
                 if (_version != _builder._version) { Throw.CantReuseBuilder(); }

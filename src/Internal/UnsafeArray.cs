@@ -38,13 +38,13 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnsafeArray(int length)
         {
-            UnmanagedArrayUtility.New(out ptr, length);
+            ptr = MemoryAllocator.Alloc<T>(length).Ptr;
             Length = length;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnsafeArray(int length, bool isInit)
         {
-            UnmanagedArrayUtility.NewAndInit(out ptr, length);
+            ptr = MemoryAllocator.AllocAndInit<T>(length).Ptr;
             Length = length;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -90,18 +90,20 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnsafeArray<T> Clone()
         {
-            return new UnsafeArray<T>(UnmanagedArrayUtility.Clone(ptr, Length), Length);
+            return new UnsafeArray<T>(MemoryAllocator.From(ptr, Length).Ptr, Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            UnmanagedArrayUtility.Free(ref ptr, ref Length);
+            MemoryAllocator.Free(ptr);
+            ptr = default;
+            Length = default;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReadonlyDispose()
         {
-            UnmanagedArrayUtility.Free(ptr);
+            MemoryAllocator.Free(ptr);
         }
         public override string ToString()
         {
@@ -113,6 +115,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
             return CollectionUtility.AutoToString(elements, "ua");
         }
+
+        public Span<T> AsSpan() { return new Span<T>(ptr, Length); }
+        public T[] ToArray() { return AsSpan().ToArray(); }
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator() { return GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }

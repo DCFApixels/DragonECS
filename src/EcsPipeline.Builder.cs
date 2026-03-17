@@ -122,7 +122,6 @@ namespace DCFApixels.DragonECS
             }
             private void InsertAfterNode_Internal(int insertAfterIndex, IEcsProcess system, string layer, int sortOrder, bool isUnique)
             {
-                //TODO нужно потестить
                 if (isUnique && _uniqueSystemsSet.Add(system.GetType()) == false)
                 {
                     //EcsDebug.PrintWarning($"The pipeline already contains a unique instance of {system.GetType().Name}");
@@ -597,20 +596,6 @@ namespace DCFApixels.DragonECS
                 public override string ToString()
                 {
                     return this.AutoToString();
-                }
-            }
-            #endregion
-
-            #region Obsolete
-            [Obsolete("Use " + nameof(Injections))]
-            public readonly InitInjectionList Injector;
-            [Obsolete("Use LayersMap")]
-            public class LayerList : LayersMap
-            {
-                //public LayerList(Builder source, string basicLayerName) : base(source, basicLayerName) { }
-                //public LayerList(Builder source, string preBeginlayer, string beginlayer, string basicLayer, string endLayer, string postEndLayer) : base(source, preBeginlayer, beginlayer, basicLayer, endLayer, postEndLayer) { }
-                public LayerList(IDependencyGraph<string> graph, Builder pipelineBuilder) : base(graph, pipelineBuilder)
-                {
                 }
             }
             #endregion

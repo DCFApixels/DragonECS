@@ -126,7 +126,7 @@ namespace DCFApixels.DragonECS
         {
             return (T)Extract_Internal(typeof(T));
         }
-        private object Extract_Internal(Type type)//TODO проверить
+        private object Extract_Internal(Type type)
         {
             if (_nodes.TryGetValue(type, out InjectionNodeBase node))
             {
@@ -192,7 +192,7 @@ namespace DCFApixels.DragonECS
                 FindMonoWorld(obj);
                 _injections.Add(new Injection<T>(obj));
             }
-            public void Extract<T>(ref T obj) // TODO проверить
+            public void Extract<T>(ref T obj)
             {
                 Type type = typeof(T);
                 for (int i = _injections.Count - 1; i >= 0; i--)
@@ -272,7 +272,7 @@ namespace DCFApixels.DragonECS
             }
             public void InjectTo(Injector injector, EcsPipeline pipeline)
             {
-                var monoWorldProcess = pipeline.GetProcess<IMonoWorldInject>(); // TODO Проверить IMonoWorldInject
+                var monoWorldProcess = pipeline.GetProcess<IMonoWorldInject>();
                 foreach (var monoWorldSystem in monoWorldProcess)
                 {
                     monoWorldSystem.World = _monoWorld;

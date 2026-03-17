@@ -148,7 +148,7 @@ namespace DCFApixels.DragonECS
                 #region Constructors
                 public RunHelper(EcsRunner<TProcess> runner) : this(runner,
 #if DEBUG
-                    typeof(TProcess).ToMeta().Name)
+                    typeof(TProcess).GetMeta().Name)
 #else
                     string.Empty)
 #endif
@@ -298,7 +298,7 @@ namespace DCFApixels.DragonECS
                 #region Constructors
                 public RunHelperWithFinally(EcsRunner<TProcess> runner) : this(runner,
 #if DEBUG
-                    typeof(TProcess).ToMeta().Name)
+                    typeof(TProcess).GetMeta().Name)
 #else
                     string.Empty)
 #endif

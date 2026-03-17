@@ -5,7 +5,6 @@ using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -34,6 +33,7 @@ namespace DCFApixels.DragonECS
     {
         public readonly int ID;
         public readonly short WorldID;
+        public readonly EcsWorld World;
 
         internal readonly EcsStaticMask _staticMask;
         internal readonly EcsMaskChunck[] _incChunckMasks;
@@ -51,11 +51,6 @@ namespace DCFApixels.DragonECS
         private EcsMaskIterator _iterator;
 
         #region Properties
-        public EcsWorld World
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return EcsWorld.GetWorld(WorldID); }
-        }
         /// <summary> Sorted set excluding constraints. </summary>
         public ReadOnlySpan<int> Incs
         {
@@ -73,6 +68,25 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _anys; }
+        }
+
+        /// <summary> Sorted set including constraints presented as global type codes. </summary>
+        public ReadOnlySpan<EcsTypeCode> IncTypeCodes
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ToStatic().IncTypeCodes; }
+        }
+        /// <summary> Sorted set excluding constraints presented as global type codes. </summary>
+        public ReadOnlySpan<EcsTypeCode> ExcTypeCodes
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ToStatic().ExcTypeCodes; }
+        }
+        /// <summary> Sorted set any constraints presented as global type codes. </summary>
+        public ReadOnlySpan<EcsTypeCode> AnyTypeCodes
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ToStatic().AnyTypeCodes; }
         }
         public EcsMaskFlags Flags
         {
@@ -116,6 +130,7 @@ namespace DCFApixels.DragonECS
             _staticMask = staticMask;
             ID = id;
             WorldID = worldID;
+            World = EcsWorld.GetWorld(worldID);
             _flags = staticMask.Flags;
 
             EcsWorld world = EcsWorld.GetWorld(worldID);
@@ -345,8 +360,6 @@ namespace DCFApixels.DragonECS
 
             internal EcsMask ConvertFromStatic(EcsStaticMask staticMask)
             {
-
-
                 if (_staticMasks.TryGetValue(staticMask.ID, out EcsMask result) == false)
                 {
                     result = new EcsMask(staticMask, _staticMasks.Count, _world.ID);
@@ -367,20 +380,42 @@ namespace DCFApixels.DragonECS
                 _world = world;
                 _builder = EcsStaticMask.New();
             }
-
+            public Builder Inc() { return this; }
+            public Builder Exc() { return this; }
+            public Builder Any() { return this; }
             public Builder Inc<T>() { _builder.Inc<T>(); return this; }
             public Builder Exc<T>() { _builder.Exc<T>(); return this; }
             public Builder Any<T>() { _builder.Any<T>(); return this; }
             public Builder Inc(Type type) { _builder.Inc(type); return this; }
             public Builder Exc(Type type) { _builder.Exc(type); return this; }
             public Builder Any(Type type) { _builder.Any(type); return this; }
+            public Builder Inc(params Type[] types) { _builder.Inc(types); return this; }
+            public Builder Exc(params Type[] types) { _builder.Exc(types); return this; }
+            public Builder Any(params Type[] types) { _builder.Any(types); return this; }
+            public Builder Inc(ReadOnlySpan<Type> types) { _builder.Inc(types); return this; }
+            public Builder Exc(ReadOnlySpan<Type> types) { _builder.Exc(types); return this; }
+            public Builder Any(ReadOnlySpan<Type> types) { _builder.Any(types); return this; }
+            public Builder Inc(IEnumerable<Type> types) { _builder.Inc(types); return this; }
+            public Builder Exc(IEnumerable<Type> types) { _builder.Exc(types); return this; }
+            public Builder Any(IEnumerable<Type> types) { _builder.Any(types); return this; }
             public Builder Inc(EcsTypeCode typeCode) { _builder.Inc(typeCode); return this; }
             public Builder Exc(EcsTypeCode typeCode) { _builder.Exc(typeCode); return this; }
             public Builder Any(EcsTypeCode typeCode) { _builder.Any(typeCode); return this; }
+            public Builder Inc(params EcsTypeCode[] typeCodes) { _builder.Inc(typeCodes); return this; }
+            public Builder Exc(params EcsTypeCode[] typeCodes) { _builder.Exc(typeCodes); return this; }
+            public Builder Any(params EcsTypeCode[] typeCodes) { _builder.Any(typeCodes); return this; }
+            public Builder Inc(ReadOnlySpan<EcsTypeCode> typeCodes) { _builder.Inc(typeCodes); return this; }
+            public Builder Exc(ReadOnlySpan<EcsTypeCode> typeCodes) { _builder.Exc(typeCodes); return this; }
+            public Builder Any(ReadOnlySpan<EcsTypeCode> typeCodes) { _builder.Any(typeCodes); return this; }
+            public Builder Inc(IEnumerable<EcsTypeCode> typeCodes) { _builder.Inc(typeCodes); return this; }
+            public Builder Exc(IEnumerable<EcsTypeCode> typeCodes) { _builder.Exc(typeCodes); return this; }
+            public Builder Any(IEnumerable<EcsTypeCode> typeCodes) { _builder.Any(typeCodes); return this; }
+
             public Builder Combine(EcsMask mask) { _builder.Combine(mask._staticMask); return this; }
             public Builder Except(EcsMask mask) { _builder.Except(mask._staticMask); return this; }
 
             public EcsMask Build() { return _world.Get<WorldMaskComponent>().ConvertFromStatic(_builder.Build()); }
+            public static implicit operator EcsMask(Builder a) { return a.Build(); }
         }
         #endregion
 
@@ -402,15 +437,18 @@ namespace DCFApixels.DragonECS
             public readonly int ID;
             public readonly EcsWorld world;
             private readonly short _worldID;
-            public readonly EcsMaskChunck[] includedChunkMasks;
-            public readonly EcsMaskChunck[] excludedChunkMasks;
-            public readonly EcsMaskChunck[] anyChunkMasks;
-            public readonly int[] included;
-            public readonly int[] excluded;
-            public readonly int[] any;
-            public readonly Type[] includedTypes;
-            public readonly Type[] excludedTypes;
-            public readonly Type[] anyTypes;
+            public readonly EcsMaskChunck[] incsChunkMasks;
+            public readonly EcsMaskChunck[] excsChunkMasks;
+            public readonly EcsMaskChunck[] anysChunkMasks;
+            public readonly int[] incs;
+            public readonly int[] excs;
+            public readonly int[] anys;
+            public readonly Type[] incsTypes;
+            public readonly Type[] excsTypes;
+            public readonly Type[] anysTypes;
+            public readonly IEcsPool[] incsPools;
+            public readonly IEcsPool[] excsPools;
+            public readonly IEcsPool[] anysPools;
 
             public bool IsEmpty { get { return _source.IsEmpty; } }
             public bool IsBroken { get { return _source.IsBroken; } }
@@ -422,49 +460,25 @@ namespace DCFApixels.DragonECS
                 ID = mask.ID;
                 world = EcsWorld.GetWorld(mask.WorldID);
                 _worldID = mask.WorldID;
-                includedChunkMasks = mask._incChunckMasks;
-                excludedChunkMasks = mask._excChunckMasks;
-                anyChunkMasks = mask._anyChunckMasks;
-                included = mask._incs;
-                excluded = mask._excs;
-                any = mask._anys;
+                incsChunkMasks = mask._incChunckMasks;
+                excsChunkMasks = mask._excChunckMasks;
+                anysChunkMasks = mask._anyChunckMasks;
+                incs = mask._incs;
+                excs = mask._excs;
+                anys = mask._anys;
                 Type converter(int o) { return world.GetComponentType(o); }
-                includedTypes = included.Select(converter).ToArray();
-                excludedTypes = excluded.Select(converter).ToArray();
-                anyTypes = any.Select(converter).ToArray();
+                IEcsPool converterPool(int o) { return world.FindPoolInstance(o); }
+                incsTypes = incs.Select(converter).ToArray();
+                excsTypes = excs.Select(converter).ToArray();
+                anysTypes = anys.Select(converter).ToArray();
+                incsPools = incs.Select(converterPool).ToArray();
+                excsPools = excs.Select(converterPool).ToArray();
+                anysPools = anys.Select(converterPool).ToArray();
             }
             public override string ToString()
             {
-                return CreateLogString(_worldID, included, excluded, any);
+                return CreateLogString(_worldID, incs, excs, anys);
             }
-        }
-        #endregion
-
-        #region Obsolete
-        /// <summary> Sorted set including constraints. </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Use Incs")]
-        public ReadOnlySpan<int> Inc
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _incs; }
-        }
-        /// <summary> Sorted set excluding constraints. </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Use Excs")]
-        public ReadOnlySpan<int> Exc
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _excs; }
-        }
-        public partial struct Builder
-        {
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Include<T>() { return Inc<T>(); }
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Exclude<T>() { return Exc<T>(); }
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Include(Type type) { return Inc(type); }
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Exclude(Type type) { return Exc(type); }
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Inc(int componentTypeID) { Inc(_world.GetComponentType(componentTypeID)); return this; }
-            [EditorBrowsable(EditorBrowsableState.Never)][Obsolete] public Builder Exc(int componentTypeID) { Exc(_world.GetComponentType(componentTypeID)); return this; }
         }
         #endregion
     }
@@ -607,8 +621,8 @@ namespace DCFApixels.DragonECS
         }
         private void Cleanup(bool disposing)
         {
-            _bufferHandler.Dispose();
-            _chunckBufferHandler.Dispose();
+            _bufferHandler.DisposeAndReset();
+            _chunckBufferHandler.DisposeAndReset();
         }
         #endregion
 
@@ -636,8 +650,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortIncChunckBuffer.Length > 1)
             {
-                var comparer = new IncCountComparer(counts);
-                UnsafeArraySortHalperX<int>.InsertionSort(sortIncBuffer.ptr, sortIncBuffer.Length, ref comparer);
+                SortHalper.Sort(sortIncBuffer.AsSpan(), new IncCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortIncBuffer, _sortIncChunckBuffer);
             }
             if (_sortIncChunckBuffer.Length > 0)
@@ -651,8 +664,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortExcChunckBuffer.Length > 1)
             {
-                ExcCountComparer comparer = new ExcCountComparer(counts);
-                UnsafeArraySortHalperX<int>.InsertionSort(sortExcBuffer.ptr, sortExcBuffer.Length, ref comparer);
+                SortHalper.Sort(sortExcBuffer.AsSpan(), new ExcCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortExcBuffer, _sortExcChunckBuffer);
             }
             // Выражение IncCount < (AllEntitesCount - ExcCount) мало вероятно будет истинным.
@@ -662,8 +674,7 @@ namespace DCFApixels.DragonECS
 
             if (_sortAnyChunckBuffer.Length > 1)
             {
-                ExcCountComparer comparer = new ExcCountComparer(counts);
-                UnsafeArraySortHalperX<int>.InsertionSort(sortAnyBuffer.ptr, sortAnyBuffer.Length, ref comparer);
+                SortHalper.Sort(sortAnyBuffer.AsSpan(), new ExcCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortAnyBuffer, _sortAnyChunckBuffer);
             }
             // Any не влияет на maxEntites если есть Inc и сложно высчитывается если нет Inc
@@ -691,9 +702,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IterateTo
-        //TODO Перемеиноваться в CacheTo
+        public EcsMaskFlags MaskFlags
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _maskFlags; }
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void IterateTo(EcsSpan source, EcsGroup group)
+        public void CacheTo(EcsSpan source, EcsGroup group)
         {
             switch (_maskFlags)
             {
@@ -701,7 +716,7 @@ namespace DCFApixels.DragonECS
                     group.CopyFrom(source);
                     break;
                 case EcsMaskFlags.Inc:
-                    IterateOnlyInc(source).CopyTo(group);
+                    IterateOnlyInc(source).CacheTo(group);
                     break;
                 case EcsMaskFlags.Exc:
                 case EcsMaskFlags.Any:
@@ -709,7 +724,7 @@ namespace DCFApixels.DragonECS
                 case EcsMaskFlags.IncAny:
                 case EcsMaskFlags.ExcAny:
                 case EcsMaskFlags.IncExcAny:
-                    Iterate(source).CopyTo(group);
+                    Iterate(source).CacheTo(group);
                     break;
                 case EcsMaskFlags.Broken:
                     group.Clear();
@@ -720,21 +735,21 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int IterateTo(EcsSpan source, ref int[] array)
+        public int CacheTo(EcsSpan source, ref int[] array)
         {
             switch (_maskFlags)
             {
                 case EcsMaskFlags.Empty:
                     return source.ToArray(ref array);
                 case EcsMaskFlags.Inc:
-                    return IterateOnlyInc(source).CopyTo(ref array);
+                    return IterateOnlyInc(source).CacheTo(ref array);
                 case EcsMaskFlags.Exc:
                 case EcsMaskFlags.Any:
                 case EcsMaskFlags.IncExc:
                 case EcsMaskFlags.IncAny:
                 case EcsMaskFlags.ExcAny:
                 case EcsMaskFlags.IncExcAny:
-                    return Iterate(source).CopyTo(ref array);
+                    return Iterate(source).CacheTo(ref array);
                 case EcsMaskFlags.Broken:
                     return new EcsSpan(World.ID, Array.Empty<int>()).ToArray(ref array);
                 default:
@@ -764,7 +779,7 @@ namespace DCFApixels.DragonECS
 
             #region CopyTo
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void CopyTo(EcsGroup group)
+            public void CacheTo(EcsGroup group)
             {
                 group.Clear();
                 var enumerator = GetEnumerator();
@@ -774,7 +789,7 @@ namespace DCFApixels.DragonECS
                 }
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int CopyTo(ref int[] array)
+            public int CacheTo(ref int[] array)
             {
                 int count = 0;
                 var enumerator = GetEnumerator();
@@ -920,7 +935,7 @@ namespace DCFApixels.DragonECS
 
             #region CopyTo
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void CopyTo(EcsGroup group)
+            public void CacheTo(EcsGroup group)
             {
                 group.Clear();
                 var enumerator = GetEnumerator();
@@ -930,7 +945,7 @@ namespace DCFApixels.DragonECS
                 }
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int CopyTo(ref int[] array)
+            public int CacheTo(ref int[] array)
             {
                 int count = 0;
                 var enumerator = GetEnumerator();
@@ -1077,7 +1092,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-        internal readonly struct IncCountComparer : IStructComparer<int>
+        internal readonly struct IncCountComparer : IComparer<int>
         {
             public readonly EcsWorld.PoolSlot[] counts;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1096,7 +1111,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-        internal readonly struct ExcCountComparer : IStructComparer<int>
+        internal readonly struct ExcCountComparer : IComparer<int>
         {
             public readonly EcsWorld.PoolSlot[] counts;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -66,7 +66,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             if (_versionsChecker.CheckAndNext() == false)
             {
                 _version++;
-                _iterator.IterateTo(World.Entities, _filteredAllGroup);
+                _iterator.CacheTo(World.Entities, _filteredAllGroup);
 #if DEBUG && DRAGONECS_DEEP_DEBUG
                 if (_filteredGroup == null)
                 {
@@ -98,7 +98,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 _filteredGroup = EcsGroup.New(World);
             }
-            _iterator.IterateTo(span, _filteredGroup);
+            _iterator.CacheTo(span, _filteredGroup);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

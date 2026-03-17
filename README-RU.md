@@ -89,12 +89,12 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
 Обязательные требования:
 + Минимальная версия C# 7.3;
 
-Опционально:
-+ Поддержка NativeAOT
+Поддерживает:
++ NativeAOT;
 + Игровые движки с C#: Unity, Godot, MonoGame и т.д.
 
 Протестировано:
-+ **Unity:** Минимальная версия 2020.3.0;
++ **Unity:** Минимальная версия 2021.2.0;
 
 ## Установка для Unity
 > Рекомендуется так же установить расширение [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
@@ -125,6 +125,7 @@ https://github.com/DCFApixels/DragonECS.git
     * [Графы](https://github.com/DCFApixels/DragonECS-Graphs)
 * Утилиты:
     * [Упрощенный синтаксис](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
+    * [EcsRefPool](https://gist.github.com/DCFApixels/73e392ccabdd98b3d4a517017d8a3f22)
     * [Таймеры](https://gist.github.com/DCFApixels/71a416275660c465ece76242290400df)
     * [Однокадровые компоненты](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
     * [Шаблоны кода IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [для Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
@@ -612,9 +613,9 @@ class Aspect : EcsAspect
     public EcsPool<Velocity> velocities;
     protected override void Init(Builder b)
     {
-        poses = b.IncludePool<Pose>();
-        velocities = b.IncludePool<Velocity>();
-        b.ExcludePool<FreezedTag>();
+        poses = b.Inc<Pose>();
+        velocities = b.Inc<Velocity>();
+        b.Exc<FreezedTag>();
     }
 }
 ```
@@ -638,8 +639,8 @@ class Aspect : EcsAspect
         otherAspect1 = b.Combine<OtherAspect1>(1);
         // Хотя для OtherAspect1 метод Combine был вызван раньше, сначала будет скомбинирован с OtherAspect2, так как по умолчанию order = 0.
         otherAspect2 = b.Combine<OtherAspect2>();
-        // Если в OtherAspect1 или в OtherAspect2 было условие b.Exclude<Pose>() тут оно будет заменено на b.Include<Pose>().
-        poses = b.Include<Pose>();
+        // Если в OtherAspect1 или в OtherAspect2 было условие b.Exc<Pose>() тут оно будет заменено на b.Inc<Pose>().
+        poses = b.Inc<Pose>();
     }
 }
 ```
@@ -963,7 +964,6 @@ using (_marker.Auto())
 + `DRAGONECS_DISABLE_CATH_EXCEPTIONS` - Выключает поведение по умолчанию по обработке исключений. По умолчанию фреймворк будет ловить исключения с выводом информации из исключений через EcsDebug и продолжать работу.
 + `REFLECTION_DISABLED` - Полностью ограничивает работу фреймворка с Reflection.
 + `DISABLE_DEBUG` - Для среды где не поддерживается ручное отключение DEBUG, например Unity.
-+ `ENABLE_DUMMY_SPAN` - На случай если в среде не поддерживаются Span типы, включает его замену.
 
 </br>
 
@@ -1122,13 +1122,6 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 
  
 # FAQ
-
-## 'ReadOnlySpan<>' could not be found
-В версии Unity 2020.1.х в консоли может выпадать ошибка:
-```
-The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing a using directive or an assembly reference?)
-``` 
-Чтобы починить добавьте директиву `ENABLE_DUMMY_SPAN` в `Project Settings/Player/Other Settings/Scripting Define Symbols`.
 
 ## Как Выключать/Включать системы?
 Напрямую - никак. </br>
