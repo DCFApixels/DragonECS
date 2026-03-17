@@ -23,18 +23,6 @@ namespace DCFApixels.DragonECS
     [MetaID("DragonECS_84D2537C9201D6F6B92FEC1C8883A07A")]
     public interface IEcsValueComponent : IEcsComponentMember { }
 
-    internal unsafe struct EcsValuePoolSharedStore
-    {
-        public int _componentTypeID;
-        public int* _mapping;
-        public void* _items;
-    }
-    internal readonly unsafe struct EcsValuePoolNative<T>
-    {
-        private readonly EcsValuePoolSharedStore* _store;
-    }
-
-
     /// <summary>Pool for IEcsValueComponent components</summary>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
@@ -135,6 +123,9 @@ namespace DCFApixels.DragonECS
             _componentTypeID = componentTypeID;
             _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
+            _sharedStore->_worldID = _worldID;
+            _sharedStore->_componentTypeID = _componentTypeID;
+
             _mapping = MemoryAllocator.Alloc<int>(world.Capacity).Ptr;
             _sharedStore->_mapping = _mapping;
             var worldConfig = world.Configs.GetWorldConfigOrDefault();
@@ -155,6 +146,7 @@ namespace DCFApixels.DragonECS
         {
             MemoryAllocator.Free(_mapping);
             MemoryAllocator.Free(_items);
+            MemoryAllocator.Free(_sharedStore);
             MemoryAllocator.Free(_recycledItems);
         }
         #endregion
@@ -462,6 +454,45 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    internal unsafe struct EcsValuePoolSharedStore
+    {
+        public short _worldID;
+        public int _componentTypeID;
+        public int* _mapping;
+        public void* _items;
+    }
+    public readonly unsafe struct NativeEcsValuePool<T>
+        where T : unmanaged, IEcsValueComponent
+    {
+        private readonly EcsValuePoolSharedStore* _store;
+        public short WorldID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _store->_worldID; }
+        }
+        public int ComponentTypeID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _store->_componentTypeID; }
+        }
+        public ref T this[int entityID]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ref Get(entityID); }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal NativeEcsValuePool(EcsValuePoolSharedStore* store)
+        {
+            _store = store;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Has(int entityID) { return _store->_mapping[entityID] != 0; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T Get(int entityID) { return ref ((T*)_store->_items)[_store->_mapping[entityID]]; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly T Read(int entityID) { return ref Get(entityID); }
+    }
 
     public static class EcsValuePoolExtensions
     {
