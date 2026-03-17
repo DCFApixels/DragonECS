@@ -53,7 +53,7 @@ namespace DCFApixels.DragonECS
 
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
         private StructList<IEcsPoolEventListener> _listeners = new StructList<IEcsPoolEventListener>(2);
-        private int _listenersCachedCount = 0;
+        private bool _hasAnyListener = false;
 #endif
         private bool _isLocked;
 
@@ -155,7 +155,7 @@ namespace DCFApixels.DragonECS
             ref T result = ref _items[itemIndex];
             EcsComponentLifecycle<T>.OnAdd( _isCustomLifecycle, _customLifecycle, ref result, _worldID, entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            _listeners.InvokeOnAddAndGet(entityID, _listenersCachedCount);
+            if (_hasAnyListener) { _listeners.InvokeOnAddAndGet(entityID); }
 #endif
             return ref result;
         }
@@ -166,7 +166,7 @@ namespace DCFApixels.DragonECS
             if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            _listeners.InvokeOnGet(entityID, _listenersCachedCount);
+            if (_hasAnyListener) { _listeners.InvokeOnGet(entityID); }
 #endif
             return ref _items[_mapping[entityID]];
         }
@@ -205,13 +205,13 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-                EcsComponentLifecycle<T>.OnAdd( _isCustomLifecycle, _customLifecycle, ref _items[itemIndex], _worldID, entityID);
+                EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref _items[itemIndex], _worldID, entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-                _listeners.InvokeOnAdd(entityID, _listenersCachedCount);
+                if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
 #endif
             } //Add block end
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            _listeners.InvokeOnGet(entityID, _listenersCachedCount);
+            if (_hasAnyListener) { _listeners.InvokeOnGet(entityID); }
 #endif
             return ref _items[itemIndex];
         }
@@ -241,7 +241,7 @@ namespace DCFApixels.DragonECS
             _itemsCount--;
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            _listeners.InvokeOnDel(entityID, _listenersCachedCount);
+            if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
         }
         public void TryDel(int entityID)
@@ -287,7 +287,7 @@ namespace DCFApixels.DragonECS
                 itemIndex = 0;
                 _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-                _listeners.InvokeOnDel(entityID, _listenersCachedCount);
+                if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
             }
             _itemsCount = 0;
@@ -334,14 +334,14 @@ namespace DCFApixels.DragonECS
         {
             if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
             _listeners.Add(listener);
-            _listenersCachedCount++;
+            _hasAnyListener = _listeners.Count > 0;
         }
         public void RemoveListener(IEcsPoolEventListener listener)
         {
             if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
             if (_listeners.RemoveWithOrder(listener))
             {
-                _listenersCachedCount--;
+                _hasAnyListener = _listeners.Count > 0;
             }
         }
 #endif

@@ -44,7 +44,7 @@ namespace DCFApixels.DragonECS
 
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
         private StructList<IEcsPoolEventListener> _listeners = new StructList<IEcsPoolEventListener>(2);
-        private int _listenersCachedCount = 0;
+        private bool _hasAnyListener = false;
 #endif
         private bool _isLocked;
 
@@ -127,7 +127,7 @@ namespace DCFApixels.DragonECS
             _mapping[entityID] = true;
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            _listeners.InvokeOnAdd(entityID, _listenersCachedCount);
+            if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
 #endif
         }
         public void TryAdd(int entityID)
@@ -155,7 +155,7 @@ namespace DCFApixels.DragonECS
             _count--;
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            _listeners.InvokeOnDel(entityID, _listenersCachedCount);
+            if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -225,7 +225,7 @@ namespace DCFApixels.DragonECS
                 _mapping[entityID] = false;
                 _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-                _listeners.InvokeOnDel(entityID, _listenersCachedCount);
+                if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
             }
         }
@@ -295,14 +295,14 @@ namespace DCFApixels.DragonECS
         {
             if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
             _listeners.Add(listener);
-            _listenersCachedCount++;
+            _hasAnyListener = _listeners.Count > 0;
         }
         public void RemoveListener(IEcsPoolEventListener listener)
         {
             if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
             if (_listeners.RemoveWithOrder(listener))
             {
-                _listenersCachedCount--;
+                _hasAnyListener = _listeners.Count > 0;
             }
         }
 #endif

@@ -322,7 +322,7 @@ namespace DCFApixels.DragonECS
 }
 
 namespace DCFApixels.DragonECS.Core
-{ 
+{
 #if ENABLE_IL2CPP
     using Unity.IL2CPP.CompilerServices;
     [Il2CppSetOption(Option.NullChecks, false)]
@@ -385,6 +385,7 @@ namespace DCFApixels.DragonECS.Core
         #endregion
 
         #region Constructors
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal EcsUnsafeSpan(short worldID, int* array, int length)
         {
             _worldID = worldID;
