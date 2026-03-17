@@ -437,15 +437,18 @@ namespace DCFApixels.DragonECS
             public readonly int ID;
             public readonly EcsWorld world;
             private readonly short _worldID;
-            public readonly EcsMaskChunck[] includedChunkMasks;
-            public readonly EcsMaskChunck[] excludedChunkMasks;
-            public readonly EcsMaskChunck[] anyChunkMasks;
-            public readonly int[] included;
-            public readonly int[] excluded;
-            public readonly int[] any;
-            public readonly Type[] includedTypes;
-            public readonly Type[] excludedTypes;
-            public readonly Type[] anyTypes;
+            public readonly EcsMaskChunck[] incsChunkMasks;
+            public readonly EcsMaskChunck[] excsChunkMasks;
+            public readonly EcsMaskChunck[] anysChunkMasks;
+            public readonly int[] incs;
+            public readonly int[] excs;
+            public readonly int[] anys;
+            public readonly Type[] incsTypes;
+            public readonly Type[] excsTypes;
+            public readonly Type[] anysTypes;
+            public readonly IEcsPool[] incsPools;
+            public readonly IEcsPool[] excsPools;
+            public readonly IEcsPool[] anysPools;
 
             public bool IsEmpty { get { return _source.IsEmpty; } }
             public bool IsBroken { get { return _source.IsBroken; } }
@@ -457,20 +460,24 @@ namespace DCFApixels.DragonECS
                 ID = mask.ID;
                 world = EcsWorld.GetWorld(mask.WorldID);
                 _worldID = mask.WorldID;
-                includedChunkMasks = mask._incChunckMasks;
-                excludedChunkMasks = mask._excChunckMasks;
-                anyChunkMasks = mask._anyChunckMasks;
-                included = mask._incs;
-                excluded = mask._excs;
-                any = mask._anys;
+                incsChunkMasks = mask._incChunckMasks;
+                excsChunkMasks = mask._excChunckMasks;
+                anysChunkMasks = mask._anyChunckMasks;
+                incs = mask._incs;
+                excs = mask._excs;
+                anys = mask._anys;
                 Type converter(int o) { return world.GetComponentType(o); }
-                includedTypes = included.Select(converter).ToArray();
-                excludedTypes = excluded.Select(converter).ToArray();
-                anyTypes = any.Select(converter).ToArray();
+                IEcsPool converterPool(int o) { return world.FindPoolInstance(o); }
+                incsTypes = incs.Select(converter).ToArray();
+                excsTypes = excs.Select(converter).ToArray();
+                anysTypes = anys.Select(converter).ToArray();
+                incsPools = incs.Select(converterPool).ToArray();
+                excsPools = excs.Select(converterPool).ToArray();
+                anysPools = anys.Select(converterPool).ToArray();
             }
             public override string ToString()
             {
-                return CreateLogString(_worldID, included, excluded, any);
+                return CreateLogString(_worldID, incs, excs, anys);
             }
         }
         #endregion
