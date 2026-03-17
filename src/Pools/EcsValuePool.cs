@@ -152,6 +152,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
+        public NativeEcsValuePool<T> AsNative()
+        {
+            return new NativeEcsValuePool<T>(_sharedStore);
+        }
         public ref T Add(int entityID)
         {
             ref int itemIndex = ref _mapping[entityID];
