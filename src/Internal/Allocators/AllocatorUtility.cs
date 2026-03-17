@@ -1,8 +1,16 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using static DCFApixels.DragonECS.Core.Internal.MemoryAllocator;
+#if ENABLE_IL2CPP
+using Unity.IL2CPP.CompilerServices;
+#endif
+
 namespace DCFApixels.DragonECS.Core.Internal
 {
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
     internal static unsafe class AllocatorUtility
     {
         public static void ClearAllocatedMemory(IntPtr ptr, int startByte, int lengthInBytes)

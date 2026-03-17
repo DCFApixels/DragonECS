@@ -2,7 +2,6 @@
 #undef DEBUG
 #endif
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -455,7 +454,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
 
             [StructLayout(LayoutKind.Explicit)]
-            private unsafe struct Union
+            private struct Union
             {
                 [FieldOffset(0)]
                 public Array array;
