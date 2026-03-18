@@ -114,16 +114,16 @@ https://github.com/DCFApixels/DragonECS.git
 也可以通过将框架的源代码直接复制到项目中来使用该框架。
 
 # 扩展
-* 集成:
+* Integrations:
     * [Unity](https://github.com/DCFApixels/DragonECS-Unity)
     * [Godot](https://gitlab.com/InauniusOwn/Libraries/DraGodot)
-* 包:
+* Packages:
     * [自动依赖注入](https://github.com/DCFApixels/DragonECS-AutoInjections)
     * [经典C#多线程](https://github.com/DCFApixels/DragonECS-ClassicThreads)
     * [Recursivity](https://github.com/DCFApixels/DragonECS-Recursivity)
     * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
     * [Graphs](https://github.com/DCFApixels/DragonECS-Graphs)
-* 工具:
+* Utilities:
     * [简单语法](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
     * [EcsRefPool](https://gist.github.com/DCFApixels/73e392ccabdd98b3d4a517017d8a3f22)
     * [计时器](https://gist.github.com/DCFApixels/71a416275660c465ece76242290400df)
