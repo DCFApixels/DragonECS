@@ -17,6 +17,16 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
     internal static unsafe class SortHalper
     {
+        #region OrderBy
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SortBy<T, TKey>(Span<T> span, Func<T, TKey> keySelector)
+            where TKey : IComparable<TKey>
+        {
+            var c = new ComparisonWrapper<T>((a, b) => keySelector(a).CompareTo(keySelector(b)));
+            SortHalper<T, ComparisonWrapper<T>>.Sort(span, ref c);
+        }
+        #endregion
+
         #region Span
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Sort<T>(Span<T> span)

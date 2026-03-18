@@ -10,6 +10,7 @@ namespace DCFApixels.DragonECS.Core.Internal
     internal unsafe static class MemoryAllocator
     {
 #if DEBUG
+        private static ulong _inrement = 0;
         private static IdDispenser _idDispenser;
         private static HandlerDebugInfo[] _debugInfos;
 #endif
@@ -24,6 +25,21 @@ namespace DCFApixels.DragonECS.Core.Internal
             _idDispenser = new IdDispenser();
             _debugInfos = new HandlerDebugInfo[32];
 #endif
+        }
+        private static HandlerDebugInfo[] CurrentHandlersList
+        {
+            get { return CreateCurrentHandlersList_Debug(); }
+        }
+        internal static HandlerDebugInfo[] CreateCurrentHandlersList_Debug()
+        {
+            var result = new HandlerDebugInfo[_idDispenser.Count];
+            int i = 0;
+            foreach (var id in _idDispenser)
+            {
+                result[i++] = _debugInfos[id];
+            }
+            SortHalper.SortBy<HandlerDebugInfo, ulong>(result, o => o.increment);
+            return result;
         }
 
         #region AllocAndInit
@@ -76,6 +92,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 #if DRAGONECS_DEEP_DEBUG
             _debugInfos[id].stackTrace = new System.Diagnostics.StackTrace();
 #endif
+            _debugInfos[id].increment = ++_inrement;
             _debugInfos[id].type = type;
             _debugInfos[id].handler = handler;
 #endif
@@ -143,17 +160,19 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 return Alloc_Internal(newByteLength, newType);
             }
-#if DEBUG
-            int id = 0;
-            lock (_idDispenser)
-            {
-                if (_debugInfos.Length <= _idDispenser.Count)
-                {
-                    Array.Resize(ref _debugInfos, ArrayUtility.NextPow2(_idDispenser.Count));
-                }
-                id = _idDispenser.UseFree();
-            }
-#endif
+            //#if DEBUG
+            //            int id = 0;
+            //            lock (_idDispenser)
+            //            {
+            //                if (_debugInfos.Length <= _idDispenser.Count)
+            //                {
+            //                    Array.Resize(ref _debugInfos, ArrayUtility.NextPow2(_idDispenser.Count));
+            //                }
+            //                id = _idDispenser.UseFree();
+            //            }
+            //#endif
+            var id = target.GetHandledPtr()->ID;
+
             Meta* newHandledPtr = (Meta*)Marshal.ReAllocHGlobal(
                 (IntPtr)target.GetHandledPtr(),
                 (IntPtr)newByteLength + sizeof(Meta));
@@ -162,10 +181,11 @@ namespace DCFApixels.DragonECS.Core.Internal
             newHandledPtr->ID = id;
             newHandledPtr->ByteLength = newByteLength;
 #if DRAGONECS_DEEP_DEBUG
-            _debugInfos[newHandledPtr->ID].stackTrace = new System.Diagnostics.StackTrace();
+            _debugInfos[id].stackTrace = new System.Diagnostics.StackTrace();
 #endif
-            _debugInfos[newHandledPtr->ID].type = newType;
-            _debugInfos[newHandledPtr->ID].handler = handler;
+            _debugInfos[id].increment = ++_inrement;
+            _debugInfos[id].type = newType;
+            _debugInfos[id].handler = handler;
 #endif
             return handler;
         }
@@ -265,6 +285,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 #if DRAGONECS_DEEP_DEBUG
             public System.Diagnostics.StackTrace stackTrace;
 #endif
+            public ulong increment;
             public Type type;
             public Handler handler;
 #endif
@@ -276,6 +297,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         #endregion
 
+        #region Handlers
         public readonly struct HMem<T> : IDisposable, IEquatable<HMem<T>>
             where T : unmanaged
         {
@@ -508,50 +530,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
             #endregion
         }
-    }
-
-    internal ref struct AllocBuilder
-    {
-        //[ThreadStatic]
-        //private static Stack<AllocBuilder> _buildersPool;
-        //private AllocBuilder() { }
-        //public static AllocBuilder New()
-        //{
-        //    if (_buildersPool == null) { _buildersPool = new Stack<AllocBuilder>(4); }
-        //    if(_buildersPool.TryPop(out var result) == false)
-        //    {
-        //        result = new AllocBuilder();
-        //    }
-        //    return result;
-        //}
-
-        public static AllocBuilder New()
-        {
-            return new AllocBuilder(0);
-        }
-
-        private int _byteLength;
-        private AllocBuilder(int byteLength)
-        {
-            _byteLength = byteLength;
-        }
-        public void Add<T>(int count) where T : unmanaged
-        {
-            Add(Marshal.SizeOf<T>());
-        }
-        public void Add(int byteLength)
-        {
-            _byteLength += byteLength;
-        }
-
-        public MemoryAllocator.Handler Alloc()
-        {
-            return MemoryAllocator.Alloc(_byteLength);
-        }
-        public MemoryAllocator.Handler Realloc(MemoryAllocator.Handler handler)
-        {
-            return MemoryAllocator.Realloc(handler, _byteLength);
-        }
+        #endregion
     }
 
     internal static class MemoryAllocatorHandlerExtensions
