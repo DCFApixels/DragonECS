@@ -126,7 +126,8 @@ namespace DCFApixels.DragonECS
             _sharedStore->_worldID = _worldID;
             _sharedStore->_componentTypeID = _componentTypeID;
 
-            _mapping = MemoryAllocator.Alloc<int>(world.Capacity).Ptr;
+            _mapping = MemoryAllocator.AllocAndInit<int>(world.Capacity).Ptr;
+            _mappingLength = world.Capacity;
             _sharedStore->_mapping = _mapping;
             var worldConfig = world.Configs.GetWorldConfigOrDefault();
             if (_items == null)
@@ -313,10 +314,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Callbacks
+        private int _mappingLength;
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
-            _mapping = MemoryAllocator.Realloc(_mapping, newSize).Ptr;
+            _mapping = MemoryAllocator.ReallocAndInit(_mapping, _mappingLength, newSize).Ptr;
             _sharedStore->_mapping = _mapping;
+            _mappingLength = newSize;
         }
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
         {
