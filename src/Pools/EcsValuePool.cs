@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using static DCFApixels.DragonECS.Core.Internal.MemoryAllocator;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
 #endif
@@ -42,13 +43,17 @@ namespace DCFApixels.DragonECS
         private EcsMaskChunck _maskBit;
 
         public int* _mapping; // index = entityID / value = itemIndex;/ value = 0 = no entityID.
-        public void* _items; // dense; _items[0] - fake component.
+        public T* _items; // dense; _items[0] - fake component.
         public int _itemsLength;
         public int _itemsCount;
         public int* _recycledItems;
         public int _recycledItemsLength;
         public int _recycledItemsCount;
         private readonly EcsValuePoolSharedStore* _sharedStore;
+
+        private HMem<int> _mappingHandler;
+        private HMem<T> _itemsHandler;
+        private HMem<int> _recycledItemsHandler;
 
         private readonly IEcsComponentLifecycle<T> _customLifecycle = EcsComponentLifecycle<T>.CustomHandler;
         private readonly bool _isCustomLifecycle = EcsComponentLifecycle<T>.IsCustom;
@@ -96,14 +101,14 @@ namespace DCFApixels.DragonECS
         {
             if (_sharedStore == null)
             {
-                _sharedStore = MemoryAllocator.Alloc<EcsValuePoolSharedStore>(1).Ptr;
+                _sharedStore = Alloc<EcsValuePoolSharedStore>(1).Ptr;
             }
         }
         public EcsValuePool(int capacity, int recycledCapacity = -1)
         {
             if (_sharedStore == null)
             {
-                _sharedStore = MemoryAllocator.Alloc<EcsValuePoolSharedStore>(1).Ptr;
+                _sharedStore = Alloc<EcsValuePoolSharedStore>(1).Ptr;
             }
             capacity = ArrayUtility.NextPow2(capacity);
             if (recycledCapacity < 0)
@@ -111,10 +116,12 @@ namespace DCFApixels.DragonECS
                 recycledCapacity = capacity / 2;
             }
             _itemsLength = capacity;
-            _items = MemoryAllocator.Alloc<T>(_itemsLength).Ptr;
+            _itemsHandler = Alloc<T>(_itemsLength);
+            _items = _itemsHandler.Ptr;
             _sharedStore->_items = _items;
             _recycledItemsLength = recycledCapacity;
-            _recycledItems = MemoryAllocator.Alloc<int>(_recycledItemsLength).Ptr;
+            _recycledItemsHandler = Alloc<int>(_recycledItemsLength);
+            _recycledItems = _recycledItemsHandler.Ptr;
         }
         void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
@@ -126,29 +133,33 @@ namespace DCFApixels.DragonECS
             _sharedStore->_worldID = _worldID;
             _sharedStore->_componentTypeID = _componentTypeID;
 
-            _mapping = MemoryAllocator.AllocAndInit<int>(world.Capacity).Ptr;
-            _mappingLength = world.Capacity;
+            _mappingHandler = AllocAndInit<int>(world.Capacity);
+            _mapping = _mappingHandler.Ptr;
+
             _sharedStore->_mapping = _mapping;
             var worldConfig = world.Configs.GetWorldConfigOrDefault();
             if (_items == null)
             {
                 _itemsLength = ArrayUtility.NextPow2(worldConfig.PoolComponentsCapacity);
-                _items = MemoryAllocator.Alloc<T>(_itemsLength).Ptr;
+                _itemsHandler = Alloc<T>(_itemsLength);
+                _items = _itemsHandler.Ptr;
                 _sharedStore->_items = _items;
             }
             if (_recycledItems == null)
             {
                 _recycledItemsLength = worldConfig.PoolRecycledComponentsCapacity;
-                _recycledItems = MemoryAllocator.Alloc<int>(_recycledItemsLength).Ptr;
+                _recycledItemsHandler = Alloc<int>(_recycledItemsLength);
+                _recycledItems = _recycledItemsHandler.Ptr;
             }
         }
         void IEcsPoolImplementation.OnWorldDestroy() { }
         ~EcsValuePool()
         {
-            MemoryAllocator.Free(_mapping);
-            MemoryAllocator.Free(_items);
-            MemoryAllocator.Free(_sharedStore);
-            MemoryAllocator.Free(_recycledItems);
+            Free(_mappingHandler);
+            Free(_itemsHandler);
+            Free(_recycledItemsHandler);
+
+            Free(_sharedStore);
         }
         #endregion
 
@@ -180,12 +191,13 @@ namespace DCFApixels.DragonECS
                 if (itemIndex >= _itemsLength)
                 {
                     _itemsLength = ArrayUtility.NextPow2(_itemsLength << 1);
-                    _items = MemoryAllocator.Realloc(_items, _itemsLength).Ptr;
+                    _itemsHandler = Realloc(_itemsHandler, _itemsLength);
+                    _items = _itemsHandler.Ptr;
                     _sharedStore->_items = _items;
                 }
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-            ref T result = ref ((T*)_items)[itemIndex];
+            ref T result = ref _items[itemIndex];
             EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref result, _worldID, entityID);
             return ref result;
         }
@@ -195,7 +207,7 @@ namespace DCFApixels.DragonECS
 #if DEBUG // не нужен STAB_MODE
             if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
-            return ref ((T*)_items)[_mapping[entityID]];
+            return ref _items[_mapping[entityID]];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID)
@@ -203,7 +215,7 @@ namespace DCFApixels.DragonECS
 #if DEBUG // не нужен STAB_MODE
             if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
-            return ref ((T*)_items)[_mapping[entityID]];
+            return ref _items[_mapping[entityID]];
         }
         public ref T TryAddOrGet(int entityID)
         {
@@ -229,14 +241,15 @@ namespace DCFApixels.DragonECS
                     if (itemIndex >= _itemsLength)
                     {
                         _itemsLength = ArrayUtility.NextPow2(_itemsLength << 1);
-                        _items = MemoryAllocator.Realloc(_items, _itemsLength).Ptr;
+                        _itemsHandler = Realloc(_itemsHandler, _itemsLength);
+                        _items = _itemsHandler.Ptr;
                         _sharedStore->_items = _items;
                     }
                 }
                 _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-                EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref ((T*)_items)[itemIndex], _worldID, entityID);
+                EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref _items[itemIndex], _worldID, entityID);
             } //Add block end
-            return ref ((T*)_items)[itemIndex];
+            return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
@@ -258,7 +271,8 @@ namespace DCFApixels.DragonECS
             if (_recycledItemsCount >= _recycledItemsLength)
             {
                 _recycledItemsLength = ArrayUtility.NextPow2(_recycledItemsLength << 1);
-                _recycledItems = MemoryAllocator.Realloc<int>(_recycledItems, _recycledItemsLength).Ptr;
+                _recycledItemsHandler = Realloc(_recycledItemsHandler, _recycledItemsLength);
+                _recycledItems = _recycledItemsHandler.Ptr;
             }
             _recycledItems[_recycledItemsCount++] = itemIndex;
             itemIndex = 0;
@@ -314,12 +328,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Callbacks
-        private int _mappingLength;
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
-            _mapping = MemoryAllocator.ReallocAndInit(_mapping, _mappingLength, newSize).Ptr;
+            _mappingHandler = ReallocAndInit<int>(_mappingHandler, newSize);
+            _mapping = _mappingHandler.Ptr;
+
             _sharedStore->_mapping = _mapping;
-            _mappingLength = newSize;
         }
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
         {

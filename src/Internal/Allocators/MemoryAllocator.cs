@@ -124,6 +124,10 @@ namespace DCFApixels.DragonECS.Core.Internal
         {
             return new HMem<byte>(Realloc(Handler.FromDataPtr(target), newByteLength), newByteLength);
         }
+        public static HMem<T> Realloc<T>(HMem<T> target, int newCount) where T : unmanaged
+        {
+            return new HMem<T>(Realloc_Internal(target, Marshal.SizeOf<T>() * newCount, typeof(T)), newCount);
+        }
         public static HMem<T> Realloc<T>(Handler target, int newCount) where T : unmanaged
         {
             return new HMem<T>(Realloc_Internal(target, Marshal.SizeOf<T>() * newCount, typeof(T)), newCount);
