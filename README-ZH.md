@@ -20,19 +20,19 @@
   <tr>
     <td nowrap width="100">
       <a href="README-RU.md">
-        <img src="https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755"></br>
+        <img src="https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755"><br/>
         <span>Русский</span>
       </a>  
     </td>
     <td nowrap width="100">
       <a href="https://github.com/DCFApixels/DragonECS">
-        <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930"></br>
+        <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930"><br/>
         <span>English</span>
       </a>  
     </td>
     <td nowrap width="100">
       <a href="README-ZH.md">
-        <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"></br>
+        <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"><br/>
         <span>中文</span>
       </a>  
     </td>
@@ -52,6 +52,7 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
 
 ## 目录
 - [安装](#安装)
+- [扩展](#扩展)
 - [基础概念](#基础概念)
   - [实体](#实体)
   - [组件](#组件)
@@ -79,7 +80,6 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
   - [世界组件](#世界组件)
   - [配置](#配置)
 - [使用DragonECS的项目](#使用dragonecs的项目)
-- [扩展](#扩展)
 - [FAQ](#faq)
 - [反馈](#反馈)
 
@@ -89,14 +89,14 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
 版本的语义 [[打开]](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
 ## 环境
 必备要求：
-+ C# 7.3 的最低版本；
+* 最低 C# 版本：7.3。
 
 可选要求：
-+ 支持NativeAOT；
-+ 使用 C# 的游戏引擎：Unity、Godot、MonoGame等。
+* 支持 NativeAOT；
+* 使用 C# 的游戏引擎：Unity、Godot、MonoGame 等。
 
-已测试:
-+ **Unity:** 最低版本 2020.1.0；
+已测试：
+* **Unity:** 最低版本 2021.2.0。
 
 ## 为Unity安装
 > 还建议安装[Unity引擎集成](https://github.com/DCFApixels/DragonECS-Unity)扩展。
@@ -108,14 +108,32 @@ https://github.com/DCFApixels/DragonECS.git
 
 * ### 作为源代码
 框架也可以通过复制源代码添加到项目中。
-</br>
+
+# 扩展
+* 集成:
+    * [Unity](https://github.com/DCFApixels/DragonECS-Unity)
+    * [Godot](https://gitlab.com/InauniusOwn/Libraries/DraGodot)
+* 包:
+    * [自动依赖注入](https://github.com/DCFApixels/DragonECS-AutoInjections)
+    * [经典C#多线程](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+    * [Recursivity](https://github.com/DCFApixels/DragonECS-Recursivity)
+    * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
+    * [Graphs](https://github.com/DCFApixels/DragonECS-Graphs)
+* 工具:
+    * [简单语法](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
+    * [EcsRefPool](https://gist.github.com/DCFApixels/73e392ccabdd98b3d4a517017d8a3f22)
+    * [计时器](https://gist.github.com/DCFApixels/71a416275660c465ece76242290400df)
+    * [单帧组件](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
+    * [IDE代码模板](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) 和 [Unity 模板](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
+> *你的扩展？如果你正在开发 DragonECS 的扩展，可以[在此处发布](#反馈).
+
 
 # 基础概念
 ## 实体
-**实体**是附加数据的基础。它们以标识符的形式实现，有两种类型：
-* `int` - 是在单个更新中使用的一次性标识符。不建议存储`int`标识符，而应使用 `entlong`；
-* `entlong` - 是一个长期标识符，包含一整套用于明确识别的信息;
-``` c#
+**实体**是附加数据的基础。有两种用于引用实体的标识符：
+* `int` - 短期标识符，仅在单次更新（tick）内有效。不建议用于长期存储；
+* `entlong` - 长期标识符，包含一个世代标记（generation tag），使其在实体的整个生命周期内保持唯一。适合长期保存和存储使用；
+```c#
 // 在世界中创建一个新实体。
 int entityID = _world.NewEntity();
 
@@ -132,7 +150,7 @@ int newEntityID = _world.CloneEntity(entityID);
 <details>
 <summary>entlong使用</summary>
  
-``` c#
+```c#
 // int 转换为 entlong。
 entlong entity = _world.GetEntityLong(entityID);
 // 或者
@@ -220,7 +238,7 @@ class SomeSystem : IEcsRun, IEcsPipelineMember
 ### 依赖注入
 框架具有向系统注入依赖的功能。这是一个与管线初始化一起运行的流程，并注入传递给Builder的数据。
 > 内置依赖注入的使用是可选的。 
-``` c#
+```c#
 class SomeDataA { /* ... */ }
 class SomeDataB : SomeDataA { /* ... */ }
 
@@ -251,9 +269,15 @@ class SomeSystem : IEcsInject<SomeDataA>, IEcsRun
 }
 ```
 
+静态标记的含义：
+* `Inc` — 组件必须存在（包含条件）并缓存该池。
+* `Exc` — 组件不得存在（排除条件）并缓存该池。
+* `Opt` — 组件可以存在，但不影响过滤（仅缓存池以便访问）。
+* `Any` — 至少要存在被 `Any` 标记的组件之一；同时缓存该池。
+
 ### 模块
 实现一个共同特性的系统组可以组合成模块，模块也可以简单地添加到管线中。
-``` c#
+```c#
 using DCFApixels.DragonECS;
 class Module1 : IEcsModule 
 {
@@ -290,11 +314,11 @@ EcsPipeline pipeline = EcsPipeline.New()
     .BuildAndInit();
 ```
 嵌入层按以下顺序排列：
-* `EcsConst.PRE_BEGIN_LAYER`
-* `EcsConst.BEGIN_LAYER`
-* `EcsConst.BASIC_LAYER`（默认情况下，系统添加到此层）
-* `EcsConst.END_LAYER`
-* `EcsConst.POST_END_LAYER`
+* `EcsConsts.PRE_BEGIN_LAYER`
+* `EcsConsts.BEGIN_LAYER`
+* `EcsConsts.BASIC_LAYER`（默认情况下，系统添加到此层）
+* `EcsConsts.END_LAYER`
+* `EcsConsts.POST_END_LAYER`
 #### 排序顺序
 在同一层内，可以使用 `int` 类型的排序值来排序系统。默认情况下，系统的排序值为 `sortOrder = 0`。
 ```c#
@@ -322,7 +346,7 @@ EcsPipeline pipeline = EcsPipeline.New()
 <details>
 <summary>用户流程</summary>
  
-Для добавления нового процесса создайте интерфейс наследованный от `IEcsProcess` и создайте раннер для него. Раннер это класс реализующий интерфейс запускаемого процесса и наследуемый от `EcsRunner<TInterface>`. Пример:
+要添加新的流程，请创建一个继承自 `IEcsProcess` 的接口，并为其创建一个 Runner。Runner 是一个实现该流程接口并继承自 `EcsRunner<TInterface>` 的类。示例：
 ``` c#
 // 流程接口。
 interface IDoSomethingProcess : IEcsProcess
@@ -347,10 +371,10 @@ _pipeline = EcsPipeline.New()
     .BuildAndInit();
 
 // 如果启动器已经添加，运行它。
-_pipeline.GetRunner<IDoSomethingProcess>.Do()
+_pipeline.GetRunner<IDoSomethingProcess>().Do();
 
 // 如果启动器尚未添加，使用 GetRunnerInstance 将其添加并运行
-_pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
+_pipeline.GetRunnerInstance<DoSomethingProcessRunner>().Do();
 ```
 
 <details>
@@ -437,7 +461,7 @@ poses.Del(entityID);
 > 可以实现用户池。稍后将介绍这一功能。
 
 ## 掩码
-用于根据组件的存在与否来过滤实体。
+用于根据组件的存在与否来过滤实体。通常掩码不单独使用，而是作为 `EcsAspect` 的一部分，用于查询时过滤实体。
 ``` c#
 // 创建一个掩码，检查实体是否具有组件
 // SomeCmp1 和 SomeCmp2，但没有组件 SomeCmp3。
@@ -472,7 +496,11 @@ EcsMask mask = _staticMask.ToMask(_world);
 </details>
 
 ## 方面
-这些是继承自 EcsAspect 的用户类，用于与实体进行交互。方面同时充当池的缓存和实体组件的过滤掩码。可以把方面视为系统处理哪些实体的描述。
+方面是继承自 `EcsAspect` 的用户自定义类，用于描述系统要处理的一组组件。方面同时承担两个职责：
+- 掩码 — 初始化并保存一个 `EcsMask`，使其可在查询中用于过滤实体。
+- 池缓存 — 提供对组件池的快速访问。
+
+简而言之，方面是描述“我处理哪些实体以及如何访问它们的组件”的便捷方式。
 
 简化语法：
 ``` c#
@@ -503,9 +531,9 @@ class Aspect : EcsAspect
     public EcsPool<Velocity> velocities;
     protected override void Init(Builder b)
     {
-        poses = b.Include<Pose>();
-        velocities = b.Include<Velocity>();
-        b.Exclude<FreezedTag>();
+        poses = b.Inc<Pose>();
+        velocities = b.Inc<Velocity>();
+        b.Exc<FreezedTag>();
     }
 }
 ```
@@ -529,13 +557,13 @@ class Aspect : EcsAspect
         otherAspect1 = b.Combine<OtherAspect1>(1);
         // 即使对 OtherAspect1 调用 Combine 方法更早，Aspect 会首先与 OtherAspect2 进行组合，因为默认情况下 order = 0。
         otherAspect2 = b.Combine<OtherAspect2>();
-         // 如果 OtherAspect1 或 OtherAspect2 中有 b.Exclude<Pose>() 的限制条件，这里将被替换为 b.Include<Pose>()。
-        poses = b.Include<Pose>();
+         // 如果 OtherAspect1 或 OtherAspect2 中有 b.Exc<Pose>() 的限制条件，这里将被替换为 b.Inc<Pose>().
+        poses = b.Inc<Pose>();
     }
 }
 ```
 如果组合的方面存在冲突的限制条件，则新的限制条件将替换先前添加的限制条件。根方面的限制条件始终会替换添加的方面中的限制条件。限制条件组合的视觉示例：
-| | cmp1 | cmp2 | cmp3 | cmp4 | cmp5 | разрешение конфликтных ограничений|
+| | cmp1 | cmp2 | cmp3 | cmp4 | cmp5 | 冲突限制的解析 |
 | :--- | :--- | :--- | :--- | :--- | :--- |:--- |
 | OtherAspect2 | :heavy_check_mark: | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | |
 | OtherAspect1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | 对于 `cmp2` 将选择 :heavy_check_mark: |
@@ -980,46 +1008,49 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 <table>
   <tr>
     <td align="center">
+      <a href="https://dcfapixels.github.io/Project8.html">
+        Crystal Siege
+        <img src="https://github.com/user-attachments/assets/1aa60a50-2668-4919-aca9-d6d2b980c3dd">
+      </a> 
+    </td>
+    <td align="center">
+      <a href="https://play.google.com/store/apps/details?id=com.ZlodeyStudios.OrdersMatter">
+        Order matters
+        <img src="https://github.com/user-attachments/assets/c55b2647-9b6e-4145-98ff-c3d094600fa1">
+      </a> 
+    </td>
+  </tr>
+
+  <tr></tr>
+
+  <tr>
+    <td align="center">
       <a href="https://yandex.ru/games/app/206024?utm_source=game_popup_menu">
         Башенки Смерти
         <img src="https://github.com/user-attachments/assets/70fc55a0-c911-49f8-ba75-f503437f087f" alt="screenshot">
       </a> 
     </td>
     <td align="center">
-      <span>
-        ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ
+        _____________
         <img tabindex="-1" src="https://github.com/user-attachments/assets/3fa1ca6d-29f6-43e6-aafe-cc9648d20490" alt="screenshot">
-      </span> 
     </td>
   </tr>
 </table>
 
 </br>
 
-# 扩展
-* Packages:
-    * [Unity集成](https://github.com/DCFApixels/DragonECS-Unity)
-    * [自动依赖注入](https://github.com/DCFApixels/DragonECS-AutoInjections)
-    * [经典C#多线程](https://github.com/DCFApixels/DragonECS-ClassicThreads)
-    * [Recursivity](https://github.com/DCFApixels/DragonECS-Recursivity)
-    * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
-    * [Graphs](https://github.com/DCFApixels/DragonECS-Graphs)
-* Utilities:
-    * [简单语法](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
-    * [单帧组件](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
-    * [IDE代码模板](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [Unity代码模板](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
-
-> *你的扩展？如果你正在开发 DragonECS 的扩展，可以[在此处发布](#反馈).
-
-</br>
  
 # FAQ
-## 'ReadOnlySpan<>' could not be found
-在Unity 2020.1.x版本中，控制台可能会出现以下错误：
-```
-The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing a using directive or an assembly reference?)
-``` 
-要解决这个问题，需要在`Project Settings/Player/Other Settings/Scripting Define Symbols`中添加`ENABLE_DUMMY_SPAN`指令.
+
+## 如何启用/禁用系统？
+直接——不能。
+
+通常当游戏的整体状态发生变化时，会需要启用或禁用系统；有时需要切换一组系统。从概念上讲，这可以视为流程（process）的变更。这里有两种解决方案：
+
+- 如果流程变更是全局性的，可以创建一个新的 `EcsPipeline`，并在引擎的更新循环中运行相应的管线（pipeline）。
+- 将 `IEcsRun` 拆分为多个流程，并在引擎更新循环中运行所需的流程。为此，创建一个新的流程接口，为其实现一个 Runner，并通过 `EcsPipeline.GetRunner<T>()` 获取该 Runner。
+
+## 建议清单: [DragonECS-Vault](https://github.com/DCFApixels/DragonECS-Vault)
 </br>
 
 # 反馈

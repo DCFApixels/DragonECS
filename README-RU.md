@@ -20,28 +20,26 @@
   <tr>
     <td nowrap width="100">
       <a href="README-RU.md">
-        <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"></br>
+        <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"><br/>
         <span>Русский</span>
       </a>  
     </td>
     <td nowrap width="100">
       <a href="https://github.com/DCFApixels/DragonECS">
-        <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930"></br>
+        <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930"><br/>
         <span>English</span>
       </a>  
     </td>
     <td nowrap width="100">
       <a href="README-ZH.md">
-        <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927"></br>
+        <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927"><br/>
         <span>中文</span>
       </a>  
     </td>
   </tr>
 </table>
 
-</br>
-
-DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) фреймворк нацеленный на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Разработан на чистом C#, без зависимостей и генерации кода. Вдохновлен [LeoEcs Lite](https://github.com/Leopotam/ecslite).
+DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) фреймворк, нацеленный на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Разработан на чистом C#, без зависимостей и генерации кода. Вдохновлен [LeoEcs Lite](https://github.com/Leopotam/ecslite).
 
 > [!WARNING]
 > Проект предрелизной версии, поэтому API может меняться. В ветке main актуальная и рабочая версия.
@@ -81,20 +79,20 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
 - [FAQ](#faq)
 - [Обратная связь](#обратная-связь)
 
-</br>
+
 
 # Установка
 Семантика версионирования - [Открыть](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
 ## Окружение
 Обязательные требования:
-+ Минимальная версия C# 7.3;
++ Минимальная версия C#: 7.3.
 
 Поддерживает:
 + NativeAOT;
 + Игровые движки с C#: Unity, Godot, MonoGame и т.д.
 
-Протестировано:
-+ **Unity:** Минимальная версия 2021.2.0;
+Протестировано на:
+* **Unity:** Минимальная версия 2021.2.0.
 
 ## Установка для Unity
 > Рекомендуется так же установить расширение [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
@@ -110,8 +108,8 @@ https://github.com/DCFApixels/DragonECS.git
 
 * ### В виде исходников
 Можно так же напрямую скопировать в проект исходники фреймворка.
+    
 
-</br>
 
 # Расширения
 * Интеграции:
@@ -131,14 +129,14 @@ https://github.com/DCFApixels/DragonECS.git
     * [Шаблоны кода IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [для Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
 > *Твое расширение? Если разрабатываешь расширение для DragonECS, пиши [сюда](#обратная-связь).
 
-</br>
+
 
 # Основные концепции
 ## Entity
-**Сущности** - это то к чему крепятся данные. Для доступа к сущности используются идентификаторы двух типов:
+**Сущности** - это то, к чему крепятся данные. Для доступа к сущности используются идентификаторы двух типов:
 * `int` - однократный идентификатор, применяется в пределах одного тика. Не рекомендуется использовать для хранения;
 * `entlong` - долговременный идентификатор, содержит метку поколения, что делает его уникальным навсегда. Подходит для хранения.
-``` c#
+```c#
 // Создание новой сущности в мире.
 int entityID = _world.NewEntity();
 
@@ -156,7 +154,7 @@ int newEntityID = _world.CloneEntity(entityID);
 <summary>Работа с entlong</summary>
  
 
-``` c#
+```c#
 // Конвертация int в entlong.
 entlong entity = _world.GetEntityLong(entityID);
 // упрощенная версия
@@ -216,7 +214,7 @@ class SomeSystem : IEcsPreInit, IEcsInit, IEcsRun, IEcsDestroy
 <summary>Пример системы</summary>
  
 
-``` c#
+```c#
 // Система
 class DamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
 {
@@ -254,7 +252,7 @@ public struct Health : IEcsComponent
  
  </details>
 
-</br>
+
 
 # Концепции фреймворка
 ## Пайплайн
@@ -285,9 +283,9 @@ class SomeSystem : IEcsRun, IEcsPipelineMember
 ```
 > Для одновременного построения и инициализации есть метод Builder.BuildAndInit();
 ### Внедрение зависимостей
-Фреймворк реализует внедрение зависимостей для систем. это процесс который запускается вместе с инициализацией пайплайна и внедряет данные переданные в Builder.
+Фреймворк реализует внедрение зависимостей для систем. Это процесс, который запускается вместе с инициализацией пайплайна и внедряет данные, переданные в Builder.
 
-``` c#
+```c#
 class SomeDataA { /* ... */ }
 class SomeDataB : SomeDataA { /* ... */ }
 
@@ -325,7 +323,7 @@ class SomeSystem : IEcsInject<SomeDataA>, IEcsRun
 
 ### Модули
 Группы систем реализующие общую фичу можно объединять в модули, и просто добавлять модули в Pipeline.
-``` c#
+```c#
 using DCFApixels.DragonECS;
 class Module1 : IEcsModule 
 {
@@ -338,7 +336,7 @@ class Module1 : IEcsModule
     }
 }
 ```
-``` c#
+```c#
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
     .AddModule(new Module1())
@@ -347,10 +345,10 @@ EcsPipeline pipeline = EcsPipeline.New()
 ```
 
 ### Сортировка
-Дла управления расположением систем в пайплайне, вне зависимости от порядка добавления, есть 2 способа: Слои и Порядок сортировки.
+Для управления расположением систем в пайплайне, вне зависимости от порядка добавления, есть 2 способа: Слои и Порядок сортировки.
 #### Слои
 Слой определяет место в пайплайне для вставки систем. Например, если необходимо чтобы система была вставлена в конце пайплайна, эту систему можно добавить в слой `EcsConsts.END_LAYER`.
-``` c#
+```c#
 const string SOME_LAYER = nameof(SOME_LAYER);
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
@@ -362,14 +360,14 @@ EcsPipeline pipeline = EcsPipeline.New()
     .BuildAndInit();
 ```
 Встроенные слои расположены в следующем порядке:
-* `EcsConst.PRE_BEGIN_LAYER`
-* `EcsConst.BEGIN_LAYER`
-* `EcsConst.BASIC_LAYER` (По умолчанию системы добавляются сюда)
-* `EcsConst.END_LAYER`
-* `EcsConst.POST_END_LAYER`
+* `EcsConsts.PRE_BEGIN_LAYER`
+* `EcsConsts.BEGIN_LAYER`
+* `EcsConsts.BASIC_LAYER` (По умолчанию системы добавляются сюда)
+* `EcsConsts.END_LAYER`
+* `EcsConsts.POST_END_LAYER`
 #### Порядок сортировки
 Для сортировки систем в рамках слоя используется int значение порядка сортировки. По умолчанию системы добавляются с `sortOrder = 0`.
-``` c#
+```c#
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
     // Система SomeSystem будет вставлена в слой EcsConsts.BEGIN_LAYER 
@@ -395,7 +393,7 @@ EcsPipeline pipeline = EcsPipeline.New()
 <summary>Пользовательские процессы</summary>
  
 Для добавления нового процесса создайте интерфейс наследованный от `IEcsProcess` и создайте раннер для него. Раннер это класс реализующий интерфейс запускаемого процесса и наследуемый от `EcsRunner<TInterface>`. Пример:
-``` c#
+```c#
 // Интерфейс процесса.
 interface IDoSomethingProcess : IEcsProcess
 {
@@ -421,10 +419,10 @@ _pipeline = EcsPipeline.New()
     .BuildAndInit();
 
 // Запуск раннера если раннер был добавлен.
-_pipeline.GetRunner<IDoSomethingProcess>.Do()
+_pipeline.GetRunner<IDoSomethingProcess>().Do();
 
-// Или если раннер не был добавлен(Вызов GetRunnerInstance так же добавит раннер в пайплайн).
-_pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
+// Или если раннер не был добавлен (вызов GetRunnerInstance также добавит раннер в пайплайн).
+_pipeline.GetRunnerInstance<DoSomethingProcessRunner>().Do();
 ```
 
 <details>
@@ -541,9 +539,9 @@ poses.Del(entityID);
 
 Обычно маски не используются в чистом виде, а являются частью [Аспекта](#Аспект).
 
-``` c#
-// Создание маски с улосвием наличия компонентов SomeCmp1 и SomeCmp2, 
-// и с улосвием отсутсвия компонента SomeCmp3.
+```c#
+// Создание маски с условием наличия компонентов SomeCmp1 и SomeCmp2,
+// и с условием отсутствия компонента SomeCmp3.
 EcsMask mask = EcsMask.New(_world)
     // Inc - Условие наличия компонента.
     .Inc<SomeCmp1>()
@@ -704,7 +702,7 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
 ``` c#
 // Запрос Where возвращает сущности в виде EcsSpan.
 EcsSpan es = _world.Where(out Aspect a);
-// Итерироваться можно по foreach и for.
+// Итерироваться можно с помощью `foreach` и `for`.
 foreach (var e in es)
 {
     // ...
@@ -737,7 +735,7 @@ group.Remove(entityID);
 ``` c#
 // Запрос WhereToGroup возвращает сущности в виде группы только для чтения EcsReadonlyGroup.
 EcsReadonlyGroup group = _world.WhereToGroup(out Aspect a);
-// Итерироваться можно по foreach и for.
+// Итерироваться можно с помощью `foreach` и `for`.
 foreach (var e in group) 
 { 
     // ...
@@ -963,7 +961,7 @@ using (_marker.Auto())
 + `DRAGONECS_STABILITY_MODE` - включает опускаемые в релизном билде проверки.
 + `DRAGONECS_DISABLE_CATH_EXCEPTIONS` - Выключает поведение по умолчанию по обработке исключений. По умолчанию фреймворк будет ловить исключения с выводом информации из исключений через EcsDebug и продолжать работу.
 + `REFLECTION_DISABLED` - Полностью ограничивает работу фреймворка с Reflection.
-+ `DISABLE_DEBUG` - Для среды где не поддерживается ручное отключение DEBUG, например Unity.
++ `DISABLE_DEBUG` - Для среды, где не поддерживается ручное отключение DEBUG, например Unity.
 
 </br>
 
@@ -1124,7 +1122,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 # FAQ
 
 ## Как Выключать/Включать системы?
-Напрямую - никак. </br>
+Напрямую — никак.
 Обычно потребность выключить/включить систему появляется когда поменялось общее состояние игры, это может так же значить что нужно переключить сразу группу систем, все это в совокупности можно рассматривать как изменения процессов. Есть 2 решения：</br>
 + Если изменения процесса глобальные, то создать новый `EcsPipeline` и в цикле обновления движка запускать соответствующий пайплайн.
 + Разделить `IEcsRun` на несколько процессов и в цикле обновления движка запускать соответствующий процесс. Для этого создайте новый интерфейс процесса, раннер для запуска этого интерфейса и получайте раннер через `EcsPipeline.GetRunner<T>()`.
