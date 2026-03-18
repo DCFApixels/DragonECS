@@ -91,23 +91,27 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
 必备要求：
 * 最低 C# 版本：7.3。
 
-可选要求：
-* 支持 NativeAOT；
+支持：
+* NativeAOT；
 * 使用 C# 的游戏引擎：Unity、Godot、MonoGame 等。
 
 已测试：
 * **Unity:** 最低版本 2021.2.0。
 
-## 为Unity安装
-> 还建议安装[Unity引擎集成](https://github.com/DCFApixels/DragonECS-Unity)扩展。
-* ### Unity-软件包
-支持以Unity软件包的形式安装。可以通过[git-url添加到PackageManager](https://docs.unity3d.com/cn/2023.2/Manual/upm-ui-giturl.html)或手动添加到`Packages/manifest.json`：
+## 为 Unity 安装
+> 还建议安装[Unity 引擎集成](https://github.com/DCFApixels/DragonECS-Unity)扩展。
+* ### Unity 软件包
+支持以 Unity 软件包的形式安装。可以通过在 PackageManager 中添加 Git URL（参见 [教程](https://docs.unity3d.com/cn/2023.2/Manual/upm-ui-giturl.html)）或手动将条目添加到 `Packages/manifest.json`：
 ```
 https://github.com/DCFApixels/DragonECS.git
 ```
+或者在 `Packages/manifest.json` 中添加包条目：
+```
+"com.dcfa_pixels.dragonecs": "https://github.com/DCFApixels/DragonECS.git",
+```
 
 * ### 作为源代码
-框架也可以通过复制源代码添加到项目中。
+也可以通过将框架的源代码直接复制到项目中来使用该框架。
 
 # 扩展
 * 集成:

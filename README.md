@@ -94,21 +94,27 @@ Versioning semantics - [Open](https://gist.github.com/DCFApixels/e53281d4628b19f
 Requirements:
 * Minimum C# version: 7.3.
 
-Optional:
-* Support for NativeAOT
+Supported:
+* NativeAOT;
 * Game engines with C#: Unity, Godot, MonoGame, etc.
 
 Tested with:
 * **Unity:** Minimum version 2021.2.0.
 
 ## Unity Installation
-* ### Unity Package
-The framework can be installed as a Unity package by adding the Git URL [in the PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) or manually adding it to `Packages/manifest.json`: 
+> It is also recommended to install the Unity engine integration extension [Unity integration](https://github.com/DCFApixels/DragonECS-Unity)
+* ### Unity package
+The framework supports installation as a Unity package by adding the Git URL to the PackageManager ([how-to](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html)) or by manually adding the entry to `Packages/manifest.json`:
 ```
 https://github.com/DCFApixels/DragonECS.git
 ```
-* ### Source Code
-The framework can also be added to the project as source code.
+Or add the package entry to `Packages/manifest.json`:
+```
+"com.dcfa_pixels.dragonecs": "https://github.com/DCFApixels/DragonECS.git",
+```
+
+* ### As source code
+You can also add the framework directly by copying its source files into your project.
 
 
 # Extensions
