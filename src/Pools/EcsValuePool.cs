@@ -126,6 +126,7 @@ namespace DCFApixels.DragonECS
         void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
             _world = world;
+            _worldID = world.ID;
             _mediator = mediator;
             _componentTypeID = componentTypeID;
             _maskBit = EcsMaskChunck.FromID(componentTypeID);

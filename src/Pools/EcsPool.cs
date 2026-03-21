@@ -4,7 +4,6 @@
 using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.PoolsCore;
-using DCFApixels.DragonECS.UncheckedCore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -100,15 +99,10 @@ namespace DCFApixels.DragonECS
 
         #region Constructors/Init/Destroy
         public EcsPool() { }
-        public EcsPool(int capacity, int recycledCapacity = -1)
+        public EcsPool(int capacity)
         {
             capacity = ArrayUtility.CeilPow2Safe(capacity);
-            if (recycledCapacity < 0)
-            {
-                recycledCapacity = capacity / 2;
-            }
             _items = new T[capacity];
-            _recycledItems = new int[recycledCapacity];
         }
         void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
@@ -118,20 +112,13 @@ namespace DCFApixels.DragonECS
             _componentTypeID = componentTypeID;
             _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
-            _mapping = new int[world.Capacity];
             var worldConfig = world.Configs.GetWorldConfigOrDefault();
             if (_items == null)
             {
                 _items = new T[ArrayUtility.CeilPow2Safe(worldConfig.PoolComponentsCapacity)];
             }
-            if (_recycledItems == null)
-            {
-                _recycledItems = new int[worldConfig.PoolRecycledComponentsCapacity];
-            }
-
-
             _mapping = new int[world.Capacity];
-            Resize(ArrayUtility.NextPow2(world.Configs.GetWorldConfigOrDefault().PoolComponentsCapacity));
+            Resize(ArrayUtility.NextPow2(worldConfig.PoolComponentsCapacity));
         }
         void IEcsPoolImplementation.OnWorldDestroy() { }
         #endregion
@@ -189,48 +176,48 @@ namespace DCFApixels.DragonECS
         }
         public ref T TryAddOrGet(int entityID)
         {
-            //if (Has(entityID))
-            //{
-            //    return ref Get(entityID);
-            //}
-            //else
-            //{
-            //    return ref Add(entityID);
-            //}
+            if (Has(entityID))
+            {
+                return ref Get(entityID);
+            }
+            else
+            {
+                return ref Add(entityID);
+            }
 
 
-#if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
-#endif
-            ref int itemIndex = ref _mapping[entityID];
-            if (itemIndex <= 0)
-            { //Add block
-#if DEBUG
-                if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
-#elif DRAGONECS_STABILITY_MODE
-                if (_isLocked) { return ref _items[0]; }
-#endif
-                itemIndex = GetFreeItemIndex(entityID);
-                _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-                _sparseEntities[itemIndex] = entityID;
-                EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref _items[itemIndex], _worldID, entityID);
-
-#if !DRAGONECS_DISABLE_POOLS_EVENTS
-                if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
-#endif
-            } //Add block end
-#if !DRAGONECS_DISABLE_POOLS_EVENTS
-            if (_hasAnyListener) { _listeners.InvokeOnGet(entityID); }
-#endif
-
-
-#if DRAGONECS_DEEP_DEBUG
-             if (_mediator.GetComponentCount(_componentTypeID) != _itemsCount)
-             {
-                 Throw.UndefinedException();
-             }
-#endif
-            return ref _items[itemIndex];
+//#if DEBUG
+//            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
+//#endif
+//            ref int itemIndex = ref _mapping[entityID];
+//            if (itemIndex <= 0)
+//            { //Add block
+//#if DEBUG
+//                if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
+//#elif DRAGONECS_STABILITY_MODE
+//                if (_isLocked) { return ref _items[0]; }
+//#endif
+//                itemIndex = GetFreeItemIndex(entityID);
+//                _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
+//                _sparseEntities[itemIndex] = entityID;
+//                EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref _items[itemIndex], _worldID, entityID);
+//
+//#if !DRAGONECS_DISABLE_POOLS_EVENTS
+//                if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
+//#endif
+//            } //Add block end
+//#if !DRAGONECS_DISABLE_POOLS_EVENTS
+//            if (_hasAnyListener) { _listeners.InvokeOnGet(entityID); }
+//#endif
+//
+//
+//#if DRAGONECS_DEEP_DEBUG
+//             if (_mediator.GetComponentCount(_componentTypeID) != _itemsCount)
+//             {
+//                 Throw.UndefinedException();
+//             }
+//#endif
+//            return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
@@ -298,21 +285,20 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (_isLocked) { return; }
 #endif
-            _recycledItemsCount = 0; // ������� ����� ����������, ��� ��� Del �� ��������
             if (_itemsCount <= 0) { return; }
             var span = _world.Where(out SingleAspect<T> _);
             foreach (var entityID in span)
             {
-                ref int itemIndex = ref _mapping[entityID];
-                EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref _items[itemIndex], _worldID, entityID);
-                itemIndex = 0;
-                _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
-#if !DRAGONECS_DISABLE_POOLS_EVENTS
-                if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
-#endif
+                Del(entityID);
+//                ref int itemIndex = ref _mapping[entityID];
+//                EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref _items[itemIndex], _worldID, entityID);
+//                itemIndex = 0;
+//                _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
+//#if !DRAGONECS_DISABLE_POOLS_EVENTS
+//                if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
+//#endif
             }
             _itemsCount = 0;
-            _recycledItemsCount = 0;
         }
 
         #endregion
@@ -356,13 +342,13 @@ namespace DCFApixels.DragonECS
 #if DRAGONECS_DEEP_DEBUG
             if (_lockToSpan)
             {
-                return _source.Entities;
+                return _world.Entities;
             }
 #endif
             UpdateDenseEntities();
-            var span = new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
+            var span = new EcsSpan(_worldID, _denseEntitiesDelayed, 1, _itemsCount);
 #if DRAGONECS_DEEP_DEBUG
-            if (UncheckedCoreUtility.CheckSpanValideDebug(span) == false)
+            if (Core.Unchecked.UncheckedUtility.CheckSpanValideDebug(span) == false)
             {
                 Throw.UndefinedException();
             }
@@ -403,10 +389,10 @@ namespace DCFApixels.DragonECS
             {
                 Throw.UndefinedException();
             }
-            using (_source.DisableAutoReleaseDelEntBuffer()) using (var group = EcsGroup.New(_source))
+            using (_world.DisableAutoReleaseDelEntBuffer()) using (var group = EcsGroup.New(_world))
             {
-                EcsStaticMask.Inc<T>().Build().ToMask(_source).GetIterator().IterateTo(World.Entities, group);
-                var span = new EcsSpan(_source.ID, _denseEntitiesDelayed, 1, _itemsCount);
+                EcsStaticMask.Inc<T>().Build().ToMask(_world).GetIterator().CacheTo(World.Entities, group);
+                var span = new EcsSpan(_world.ID, _denseEntitiesDelayed, 1, _itemsCount);
                 if (group.SetEquals(span) == false)
                 {
                     Throw.UndefinedException();
