@@ -2,8 +2,8 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.Core.Unchecked;
-using DCFApixels.DragonECS.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
@@ -31,9 +31,13 @@ namespace DCFApixels.DragonECS
         [DataMember] public int PoolsCapacity;
         [DataMember] public int PoolComponentsCapacity;
         [DataMember] public int PoolRecycledComponentsCapacity;
-        public EcsWorldConfig() : this(512) { }
-        public EcsWorldConfig(int entitiesCapacity = 512, int groupCapacity = 512, int poolsCapacity = 512, int poolComponentsCapacity = 512, int poolRecycledComponentsCapacity = 512 / 2)
+        public EcsWorldConfig(int entitiesCapacity = 512, int groupCapacity = 512, int poolsCapacity = 512, int poolComponentsCapacity = 512, int poolRecycledComponentsCapacity = -1)
         {
+            if (poolRecycledComponentsCapacity < 0)
+            {
+                poolRecycledComponentsCapacity = poolComponentsCapacity / 4;
+            }
+
             EntitiesCapacity = entitiesCapacity;
             GroupCapacity = groupCapacity;
             PoolsCapacity = poolsCapacity;
@@ -67,6 +71,7 @@ namespace DCFApixels.DragonECS
         private int[] _delEntBuffer = Array.Empty<int>();
         private int _delEntBufferCount = 0;
         private int[] _emptyEntities = Array.Empty<int>();
+        private int _emptyEntitiesLength = 0;
         private int _emptyEntitiesCount = 0;
         private bool _isEnableAutoReleaseDelEntBuffer = true;
 
@@ -171,14 +176,14 @@ namespace DCFApixels.DragonECS
                 // тут сложно однозначно посчитать, так как нужно еще место под аспекты и запросы
                 int controllersCount = config.PoolsCapacity * 4;
                 _worldComponentPools = new StructList<WorldComponentPoolAbstract>(controllersCount);
-                if (controllersCount < _allWorldComponentPools.Capacity)
-                {
-                    _allWorldComponentPools.Capacity = controllersCount;
-                }
 
                 if (worldID < 0 || (worldID == NULL_WORLD_ID && nullWorld == false))
                 {
-                    worldID = (short)_worldIdDispenser.UseFree();
+                    int newID = _worldIdDispenser.UseFree();
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                    if (newID > short.MaxValue) { Throw.DeepDebugException(); }
+#endif
+                    worldID = (short)newID;
                 }
                 else
                 {
@@ -197,12 +202,12 @@ namespace DCFApixels.DragonECS
 
                 _poolsMediator = new PoolsMediator(this);
 
-                int poolsCapacity = ArrayUtility.NextPow2(config.PoolsCapacity);
+                int poolsCapacity = ArrayUtility.CeilPow2Safe(config.PoolsCapacity);
                 _pools = new IEcsPoolImplementation[poolsCapacity];
                 _poolSlots = new PoolSlot[poolsCapacity];
                 ArrayUtility.Fill(_pools, _nullPool);
 
-                int entitiesCapacity = ArrayUtility.NextPow2(config.EntitiesCapacity);
+                int entitiesCapacity = ArrayUtility.CeilPow2Safe(config.EntitiesCapacity);
                 _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
 
                 _executorCoures = new Dictionary<(Type, object), IQueryExecutorImplementation>(config.PoolComponentsCapacity);
@@ -226,6 +231,14 @@ namespace DCFApixels.DragonECS
 #endif
                     return;
                 }
+
+                for (int i = Entities.Count - 1; i >= 0; i--)
+                {
+                    DelEntity(Entities[i]);
+                }
+                ReleaseDelEntityBufferAll();
+
+                _isDestroyed = true;
                 _listeners.InvokeOnWorldDestroy();
                 _entityDispenser = null;
                 _pools = null;
@@ -233,9 +246,9 @@ namespace DCFApixels.DragonECS
                 _worlds[ID] = null;
                 ReleaseData(ID);
                 _worldIdDispenser.Release(ID);
-                _isDestroyed = true;
                 _poolTypeCode_2_CmpTypeIDs = null;
                 _cmpTypeCode_2_CmpTypeIDs = null;
+                DisposeGroups();
 
                 foreach (var item in _executorCoures)
                 {
@@ -244,7 +257,6 @@ namespace DCFApixels.DragonECS
                 //_entities - не обнуляется для работы entlong.IsAlive
             }
         }
-        //public void Clear() { }
         #endregion
 
         #region Getters
@@ -430,20 +442,37 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void MoveToEmptyEntities(int entityID)
         {
-            _emptyEntities[_emptyEntitiesCount++] = entityID;
+            _emptyEntities[_emptyEntitiesLength++] = entityID;
+            _emptyEntitiesCount++;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool RemoveFromEmptyEntities(int entityID)
+        private void RemoveFromEmptyEntities(int entityID)
         {
-            for (int i = _emptyEntitiesCount - 1; i >= 0; i--)
+            const int THRESHOLD = 16;
+            _emptyEntitiesCount--;
+
+            if (_emptyEntitiesLength < THRESHOLD)
             {
-                if (_emptyEntities[i] == entityID)
+                for (int i = _emptyEntitiesLength - 1; i >= 0; i--)
                 {
-                    _emptyEntities[i] = _emptyEntities[--_emptyEntitiesCount];
-                    return true;
+                    if (_emptyEntities[i] == entityID)
+                    {
+                        _emptyEntities[i] = _emptyEntities[--_emptyEntitiesLength];
+                    }
                 }
             }
-            return false;
+
+#if DRAGONECS_DEEP_DEBUG
+            if (_emptyEntitiesCount < 0)
+            {
+                Throw.DeepDebugException();
+            }
+#endif
+            if (_emptyEntitiesCount == 0)
+            {
+                _emptyEntitiesCount = 0;
+                _emptyEntitiesLength = 0;
+            }
         }
         #endregion
 
@@ -551,6 +580,22 @@ namespace DCFApixels.DragonECS
                         return false;
                     }
                 }
+                if (mask_._anys.Length != 0)
+                {
+                    int count = 0;
+                    for (int i = 0, iMax = mask_._anys.Length; i < iMax; i++)
+                    {
+                        if (_pools[mask_._anys[i]].Has(entityID_))
+                        {
+                            count++;
+                        }
+                    }
+                    if (count == 0)
+                    {
+                        return false;
+                    }
+                }
+
                 return true;
             }
             bool deepDebug = IsMatchesMaskDeepDebug(mask, entityID);
@@ -558,6 +603,7 @@ namespace DCFApixels.DragonECS
 
             var incChuncks = mask._incChunckMasks;
             var excChuncks = mask._excChunckMasks;
+            var anyChuncks = mask._anyChunckMasks;
             var componentMaskStartIndex = entityID << _entityComponentMaskLengthBitShift;
 
             for (int i = 0; i < incChuncks.Length; i++)
@@ -582,6 +628,26 @@ namespace DCFApixels.DragonECS
                     return false;
                 }
             }
+
+            if (anyChuncks.Length > 0)
+            {
+                for (int i = 0; i < anyChuncks.Length; i++)
+                {
+                    var bit = anyChuncks[i];
+                    if ((_entityComponentMasks[componentMaskStartIndex + bit.chunkIndex] & bit.mask) == bit.mask)
+                    {
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                        if (true != deepDebug) { Throw.DeepDebugException(); }
+#endif
+                        return true;
+                    }
+                }
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                if (false != deepDebug) { Throw.DeepDebugException(); }
+#endif
+                return false;
+            }
+
 
 #if DEBUG && DRAGONECS_DEEP_DEBUG
             if (true != deepDebug) { Throw.DeepDebugException(); }
@@ -650,7 +716,7 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+                poolIdsPtr = MemoryAllocator.Alloc<int>(count).Ptr;
             }
 
             UnsafeArray<int> ua = UnsafeArray<int>.Manual(poolIdsPtr, count);
@@ -663,7 +729,7 @@ namespace DCFApixels.DragonECS
 
             if (count >= BUFFER_THRESHOLD)
             {
-                UnmanagedArrayUtility.Free(poolIdsPtr);
+                MemoryAllocator.Free(poolIdsPtr);
             }
 
 
@@ -700,7 +766,7 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+                poolIdsPtr = MemoryAllocator.Alloc<int>(count).Ptr;
             }
 
             GetComponentTypeIDsFor_Internal(fromEntityID, poolIdsPtr, count);
@@ -711,7 +777,7 @@ namespace DCFApixels.DragonECS
 
             if (count >= BUFFER_THRESHOLD)
             {
-                UnmanagedArrayUtility.Free(poolIdsPtr);
+                MemoryAllocator.Free(poolIdsPtr);
             }
 
             //foreach (var pool in _pools)
@@ -842,16 +908,21 @@ namespace DCFApixels.DragonECS
         {
             ReleaseDelEntityBuffer(-1);
         }
-        public unsafe void ReleaseDelEntityBuffer(int count)
+        public void ReleaseDelEntityBuffer(int count)
         {
-            if (_emptyEntitiesCount <= 0 && _delEntBufferCount <= 0) { return; }
+            if (_emptyEntitiesLength <= 0 && _delEntBufferCount <= 0) { return; }
             unchecked { _version++; }
 
-            for (int i = 0; i < _emptyEntitiesCount; i++)
+            for (int i = 0; i < _emptyEntitiesLength; i++)
             {
-                TryDelEntity(_emptyEntities[i]);
+                var entityID = _emptyEntities[i];
+                if (IsUsed(entityID) && _entities[entityID].componentsCount == 0)
+                {
+                    DelEntity(entityID);
+                }
             }
             _emptyEntitiesCount = 0;
+            _emptyEntitiesLength = 0;
 
             if (count < 0)
             {
@@ -1034,7 +1105,7 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                poolIdsPtr = UnmanagedArrayUtility.New<int>(count);
+                poolIdsPtr = MemoryAllocator.Alloc<int>(count).Ptr;
             }
 
             GetComponentTypeIDsFor_Internal(entityID, poolIdsPtr, count);
@@ -1054,11 +1125,16 @@ namespace DCFApixels.DragonECS
                     list.Add(_pools[poolIdsPtr[i]]);
                 }
             }
+
+            if (count >= BUFFER_THRESHOLD)
+            {
+                MemoryAllocator.Free(poolIdsPtr);
+            }
         }
         public ReadOnlySpan<object> GetComponentsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
-            ArrayUtility.UpsizeWithoutCopy(ref _componentIDsBuffer, count);
+            ArrayUtility.UpsizeWithoutCopy(ref _componentsBuffer, count);
 
             for (int i = 0; i < count; i++)
             {

@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
         public abstract void Init(EcsPipeline pipeline);
     }
 }
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     internal sealed class InjectionNode<T> : InjectionNodeBase
     {
@@ -60,8 +60,6 @@ namespace DCFApixels.DragonECS.Internal
         }
         private void ExtractTo_Internal(object target)
         {
-            var type = target.GetType();
-            var intrfs = type.GetInterfaces();
             if (target is IEcsInject<T> intrf)
             {
                 intrf.Inject(_currentInjectedDependency);

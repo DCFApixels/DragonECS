@@ -2,7 +2,7 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using System;
 
 namespace DCFApixels.DragonECS
@@ -78,6 +78,76 @@ namespace DCFApixels.DragonECS
             return group.ToSpan().Where(mask, comparison);
         }
         public static EcsSpan Where(this EcsSpan span, IComponentMask mask, Comparison<int> comparison)
+        {
+            var executor = span.World.GetExecutorForMask<EcsWhereExecutor>(mask);
+            return executor.ExecuteFor(span);
+        }
+        #endregion
+
+        #region WhereUnsafe
+        public static EcsUnsafeSpan WhereUnsafe<TCollection, TAspect>(this TCollection entities, out TAspect aspect)
+            where TAspect : new()
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().WhereUnsafe(out aspect);
+        }
+        public static EcsUnsafeSpan WhereUnsafe<TAspect>(this EcsReadonlyGroup group, out TAspect aspect)
+            where TAspect : new()
+        {
+            return group.ToSpan().WhereUnsafe(out aspect);
+        }
+        public static EcsUnsafeSpan WhereUnsafe<TAspect>(this EcsSpan span, out TAspect aspect)
+            where TAspect : new()
+        {
+            span.World.GetQueryCache(out EcsWhereExecutor executor, out aspect);
+            return executor.ExecuteFor(span);
+        }
+
+        public static EcsUnsafeSpan WhereUnsafe<TCollection>(this TCollection entities, IComponentMask mask)
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().WhereUnsafe(mask);
+        }
+        public static EcsUnsafeSpan WhereUnsafe(this EcsReadonlyGroup group, IComponentMask mask)
+        {
+            return group.ToSpan().WhereUnsafe(mask);
+        }
+        public static EcsUnsafeSpan WhereUnsafe(this EcsSpan span, IComponentMask mask)
+        {
+            var executor = span.World.GetExecutorForMask<EcsWhereExecutor>(mask);
+            return executor.ExecuteFor(span);
+        }
+        #endregion
+
+        #region WhereUnsafe with sort
+        public static EcsUnsafeSpan WhereUnsafe<TCollection, TAspect>(this TCollection entities, out TAspect aspect, Comparison<int> comparison)
+            where TAspect : new()
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().WhereUnsafe(out aspect, comparison);
+        }
+        public static EcsUnsafeSpan WhereUnsafe<TAspect>(this EcsReadonlyGroup group, out TAspect aspect, Comparison<int> comparison)
+            where TAspect : new()
+        {
+            return group.ToSpan().WhereUnsafe(out aspect, comparison);
+        }
+        public static EcsUnsafeSpan WhereUnsafe<TAspect>(this EcsSpan span, out TAspect aspect, Comparison<int> comparison)
+            where TAspect : new()
+        {
+            span.World.GetQueryCache(out EcsWhereExecutor executor, out aspect);
+            return executor.ExecuteFor(span, comparison);
+        }
+
+        public static EcsUnsafeSpan WhereUnsafe<TCollection>(this TCollection entities, IComponentMask mask, Comparison<int> comparison)
+            where TCollection : IEntityStorage
+        {
+            return entities.ToSpan().WhereUnsafe(mask, comparison);
+        }
+        public static EcsUnsafeSpan WhereUnsafe(this EcsReadonlyGroup group, IComponentMask mask, Comparison<int> comparison)
+        {
+            return group.ToSpan().WhereUnsafe(mask, comparison);
+        }
+        public static EcsUnsafeSpan WhereUnsafe(this EcsSpan span, IComponentMask mask, Comparison<int> comparison)
         {
             var executor = span.World.GetExecutorForMask<EcsWhereExecutor>(mask);
             return executor.ExecuteFor(span);

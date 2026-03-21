@@ -21,27 +21,27 @@
   <tr></tr>
   <tr>
     <td nowrap width="100">
-      <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md">
-        <img src="https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755"></br>
+      <a href="README-RU.md">
+        <img src="https://github.com/user-attachments/assets/7bc29394-46d6-44a3-bace-0a3bae65d755"><br/>
         <span>Русский</span>
       </a>  
     </td>
     <td nowrap width="100">
       <a href="https://github.com/DCFApixels/DragonECS">
-        <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"></br>
+        <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"><br/>
         <span>English</span>
       </a>  
     </td>
     <td nowrap width="100">
-      <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-ZH.md">
-        <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927"></br>
+      <a href="README-ZH.md">
+        <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927"><br/>
         <span>中文</span>
       </a>  
     </td>
   </tr>
 </table>
 
-</br>
+ 
 
 The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance of dynamic entity changes. Without code generation and dependencies. Inspired by [LeoEcs Lite](https://github.com/Leopotam/ecslite). 
 
@@ -54,6 +54,7 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 
 ## Table of Contents
 - [Installation](#installation)
+- [Extensions](#extensions)
 - [Basic Concepts](#basic-concepts)
   - [Entity](#entity)
   - [Component](#component)
@@ -88,35 +89,59 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 </br>
 
 # Installation
-Versioning semantics - [Open](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
+Versioning semantics - [Open](https://gist.github.com/DCFApixels/c3b178a308b411f530361d1d56f1f929#file-dcfapixels_versioning_en-md)
 ## Environment
 Requirements:
-+ Minimum version of C# 7.3;
-  
-Optional:
-+ Support for NativeAOT
-+ Game engines with C#: Unity, Godot, MonoGame, etc.
-  
+* Minimum C# version: 7.3.
+
+Supported:
+* NativeAOT;
+* Game engines with C#: Unity, Godot, MonoGame, etc.
+
 Tested with:
-+ **Unity:** Minimum version 2020.1.0;
+* **Unity:** Minimum version 2021.2.0.
 
 ## Unity Installation
-* ### Unity Package
-The framework can be installed as a Unity package by adding the Git URL [in the PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) or manually adding it to `Packages/manifest.json`: 
+> It is also recommended to install the Unity engine integration extension [Unity integration](https://github.com/DCFApixels/DragonECS-Unity)
+* ### Unity package
+The framework supports installation as a Unity package by adding the Git URL to the PackageManager ([how-to](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html)) or by manually adding the entry to `Packages/manifest.json`:
 ```
 https://github.com/DCFApixels/DragonECS.git
 ```
-* ### Source Code
-The framework can also be added to the project as source code.
+Or add the package entry to `Packages/manifest.json`:
+```
+"com.dcfa_pixels.dragonecs": "https://github.com/DCFApixels/DragonECS.git",
+```
 
-</br>
+* ### As source code
+You can also add the framework directly by copying its source files into your project.
+
+
+# Extensions
+* Integrations:
+    * [Unity](https://github.com/DCFApixels/DragonECS-Unity)
+    * [Godot](https://gitlab.com/InauniusOwn/Libraries/DraGodot)
+* Packages:
+    * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
+    * [Classic C# multithreading](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+    * [Recursivity](https://github.com/DCFApixels/DragonECS-Recursivity)
+    * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
+    * [Graphs](https://github.com/DCFApixels/DragonECS-Graphs)
+* Utilities:
+    * [Simple syntax](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
+    * [EcsRefPool](https://gist.github.com/DCFApixels/73e392ccabdd98b3d4a517017d8a3f22)
+    * [Timers](https://gist.github.com/DCFApixels/71a416275660c465ece76242290400df)
+    * [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
+    * [Code Templates for IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) and [for Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
+> *Your extension? If you are developing an extension for DragonECS, you can share it [here](#feedback).
+
 
 # Basic Concepts
 ## Entity
-Сontainer for components. They are implemented as identifiers, of which there are two types:
-* `int` - a short-term identifier used within a single tick. Storing `int` identifiers is not recommended, use `entlong` instead;
-* `entlong` - long-term identifier, contains a full set of information for unique identification;
-``` c#
+Container for components. There are two identifier types used to reference entities:
+* `int` - short-lived identifier, valid within a single tick. Not recommended for long-term storage;
+* `entlong` - long-term identifier that includes a generation tag, which makes it unique across entity lifetimes. Suitable for storing and long-term usage.
+```c#
 // Creating a new entity in the world.
 int entityID = _world.NewEntity();
 
@@ -133,7 +158,7 @@ int newEntityID = _world.CloneEntity(entityID);
 <details>
 <summary>Working with entlong</summary>
  
-``` c#
+```c#
 // Convert int to entlong.
 entlong entity = _world.GetEntityLong(entityID);
 // or
@@ -222,7 +247,7 @@ class SomeSystem : IEcsRun, IEcsPipelineMember
 ### Dependency Injection
 The framework implements dependency injection for systems. This process begins during pipeline initialization  and injects data passed to the Builder.
 > Using built-in dependency injection is optional. 
-``` c#
+```c#
 class SomeDataA { /* ... */ }
 class SomeDataB : SomeDataA { /* ... */ }
 
@@ -257,7 +282,7 @@ class SomeSystem : IEcsInject<SomeDataA>, IEcsRun
 
 ### Modules
 Groups of systems that implement a common feature can be grouped into modules and easily added to the Pipeline.
-``` c#
+```c#
 using DCFApixels.DragonECS;
 class Module1 : IEcsModule 
 {
@@ -294,11 +319,11 @@ EcsPipeline pipeline = EcsPipeline.New()
     .BuildAndInit();
 ```
 The built-in layers are arranged in the following order:
-* `EcsConst.PRE_BEGIN_LAYER`
-* `EcsConst.BEGIN_LAYER`
-* `EcsConst.BASIC_LAYER` (Systems are added here if no layer is specified during addition)
-* `EcsConst.END_LAYER`
-* `EcsConst.POST_END_LAYER`
+* `EcsConsts.PRE_BEGIN_LAYER`
+* `EcsConsts.BEGIN_LAYER`
+* `EcsConsts.BASIC_LAYER` (Systems are added here if no layer is specified during addition)
+* `EcsConsts.END_LAYER`
+* `EcsConsts.POST_END_LAYER`
 #### Sorting Order
 The sort order int value is used to sort systems within a layer. By default, systems are added with `sortOrder = 0`.
 
@@ -352,10 +377,10 @@ _pipeline = EcsPipeline.New()
     .BuildAndInit();
 
 // Running the runner if it was added
-_pipeline.GetRunner<IDoSomethingProcess>.Do()
+_pipeline.GetRunner<IDoSomethingProcess>().Do();
 
 // or if the runner was not added (calling GetRunnerInstance will also add the runner to the pipeline).
-_pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
+_pipeline.GetRunnerInstance<DoSomethingProcessRunner>().Do();
 ```
 
 <details>
@@ -444,7 +469,7 @@ poses.Del(entityID);
 > It is possible to implement a user pool. This feature will be described shortly.
 
 ## Mask
-Used to filter entities by the presence or absence of components.
+Used to filter entities by the presence or absence of components. Usually masks are not used standalone, they are part of `EcsAspect` and used by queries to filter entities.
 ``` c#
 // Creating a mask that checks if entities have components 
 // SomeCmp1 and SomeCmp2, but do not have component SomeCmp3.
@@ -479,7 +504,11 @@ EcsMask mask = _staticMask.ToMask(_world);
 </details>
  
 ## Aspect
-These are custom classes inherited from `EcsAspect` and used to interact with entities. Aspects are both a pool cache and a component mask for filtering entities. You can think of aspects as a description of what entities the system is working with.
+These are user-defined classes that inherit from `EcsAspect` and describe sets of components a system works with. An aspect serves two purposes:
+- Mask — initializes and holds an `EcsMask`, so it can be used in queries to filter entities.
+- Pool cache — provides fast access to component pools.
+
+In short, an aspect is a convenient way to declare "which entities I work with and how to access their components." 
 
 Simplified syntax:
 ``` c#
@@ -500,6 +529,13 @@ class Aspect : EcsAspect
 }
 ```
 
+Purpose of the static markers:
+* `Inc` — component must be present (inclusive) and caches the pool.
+* `Exc` — component must NOT be present (exclusive) and caches the pool.
+* `Opt` — component may be present, but does not affect filtering (only caches the pool for access).
+* `Any` — at least one of the components marked with `Any` must be present; caches the pool.
+
+
 Explicit syntax (the result is identical to the example above):
 ``` c#
 using DCFApixels.DragonECS;
@@ -510,9 +546,9 @@ class Aspect : EcsAspect
     public EcsPool<Velocity> velocities;
     protected override void Init(Builder b)
     {
-        poses = b.Include<Pose>();
-        velocities = b.Include<Velocity>();
-        b.Exclude<FreezedTag>();
+        poses = b.Inc<Pose>();
+        velocities = b.Inc<Velocity>();
+        b.Exc<FreezedTag>();
     }
 }
 ```
@@ -536,17 +572,17 @@ class Aspect : EcsAspect
         otherAspect1 = b.Combine<OtherAspect1>(1);
         // Although Combine was called earlier for OtherAspect1, it will first combine with OtherAspect2 because the default order is 0.
         otherAspect2 = b.Combine<OtherAspect2>();
-        // If b.Exclude<Pose>() was specified in OtherAspect1 or OtherAspect2, it will be replaced with b.Include<Pose>() here.
-        poses = b.Include<Pose>();
+        // If b.Exc<Pose>() was specified in OtherAspect1 or OtherAspect2, it will be replaced with b.Inc<Pose>() here.
+        poses = b.Inc<Pose>();
     }
 }
 ```
 If there are conflicting constraints between the combined aspects, the new constraints will replace those added earlier. Constraints from the root aspect always replace constraints from added aspects. Here's a visual example of constraint combination:
-| | cmp1 | cmp2 | cmp3 | cmp4 | cmp5 | разрешение конфликтных ограничений|
+| | cmp1 | cmp2 | cmp3 | cmp4 | cmp5 | Conflict resolution |
 | :--- | :--- | :--- | :--- | :--- | :--- |:--- |
 | OtherAspect2 | :heavy_check_mark: | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | |
-| OtherAspect1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | For `cmp2` will be chosen. :heavy_check_mark: |
-| Aspect | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | For `cmp1` will be chosen. :x: |
+| OtherAspect1 | :heavy_minus_sign: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_minus_sign: | For `cmp2`, :heavy_check_mark: will be chosen. |
+| Aspect | :x: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_check_mark: | For `cmp1`, :x: will be chosen. |
 | Final Constraints | :x: | :heavy_check_mark: | :heavy_minus_sign: | :x: | :heavy_check_mark: | |
 
 </details>
@@ -986,46 +1022,49 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 <table>
   <tr>
     <td align="center">
+      <a href="https://dcfapixels.github.io/Project8.html">
+        Crystal Siege
+        <img src="https://github.com/user-attachments/assets/1aa60a50-2668-4919-aca9-d6d2b980c3dd">
+      </a> 
+    </td>
+    <td align="center">
+      <a href="https://play.google.com/store/apps/details?id=com.ZlodeyStudios.OrdersMatter">
+        Order matters
+        <img src="https://github.com/user-attachments/assets/c55b2647-9b6e-4145-98ff-c3d094600fa1">
+      </a> 
+    </td>
+  </tr>
+
+  <tr></tr>
+
+  <tr>
+    <td align="center">
       <a href="https://yandex.ru/games/app/206024?utm_source=game_popup_menu">
         Башенки Смерти
         <img src="https://github.com/user-attachments/assets/70fc55a0-c911-49f8-ba75-f503437f087f" alt="screenshot">
       </a> 
     </td>
     <td align="center">
-      <span>
-        ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ
+        _____________
         <img tabindex="-1" src="https://github.com/user-attachments/assets/3fa1ca6d-29f6-43e6-aafe-cc9648d20490" alt="screenshot">
-      </span> 
     </td>
   </tr>
 </table>
 
 </br>
 
-# Extensions
-* Packages:
-    * [Unity integration](https://github.com/DCFApixels/DragonECS-Unity)
-    * [Dependency autoinjections](https://github.com/DCFApixels/DragonECS-AutoInjections)
-    * [Classic C# multithreading](https://github.com/DCFApixels/DragonECS-ClassicThreads)
-    * [Recursivity](https://github.com/DCFApixels/DragonECS-Recursivity)
-    * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
-    * [Graphs](https://github.com/DCFApixels/DragonECS-Graphs)
-* Utilities:
-    * [Simple syntax](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
-    * [One-Frame Components](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
-    * [Code Templates for IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) and [for  Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
-> *Your extension? If you are developing an extension for DragonECS, you can share it [here](#feedback).
-
-</br>
  
 # FAQ
-## 'ReadOnlySpan<>' could not be found
-In Unity 2020.1.x, you may encounter this error in the console:
-```
-The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing a using directive or an assembly reference?)
-``` 
-To fix this, add the define symbol `ENABLE_DUMMY_SPAN` to `Project Settings/Player/Other Settings/Scripting Define Symbols`.
 
+## How to enable/disable systems?
+Directly — you can't.
+
+The need to enable or disable systems usually appears when the overall game state changes; this may also mean switching a group of systems. Conceptually this is a change of processes. There are two solutions:
+
+- If the process changes are global, create a new `EcsPipeline` and run the appropriate pipeline in the engine update loop.
+- Split `IEcsRun` into multiple processes and run the desired process in the engine update loop. To do this create a new process interface, implement a runner for it, and obtain the runner via `EcsPipeline.GetRunner<T>()`.
+
+## Recommendations list: [DragonECS-Vault](https://github.com/DCFApixels/DragonECS-Vault)
 </br>
 
 # Feedback

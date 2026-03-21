@@ -1,7 +1,7 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Collections;
@@ -78,11 +78,25 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
-        private EcsPipeline(IConfigContainer configs, Injector.Builder injectorBuilder, IEcsProcess[] systems)
+        public EcsPipeline(ReadOnlySpan<IEcsProcess> systems, IConfigContainer configs = null, Injector.InjectionList injectionList = null) :
+            this(systems.ToArray(), configs, injectionList)
+        { }
+        public EcsPipeline(IEnumerable<IEcsProcess> systems, IConfigContainer configs = null, Injector.InjectionList injectionList = null) :
+            this(systems.ToArray(), configs, injectionList)
+        { }
+        private EcsPipeline(IEcsProcess[] systems, IConfigContainer configs, Injector.InjectionList injectionList)
         {
+            if (configs == null)
+            {
+                configs = new ConfigContainer();
+            }
+            if (injectionList == null)
+            {
+                injectionList = Injector.InjectionList._Empty_Internal;
+            }
+
             _configs = configs;
             _allSystems = systems;
-            injectorBuilder.Inject(this);
 
             var members = GetProcess<IEcsPipelineMember>();
             for (int i = 0; i < members.Length; i++)
@@ -90,7 +104,14 @@ namespace DCFApixels.DragonECS
                 members[i].Pipeline = this;
             }
 
-            _injector = injectorBuilder.Build(this);
+            _injector = new Injector(this);
+            injectionList.InitInjectTo(_injector, this);
+        }
+        ~EcsPipeline()
+        {
+            if (_isDestoryed) { return; }
+            if (_isInit == false) { Init(); }
+            Destroy();
         }
         #endregion
 

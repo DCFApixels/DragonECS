@@ -1,7 +1,7 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Linq;
@@ -127,7 +127,6 @@ namespace DCFApixels.DragonECS
         {
             return _cmpTypeCode_2_CmpTypeIDs.Contains((int)EcsTypeCodeManager.Get(componentType));
         }
-        //TODO пересмотреть нейминг или функцию
         public bool IsComponentTypeDeclared(int componentTypeID)
         {
             if (componentTypeID >= 0 && componentTypeID < _pools.Length)
@@ -161,14 +160,14 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region FindOrAutoCreatePool/InitPool
-        public void InitPool(IEcsPoolImplementation poolImplementation)
+        public void InitPoolInstance(IEcsPoolImplementation poolImplementation)
         {
 #if DEBUG
             if (Count > 0) { Throw.World_MethodCalledAfterEntityCreation(nameof(InitEntitySlot)); }
 #elif DRAGONECS_STABILITY_MODE
             if (Count > 0) { return; }
 #endif
-            InitPool_Internal(poolImplementation);
+            InitPoolInstance_Internal(poolImplementation);
         }
         private TPool FindOrAutoCreatePool<TPool>() where TPool : IEcsPoolImplementation, new()
         {
@@ -184,14 +183,17 @@ namespace DCFApixels.DragonECS
                     return (TPool)pool;
                 }
                 TPool newPool = new TPool();
-                InitPool_Internal(newPool);
+                InitPoolInstance_Internal(newPool);
                 return newPool;
             }
         }
-        private void InitPool_Internal(IEcsPoolImplementation newPool)
+        private void InitPoolInstance_Internal(IEcsPoolImplementation newPool)
         {
             lock (_worldLock)
             {
+#if DEBUG
+                AllowedInWorldsAttribute.CheckAllows(this, newPool.ComponentType);
+#endif
                 int poolTypeCode = (int)EcsTypeCodeManager.Get(newPool.GetType());
                 if (_poolTypeCode_2_CmpTypeIDs.Contains(poolTypeCode))
                 {

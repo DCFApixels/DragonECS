@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS
     }
 }
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     internal static class Throw
     {
@@ -139,10 +139,19 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void Quiery_ArgumentDifferentWorldsException()
         {
-            throw new ArgumentException("The groups belong to different worlds.");
+            ArgumentDifferentWorldsException();
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentDifferentWorldsException()
+        {
+            throw new ArgumentException("World ID mismatch: the expected and actual world identifiers do not match.");
         }
 
-
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void EmptyStack()
+        {
+            throw new InvalidOperationException("Invalid Operation Empty Stack.");
+        }
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ArgumentNull()
         {

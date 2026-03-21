@@ -2,7 +2,7 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -284,6 +284,7 @@ namespace DCFApixels.DragonECS
                     }
                     oldService?.OnDisableBaseService(service);
                     service.OnEnableBaseService(oldService);
+                    _threadServiceClonesSet.Clear();
                     OnServiceChanged(service);
                 }
             }
@@ -409,7 +410,6 @@ namespace DCFApixels.DragonECS.Core
         {
             self.Print("");
         }
-        //TODO PrintJson возможно будет добавлено когда-то
     }
     #endregion
 
@@ -525,7 +525,7 @@ namespace DCFApixels.DragonECS.Core
         {
             if (id >= _stopwatchs.Length)
             {
-                Array.Resize(ref _stopwatchs, id << 1);
+                Array.Resize(ref _stopwatchs, ArrayUtility.NextPow2(id));
             }
             _stopwatchs[id] = new MarkerData(new System.Diagnostics.Stopwatch(), name, id);
         }

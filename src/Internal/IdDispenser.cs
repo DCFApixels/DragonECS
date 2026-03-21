@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
 #if ENABLE_IL2CPP
     using Unity.IL2CPP.CompilerServices;
@@ -16,6 +16,7 @@ namespace DCFApixels.DragonECS.Internal
 #endif
     [Serializable]
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
+    [DebuggerDisplay("Count: {Count}")]
     internal class IdDispenser : IEnumerable<int>, IReadOnlyCollection<int>
     {
         private const int MIN_SIZE = 4;
@@ -247,7 +248,7 @@ namespace DCFApixels.DragonECS.Internal
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void Upsize_Internal(int minSize)
         {
-            Resize(ArrayUtility.NextPow2_ClampOverflow(minSize));
+            Resize(ArrayUtility.CeilPow2_ClampOverflow(minSize));
         }
         private void Resize(int newSize)
         {

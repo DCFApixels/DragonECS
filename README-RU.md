@@ -19,29 +19,27 @@
   <tr></tr>
   <tr>
     <td nowrap width="100">
-      <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md">
-        <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"></br>
+      <a href="README-RU.md">
+        <img src="https://github.com/user-attachments/assets/3c699094-f8e6-471d-a7c1-6d2e9530e721"><br/>
         <span>Русский</span>
       </a>  
     </td>
     <td nowrap width="100">
       <a href="https://github.com/DCFApixels/DragonECS">
-        <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930"></br>
+        <img src="https://github.com/user-attachments/assets/30528cb5-f38e-49f0-b23e-d001844ae930"><br/>
         <span>English</span>
       </a>  
     </td>
     <td nowrap width="100">
-      <a href="https://github.com/DCFApixels/DragonECS/blob/main/README-ZH.md">
-        <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927"></br>
+      <a href="README-ZH.md">
+        <img src="https://github.com/user-attachments/assets/8e598a9a-826c-4a1f-b842-0c56301d2927"><br/>
         <span>中文</span>
       </a>  
     </td>
   </tr>
 </table>
 
-</br>
-
-DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) фреймворк нацеленный на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Разработан на чистом C#, без зависимостей и генерации кода. Вдохновлен [LeoEcs Lite](https://github.com/Leopotam/ecslite).
+DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) фреймворк, нацеленный на максимальную удобность, модульность, расширяемость и производительность динамического изменения сущностей. Разработан на чистом C#, без зависимостей и генерации кода. Вдохновлен [LeoEcs Lite](https://github.com/Leopotam/ecslite).
 
 > [!WARNING]
 > Проект предрелизной версии, поэтому API может меняться. В ветке main актуальная и рабочая версия.
@@ -50,6 +48,7 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
 
 ## Оглавление
 - [Установка](#установка)
+- [Расширения](#расширения)
 - [Основные концепции](#основные-концепции)
   - [Entity](#entity)
   - [Component](#component)
@@ -77,42 +76,67 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
   - [Компоненты мира](#компоненты-мира)
   - [Конфиги](#конфиги)
 - [Проекты на DragonECS](#Проекты-на-DragonECS)
-- [Расширения](#расширения)
 - [FAQ](#faq)
 - [Обратная связь](#обратная-связь)
 
-</br>
+
 
 # Установка
 Семантика версионирования - [Открыть](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
 ## Окружение
 Обязательные требования:
-+ Минимальная версия C# 7.3;
++ Минимальная версия C#: 7.3.
 
-Опционально:
-+ Поддержка NativeAOT
+Поддерживает:
++ NativeAOT;
 + Игровые движки с C#: Unity, Godot, MonoGame и т.д.
 
-Протестировано:
-+ **Unity:** Минимальная версия 2020.1.0;
+Протестировано на:
+* **Unity:** Минимальная версия 2021.2.0.
 
 ## Установка для Unity
 > Рекомендуется так же установить расширение [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
 * ### Unity-модуль
-Поддерживается установка в виде Unity-модуля в  при помощи добавления git-URL [в PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html) или ручного добавления в `Packages/manifest.json`: 
+Поддерживается установка в виде Unity-модуля при помощи добавления git-URL [в PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html): 
 ```
 https://github.com/DCFApixels/DragonECS.git
 ```
+Или ручного добавления этой строчки в `Packages/manifest.json`:
+```
+"com.dcfa_pixels.dragonecs": "https://github.com/DCFApixels/DragonECS.git",
+```
+
 * ### В виде исходников
-Фреймворк так же может быть добавлен в проект в виде исходников.
-</br>
+Можно так же напрямую скопировать в проект исходники фреймворка.
+    
+
+
+# Расширения
+* Интеграции:
+    * [Unity](https://github.com/DCFApixels/DragonECS-Unity)
+    * [Godot](https://gitlab.com/InauniusOwn/Libraries/DraGodot)
+* Пакеты:
+    * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
+    * [Классическая C# многопоточность](https://github.com/DCFApixels/DragonECS-ClassicThreads)
+    * [Recursivity](https://github.com/DCFApixels/DragonECS-Recursivity)
+    * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
+    * [Графы](https://github.com/DCFApixels/DragonECS-Graphs)
+* Утилиты:
+    * [Упрощенный синтаксис](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
+    * [EcsRefPool](https://gist.github.com/DCFApixels/73e392ccabdd98b3d4a517017d8a3f22)
+    * [Таймеры](https://gist.github.com/DCFApixels/71a416275660c465ece76242290400df)
+    * [Однокадровые компоненты](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
+    * [Шаблоны кода IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [для Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
+> *Твое расширение? Если разрабатываешь расширение для DragonECS, пиши [сюда](#обратная-связь).
+
+
 
 # Основные концепции
 ## Entity
-**Сущности** - это то к чему крепятся данные. Реализованы в виде идентификаторов, которых есть 2 вида:
-* `int` - однократный идентификатор, применяется в пределах одного тика. Не рекомендуется хранить `int` идентификаторы, в место этого используйте `entlong`;
-* `entlong` - долговременный идентификатор, содержит в себе полный набор информации для однозначной идентификации;
-``` c#
+**Сущности** - это то, к чему крепятся данные. Для доступа к сущности используются идентификаторы двух типов:
+* `int` - однократный идентификатор, применяется в пределах одного тика. Не рекомендуется использовать для хранения;
+* `entlong` - долговременный идентификатор, содержит метку поколения, что делает его уникальным навсегда. Подходит для хранения.
+```c#
 // Создание новой сущности в мире.
 int entityID = _world.NewEntity();
 
@@ -129,10 +153,11 @@ int newEntityID = _world.CloneEntity(entityID);
 <details>
 <summary>Работа с entlong</summary>
  
-``` c#
+
+```c#
 // Конвертация int в entlong.
 entlong entity = _world.GetEntityLong(entityID);
-// или
+// упрощенная версия
 entlong entity = (_world, entityID);
 
 // Проверка что сущность еще жива.
@@ -148,6 +173,8 @@ if (entity.TryGetID(out int entityID)) { }
 ```
  
  </details>
+
+> 
  
 > Сущности не могут существовать без компонентов, пустые сущности будут автоматически удаляться сразу после удаления последнего компонента либо в конце тика.
 ## Component
@@ -183,7 +210,49 @@ class SomeSystem : IEcsPreInit, IEcsInit, IEcsRun, IEcsDestroy
 ```
 > Для реализации дополнительных процессов перейдите к разделу [Процессы](#Процессы).
 
-</br>
+<details>
+<summary>Пример системы</summary>
+ 
+
+```c#
+// Система
+class DamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
+{
+    // Аспекты описаны в соответствующей главе
+    class Aspect : EcsAspect
+    {
+        public EcsPool<DamageRequest> DamageRequests = Inc;
+        public EcsPool<Health> Healths = Inc;
+    }
+    // Мир - хранилище сущностей, так же описан в соответствующей главе
+    EcsDefaultWorld world;
+    // Процесс Run
+    public void Run()
+    {
+        // Итерируемся по сущностям, в рамках Run можно использовать int идентификаторы сущностей
+        foreach (int e in world.Where(out Aspect a))
+        {
+            // Логика нанесения урона
+            a.Healths[e].Points -= a.DamageRequests[e].Points;
+        }
+    }
+    // Процесс Inject. Получение инстанса EcsDefaultWorld
+    void IEcsInject<EcsDefaultWorld>.Inject(EcsDefaultWorld obj) => world = obj;
+}
+// Компоненты
+public struct DamageRequest : IEcsComponent
+{
+    public float Points;
+}
+public struct Health : IEcsComponent
+{
+    public float Points;
+}
+```
+ 
+ </details>
+
+
 
 # Концепции фреймворка
 ## Пайплайн
@@ -214,9 +283,9 @@ class SomeSystem : IEcsRun, IEcsPipelineMember
 ```
 > Для одновременного построения и инициализации есть метод Builder.BuildAndInit();
 ### Внедрение зависимостей
-Фреймворк реализует внедрение зависимостей для систем. это процесс который запускается вместе с инициализацией пайплайна и внедряет данные переданные в Builder.
+Фреймворк реализует внедрение зависимостей для систем. Это процесс, который запускается вместе с инициализацией пайплайна и внедряет данные, переданные в Builder.
 
-``` c#
+```c#
 class SomeDataA { /* ... */ }
 class SomeDataB : SomeDataA { /* ... */ }
 
@@ -254,7 +323,7 @@ class SomeSystem : IEcsInject<SomeDataA>, IEcsRun
 
 ### Модули
 Группы систем реализующие общую фичу можно объединять в модули, и просто добавлять модули в Pipeline.
-``` c#
+```c#
 using DCFApixels.DragonECS;
 class Module1 : IEcsModule 
 {
@@ -267,7 +336,7 @@ class Module1 : IEcsModule
     }
 }
 ```
-``` c#
+```c#
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
     .AddModule(new Module1())
@@ -276,10 +345,10 @@ EcsPipeline pipeline = EcsPipeline.New()
 ```
 
 ### Сортировка
-Дла управления расположением систем в пайплайне, вне зависимости от порядка добавления, есть 2 способа: Слои и Порядок сортировки.
+Для управления расположением систем в пайплайне, вне зависимости от порядка добавления, есть 2 способа: Слои и Порядок сортировки.
 #### Слои
 Слой определяет место в пайплайне для вставки систем. Например, если необходимо чтобы система была вставлена в конце пайплайна, эту систему можно добавить в слой `EcsConsts.END_LAYER`.
-``` c#
+```c#
 const string SOME_LAYER = nameof(SOME_LAYER);
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
@@ -291,14 +360,14 @@ EcsPipeline pipeline = EcsPipeline.New()
     .BuildAndInit();
 ```
 Встроенные слои расположены в следующем порядке:
-* `EcsConst.PRE_BEGIN_LAYER`
-* `EcsConst.BEGIN_LAYER`
-* `EcsConst.BASIC_LAYER` (По умолчанию системы добавляются сюда)
-* `EcsConst.END_LAYER`
-* `EcsConst.POST_END_LAYER`
+* `EcsConsts.PRE_BEGIN_LAYER`
+* `EcsConsts.BEGIN_LAYER`
+* `EcsConsts.BASIC_LAYER` (По умолчанию системы добавляются сюда)
+* `EcsConsts.END_LAYER`
+* `EcsConsts.POST_END_LAYER`
 #### Порядок сортировки
 Для сортировки систем в рамках слоя используется int значение порядка сортировки. По умолчанию системы добавляются с `sortOrder = 0`.
-``` c#
+```c#
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
     // Система SomeSystem будет вставлена в слой EcsConsts.BEGIN_LAYER 
@@ -324,7 +393,7 @@ EcsPipeline pipeline = EcsPipeline.New()
 <summary>Пользовательские процессы</summary>
  
 Для добавления нового процесса создайте интерфейс наследованный от `IEcsProcess` и создайте раннер для него. Раннер это класс реализующий интерфейс запускаемого процесса и наследуемый от `EcsRunner<TInterface>`. Пример:
-``` c#
+```c#
 // Интерфейс процесса.
 interface IDoSomethingProcess : IEcsProcess
 {
@@ -350,10 +419,10 @@ _pipeline = EcsPipeline.New()
     .BuildAndInit();
 
 // Запуск раннера если раннер был добавлен.
-_pipeline.GetRunner<IDoSomethingProcess>.Do()
+_pipeline.GetRunner<IDoSomethingProcess>().Do();
 
-// Или если раннер не был добавлен(Вызов GetRunnerInstance так же добавит раннер в пайплайн).
-_pipeline.GetRunnerInstance<DoSomethingProcessRunner>.Do()
+// Или если раннер не был добавлен (вызов GetRunnerInstance также добавит раннер в пайплайн).
+_pipeline.GetRunnerInstance<DoSomethingProcessRunner>().Do();
 ```
 
 <details>
@@ -466,10 +535,13 @@ poses.Del(entityID);
 </details>
 
 ## Маска
-Применяется для фильтрации сущностей по наличию или отсутствию компонентов.  
-``` c#
-// Создание маски которая проверяет что у сущностей есть компоненты 
-// SomeCmp1 и SomeCmp2, но нет компонента SomeCmp3.
+Набор требований к компонентам сущности: какие компоненты должны присутствовать, а какие отсутствовать. Маска — это просто данные, она не выполняет поиск, а используется запросами для фильтрации сущностей.
+
+Обычно маски не используются в чистом виде, а являются частью [Аспекта](#Аспект).
+
+```c#
+// Создание маски с условием наличия компонентов SomeCmp1 и SomeCmp2,
+// и с условием отсутствия компонента SomeCmp3.
 EcsMask mask = EcsMask.New(_world)
     // Inc - Условие наличия компонента.
     .Inc<SomeCmp1>()
@@ -501,42 +573,47 @@ EcsMask mask = _staticMask.ToMask(_world);
 </details>
 
 ## Аспект
-Пользовательские классы наследуемые от `EcsAspect` и используемые для взаимодействия с сущностями. Аспекты одновременно являются кешем пулов и содержат маску. Можно рассматривать аспекты как описание того с какими сущностями работает система.
 
-Упрощенный синтаксис:
+Пользовательские классы наследуемые от `EcsAspect`, описывающие наборы компонентов, с которыми работает система. Аспект одновременно выполняет две функции:
++ Маска — инициализирует и хранит [маску](#Маска), за счет чего может использоваться в запросах.
++ Кэш пулов — предоставляет быстрый доступ к пулам компонентов.
+
+
+Проще говоря, аспект — это удобный способ описать "с какими сущностями я работаю и как получать их компоненты".
+
+
+Пример:
 ``` c#
-using DCFApixels.DragonECS;
-// ...
 class Aspect : EcsAspect
 {
-    // Кешируется пул и Pose добавляется во включающее ограничение.
+    // Кешируется пул и тип Pose добавляется во включающее условие.
     public EcsPool<Pose> poses = Inc;
-    // Кешируется пул и Velocity добавляется во включающее ограничение.
+    // Кешируется пул и тип Velocity добавляется во включающее условие.
     public EcsPool<Velocity> velocities = Inc;
-    // Кешируется пул и FreezedTag добавляется в исключающее ограничение.
+    // Кешируется пул и тип FreezedTag добавляется в исключающее условие.
     public EcsTagPool<FreezedTag> freezedTags = Exc;
-
-    // При запросах будет проверяться наличие компонентов
-    // из включающего ограничения маски и отсутствие из исключающего.
-    // Так же есть Opt - только кеширует пул, не влияя на маску. 
 }
 ```
 
+Назначение статических свойств:
++ Inc — компонент должен быть у сущности (включающее условие) + кеширует пул
++ Exc — компонента не должно быть у сущности (исключающее условие) + кеширует пул
++ Opt — компонент может быть, но не влияет на фильтрацию (только кеширует пул для доступа)
++ Any — хотя бы один из компонентов с Any должен присутствовать + кеширует пул
+
 <details>
-<summary>Явный синтаксис (результат идентичен примеру выше):</summary>
+<summary>Инициализация через метод (результат идентичен примеру выше):</summary>
 
 ``` c#
-using DCFApixels.DragonECS;
-// ...
 class Aspect : EcsAspect
 {
     public EcsPool<Pose> poses;
     public EcsPool<Velocity> velocities;
     protected override void Init(Builder b)
     {
-        poses = b.Include<Pose>();
-        velocities = b.Include<Velocity>();
-        b.Exclude<FreezedTag>();
+        poses = b.Inc<Pose>();
+        velocities = b.Inc<Velocity>();
+        b.Exc<FreezedTag>();
     }
 }
 ```
@@ -546,10 +623,8 @@ class Aspect : EcsAspect
 <details>
 <summary>Комбинирование аспектов</summary>
 
-В аспекты можно добавлять другие аспекты, тем самым комбинируя их. Ограничения так же будут скомбинированы.
+В аспекты можно добавлять другие аспекты, тем самым комбинируя их. Маски так же будут скомбинированы.
 ``` c#
-using DCFApixels.DragonECS;
-// ...
 class Aspect : EcsAspect
 {
     public OtherAspect1 otherAspect1;
@@ -562,8 +637,8 @@ class Aspect : EcsAspect
         otherAspect1 = b.Combine<OtherAspect1>(1);
         // Хотя для OtherAspect1 метод Combine был вызван раньше, сначала будет скомбинирован с OtherAspect2, так как по умолчанию order = 0.
         otherAspect2 = b.Combine<OtherAspect2>();
-        // Если в OtherAspect1 или в OtherAspect2 было ограничение b.Exclude<Pose>() тут оно будет заменено на b.Include<Pose>().
-        poses = b.Include<Pose>();
+        // Если в OtherAspect1 или в OtherAspect2 было условие b.Exc<Pose>() тут оно будет заменено на b.Inc<Pose>().
+        poses = b.Inc<Pose>();
     }
 }
 ```
@@ -578,11 +653,11 @@ class Aspect : EcsAspect
 </details>
 
 ## Запросы
-Фильтруют сущности и выдают коллекции сущностей удовлетворяющие определенным условиям. Встроенный запрос `Where` фильтрует на соответствие условиям маски компонентов и имеет несколько перегрузок:
+Запросы позволяют отфильтровать и получать коллекции сущностей, удовлетворяющих заданным условиям. Основной метод — `Where`, который фильтрует по маске компонентов и имеет несколько перегрузок:
++ `EcsWorld.Where<TAspect>(out TAspect aspect)` - Фильтрация по маске, определённой в аспекте, плюс получение самого аспекта с закешированными пулами.
 + `EcsWorld.Where(EcsMask mask)` - Обычная фильтрация по маске;
-+ `EcsWorld.Where<TAspect>(out TAspect aspect)` - Сочетает в себе фильтрацию по маске из аспекта и получение аспекта;
 
-Запрос `Where` применим как к `EcsWorld` так и коллекциям фреймворка (в этом плане Where чем-то похож на аналогичный из Linq). Так же имеются перегрузки для сортировки сущностей по `Comparison<int>`. 
+`Where` можно вызывать не только у мира, но и у любых коллекций фреймворка (в этом плане Where чем-то похож на аналогичный из Linq). Также доступны перегрузки для сортировки сущностей с помощью `Comparison<int>`. 
 
 Пример системы:
 ``` c#
@@ -597,10 +672,9 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
         public EcsTagPool<IsDiedSignal> isDiedSignals = Opt;
     }
     EcsDefaultWorld _world;
-    public void Inject(EcsDefaultWorld world) => _world = world;
-
     public void Run()
     {
+        // Запрашиваем сущности удовлетворяющее маске из Aspect
         foreach (var e in _world.Where(out Aspect a))
         {
             // Сюда попадают сущности с компонентами Health, DamageSignal и без IsInvulnerable.
@@ -615,6 +689,7 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
             }
         }
     }
+    public void Inject(EcsDefaultWorld world) => _world = world;
 }
 ```
 
@@ -623,11 +698,11 @@ public class SomeDamageSystem : IEcsRun, IEcsInject<EcsDefaultWorld>
 ## Коллекции
 
 ### EcsSpan
-Коллекция сущностей, доступная только для чтения и выделяемая только в стеке. Состоит из ссылки на массив, длинны и идентификатора мира. Аналог `ReadOnlySpan<int>`.
+`ref struct` коллекция сущностей, доступная только для чтения. Состоит из ссылки на массив, длинны и идентификатора мира. Аналог `ReadOnlySpan<int>`.
 ``` c#
 // Запрос Where возвращает сущности в виде EcsSpan.
 EcsSpan es = _world.Where(out Aspect a);
-// Итерироваться можно по foreach и for.
+// Итерироваться можно с помощью `foreach` и `for`.
 foreach (var e in es)
 {
     // ...
@@ -641,7 +716,7 @@ for (int i = 0; i < es.Count; i++)
 > Хотя `EcsSpan` является просто массивом, в нем не допускается дублирование сущностей. 
 
 ### EcsGroup
-Вспомогательная коллекция основанная на Sparse Set для хранения множества сущностей с O(1) операциями добавления/удаления/проверки и т.д.
+Вспомогательная коллекция основанная на Sparse Set для хранения множества сущностей с `O(1)` операциями добавления/удаления/проверки и т.д.
 ``` c#
 // Получаем новую группу. EcsWorld содержит в себе пул групп,
 // поэтому будет переиспользована свободная или создана новая.
@@ -660,7 +735,7 @@ group.Remove(entityID);
 ``` c#
 // Запрос WhereToGroup возвращает сущности в виде группы только для чтения EcsReadonlyGroup.
 EcsReadonlyGroup group = _world.WhereToGroup(out Aspect a);
-// Итерироваться можно по foreach и for.
+// Итерироваться можно с помощью `foreach` и `for`.
 foreach (var e in group) 
 { 
     // ...
@@ -886,8 +961,7 @@ using (_marker.Auto())
 + `DRAGONECS_STABILITY_MODE` - включает опускаемые в релизном билде проверки.
 + `DRAGONECS_DISABLE_CATH_EXCEPTIONS` - Выключает поведение по умолчанию по обработке исключений. По умолчанию фреймворк будет ловить исключения с выводом информации из исключений через EcsDebug и продолжать работу.
 + `REFLECTION_DISABLED` - Полностью ограничивает работу фреймворка с Reflection.
-+ `DISABLE_DEBUG` - Для среды где не поддерживается ручное отключение DEBUG, например Unity.
-+ `ENABLE_DUMMY_SPAN` - На случай если в среде не поддерживаются Span типы, включает его замену.
++ `DISABLE_DEBUG` - Для среды, где не поддерживается ручное отключение DEBUG, например Unity.
 
 </br>
 
@@ -1013,48 +1087,42 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 <table>
   <tr>
     <td align="center">
+      <a href="https://dcfapixels.github.io/Project8.html">
+        Crystal Siege
+        <img src="https://github.com/user-attachments/assets/1aa60a50-2668-4919-aca9-d6d2b980c3dd">
+      </a> 
+    </td>
+    <td align="center">
+      <a href="https://play.google.com/store/apps/details?id=com.ZlodeyStudios.OrdersMatter">
+        Order matters
+        <img src="https://github.com/user-attachments/assets/c55b2647-9b6e-4145-98ff-c3d094600fa1">
+      </a> 
+    </td>
+  </tr>
+
+  <tr></tr>
+
+  <tr>
+    <td align="center">
       <a href="https://yandex.ru/games/app/206024?utm_source=game_popup_menu">
         Башенки Смерти
         <img src="https://github.com/user-attachments/assets/70fc55a0-c911-49f8-ba75-f503437f087f" alt="screenshot">
       </a> 
     </td>
     <td align="center">
-      <span>
-        ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ
+        _____________
         <img tabindex="-1" src="https://github.com/user-attachments/assets/3fa1ca6d-29f6-43e6-aafe-cc9648d20490" alt="screenshot">
-      </span> 
     </td>
   </tr>
 </table>
 
 </br>
 
-# Расширения
-* Пакеты:
-    * [Интеграция с движком Unity](https://github.com/DCFApixels/DragonECS-Unity)
-    * [Автоматическое внедрение зависимостей](https://github.com/DCFApixels/DragonECS-AutoInjections)
-    * [Классическая C# многопоточность](https://github.com/DCFApixels/DragonECS-ClassicThreads)
-    * [Recursivity](https://github.com/DCFApixels/DragonECS-Recursivity)
-    * [Hybrid](https://github.com/DCFApixels/DragonECS-Hybrid)
-    * [Графы](https://github.com/DCFApixels/DragonECS-Graphs)
-* Утилиты:
-    * [Упрощенный синтаксис](https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0)
-    * [Однокадровые компоненты](https://gist.github.com/DCFApixels/46d512dbcf96c115b94c3af502461f60)
-    * [Шаблоны кода IDE](https://gist.github.com/ctzcs/0ba948b0e53aa41fe1c87796a401660b) и [для Unity](https://gist.github.com/ctzcs/d4c7730cf6cd984fe6f9e0e3f108a0f1)
-> *Твое расширение? Если разрабатываешь расширение для DragonECS, пиши [сюда](#обратная-связь).
-
-</br>
  
 # FAQ
-## 'ReadOnlySpan<>' could not be found
-В версии Unity 2020.1.х в консоли может выпадать ошибка:
-```
-The type or namespace name 'ReadOnlySpan<>' could not be found (are you missing a using directive or an assembly reference?)
-``` 
-Чтобы починить добавьте директиву `ENABLE_DUMMY_SPAN` в `Project Settings/Player/Other Settings/Scripting Define Symbols`.
 
 ## Как Выключать/Включать системы?
-Напрямую - никак. </br>
+Напрямую — никак.
 Обычно потребность выключить/включить систему появляется когда поменялось общее состояние игры, это может так же значить что нужно переключить сразу группу систем, все это в совокупности можно рассматривать как изменения процессов. Есть 2 решения：</br>
 + Если изменения процесса глобальные, то создать новый `EcsPipeline` и в цикле обновления движка запускать соответствующий пайплайн.
 + Разделить `IEcsRun` на несколько процессов и в цикле обновления движка запускать соответствующий процесс. Для этого создайте новый интерфейс процесса, раннер для запуска этого интерфейса и получайте раннер через `EcsPipeline.GetRunner<T>()`.

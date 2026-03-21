@@ -1,7 +1,7 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections.Generic;
 #if DEBUG || !REFLECTION_DISABLED
@@ -285,7 +285,7 @@ namespace DCFApixels.DragonECS
         public static TypeMeta GetTypeMeta(object obj)
         {
             if (obj == null) { return TypeMeta.NullTypeMeta; }
-            return TypeMeta.Get(GetTypeMetaSource(obj).GetType());
+            return TypeMeta.Get(Type.GetTypeHandle(GetTypeMetaSource(obj)));
         }
         public static TypeMeta GetTypeMeta<T>()
         {
@@ -294,6 +294,10 @@ namespace DCFApixels.DragonECS
         public static TypeMeta GetTypeMeta(Type type)
         {
             return TypeMeta.Get(type);
+        }
+        public static TypeMeta GetTypeMeta(RuntimeTypeHandle typeHandle)
+        {
+            return TypeMeta.Get(typeHandle);
         }
         #endregion
 
@@ -318,7 +322,11 @@ namespace DCFApixels.DragonECS
 #endif
             return EcsDebugUtility.GetTypeMeta(self);
         }
-        public static TypeMeta ToMeta(this Type self)
+        public static TypeMeta GetMeta(this Type self)
+        {
+            return EcsDebugUtility.GetTypeMeta(self);
+        }
+        public static TypeMeta GetMeta(this RuntimeTypeHandle self)
         {
             return EcsDebugUtility.GetTypeMeta(self);
         }

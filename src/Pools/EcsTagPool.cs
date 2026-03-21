@@ -2,7 +2,7 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections;
@@ -26,6 +26,7 @@ namespace DCFApixels.DragonECS
     /// <summary> Pool for IEcsTagComponent components. </summary>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
@@ -35,7 +36,7 @@ namespace DCFApixels.DragonECS
     public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {
-        private EcsWorld _source;
+        private EcsWorld _world;
         private int _componentTypeID;
         private EcsMaskChunck _maskBit;
 
@@ -44,7 +45,7 @@ namespace DCFApixels.DragonECS
 
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
         private StructList<IEcsPoolEventListener> _listeners = new StructList<IEcsPoolEventListener>(2);
-        private int _listenersCachedCount = 0;
+        private bool _hasAnyListener = false;
 #endif
         private bool _isLocked;
 
@@ -59,13 +60,6 @@ namespace DCFApixels.DragonECS
 #pragma warning disable IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
             _isInvalidType = typeof(T).GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic).Length > 0;
 #pragma warning restore IL2090
-        }
-        public EcsTagPool()
-        {
-            if (_isInvalidType)
-            {
-                throw new Exception($"{typeof(T).Name} type must not contain any data.");
-            }
         }
 #endif
         #endregion
@@ -85,7 +79,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsWorld World
         {
-            get { return _source; }
+            get { return _world; }
         }
         public bool IsReadOnly
         {
@@ -100,21 +94,41 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        #region Constructors/Init/Destroy
+        public EcsTagPool()
+        {
+#if DEBUG
+            if (_isInvalidType) { Throw.Exception($"{typeof(T).Name} type must not contain any data."); }
+#endif
+        }
+        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
+        {
+            _world = world;
+            _mediator = mediator;
+            _componentTypeID = componentTypeID;
+            _maskBit = EcsMaskChunck.FromID(componentTypeID);
+
+            _mapping = new bool[world.Capacity];
+        }
+        void IEcsPoolImplementation.OnWorldDestroy() { }
+        #endregion
+
         #region Method
         public void Add(int entityID)
         {
 #if DEBUG
-            if (_source.IsUsed(entityID) == false) { Throw.Ent_ThrowIsNotAlive(_source, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
+            if (_world.IsUsed(entityID) == false) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
             if (Has(entityID)) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
-            if (Has(entityID) | _source.IsUsed(entityID) == false | _isLocked) { return; }
+            if (Has(entityID) | _world.IsUsed(entityID) == false | _isLocked) { return; }
 #endif
             _count++;
             _mapping[entityID] = true;
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            _listeners.InvokeOnAdd(entityID, _listenersCachedCount);
+            if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
 #endif
         }
         public void TryAdd(int entityID)
@@ -132,6 +146,7 @@ namespace DCFApixels.DragonECS
         public void Del(int entityID)
         {
 #if DEBUG
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
             if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
@@ -141,7 +156,7 @@ namespace DCFApixels.DragonECS
             _count--;
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            _listeners.InvokeOnDel(entityID, _listenersCachedCount);
+            if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -204,38 +219,25 @@ namespace DCFApixels.DragonECS
             if (_isLocked) { return; }
 #endif
             if (_count <= 0) { return; }
-            var span = _source.Where(out SingleTagAspect<T> _);
+            var span = _world.Where(out SingleTagAspect<T> _);
             _count = 0;
             foreach (var entityID in span)
             {
                 _mapping[entityID] = false;
                 _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-                _listeners.InvokeOnDel(entityID, _listenersCachedCount);
+                if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
             }
         }
         #endregion
 
         #region Callbacks
-        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
-        {
-#if DEBUG
-            AllowedInWorldsAttribute.CheckAllows<T>(world);
-#endif
 
-            _source = world;
-            _mediator = mediator;
-            _componentTypeID = componentTypeID;
-            _maskBit = EcsMaskChunck.FromID(componentTypeID);
-
-            _mapping = new bool[world.Capacity];
-        }
         void IEcsPoolImplementation.OnWorldResize(int newSize)
         {
             Array.Resize(ref _mapping, newSize);
         }
-        void IEcsPoolImplementation.OnWorldDestroy() { }
 
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer)
         {
@@ -294,14 +296,14 @@ namespace DCFApixels.DragonECS
         {
             if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
             _listeners.Add(listener);
-            _listenersCachedCount++;
+            _hasAnyListener = _listeners.Count > 0;
         }
         public void RemoveListener(IEcsPoolEventListener listener)
         {
             if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
             if (_listeners.RemoveWithOrder(listener))
             {
-                _listenersCachedCount--;
+                _hasAnyListener = _listeners.Count > 0;
             }
         }
 #endif
@@ -315,6 +317,7 @@ namespace DCFApixels.DragonECS
         #region Convertors
         public static implicit operator EcsTagPool<T>(IncludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(ExcludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
+        public static implicit operator EcsTagPool<T>(AnyMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(OptionalMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator EcsTagPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         #endregion
@@ -402,11 +405,11 @@ namespace DCFApixels.DragonECS
         public static implicit operator ReadonlyEcsTagPool<T>(EcsTagPool<T> a) { return new ReadonlyEcsTagPool<T>(a); }
         public static implicit operator ReadonlyEcsTagPool<T>(IncludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator ReadonlyEcsTagPool<T>(ExcludeMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
+        public static implicit operator ReadonlyEcsTagPool<T>(AnyMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator ReadonlyEcsTagPool<T>(OptionalMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         public static implicit operator ReadonlyEcsTagPool<T>(EcsWorld.GetPoolInstanceMarker a) { return a.GetInstance<EcsTagPool<T>>(); }
         #endregion
     }
-
     public static class EcsTagPoolExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -431,72 +434,14 @@ namespace DCFApixels.DragonECS
             return self.ExcludePool<EcsTagPool<TTagComponent>>();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EcsTagPool<TTagComponent> Any<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
+        {
+            return self.AnyPool<EcsTagPool<TTagComponent>>();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTagPool<TTagComponent> Opt<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
         {
             return self.OptionalPool<EcsTagPool<TTagComponent>>();
         }
-
-        #region Obsolete
-        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Inc) + "<T>()")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsTagPool<TTagComponent> Include<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
-        {
-            return self.IncludePool<EcsTagPool<TTagComponent>>();
-        }
-        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Exc) + "<T>()")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsTagPool<TTagComponent> Exclude<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
-        {
-            return self.ExcludePool<EcsTagPool<TTagComponent>>();
-        }
-        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Opt) + "<T>()")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsTagPool<TTagComponent> Optional<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
-        {
-            return self.OptionalPool<EcsTagPool<TTagComponent>>();
-        }
-
-        //---------------------------------------------------
-
-        [Obsolete("Use " + nameof(EcsWorld) + "." + nameof(GetPool) + "<T>()")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsTagPool<TTagComponent> GetTagPool<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
-        {
-            return self.GetPoolInstance<EcsTagPool<TTagComponent>>();
-        }
-        [Obsolete("Use " + nameof(EcsWorld) + "." + nameof(GetPoolUnchecked) + "<T>()")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsTagPool<TTagComponent> GetTagPoolUnchecked<TTagComponent>(this EcsWorld self) where TTagComponent : struct, IEcsTagComponent
-        {
-            return self.GetPoolInstanceUnchecked<EcsTagPool<TTagComponent>>();
-        }
-
-        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Inc) + "<T>()")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsTagPool<TTagComponent> IncludeTag<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
-        {
-            return self.IncludePool<EcsTagPool<TTagComponent>>();
-        }
-        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Exc) + "<T>()")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsTagPool<TTagComponent> ExcludeTag<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
-        {
-            return self.ExcludePool<EcsTagPool<TTagComponent>>();
-        }
-        [Obsolete("Use " + nameof(EcsAspect) + "." + nameof(EcsAspect.Builder) + "." + nameof(Opt) + "<T>()")]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EcsTagPool<TTagComponent> OptionalTag<TTagComponent>(this EcsAspect.Builder self) where TTagComponent : struct, IEcsTagComponent
-        {
-            return self.OptionalPool<EcsTagPool<TTagComponent>>();
-        }
-        #endregion
     }
 }

@@ -1,8 +1,9 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
+using DCFApixels.DragonECS.Core;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.Core.Unchecked;
-using DCFApixels.DragonECS.Internal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -50,7 +51,7 @@ namespace DCFApixels.DragonECS
         public bool IsSourceEntities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return this == EcsWorld.GetWorld(_worldID).GetCurrentEntities_Internal(); }
+            get { return _values == EcsWorld.GetWorld(_worldID).GetCurrentEntities_Internal()._values; }
         }
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.ArrayBoundsChecks, true)]
@@ -98,7 +99,7 @@ namespace DCFApixels.DragonECS
         {
             if (dynamicBuffer.Length < _values.Length)
             {
-                Array.Resize(ref dynamicBuffer, ArrayUtility.NextPow2(_values.Length));
+                Array.Resize(ref dynamicBuffer, ArrayUtility.CeilPow2(_values.Length));
             }
             int i = 0;
             foreach (var e in this)
@@ -117,8 +118,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region operators
-        public static bool operator ==(EcsSpan left, EcsSpan right) { return left._values == right._values; }
-        public static bool operator !=(EcsSpan left, EcsSpan right) { return left._values != right._values; }
+        public static bool operator ==(EcsSpan left, EcsSpan right) { return left._values == right._values && left._worldID == right._worldID; }
+        public static bool operator !=(EcsSpan left, EcsSpan right) { return left._values != right._values || left._worldID != right._worldID; }
         #endregion
 
         #region Enumerator
@@ -127,6 +128,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        public ReadOnlySpan<int> AsSystemSpan() { return _values; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _values[0]; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -170,6 +172,7 @@ namespace DCFApixels.DragonECS
                 _worldID = span._worldID;
             }
             public DebuggerProxy(EcsLongsSpan span) : this(span.ToSpan()) { }
+            public DebuggerProxy(EcsUnsafeSpan span) : this(span.ToSpan()) { }
         }
         #endregion
     }
@@ -247,7 +250,7 @@ namespace DCFApixels.DragonECS
         {
             if (dynamicBuffer.Length < _source.Count)
             {
-                Array.Resize(ref dynamicBuffer, ArrayUtility.NextPow2(_source.Count));
+                Array.Resize(ref dynamicBuffer, ArrayUtility.CeilPow2(_source.Count));
             }
             int i = 0;
             foreach (var e in this)
@@ -314,6 +317,168 @@ namespace DCFApixels.DragonECS
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override int GetHashCode() { throw new NotSupportedException(); }
 #pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
+        #endregion
+    }
+}
+
+namespace DCFApixels.DragonECS.Core
+{
+#if ENABLE_IL2CPP
+    using Unity.IL2CPP.CompilerServices;
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+    [DebuggerTypeProxy(typeof(EcsSpan.DebuggerProxy))]
+    public unsafe readonly struct EcsUnsafeSpan
+    {
+        private readonly int* _values;
+        private readonly int _length;
+        private readonly short _worldID;
+
+        #region Properties
+        public bool IsNull
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _worldID == 0; }
+        }
+        public short WorldID
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _worldID; }
+        }
+        public EcsWorld World
+        {
+            get { return EcsWorld.GetWorld(_worldID); }
+        }
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _length; }
+        }
+        public EcsLongsSpan Longs
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ToSpan().Longs; }
+        }
+        public bool IsSourceEntities
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return ToSpan().IsSourceEntities; }
+        }
+
+        public int this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+#if DEBUG
+                if ((uint)index >= (uint)_length || (uint)index < 0)
+                {
+                    ThrowHelper.ThrowIndexOutOfRangeException();
+                }
+#elif DRAGONECS_STABILITY_MODE
+                return EcsConsts.NULL_ENTITY_ID;
+#endif
+                return _values[index];
+            }
+        }
+        #endregion
+
+        #region Constructors
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal EcsUnsafeSpan(short worldID, int* array, int length)
+        {
+            _worldID = worldID;
+            _values = array;
+            _length = length;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal EcsUnsafeSpan(short worldID, int* array, int start, int length)
+        {
+            _worldID = worldID;
+            _values = array + start;
+            _length = length;
+        }
+        #endregion
+
+        #region Slice/ToArray
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsUnsafeSpan Slice(int start)
+        {
+            if ((uint)start > (uint)_length)
+            {
+                ThrowHelper.ThrowArgumentOutOfRangeException();
+            }
+            return new EcsUnsafeSpan(_worldID, _values, start, _length - start);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsUnsafeSpan Slice(int start, int length)
+        {
+            if ((uint)start > (uint)_length || (uint)length > (uint)(_length - start))
+            {
+                ThrowHelper.ThrowArgumentOutOfRangeException();
+            }
+            return new EcsUnsafeSpan(_worldID, _values, start, length);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EcsSpan ToSpan() { return new EcsSpan(_worldID, new ReadOnlySpan<int>(_values, _length)); }
+        public int[] ToArray() { return new ReadOnlySpan<int>(_values, _length).ToArray(); }
+        public int ToArray(ref int[] dynamicBuffer)
+        {
+            if (dynamicBuffer.Length < _length)
+            {
+                Array.Resize(ref dynamicBuffer, ArrayUtility.CeilPow2(_length));
+            }
+            int i = 0;
+            foreach (var e in this)
+            {
+                dynamicBuffer[i++] = e;
+            }
+            return i;
+        }
+        public void ToCollection(ICollection<int> collection)
+        {
+            foreach (var e in this)
+            {
+                collection.Add(e);
+            }
+        }
+        #endregion
+
+        #region operators
+        public static bool operator ==(EcsUnsafeSpan left, EcsUnsafeSpan right) { return left._values == right._values && left._length == right._length && left._worldID == right._worldID; }
+        public static bool operator !=(EcsUnsafeSpan left, EcsUnsafeSpan right) { return left._values != right._values || left._length != right._length || left._worldID != right._worldID; }
+        public static implicit operator EcsSpan(EcsUnsafeSpan a) { return a.ToSpan(); }
+        #endregion
+
+        #region Enumerator
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ReadOnlySpan<int>.Enumerator GetEnumerator() { return new ReadOnlySpan<int>(_values, _length).GetEnumerator(); }
+        #endregion
+
+        #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int First() { return _values[0]; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Last() { return _values[_length - 1]; }
+        public override string ToString()
+        {
+            return CollectionUtility.EntitiesToString(ToArray(), "span");
+        }
+        public override bool Equals(object obj)
+        {
+            return obj is EcsUnsafeSpan other && other == this;
+        }
+        public override int GetHashCode()
+        {
+            return *_values ^ _length ^ (_worldID << 16);
+        }
+        private static class ThrowHelper
+        {
+            public static void ThrowIndexOutOfRangeException() => throw new IndexOutOfRangeException();
+            public static void ThrowArgumentOutOfRangeException() => throw new ArgumentOutOfRangeException();
+            public static void ThrowInvalidOperationException() => throw new InvalidOperationException();
+        }
         #endregion
     }
 }

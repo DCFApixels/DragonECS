@@ -1,13 +1,12 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
-using DCFApixels.DragonECS.Core;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
 #endif
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
@@ -67,7 +66,7 @@ namespace DCFApixels.DragonECS.Internal
             if (_versionsChecker.CheckAndNext() == false)
             {
                 _version++;
-                _iterator.IterateTo(World.Entities, _filteredAllGroup);
+                _iterator.CacheTo(World.Entities, _filteredAllGroup);
 #if DEBUG && DRAGONECS_DEEP_DEBUG
                 if (_filteredGroup == null)
                 {
@@ -99,7 +98,7 @@ namespace DCFApixels.DragonECS.Internal
             {
                 _filteredGroup = EcsGroup.New(World);
             }
-            _iterator.IterateTo(span, _filteredGroup);
+            _iterator.CacheTo(span, _filteredGroup);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

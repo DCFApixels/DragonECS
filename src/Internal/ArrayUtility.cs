@@ -6,9 +6,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
-namespace DCFApixels.DragonECS.Internal
+namespace DCFApixels.DragonECS.Core.Internal
 {
     internal interface ILinkedNext
     {
@@ -121,7 +120,6 @@ namespace DCFApixels.DragonECS.Internal
 
     internal static class ArrayUtility
     {
-        //TODO потестить
         public static void ResizeOrCreate<T>(ref T[] array, int newSize)
         {
             if (array == null)
@@ -145,7 +143,19 @@ namespace DCFApixels.DragonECS.Internal
             array = result;
         }
 
+        public static int NextPow2Safe(int v, int min = 4)
+        {
+            return NextPow2(v < min ? min : v);
+        }
         public static int NextPow2(int v)
+        {
+            return CeilPow2(v | 1);
+        }
+        public static int CeilPow2Safe(int v, int min = 4)
+        {
+            return CeilPow2(v < min ? min : v);
+        }
+        public static int CeilPow2(int v)
         {
             unchecked
             {
@@ -158,7 +168,7 @@ namespace DCFApixels.DragonECS.Internal
                 return ++v;
             }
         }
-        public static int NextPow2_ClampOverflow(int v)
+        public static int CeilPow2_ClampOverflow(int v)
         {
             unchecked
             {
@@ -167,7 +177,7 @@ namespace DCFApixels.DragonECS.Internal
                 {
                     return int.MaxValue;
                 }
-                return NextPow2(v);
+                return CeilPow2(v);
             }
         }
 
@@ -206,19 +216,18 @@ namespace DCFApixels.DragonECS.Internal
                 Array.Resize(ref array, minSize);
             }
         }
-        public static void UpsizeToNextPow2<T>(ref T[] array, int minSize)
-        {
-            if (array == null)
-            {
-                minSize = NextPow2(minSize);
-                array = new T[minSize];
-            }
-            else if (minSize > array.Length)
-            {
-                minSize = NextPow2(minSize);
-                Array.Resize(ref array, minSize);
-            }
-        }
+        //public static void UpsizeToCeilPow2<T>(ref T[] array, int newSize, int minSize = 4)
+        //{
+        //    newSize = CeilPow2(newSize < minSize ? minSize : newSize);
+        //    if (array == null)
+        //    {
+        //        array = new T[newSize];
+        //    }
+        //    else if (newSize > array.Length)
+        //    {
+        //        Array.Resize(ref array, newSize);
+        //    }
+        //}
     }
     internal readonly struct EnumerableInt : IEnumerable<int>
     {
@@ -258,106 +267,6 @@ namespace DCFApixels.DragonECS.Internal
             void IDisposable.Dispose() { }
             void IEnumerator.Reset() { throw new NotSupportedException(); }
 
-        }
-    }
-    internal static unsafe class UnmanagedArrayUtility
-    {
-        private static class MetaCache<T>
-        {
-            public readonly static int Size;
-            static MetaCache()
-            {
-                T def = default;
-                Size = Marshal.SizeOf(def);
-            }
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T* New<T>(int capacity) where T : unmanaged
-        {
-            //Console.WriteLine($"{typeof(T).Name} - {Marshal.SizeOf<T>()} - {capacity} - {Marshal.SizeOf<T>() * capacity}");
-            return (T*)Marshal.AllocHGlobal(Marshal.SizeOf<T>() * capacity).ToPointer();
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void New<T>(out T* ptr, int capacity) where T : unmanaged
-        {
-            ptr = (T*)Marshal.AllocHGlobal(Marshal.SizeOf<T>() * capacity).ToPointer();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T* NewAndInit<T>(int capacity) where T : unmanaged
-        {
-            int newSize = MetaCache<T>.Size * capacity;
-            byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
-
-            for (int i = 0; i < newSize; i++)
-            {
-                *(newPointer + i) = 0;
-            }
-
-            return (T*)newPointer;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NewAndInit<T>(out T* ptr, int capacity) where T : unmanaged
-        {
-            int newSize = MetaCache<T>.Size * capacity;
-            byte* newPointer = (byte*)Marshal.AllocHGlobal(newSize).ToPointer();
-
-            for (int i = 0; i < newSize; i++)
-            {
-                *(newPointer + i) = 0;
-            }
-
-            ptr = (T*)newPointer;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Free(void* pointer)
-        {
-            Marshal.FreeHGlobal(new IntPtr(pointer));
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Free<T>(ref T* pointer, ref int length) where T : unmanaged
-        {
-            Marshal.FreeHGlobal(new IntPtr(pointer));
-            pointer = null;
-            length = 0;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T* Clone<T>(T* sourcePtr, int length) where T : unmanaged
-        {
-            T* clone = New<T>(length);
-            for (int i = 0; i < length; i++)
-            {
-                clone[i] = sourcePtr[i];
-            }
-            return clone;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T* Resize<T>(void* oldPointer, int newCount) where T : unmanaged
-        {
-            return (T*)(Marshal.ReAllocHGlobal(
-                new IntPtr(oldPointer),
-                new IntPtr(MetaCache<T>.Size * newCount))).ToPointer();
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T* ResizeAndInit<T>(void* oldPointer, int oldSize, int newSize) where T : unmanaged
-        {
-            int sizeT = MetaCache<T>.Size;
-            T* result = (T*)Marshal.ReAllocHGlobal(
-                new IntPtr(oldPointer),
-                new IntPtr(sizeT * newSize)).ToPointer();
-            Init((byte*)result, sizeT * oldSize, sizeT * newSize);
-            return result;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Init(byte* pointer, int startByteIndex, int endByteIndex)
-        {
-            for (int i = startByteIndex; i < endByteIndex; i++)
-            {
-                *(pointer + i) = 0;
-            }
         }
     }
 

@@ -7,13 +7,12 @@ namespace DCFApixels.DragonECS.Core
 {
     public abstract class EcsMetaAttribute : Attribute { }
 
-
-    internal unsafe static class EcsMetaAttributeHalper
+    internal static class EcsMetaAttributeHalper
     {
         internal const string EMPTY_NO_SENSE_MESSAGE = "With empty parameters, this attribute makes no sense.";
         [ThreadStatic]
         private static string[] _splitBuffer;
-        public static string[] Split(char separator, string value)
+        public static unsafe string[] Split(char separator, string value)
         {
             if (_splitBuffer == null)
             {
@@ -46,7 +45,7 @@ namespace DCFApixels.DragonECS.Core
         }
 
         #region SplitStream
-        private ref struct SplitStream
+        private unsafe ref struct SplitStream
         {
             public string current;
             public char* ptr;

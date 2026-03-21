@@ -2,10 +2,9 @@
 #undef DEBUG
 #endif
 using DCFApixels.DragonECS.Core;
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -26,12 +25,15 @@ namespace DCFApixels.DragonECS
 
         private static EcsWorld[] _worlds = Array.Empty<EcsWorld>();
         private static readonly IdDispenser _worldIdDispenser = new IdDispenser(4, 0, n => Array.Resize(ref _worlds, n));
-        private static StructList<WorldComponentPoolAbstract> _allWorldComponentPools = new StructList<WorldComponentPoolAbstract>(64);
         private static readonly object _worldLock = new object();
 
         private StructList<WorldComponentPoolAbstract> _worldComponentPools;
         private int _builtinWorldComponentsCount = 0;
 
+        public static int AllWorldsCount
+        {
+            get { return _worldIdDispenser.Count; }
+        }
         static EcsWorld()
         {
             _worlds[NULL_WORLD_ID] = new NullWorld();
@@ -114,7 +116,7 @@ namespace DCFApixels.DragonECS
         }
         public ReadOnlySpan<WorldComponentPoolAbstract> GetAllWorldComponents()
         {
-            return _worldComponentPools.ToReadOnlySpan();
+            return _worldComponentPools.AsReadOnlySpan();
         }
         public abstract class WorldComponentPoolAbstract
         {
@@ -145,12 +147,9 @@ namespace DCFApixels.DragonECS
             private static short _count;
             private static short[] _recycledItems = new short[4];
             private static short _recycledItemsCount;
-            private static readonly IEcsWorldComponent<T> _interface = EcsWorldComponentHandler<T>.instance;
+            private static readonly IEcsWorldComponent<T> _interface = EcsWorldComponent<T>.CustomHandler;
             private static readonly Abstract _controller = new Abstract();
-            static WorldComponentPool()
-            {
-                _allWorldComponentPools.Add(_controller);
-            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetItem(int itemIndex)
             {// ts
@@ -182,7 +181,6 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 short itemIndex = _mapping[worldID];
-
                 if (itemIndex == 0)
                 {
                     lock (_worldLock)
@@ -203,11 +201,11 @@ namespace DCFApixels.DragonECS
 
                             if (_items.Length <= itemIndex)
                             {
-                                Array.Resize(ref _items, _items.Length << 1);
+                                Array.Resize(ref _items, ArrayUtility.NextPow2(itemIndex));
                             }
 
 #if DEBUG
-                            AllowedInWorldsAttribute.CheckAllows<T>(_worlds[worldID]);
+                            AllowedInWorldsAttribute.CheckAllows(_worlds[worldID], typeof(T));
 #endif
 
                             _interface.Init(ref _items[itemIndex], _worlds[worldID]);
@@ -235,14 +233,21 @@ namespace DCFApixels.DragonECS
                         Array.Resize(ref _mapping, _worlds.Length);
                     }
                     ref short itemIndex = ref _mapping[worldID];
+#if DEBUG && DRAGONECS_DEEP_DEBUG
+                    if (itemIndex >= _worlds.Length)
+                    {
+                        Throw.UndefinedException();
+                    }
+#endif
                     if (itemIndex != 0)
                     {
                         _interface.OnDestroy(ref _items[itemIndex], _worlds[worldID]);
                         if (_recycledItemsCount >= _recycledItems.Length)
                         {
-                            Array.Resize(ref _recycledItems, _recycledItems.Length << 1);
+                            Array.Resize(ref _recycledItems, ArrayUtility.NextPow2(_recycledItemsCount));
                         }
                         _recycledItems[_recycledItemsCount++] = itemIndex;
+                        _items[itemIndex] = default;
                         itemIndex = 0;
                     }
                 }
@@ -316,28 +321,6 @@ namespace DCFApixels.DragonECS
                     return _world._worldComponentPools.ToEnumerable().Select(o => o.GetRaw(_worldID));
                 }
             }
-        }
-        #endregion
-
-        #region Obsolete
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Use EcsWorld.ID")]
-        public short id
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return ID; }
-        }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("The GetPoolInstance(int componentTypeID) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
-        public IEcsPool GetPoolInstance(int componentTypeID)
-        {
-            return FindPoolInstance(componentTypeID);
-        }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("The GetPoolInstance(Type componentType) method will be removed in future updates, use FindPoolInstance(Type componentType)")]
-        public IEcsPool GetPoolInstance(Type componentType)
-        {
-            return FindPoolInstance(componentType);
         }
         #endregion
     }

@@ -1,7 +1,7 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
-using DCFApixels.DragonECS.Internal;
+using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Linq;
@@ -78,8 +78,6 @@ namespace DCFApixels.DragonECS
             bool IsEmpty { get; }
         }
 
-        //TODO инъекция в раннеры
-        //TODO добавить функцию фильтрации систем по string, за счет создания отдельных ранеров для отдельных string
         [MetaColor(MetaColor.DragonRose)]
         [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
         [MetaDescription(EcsConsts.AUTHOR, "...")]
@@ -150,7 +148,7 @@ namespace DCFApixels.DragonECS
                 #region Constructors
                 public RunHelper(EcsRunner<TProcess> runner) : this(runner,
 #if DEBUG
-                    typeof(TProcess).ToMeta().Name)
+                    typeof(TProcess).GetMeta().Name)
 #else
                     string.Empty)
 #endif
@@ -300,7 +298,7 @@ namespace DCFApixels.DragonECS
                 #region Constructors
                 public RunHelperWithFinally(EcsRunner<TProcess> runner) : this(runner,
 #if DEBUG
-                    typeof(TProcess).ToMeta().Name)
+                    typeof(TProcess).GetMeta().Name)
 #else
                     string.Empty)
 #endif
