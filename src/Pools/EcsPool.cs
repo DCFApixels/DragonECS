@@ -345,6 +345,10 @@ namespace DCFApixels.DragonECS
                 return _world.Entities;
             }
 #endif
+            //if(_itemsCount > (_sparseEntities.Length >> 2))
+            //{
+            //    return _world.Entities;
+            //}
             UpdateDenseEntities();
             var span = new EcsSpan(_worldID, _denseEntitiesDelayed, 1, _itemsCount);
 #if DRAGONECS_DEEP_DEBUG
