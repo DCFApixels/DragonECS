@@ -32,6 +32,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         internal static HandlerDebugInfo[] CreateCurrentHandlersList_Debug()
         {
+#if DEBUG
             var result = new HandlerDebugInfo[_idDispenser.Count];
             int i = 0;
             foreach (var id in _idDispenser)
@@ -40,6 +41,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
             SortHalper.SortBy<HandlerDebugInfo, ulong>(result, o => o.increment);
             return result;
+#else
+            return Array.Empty<HandlerDebugInfo>();
+#endif
         }
 
         #region AllocAndInit
@@ -171,7 +175,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             //                id = _idDispenser.UseFree();
             //            }
             //#endif
+#if DEBUG
             var id = target.GetHandledPtr()->ID;
+#endif
 
             Meta* newHandledPtr = (Meta*)Marshal.ReAllocHGlobal(
                 (IntPtr)target.GetHandledPtr(),
