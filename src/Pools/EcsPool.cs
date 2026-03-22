@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using static DCFApixels.DragonECS.Core.Internal.MemoryAllocator;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
 #endif
@@ -46,8 +47,7 @@ namespace DCFApixels.DragonECS
         private MappingSlot[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID.
         private T[] _items; // dense; _items[0] - fake component.
         private int _itemsCount = 0;
-        private int[] _recycledItems;
-        private int _recycledItemsCount = 0;
+        private int _recycledItemsCount;
 
         private readonly IEcsComponentLifecycle<T> _customLifecycle = EcsComponentLifecycle<T>.CustomHandler;
         private readonly bool _isCustomLifecycle = EcsComponentLifecycle<T>.IsCustom;
@@ -105,7 +105,6 @@ namespace DCFApixels.DragonECS
             }
             _items = new T[capacity];
             _dense = new int[capacity];
-            _recycledItems = new int[recycledCapacity];
         }
         void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
@@ -121,10 +120,6 @@ namespace DCFApixels.DragonECS
             {
                 _items = new T[ArrayUtility.CeilPow2Safe(worldConfig.PoolComponentsCapacity)];
                 _dense = new int[ArrayUtility.CeilPow2Safe(worldConfig.PoolComponentsCapacity)];
-            }
-            if (_recycledItems == null)
-            {
-                _recycledItems = new int[worldConfig.PoolRecycledComponentsCapacity];
             }
         }
         void IEcsPoolImplementation.OnWorldDestroy() { }
@@ -145,7 +140,10 @@ namespace DCFApixels.DragonECS
 #endif
             if (_recycledItemsCount > 0)
             {
-                mappingSlot.ComponentPosIndex = _recycledItems[--_recycledItemsCount];
+                //mappingSlot.ComponentPosIndex = _recycledItems[--_recycledItemsCount];
+                //mappingSlot.ComponentPosIndex = _dense[_dense.Length - _recycledItemsCount] & int.MaxValue;
+                mappingSlot.ComponentPosIndex = _dense[_dense.Length - _recycledItemsCount];
+                _recycledItemsCount--;
                 _itemsCount++;
             }
             else
@@ -161,7 +159,7 @@ namespace DCFApixels.DragonECS
             _dense[_denseCount++] = entityID;
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             ref T result = ref _items[mappingSlot.ComponentPosIndex];
-            EcsComponentLifecycle<T>.OnAdd( _isCustomLifecycle, _customLifecycle, ref result, _worldID, entityID);
+            EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref result, _worldID, entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnAddAndGet(entityID); }
 #endif
@@ -201,7 +199,9 @@ namespace DCFApixels.DragonECS
 #endif
                 if (_recycledItemsCount > 0)
                 {
-                    mappingSlot.ComponentPosIndex = _recycledItems[--_recycledItemsCount];
+                    //mappingSlot.ComponentPosIndex = _dense[_dense.Length - _recycledItemsCount] & int.MaxValue;
+                    mappingSlot.ComponentPosIndex = _dense[_dense.Length - _recycledItemsCount];
+                    _recycledItemsCount--;
                     _itemsCount++;
                 }
                 else
@@ -229,7 +229,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
         {
-            return _mapping[entityID].ComponentPosIndex != 0;
+            return _mapping[entityID].ComponentPosIndex > 0;
         }
         public void Del(int entityID)
         {
@@ -242,22 +242,28 @@ namespace DCFApixels.DragonECS
             if (itemIndex <= 0) { return; }
             if (_isLocked) { return; }
 #endif
-            EcsComponentLifecycle<T>.OnDel( _isCustomLifecycle, _customLifecycle, ref _items[mappingSlot.ComponentPosIndex], _worldID, entityID);
-            if (_recycledItemsCount >= _recycledItems.Length)
-            {
-                Array.Resize(ref _recycledItems, ArrayUtility.NextPow2Safe(_recycledItemsCount));
-            }
+            EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref _items[mappingSlot.ComponentPosIndex], _worldID, entityID);
+
+            //_dense[_sparse[entityID]] = _dense[_count];
+            //_sparse[_dense[_count--]] = _sparse[entityID];
 
             //_dense[_mapping[entityID].EntityPosIndex] = _dense[_denseCount];
             //_mapping[_dense[_denseCount--]].EntityPosIndex = _mapping[entityID].EntityPosIndex;
-            _dense[mappingSlot.EntityPosIndex] = _dense[_denseCount];
-            _mapping[_dense[_denseCount--]].EntityPosIndex = mappingSlot.EntityPosIndex;
+
+            //_dense[mappingSlot.EntityPosIndex] = _dense[_denseCount];
+            //_mapping[_dense[_denseCount--]].EntityPosIndex = mappingSlot.EntityPosIndex;
 
 
-            _recycledItems[_recycledItemsCount++] = mappingSlot.ComponentPosIndex;
+            _dense[mappingSlot.EntityPosIndex] = _dense[--_denseCount];
+            _mapping[_dense[_denseCount]].EntityPosIndex = mappingSlot.EntityPosIndex;
+
+            _recycledItemsCount++;
+            //_dense[_dense.Length - _recycledItemsCount] = mappingSlot.ComponentPosIndex | int.MinValue;
+            _dense[_dense.Length - _recycledItemsCount] = mappingSlot.ComponentPosIndex;
             mappingSlot.ComponentPosIndex = 0;
             _itemsCount--;
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
+
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
