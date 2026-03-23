@@ -43,11 +43,17 @@ namespace DCFApixels.DragonECS
         private EcsMaskChunck _maskBit;
 
         private HMem<int> _dense;
-        private int _denseCount = 0;
-        private (int ComponentPosIndex, int EntityPosIndex)[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID.
-        private T[] _items; // dense; _items[0] - fake component.
+        private int[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID.
+        private (T Cmp, int EntityID)[] _items; // dense; _items[0] - fake component.
         private int _itemsCount = 0;
         private int _recycledItemsCount;
+        private int _usedBlockCount;
+
+        private struct Slot
+        {
+            public T Cmp;
+            public int EntityID;
+        }
 
         private readonly IEcsComponentLifecycle<T> _customLifecycle = EcsComponentLifecycle<T>.CustomHandler;
         private readonly bool _isCustomLifecycle = EcsComponentLifecycle<T>.IsCustom;
@@ -103,7 +109,7 @@ namespace DCFApixels.DragonECS
             {
                 recycledCapacity = capacity / 2;
             }
-            _items = new T[capacity];
+            _items = new (T, int)[capacity];
             //_dense = new int[capacity];
             _dense = Alloc<int>(capacity);
         }
@@ -115,11 +121,11 @@ namespace DCFApixels.DragonECS
             _componentTypeID = componentTypeID;
             _maskBit = EcsMaskChunck.FromID(componentTypeID);
 
-            _mapping = new (int,int)[world.Capacity];
+            _mapping = new int[world.Capacity];
             var worldConfig = world.Configs.GetWorldConfigOrDefault();
             if (_items == null)
             {
-                _items = new T[ArrayUtility.CeilPow2Safe(worldConfig.PoolComponentsCapacity)];
+                _items = new (T, int)[ArrayUtility.CeilPow2Safe(worldConfig.PoolComponentsCapacity)];
                 //_dense = new int[ArrayUtility.CeilPow2Safe(worldConfig.PoolComponentsCapacity)];
                 _dense = Alloc<int>(ArrayUtility.CeilPow2Safe(worldConfig.PoolComponentsCapacity));
             }
@@ -134,7 +140,7 @@ namespace DCFApixels.DragonECS
 #if DEBUG
             if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
             if (_world.IsUsed(entityID) == false) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
-            if (mappingSlot.ComponentPosIndex > 0) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
+            if (mappingSlot > 0) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
             if (itemIndex > 0) { return ref Get(entityID); }
@@ -142,31 +148,32 @@ namespace DCFApixels.DragonECS
 #endif
             if (_recycledItemsCount > 0)
             {
-                //mappingSlot.ComponentPosIndex = _recycledItems[--_recycledItemsCount];
-                //mappingSlot.ComponentPosIndex = _dense[_dense.Length - _recycledItemsCount] & int.MaxValue;
-                mappingSlot.ComponentPosIndex = _dense.Ptr[_denseCount];
+                //mappingSlot = _recycledItems[--_recycledItemsCount];
+                //mappingSlot = _dense[_dense.Length - _recycledItemsCount] & int.MaxValue;
+                mappingSlot = _dense.Ptr[_itemsCount];
                 _recycledItemsCount--;
-                _itemsCount++;
             }
             else
             {
-                mappingSlot.ComponentPosIndex = ++_itemsCount;
-                if (mappingSlot.ComponentPosIndex >= _items.Length)
+                mappingSlot = _itemsCount + 1;
+                if (mappingSlot >= _items.Length)
                 {
-                    Array.Resize(ref _items, ArrayUtility.NextPow2(mappingSlot.ComponentPosIndex));
-                    //Array.Resize(ref _dense, ArrayUtility.NextPow2(mappingSlot.ComponentPosIndex));
-                    _dense = Realloc<int>(_dense, ArrayUtility.NextPow2(mappingSlot.ComponentPosIndex));
+                    Array.Resize(ref _items, ArrayUtility.NextPow2(mappingSlot));
+                    //Array.Resize(ref _dense, ArrayUtility.NextPow2(mappingSlot));
+                    _dense = Realloc<int>(_dense, ArrayUtility.NextPow2(mappingSlot));
                 }
+                _usedBlockCount++;
             }
-            mappingSlot.EntityPosIndex = _denseCount;
-            _dense.Ptr[_denseCount++] = entityID;
+            _dense.Ptr[_itemsCount] = entityID;
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-            ref T result = ref _items[mappingSlot.ComponentPosIndex];
-            EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref result, _worldID, entityID);
+            ref var slot = ref _items[mappingSlot];
+            slot.EntityID = entityID;
+            _itemsCount++;
+            EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref slot.Cmp, _worldID, entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnAddAndGet(entityID); }
 #endif
-            return ref result;
+            return ref slot.Cmp;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get(int entityID)
@@ -177,7 +184,7 @@ namespace DCFApixels.DragonECS
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnGet(entityID); }
 #endif
-            return ref _items[_mapping[entityID].ComponentPosIndex];
+            return ref _items[_mapping[entityID]].Cmp;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID)
@@ -185,88 +192,90 @@ namespace DCFApixels.DragonECS
 #if DEBUG // не нужен STAB_MODE
             if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
-            return ref _items[_mapping[entityID].ComponentPosIndex];
+            return ref _items[_mapping[entityID]].Cmp;
         }
         public ref T TryAddOrGet(int entityID)
         {
-#if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
-#endif
-            ref var mappingSlot = ref _mapping[entityID];
-            if (mappingSlot.ComponentPosIndex <= 0)
-            { //Add block
-#if DEBUG
-                if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
-#elif DRAGONECS_STABILITY_MODE
-                if (_isLocked) { return ref _items[0]; }
-#endif
-                if (_recycledItemsCount > 0)
-                {
-                    //mappingSlot.ComponentPosIndex = _dense[_dense.Length - _recycledItemsCount] & int.MaxValue;
-                    mappingSlot.ComponentPosIndex = _dense.Ptr[_denseCount];
-                    _recycledItemsCount--;
-                    _itemsCount++;
-                }
-                else
-                {
-                    mappingSlot.ComponentPosIndex = ++_itemsCount;
-                    if (mappingSlot.ComponentPosIndex >= _items.Length)
-                    {
-                        Array.Resize(ref _items, ArrayUtility.NextPow2(mappingSlot.ComponentPosIndex));
-                        //Array.Resize(ref _dense, ArrayUtility.NextPow2(mappingSlot.ComponentPosIndex));
-                        _dense = Realloc<int>(_dense, ArrayUtility.NextPow2(mappingSlot.ComponentPosIndex));
-                    }
-                }
-                mappingSlot.EntityPosIndex = _denseCount;
-                _dense.Ptr[_denseCount++] = entityID;
-                _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-                EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref _items[mappingSlot.ComponentPosIndex], _worldID, entityID);
-#if !DRAGONECS_DISABLE_POOLS_EVENTS
-                if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
-#endif
-            } //Add block end
-#if !DRAGONECS_DISABLE_POOLS_EVENTS
-            if (_hasAnyListener) { _listeners.InvokeOnGet(entityID); }
-#endif
-            return ref _items[mappingSlot.ComponentPosIndex];
+            if (Has(entityID))
+            {
+                return ref Get(entityID);
+            }
+            return ref Add(entityID);
+//#if DEBUG
+//            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
+//#endif
+//            ref var mappingSlot = ref _mapping[entityID];
+//            if (mappingSlot <= 0)
+//            { //Add block
+//#if DEBUG
+//                if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
+//#elif DRAGONECS_STABILITY_MODE
+//                if (_isLocked) { return ref _items[0]; }
+//#endif
+//                if (_recycledItemsCount > 0)
+//                {
+//                    //mappingSlot = _dense[_dense.Length - _recycledItemsCount] & int.MaxValue;
+//                    mappingSlot = _dense.Ptr[_denseCount];
+//                    _recycledItemsCount--;
+//                    _itemsCount++;
+//                }
+//                else
+//                {
+//                    mappingSlot = ++_itemsCount;
+//                    if (mappingSlot >= _items.Length)
+//                    {
+//                        Array.Resize(ref _items, ArrayUtility.NextPow2(mappingSlot));
+//                        //Array.Resize(ref _dense, ArrayUtility.NextPow2(mappingSlot));
+//                        _dense = Realloc<int>(_dense, ArrayUtility.NextPow2(mappingSlot));
+//                    }
+//                }
+//                mappingSlot.EntityPosIndex = _denseCount;
+//                _dense.Ptr[_denseCount++] = entityID;
+//                _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
+//                EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref _items[mappingSlot], _worldID, entityID);
+//#if !DRAGONECS_DISABLE_POOLS_EVENTS
+//                if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
+//#endif
+//            } //Add block end
+//#if !DRAGONECS_DISABLE_POOLS_EVENTS
+//            if (_hasAnyListener) { _listeners.InvokeOnGet(entityID); }
+//#endif
+//            return ref _items[mappingSlot];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
         {
-            return _mapping[entityID].ComponentPosIndex > 0;
+            return _mapping[entityID] > 0;
         }
         public void Del(int entityID)
         {
-            ref var mappingSlot = ref _mapping[entityID];
+            var mapIndex = _mapping[entityID];
 #if DEBUG
             if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
-            if (mappingSlot.ComponentPosIndex <= 0) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
+            if (mappingSlot <= 0) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
             if (itemIndex <= 0) { return; }
             if (_isLocked) { return; }
 #endif
-            EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref _items[mappingSlot.ComponentPosIndex], _worldID, entityID);
+            EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref _items[mapIndex].Cmp, _worldID, entityID);
+            _items[mapIndex].EntityID = 0;
 
-            //_dense[_sparse[entityID]] = _dense[_count];
-            //_sparse[_dense[_count--]] = _sparse[entityID];
-
-            //_dense[_mapping[entityID].EntityPosIndex] = _dense[_denseCount];
-            //_mapping[_dense[_denseCount--]].EntityPosIndex = _mapping[entityID].EntityPosIndex;
-
-            //_dense[mappingSlot.EntityPosIndex] = _dense[_denseCount];
-            //_mapping[_dense[_denseCount--]].EntityPosIndex = mappingSlot.EntityPosIndex;
-
-
-            _dense.Ptr[mappingSlot.EntityPosIndex] = _dense.Ptr[--_denseCount];
-            _mapping[_dense.Ptr[_denseCount]].EntityPosIndex = mappingSlot.EntityPosIndex;
-
-            //_dense[_dense.Length - _recycledItemsCount] = mappingSlot.ComponentPosIndex | int.MinValue;
-            _dense.Ptr[_denseCount] = mappingSlot.ComponentPosIndex;
-            _recycledItemsCount++;
-            mappingSlot.ComponentPosIndex = 0;
             _itemsCount--;
+            _dense.Ptr[_itemsCount] = mapIndex;
+            _mapping[entityID] = 0;
+
+            _recycledItemsCount++;
+            _isDensified = false;
             _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
+
+            //if(_itemsCount == 0)
+            //{
+            //    _itemsCount = 0;
+            //    _usedBlockCount = 0;
+            //    _recycledItemsCount = 0;
+            //    _isDensified = true;
+            //}
 
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
@@ -311,16 +320,47 @@ namespace DCFApixels.DragonECS
             foreach (var entityID in span)
             {
                 ref var mappingSlot = ref _mapping[entityID];
-                EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref _items[mappingSlot.ComponentPosIndex], _worldID, entityID);
-                mappingSlot.ComponentPosIndex = 0;
+                ref var slot = ref _items[mappingSlot];
+                EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref slot.Cmp, _worldID, entityID);
+                slot.EntityID = 0;
+                mappingSlot = 0;
                 _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
                 if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
             }
-            _denseCount = 0;
             _itemsCount = 0;
+            _usedBlockCount = 0;
             _recycledItemsCount = 0;
+            _isDensified = true;
+        }
+        private bool _isDensified;
+        private void Densify()
+        {
+            if (_isDensified) { return; }
+
+            var newUsedBlockCount = 0;
+
+            int denseIndex = 0;
+            for (int i = 0; i < _usedBlockCount; i++)
+            {
+                ref var slot = ref _items[i + 1];
+                if (slot.EntityID != 0)
+                {
+                    _dense.Ptr[denseIndex] = slot.EntityID;
+                    denseIndex++;
+                    newUsedBlockCount = i + 1;
+                }
+                else
+                {
+                    _dense.Ptr[denseIndex] = i;
+                }
+            }
+            //if (denseIndex != _itemsCount) { Throw.DeepDebugException(); }
+
+            _usedBlockCount = newUsedBlockCount;
+            _recycledItemsCount = newUsedBlockCount - _itemsCount;
+            _isDensified = true;
         }
         #endregion
 
@@ -359,7 +399,8 @@ namespace DCFApixels.DragonECS
 
         public EcsSpan ToSpan()
         {
-            return new EcsSpan(_worldID, new ReadOnlySpan<int>(_dense.Ptr, _denseCount));
+            Densify();
+            return new EcsSpan(_worldID, new ReadOnlySpan<int>(_dense.Ptr, _itemsCount));
         }
 
         #region Listeners
