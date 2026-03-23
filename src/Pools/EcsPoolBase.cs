@@ -1,6 +1,12 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
+#if !DRAGONECS_DISABLE_POOLS_EVENTS
+#define DRAGONECS_ENABLE_POOLS_EVENTS
+#else
+#undef DRAGONECS_ENABLE_POOLS_EVENTS
+#endif
+
 using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
@@ -100,7 +106,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 #if DEBUG
                 throw new NullInstanceException();
 #else
-                    return EcsWorld.GetWorld(0);
+                return EcsWorld.GetWorld(0);
 #endif
             }
         }
@@ -291,14 +297,15 @@ namespace DCFApixels.DragonECS
         /// <summary>Called after deleting an entity from the pool</summary>
         void OnDel(int entityID);
     }
-#if !DRAGONECS_DISABLE_POOLS_EVENTS
     public static class PoolEventListExtensions
     {
+        [Conditional("DRAGONECS_ENABLE_POOLS_EVENTS")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnAdd(this List<IEcsPoolEventListener> self, int entityID)
         {
             for (int i = 0; i < self.Count; i++) { self[i].OnAdd(entityID); }
         }
+        [Conditional("DRAGONECS_ENABLE_POOLS_EVENTS")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnAddAndGet(this List<IEcsPoolEventListener> self, int entityID)
         {
@@ -308,11 +315,13 @@ namespace DCFApixels.DragonECS
                 self[i].OnGet(entityID);
             }
         }
+        [Conditional("DRAGONECS_ENABLE_POOLS_EVENTS")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID)
         {
             for (int i = 1; i < self.Count; i++) { self[i].OnGet(entityID); }
         }
+        [Conditional("DRAGONECS_ENABLE_POOLS_EVENTS")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnDel(this List<IEcsPoolEventListener> self, int entityID)
         {
@@ -322,11 +331,13 @@ namespace DCFApixels.DragonECS
         //
 
 
+        [Conditional("DRAGONECS_ENABLE_POOLS_EVENTS")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void InvokeOnAdd(this StructList<IEcsPoolEventListener> self, int entityID)
         {
             for (int i = 0; i < self.Count; i++) { self[i].OnAdd(entityID); }
         }
+        [Conditional("DRAGONECS_ENABLE_POOLS_EVENTS")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void InvokeOnAddAndGet(this StructList<IEcsPoolEventListener> self, int entityID)
         {
@@ -336,17 +347,18 @@ namespace DCFApixels.DragonECS
                 self[i].OnGet(entityID);
             }
         }
+        [Conditional("DRAGONECS_ENABLE_POOLS_EVENTS")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void InvokeOnGet(this StructList<IEcsPoolEventListener> self, int entityID)
         {
             for (int i = 0; i < self.Count; i++) { self[i].OnGet(entityID); }
         }
+        [Conditional("DRAGONECS_ENABLE_POOLS_EVENTS")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void InvokeOnDel(this StructList<IEcsPoolEventListener> self, int entityID)
         {
             for (int i = 0; i < self.Count; i++) { self[i].OnDel(entityID); }
         }
     }
-#endif
     #endregion
 }
