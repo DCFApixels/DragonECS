@@ -995,7 +995,7 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
     <td align="center">
       <a href="https://github.com/DCFApixels/3D-Platformer-DragonECS-Demo">
         3D Platformer (Example)
-        <img src="https://github.com/user-attachments/assets/c593dba7-eeaa-4706-a043-946f132f3f83" alt="screenshot">
+        <img src="https://github.com/user-attachments/assets/6aba814d-a70b-432f-a905-84d1b6872581" />
       </a> 
     </td>
     <td align="center">
