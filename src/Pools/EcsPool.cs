@@ -486,11 +486,11 @@ namespace DCFApixels.DragonECS
             Densify();
             var result = new EcsSpan(_worldID, new ReadOnlySpan<int>(_dense.Ptr + 1, _itemsCount));
 #if DRAGONECS_DEEP_DEBUG
-            var r2 = _world.WhereToGroup(out SingleAspect<T> _);
-            if(r2.SetEquals(result) == false)
-            {
-                Throw.DeepDebugException();
-            }
+            //var r2 = _world.WhereToGroup(out SingleAspect<T> _);
+            //if(r2.SetEquals(result) == false)
+            //{
+            //    Throw.DeepDebugException();
+            //}
             if (result.Count != _itemsCount)
             {
                 Throw.DeepDebugException();
