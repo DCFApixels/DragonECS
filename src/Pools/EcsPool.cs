@@ -154,7 +154,7 @@ namespace DCFApixels.DragonECS
             }
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
             ref T result = ref _items[itemIndex];
-            EcsComponentLifecycle<T>.OnAdd( _isCustomLifecycle, _customLifecycle, ref result, _worldID, entityID);
+            InvokeOnAdd(entityID, ref _items[itemIndex]);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnAddAndGet(entityID); }
 #endif
@@ -206,7 +206,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
                 _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-                EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref _items[itemIndex], _worldID, entityID);
+                InvokeOnAdd(entityID, ref _items[itemIndex]);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
                 if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
 #endif
@@ -232,7 +232,7 @@ namespace DCFApixels.DragonECS
             if (itemIndex <= 0) { return; }
             if (_isLocked) { return; }
 #endif
-            EcsComponentLifecycle<T>.OnDel( _isCustomLifecycle, _customLifecycle, ref _items[itemIndex], _worldID, entityID);
+            InvokeOnDel(entityID, ref _items[itemIndex]);
             if (_recycledItemsCount >= _recycledItems.Length)
             {
                 Array.Resize(ref _recycledItems, ArrayUtility.NextPow2Safe(_recycledItemsCount));
@@ -284,7 +284,7 @@ namespace DCFApixels.DragonECS
             foreach (var entityID in span)
             {
                 ref int itemIndex = ref _mapping[entityID];
-                EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref _items[itemIndex], _worldID, entityID);
+                InvokeOnDel(entityID, ref _items[itemIndex]);
                 itemIndex = 0;
                 _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
@@ -317,6 +317,26 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InvokeOnAdd(int entityID, ref T component)
+        {
+            if (_isCustomLifecycle)
+            {
+                _customLifecycle.OnAdd(ref component, _worldID, entityID);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InvokeOnDel(int entityID, ref T component)
+        {
+            if (_isCustomLifecycle)
+            {
+                _customLifecycle.OnDel(ref component, _worldID, entityID);
+            }
+            else
+            {
+                component = default;
+            }
+        }
         void IEcsPool.AddEmpty(int entityID) { Add(entityID); }
         void IEcsPool.AddRaw(int entityID, object dataRaw)
         {
