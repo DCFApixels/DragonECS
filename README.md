@@ -104,17 +104,17 @@ Tested with:
 ## Unity Installation
 > It is also recommended to install the Unity engine integration extension [Unity integration](https://github.com/DCFApixels/DragonECS-Unity)
 * ### Unity package
-The framework supports installation as a Unity package by adding the Git URL to the PackageManager ([how-to](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html)) or by manually adding the entry to `Packages/manifest.json`:
+The framework supports installation as a Unity package by adding the Git URL [in the PackageManager](https://docs.unity3d.com/2023.2/Documentation/Manual/upm-ui-giturl.html): 
 ```
 https://github.com/DCFApixels/DragonECS.git
 ```
-Or add the package entry to `Packages/manifest.json`:
+Or manually add the package entry to `Packages/manifest.json`:
 ```
 "com.dcfa_pixels.dragonecs": "https://github.com/DCFApixels/DragonECS.git",
 ```
 
 * ### As source code
-You can also add the framework directly by copying its source files into your project.
+The framework source code can also be copied directly into the project.
 
 
 # Extensions
