@@ -385,6 +385,26 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InvokeOnAdd(int entityID, ref T component)
+        {
+            if (_isCustomLifecycle)
+            {
+                _customLifecycle.OnAdd(ref component, _worldID, entityID);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InvokeOnDel(int entityID, ref T component)
+        {
+            if (_isCustomLifecycle)
+            {
+                _customLifecycle.OnDel(ref component, _worldID, entityID);
+            }
+            else
+            {
+                component = default;
+            }
+        }
         void IEcsPool.AddEmpty(int entityID) { Add(entityID); }
         void IEcsPool.AddRaw(int entityID, object dataRaw)
         {
