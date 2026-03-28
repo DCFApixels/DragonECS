@@ -60,6 +60,17 @@ namespace DCFApixels.DragonECS.Core.Unchecked
             }
             return true;
         }
+        public static void CheckSpanValideDebugWithException(EcsSpan span)
+        {
+            HashSet<int> set = new HashSet<int>();
+            foreach (var e in span)
+            {
+                if (set.Add(e) == false)
+                {
+                    throw new Exception($"Duplication {e}");
+                }
+            }
+        }
         #endregion
 
         #region Unsafe Span
