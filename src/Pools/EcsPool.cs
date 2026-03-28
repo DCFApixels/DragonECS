@@ -136,11 +136,11 @@ namespace DCFApixels.DragonECS
         #region Methods
         public ref T Add(int entityID)
         {
-            ref var mappingSlot = ref _mapping[entityID];
+            ref var itemIndex = ref _mapping[entityID];
 #if DEBUG
             if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
             if (_world.IsUsed(entityID) == false) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
-            if (mappingSlot > 0) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
+            if (itemIndex > 0) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
             if (itemIndex > 0) { return ref Get(entityID); }
@@ -150,23 +150,23 @@ namespace DCFApixels.DragonECS
             {
                 //mappingSlot = _recycledItems[--_recycledItemsCount];
                 //mappingSlot = _dense[_dense.Length - _recycledItemsCount] & int.MaxValue;
-                mappingSlot = _dense.Ptr[_itemsCount];
+                itemIndex = _dense.Ptr[_itemsCount];
                 _recycledItemsCount--;
             }
             else
             {
-                mappingSlot = _itemsCount + 1;
-                if (mappingSlot >= _items.Length)
+                itemIndex = _itemsCount + 1;
+                if (itemIndex >= _items.Length)
                 {
-                    Array.Resize(ref _items, ArrayUtility.NextPow2(mappingSlot));
+                    Array.Resize(ref _items, ArrayUtility.NextPow2(itemIndex));
                     //Array.Resize(ref _dense, ArrayUtility.NextPow2(mappingSlot));
-                    _dense = Realloc<int>(_dense, ArrayUtility.NextPow2(mappingSlot));
+                    _dense = Realloc<int>(_dense, ArrayUtility.NextPow2(itemIndex));
                 }
                 _usedBlockCount++;
             }
             _dense.Ptr[_itemsCount] = entityID;
             _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-            ref var slot = ref _items[mappingSlot];
+            ref var slot = ref _items[itemIndex];
             slot.EntityID = entityID;
             _itemsCount++;
             EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref slot.Cmp, _worldID, entityID);
@@ -249,20 +249,20 @@ namespace DCFApixels.DragonECS
         }
         public void Del(int entityID)
         {
-            var mapIndex = _mapping[entityID];
+            var itemIndex = _mapping[entityID];
 #if DEBUG
             if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
-            if (mappingSlot <= 0) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
+            if (itemIndex <= 0) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
             if (itemIndex <= 0) { return; }
             if (_isLocked) { return; }
 #endif
-            EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref _items[mapIndex].Cmp, _worldID, entityID);
-            _items[mapIndex].EntityID = 0;
+            EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref _items[itemIndex].Cmp, _worldID, entityID);
+            _items[itemIndex].EntityID = 0;
 
             _itemsCount--;
-            _dense.Ptr[_itemsCount] = mapIndex;
+            _dense.Ptr[_itemsCount] = itemIndex;
             _mapping[entityID] = 0;
 
             _recycledItemsCount++;
