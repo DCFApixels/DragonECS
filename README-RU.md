@@ -82,7 +82,7 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
 
 
 # Установка
-Семантика версионирования - [Открыть](https://gist.github.com/DCFApixels/e53281d4628b19fe5278f3e77a7da9e8#file-dcfapixels_versioning_ru-md)
+Семантика версионирования - [Открыть](https://gist.github.com/DCFApixels/af79284955bf40e9476cdcac79d7b098#file-dcfapixels_versioning-md)
 ## Окружение
 Обязательные требования:
 + Минимальная версия C#: 7.3.

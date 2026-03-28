@@ -86,7 +86,7 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
 </br>
 
 # 安装
-版本的语义 [[打开]](https://gist.github.com/DCFApixels/c3b178a308b411f530361d1d56f1f929#file-dcfapixels_versioning_en-md)
+版本的语义 [[打开]](https://gist.github.com/DCFApixels/af79284955bf40e9476cdcac79d7b098#file-dcfapixels_versioning-md)
 ## 环境
 必备要求：
 * 最低 C# 版本：7.3。

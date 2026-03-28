@@ -89,7 +89,7 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 </br>
 
 # Installation
-Versioning semantics - [Open](https://gist.github.com/DCFApixels/c3b178a308b411f530361d1d56f1f929#file-dcfapixels_versioning_en-md)
+Versioning semantics - [Open](https://gist.github.com/DCFApixels/af79284955bf40e9476cdcac79d7b098#file-dcfapixels_versioning-md)
 ## Environment
 Requirements:
 * Minimum C# version: 7.3.
