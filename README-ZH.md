@@ -82,6 +82,7 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
 - [使用DragonECS的项目](#使用dragonecs的项目)
 - [FAQ](#faq)
 - [反馈](#反馈)
+- [License](#license)
 
 </br>
 
@@ -1070,11 +1071,17 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 - 将 `IEcsRun` 拆分为多个流程，并在引擎更新循环中运行所需的流程。为此，创建一个新的流程接口，为其实现一个 Runner，并通过 `EcsPipeline.GetRunner<T>()` 获取该 Runner。
 
 ## 建议清单: [DragonECS-Vault](https://github.com/DCFApixels/DragonECS-Vault)
+
 </br>
 
 # 反馈
 + Discord (RU-EN) [https://discord.gg/kqmJjExuCf](https://discord.gg/kqmJjExuCf)
 + QQ (中文) [949562781](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=IbDcH43vhfArb30luGMP1TMXB3GCHzxm&authKey=s%2FJfqvv46PswFq68irnGhkLrMR6y9tf%2FUn2mogYizSOGiS%2BmB%2B8Ar9I%2Fnr%2Bs4oS%2B&noverify=0&group_code=949562781)
+
+</br>
+
+# License
+The MIT License: [Open](LICENSE.md)
 
 </br></br></br>
 </br></br></br>

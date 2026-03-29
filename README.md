@@ -83,6 +83,7 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
 - [Extensions](#extensions)
 - [FAQ](#faq)
 - [Feedback](#feedback)
+- [License](#license)
 
 </br>
 
@@ -1101,11 +1102,17 @@ The need to enable or disable systems usually appears when the overall game stat
 - Split `IEcsRun` into multiple processes and run the desired process in the engine update loop. Create a new process interface, implement a runner for it, and obtain the runner via `EcsPipeline.GetRunner<T>()`.
 
 ## Recommendations list: [DragonECS-Vault](https://github.com/DCFApixels/DragonECS-Vault)
+
 </br>
 
 # Feedback
 + Discord (RU-EN) [https://discord.gg/kqmJjExuCf](https://discord.gg/kqmJjExuCf)
 + QQ (中文) [949562781](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=IbDcH43vhfArb30luGMP1TMXB3GCHzxm&authKey=s%2FJfqvv46PswFq68irnGhkLrMR6y9tf%2FUn2mogYizSOGiS%2BmB%2B8Ar9I%2Fnr%2Bs4oS%2B&noverify=0&group_code=949562781)
+
+</br>
+
+# License
+The MIT License: [Open](LICENSE.md)
 
 </br></br></br>
 </br></br></br>
