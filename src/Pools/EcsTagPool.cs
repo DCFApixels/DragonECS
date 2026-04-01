@@ -331,6 +331,13 @@ namespace DCFApixels.DragonECS
         {
             pool.TryAdd(entityID);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T Apply(short worldID, int entityID)
+        {
+            var pool = EcsWorld.GetPoolInstance<EcsTagPool<T>>(worldID);
+            pool.TryAdd(entityID);
+            return ref pool._fakeComponent;
+        }
         #endregion
     }
 
