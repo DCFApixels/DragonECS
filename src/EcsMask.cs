@@ -420,6 +420,42 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Debug utils
+        private Type[] _incTypes_Debug;
+        private Type[] _excTypes_Debug;
+        private Type[] _anyTypes_Debug;
+        public ReadOnlySpan<Type> GetIncTypes_Debug()
+        {
+            if(_incTypes_Debug == null)
+            {
+                _incTypes_Debug = GetTypes(IncTypeCodes);
+            }
+            return _incTypes_Debug;
+        }
+        public ReadOnlySpan<Type> GetExcTypes_Debug()
+        {
+            if(_excTypes_Debug == null)
+            {
+                _excTypes_Debug = GetTypes(ExcTypeCodes);
+            }
+            return _excTypes_Debug;
+        }
+        public ReadOnlySpan<Type> GetAnyTypes_Debug()
+        {
+            if (_anyTypes_Debug == null)
+            {
+                _anyTypes_Debug = GetTypes(AnyTypeCodes);
+            }
+            return _anyTypes_Debug;
+        }
+        private Type[] GetTypes(ReadOnlySpan<EcsTypeCode> typeCodes)
+        {
+            Type[] result = new Type[typeCodes.Length];
+            for (int i = 0; i < typeCodes.Length; i++)
+            {
+                result[i] = EcsTypeCodeManager.FindTypeOfCode(typeCodes[i]).Type;
+            }
+            return result;
+        }
         private static string CreateLogString(short worldID, int[] incs, int[] excs, int[] anys)
         {
 #if DEBUG
@@ -466,11 +502,10 @@ namespace DCFApixels.DragonECS
                 incs = mask._incs;
                 excs = mask._excs;
                 anys = mask._anys;
-                Type converter(int o) { return world.GetComponentType(o); }
                 IEcsPool converterPool(int o) { return world.FindPoolInstance(o); }
-                incsTypes = incs.Select(converter).ToArray();
-                excsTypes = excs.Select(converter).ToArray();
-                anysTypes = anys.Select(converter).ToArray();
+                incsTypes = mask.GetIncTypes_Debug().ToArray();
+                excsTypes = mask.GetExcTypes_Debug().ToArray();
+                anysTypes = mask.GetAnyTypes_Debug().ToArray();
                 incsPools = incs.Select(converterPool).ToArray();
                 excsPools = excs.Select(converterPool).ToArray();
                 anysPools = anys.Select(converterPool).ToArray();
