@@ -113,8 +113,7 @@ Or add the package entry to `Packages/manifest.json`:
 ```
 
 * ### As source code
-The framework source code can also be copied directly into the project.
-
+The framework sources can be copied directly into the project.
 
 # Extensions
 * Integrations:
