@@ -390,6 +390,11 @@ namespace DCFApixels.DragonECS
         {
             pool.TryAddOrGet(entityID) = component;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T Apply(short worldID, int entityID)
+        {
+            return ref EcsWorld.GetPoolInstance<EcsPool<T>>(worldID).TryAddOrGet(entityID);
+        }
         #endregion
     }
 
