@@ -174,6 +174,30 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.Print(tag, v);
 #endif
         }
+#if UNITY_2021_3_OR_NEWER
+        [UnityEngine.HideInCallstack]
+#endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PrintJson(object v)
+        {
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
+            string json = JsonDebugger.ToJsonLog(v);
+            OnPrint(string.Empty, json);
+            DebugService.CurrentThreadInstance.Print(json);
+#endif
+        }
+#if UNITY_2021_3_OR_NEWER
+        [UnityEngine.HideInCallstack]
+#endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PrintJson(string tag, object v)
+        {
+#if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
+            string json = JsonDebugger.ToJsonLog(v);
+            OnPrint(tag, json);
+            DebugService.CurrentThreadInstance.Print(tag, json);
+#endif
+        }
         #endregion
 
         #region Other
