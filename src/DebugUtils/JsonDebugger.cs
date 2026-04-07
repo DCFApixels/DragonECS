@@ -8,20 +8,43 @@ namespace DCFApixels.DragonECS.Core.Internal
 {
     internal static class JsonDebugger
     {
+        private readonly static List<string> _indentsChache = new List<string>();
         internal static string ToJsonLog(object obj)
         {
             if (obj == null) return "null";
             var sb = new StringBuilder();
-            ToJsonLog(obj, sb, new HashSet<object>(), "  ", "");
-            return sb.ToString();
+            int linesCounter = 0;
+            var visited = new Dictionary<object, int>();
+            ToJsonLog(ref linesCounter, obj, sb, visited, 0, 2);
+            string json = sb.ToString();
+            return json;
         }
-
+        private static string GetIndentString(int count)
+        {
+            int newSize = count + 1;
+            while (newSize > _indentsChache.Count)
+            {
+                _indentsChache.Add(new string(' ', _indentsChache.Count));
+            }
+            return _indentsChache[count];
+        }
+        private static void NewLine(
+            ref int linesCounter,
+            StringBuilder sb,
+            int indent,
+            int indentStep)
+        {
+            sb.AppendLine();
+            sb.Append(GetIndentString(indent * indentStep));
+            linesCounter++;
+        }
         private static void ToJsonLog(
+            ref int linesCounter,
             object value,
             StringBuilder sb,
-            HashSet<object> visited,
-            string indent,
-            string currentIndent)
+            Dictionary<object, int> visited,
+            int indent,
+            int indentStep)
         {
             if (value == null)
             {
@@ -107,7 +130,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 sb.Append('"');
                 return;
             }
-            if (typeof(Type).IsAssignableFrom(type) ||
+            if (value is Type ||
                 type.Namespace == typeof(FieldInfo).Namespace ||
                 type.IsPointer ||
                 type.IsFunctionPointer ||
@@ -142,36 +165,51 @@ namespace DCFApixels.DragonECS.Core.Internal
                 // как дописать приваильно тут вызов ToJsonLog ?
             }
 
-            if (visited.Contains(value))
+            if(type.IsValueType == false)
             {
-                sb.Append('#');
-                sb.Append(type.Name);
-                sb.Append('#');
-                return;
+                if (visited.TryGetValue(value, out var line))
+                {
+                    sb.Append('#');
+                    sb.Append(type.Name);
+                    sb.Append('#');
+                    sb.Append(line);
+                    sb.Append('#');
+                    return;
+                }
+                visited.Add(value, linesCounter);
             }
-            visited.Add(value);
 
-            if (value is IEnumerable enumerable)
+
+            IEnumerable enumerable = value as IEnumerable;
+            if(enumerable != null)
+            {
+                try
+                {
+                    enumerable.GetEnumerator();
+                }
+                catch (Exception)
+                {
+                    enumerable = null;
+                }
+            }
+            if (enumerable != null)
             {
                 sb.Append('[');
                 bool first = true;
-                string nextIndent = currentIndent + indent;
 
                 foreach (object item in enumerable)
                 {
                     if (!first) { sb.Append(','); } else { first = false; }
 
                     // Перенос строки и отступ перед элементом
-                    sb.AppendLine();
-                    sb.Append(nextIndent);
-                    ToJsonLog(item, sb, visited, indent, nextIndent);
+                    NewLine(ref linesCounter, sb, indent + 1, indentStep);
+                    ToJsonLog(ref linesCounter, item, sb, visited, indent + 1, indentStep);
                 }
 
                 // Если были элементы, переносим строку перед закрывающей скобкой
                 if (!first)
                 {
-                    sb.AppendLine();
-                    sb.Append(currentIndent);
+                    NewLine(ref linesCounter, sb, indent, indentStep);
                 }
                 sb.Append(']');
             }
@@ -179,25 +217,28 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 sb.Append('{');
                 bool first = true;
-                string nextIndent = currentIndent + indent;
 
                 // Fields
                 var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 foreach (var field in fields)
                 {
-                    if (field.IsStatic) continue;
+                    if (field.IsStatic)
+                    {
+                        continue;
+                    }
 
                     if (!first) { sb.Append(','); } else { first = false; }
 
-                    sb.AppendLine();
-                    sb.Append(nextIndent);
+                    NewLine(ref linesCounter, sb, indent + 1, indentStep);
+                    //sb.AppendLine();
+                    //sb.Append(nextIndent);
                     sb.Append('"');
                     sb.Append(field.Name);
                     sb.Append('"');
                     sb.Append(':').Append(' ');
 
                     object fieldValue = field.GetValue(value);
-                    ToJsonLog(fieldValue, sb, visited, indent, nextIndent);
+                    ToJsonLog(ref linesCounter, fieldValue, sb, visited, indent + 1, 2);
                 }
 
                 // Properties
@@ -207,12 +248,13 @@ namespace DCFApixels.DragonECS.Core.Internal
                     if (prop.GetIndexParameters().Length > 0 ||
                         prop.GetMethod == null ||
                         prop.GetMethod.IsStatic)
+                    {
                         continue;
+                    }
 
                     if (!first) { sb.Append(','); } else { first = false; }
 
-                    sb.AppendLine();
-                    sb.Append(nextIndent);
+                    NewLine(ref linesCounter, sb, indent + 1, indentStep);
                     sb.Append('"');
                     sb.Append(prop.Name);
                     sb.Append('"');
@@ -227,19 +269,18 @@ namespace DCFApixels.DragonECS.Core.Internal
                     {
                         propValue = cathcedE;
                     }
-                    ToJsonLog(propValue, sb, visited, indent, nextIndent);
+                    ToJsonLog(ref linesCounter, propValue, sb, visited, indent + 1, indentStep);
                 }
 
                 // Если были поля/свойства, добавляем перевод строки перед закрывающей скобкой
                 if (!first)
                 {
-                    sb.AppendLine();
-                    sb.Append(currentIndent);
+                    NewLine(ref linesCounter, sb, indent, indentStep);
                 }
                 sb.Append('}');
             }
 
-            visited.Remove(value);
+            //visited.Remove(value);
         }
 
         private static void EscapeString(string s, StringBuilder sb)
