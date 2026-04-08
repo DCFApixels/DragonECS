@@ -137,10 +137,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 sb.Append('"');
                 return;
             }
-            if (type.Namespace == typeof(FieldInfo).Namespace ||
-                type.IsPointer ||
-                type.IsFunctionPointer ||
-                type.IsUnmanagedFunctionPointer)
+            if (type.Namespace == typeof(FieldInfo).Namespace || type.IsPointer)
             {
                 sb.Append('"');
                 sb.Append(value.ToString());
