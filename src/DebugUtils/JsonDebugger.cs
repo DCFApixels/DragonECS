@@ -11,7 +11,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         private readonly static List<string> _indentsChache = new List<string>();
         internal static string ToJsonLog(object obj)
         {
-            if (obj == null) return "null";
+            if (obj == null) { return "null"; }
             var sb = new StringBuilder();
             int linesCounter = 0;
             var visited = new Dictionary<object, int>();
@@ -142,10 +142,10 @@ namespace DCFApixels.DragonECS.Core.Internal
                 return;
             }
 
-            if(value is Delegate del)
+            if (value is Delegate del)
             {
                 var list = del.GetInvocationList();
-                if(list.Length == 0)
+                if (list.Length == 0)
                 {
                     sb.Append("null");
                     return;
@@ -159,13 +159,11 @@ namespace DCFApixels.DragonECS.Core.Internal
                     sb.Append('"');
                     return;
                 }
-
-                value = list;
-                type = list.GetType();
-                // как дописать приваильно тут вызов ToJsonLog ?
+                ToJsonLog(ref linesCounter, list, sb, visited, indent, indentStep);
+                return;
             }
 
-            if(type.IsValueType == false)
+            if (type.IsValueType == false)
             {
                 if (visited.TryGetValue(value, out var line))
                 {
@@ -179,7 +177,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 visited.Add(value, linesCounter);
             }
 
-
+            // Collections
             IEnumerable enumerable = value as IEnumerable;
             if(enumerable != null)
             {
@@ -206,7 +204,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                     ToJsonLog(ref linesCounter, item, sb, visited, indent + 1, indentStep);
                 }
 
-                // Если были элементы, переносим строку перед закрывающей скобкой
+                // перенос строки если были элементы
                 if (!first)
                 {
                     NewLine(ref linesCounter, sb, indent, indentStep);
@@ -230,8 +228,6 @@ namespace DCFApixels.DragonECS.Core.Internal
                     if (!first) { sb.Append(','); } else { first = false; }
 
                     NewLine(ref linesCounter, sb, indent + 1, indentStep);
-                    //sb.AppendLine();
-                    //sb.Append(nextIndent);
                     sb.Append('"');
                     sb.Append(field.Name);
                     sb.Append('"');
@@ -272,7 +268,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                     ToJsonLog(ref linesCounter, propValue, sb, visited, indent + 1, indentStep);
                 }
 
-                // Если были поля/свойства, добавляем перевод строки перед закрывающей скобкой
+                // перенос строки если были элементы
                 if (!first)
                 {
                     NewLine(ref linesCounter, sb, indent, indentStep);
