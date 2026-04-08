@@ -130,8 +130,14 @@ namespace DCFApixels.DragonECS.Core.Internal
                 sb.Append('"');
                 return;
             }
-            if (value is Type ||
-                type.Namespace == typeof(FieldInfo).Namespace ||
+            if (value is Type t)
+            {
+                sb.Append('"');
+                sb.Append(t.GetMeta().TypeName);
+                sb.Append('"');
+                return;
+            }
+            if (type.Namespace == typeof(FieldInfo).Namespace ||
                 type.IsPointer ||
                 type.IsFunctionPointer ||
                 type.IsUnmanagedFunctionPointer)
@@ -198,8 +204,6 @@ namespace DCFApixels.DragonECS.Core.Internal
                 foreach (object item in enumerable)
                 {
                     if (!first) { sb.Append(','); } else { first = false; }
-
-                    // Перенос строки и отступ перед элементом
                     NewLine(ref linesCounter, sb, indent + 1, indentStep);
                     ToJsonLog(ref linesCounter, item, sb, visited, indent + 1, indentStep);
                 }
@@ -214,18 +218,18 @@ namespace DCFApixels.DragonECS.Core.Internal
             else // Object
             {
                 sb.Append('{');
-                bool first = true;
+                {
+                    NewLine(ref linesCounter, sb, indent + 1, indentStep);
+                    sb.Append("\"Type\": ");
+
+                    ToJsonLog(ref linesCounter, type, sb, visited, indent + 1, indentStep);
+                }
 
                 // Fields
                 var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 foreach (var field in fields)
                 {
-                    if (field.IsStatic)
-                    {
-                        continue;
-                    }
-
-                    if (!first) { sb.Append(','); } else { first = false; }
+                    if (field.IsStatic) { continue; }
 
                     NewLine(ref linesCounter, sb, indent + 1, indentStep);
                     sb.Append('"');
@@ -248,8 +252,6 @@ namespace DCFApixels.DragonECS.Core.Internal
                         continue;
                     }
 
-                    if (!first) { sb.Append(','); } else { first = false; }
-
                     NewLine(ref linesCounter, sb, indent + 1, indentStep);
                     sb.Append('"');
                     sb.Append(prop.Name);
@@ -268,11 +270,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                     ToJsonLog(ref linesCounter, propValue, sb, visited, indent + 1, indentStep);
                 }
 
-                // перенос строки если были элементы
-                if (!first)
-                {
-                    NewLine(ref linesCounter, sb, indent, indentStep);
-                }
+                NewLine(ref linesCounter, sb, indent, indentStep);
                 sb.Append('}');
             }
 
