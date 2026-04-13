@@ -37,8 +37,8 @@ namespace DCFApixels.DragonECS
     public sealed unsafe class EcsValuePool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
         where T : unmanaged, IEcsValueComponent
     {
-        private short _worldID;
         private EcsWorld _world;
+        private short _worldID;
         private int _componentTypeID;
         private EcsMaskChunck _maskBit;
 
@@ -126,6 +126,7 @@ namespace DCFApixels.DragonECS
         void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
         {
             _world = world;
+            _worldID = world.ID;
             _mediator = mediator;
             _componentTypeID = componentTypeID;
             _maskBit = EcsMaskChunck.FromID(componentTypeID);
