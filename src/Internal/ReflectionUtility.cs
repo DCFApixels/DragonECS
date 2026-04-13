@@ -10,6 +10,15 @@ namespace DCFApixels.DragonECS.Core.Internal
     internal static class ReflectionUtility
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Type GetPureType(this Type type)
+        {
+            if (type.IsGenericType)
+            {
+                return type.GetGenericTypeDefinition();
+            }
+            return type;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetAttribute<T>(this MemberInfo self, out T attribute) where T : Attribute
         {
             attribute = self.GetCustomAttribute<T>();

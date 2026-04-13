@@ -6,7 +6,6 @@ using DCFApixels.DragonECS.Core.Internal;
 using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 #if DEBUG || !REFLECTION_DISABLED
@@ -51,6 +50,7 @@ namespace DCFApixels.DragonECS
 
         private readonly int _uniqueID;
         internal readonly Type _type;
+        private readonly MetaProxy _proxy;
 
         private bool _isCustomName;
         private bool _isCustomColor;
@@ -93,6 +93,7 @@ namespace DCFApixels.DragonECS
 
                 _initFlags = InitFlag.All,
             };
+
             _metaCache.Add(typeof(void).TypeHandle, NullTypeMeta);
         }
         public static TypeMeta Get(Type type) { return Get(type.TypeHandle); }
@@ -108,10 +109,45 @@ namespace DCFApixels.DragonECS
                 return result;
             }
         }
+        private static Type FindDeclaringType(Type targetPureType, Type currentType)
+        {
+            if (currentType == typeof(object)) { return null; }
+            var pure = currentType.GetPureType();
+            if (pure == targetPureType)
+            {
+                return currentType;
+            }
+            return FindDeclaringType(targetPureType, currentType.BaseType);
+        }
         private TypeMeta(Type type)
         {
             _uniqueID = _increment++;
             _type = type;
+            _proxy = MetaProxy.EmptyProxy;
+
+            if (type.ContainsGenericParameters == false && 
+                type.TryGetAttribute<MetaProxyAttribute>(out var proxyAtr))
+            {
+                Type proxyType = proxyAtr.Type;
+                if (proxyType.ContainsGenericParameters && proxyType.IsNested)
+                {
+                    var baseType = FindDeclaringType(proxyType.DeclaringType, type);
+                    if(baseType != null)
+                    {
+                        var args = baseType.GetGenericArguments();
+                        proxyType = proxyType.MakeGenericType(args);
+                    }
+                }
+
+                if (proxyType.ContainsGenericParameters == false)
+                {
+                    var proxy = Activator.CreateInstance(proxyType, type) as MetaProxy;
+                    if (proxy != null)
+                    {
+                        _proxy = proxy;
+                    }
+                }
+            }
         }
         #endregion
 
@@ -127,7 +163,7 @@ namespace DCFApixels.DragonECS
         {
             if (_initFlags.HasFlag(InitFlag.Name) == false)
             {
-                (_name, _isCustomName) = MetaGenerator.GetMetaName(_type);
+                (_name, _isCustomName) = MetaGenerator.GetMetaName(this);
                 _typeName = _isCustomName ? MetaGenerator.GetTypeName(_type) : _name;
                 _initFlags |= InitFlag.Name;
             }
@@ -192,7 +228,7 @@ namespace DCFApixels.DragonECS
             {
                 if (_initFlags.HasFlag(InitFlag.Description) == false)
                 {
-                    _description = MetaGenerator.GetDescription(_type);
+                    _description = MetaGenerator.GetDescription(this);
                     _initFlags |= InitFlag.Description;
                 }
                 return _description;
@@ -207,7 +243,7 @@ namespace DCFApixels.DragonECS
             {
                 if (_initFlags.HasFlag(InitFlag.Group) == false)
                 {
-                    _group = MetaGenerator.GetGroup(_type);
+                    _group = MetaGenerator.GetGroup(this);
                     _initFlags |= InitFlag.Group;
                 }
                 return _group;
@@ -220,7 +256,7 @@ namespace DCFApixels.DragonECS
         {
             if (_initFlags.HasFlag(InitFlag.Tags) == false)
             {
-                _tags = MetaGenerator.GetTags(_type);
+                _tags = MetaGenerator.GetTags(this);
                 _initFlags |= InitFlag.Tags;
                 _isHidden = _tags.Contains(MetaTags.HIDDEN);
                 _isObsolete = _tags.Contains(MetaTags.OBSOLETE);
@@ -480,9 +516,14 @@ namespace DCFApixels.DragonECS
             {
                 return EcsDebugUtility.GetGenericTypeName(type, GENERIC_NAME_DEPTH);
             }
-            public static (string, bool) GetMetaName(Type type)
+            public static (string, bool) GetMetaName(TypeMeta meta)
             {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+                if (meta._proxy.Name != null)
+                {
+                    return (meta._proxy.Name, true);
+                }
+                var type = meta.Type;
                 bool isCustom = type.TryGetAttribute(out MetaNameAttribute atr) && string.IsNullOrEmpty(atr.name) == false;
                 if (isCustom)
                 {
@@ -524,6 +565,10 @@ namespace DCFApixels.DragonECS
             public static (MetaColor, bool) GetColor(TypeMeta meta)
             {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+                if (meta._proxy.Color != null)
+                {
+                    return (meta._proxy.Color.Value, true);
+                }
                 bool isCustom = meta.Type.TryGetAttribute(out MetaColorAttribute atr);
                 return (isCustom ? atr.color : AutoColor(meta), isCustom);
 #else
@@ -534,16 +579,20 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetGroup
-            public static MetaGroup GetGroup(Type type)
+            public static MetaGroup GetGroup(TypeMeta meta)
             {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                if (type.TryGetAttribute(out MetaGroupAttribute atr))
+                if (meta._proxy.Group != null)
+                {
+                    return meta._proxy.Group;
+                }
+                if (meta.Type.TryGetAttribute(out MetaGroupAttribute atr))
                 {
                     return MetaGroup.FromName(atr.Name);
                 }
                 else
                 {
-                    return MetaGroup.FromNameSpace(type);
+                    return MetaGroup.FromNameSpace(meta.Type);
                 }
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetGroup)} method does not work.");
@@ -553,10 +602,14 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetDescription
-            public static MetaDescription GetDescription(Type type)
+            public static MetaDescription GetDescription(TypeMeta meta)
             {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                bool isCustom = type.TryGetAttribute(out MetaDescriptionAttribute atr);
+                if (meta._proxy.Description != null)
+                {
+                    return meta._proxy.Description;
+                }
+                bool isCustom = meta.Type.TryGetAttribute(out MetaDescriptionAttribute atr);
                 return isCustom ? atr.Data : MetaDescription.Empty;
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetDescription)} method does not work.");
@@ -566,10 +619,14 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region GetTags
-            public static IReadOnlyList<string> GetTags(Type type)
+            public static IReadOnlyList<string> GetTags(TypeMeta meta)
             {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-                var atr = type.GetCustomAttribute<MetaTagsAttribute>();
+                if (meta._proxy.Tags != null)
+                {
+                    return meta._proxy.Tags.ToArray();
+                }
+                var atr = meta.Type.GetCustomAttribute<MetaTagsAttribute>();
                 return atr != null ? atr.Tags : Array.Empty<string>();
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetTags)} method does not work.");
@@ -623,5 +680,29 @@ namespace DCFApixels.DragonECS
             #endregion
         }
         #endregion
+    }
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
+    public sealed class MetaProxyAttribute : EcsMetaAttribute
+    {
+        public Type Type;
+        public MetaProxyAttribute(Type type)
+        {
+            Type = type;
+        }
+    }
+    public class MetaProxy
+    {
+        public static readonly MetaProxy EmptyProxy = new MetaProxy(typeof(void));
+        public static TypeMeta EmptyMeta => TypeMeta.NullTypeMeta;
+        public readonly Type Type;
+        public virtual string Name { get { return null; } }
+        public virtual MetaColor? Color { get { return null; } }
+        public virtual MetaDescription Description { get { return null; } }
+        public virtual MetaGroup Group { get { return null; } }
+        public virtual IEnumerable<string> Tags { get { return null; } }
+        public MetaProxy(Type type)
+        {
+            Type = type;
+        }
     }
 }
