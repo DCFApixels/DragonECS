@@ -16,9 +16,9 @@ namespace DCFApixels.DragonECS
             Type = type;
         }
     }
-    public class MetaProxy
+    public class MetaProxyBase
     {
-        public static readonly MetaProxy EmptyProxy = new MetaProxy(typeof(void));
+        public static readonly MetaProxyBase EmptyProxy = new MetaProxyBase(typeof(void));
         public static TypeMeta EmptyMeta => TypeMeta.NullTypeMeta;
         public readonly Type Type;
         public virtual string Name { get { return null; } }
@@ -26,7 +26,7 @@ namespace DCFApixels.DragonECS
         public virtual MetaDescription Description { get { return null; } }
         public virtual MetaGroup Group { get { return null; } }
         public virtual IEnumerable<string> Tags { get { return null; } }
-        public MetaProxy(Type type)
+        public MetaProxyBase(Type type)
         {
             Type = type;
         }

@@ -49,7 +49,7 @@ namespace DCFApixels.DragonECS
 
         private readonly int _uniqueID;
         internal readonly Type _type;
-        private readonly MetaProxy _proxy;
+        private readonly MetaProxyBase _proxy;
 
         private bool _isCustomName;
         private bool _isCustomColor;
@@ -122,7 +122,7 @@ namespace DCFApixels.DragonECS
         {
             _uniqueID = _increment++;
             _type = type;
-            _proxy = MetaProxy.EmptyProxy;
+            _proxy = MetaProxyBase.EmptyProxy;
 
             if (type.ContainsGenericParameters == false && 
                 type.TryGetAttribute<MetaProxyAttribute>(out var proxyAtr))
@@ -140,7 +140,7 @@ namespace DCFApixels.DragonECS
 
                 if (proxyType.ContainsGenericParameters == false)
                 {
-                    var proxy = Activator.CreateInstance(proxyType, type) as MetaProxy;
+                    var proxy = Activator.CreateInstance(proxyType, type) as MetaProxyBase;
                     if (proxy != null)
                     {
                         _proxy = proxy;
