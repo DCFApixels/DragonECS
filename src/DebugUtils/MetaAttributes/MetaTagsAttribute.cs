@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
-    public sealed class MetaTagsAttribute : EcsMetaAttribute
+    public sealed class MetaTagsAttribute : DragonMetaAttribute
     {
         public const char SEPARATOR = ',';
         private readonly string[] _tags = Array.Empty<string>();

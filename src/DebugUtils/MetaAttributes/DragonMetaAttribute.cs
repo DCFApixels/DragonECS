@@ -5,7 +5,7 @@ using System;
 
 namespace DCFApixels.DragonECS.Core
 {
-    public abstract class EcsMetaAttribute : Attribute { }
+    public abstract class DragonMetaAttribute : Attribute { }
 
     internal static class EcsMetaAttributeHalper
     {

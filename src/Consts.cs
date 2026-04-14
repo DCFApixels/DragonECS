@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DCFApixels.DragonECS
+﻿namespace DCFApixels.DragonECS
 {
     public static class EcsConsts
     {

@@ -7,7 +7,7 @@ using System;
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
-    public sealed class MetaDescriptionAttribute : EcsMetaAttribute
+    public sealed class MetaDescriptionAttribute : DragonMetaAttribute
     {
         public readonly MetaDescription Data;
         public MetaDescriptionAttribute(string text)

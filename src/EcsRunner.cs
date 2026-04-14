@@ -1,8 +1,8 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
+using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
-using DCFApixels.DragonECS.RunnersCore;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -17,7 +17,7 @@ namespace DCFApixels.DragonECS
     [MetaID("DragonECS_EF8A557C9201E6F04D4A76DC670BDE19")]
     public interface IEcsProcess : IEcsMember { }
 
-    namespace RunnersCore
+    namespace Core
     {
         //добавить инъекцию в раннеры
         public abstract class EcsRunner

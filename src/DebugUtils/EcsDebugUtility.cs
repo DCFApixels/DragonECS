@@ -285,7 +285,7 @@ namespace DCFApixels.DragonECS
         public static TypeMeta GetTypeMeta(object obj)
         {
             if (obj == null) { return TypeMeta.NullTypeMeta; }
-            return TypeMeta.Get(Type.GetTypeHandle(GetTypeMetaSource(obj)));
+            return TypeMeta.Get(Type.GetTypeHandle(obj));
         }
         public static TypeMeta GetTypeMeta<T>()
         {
@@ -298,17 +298,6 @@ namespace DCFApixels.DragonECS
         public static TypeMeta GetTypeMeta(RuntimeTypeHandle typeHandle)
         {
             return TypeMeta.Get(typeHandle);
-        }
-        #endregion
-
-        #region TypeMetaProvider
-        public static bool IsTypeMetaProvided(object obj)
-        {
-            return obj is IEcsTypeMetaProvider;
-        }
-        public static object GetTypeMetaSource(object obj)
-        {
-            return obj is IEcsTypeMetaProvider intr ? intr.MetaSource : obj;
         }
         #endregion
     }

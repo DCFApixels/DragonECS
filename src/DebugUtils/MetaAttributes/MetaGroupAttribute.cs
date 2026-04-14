@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
-    public sealed class MetaGroupAttribute : EcsMetaAttribute
+    public sealed class MetaGroupAttribute : DragonMetaAttribute
     {
         public const char SEPARATOR = MetaGroup.SEPARATOR;
         public readonly string Name = string.Empty;

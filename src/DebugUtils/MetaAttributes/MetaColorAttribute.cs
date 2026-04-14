@@ -23,7 +23,7 @@ namespace DCFApixels.DragonECS
         #endregion
     }
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
-    public sealed class MetaColorAttribute : EcsMetaAttribute, IMetaColor
+    public sealed class MetaColorAttribute : DragonMetaAttribute, IMetaColor
     {
         public readonly MetaColor color;
 

@@ -3,7 +3,6 @@
 #endif
 using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
-using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -441,7 +440,7 @@ namespace DCFApixels.DragonECS
         public static bool IsHasCustomMeta(Type type)
         {
 #if DEBUG || !REFLECTION_DISABLED
-            return CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(EcsMetaAttribute), false).Length > 0;
+            return CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(DragonMetaAttribute), false).Length > 0;
 #else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasMeta)} method does not work.");
             return false;
@@ -680,29 +679,5 @@ namespace DCFApixels.DragonECS
             #endregion
         }
         #endregion
-    }
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
-    public sealed class MetaProxyAttribute : EcsMetaAttribute
-    {
-        public Type Type;
-        public MetaProxyAttribute(Type type)
-        {
-            Type = type;
-        }
-    }
-    public class MetaProxy
-    {
-        public static readonly MetaProxy EmptyProxy = new MetaProxy(typeof(void));
-        public static TypeMeta EmptyMeta => TypeMeta.NullTypeMeta;
-        public readonly Type Type;
-        public virtual string Name { get { return null; } }
-        public virtual MetaColor? Color { get { return null; } }
-        public virtual MetaDescription Description { get { return null; } }
-        public virtual MetaGroup Group { get { return null; } }
-        public virtual IEnumerable<string> Tags { get { return null; } }
-        public MetaProxy(Type type)
-        {
-            Type = type;
-        }
     }
 }

@@ -14,7 +14,7 @@ using System.Text.RegularExpressions;
 namespace DCFApixels.DragonECS
 {
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
-    public sealed class MetaIDAttribute : EcsMetaAttribute
+    public sealed class MetaIDAttribute : DragonMetaAttribute
     {
         public readonly string ID;
         public MetaIDAttribute(string id)

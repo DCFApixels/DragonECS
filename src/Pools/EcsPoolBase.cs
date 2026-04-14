@@ -8,13 +8,12 @@
 #endif
 
 using DCFApixels.DragonECS.Core.Internal;
-using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace DCFApixels.DragonECS.PoolsCore
+namespace DCFApixels.DragonECS.Core
 {
     /// <summary> Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>. </summary>
     public interface IEcsPoolImplementation : IEcsPool

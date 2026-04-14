@@ -1,8 +1,8 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
+using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
-using DCFApixels.DragonECS.PoolsCore;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
