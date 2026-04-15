@@ -1,13 +1,17 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
+#if DEBUG || !REFLECTION_DISABLED
+#define REFLECTION_ENABLED
+#endif
+
 using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-#if DEBUG || !REFLECTION_DISABLED
+#if REFLECTION_ENABLED
 using System.Reflection;
 #endif
 
@@ -127,7 +131,11 @@ namespace DCFApixels.DragonECS
 
             if (type.TryGetAttributeInherited<MetaProxyAttribute>(out var proxyAtr, out var declaringAtrType))
             {
-#if REFLECTION_DISABLED
+#if REFLECTION_ENABLED
+#pragma warning disable IDE0019 // Используйте сопоставление шаблонов
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+#pragma warning disable IL2055 // Either the type on which the MakeGenericType is called can't be statically determined, or the type parameters to be used for generic arguments can't be statically determined.
+#pragma warning disable IL2077 // Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The source field does not have matching annotations.
                 Type proxyType = proxyAtr.Type;
                 if (proxyType.ContainsGenericParameters && proxyType.IsNested)
                 {
@@ -147,6 +155,10 @@ namespace DCFApixels.DragonECS
                         _isSelfProxy = declaringAtrType == type;
                     }
                 }
+#pragma warning restore IL2055 
+#pragma warning restore IL3050
+#pragma warning restore IDE0019
+#pragma warning restore IL2077
 #endif
             }
         }
@@ -422,7 +434,7 @@ namespace DCFApixels.DragonECS
         }
         private static bool CheckEcsMemener(Type checkedType)
         {
-#if DEBUG || !REFLECTION_DISABLED
+#if REFLECTION_ENABLED
             return checkedType.IsInterface == false && checkedType.IsAbstract == false && typeof(IEcsMember).IsAssignableFrom(checkedType);
 #else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(CheckEcsMemener)} method does not work.");
@@ -441,16 +453,16 @@ namespace DCFApixels.DragonECS
         }
         public static bool IsHasCustomMeta(Type type)
         {
-#if DEBUG || !REFLECTION_DISABLED
+#if REFLECTION_ENABLED
             return CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(DragonMetaAttribute), false).Length > 0;
 #else
-            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasMeta)} method does not work.");
+            EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasCustomMeta)} method does not work.");
             return false;
 #endif
         }
         public static bool IsHasMetaID(Type type)
         {
-#if DEBUG || !REFLECTION_DISABLED
+#if REFLECTION_ENABLED
             return TryGetCustomMeta(type, out TypeMeta meta) && meta.IsHasMetaID();
 #else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasMetaID)} method does not work.");
@@ -519,7 +531,7 @@ namespace DCFApixels.DragonECS
             }
             public static (string, bool) GetMetaName(TypeMeta meta)
             {
-#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if REFLECTION_ENABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 if (meta._isSelfProxy && meta._proxy.Name != null)
                 {
                     return (meta._proxy.Name, true);
@@ -548,7 +560,7 @@ namespace DCFApixels.DragonECS
                 return (EcsDebugUtility.GetGenericTypeName(type, GENERIC_NAME_DEPTH), false);
 #else
                 EcsDebug.PrintWarning($"Reflection is not available, the {nameof(MetaGenerator)}.{nameof(GetMetaName)} method does not work.");
-                return (type.Name, false);
+                return (meta.Type.Name, false);
 #endif
             }
             #endregion
@@ -569,7 +581,7 @@ namespace DCFApixels.DragonECS
             }
             public static (MetaColor, bool) GetColor(TypeMeta meta)
             {
-#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if REFLECTION_ENABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 if (meta._isSelfProxy && meta._proxy.Color != null)
                 {
                     return (meta._proxy.Color.Value, true);
@@ -594,7 +606,7 @@ namespace DCFApixels.DragonECS
             #region GetGroup
             public static MetaGroup GetGroup(TypeMeta meta)
             {
-#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if REFLECTION_ENABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 if (meta._isSelfProxy && meta._proxy.Group != null)
                 {
                     return meta._proxy.Group;
@@ -618,7 +630,7 @@ namespace DCFApixels.DragonECS
             #region GetDescription
             public static MetaDescription GetDescription(TypeMeta meta)
             {
-#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if REFLECTION_ENABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 if (meta._isSelfProxy && meta._proxy.Description != null)
                 {
                     return meta._proxy.Description;
@@ -642,7 +654,7 @@ namespace DCFApixels.DragonECS
             #region GetTags
             public static IReadOnlyList<string> GetTags(TypeMeta meta)
             {
-#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if REFLECTION_ENABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 if (meta._isSelfProxy && meta._proxy.Tags != null)
                 {
                     return meta._proxy.Tags.ToArray();
@@ -666,7 +678,7 @@ namespace DCFApixels.DragonECS
             #region GetMetaID
             public static string GetMetaID(Type type)
             {
-#if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
+#if REFLECTION_ENABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
                 var atr = type.GetCustomAttribute<MetaIDAttribute>();
 
                 if (atr == null)
