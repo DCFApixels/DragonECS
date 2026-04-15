@@ -132,7 +132,6 @@ namespace DCFApixels.DragonECS
             if (type.TryGetAttributeInherited<MetaProxyAttribute>(out var proxyAtr, out var declaringAtrType))
             {
 #if REFLECTION_ENABLED
-#pragma warning disable IDE0019 // Используйте сопоставление шаблонов
 #pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 #pragma warning disable IL2055 // Either the type on which the MakeGenericType is called can't be statically determined, or the type parameters to be used for generic arguments can't be statically determined.
 #pragma warning disable IL2077 // Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The source field does not have matching annotations.
@@ -157,7 +156,6 @@ namespace DCFApixels.DragonECS
                 }
 #pragma warning restore IL2055 
 #pragma warning restore IL3050
-#pragma warning restore IDE0019
 #pragma warning restore IL2077
 #endif
             }
