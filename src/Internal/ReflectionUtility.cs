@@ -19,21 +19,21 @@ namespace DCFApixels.DragonECS.Core.Internal
             return type;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetAttributeInherited<T>(this Type self, out T attribute, out Type declareAtrType) where T : Attribute
+        public static bool TryGetAttributeInherited<T>(this Type self, out T attribute, out Type declaringAtrType) where T : Attribute
         {
             if (self == null || self == typeof(object))
             {
                 attribute = null;
-                declareAtrType = null;
+                declaringAtrType = null;
                 return false;
             }
 
             attribute = self.GetCustomAttribute<T>();
             if (attribute == null)
             {
-                return self.BaseType.TryGetAttributeInherited<T>(out attribute, out declareAtrType);
+                return self.BaseType.TryGetAttributeInherited<T>(out attribute, out declaringAtrType);
             }
-            declareAtrType = self;
+            declaringAtrType = self;
             return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

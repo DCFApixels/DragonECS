@@ -408,6 +408,9 @@ namespace DCFApixels.DragonECS
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
 #endif
+    [MetaTags(MetaTags.HIDDEN)]
+    [MetaColor(MetaColor.DragonRose)]
+    [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public readonly struct ReadonlyEcsValuePool<T> : IEcsReadonlyPool //IEnumerable<T> - IntelliSense hack
         where T : unmanaged, IEcsValueComponent

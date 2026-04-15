@@ -294,6 +294,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region NullWorld
+        [MetaTags(MetaTags.HIDDEN)]
+        [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
         private sealed class NullWorld : EcsWorld
         {
             internal NullWorld() : base(new EcsWorldConfig(4, 4, 4, 4, 4), null, 0) { }

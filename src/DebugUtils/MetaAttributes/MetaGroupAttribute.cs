@@ -73,6 +73,10 @@ namespace DCFApixels.DragonECS
             }
             return new MetaGroup(name);
         }
+        public static MetaGroup FromName(params string[] path)
+        {
+            return FromName(string.Join(SEPARATOR, path));
+        }
         public static MetaGroup FromNameSpace(Type type)
         {
             if (string.IsNullOrWhiteSpace(type.Namespace))

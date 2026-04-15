@@ -63,6 +63,23 @@ namespace DCFApixels.DragonECS
             #endregion
 
             public delegate void ActionWithData<in TProcess, T>(TProcess process, ref T Data);
+
+            #region MetaProxy
+            protected class RunnerMetaProxy : MetaProxyBase
+            {
+                private TypeMeta _processMeta;
+                public override MetaColor? Color => MetaColor.DragonRose;
+                public override MetaDescription Description => new MetaDescription(EcsConsts.AUTHOR, $"Runner for {_processMeta.TypeName} process.");
+                public override MetaGroup Group => MetaGroup.FromName(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP);
+                public RunnerMetaProxy(Type type) : base(type)
+                {
+                    if (type.IsGenericType)
+                    {
+                        _processMeta = type.GetGenericArguments()[0].GetMeta();
+                    }
+                }
+            }
+            #endregion
         }
 
         [MetaColor(MetaColor.DragonRose)]
@@ -80,9 +97,9 @@ namespace DCFApixels.DragonECS
 
         [MetaColor(MetaColor.DragonRose)]
         [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
-        [MetaDescription(EcsConsts.AUTHOR, "...")]
         [MetaTags(MetaTags.HIDDEN)]
         [MetaID("DragonECS_7DB3557C9201F85E0E1C17D7B19D9CEE")]
+        [MetaProxy(typeof(RunnerMetaProxy), true)]
         public abstract class EcsRunner<TProcess> : EcsRunner, IEcsRunner, IEcsProcess
             where TProcess : IEcsProcess
         {
@@ -476,8 +493,6 @@ namespace DCFApixels.DragonECS
                 #endregion
             }
             #endregion
-
-            //----
         }
     }
 

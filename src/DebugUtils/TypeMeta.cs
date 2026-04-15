@@ -125,27 +125,25 @@ namespace DCFApixels.DragonECS
             _type = type;
             _proxy = MetaProxyBase.EmptyProxy;
 
-            if (type.ContainsGenericParameters == false && 
-                type.TryGetAttributeInherited<MetaProxyAttribute>(out var proxyAtr, out var declareAtrType))
+            if (type.TryGetAttributeInherited<MetaProxyAttribute>(out var proxyAtr, out var declaringAtrType))
             {
                 Type proxyType = proxyAtr.Type;
                 if (proxyType.ContainsGenericParameters && proxyType.IsNested)
                 {
-                    var baseType = FindDeclaringType(proxyType.DeclaringType, type);
-                    if(baseType != null)
+                    if (declaringAtrType != null && declaringAtrType.ContainsGenericParameters == false)
                     {
-                        var args = baseType.GetGenericArguments();
+                        var args = declaringAtrType.GetGenericArguments();
                         proxyType = proxyType.MakeGenericType(args);
                     }
                 }
 
                 if (proxyType.ContainsGenericParameters == false)
                 {
-                    var proxy = Activator.CreateInstance(proxyType, type) as MetaProxyBase;
+                    var proxy = Activator.CreateInstance(proxyType, proxyAtr.ForDeclaringType ? declaringAtrType : type) as MetaProxyBase;
                     if (proxy != null)
                     {
                         _proxy = proxy;
-                        _isSelfProxy = declareAtrType == type;
+                        _isSelfProxy = declaringAtrType == type;
                     }
                 }
             }

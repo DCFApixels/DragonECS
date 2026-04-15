@@ -59,7 +59,6 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
     [MetaTags(MetaTags.HIDDEN)]
     [MetaID("DragonECS_3273527C9201285BAA0A463F700A50FB")]
     internal sealed class EcsPreInitRunner : EcsRunner<IEcsPreInit>, IEcsPreInit
@@ -80,7 +79,6 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
     [MetaTags(MetaTags.HIDDEN)]
     [MetaID("DragonECS_ED85527C9201A391AB8EC0B734917859")]
     internal sealed class EcsInitRunner : EcsRunner<IEcsInit>, IEcsInit
@@ -101,7 +99,6 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
     [MetaTags(MetaTags.HIDDEN)]
     [MetaID("DragonECS_2098527C9201F260C840BFD50BC7E0BA")]
     internal sealed class EcsRunRunner : EcsRunner<IEcsRun>, IEcsRun
@@ -182,7 +179,6 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP)]
-    [MetaDescription(EcsConsts.AUTHOR, "...")]
     [MetaTags(MetaTags.HIDDEN)]
     [MetaID("DragonECS_06A6527C92010430ACEB3DA520F272CC")]
     internal sealed class EcsDestroyRunner : EcsRunner<IEcsDestroy>, IEcsDestroy
