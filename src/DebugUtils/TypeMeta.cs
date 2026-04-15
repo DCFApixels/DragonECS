@@ -127,6 +127,7 @@ namespace DCFApixels.DragonECS
 
             if (type.TryGetAttributeInherited<MetaProxyAttribute>(out var proxyAtr, out var declaringAtrType))
             {
+#if REFLECTION_DISABLED
                 Type proxyType = proxyAtr.Type;
                 if (proxyType.ContainsGenericParameters && proxyType.IsNested)
                 {
@@ -146,9 +147,10 @@ namespace DCFApixels.DragonECS
                         _isSelfProxy = declaringAtrType == type;
                     }
                 }
+#endif
             }
         }
-        #endregion
+#endregion
 
         #region Type
         public Type Type

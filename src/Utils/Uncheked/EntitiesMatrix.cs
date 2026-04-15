@@ -2,7 +2,7 @@
 #undef DEBUG
 #endif
 
-namespace DCFApixels.DragonECS.UncheckedCore
+namespace DCFApixels.DragonECS.Core.Unchecked
 {
     public readonly struct EntitiesMatrix
     {
