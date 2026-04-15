@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace DCFApixels.DragonECS
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
     public sealed class MetaProxyAttribute : DragonMetaAttribute
     {
         public Type Type;
@@ -19,7 +19,6 @@ namespace DCFApixels.DragonECS
     public class MetaProxyBase
     {
         public static readonly MetaProxyBase EmptyProxy = new MetaProxyBase(typeof(void));
-        public static TypeMeta EmptyMeta => TypeMeta.NullTypeMeta;
         public readonly Type Type;
         public virtual string Name { get { return null; } }
         public virtual MetaColor? Color { get { return null; } }
