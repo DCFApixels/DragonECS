@@ -105,6 +105,7 @@ namespace DCFApixels.DragonECS.Core
         }
         protected abstract void OnInitialize();
         protected abstract void OnDestroy();
+        public abstract EcsSpan Snapshot();
     }
 
 #if ENABLE_IL2CPP

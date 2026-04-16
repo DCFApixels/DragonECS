@@ -117,6 +117,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             ExecuteFor_Iternal(span);
             return _filteredGroup;
         }
+        public override EcsSpan Snapshot() { return Execute(); }
         #endregion
     }
 }

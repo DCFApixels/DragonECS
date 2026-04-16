@@ -160,6 +160,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             SortHalper.Sort(_filteredEntities.AsSpan(_filteredEntitiesCount), comparison);
             return new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount);
         }
+        public override EcsSpan Snapshot() { return Execute(); }
         #endregion
     }
 }

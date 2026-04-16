@@ -286,6 +286,10 @@ namespace DCFApixels.DragonECS
                 RemoveFromEmptyEntities(entityID);
             }
             _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex] |= maskBit.mask;
+            if (_hasAnyEntityListener)
+            {
+                _entityListeners.InvokeOnMigrateEntity(entityID);
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UnregisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
@@ -296,12 +300,15 @@ namespace DCFApixels.DragonECS
             slot.version++;
             var count = --_entities[entityID].componentsCount;
             _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex] &= ~maskBit.mask;
-
             if (count == 0 && IsUsed(entityID))
             {
                 MoveToEmptyEntities(entityID);
             }
             CheckUnregisterValid(count, entityID);
+            if (_hasAnyEntityListener)
+            {
+                _entityListeners.InvokeOnMigrateEntity(entityID);
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryRegisterEntityComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
@@ -319,6 +326,10 @@ namespace DCFApixels.DragonECS
                 if (count == 0 && IsUsed(entityID))
                 {
                     RemoveFromEmptyEntities(entityID);
+                }
+                if (_hasAnyEntityListener)
+                {
+                    _entityListeners.InvokeOnMigrateEntity(entityID);
                 }
                 return true;
             }
@@ -343,6 +354,10 @@ namespace DCFApixels.DragonECS
                     MoveToEmptyEntities(entityID);
                 }
                 CheckUnregisterValid(count, entityID);
+                if (_hasAnyEntityListener)
+                {
+                    _entityListeners.InvokeOnMigrateEntity(entityID);
+                }
                 return true;
             }
             return false;

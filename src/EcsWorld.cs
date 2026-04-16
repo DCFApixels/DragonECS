@@ -86,6 +86,7 @@ namespace DCFApixels.DragonECS
 
         private StructList<IEcsWorldEventListener> _listeners = new StructList<IEcsWorldEventListener>(2);
         private StructList<IEcsEntityEventListener> _entityListeners = new StructList<IEcsEntityEventListener>(2);
+        private bool _hasAnyEntityListener = false;
 
         #region Properties
         EcsWorld IEntityStorage.World
@@ -394,7 +395,10 @@ namespace DCFApixels.DragonECS
             {
                 slot.gen |= GEN_SLEEP_MASK;
             }
-            _entityListeners.InvokeOnNewEntity(entityID);
+            if (_hasAnyEntityListener)
+            {
+                _entityListeners.InvokeOnNewEntity(entityID);
+            }
             MoveToEmptyEntities(entityID);
         }
 
@@ -436,7 +440,10 @@ namespace DCFApixels.DragonECS
             _delEntBuffer[_delEntBufferCount++] = entityID;
             _entities[entityID].isUsed = false;
             _entitiesCount--;
-            _entityListeners.InvokeOnDelEntity(entityID);
+            if (_hasAnyEntityListener)
+            {
+                _entityListeners.InvokeOnDelEntity(entityID);
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void MoveToEmptyEntities(int entityID)
@@ -1045,10 +1052,12 @@ namespace DCFApixels.DragonECS
         public void AddListener(IEcsEntityEventListener entityEventListener)
         {
             _entityListeners.Add(entityEventListener);
+            _hasAnyEntityListener = _entityListeners.Count > 0;
         }
         public void RemoveListener(IEcsEntityEventListener entityEventListener)
         {
             _entityListeners.Remove(entityEventListener);
+            _hasAnyEntityListener = _entityListeners.Count > 0;
         }
         #endregion
 
@@ -1374,6 +1383,7 @@ namespace DCFApixels.DragonECS
     public interface IEcsEntityEventListener
     {
         void OnNewEntity(int entityID);
+        void OnMigrateEntity(int entityID);
         void OnDelEntity(int entityID);
     }
     internal static class WorldEventListExtensions
@@ -1408,6 +1418,14 @@ namespace DCFApixels.DragonECS
             for (int i = 0, iMax = self.Count; i < iMax; i++)
             {
                 self[i].OnNewEntity(entityID);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InvokeOnMigrateEntity(this ref StructList<IEcsEntityEventListener> self, int entityID)
+        {
+            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            {
+                self[i].OnMigrateEntity(entityID);
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
