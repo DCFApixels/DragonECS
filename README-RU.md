@@ -75,7 +75,7 @@ DragonECS - это [ECS](https://en.wikipedia.org/wiki/Entity_component_system) 
 - [Расширение фреймворка](#расширение-фреймворка)
   - [Компоненты мира](#компоненты-мира)
   - [Конфиги](#конфиги)
-- [Проекты на DragonECS](#Проекты-на-DragonECS)
+- [Проекты на DragonECS](#проекты-на-dragonecs)
 - [FAQ](#faq)
 - [Обратная связь](#обратная-связь)
 - [Лицензия](#лицензия)
@@ -911,6 +911,40 @@ var metaID = typeMeta.MetaID; // [MetaID]
 var tags = typeMeta.Tags; // [MetaTags]
 ```
 > Для автоматической генерации уникальных идентификаторов MetaID есть метод `MetaID.GenerateNewUniqueID()` и [Браузерный генератор](https://dcfapixels.github.io/DragonECS-MetaID_Generator_Online/)
+
+<details>
+<summary>[MetaProxy]</summary>
+
+`[MetaProxy(typeof(MetaProxyType))]` атрибут для гибкой настройки метаданных. Он позволяет обходить ограничения обычных атрибутов (например, невозможность передавать в них неконстантные данные) и задавать метаданные программно. Кроме того, метаданные, полученные через `MetaProxy`, наследуются.
+
+API напоминает `[DebuggerTypeProxy]`, но вместо экземпляра объекта принимает тип `Type`. А класс для `MetaProxy` должен наследовать `MetaProxyBase`.
+
+Пример использования:
+
+``` c#
+// Применение атрибута
+[MetaProxy(typeof(UnityComponent<>.MetaProxy))]
+// В данном примере UnityComponent оборачивает компонент Unity
+public struct UnityComponent<T> where T : Component
+{
+    // ...
+
+    // Реализация MetaProxyBase. MetaProxy копирует метаданные оборачиваемого типа,
+    // чтобы в инспекторе Unity отображалась его мета.
+    private class MetaProxy : MetaProxyBase
+    {
+        protected TypeMeta Meta = typeof(T).GetMeta();
+        public override string Name { get { return Meta?.Name; } }
+        public override MetaColor? Color { get { return Meta != null && Meta.IsCustomColor ? Meta.Color : null; } }
+        public override MetaGroup Group { get { return Meta?.Group; } }
+        public override MetaDescription Description { get { return Meta?.Description; } }
+        public override IEnumerable<string> Tags { get { return Meta?.Tags; } }
+        public MetaProxy(Type type) : base(type) { }
+    }
+}
+```
+
+</details>
 
 ## EcsDebug
 Вспомогательный тип с набором методов для отладки и логирования. Реализован как статический класс вызывающий методы Debug-сервисов. Debug-сервисы - это посредники между EcsDebug и инструментами отладки среды. Такая реализация позволяет не изменяя отладочный код, менять его поведение или переносить проект в другие среды, достаточно только реализовать соответствующий Debug-сервис.

@@ -871,6 +871,41 @@ var tags = typeMeta.Tags; // [MetaTags]
 ```
 > To simplify generate unique MetaID values, use `MetaID.GenerateNewUniqueID()` or the [Browser Generator](https://dcfapixels.github.io/DragonECS-MetaID_Generator_Online/).
 
+<details>
+<summary>[MetaProxy]</summary>
+
+The `[MetaProxy(typeof(MetaProxyType))]` attribute enables flexible metadata configuration. It allows bypassing the limitations of regular attributes (for example, the inability to pass non-constant data into them) and setting metadata programmatically. Furthermore, metadata obtained via `MetaProxy` is inherited.
+
+The API resembles `[DebuggerTypeProxy]`, but instead of an object instance, it accepts a Type. The class for `MetaProxy` must inherit from `MetaProxyBase`.
+
+Usage example:
+
+``` c#
+// Applying the attribute
+[MetaProxy(typeof(UnityComponent<>.MetaProxy))]
+// In this example, UnityComponent wraps a Unity component
+public struct UnityComponent<T> where T : Component
+{
+    // ...
+
+    // Implementation of MetaProxyBase. MetaProxy copies the metadata of the wrapped type
+    // so that its metadata is displayed in the Unity inspector.
+    private class MetaProxy : MetaProxyBase
+    {
+        protected TypeMeta Meta = typeof(T).GetMeta();
+        public override string Name { get { return Meta?.Name; } }
+        public override MetaColor? Color { get { return Meta != null && Meta.IsCustomColor ? Meta.Color : null; } }
+        public override MetaGroup Group { get { return Meta?.Group; } }
+        public override MetaDescription Description { get { return Meta?.Description; } }
+        public override IEnumerable<string> Tags { get { return Meta?.Tags; } }
+        public MetaProxy(Type type) : base(type) { }
+    }
+}
+```
+
+</details>
+
+
 ## EcsDebug
 Provides methods for debugging and logging. Implemented as a static class that forwards calls to a Debug service. Debug services act as intermediaries between environment-specific debugging systems and EcsDebug, enabling portability.
 

@@ -72,7 +72,7 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
   - [集合](#集合)
   - [ECS入口](#ECS入口)
 - [Debug](#debug)
-  - [元属性](#元属性)
+  - [Meta Attributes](#meta-attributes)
   - [EcsDebug](#ecsdebug)
   - [性能分析](#性能分析)
 - [Define Symbols](#define-symbols)
@@ -798,7 +798,7 @@ public class EcsRoot
 
 # Debug
 该框架提供了额外的调试和日志记录工具，不依赖于环境此外，许多类型都有自己的 DebuggerProxy，以便在 IDE 中更详细地显示信息。
-## 元属性
+## Meta Attributes
 默认情况下，元属性没有用处，在与引擎集成时用于指定在调试工具和编辑器中的显示方式。还可以用于生成自动文档。
 ``` c#
 using DCFApixels.DragonECS;
@@ -836,6 +836,40 @@ var metaID = typeMeta.MetaID; // [MetaID]
 var tags = typeMeta.Tags; // [MetaTags]
 ```
 > 为了自动生成唯一的标识符 MetaID，可以使用 `MetaID.GenerateNewUniqueID()` 方法和 [浏览器生成器](https://dcfapixels.github.io/DragonECS-MetaID_Generator_Online/)。
+
+<details> 
+<summary>MetaProxy</summary>
+
+`[MetaProxy(typeof(MetaProxyType))]` 特性用于灵活配置元数据。它允许绕过常规特性的限制（例如无法向其传递非常量数据），并以编程方式设置元数据。此外，通过 `MetaProxy` 获得的元数据是可继承的。
+
+该 API 类似于 `[DebuggerTypeProxy]`，但不同之处在于它接受的是 `Type` 类型，而不是对象实例。`MetaProxy` 的类必须继承自 `MetaProxyBase`。
+
+使用示例：
+
+``` c#
+// 应用特性
+[MetaProxy(typeof(UnityComponent<>.MetaProxy))]
+// 在此示例中，UnityComponent 包装了一个 Unity 组件
+public struct UnityComponent<T> where T : Component
+{
+    // ...
+
+    // MetaProxyBase 的实现。MetaProxy 复制被包装类型的元数据，
+    // 以便在 Unity 检查器中显示其元数据。
+    private class MetaProxy : MetaProxyBase
+    {
+        protected TypeMeta Meta = typeof(T).GetMeta();
+        public override string Name { get { return Meta?.Name; } }
+        public override MetaColor? Color { get { return Meta != null && Meta.IsCustomColor ? Meta.Color : null; } }
+        public override MetaGroup Group { get { return Meta?.Group; } }
+        public override MetaDescription Description { get { return Meta?.Description; } }
+        public override IEnumerable<string> Tags { get { return Meta?.Tags; } }
+        public MetaProxy(Type type) : base(type) { }
+    }
+}
+```
+
+</details>
 
 ## EcsDebug
 具有调试和日志记录方法集. 实现为一个静态类，调用 DebugService 的方法.  DebugService 是环境调试系统与 EcsDebug 之间的中介. 这使得可以将项目移植到其他引擎上，而无需修改项目的调试代码，只需要实现特定的 DebugService 即可。
