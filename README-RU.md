@@ -1009,7 +1009,7 @@ using (_marker.Auto())
 var configs = new ConfigContainer()
     .Set(new EcsWorldConfig(entitiesCapacity: 2000, poolsCapacity: 2000)
     .Set(new SomeDataA(/* ... */))
-    .Set(new SomeDataB(/* ... */)));
+    .Set(new SomeDataB(/* ... */));
 EcsDefaultWorld _world = new EcsDefaultWorld(configs);
 // ...
 var _someDataA = _world.Configs.Get<SomeDataA>();
