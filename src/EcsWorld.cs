@@ -399,7 +399,7 @@ namespace DCFApixels.DragonECS
             {
                 _entityListeners.InvokeOnNewEntity(entityID);
             }
-            MoveToEmptyEntities(entityID);
+            MoveToEmptyEntities(entityID, false);
         }
 
 
@@ -446,10 +446,18 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void MoveToEmptyEntities(int entityID)
+        private void MoveToEmptyEntities(int entityID, bool readyToRemove)
         {
+            if (readyToRemove)
+            {
+                entityID |= int.MinValue;
+            }
             _emptyEntities[_emptyEntitiesLength++] = entityID;
             _emptyEntitiesCount++;
+            if (_emptyEntitiesLength == _emptyEntities.Length)
+            {
+                ReleaseEmptyEntitiesBuffer_OnlyReadyToRemove();
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RemoveFromEmptyEntities(int entityID)
@@ -461,7 +469,7 @@ namespace DCFApixels.DragonECS
             {
                 for (int i = _emptyEntitiesLength - 1; i >= 0; i--)
                 {
-                    if (_emptyEntities[i] == entityID)
+                    if ((_emptyEntities[i] & int.MaxValue) == entityID)
                     {
                         _emptyEntities[i] = _emptyEntities[--_emptyEntitiesLength];
                     }
@@ -479,6 +487,45 @@ namespace DCFApixels.DragonECS
                 _emptyEntitiesCount = 0;
                 _emptyEntitiesLength = 0;
             }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ReleaseEmptyEntitiesBuffer()
+        {
+            for (int i = 0; i < _emptyEntitiesLength; i++)
+            {
+                var entityID = _emptyEntities[i] & int.MaxValue;
+                if (IsUsed(entityID) && _entities[entityID].componentsCount == 0)
+                {
+                    DelEntity(entityID);
+                }
+            }
+            _emptyEntitiesCount = 0;
+            _emptyEntitiesLength = 0;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ReleaseEmptyEntitiesBuffer_OnlyReadyToRemove()
+        {
+            var newCount = 0;
+            for (int i = 0; i < _emptyEntitiesLength; i++)
+            {
+                var entityID = _emptyEntities[i];
+                bool isReady = entityID < 0;
+                entityID &= int.MaxValue;
+
+                if (IsUsed(entityID) && _entities[entityID].componentsCount == 0)
+                {
+                    if (isReady)
+                    {
+                        DelEntity(entityID);
+                    }
+                    else
+                    {
+                        _emptyEntities[newCount++] = entityID;
+                    }
+                }
+            }
+            _emptyEntitiesCount = newCount;
+            _emptyEntitiesLength = newCount;
         }
         #endregion
 
@@ -919,16 +966,7 @@ namespace DCFApixels.DragonECS
             if (_emptyEntitiesLength <= 0 && _delEntBufferCount <= 0) { return; }
             unchecked { _version++; }
 
-            for (int i = 0; i < _emptyEntitiesLength; i++)
-            {
-                var entityID = _emptyEntities[i];
-                if (IsUsed(entityID) && _entities[entityID].componentsCount == 0)
-                {
-                    DelEntity(entityID);
-                }
-            }
-            _emptyEntitiesCount = 0;
-            _emptyEntitiesLength = 0;
+            ReleaseEmptyEntitiesBuffer();
 
             if (count < 0)
             {

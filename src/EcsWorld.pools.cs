@@ -302,7 +302,7 @@ namespace DCFApixels.DragonECS
             _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex] &= ~maskBit.mask;
             if (count == 0 && IsUsed(entityID))
             {
-                MoveToEmptyEntities(entityID);
+                MoveToEmptyEntities(entityID, true);
             }
             CheckUnregisterValid(count, entityID);
             if (_hasAnyEntityListener)
@@ -351,7 +351,7 @@ namespace DCFApixels.DragonECS
 
                 if (count == 0 && IsUsed(entityID))
                 {
-                    MoveToEmptyEntities(entityID);
+                    MoveToEmptyEntities(entityID, true);
                 }
                 CheckUnregisterValid(count, entityID);
                 if (_hasAnyEntityListener)
