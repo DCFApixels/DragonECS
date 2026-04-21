@@ -43,12 +43,8 @@
 
 The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims to maximize usability, modularity, extensibility and performance for dynamic entity changes, without code generation or external dependencies. Inspired by [LeoEcs Lite](https://github.com/Leopotam/ecslite).
 
-> [!WARNING]
-> The project is a work in progress; the API may change.
->
-> The most current version of the README is in [Russian version](https://github.com/DCFApixels/DragonECS/blob/main/README-RU.md).
->
-> If there are unclear points, you can ask questions here [Feedback](#Feedback)
+> [!Note]
+> Have questions or want to stay updated on development? Join our community! -> [Feedback](#Feedback)
 
 ## Table of Contents
 - [Installation](#installation)
