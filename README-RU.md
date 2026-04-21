@@ -350,10 +350,13 @@ EcsPipeline pipeline = EcsPipeline.New()
 Слой определяет место в пайплайне для вставки систем. Например, если необходимо чтобы система была вставлена в конце пайплайна, эту систему можно добавить в слой `EcsConsts.END_LAYER`.
 ```c#
 const string SOME_LAYER = nameof(SOME_LAYER);
+const string SOME_LAYER_2 = nameof(SOME_LAYER_2);
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
     // Вставляет новый слой перед конечным слоем EcsConsts.END_LAYER
-    .Layers.Insert(EcsConsts.END_LAYER, SOME_LAYER)
+    .Layers.Add(SOME_LAYER).Before(EcsConsts.END_LAYER)
+    // Вставляет SOME_LAYER_2 слой в позицию после EcsConsts.BASIC_LAYER
+    .Layers.Add(SOME_LAYER).After(EcsConsts.BASIC_LAYER)
     // Система SomeSystem будет вставлена в слой SOME_LAYER
     .Add(New SomeSystem(), SOME_LAYER) 
     // ...

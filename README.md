@@ -309,7 +309,9 @@ const string SOME_LAYER = nameof(SOME_LAYER);
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
     // Inserts a new layer before the end layer EcsConsts.END_LAYER
-    .Layers.Insert(EcsConsts.END_LAYER, SOME_LAYER)
+    .Layers.Add(SOME_LAYER).Before(EcsConsts.END_LAYER)
+    // Inserts SOME_LAYER_2 layer at the position after EcsConsts.BASIC_LAYER
+    .Layers.Add(SOME_LAYER).After(EcsConsts.BASIC_LAYER)
     // System SomeSystem will be added to the SOME_LAYER layer
     .Add(new SomeSystem(), SOME_LAYER) 
     // ...

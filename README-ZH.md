@@ -312,7 +312,9 @@ const string SOME_LAYER = nameof(SOME_LAYER);
 EcsPipeline pipeline = EcsPipeline.New()
     // ...
     // 在最终的 EcsConsts.END_LAYER 层前面插入一个新 SOME_LAYER 层。
-    .Layers.Insert(EcsConsts.END_LAYER, SOME_LAYER) 
+    .Layers.Add(SOME_LAYER).Before(EcsConsts.END_LAYER)
+    // 将 SOME_LAYER_2 层级入到 EcsConsts.BASIC_LAYER 之后的位置
+    .Layers.Add(SOME_LAYER).After(EcsConsts.BASIC_LAYER)
     // SomeSystem 系统将插入 SAME_LAYER 层。
     .Add(New SomeSystem(), SOME_LAYER) 
     // ...
