@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Linq;
 #if REFLECTION_ENABLED
 using System.Reflection;
+using System.Runtime.CompilerServices;
 #endif
 
 namespace DCFApixels.DragonECS
@@ -48,7 +49,19 @@ namespace DCFApixels.DragonECS
         public static readonly TypeMeta NullTypeMeta;
 
         private static readonly object _lock = new object();
-        private static readonly AppendOnlyTable<RuntimeTypeHandle, TypeMeta>.Provider _metaCache = new AppendOnlyTable<RuntimeTypeHandle, TypeMeta>.Provider(256);
+        private static readonly AppendOnlyTable<RuntimeTypeHandleKey, TypeMeta>.Provider _metaCache = new AppendOnlyTable<RuntimeTypeHandleKey, TypeMeta>.Provider(256);
+        private readonly struct RuntimeTypeHandleKey : IEquatable<RuntimeTypeHandleKey>
+        {
+            public readonly RuntimeTypeHandle Handle;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public RuntimeTypeHandleKey(RuntimeTypeHandle handle) { Handle = handle; }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool Equals(RuntimeTypeHandleKey other) { return other.Handle.Value == Handle.Value; }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public override int GetHashCode() { return Handle.GetHashCode(); }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator RuntimeTypeHandleKey(RuntimeTypeHandle handle) { return new RuntimeTypeHandleKey(handle); }
+        }
         private static int _increment = 1;
 
         private readonly int _uniqueID;
