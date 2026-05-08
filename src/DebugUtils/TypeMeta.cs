@@ -48,7 +48,7 @@ namespace DCFApixels.DragonECS
         public static readonly TypeMeta NullTypeMeta;
 
         private static readonly object _lock = new object();
-        private static readonly Dictionary<RuntimeTypeHandle, TypeMeta> _metaCache = new Dictionary<RuntimeTypeHandle, TypeMeta>();
+        private static readonly AppendOnlyTable<RuntimeTypeHandle, TypeMeta>.Provider _metaCache = new AppendOnlyTable<RuntimeTypeHandle, TypeMeta>.Provider(256);
         private static int _increment = 1;
 
         private readonly int _uniqueID;
@@ -105,7 +105,7 @@ namespace DCFApixels.DragonECS
         {
             lock (_lock) 
             {
-                if (_metaCache.TryGetValue(typeHandle, out TypeMeta result) == false)
+                if (_metaCache.TryGet(typeHandle, out TypeMeta result) == false)
                 {
                     result = new TypeMeta(Type.GetTypeFromHandle(typeHandle));
                     _metaCache.Add(typeHandle, result);

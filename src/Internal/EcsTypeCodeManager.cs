@@ -18,7 +18,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
     internal static class EcsTypeCodeManager
     {
-        private static readonly Dictionary<EcsTypeCodeKey, EcsTypeCode> _codes = new Dictionary<EcsTypeCodeKey, EcsTypeCode>();
+        private static readonly AppendOnlyTable<EcsTypeCodeKey, EcsTypeCode>.Provider _codes = new AppendOnlyTable<EcsTypeCodeKey, EcsTypeCode>.Provider(256);
         private static int _increment = 1;
         private static readonly object _lock = new object();
         public static int Count
@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         {
             lock (_lock)
             {
-                if (!_codes.TryGetValue(type, out EcsTypeCode code))
+                if (!_codes.TryGet(type, out EcsTypeCode code))
                 {
                     code = (EcsTypeCode)_increment++;
                     _codes.Add(type, code);
@@ -40,7 +40,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTypeCode Get<T>() { return EcsTypeCodeCache<T>.code; }
-        public static bool Has(Type type) { return _codes.ContainsKey(type); }
+        public static bool Has(Type type) { return _codes.Has(type); }
         public static EcsTypeCodeKey FindTypeOfCode(EcsTypeCode typeCode)
         {
             foreach (var item in _codes)
