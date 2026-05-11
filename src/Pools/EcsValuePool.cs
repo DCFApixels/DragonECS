@@ -487,7 +487,13 @@ namespace DCFApixels.DragonECS
     {
         public short _worldID;
         public int _componentTypeID;
+#if UNITY_2020_3_OR_NEWER
+        [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
+#endif
         public int* _mapping;
+#if UNITY_2020_3_OR_NEWER
+        [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
+#endif
         public void* _items;
     }
     public readonly unsafe struct NativeEcsValuePool<T>
