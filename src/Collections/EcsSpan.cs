@@ -331,6 +331,9 @@ namespace DCFApixels.DragonECS.Core
     [DebuggerTypeProxy(typeof(EcsSpan.DebuggerProxy))]
     public unsafe readonly struct EcsUnsafeSpan
     {
+#if UNITY_2020_3_OR_NEWER
+        [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
+#endif
         private readonly int* _values;
         private readonly int _length;
         private readonly short _worldID;
