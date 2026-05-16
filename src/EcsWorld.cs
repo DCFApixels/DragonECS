@@ -232,9 +232,13 @@ namespace DCFApixels.DragonECS
                     return;
                 }
 
-                for (int i = Entities.Count - 1; i >= 0; i--)
+                ReleaseDelEntityBufferAll();
+                using (DisableAutoReleaseDelEntBuffer())
                 {
-                    DelEntity(Entities[i]);
+                    for (int i = Entities.Count - 1; i >= 0; i--)
+                    {
+                        DelEntity(Entities[i]);
+                    }
                 }
                 ReleaseDelEntityBufferAll();
 
