@@ -244,7 +244,7 @@ namespace DCFApixels.DragonECS
             if (itemIndex <= 0) { return; }
             if (_isLocked) { return; }
 #endif
-            InvokeOnDel(entityID, ref _items[itemIndex]);
+            InvokeOnDel(entityID, itemIndex);
             _itemEntites[itemIndex] = 0;
 
             _dense[_itemsCount] = itemIndex;
@@ -303,7 +303,7 @@ namespace DCFApixels.DragonECS
             foreach (var entityID in span)
             {
                 ref int itemIndex = ref _mapping[entityID];
-                InvokeOnDel(entityID, ref _items[itemIndex]);
+                InvokeOnDel(entityID, itemIndex);
                 _itemEntites[itemIndex] = 0;
                 itemIndex = 0;
                 _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
@@ -352,7 +352,7 @@ namespace DCFApixels.DragonECS
 
             for (int i = 1; i <= newUsedBlockCount; i++)
             {
-                var value = _dense.Ptr[i];
+                var value = _dense[i];
                 if (i <= _itemsCount)
                 {
                     if (useds.Add(value) == false)
@@ -366,7 +366,7 @@ namespace DCFApixels.DragonECS
                     {
                         Throw.DeepDebugException();
                     }
-                    var e = _items[value].EntityID;
+                    var e = _itemEntites[value];
                     bool isHasComponent = Has(e);
                     bool isUsedsContains = useds.Contains(e);
                     bool isWorldUsed = _world.IsUsed(e);
@@ -382,8 +382,8 @@ namespace DCFApixels.DragonECS
                 Throw.DeepDebugException();
             }
 
-            var result = new EcsSpan(_worldID, new ReadOnlySpan<int>(_dense.Ptr + 1, _itemsCount));
-            UncheckedUtility.CheckSpanValideDebugWithException(result);
+            var result = new EcsSpan(_worldID, new ReadOnlySpan<int>(_dense, 1, _itemsCount));
+            Core.Unchecked.UncheckedUtility.CheckSpanValideDebug(result);
             _lastDensifyAfterIncrement = 0;
             _invokeDensifyCounter++;
             if(newUsedBlockCount > _usedBlockCount)
@@ -428,15 +428,15 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InvokeOnDel(int entityID, ref T component)
+        public void InvokeOnDel(int entityID, int itemIndex)
         {
             if (_isCustomLifecycle)
             {
-                _customLifecycle.OnDel(ref component, _worldID, entityID);
+                _customLifecycle.OnDel(ref _items[itemIndex], _worldID, entityID);
             }
             else
             {
-                component = default;
+                _items[itemIndex] = default;
             }
         }
         void IEcsPool.AddEmpty(int entityID) { Add(entityID); }
@@ -485,7 +485,7 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-            UncheckedUtility.CheckSpanValideDebugWithException(result);
+            Core.Unchecked.UncheckedUtility.CheckSpanValideDebug(result);
             _toSpans--;
 #endif
             return result;
