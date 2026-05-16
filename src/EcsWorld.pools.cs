@@ -300,6 +300,7 @@ namespace DCFApixels.DragonECS
             slot.version++;
             var count = --_entities[entityID].componentsCount;
             _entityComponentMasks[(entityID << _entityComponentMaskLengthBitShift) + maskBit.chunkIndex] &= ~maskBit.mask;
+
             if (count == 0 && IsUsed(entityID))
             {
                 MoveToEmptyEntities(entityID, true);

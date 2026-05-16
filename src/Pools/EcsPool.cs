@@ -233,6 +233,7 @@ namespace DCFApixels.DragonECS
         {
             return _mapping[entityID] != 0;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Del(int entityID)
         {
             ref int itemIndex = ref _mapping[entityID];
