@@ -427,6 +427,10 @@ namespace DCFApixels.DragonECS
             {
                 _customLifecycle.OnAdd(ref component, _worldID, entityID);
             }
+            else if (RuntimeHelpers.IsReferenceOrContainsReferences<T>() == false)
+            {
+                component = default;
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void InvokeOnDel(int entityID, int itemIndex)
@@ -435,7 +439,7 @@ namespace DCFApixels.DragonECS
             {
                 _customLifecycle.OnDel(ref _items[itemIndex], _worldID, entityID);
             }
-            else
+            else if(RuntimeHelpers.IsReferenceOrContainsReferences<T>())
             {
                 _items[itemIndex] = default;
             }
