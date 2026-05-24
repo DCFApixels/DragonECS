@@ -28,10 +28,10 @@ namespace DCFApixels.DragonECS.Core.Internal
                 return false;
             }
 
-            attribute = self.GetCustomAttribute<T>();
+            attribute = self.GetCustomAttribute<T>(false);
             if (attribute == null)
             {
-                return self.BaseType.TryGetAttributeInherited<T>(out attribute, out declaringAtrType);
+                return self.BaseType.TryGetAttributeInherited(out attribute, out declaringAtrType);
             }
             declaringAtrType = self;
             return true;
