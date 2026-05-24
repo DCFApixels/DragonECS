@@ -103,7 +103,7 @@ namespace DCFApixels.DragonECS
         public static TypeMeta Get(Type type) { return Get(type.TypeHandle); }
         public static TypeMeta Get(RuntimeTypeHandle typeHandle)
         {
-            lock (_lock) 
+            lock (_lock)
             {
                 if (_metaCache.TryGetValue(typeHandle, out TypeMeta result) == false)
                 {
@@ -147,7 +147,7 @@ namespace DCFApixels.DragonECS
 
                 if (proxyType.ContainsGenericParameters == false)
                 {
-                    var proxy = Activator.CreateInstance(proxyType, proxyAtr.ForDeclaringType ? declaringAtrType : type) as MetaProxyBase;
+                    var proxy = Activator.CreateInstance(proxyType, type, declaringAtrType) as MetaProxyBase;
                     if (proxy != null)
                     {
                         _proxy = proxy;
@@ -160,7 +160,7 @@ namespace DCFApixels.DragonECS
 #endif
             }
         }
-#endregion
+        #endregion
 
         #region Type
         public Type Type
@@ -452,7 +452,21 @@ namespace DCFApixels.DragonECS
         public static bool IsHasCustomMeta(Type type)
         {
 #if REFLECTION_ENABLED
-            return CheckEcsMemener(type) || Attribute.GetCustomAttributes(type, typeof(DragonMetaAttribute), false).Length > 0;
+            if (CheckEcsMemener(type))
+            {
+                return true;
+            }
+            var atrs = Attribute.GetCustomAttributes(type, typeof(DragonMetaAttribute), true);
+            if (atrs.Length > 0)
+            {
+                if (atrs.Length == 1 && atrs[0] is MetaProxyAttribute &&
+                    type.TryGetAttributeInherited(out MetaProxyAttribute mpa, out Type declaringAtrType))
+                {
+                    return ((MetaProxyBase)Activator.CreateInstance(mpa.Type, type, declaringAtrType)).IsInherit == false;
+                }
+                return true;
+            }
+            return false;
 #else
             EcsDebug.PrintWarning($"Reflection is not available, the {nameof(TypeMeta)}.{nameof(IsHasCustomMeta)} method does not work.");
             return false;

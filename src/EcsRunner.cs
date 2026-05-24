@@ -71,11 +71,11 @@ namespace DCFApixels.DragonECS
                 public override MetaColor? Color => MetaColor.DragonRose;
                 public override MetaDescription Description => new MetaDescription(EcsConsts.AUTHOR, $"Runner for {_processMeta.TypeName} process.");
                 public override MetaGroup Group => MetaGroup.FromName(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP);
-                public RunnerMetaProxy(Type type) : base(type)
+                public RunnerMetaProxy(Type type, Type declaredType) : base(type, declaredType)
                 {
-                    if (type.IsGenericType)
+                    if (declaredType.IsGenericType)
                     {
-                        _processMeta = type.GetGenericArguments()[0].GetMeta();
+                        _processMeta = declaredType.GetGenericArguments()[0].GetMeta();
                     }
                 }
             }
@@ -99,7 +99,7 @@ namespace DCFApixels.DragonECS
         [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
         [MetaTags(MetaTags.HIDDEN)]
         [MetaID("DragonECS_7DB3557C9201F85E0E1C17D7B19D9CEE")]
-        [MetaProxy(typeof(RunnerMetaProxy), true)]
+        [MetaProxy(typeof(RunnerMetaProxy))]
         public abstract class EcsRunner<TProcess> : EcsRunner, IEcsRunner, IEcsProcess
             where TProcess : IEcsProcess
         {
