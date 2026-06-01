@@ -213,6 +213,7 @@ namespace DCFApixels.DragonECS
                 _executorCoures = new Dictionary<(Type, object), IQueryExecutorImplementation>(config.PoolComponentsCapacity);
 
                 GetComponentTypeID<NullComponent>();
+                OnWorldCreated?.Invoke(this);
             }
         }
         public void Destroy()
@@ -1478,6 +1479,8 @@ namespace DCFApixels.DragonECS
             return _entityDispenser.UsedToEcsSpan(ID);
         }
         #endregion
+
+        public static event Action<EcsWorld> OnWorldCreated;
     }
 
     #region Callbacks Interface
