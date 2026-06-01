@@ -139,20 +139,15 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 var pair = _pairs[i];
                 _markers[i].Begin();
-                try
-                {
-                    pair.run.Run();
-                }
+                try { pair.run.Run(); }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                 catch (Exception e)
                 {
-#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                    throw e;
-#else
                     EcsDebug.PrintError(e);
+				}
 #endif
-                }
-                finally
-                {
+				finally
+				{
                     pair.cleanup?.RunFinally();
                 }
                 _markers[i].End();
@@ -161,18 +156,17 @@ namespace DCFApixels.DragonECS.Core.Internal
             foreach (var item in Process)
             {
                 try { item.Run(); }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                 catch (Exception e)
                 {
-#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                    throw e;
-#else
                     EcsDebug.PrintError(e);
+				}
 #endif
-                }
+				finally { }
             }
 #endif
-        }
-    }
+		}
+	}
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
