@@ -246,6 +246,7 @@ namespace DCFApixels.DragonECS
                 _worlds[ID] = null;
                 ReleaseData(ID);
                 _worldIdDispenser.Release(ID);
+                _worldIdDispenser.Sort();
                 _poolTypeCode_2_CmpTypeIDs = null;
                 _cmpTypeCode_2_CmpTypeIDs = null;
                 DisposeGroups();
