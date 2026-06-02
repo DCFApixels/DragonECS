@@ -31,6 +31,13 @@ namespace DCFApixels.DragonECS.Core.Unchecked
         {
             return _world.IsUsed(entityID);
         }
+        public RawEntLong this[int entityID]
+        {
+            get
+            {
+                return _world.GetRawEntLong(entityID);
+            }
+        }
         public bool this[int entityID, int poolID]
         {
             get

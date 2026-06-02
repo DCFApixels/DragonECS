@@ -1606,15 +1606,15 @@ namespace DCFApixels.DragonECS
             private EcsGroup _group;
             public EcsWorld World { get { return _group.World; } }
             public bool IsReleased { get { return _group.IsReleased; } }
-            public EntitySlotInfo[] Entities
+            public RawEntLong[] Entities
             {
                 get
                 {
-                    EntitySlotInfo[] result = new EntitySlotInfo[_group.Count];
+                    RawEntLong[] result = new RawEntLong[_group.Count];
                     int i = 0;
                     foreach (var e in _group)
                     {
-                        result[i++] = _group.World.GetEntitySlotInfoDebug(e);
+                        result[i++] = _group.World.GetRawEntLong(e);
                     }
                     return result;
                 }

@@ -11,7 +11,7 @@ namespace DCFApixels.DragonECS.Core.Unchecked
 {
     [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
     [DebuggerTypeProxy(typeof(EntityDebuggerProxy))]
-    public struct EntitySlotInfo : IEquatable<EntitySlotInfo>
+    public struct RawEntLong : IEquatable<RawEntLong>
     {
 #if UNITY_EDITOR
         [UnityEngine.SerializeField]
@@ -32,12 +32,12 @@ namespace DCFApixels.DragonECS.Core.Unchecked
 
         #region Constructors/Deconstructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EntitySlotInfo(long full) : this()
+        public RawEntLong(long full) : this()
         {
             this.full = full;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EntitySlotInfo(int id, short gen, short world) : this()
+        public RawEntLong(int id, short gen, short world) : this()
         {
             this.id = id;
             this.gen = gen;
@@ -60,14 +60,14 @@ namespace DCFApixels.DragonECS.Core.Unchecked
 
         #region Operators
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(EntitySlotInfo a, EntitySlotInfo b) { return a.full == b.full; }
+        public static bool operator ==(RawEntLong a, RawEntLong b) { return a.full == b.full; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(EntitySlotInfo a, EntitySlotInfo b) { return a.full != b.full; }
+        public static bool operator !=(RawEntLong a, RawEntLong b) { return a.full != b.full; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator EntitySlotInfo(entlong a) { return new EntitySlotInfo(a._full); }
+        public static explicit operator RawEntLong(entlong a) { return new RawEntLong(a._full); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator entlong(EntitySlotInfo a) { return new entlong(a.full); }
+        public static explicit operator entlong(RawEntLong a) { return new entlong(a.full); }
         #endregion
 
         #region Other
@@ -76,9 +76,9 @@ namespace DCFApixels.DragonECS.Core.Unchecked
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString() { return $"slot(id:{id} g:{gen} w:{worldID} {(State == StateFlag.Null ? "null" : State == StateFlag.Alive ? "alive" : "not alive")})"; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool Equals(object obj) { return obj is EntitySlotInfo other && this == other; }
+        public override bool Equals(object obj) { return obj is RawEntLong other && this == other; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(EntitySlotInfo other) { return this == other; }
+        public bool Equals(RawEntLong other) { return this == other; }
 
         public enum StateFlag { Null, Dead, Alive, }
         #endregion
@@ -87,18 +87,18 @@ namespace DCFApixels.DragonECS.Core.Unchecked
     internal class EntityDebuggerProxy
     {
         private List<object> _componentsList = new List<object>();
-        private EntitySlotInfo _info;
+        private RawEntLong _info;
         public virtual long full { get { return _info.full; } }
         public virtual int id { get { return _info.id; } }
         public virtual short gen { get { return _info.gen; } }
         public virtual short worldID { get { return _info.worldID; } }
-        public virtual EntitySlotInfo.StateFlag State { get { return _info.State; } }
+        public virtual RawEntLong.StateFlag State { get { return _info.State; } }
         public virtual EcsWorld World { get { return _info.World; } }
         public virtual IEnumerable<object> Components
         {
             get
             {
-                if (State == EntitySlotInfo.StateFlag.Alive)
+                if (State == RawEntLong.StateFlag.Alive)
                 {
                     World.GetComponentsFor(id, _componentsList);
                     return _componentsList;
@@ -107,7 +107,7 @@ namespace DCFApixels.DragonECS.Core.Unchecked
             }
             set
             {
-                if (State == EntitySlotInfo.StateFlag.Alive)
+                if (State == RawEntLong.StateFlag.Alive)
                 {
                     foreach (var component in value)
                     {
@@ -123,17 +123,17 @@ namespace DCFApixels.DragonECS.Core.Unchecked
                 }
             }
         }
-        public EntityDebuggerProxy(EntitySlotInfo info)
+        public EntityDebuggerProxy(RawEntLong info)
         {
             _info = info;
         }
         public EntityDebuggerProxy(entlong info)
         {
-            _info = (EntitySlotInfo)info;
+            _info = (RawEntLong)info;
         }
         public EntityDebuggerProxy(int entityID, short gen, short worldID)
         {
-            _info = new EntitySlotInfo(entityID, gen, worldID);
+            _info = new RawEntLong(entityID, gen, worldID);
         }
     }
 }

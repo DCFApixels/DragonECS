@@ -32,7 +32,11 @@ namespace DCFApixels.DragonECS
 
         public static int AllWorldsCount
         {
-            get { return _worldIdDispenser.Count; }
+            get { return _worldIdDispenser.Count - 1; }
+        }
+        public static ReadOnlySpan<int> AllWorldIDs
+        {
+            get { return _worldIdDispenser.Used.Slice(1, _worldIdDispenser.Count - 1); }
         }
         static EcsWorld()
         {

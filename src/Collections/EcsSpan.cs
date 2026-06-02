@@ -151,15 +151,15 @@ namespace DCFApixels.DragonECS
             private int[] _values;
             private short _worldID;
             public EcsWorld World { get { return EcsWorld.GetWorld(_worldID); } }
-            public EntitySlotInfo[] Entities
+            public RawEntLong[] Entities
             {
                 get
                 {
-                    EntitySlotInfo[] result = new EntitySlotInfo[_values.Length];
+                    RawEntLong[] result = new RawEntLong[_values.Length];
                     int i = 0;
                     foreach (var e in _values)
                     {
-                        result[i++] = World.GetEntitySlotInfoDebug(e);
+                        result[i++] = World.GetRawEntLong(e);
                     }
                     return result;
                 }
