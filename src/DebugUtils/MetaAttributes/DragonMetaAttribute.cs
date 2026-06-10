@@ -7,7 +7,7 @@ namespace DCFApixels.DragonECS.Core
 {
     public abstract class DragonMetaAttribute : Attribute { }
 
-    internal static class EcsMetaAttributeHalper
+    internal static class DragonMetaAttributeHalper
     {
         internal const string EMPTY_NO_SENSE_MESSAGE = "With empty parameters, this attribute makes no sense.";
         [ThreadStatic]

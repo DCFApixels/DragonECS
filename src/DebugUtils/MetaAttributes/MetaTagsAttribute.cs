@@ -17,11 +17,11 @@ namespace DCFApixels.DragonECS
             get { return _tags; }
         }
 
-        [Obsolete(EcsMetaAttributeHalper.EMPTY_NO_SENSE_MESSAGE)]
+        [Obsolete(DragonMetaAttributeHalper.EMPTY_NO_SENSE_MESSAGE)]
         public MetaTagsAttribute() { }
         public MetaTagsAttribute(string tags)
         {
-            _tags = EcsMetaAttributeHalper.Split(SEPARATOR, tags);
+            _tags = DragonMetaAttributeHalper.Split(SEPARATOR, tags);
             for (int i = 0; i < _tags.Length; i++)
             {
                 _tags[i] = string.Intern(_tags[i]);
