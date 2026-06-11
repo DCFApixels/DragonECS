@@ -456,7 +456,9 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+#if DRAGONECS_DEEP_DEBUG
         private int _toSpans = 0;
+#endif
         public EcsSpan ToSpan()
         {
 #if DRAGONECS_DEEP_DEBUG
