@@ -396,6 +396,10 @@ namespace DCFApixels.DragonECS
         #region Utils
         protected static string AutoConvertObjectToString(object o)
         {
+            if (ReferenceEquals(o, null))
+            {
+                return "NULL";
+            }
             if (o is string str)
             {
                 return str;
