@@ -33,7 +33,7 @@ namespace DCFApixels.DragonECS
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsValueComponent components.")]
     [MetaID("DragonECS_5097D6FA9C0109349197EEAC3A0D2858")]
     [DebuggerDisplay("Count: {Count} Type: {ComponentType}")]
-    public sealed unsafe class EcsValuePool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
+    public sealed unsafe class EcsValuePool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T>, IComponentMask //IEnumerable<T> - IntelliSense hack
         where T : unmanaged, IEcsValueComponent
     {
         private EcsWorld _world;
@@ -62,6 +62,8 @@ namespace DCFApixels.DragonECS
         private bool _isLocked;
 
         private EcsWorld.PoolsMediator _mediator;
+
+        private readonly static EcsStaticMask _staticMask = EcsStaticMask.Inc<T>();
 
         #region Properites
         public int Count
@@ -403,6 +405,11 @@ namespace DCFApixels.DragonECS
             return ref EcsWorld.GetPoolInstance<EcsValuePool<T>>(worldID).TryAddOrGet(entityID);
         }
         #endregion
+
+        EcsMask IComponentMask.ToMask(EcsWorld world)
+        {
+            return _staticMask.ToMask(world);
+        }
     }
 
 #if ENABLE_IL2CPP

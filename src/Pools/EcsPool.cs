@@ -32,7 +32,7 @@ namespace DCFApixels.DragonECS
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsComponent components.")]
     [MetaID("DragonECS_C501547C9201A4B03FC25632E4FAAFD7")]
     [DebuggerDisplay("Count: {Count} Type: {ComponentType}")]
-    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T>, IEntityStorage //IEnumerable<T> - IntelliSense hack
+    public sealed class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T>, IEntityStorage, IComponentMask //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
     {
         private short _worldID;
@@ -61,6 +61,8 @@ namespace DCFApixels.DragonECS
         private bool _isLocked;
 
         private EcsWorld.PoolsMediator _mediator;
+
+        private readonly static EcsStaticMask _staticMask = EcsStaticMask.Inc<T>();
 
         #region Properites
         public int Count
@@ -170,7 +172,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get(int entityID)
         {
-#if DEBUG // не нужен STAB_MODE
+#if DEBUG // пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ STAB_MODE
             if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
@@ -181,7 +183,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID)
         {
-#if DEBUG // не нужен STAB_MODE
+#if DEBUG // пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ STAB_MODE
             if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
 #endif
             return ref _items[_mapping[entityID]];
@@ -292,7 +294,7 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (_isLocked) { return; }
 #endif
-            _recycledItemsCount = 0; // спереди чтобы обнулялось, так как Del не обнуляет
+            _recycledItemsCount = 0; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅ Del пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             if (_itemsCount <= 0) { return; }
             var span = _world.Where(out SingleAspect<T> _);
 #if DRAGONECS_DEEP_DEBUG
@@ -545,6 +547,11 @@ namespace DCFApixels.DragonECS
             return ref EcsWorld.GetPoolInstance<EcsPool<T>>(worldID).TryAddOrGet(entityID);
         }
         #endregion
+
+        EcsMask IComponentMask.ToMask(EcsWorld world)
+        {
+            return _staticMask.ToMask(world);
+        }
     }
 
 #if ENABLE_IL2CPP
