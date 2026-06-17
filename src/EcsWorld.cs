@@ -213,6 +213,7 @@ namespace DCFApixels.DragonECS
                 _executorCoures = new Dictionary<(Type, object), IQueryExecutorImplementation>(config.PoolComponentsCapacity);
 
                 GetComponentTypeID<NullComponent>();
+                OnWorldCreated?.Invoke(this);
             }
         }
         public void Destroy()
@@ -250,6 +251,7 @@ namespace DCFApixels.DragonECS
                 _worlds[ID] = null;
                 ReleaseData(ID);
                 _worldIdDispenser.Release(ID);
+                _worldIdDispenser.Sort();
                 _poolTypeCode_2_CmpTypeIDs = null;
                 _cmpTypeCode_2_CmpTypeIDs = null;
                 DisposeGroups();
@@ -442,7 +444,10 @@ namespace DCFApixels.DragonECS
 #endif
             UpVersion();
             _delEntBuffer[_delEntBufferCount++] = entityID;
-            _entities[entityID].isUsed = false;
+            ref var slot = ref _entities[entityID];
+            slot.isUsed = false;
+            slot.metaName = null;
+            slot.metaColor = new MetaColor(0, 0, 0, 0);
             _entitiesCount--;
             if (_hasAnyEntityListener)
             {
@@ -561,9 +566,9 @@ namespace DCFApixels.DragonECS
             _entities[entityID].gen = gen;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EntitySlotInfo GetEntitySlotInfoDebug(int entityID)
+        public RawEntLong GetRawEntLong(int entityID)
         {
-            return new EntitySlotInfo(entityID, _entities[entityID].gen, ID);
+            return new RawEntLong(entityID, _entities[entityID].gen, ID);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(int entityID, short gen)
@@ -1125,7 +1130,48 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Debug Components
+        #region Entity Debug Utils / Get Components
+        public readonly ref struct EntitySlotMeta
+        {
+            public readonly EcsWorld World;
+            public readonly int EntityID;
+         
+            public string Name
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get { return World._entities[EntityID].metaName; }
+                set
+                {
+                    ref var slot = ref World._entities[EntityID];
+                    slot.metaName = value;
+                    World.EntityMetaChanged.Invoke(this);
+                }
+            }
+            public MetaColor Color
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get { return World._entities[EntityID].metaColor; }
+                set
+                {
+                    ref var slot = ref World._entities[EntityID];
+                    slot.metaColor = value;
+                    World.EntityMetaChanged.Invoke(this);
+                }
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public EntitySlotMeta(EcsWorld world, int entityID)
+            {
+                World = world;
+                EntityID = entityID;
+            }
+        }
+        public EntitySlotMeta GetEntitySlotMeta(int entityID)
+        {
+            return new EntitySlotMeta(this, entityID);
+        }
+        public delegate void EntityMetaChangedHandler(EntitySlotMeta meta);
+        public event EntityMetaChangedHandler EntityMetaChanged = delegate { };
+
         [ThreadStatic]
         private static int[] _componentIDsBuffer;
         [ThreadStatic]
@@ -1134,10 +1180,30 @@ namespace DCFApixels.DragonECS
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
             return new ReadOnlySpan<int>(_componentIDsBuffer, 0, count);
-        }
-        public unsafe void GetComponentPoolsFor(int entityID, List<IEcsPool> list)
+		}
+		public int GetFirstComponentTypeIDFor(int entityID)
+		{
+			int poolIndex = 0;
+			for (int chunkIndex = entityID << _entityComponentMaskLengthBitShift,
+		        chunkIndexMax = chunkIndex + _entityComponentMaskLength;
+		        chunkIndex < chunkIndexMax;
+		        chunkIndex++)
+            {
+				int chunk = _entityComponentMasks[chunkIndex];
+				if (chunk == 0)
+				{
+					poolIndex += COMPONENT_MASK_CHUNK_SIZE;
+				}
+                else
+                {
+					return BitsUtility.GetHighBitNumber(chunk) + poolIndex;
+				}
+			}
+            return -1;
+		}
+		public unsafe void GetComponentPoolsFor(int entityID, List<IEcsPool> list)
         {
-            const int BUFFER_THRESHOLD = 100;
+            const int BUFFER_THRESHOLD = 256;
 
             var count = GetComponentsCount(entityID);
 
@@ -1210,7 +1276,7 @@ namespace DCFApixels.DragonECS
                 typeSet.Add(_pools[_componentIDsBuffer[i]].ComponentType);
             }
         }
-        private unsafe int GetComponentTypeIDsFor_Internal(int entityID, ref int[] componentIDs)
+        private int GetComponentTypeIDsFor_Internal(int entityID, ref int[] componentIDs)
         {
             var itemsCount = GetComponentsCount(entityID);
             ArrayUtility.UpsizeWithoutCopy(ref componentIDs, itemsCount);
@@ -1360,11 +1426,15 @@ namespace DCFApixels.DragonECS
             public short gen;
             public short componentsCount;
             public bool isUsed;
+            public string metaName;
+            public MetaColor metaColor;
             public EntitySlot(short gen, short componentsCount, bool isUsed)
             {
                 this.gen = gen;
                 this.componentsCount = componentsCount;
                 this.isUsed = isUsed;
+                metaName = string.Empty;
+                metaColor = new MetaColor(0, 0, 0, 0);
             }
         }
         #endregion
@@ -1375,17 +1445,17 @@ namespace DCFApixels.DragonECS
             private EcsWorld _world;
             private List<MaskQueryExecutor> _queries;
             public string Name { get { return _world.Name; } }
-            public EntitySlotInfo[] Entities
+            public RawEntLong[] Entities
             {
                 get
                 {
-                    EntitySlotInfo[] result = new EntitySlotInfo[_world.Count];
+                    RawEntLong[] result = new RawEntLong[_world.Count];
                     int i = 0;
                     using (_world.DisableAutoReleaseDelEntBuffer())
                     {
                         foreach (var e in _world.ToSpan())
                         {
-                            result[i++] = _world.GetEntitySlotInfoDebug(e);
+                            result[i++] = _world.GetRawEntLong(e);
                         }
                     }
                     return result;
@@ -1413,6 +1483,8 @@ namespace DCFApixels.DragonECS
             return _entityDispenser.UsedToEcsSpan(ID);
         }
         #endregion
+
+        public static event Action<EcsWorld> OnWorldCreated;
     }
 
     #region Callbacks Interface

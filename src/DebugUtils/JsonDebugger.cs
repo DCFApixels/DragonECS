@@ -9,13 +9,13 @@ namespace DCFApixels.DragonECS.Core.Internal
     internal static class JsonDebugger
     {
         private readonly static List<string> _indentsChache = new List<string>();
-        internal static string ToJsonLog(object obj)
+        internal static string ToJsonLog(object obj, bool withProperties)
         {
             if (obj == null) { return "null"; }
             var sb = new StringBuilder();
             int linesCounter = 0;
             var visited = new Dictionary<object, int>();
-            ToJsonLog(ref linesCounter, obj, sb, visited, 0, 2);
+            ToJsonLog_Internal(ref linesCounter, obj, sb, visited, 0, 2, withProperties);
             string json = sb.ToString();
             return json;
         }
@@ -38,13 +38,14 @@ namespace DCFApixels.DragonECS.Core.Internal
             sb.Append(GetIndentString(indent * indentStep));
             linesCounter++;
         }
-        private static void ToJsonLog(
+        private static void ToJsonLog_Internal(
             ref int linesCounter,
             object value,
             StringBuilder sb,
             Dictionary<object, int> visited,
             int indent,
-            int indentStep)
+            int indentStep,
+            bool withProperties)
         {
             if (value == null)
             {
@@ -162,7 +163,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                     sb.Append('"');
                     return;
                 }
-                ToJsonLog(ref linesCounter, list, sb, visited, indent, indentStep);
+                ToJsonLog_Internal(ref linesCounter, list, sb, visited, indent, indentStep, withProperties);
                 return;
             }
 
@@ -202,7 +203,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 {
                     if (!first) { sb.Append(','); } else { first = false; }
                     NewLine(ref linesCounter, sb, indent + 1, indentStep);
-                    ToJsonLog(ref linesCounter, item, sb, visited, indent + 1, indentStep);
+                    ToJsonLog_Internal(ref linesCounter, item, sb, visited, indent + 1, indentStep, withProperties);
                 }
 
                 // перенос строки если были элементы
@@ -219,7 +220,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                     NewLine(ref linesCounter, sb, indent + 1, indentStep);
                     sb.Append("\"Type\": ");
 
-                    ToJsonLog(ref linesCounter, type, sb, visited, indent + 1, indentStep);
+                    ToJsonLog_Internal(ref linesCounter, type, sb, visited, indent + 1, indentStep, withProperties);
                 }
 
                 // Fields
@@ -235,37 +236,40 @@ namespace DCFApixels.DragonECS.Core.Internal
                     sb.Append(':').Append(' ');
 
                     object fieldValue = field.GetValue(value);
-                    ToJsonLog(ref linesCounter, fieldValue, sb, visited, indent + 1, 2);
+                    ToJsonLog_Internal(ref linesCounter, fieldValue, sb, visited, indent + 1, 2, withProperties);
                 }
 
-                // Properties
-                var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                foreach (var prop in properties)
+                if (withProperties)
                 {
-                    if (prop.GetIndexParameters().Length > 0 ||
-                        prop.GetMethod == null ||
-                        prop.GetMethod.IsStatic)
-                    {
-                        continue;
-                    }
+					// Properties
+					var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+					foreach (var prop in properties)
+					{
+						if (prop.GetIndexParameters().Length > 0 ||
+							prop.GetMethod == null ||
+							prop.GetMethod.IsStatic)
+						{
+							continue;
+						}
 
-                    NewLine(ref linesCounter, sb, indent + 1, indentStep);
-                    sb.Append('"');
-                    sb.Append(prop.Name);
-                    sb.Append('"');
-                    sb.Append(':').Append(' ');
+						NewLine(ref linesCounter, sb, indent + 1, indentStep);
+						sb.Append('"');
+						sb.Append(prop.Name);
+						sb.Append('"');
+						sb.Append(':').Append(' ');
 
-                    object propValue;
-                    try
-                    {
-                        propValue = prop.GetValue(value);
-                    }
-                    catch (Exception cathcedE)
-                    {
-                        propValue = cathcedE;
-                    }
-                    ToJsonLog(ref linesCounter, propValue, sb, visited, indent + 1, indentStep);
-                }
+						object propValue;
+						try
+						{
+							propValue = prop.GetValue(value);
+						}
+						catch (Exception cathcedE)
+						{
+							propValue = cathcedE;
+						}
+						ToJsonLog_Internal(ref linesCounter, propValue, sb, visited, indent + 1, indentStep, withProperties);
+					}
+				}
 
                 NewLine(ref linesCounter, sb, indent, indentStep);
                 sb.Append('}');

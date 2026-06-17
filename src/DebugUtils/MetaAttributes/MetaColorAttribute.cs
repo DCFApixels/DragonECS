@@ -71,6 +71,10 @@ namespace DCFApixels.DragonECS
         {
             color = new MetaColor(colorCode, true);
         }
+        public MetaColorAttribute(string colorString)
+        {
+            color = MetaColor.Parse(colorString, true);
+        }
         #endregion
     }
     [Serializable]
@@ -212,7 +216,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region Constructors
+        #region Constructors/Parsers
         public MetaColor(byte r, byte g, byte b) : this()
         {
             this.r = r;
@@ -247,6 +251,47 @@ namespace DCFApixels.DragonECS
                 colorCode = BitsUtility.NextXorShiftState(colorCode);
                 return new MetaColor(colorCode, withoutAlpha);
             }
+        }
+        public static MetaColor Parse(string input, bool withoutAlpha)
+        {
+            var result = ParseHex(input);
+            if (withoutAlpha)
+            {
+                result = new MetaColor(result.r, result.g, result.b, byte.MaxValue);
+            }
+            return result;
+        }
+        private static MetaColor ParseHex(string input)
+        {
+            var hex = input.AsSpan().Trim();
+
+            if (hex[0] != '#' && hex.Length != 7 && hex.Length != 9)
+            {
+                throw new ArgumentException($"Invalid hex color format: {input}");
+            }
+            bool withAlpha = hex.Length != 9;
+            hex = hex.TrimStart('#');
+
+            byte r = TryParseHexByte(input, hex.Slice(0, 2));
+            byte g = TryParseHexByte(input, hex.Slice(2, 2));
+            byte b = TryParseHexByte(input, hex.Slice(4, 2));
+            byte a = withAlpha ? byte.MaxValue : TryParseHexByte(input, hex.Slice(6, 2));
+
+            return new MetaColor(r, g, b, a);
+        }
+        private static byte TryParseHexByte(string input, ReadOnlySpan<char> str)
+        {
+            int high = HexCharToValue(str[0]);
+            int low = HexCharToValue(str[1]);
+            if (high == -1 || low == -1) { throw new ArgumentException($"Invalid hex color format: {input}"); }
+            return (byte)((high << 4) | low);
+        }
+        private static int HexCharToValue(char c)
+        {
+            if (c >= '0' && c <= '9') { return c - '0'; }
+            if (c >= 'a' && c <= 'f') { return c - 'a' + 10; }
+            if (c >= 'A' && c <= 'F') { return c - 'A' + 10; }
+            return -1;
         }
         #endregion
 

@@ -32,7 +32,7 @@ namespace DCFApixels.DragonECS
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsTagComponent components. EcsTagPool is optimized for storing tag components or components without data.")]
     [MetaID("DragonECS_9D80547C9201E852E4F17324EAC1E15A")]
     [DebuggerDisplay("Count: {Count} Type: {ComponentType}")]
-    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T> //IEnumerable<T> - IntelliSense hack
+    public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T>, IComponentMask //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {
         private EcsWorld _world;
@@ -50,6 +50,8 @@ namespace DCFApixels.DragonECS
 
         private T _fakeComponent = default;
         private EcsWorld.PoolsMediator _mediator;
+
+        private readonly static EcsStaticMask _staticMask = EcsStaticMask.Inc<T>();
 
         #region CheckValide
 #if DEBUG
@@ -338,6 +340,11 @@ namespace DCFApixels.DragonECS
             return ref pool._fakeComponent;
         }
         #endregion
+
+        EcsMask IComponentMask.ToMask(EcsWorld world)
+        {
+            return _staticMask.ToMask(world);
+        }
     }
 
 #if ENABLE_IL2CPP

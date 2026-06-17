@@ -15,7 +15,7 @@ namespace DCFApixels.DragonECS
         public const char SEPARATOR = MetaGroup.SEPARATOR;
         public readonly string Name = string.Empty;
 
-        [Obsolete(EcsMetaAttributeHalper.EMPTY_NO_SENSE_MESSAGE)]
+        [Obsolete(DragonMetaAttributeHalper.EMPTY_NO_SENSE_MESSAGE)]
         public MetaGroupAttribute() { }
         public MetaGroupAttribute(string name) { Name = name; }
         public MetaGroupAttribute(params string[] path) { Name = string.Join(SEPARATOR, path); }
@@ -31,13 +31,24 @@ namespace DCFApixels.DragonECS
 
         public readonly string Name;
         private string[] _splited = null;
-        public IReadOnlyCollection<string> Splited
+        public ReadOnlySpan<string> Splited
         {
             get
             {
                 if (_splited == null)
                 {
-                    _splited = EcsMetaAttributeHalper.Split(SEPARATOR, Name);
+                    _splited = DragonMetaAttributeHalper.Split(SEPARATOR, Name);
+                }
+                return _splited;
+            }
+        }
+        public IReadOnlyCollection<string> SplitedEnumerable
+        {
+            get
+            {
+                if (_splited == null)
+                {
+                    _splited = DragonMetaAttributeHalper.Split(SEPARATOR, Name);
                 }
                 return _splited;
             }

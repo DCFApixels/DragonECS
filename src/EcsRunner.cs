@@ -71,11 +71,11 @@ namespace DCFApixels.DragonECS
                 public override MetaColor? Color => MetaColor.DragonRose;
                 public override MetaDescription Description => new MetaDescription(EcsConsts.AUTHOR, $"Runner for {_processMeta.TypeName} process.");
                 public override MetaGroup Group => MetaGroup.FromName(EcsConsts.PACK_GROUP, EcsConsts.PROCESSES_GROUP);
-                public RunnerMetaProxy(Type type) : base(type)
+                public RunnerMetaProxy(Type type, Type declaredType) : base(type, declaredType)
                 {
-                    if (type.IsGenericType)
+                    if (declaredType.IsGenericType)
                     {
-                        _processMeta = type.GetGenericArguments()[0].GetMeta();
+                        _processMeta = declaredType.GetGenericArguments()[0].GetMeta();
                     }
                 }
             }
@@ -99,7 +99,7 @@ namespace DCFApixels.DragonECS
         [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.OTHER_GROUP)]
         [MetaTags(MetaTags.HIDDEN)]
         [MetaID("DragonECS_7DB3557C9201F85E0E1C17D7B19D9CEE")]
-        [MetaProxy(typeof(RunnerMetaProxy), true)]
+        [MetaProxy(typeof(RunnerMetaProxy))]
         public abstract class EcsRunner<TProcess> : EcsRunner, IEcsRunner, IEcsProcess
             where TProcess : IEcsProcess
         {
@@ -223,15 +223,14 @@ namespace DCFApixels.DragonECS
                         {
                             translationCallback(_process[i]);
                         }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                         catch (Exception e)
                         {
-#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw e;
-#else
                             EcsDebug.PrintError(e);
+				        }
 #endif
-                        }
-                        _markers[i].End();
+                        finally { }
+						_markers[i].End();
                     }
 #else
                     foreach (var item in _process)
@@ -240,19 +239,18 @@ namespace DCFApixels.DragonECS
                         {
                             translationCallback(item);
                         }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                         catch (Exception e)
                         {
-#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw e;
-#else
                             EcsDebug.PrintError(e);
+				        }
 #endif
-                        }
+                        finally { }
                     }
 #endif
-                }
+				}
 
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public void Run<TData>(ActionWithData<TProcess, TData> translationCallback, ref TData data)
                 {
 #if DEBUG
@@ -263,16 +261,15 @@ namespace DCFApixels.DragonECS
                         try
                         {
                             translationCallback(_process[i], ref data);
-                        }
+						}
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                         catch (Exception e)
                         {
-#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw e;
-#else
                             EcsDebug.PrintError(e);
+				        }
 #endif
-                        }
-                        _markers[i].End();
+						finally { }
+						_markers[i].End();
                     }
 #else
                     foreach (var item in _process)
@@ -281,19 +278,18 @@ namespace DCFApixels.DragonECS
                         {
                             translationCallback(item, ref data);
                         }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                         catch (Exception e)
                         {
-#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw e;
-#else
                             EcsDebug.PrintError(e);
+				        }
 #endif
-                        }
+                        finally { }
                     }
 #endif
-                }
-                #endregion
-            }
+				}
+				#endregion
+			}
             #endregion
 
             #region RunHelperWithFinally
@@ -392,16 +388,14 @@ namespace DCFApixels.DragonECS
                         {
                             translationCallback(pair.run);
                         }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                         catch (Exception e)
                         {
-#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw e;
-#else
                             EcsDebug.PrintError(e);
+				        }
 #endif
-                        }
-                        finally
-                        {
+						finally
+						{
                             if (pair.runFinally != null)
                             {
                                 translationFinnalyCallback(pair.runFinally);
@@ -416,23 +410,21 @@ namespace DCFApixels.DragonECS
                         {
                             translationCallback(item.run);
                         }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                         catch (Exception e)
                         {
-#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw e;
-#else
                             EcsDebug.PrintError(e);
+				        }
 #endif
-                        }
                         finally
                         {
                             translationFinnalyCallback(item.runFinally);
                         }
                     }
 #endif
-                }
+				}
 
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public void Run<TData>(
                     ActionWithData<TProcess, TData> translationCallback,
                     ActionWithData<TProcessFinally, TData> translationFinnalyCallback,
@@ -448,16 +440,14 @@ namespace DCFApixels.DragonECS
                         {
                             translationCallback(pair.run, ref data);
                         }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                         catch (Exception e)
                         {
-#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw e;
-#else
                             EcsDebug.PrintError(e);
+				        }
 #endif
-                        }
-                        finally
-                        {
+						finally
+						{
                             if (pair.runFinally != null)
                             {
                                 translationFinnalyCallback(pair.runFinally, ref data);
@@ -472,14 +462,12 @@ namespace DCFApixels.DragonECS
                         {
                             translationCallback(pair.run, ref data);
                         }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                         catch (Exception e)
                         {
-#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                            throw e;
-#else
                             EcsDebug.PrintError(e);
+				        }
 #endif
-                        }
                         finally
                         {
                             if (pair.runFinally != null)
@@ -489,9 +477,9 @@ namespace DCFApixels.DragonECS
                         }
                     }
 #endif
-                }
-                #endregion
-            }
+				}
+				#endregion
+			}
             #endregion
         }
     }

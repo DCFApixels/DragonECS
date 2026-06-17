@@ -530,7 +530,7 @@ namespace DCFApixels.DragonECS
             public override int id => base.id;
             public override short gen => base.gen;
             public override short worldID => base.worldID;
-            public override EntitySlotInfo.StateFlag State => base.State;
+            public override RawEntLong.StateFlag State => base.State;
             public override EcsWorld World => base.World;
             public override IEnumerable<object> Components { get => base.Components; set => base.Components = value; }
             public DebuggerProxy(entlong entity) : base(entity) { }

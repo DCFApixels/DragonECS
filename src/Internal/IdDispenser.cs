@@ -46,6 +46,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _nullID; }
         }
+        public ReadOnlySpan<int> Used => new ReadOnlySpan<int>(_dense, 0, _usedCount);
         #endregion
 
         #region Constructors
