@@ -19,7 +19,7 @@ namespace DCFApixels.DragonECS.Core
     public interface IEcsPoolImplementation : IEcsPool
     {
         #region Methods
-        void OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID);
+        void OnInit(EcsWorld.ComponentsRegister register);
         void OnWorldResize(int newSize);
         void OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer);
         void OnWorldDestroy();
@@ -171,7 +171,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         #endregion
 
         #region Callbacks
-        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID) { }
+        void IEcsPoolImplementation.OnInit(EcsWorld.ComponentsRegister register) { }
         void IEcsPoolImplementation.OnWorldDestroy() { }
         void IEcsPoolImplementation.OnWorldResize(int newSize) { }
         void IEcsPoolImplementation.OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer) { }
