@@ -4,7 +4,6 @@
 using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
@@ -21,8 +20,6 @@ namespace DCFApixels.DragonECS
 #if DEBUG || DRAGONECS_STABILITY_MODE
         private int _lockedPoolCount = 0;
 #endif
-
-        private readonly PoolsMediator _poolsMediator;
 
         private EcsNullPool _nullPool = EcsNullPool.instance;
 
@@ -265,7 +262,7 @@ namespace DCFApixels.DragonECS
                 }
 
                 _pools[componentTypeID] = newPool;
-                newPool.OnInit(this, _poolsMediator, componentTypeID);
+                newPool.OnInit(ComponentsRegister.Create_Internal(this, componentTypeID));
 
                 OnPoolInitialized?.Invoke(newPool);
             }
@@ -400,52 +397,58 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region PoolsMediator
-        public readonly struct PoolsMediator
+        public readonly struct ComponentsRegister
         {
             public readonly EcsWorld World;
-            internal PoolsMediator(EcsWorld world)
+            public readonly EcsMaskChunck MaskChunck;
+            public readonly int ComponentTypeID;
+            public readonly short WorldID;
+            private ComponentsRegister(EcsWorld world, int componentTypeID)
             {
-                if (world == null || world._poolsMediator.World != null)
-                {
-                    throw new InvalidOperationException();
-                }
                 World = world;
+                WorldID = world.ID;
+                ComponentTypeID = componentTypeID;
+                MaskChunck = EcsMaskChunck.FromID(componentTypeID);
+            }
+            public static ComponentsRegister Create_Internal(EcsWorld world, int componentTypeID)
+            {
+                return new ComponentsRegister(world, componentTypeID);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RegisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
+            public void RegisterComponent(int entityID)
             {
-                World.RegisterEntityComponent(entityID, componentTypeID, maskBit);
+                World.RegisterEntityComponent(entityID, ComponentTypeID, MaskChunck);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void UnregisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
+            public void UnregisterComponent(int entityID)
             {
-                World.UnregisterEntityComponent(entityID, componentTypeID, maskBit);
+                World.UnregisterEntityComponent(entityID, ComponentTypeID, MaskChunck);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool TryRegisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
+            public bool TryRegisterComponent(int entityID)
             {
-                return World.TryRegisterEntityComponent(entityID, componentTypeID, maskBit);
+                return World.TryRegisterEntityComponent(entityID, ComponentTypeID, MaskChunck);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool TryUnregisterComponent(int entityID, int componentTypeID, EcsMaskChunck maskBit)
+            public bool TryUnregisterComponent(int entityID)
             {
-                return World.TryUnregisterEntityComponent(entityID, componentTypeID, maskBit);
+                return World.TryUnregisterEntityComponent(entityID, ComponentTypeID, MaskChunck);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int GetComponentCount(int componentTypeID)
+            public int GetComponentCount()
             {
-                return World.GetPoolComponentCount(componentTypeID);
+                return World.GetPoolComponentCount(ComponentTypeID);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public long GetVersion(int componentTypeID)
+            public long GetVersion()
             {
-                return World.GetPoolVersion(componentTypeID);
+                return World.GetPoolVersion(ComponentTypeID);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool HasComponent(int entityID, EcsMaskChunck maskBit)
+            public bool HasComponent(int entityID)
             {
-                return World.HasEntityComponent(entityID, maskBit);
+                return World.HasEntityComponent(entityID, MaskChunck);
             }
         }
         #endregion

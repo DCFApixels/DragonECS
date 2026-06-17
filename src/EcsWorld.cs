@@ -200,8 +200,6 @@ namespace DCFApixels.DragonECS
                 ID = worldID;
                 _worlds[worldID] = this;
 
-                _poolsMediator = new PoolsMediator(this);
-
                 int poolsCapacity = ArrayUtility.CeilPow2Safe(config.PoolsCapacity);
                 _pools = new IEcsPoolImplementation[poolsCapacity];
                 _poolSlots = new PoolSlot[poolsCapacity];

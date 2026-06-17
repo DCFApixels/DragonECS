@@ -35,9 +35,8 @@ namespace DCFApixels.DragonECS
     public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T>, IComponentMask //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {
-        private EcsWorld _world;
-        private int _componentTypeID;
-        private EcsMaskChunck _maskBit;
+        private EcsWorld.ComponentsRegister _register;
+        private readonly static EcsStaticMask _staticMask = EcsStaticMask.Inc<T>();
 
         private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
         private int _count = 0;
@@ -49,9 +48,6 @@ namespace DCFApixels.DragonECS
         private bool _isLocked;
 
         private T _fakeComponent = default;
-        private EcsWorld.PoolsMediator _mediator;
-
-        private readonly static EcsStaticMask _staticMask = EcsStaticMask.Inc<T>();
 
         #region CheckValide
 #if DEBUG
@@ -72,7 +68,7 @@ namespace DCFApixels.DragonECS
         }
         public int ComponentTypeID
         {
-            get { return _componentTypeID; }
+            get { return _register.ComponentTypeID; }
         }
         public Type ComponentType
         {
@@ -80,7 +76,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsWorld World
         {
-            get { return _world; }
+            get { return _register.World; }
         }
         public bool IsReadOnly
         {
@@ -102,14 +98,10 @@ namespace DCFApixels.DragonECS
             if (_isInvalidType) { Throw.Exception($"{typeof(T).Name} type must not contain any data."); }
 #endif
         }
-        void IEcsPoolImplementation.OnInit(EcsWorld world, EcsWorld.PoolsMediator mediator, int componentTypeID)
+        void IEcsPoolImplementation.OnInit(EcsWorld.ComponentsRegister register)
         {
-            _world = world;
-            _mediator = mediator;
-            _componentTypeID = componentTypeID;
-            _maskBit = EcsMaskChunck.FromID(componentTypeID);
-
-            _mapping = new bool[world.Capacity];
+            _register = register;
+            _mapping = new bool[register.World.Capacity];
         }
         void IEcsPoolImplementation.OnWorldDestroy() { }
         #endregion
@@ -127,7 +119,7 @@ namespace DCFApixels.DragonECS
 #endif
             _count++;
             _mapping[entityID] = true;
-            _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
+            _register.RegisterComponent(entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
 #endif
@@ -155,7 +147,7 @@ namespace DCFApixels.DragonECS
 #endif
             _mapping[entityID] = false;
             _count--;
-            _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
+            _register.UnregisterComponent(entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
@@ -220,12 +212,12 @@ namespace DCFApixels.DragonECS
             if (_isLocked) { return; }
 #endif
             if (_count <= 0) { return; }
-            var span = _world.Where(out SingleTagAspect<T> _);
+            var span = _register.World.Where(out SingleTagAspect<T> _);
             _count = 0;
             foreach (var entityID in span)
             {
                 _mapping[entityID] = false;
-                _mediator.UnregisterComponent(entityID, _componentTypeID, _maskBit);
+                _register.UnregisterComponent(entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
                 if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
@@ -289,6 +281,10 @@ namespace DCFApixels.DragonECS
 #endif
             return ref _fakeComponent;
         }
+        EcsMask IComponentMask.ToMask(EcsWorld world)
+        {
+            return _staticMask.ToMask(world);
+        }
         #endregion
 
         #region Listeners
@@ -340,11 +336,6 @@ namespace DCFApixels.DragonECS
             return ref pool._fakeComponent;
         }
         #endregion
-
-        EcsMask IComponentMask.ToMask(EcsWorld world)
-        {
-            return _staticMask.ToMask(world);
-        }
     }
 
 #if ENABLE_IL2CPP
