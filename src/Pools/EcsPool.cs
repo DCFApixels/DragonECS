@@ -260,6 +260,13 @@ namespace DCFApixels.DragonECS
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
+            if(_itemsCount == 0)
+            {
+                _itemsCount = 0;
+                _usedBlockCount = 0;
+                _recycledItemsCount = 0;
+                _isDensified = true;
+            }
         }
         public void TryDel(int entityID)
         {
@@ -322,10 +329,6 @@ namespace DCFApixels.DragonECS
 
 
         private bool _isDensified;
-#if DRAGONECS_DEEP_DEBUG
-        private int _invokeDensifyCounter = 0;
-        private int _lastDensifyAfterIncrement = 0;
-#endif
         private void Densify()
         {
             if (_isDensified) { return; }
@@ -337,18 +340,18 @@ namespace DCFApixels.DragonECS
             for (int i = 1; i <= _usedBlockCount; i++)
             {
                 var e = _itemEntites[i];
-                if (e != 0)
+                if (e == 0)
+                {
+                    _dense[recycleIndex++] = i;
+                }
+                else
                 {
                     _dense[denseIndex++] = e;
                     newUsedBlockCount = i;
                 }
-                else
-                {
-                    _dense[recycleIndex++] = i;
-                }
             }
 
-
+            #region Depp Debug
 #if DRAGONECS_DEEP_DEBUG
             HashSet<int> useds = new HashSet<int>();
             HashSet<int> recycleds = new HashSet<int>();
@@ -394,11 +397,16 @@ namespace DCFApixels.DragonECS
                 Throw.DeepDebugException();
             }
 #endif
+            #endregion
 
             _usedBlockCount = newUsedBlockCount;
             _recycledItemsCount = newUsedBlockCount - _itemsCount;
             _isDensified = true;
         }
+#if DRAGONECS_DEEP_DEBUG
+        private int _invokeDensifyCounter = 0;
+        private int _lastDensifyAfterIncrement = 0;
+#endif
         #endregion
 
         #region Callbacks
