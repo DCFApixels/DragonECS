@@ -380,7 +380,7 @@ namespace DCFApixels.DragonECS
                 Throw.DeepDebugException();
             }
 
-            var result = new EcsSpan(_register.WorldID, new ReadOnlySpan<int>(_denseItemEntities, 1, _itemsCount));
+            var result = new EcsSpan(_register.WorldID, new ReadOnlySpan<int>(_dense, 1, _itemsCount));
             Core.Unchecked.UncheckedUtility.CheckSpanValideDebug(result);
             _lastDensifyAfterIncrement = 0;
             _invokeDensifyCounter++;
