@@ -475,7 +475,7 @@ namespace DCFApixels.DragonECS
             _toSpans++;
 #endif
             Densify();
-            var result = new EcsSpan(_register.WorldID, new ReadOnlySpan<int>(_denseItemEntities, 1, _itemsCount));
+            var result = new EcsSpan(_register.WorldID, new ReadOnlySpan<int>(_dense, 1, _itemsCount));
 #if DRAGONECS_DEEP_DEBUG
             //var r2 = _register.World.WhereToGroup(out SingleAspect<T> _);
             //if(r2.SetEquals(result) == false)
