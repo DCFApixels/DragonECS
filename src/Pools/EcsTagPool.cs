@@ -110,12 +110,12 @@ namespace DCFApixels.DragonECS
         public void Add(int entityID)
         {
 #if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
-            if (_world.IsUsed(entityID) == false) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_register.World, entityID); }
+            if (_register.World.IsUsed(entityID) == false) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_register.World, entityID); }
             if (Has(entityID)) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
-            if (Has(entityID) | _world.IsUsed(entityID) == false | _isLocked) { return; }
+            if (Has(entityID) | _register.World.IsUsed(entityID) == false | _isLocked) { return; }
 #endif
             _count++;
             _mapping[entityID] = true;
@@ -139,7 +139,7 @@ namespace DCFApixels.DragonECS
         public void Del(int entityID)
         {
 #if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_register.World, entityID); }
             if (!Has(entityID)) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE

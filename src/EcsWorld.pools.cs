@@ -5,6 +5,7 @@ using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Runtime.CompilerServices;
+using System.Linq;
 
 namespace DCFApixels.DragonECS
 {

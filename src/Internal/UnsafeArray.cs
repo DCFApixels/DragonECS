@@ -20,6 +20,7 @@ namespace DCFApixels.DragonECS.Core.Internal
     internal unsafe struct UnsafeArray<T> : IDisposable, IEnumerable<T>
         where T : unmanaged
     {
+        public static readonly UnsafeArray<T> Empty = new UnsafeArray<T>(null, 0);
         internal T* ptr;
         internal int Length;
 

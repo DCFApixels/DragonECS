@@ -126,13 +126,13 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
-            if (_world.IsUsed(entityID) == false) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_register.World, entityID); }
+            if (_register.World.IsUsed(entityID) == false) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_register.World, entityID); }
             if (itemIndex > 0) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
             if (itemIndex > 0) { return ref Get(entityID); }
-            if (_isLocked | _world.IsUsed(entityID) == false) { return ref _items[0]; }
+            if (_isLocked | _register.World.IsUsed(entityID) == false) { return ref _items[0]; }
 #endif
             _itemsCount++;
             if (_recycledItemsCount > 0)
@@ -188,7 +188,7 @@ namespace DCFApixels.DragonECS
             }
             return ref Add(entityID);
             //#if DEBUG
-            //            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
+            //            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_register.World, entityID); }
             //#endif
             //            ref int itemIndex = ref _mapping[entityID];
             //            if (itemIndex <= 0)
@@ -232,7 +232,7 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_world, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_register.World, entityID); }
             if (itemIndex <= 0) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
@@ -367,7 +367,7 @@ namespace DCFApixels.DragonECS
                     var e = _itemEntites[value];
                     bool isHasComponent = Has(e);
                     bool isUsedsContains = useds.Contains(e);
-                    bool isWorldUsed = _world.IsUsed(e);
+                    bool isWorldUsed = _register.World.IsUsed(e);
                     if (e != 0 && (isHasComponent || isUsedsContains))
                     {
                         Throw.DeepDebugException();
@@ -380,7 +380,7 @@ namespace DCFApixels.DragonECS
                 Throw.DeepDebugException();
             }
 
-            var result = new EcsSpan(_worldID, new ReadOnlySpan<int>(_dense, 1, _itemsCount));
+            var result = new EcsSpan(_register.WorldID, new ReadOnlySpan<int>(_denseItemEntities, 1, _itemsCount));
             Core.Unchecked.UncheckedUtility.CheckSpanValideDebug(result);
             _lastDensifyAfterIncrement = 0;
             _invokeDensifyCounter++;
@@ -470,14 +470,14 @@ namespace DCFApixels.DragonECS
 #if DRAGONECS_DEEP_DEBUG
             if (_toSpans > 0)
             {
-                return _world.Entities;
+                return _register.World.Entities;
             }
             _toSpans++;
 #endif
             Densify();
-            var result = new EcsSpan(_register.WorldID, new ReadOnlySpan<int>(_dense, 1, _itemsCount));
+            var result = new EcsSpan(_register.WorldID, new ReadOnlySpan<int>(_denseItemEntities, 1, _itemsCount));
 #if DRAGONECS_DEEP_DEBUG
-            //var r2 = _world.WhereToGroup(out SingleAspect<T> _);
+            //var r2 = _register.World.WhereToGroup(out SingleAspect<T> _);
             //if(r2.SetEquals(result) == false)
             //{
             //    Throw.DeepDebugException();
@@ -492,7 +492,7 @@ namespace DCFApixels.DragonECS
                 {
                     Throw.DeepDebugException();
                 }
-                if (_world.IsUsed(e) == false)
+                if (_register.World.IsUsed(e) == false)
                 {
                     Throw.DeepDebugException();
                 }
