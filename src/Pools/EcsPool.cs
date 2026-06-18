@@ -187,40 +187,6 @@ namespace DCFApixels.DragonECS
                 return ref Get(entityID);
             }
             return ref Add(entityID);
-            //#if DEBUG
-            //            if (entityID == EcsConsts.NULL_ENTITY_ID) { EcsPoolThrowHelper.ThrowEntityIsNotAlive(_register.World, entityID); }
-            //#endif
-            //            ref int itemIndex = ref _mapping[entityID];
-            //            if (itemIndex <= 0)
-            //            { //Add block
-            //#if DEBUG
-            //                if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
-            //#elif DRAGONECS_STABILITY_MODE
-            //                if (_isLocked) { return ref _items[0]; }
-            //#endif
-            //                if (_recycledItemsCount > 0)
-            //                {
-            //                    itemIndex = _recycledItems[--_recycledItemsCount];
-            //                    _itemsCount++;
-            //                }
-            //                else
-            //                {
-            //                    itemIndex = ++_itemsCount;
-            //                    if (itemIndex >= _items.Length)
-            //                    {
-            //                        Array.Resize(ref _items, ArrayUtility.NextPow2(itemIndex));
-            //                    }
-            //                }
-            //                _mediator.RegisterComponent(entityID, _componentTypeID, _maskBit);
-            //                InvokeOnAdd(entityID, ref _items[itemIndex]);
-            //#if !DRAGONECS_DISABLE_POOLS_EVENTS
-            //                if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
-            //#endif
-            //            } //Add block end
-            //#if !DRAGONECS_DISABLE_POOLS_EVENTS
-            //            if (_hasAnyListener) { _listeners.InvokeOnGet(entityID); }
-            //#endif
-            //            return ref _items[itemIndex];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
@@ -382,8 +348,6 @@ namespace DCFApixels.DragonECS
 
             var result = new EcsSpan(_register.WorldID, new ReadOnlySpan<int>(_dense, 1, _itemsCount));
             Core.Unchecked.UncheckedUtility.CheckSpanValideDebug(result);
-            _lastDensifyAfterIncrement = 0;
-            _invokeDensifyCounter++;
             if(newUsedBlockCount > _usedBlockCount)
             {
                 Throw.DeepDebugException();
@@ -395,10 +359,6 @@ namespace DCFApixels.DragonECS
             _recycledItemsCount = newUsedBlockCount - _itemsCount;
             _isDensified = true;
         }
-#if DRAGONECS_DEEP_DEBUG
-        private int _invokeDensifyCounter = 0;
-        private int _lastDensifyAfterIncrement = 0;
-#endif
         #endregion
 
         #region Callbacks

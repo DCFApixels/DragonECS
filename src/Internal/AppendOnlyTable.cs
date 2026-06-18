@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         private static int _maxLoadCount;
         private static int _mask;
         private static bool _isInitialized = false;
-        private static int _version;
+        //private static int _version;
 
         private static readonly bool _isUnmanaged = 
             RuntimeHelpers.IsReferenceOrContainsReferences<TKey>() == false && 
@@ -104,7 +104,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                if (AppendOnlyTable<TKey, TValue>._version != _version) ThrowVersionChanged();
+                //if (AppendOnlyTable<TKey, TValue>._version != _version) ThrowVersionChanged();
 
                 while (++_index < _capacity)
                 {
@@ -120,7 +120,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset()
             {
-                if (AppendOnlyTable<TKey, TValue>._version != _version) ThrowVersionChanged();
+                //if (AppendOnlyTable<TKey, TValue>._version != _version) ThrowVersionChanged();
                 _index = -1;
                 _current = default;
             }
@@ -306,10 +306,10 @@ namespace DCFApixels.DragonECS.Core.Internal
         {
             throw new KeyNotFoundException($"The key '{key}' was not found in the dictionary.");
         }
-        private static void ThrowVersionChanged()
-        {
-            throw new InvalidOperationException("Collection was modified during enumeration.");
-        }
+        //private static void ThrowVersionChanged()
+        //{
+        //    throw new InvalidOperationException("Collection was modified during enumeration.");
+        //}
         #endregion
 
         #region Internal
