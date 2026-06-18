@@ -164,13 +164,13 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_world, entityID); }
-            if (_world.IsUsed(entityID) == false) { Throw.Ent_ThrowIsNotAlive(_world, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_register.World, entityID); }
+            if (_register.World.IsUsed(entityID) == false) { Throw.Ent_ThrowIsNotAlive(_register.World, entityID); }
             if (itemIndex > 0) { EcsPoolThrowHelper.ThrowAlreadyHasComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
             if (itemIndex > 0) { return ref Get(entityID); }
-            if (_isLocked | _world.IsUsed(entityID) == false) { return ref _items[0]; }
+            if (_isLocked | _register.World.IsUsed(entityID) == false) { return ref _items[0]; }
 #endif
             if (_recycledItemsCount > 0)
             {
@@ -212,7 +212,7 @@ namespace DCFApixels.DragonECS
         public ref T TryAddOrGet(int entityID)
         {
 #if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_world, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_register.World, entityID); }
 #endif
             ref int itemIndex = ref _mapping[entityID];
             if (itemIndex <= 0)
@@ -252,7 +252,7 @@ namespace DCFApixels.DragonECS
         {
             ref int itemIndex = ref _mapping[entityID];
 #if DEBUG
-            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_world, entityID); }
+            if (entityID == EcsConsts.NULL_ENTITY_ID) { Throw.Ent_ThrowIsNotAlive(_register.World, entityID); }
             if (itemIndex <= 0) { EcsPoolThrowHelper.ThrowNotHaveComponent<T>(entityID); }
             if (_isLocked) { EcsPoolThrowHelper.ThrowPoolLocked(); }
 #elif DRAGONECS_STABILITY_MODE
