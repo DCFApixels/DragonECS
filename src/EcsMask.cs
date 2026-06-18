@@ -643,7 +643,8 @@ namespace DCFApixels.DragonECS
                 if (_isHasAnyEntityStorage) { break; }
             }
 
-            _isSingleIncPoolWithEntityStorage = Mask.Excs.Length <= 0 && Mask.Anys.Length <= 0 && Mask.Incs.Length == 1;
+            bool isSignleInc = Mask.Excs.Length <= 0 && Mask.Anys.Length <= 0 && Mask.Incs.Length == 1;
+            _isSingleIncPoolWithEntityStorage = isSignleInc && _isHasAnyEntityStorage;
         }
         unsafe ~EcsMaskIterator()
         {
@@ -716,14 +717,14 @@ namespace DCFApixels.DragonECS
 
             return maxEntites;
         }
-        private unsafe bool TryGetEntityStorage(out IEntityStorage storage)
+        private unsafe bool TryGetEntityStorage(out IEntityStorage storage, out IEcsPool pool)
         {
             if (_isHasAnyEntityStorage)
             {
                 var pools = World.AllPools;
                 for (int i = 0; i < _sortIncBuffer.Length; i++)
                 {
-                    var pool = pools[_sortIncBuffer.ptr[i]];
+                    pool = pools[_sortIncBuffer.ptr[i]];
                     storage = pool as IEntityStorage;
                     if (storage != null)
                     {
@@ -731,6 +732,7 @@ namespace DCFApixels.DragonECS
                     }
                 }
             }
+            pool = null;
             storage = null;
             return false;
         }
@@ -862,7 +864,7 @@ namespace DCFApixels.DragonECS
                 {
                     return new Enumerator(_span.Slice(0, 0), _iterator);
                 }
-                if (_span.IsSourceEntities && _iterator.TryGetEntityStorage(out IEntityStorage storage))
+                if (_span.IsSourceEntities && _iterator.TryGetEntityStorage(out IEntityStorage storage, out _))
                 {
                     return new Enumerator(storage.ToSpan(), _iterator);
                 }
@@ -887,7 +889,7 @@ namespace DCFApixels.DragonECS
                 private readonly int[] _entityComponentMasks;
                 private readonly int _entityComponentMaskLengthBitShift;
 
-                public unsafe Enumerator(EcsSpan span, EcsMaskIterator iterator)
+                public Enumerator(EcsSpan span, EcsMaskIterator iterator)
                 {
                     _sortIncChunckBuffer = iterator._sortIncChunckBuffer;
                     _sortExcChunckBuffer = iterator._sortExcChunckBuffer;
@@ -1018,9 +1020,11 @@ namespace DCFApixels.DragonECS
                 {
                     return new Enumerator(_span.Slice(0, 0), _iterator);
                 }
-                if (_span.IsSourceEntities && _iterator.TryGetEntityStorage(out IEntityStorage storage))
+
+                if (_span.IsSourceEntities && _iterator.TryGetEntityStorage(out IEntityStorage storage, out IEcsPool rawPool))
                 {
-                    return new Enumerator(storage.ToSpan(), _iterator);
+                    var span = storage.ToSpan();
+                    return new Enumerator(span, _iterator, _iterator._isSingleIncPoolWithEntityStorage && span.Count == rawPool.Count);
                 }
                 else
                 {
@@ -1041,9 +1045,16 @@ namespace DCFApixels.DragonECS
                 private readonly int[] _entityComponentMasks;
                 private readonly int _entityComponentMaskLengthBitShift;
 
-                public unsafe Enumerator(EcsSpan span, EcsMaskIterator iterator)
+                public Enumerator(EcsSpan span, EcsMaskIterator iterator, bool isPureIteration = false)
                 {
-                    _sortIncChunckBuffer = iterator._sortIncChunckBuffer;
+                    if (isPureIteration)
+                    {
+                        _sortIncChunckBuffer = UnsafeArray<EcsMaskChunck>.Empty;
+                    }
+                    else
+                    {
+                        _sortIncChunckBuffer = iterator._sortIncChunckBuffer;
+                    }
 
                     _entityComponentMasks = iterator.World._entityComponentMasks;
                     _entityComponentMaskLengthBitShift = iterator.World._entityComponentMaskLengthBitShift;
