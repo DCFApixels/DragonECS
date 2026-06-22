@@ -397,7 +397,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #region PoolsMediator
+        #region ComponentsRegistrar
         public readonly struct ComponentsRegistrar
         {
             public readonly EcsWorld World;
