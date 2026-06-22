@@ -263,7 +263,7 @@ namespace DCFApixels.DragonECS
                 }
 
                 _pools[componentTypeID] = newPool;
-                newPool.OnInit(ComponentsRegister.Create_Internal(this, componentTypeID));
+                newPool.OnInit(ComponentsRegistrar.Create_Internal(this, componentTypeID));
 
                 OnPoolInitialized?.Invoke(newPool);
             }
@@ -398,22 +398,22 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region PoolsMediator
-        public readonly struct ComponentsRegister
+        public readonly struct ComponentsRegistrar
         {
             public readonly EcsWorld World;
             public readonly EcsMaskChunck MaskChunck;
             public readonly int ComponentTypeID;
             public readonly short WorldID;
-            private ComponentsRegister(EcsWorld world, int componentTypeID)
+            private ComponentsRegistrar(EcsWorld world, int componentTypeID)
             {
                 World = world;
                 WorldID = world.ID;
                 ComponentTypeID = componentTypeID;
                 MaskChunck = EcsMaskChunck.FromID(componentTypeID);
             }
-            public static ComponentsRegister Create_Internal(EcsWorld world, int componentTypeID)
+            public static ComponentsRegistrar Create_Internal(EcsWorld world, int componentTypeID)
             {
-                return new ComponentsRegister(world, componentTypeID);
+                return new ComponentsRegistrar(world, componentTypeID);
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void RegisterComponent(int entityID)

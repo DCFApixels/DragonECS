@@ -35,7 +35,7 @@ namespace DCFApixels.DragonECS
     public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T>, IComponentMask //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {
-        private EcsWorld.ComponentsRegister _register;
+        private EcsWorld.ComponentsRegistrar _registrar;
         private readonly static EcsStaticMask _staticMask = EcsStaticMask.Inc<T>();
 
         private bool[] _mapping;// index = entityID / value = itemIndex;/ value = 0 = no entityID
@@ -68,7 +68,7 @@ namespace DCFApixels.DragonECS
         }
         public int ComponentTypeID
         {
-            get { return _register.ComponentTypeID; }
+            get { return _registrar.ComponentTypeID; }
         }
         public Type ComponentType
         {
@@ -76,7 +76,7 @@ namespace DCFApixels.DragonECS
         }
         public EcsWorld World
         {
-            get { return _register.World; }
+            get { return _registrar.World; }
         }
         public bool IsReadOnly
         {
@@ -98,10 +98,10 @@ namespace DCFApixels.DragonECS
             if (_isInvalidType) { Throw.Exception($"{typeof(T).Name} type must not contain any data."); }
 #endif
         }
-        void IEcsPoolImplementation.OnInit(EcsWorld.ComponentsRegister register)
+        void IEcsPoolImplementation.OnInit(EcsWorld.ComponentsRegistrar registrar)
         {
-            _register = register;
-            _mapping = new bool[register.World.Capacity];
+            _registrar = registrar;
+            _mapping = new bool[registrar.World.Capacity];
         }
         void IEcsPoolImplementation.OnWorldDestroy() { }
         #endregion
@@ -119,7 +119,7 @@ namespace DCFApixels.DragonECS
 #endif
             _count++;
             _mapping[entityID] = true;
-            _register.RegisterComponent(entityID);
+            _registrar.RegisterComponent(entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
 #endif
@@ -147,7 +147,7 @@ namespace DCFApixels.DragonECS
 #endif
             _mapping[entityID] = false;
             _count--;
-            _register.UnregisterComponent(entityID);
+            _registrar.UnregisterComponent(entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
@@ -212,12 +212,12 @@ namespace DCFApixels.DragonECS
             if (_isLocked) { return; }
 #endif
             if (_count <= 0) { return; }
-            var span = _register.World.Where(out SingleTagAspect<T> _);
+            var span = _registrar.World.Where(out SingleTagAspect<T> _);
             _count = 0;
             foreach (var entityID in span)
             {
                 _mapping[entityID] = false;
-                _register.UnregisterComponent(entityID);
+                _registrar.UnregisterComponent(entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
                 if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
