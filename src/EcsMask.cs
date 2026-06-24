@@ -24,6 +24,16 @@ namespace DCFApixels.DragonECS
 {
     using static EcsMaskIteratorUtility;
 
+    /// <summary>
+    /// Defines a mask — a collection of component conditions used to filter entities in queries.
+    /// The mask consists of three sets:
+    /// <list type="bullet">
+    ///   <item><description><b>Include (Inc)</b> – entity must have <i>all</i> of these components.</description></item>
+    ///   <item><description><b>Exclude (Exc)</b> – entity must have <i>none</i> of these components.</description></item>
+    ///   <item><description><b>Any (Any)</b> – entity must have <i>at least one</i> of these components.</description></item>
+    /// </list>
+    /// Conditions are evaluated per entity during queries or iteration.
+    /// </summary>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -51,53 +61,69 @@ namespace DCFApixels.DragonECS
         private EcsMaskIterator _iterator;
 
         #region Properties
-        /// <summary> Sorted set excluding constraints. </summary>
+        /// <summary>Gets the sorted set of component type IDs that are required (include conditions).</summary>
         public ReadOnlySpan<int> Incs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _incs; }
         }
-        /// <summary> Sorted set excluding constraints. </summary>
+
+        /// <summary>Gets the sorted set of component type IDs that are forbidden (exclude conditions).</summary>
         public ReadOnlySpan<int> Excs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _excs; }
         }
-        /// <summary> Sorted set any constraints. </summary>
+
+        /// <summary>
+        /// Gets the sorted set of component type IDs that form the "any" condition.
+        /// An entity matches this mask only if it has at least one of these components.
+        /// </summary>
         public ReadOnlySpan<int> Anys
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _anys; }
         }
 
-        /// <summary> Sorted set including constraints presented as global type codes. </summary>
+        /// <summary>Gets the sorted set of required component type codes (global type codes).</summary>
         public ReadOnlySpan<EcsTypeCode> IncTypeCodes
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return ToStatic().IncTypeCodes; }
         }
-        /// <summary> Sorted set excluding constraints presented as global type codes. </summary>
+
+        /// <summary>Gets the sorted set of forbidden component type codes (global type codes).</summary>
         public ReadOnlySpan<EcsTypeCode> ExcTypeCodes
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return ToStatic().ExcTypeCodes; }
         }
-        /// <summary> Sorted set any constraints presented as global type codes. </summary>
+
+        /// <summary>
+        /// Gets the sorted set of component type codes that form the "any" condition.
+        /// An entity matches this mask only if it has at least one of the corresponding components.
+        /// </summary>
         public ReadOnlySpan<EcsTypeCode> AnyTypeCodes
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return ToStatic().AnyTypeCodes; }
         }
+
+        /// <summary>Gets the flags indicating which condition groups are present.</summary>
         public EcsMaskFlags Flags
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _flags; }
         }
+
+        /// <summary>Indicates whether the mask has no conditions (empty mask).</summary>
         public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _flags == EcsMaskFlags.Empty; }
         }
+
+        /// <summary>Indicates whether the mask is in a broken state (e.g., conflicting conditions).</summary>
         public bool IsBroken
         {
             get { return (_flags & EcsMaskFlags.Broken) != 0; }
@@ -105,6 +131,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
+        /// <summary>Creates a new fluent builder for constructing a mask in the specified world.</summary>
+        /// <param name="world">The world to which the mask will belong.</param>
+        /// <returns>A new <see cref="Builder"/> instance.</returns>
         public static Builder New(EcsWorld world) { return new Builder(world); }
         internal static EcsMask CreateEmpty(int id, short worldID)
         {
@@ -194,18 +223,27 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Object
+        /// <summary>Returns a string representation of the mask, showing the condition sets.</summary>
         public override string ToString()
         {
             return CreateLogString(WorldID, _incs, _excs, _anys);
         }
+        /// <summary>Determines whether this mask is equal to another mask (by ID and world).</summary>
+        /// <param name="mask">The other mask.</param>
+        /// <returns>True if equal; otherwise false.</returns>
         public bool Equals(EcsMask mask)
         {
             return ID == mask.ID && WorldID == mask.WorldID;
         }
+
+        /// <summary>Determines whether this mask equals another object (must be an <see cref="EcsMask"/>).</summary>
+        /// <returns>True if equal; otherwise false.</returns>
         public override bool Equals(object obj)
         {
             return obj is EcsMask mask && ID == mask.ID && Equals(mask);
         }
+
+        /// <summary>Gets the hash code for this mask (based on ID and world ID).</summary>
         public override int GetHashCode()
         {
             return unchecked(ID ^ (WorldID * EcsConsts.MAGIC_PRIME));
@@ -213,15 +251,25 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        /// <summary>Converts a static mask (<see cref="EcsStaticMask"/>) into a world‑specific <see cref="EcsMask"/> for the given world.</summary>
+        /// <param name="world">The world to bind the mask to.</param>
+        /// <param name="abstractMask">The static mask definition.</param>
+        /// <returns>A world‑specific mask instance.</returns>
         public static EcsMask FromStatic(EcsWorld world, EcsStaticMask abstractMask)
         {
             return world.Get<WorldMaskComponent>().ConvertFromStatic(abstractMask);
         }
+
+        /// <summary>Converts this world mask back to its static representation.</summary>
+        /// <returns>The underlying <see cref="EcsStaticMask"/>.</returns>
         public EcsStaticMask ToStatic()
         {
             return _staticMask;
         }
         EcsMask IComponentMask.ToMask(EcsWorld world) { return this; }
+
+        /// <summary>Returns an iterator that can be used to perform queries against entities using this mask.</summary>
+        /// <returns>An <see cref="EcsMaskIterator"/> instance for this mask.</returns>
         public EcsMaskIterator GetIterator()
         {
             if (_iterator == null)
@@ -370,7 +418,7 @@ namespace DCFApixels.DragonECS
             #endregion
         }
 
-        public partial struct Builder
+        public readonly partial struct Builder
         {
             private readonly EcsStaticMask.Builder _builder;
             private readonly EcsWorld _world;
@@ -383,38 +431,167 @@ namespace DCFApixels.DragonECS
             public Builder Inc() { return this; }
             public Builder Exc() { return this; }
             public Builder Any() { return this; }
+
+            /// <summary>Adds an include condition for the component type <typeparamref name="T"/>.</summary>
+            /// <typeparam name="T">The component type.</typeparam>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Inc<T>() { _builder.Inc<T>(); return this; }
+
+            /// <summary>Adds an exclude condition for the component type <typeparamref name="T"/>.</summary>
+            /// <typeparam name="T">The component type.</typeparam>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Exc<T>() { _builder.Exc<T>(); return this; }
+
+            /// <summary>Adds an any condition for the component type <typeparamref name="T"/>.</summary>
+            /// <typeparam name="T">The component type.</typeparam>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Any<T>() { _builder.Any<T>(); return this; }
+
+            /// <summary>Adds an include condition for the specified component type(s).</summary>
+            /// <param name="type">The component type.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Inc(Type type) { _builder.Inc(type); return this; }
+            /// <summary>Adds an exclude condition for the specified component type(s).</summary>
+            /// <param name="type">The component type.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Exc(Type type) { _builder.Exc(type); return this; }
+            /// <summary>Adds an any condition for the specified component type(s).</summary>
+            /// <param name="type">The component type.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Any(Type type) { _builder.Any(type); return this; }
+
+            /// <summary>Adds an include condition for the specified component type(s).</summary>
+            /// <param name="types">Array of component types.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Inc(params Type[] types) { _builder.Inc(types); return this; }
+
+            /// <summary>Adds an exclude condition for the specified component type(s).</summary>
+            /// <param name="types">Array of component types.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Exc(params Type[] types) { _builder.Exc(types); return this; }
+
+            /// <summary>Adds an any condition for the specified component type(s).</summary>
+            /// <param name="types">Array of component types.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Any(params Type[] types) { _builder.Any(types); return this; }
+
+            /// <summary>Adds an include condition for the specified component type(s).</summary>
+            /// <param name="types">Span of component types.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Inc(ReadOnlySpan<Type> types) { _builder.Inc(types); return this; }
+
+            /// <summary>Adds an exclude condition for the specified component type(s).</summary>
+            /// <param name="types">Span of component types.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Exc(ReadOnlySpan<Type> types) { _builder.Exc(types); return this; }
+
+            /// <summary>Adds an any condition for the specified component type(s).</summary>
+            /// <param name="types">Span of component types.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Any(ReadOnlySpan<Type> types) { _builder.Any(types); return this; }
+
+            /// <summary>Adds an include condition for the specified component type(s).</summary>
+            /// <param name="types">Enumerable of component types.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Inc(IEnumerable<Type> types) { _builder.Inc(types); return this; }
+
+            /// <summary>Adds an exclude condition for the specified component type(s).</summary>
+            /// <param name="types">Enumerable of component types.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Exc(IEnumerable<Type> types) { _builder.Exc(types); return this; }
+
+            /// <summary>Adds an any condition for the specified component type(s).</summary>
+            /// <param name="types">Enumerable of component types.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Any(IEnumerable<Type> types) { _builder.Any(types); return this; }
+
+            /// <summary>Adds an include condition using a global type code.</summary>
+            /// <param name="typeCode">The type code.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Inc(EcsTypeCode typeCode) { _builder.Inc(typeCode); return this; }
+
+            /// <summary>Adds an exclude condition using a global type code.</summary>
+            /// <param name="typeCode">The type code.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Exc(EcsTypeCode typeCode) { _builder.Exc(typeCode); return this; }
+
+            /// <summary>Adds an any condition using a global type code.</summary>
+            /// <param name="typeCode">The type code.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Any(EcsTypeCode typeCode) { _builder.Any(typeCode); return this; }
+
+            /// <summary>Adds an include condition using global type codes.</summary>
+            /// <param name="typeCodes">Array of type codes.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Inc(params EcsTypeCode[] typeCodes) { _builder.Inc(typeCodes); return this; }
+
+            /// <summary>Adds an exclude condition using global type codes.</summary>
+            /// <param name="typeCodes">Array of type codes.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Exc(params EcsTypeCode[] typeCodes) { _builder.Exc(typeCodes); return this; }
+
+            /// <summary>Adds an any condition using global type codes.</summary>
+            /// <param name="typeCodes">Array of type codes.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Any(params EcsTypeCode[] typeCodes) { _builder.Any(typeCodes); return this; }
+
+            /// <summary>Adds an include condition using global type codes.</summary>
+            /// <param name="typeCodes">Array of type codes.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Inc(ReadOnlySpan<EcsTypeCode> typeCodes) { _builder.Inc(typeCodes); return this; }
+
+            /// <summary>Adds an exclude condition using global type codes.</summary>
+            /// <param name="typeCodes">Array of type codes.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Exc(ReadOnlySpan<EcsTypeCode> typeCodes) { _builder.Exc(typeCodes); return this; }
+
+            /// <summary>Adds an any condition using global type codes.</summary>
+            /// <param name="typeCodes">Array of type codes.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Any(ReadOnlySpan<EcsTypeCode> typeCodes) { _builder.Any(typeCodes); return this; }
+
+            /// <summary>Adds an include condition using global type codes.</summary>
+            /// <param name="typeCodes">Array of type codes.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Inc(IEnumerable<EcsTypeCode> typeCodes) { _builder.Inc(typeCodes); return this; }
+
+            /// <summary>Adds an exclude condition using global type codes.</summary>
+            /// <param name="typeCodes">Array of type codes.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Exc(IEnumerable<EcsTypeCode> typeCodes) { _builder.Exc(typeCodes); return this; }
+
+            /// <summary>Adds an any condition using global type codes.</summary>
+            /// <param name="typeCodes">Array of type codes.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Any(IEnumerable<EcsTypeCode> typeCodes) { _builder.Any(typeCodes); return this; }
 
+            /// <summary>Combines the current builder with an existing mask (includes its conditions).</summary>
+            /// <param name="mask">The mask to combine.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Combine(EcsMask mask) { _builder.Combine(mask._staticMask); return this; }
+
+            /// <summary>Combines the current builder with an existing mask (includes its conditions).</summary>
+            /// <param name="mask">The mask to combine.</param>
+            /// <returns>The builder instance for chaining.</returns>
+            public Builder Combine(EcsStaticMask mask) { _builder.Combine(mask); return this; }
+
+            /// <summary>Subtracts (excludes) the conditions of an existing mask from the current builder.</summary>
+            /// <param name="mask">The mask to subtract.</param>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Except(EcsMask mask) { _builder.Except(mask._staticMask); return this; }
 
+            /// <summary>Subtracts (excludes) the conditions of an existing mask from the current builder.</summary>
+            /// <param name="mask">The mask to subtract.</param>
+            /// <returns>The builder instance for chaining.</returns>
+            public Builder Except(EcsStaticMask mask) { _builder.Except(mask); return this; }
+
+            /// <summary>Builds the final <see cref="EcsMask"/> from the current builder state.</summary>
+            /// <returns>A new or cached mask instance.</returns>
             public EcsMask Build() { return _world.Get<WorldMaskComponent>().ConvertFromStatic(_builder.Build()); }
+
+            /// <summary>Implicitly converts a builder directly into an <see cref="EcsMask"/> (calls <see cref="Build"/>).</summary>
+            /// <param name="a">The builder.</param>
+            /// <returns>The built mask.</returns>
             public static implicit operator EcsMask(Builder a) { return a.Build(); }
         }
         #endregion
@@ -518,21 +695,32 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    /// <summary>Flags that indicate which condition groups are present in a mask.</summary>
     [Flags]
     public enum EcsMaskFlags : byte
     {
+        /// <summary>No conditions.</summary>
         Empty = 0,
+        /// <summary>Include conditions present.</summary>
         Inc = 1 << 0,
+        /// <summary>Exclude conditions present.</summary>
         Exc = 1 << 1,
+        /// <summary>Any conditions present.</summary>
         Any = 1 << 2,
+        /// <summary>Both Include and Exclude.</summary>
         IncExc = Inc | Exc,
+        /// <summary>Include and Any.</summary>
         IncAny = Inc | Any,
+        /// <summary>Exclude and Any.</summary>
         ExcAny = Exc | Any,
+        /// <summary>All three condition groups.</summary>
         IncExcAny = Inc | Exc | Any,
+        /// <summary>Mask is broken (conflict or invalid).</summary>
         Broken = IncExcAny + 1,
     }
 
     #region EcsMaskChunck
+    /// <summary>Represents a chunk (group) of component type IDs within a mask, used for efficient bitmask checks.</summary>
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly struct EcsMaskChunck
     {
@@ -540,19 +728,31 @@ namespace DCFApixels.DragonECS
         internal const int DIV_SHIFT = 5;
         internal const int MOD_MASK = BITS - 1;
 
+        /// <summary>The index of the chunk (group).</summary>
         public readonly int chunkIndex;
+        /// <summary>The bitmask of component type IDs within this chunk.</summary>
         public readonly int mask;
+
+        /// <summary>Creates a chunk from the given index and mask.</summary>
+        /// <param name="chunkIndex">The chunk index.</param>
+        /// <param name="mask">The bitmask.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsMaskChunck(int chunkIndex, int mask)
         {
             this.chunkIndex = chunkIndex;
             this.mask = mask;
         }
+
+        /// <summary>Creates a mask chunk from a component type ID (automatically determines chunk index and bit position).</summary>
+        /// <param name="id">The component type ID.</param>
+        /// <returns>The corresponding <see cref="EcsMaskChunck"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsMaskChunck FromID(int id)
         {
             return new EcsMaskChunck(id >> DIV_SHIFT, 1 << (id & MOD_MASK));
         }
+
+        /// <summary>Returns a string representation of the chunk (index, mask, bit count).</summary>
         public override string ToString()
         {
             return $"mask({chunkIndex}, {mask}, {BitsUtility.CountBits(mask)})";
@@ -579,6 +779,7 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region EcsMaskIterator
+    /// <summary>Provides iteration over entities that match a given mask. Used internally by query executors.</summary>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -603,7 +804,17 @@ namespace DCFApixels.DragonECS
         private readonly bool _isHasAnyEntityStorage;
         private readonly EcsMaskFlags _maskFlags;
 
+        /// <summary>Gets the flags of the associated mask.</summary>
+        public EcsMaskFlags MaskFlags
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _maskFlags; }
+        }
+
         #region Constructors/Finalizator
+        /// <summary>Initializes a new iterator for the specified world and mask.</summary>
+        /// <param name="source">The world.</param>
+        /// <param name="mask">The mask to use.</param>
         public unsafe EcsMaskIterator(EcsWorld source, EcsMask mask)
         {
             World = source;
@@ -624,9 +835,6 @@ namespace DCFApixels.DragonECS
             _sortAnyBuffer = sortBuffer.Slice(mask._incs.Length + mask._excs.Length, mask._anys.Length);
             _sortAnyBuffer.CopyFromArray_Unchecked(mask._anys);
 
-            //EcsDebug.PrintError(_sortIncBuffer.ToArray());
-            //EcsDebug.PrintError(new Span<int>(_bufferHandler.GetPtrAs<int>(), _sortIncBuffer.Length).ToArray());
-
             _sortIncChunckBuffer = sortChunckBuffer.Slice(0, mask._incChunckMasks.Length);
             _sortIncChunckBuffer.CopyFromArray_Unchecked(mask._incChunckMasks);
             _sortExcChunckBuffer = sortChunckBuffer.Slice(mask._incChunckMasks.Length, mask._excChunckMasks.Length);
@@ -646,10 +854,12 @@ namespace DCFApixels.DragonECS
             bool isSignleInc = Mask.Excs.Length <= 0 && Mask.Anys.Length <= 0 && Mask.Incs.Length == 1;
             _isSingleIncPoolWithEntityStorage = isSignleInc && _isHasAnyEntityStorage;
         }
-        unsafe ~EcsMaskIterator()
+        ~EcsMaskIterator()
         {
             Cleanup(false);
         }
+
+        /// <summary>Releases all unmanaged resources used by the iterator.</summary>
         public void Dispose()
         {
             Cleanup(true);
@@ -739,11 +949,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IterateTo
-        public EcsMaskFlags MaskFlags
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _maskFlags; }
-        }
+        /// <summary>Fills the given group with all entities from the source span that match the mask.</summary>
+        /// <param name="source">The span of entity IDs to filter.</param>
+        /// <param name="group">The group to populate with matching entities.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CacheTo(EcsSpan source, EcsGroup group)
         {
@@ -771,6 +979,11 @@ namespace DCFApixels.DragonECS
                     return;
             }
         }
+
+        /// <summary>Fills the given array with matching entity IDs from the source span.</summary>
+        /// <param name="source">The span of entity IDs.</param>
+        /// <param name="array">The array to write into (will be resized if needed).</param>
+        /// <returns>The number of entities written.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CacheTo(EcsSpan source, ref int[] array)
         {
@@ -797,8 +1010,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Iterate/Enumerable
+        /// <summary>Returns an enumerable for iterating over matching entities (supports all condition types).</summary>
+        /// <param name="span">The source span of entity IDs.</param>
+        /// <returns>An <see cref="Enumerable"/> struct that can be enumerated.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerable Iterate(EcsSpan span) { return new Enumerable(this, span); }
+
+        /// <summary>Provides enumeration over entities matching the mask (all conditions).</summary>
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -814,7 +1032,9 @@ namespace DCFApixels.DragonECS
                 _span = span;
             }
 
-            #region CopyTo
+            #region CacheTo
+            /// <summary>Copies all matching entities into the specified group.</summary>
+            /// <param name="group">The group to fill.</param>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void CacheTo(EcsGroup group)
             {
@@ -825,6 +1045,10 @@ namespace DCFApixels.DragonECS
                     group.AddUnchecked(enumerator.Current);
                 }
             }
+
+            /// <summary>Copies matching entity IDs into the provided array (resizes if needed).</summary>
+            /// <param name="array">The array to fill.</param>
+            /// <returns>The number of entities copied.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int CacheTo(ref int[] array)
             {
@@ -843,12 +1067,16 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Other
+            /// <summary>Converts the result to a <see cref="List{int}"/>.</summary>
+            /// <returns>A new list containing all matching entity IDs.</returns>
             public List<int> ToList()
             {
                 List<int> ints = new List<int>();
                 foreach (var e in this) { ints.Add(e); }
                 return ints;
             }
+
+            /// <summary>Returns a string representation of the enumeration.</summary>
             public override string ToString() { return CollectionUtility.EntitiesToString(ToList(), "it"); }
             #endregion
 
@@ -952,9 +1180,14 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Iterate/Enumerable OnlyInc
+        /// <summary>Returns an enumerable optimized for masks that only have include conditions (no exclusions or any).</summary>
+        /// <param name="span">The source span.</param>
+        /// <returns>An <see cref="OnlyIncEnumerable"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public OnlyIncEnumerable IterateOnlyInc(EcsSpan span) { return new OnlyIncEnumerable(this, span); }
 
+
+        /// <summary>Optimized enumeration for masks that have only include conditions.</summary>
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.NullChecks, false)]
         [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -970,7 +1203,9 @@ namespace DCFApixels.DragonECS
                 _span = span;
             }
 
-            #region CopyTo
+            #region CacheTo
+            /// <summary>Copies all matching entities into the specified group.</summary>
+            /// <param name="group">The group to fill.</param>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void CacheTo(EcsGroup group)
             {
@@ -981,6 +1216,10 @@ namespace DCFApixels.DragonECS
                     group.AddUnchecked(enumerator.Current);
                 }
             }
+
+            /// <summary>Copies matching entity IDs into the provided array (resizes if needed).</summary>
+            /// <param name="array">The array to fill.</param>
+            /// <returns>The number of entities copied.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int CacheTo(ref int[] array)
             {
@@ -999,12 +1238,15 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Other
+            /// <summary>Converts the result to a <see cref="List{int}"/>.</summary>
             public List<int> ToList()
             {
                 List<int> ints = new List<int>();
                 foreach (var e in this) { ints.Add(e); }
                 return ints;
             }
+
+            /// <summary>Returns a string representation of the enumeration.</summary>
             public override string ToString() { return CollectionUtility.EntitiesToString(ToList(), "inc_it"); }
             #endregion
 
