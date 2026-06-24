@@ -43,11 +43,24 @@ namespace DCFApixels.DragonECS
             _worlds[NULL_WORLD_ID] = new NullWorld();
         }
 
+        /// <summary>
+        /// Return the EcsWorld instance for the specified world id.
+        /// </summary>
+        /// <param name="worldID">World identifier.</param>
+        /// <returns>EcsWorld instance (may be null for unknown or destroyed worlds).</returns>
+        /// <remarks>Thread-safe</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsWorld GetWorld(short worldID)
         {// ts
             return _worlds[worldID];
         }
+        /// <summary>
+        /// Try to get an EcsWorld by id. Validates existence and that world is not destroyed.
+        /// </summary>
+        /// <param name="worldID">World identifier to lookup.</param>
+        /// <param name="world">Out parameter receiving the world when found and valid.</param>
+        /// <returns>True if a valid, non-destroyed world was found; otherwise false.</returns>
+        /// <remarks>Thread-safe</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetWorld(short worldID, out EcsWorld world)
         {// ts
@@ -74,22 +87,47 @@ namespace DCFApixels.DragonECS
                 _worldComponentPools.Clear();
             }
         }
+        /// <summary>
+        /// Return a reference to a world-scoped data object of type T for the specified world id, creating it if necessary.
+        /// </summary>
+        /// <typeparam name="T">Type of world-scoped component or controller.</typeparam>
+        /// <param name="worldID">World identifier.</param>
+        /// <returns>Reference to the data instance for the specified world.</returns>
+        /// <remarks>Thread-safe</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetData<T>(short worldID)
         {
             return ref WorldComponentPool<T>.GetForWorld(worldID);
         }
+        /// <summary>
+        /// Check whether a world-scoped data object of type T exists for the specified world id.
+        /// </summary>
+        /// <typeparam name="T">Type of world-scoped component or controller.</typeparam>
+        /// <param name="worldID">World identifier.</param>
+        /// <returns>True if the data instance exists for the world; otherwise false.</returns>
+        /// <remarks>Thread-safe</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasData<T>(short worldID)
         {
             return WorldComponentPool<T>.Has(worldID);
         }
+        /// <summary>
+        /// Unchecked access to a world-scoped data object of type T for the specified world id.
+        /// Use when caller guarantees existence.
+        /// </summary>
+        /// <typeparam name="T">Type of world-scoped component or controller.</typeparam>
+        /// <param name="worldID">World identifier.</param>
+        /// <returns>Reference to the data instance for the specified world (unchecked).</returns>
+        /// <remarks>Thread-safe</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetDataUnchecked<T>(short worldID)
         {
             return ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
         }
 
+        /// <summary>
+        /// Reset global static state for all worlds. Destroys all non-null worlds and clears internal static tables.
+        /// </summary>
         public static void ResetStaticState()
         {
             var nullworld = _worlds[0];

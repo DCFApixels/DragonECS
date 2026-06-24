@@ -191,18 +191,33 @@ namespace DCFApixels.DragonECS.Core.Internal
 namespace DCFApixels.DragonECS
 {
     #region Interfaces
+    /// <summary>
+    /// Публичный интерфейс только для чтения для пула компонентов.
+    /// Предоставляет базовые методы и свойства для проверки наличия компонента и доступа к необработанным данным.
+    /// </summary>
     public interface IEcsReadonlyPool : IEcsMember
     {
         #region Properties
+        /// <summary>Внутренний идентификатор типа компонента.</summary>
         int ComponentTypeID { get; }
+        /// <summary>CLR-тип компонента, хранящегося в пуле.</summary>
         Type ComponentType { get; }
+        /// <summary>Мир, которому принадлежит пул.</summary>
         EcsWorld World { get; }
+        /// <summary>Количество элементов в пуле.</summary>
         int Count { get; }
+        /// <summary>Пул доступен только для чтения.</summary>
         bool IsReadOnly { get; }
         #endregion
 
         #region Methods
+        /// <summary>Проверяет, содержит ли указанный сущность компонент в пуле.</summary>
+        /// <param name="entityID">Идентификатор сущности.</param>
+        /// <returns>True если компонент присутствует.</returns>
         bool Has(int entityID);
+        /// <summary>Возвращает необработанное представление компонента для заданной сущности.</summary>
+        /// <param name="entityID">Идентификатор сущности.</param>
+        /// <returns>Необработанный объект компонента.</returns>
         object GetRaw(int entityID);
         #endregion
 

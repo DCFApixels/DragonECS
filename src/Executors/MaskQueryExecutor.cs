@@ -38,6 +38,11 @@ namespace DCFApixels.DragonECS
             return (TExecutor)executor;
         }
 
+        /// <summary>
+        /// Collect currently registered mask query executors into the provided list when the internal cache has changed.
+        /// </summary>
+        /// <param name="result">List to fill with MaskQueryExecutor instances.</param>
+        /// <param name="version">Reference to caller's version number; updated to current count when changed.</param>
         public void GetMaskQueryExecutors(List<MaskQueryExecutor> result, ref int version)
         {
             if (_executorCoures == null || version == _executorCoures.Count)
@@ -64,10 +69,25 @@ namespace DCFApixels.DragonECS.Core
 {
     public interface IQueryExecutorImplementation
     {
+        /// <summary>
+        /// World instance the executor is attached to.
+        /// </summary>
         EcsWorld World { get; }
+        /// <summary>
+        /// Version number representing the executor state.
+        /// </summary>
         long Version { get; }
+        /// <summary>
+        /// True when the executor maintains a cached result set.
+        /// </summary>
         bool IsCached { get; }
+        /// <summary>
+        /// Last cached result count when caching is enabled.
+        /// </summary>
         int LastCachedCount { get; }
+        /// <summary>
+        /// Destroy and release internal resources held by the executor.
+        /// </summary>
         void Destroy();
     }
     public abstract class MaskQueryExecutor : IQueryExecutorImplementation
@@ -89,8 +109,17 @@ namespace DCFApixels.DragonECS.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _mask; }
         }
+        /// <summary>
+        /// Abstract version number for derived executors to expose their change state.
+        /// </summary>
         public abstract long Version { get; }
+        /// <summary>
+        /// Indicates whether the executor caches its results.
+        /// </summary>
         public abstract bool IsCached { get; }
+        /// <summary>
+        /// Returns the last cached result count when caching is enabled.
+        /// </summary>
         public abstract int LastCachedCount { get; }
         internal void Initialize(EcsWorld world, EcsMask mask)
         {
@@ -105,6 +134,10 @@ namespace DCFApixels.DragonECS.Core
         }
         protected abstract void OnInitialize();
         protected abstract void OnDestroy();
+        /// <summary>
+        /// Produce a snapshot span of entity ids matching the executor's mask.
+        /// </summary>
+        /// <returns>EcsSpan containing matched entity ids.</returns>
         public abstract EcsSpan Snapshot();
     }
 
@@ -130,6 +163,10 @@ namespace DCFApixels.DragonECS.Core
             get { return _versions[0]; }
         }
 
+        /// <summary>
+        /// Create a checker snapshot for the specified mask. Used to verify whether world or pool versions changed.
+        /// </summary>
+        /// <param name="mask">Mask to capture versions for.</param>
         public WorldStateVersionsChecker(EcsMask mask)
         {
             _world = mask.World;
@@ -148,6 +185,10 @@ namespace DCFApixels.DragonECS.Core
 
             _isNotOnlyExc = mask._incs.Length > 0 || mask._anys.Length > 0;
         }
+        /// <summary>
+        /// Check whether captured versions still match current world state.
+        /// </summary>
+        /// <returns>True when versions match; otherwise false.</returns>
         public bool Check()
         {
             if (*_versions == _world.Version)
@@ -165,6 +206,9 @@ namespace DCFApixels.DragonECS.Core
             }
             return true;
         }
+        /// <summary>
+        /// Refresh internal captured versions to current world state.
+        /// </summary>
         public void Next()
         {
             *_versions = _world.Version;
@@ -175,6 +219,10 @@ namespace DCFApixels.DragonECS.Core
                 _versions[i] = slots[_componentIDs[i]].version;
             }
         }
+        /// <summary>
+        /// Check whether versions match and refresh captured versions. Returns true when no changes detected.
+        /// </summary>
+        /// <returns>True if no changes were detected; otherwise false.</returns>
         public bool CheckAndNext()
         {
             if (*_versions == _world.Version)
@@ -196,6 +244,9 @@ namespace DCFApixels.DragonECS.Core
             return result;
         }
 
+        /// <summary>
+        /// Release internal unmanaged resources used by the checker.
+        /// </summary>
         public void Dispose()
         {
             MemoryAllocator.Free(_handler);

@@ -61,22 +61,27 @@ namespace DCFApixels.DragonECS
 
 
         #region Properites
+        /// <summary>Количество компонентов, хранящихся в пуле.</summary>
         public int Count
         {
             get { return _itemsCount; }
         }
+        /// <summary>Ёмкость внутреннего массива компонентов.</summary>
         public int Capacity
         {
             get { return _items.Length; }
         }
+        /// <summary>Внутренний идентификатор типа компонента для данного пула.</summary>
         public int ComponentTypeID
         {
             get { return _registrar.ComponentTypeID; }
         }
+        /// <summary>CLR-тип компонента, хранящегося в пуле.</summary>
         public Type ComponentType
         {
             get { return typeof(T); }
         }
+        /// <summary>Мир, которому принадлежит этот пул.</summary>
         public EcsWorld World
         {
             get { return _registrar.World; }
@@ -85,6 +90,9 @@ namespace DCFApixels.DragonECS
         {
             get { return false; }
         }
+        /// <summary>Получить компонент по индексу внутри пула.</summary>
+        /// <param name="index">Индекс компонента внутри пула.</param>
+        /// <returns>Ссылка на компонент.</returns>
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

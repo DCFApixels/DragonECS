@@ -62,18 +62,22 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Properites
+        /// <summary>Количество сущностей, имеющих этот тег в мире.</summary>
         public int Count
         {
             get { return _count; }
         }
+        /// <summary>Внутренний идентификатор типа компонента.</summary>
         public int ComponentTypeID
         {
             get { return _registrar.ComponentTypeID; }
         }
+        /// <summary>CLR-тип компонента (тега).</summary>
         public Type ComponentType
         {
             get { return typeof(T); }
         }
+        /// <summary>Мир, которому принадлежит пул тегов.</summary>
         public EcsWorld World
         {
             get { return _registrar.World; }
@@ -82,6 +86,8 @@ namespace DCFApixels.DragonECS
         {
             get { return false; }
         }
+        /// <summary>Проверяет или устанавливает наличие тега для сущности.</summary>
+        /// <param name="index">Идентификатор сущности.</param>
         public bool this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

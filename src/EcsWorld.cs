@@ -16,6 +16,9 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    /// <summary>
+    /// Configuration for an <c>EcsWorld</c> instance. Defines initial capacities for entities, groups, pools, pool components and recycled components.
+    /// </summary>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -30,6 +33,15 @@ namespace DCFApixels.DragonECS
         [DataMember] public int PoolsCapacity;
         [DataMember] public int PoolComponentsCapacity;
         [DataMember] public int PoolRecycledComponentsCapacity;
+
+        /// <summary>
+        /// Create a new configuration.
+        /// </summary>
+        /// <param name="entitiesCapacity">Initial capacity for entities.</param>
+        /// <param name="groupCapacity">Initial capacity for groups.</param>
+        /// <param name="poolsCapacity">Initial capacity for pools.</param>
+        /// <param name="poolComponentsCapacity">Initial capacity for components inside each pool.</param>
+        /// <param name="poolRecycledComponentsCapacity">Initial capacity for recycled component slots.</param>
         public EcsWorldConfig(int entitiesCapacity = 512, int groupCapacity = 512, int poolsCapacity = 512, int poolComponentsCapacity = 512, int poolRecycledComponentsCapacity = -1)
         {
             if (poolRecycledComponentsCapacity < 0)
@@ -45,6 +57,10 @@ namespace DCFApixels.DragonECS
         }
     }
 
+    /// <summary>
+    /// Primary container for entities and components. Manages entity ids, component pools, queries, masks and other world-scoped resources. 
+    /// Use it to create and destroy entities, access component pools, run queries and manage world lifecycle.
+    /// </summary>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -94,70 +110,131 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return this; }
         }
+
+        /// <summary>
+        /// Configuration container. Contains <c>EcsWorldConfig</c> and other runtime settings.
+        /// </summary>
         public IConfigContainer Configs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _configs; }
         }
+
+        /// <summary>
+        /// World name. May be empty. Useful for identification and debugging.
+        /// </summary>
         public string Name
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _name; }
         }
+
+        /// <summary>
+        /// Monotonic version counter, incremented on structural changes (entity add/remove, mask updates).
+        /// </summary>
         public long Version
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _version; }
         }
+
+        /// <summary>
+        /// True after Destroy() was called. After destruction, most operations are invalid.
+        /// </summary>
         public bool IsDestroyed
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _isDestroyed; }
         }
+
+        /// <summary>
+        /// Current number of alive (used) entities.
+        /// </summary>
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _entitiesCount; }
         }
+
+        /// <summary>
+        /// Current entity storage capacity..
+        /// </summary>
         public int Capacity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _entitiesCapacity; }
         }
+
+        /// <summary>
+        /// Number of entities in the deferred-delete buffer.
+        /// </summary>
         public int DelEntBufferCount
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _delEntBufferCount; }
         }
+
+        /// <summary>
+        /// If true, operations that return entity spans will automatically release and process the deferred-delete buffer.
+        /// </summary>
         public bool IsEnableReleaseDelEntBuffer
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _isEnableAutoReleaseDelEntBuffer; }
         }
 
+        /// <summary>
+        /// EcsSpan of alive entities; may process deferred deletes before returning.
+        /// </summary>
         public EcsSpan Entities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return ToSpan(); }
         }
+
+        /// <summary>
+        /// Number of registered component pools.
+        /// </summary>
         public int PoolsCount
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _poolsCount; }
         }
+
+        /// <summary>
+        /// Read-only span over all registered pool instances for this world. Use to inspect or operate on pools.
+        /// </summary>
         public ReadOnlySpan<IEcsPool> AllPools
         {
-            // new ReadOnlySpan<IEcsPoolImplementation>(pools, 0, _poolsCount);
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _pools; }
+            get { return _pools; } //new ReadOnlySpan<IEcsPool>(pools, 0, _poolsCount);
         }
         #endregion
 
         #region Constructors/Destroy
+        /// <summary>
+        /// Create a new world with default configuration. Use overloads to provide explicit configuration or world id.
+        /// </summary>
         public EcsWorld() : this(ConfigContainer.Empty, null, -1) { }
+        
+        /// <summary>
+        /// Create a new world with default configuration. Use overloads to provide explicit configuration or world id.
+        /// </summary>
         public EcsWorld(EcsWorldConfig config = null, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), null, worldID) { }
+        
+        /// <summary>
+        /// Create a new world with default configuration. Use overloads to provide explicit configuration or world id.
+        /// </summary>
         public EcsWorld(IConfigContainer configs, short worldID = -1) : this(configs, null, worldID) { }
+        
+        /// <summary>
+        /// Create a new world with default configuration. Use overloads to provide explicit configuration or world id.
+        /// </summary>
         public EcsWorld(EcsWorldConfig config = null, string name = null, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), name, worldID) { }
+       
+        /// <summary>
+        /// Create a new world with default configuration. Use overloads to provide explicit configuration or world id.
+        /// </summary>
         public EcsWorld(IConfigContainer configs, string name = null, short worldID = -1)
         {
             lock (_worldLock)
@@ -214,6 +291,12 @@ namespace DCFApixels.DragonECS
                 OnWorldCreated?.Invoke(this);
             }
         }
+
+        /// <summary>
+        /// Destroy the world: removes all entities, components, notifies listeners and releases resources.
+        /// Always call when the world is no longer needed, otherwise occupied resources will leak.
+        /// After this call the world is considered destroyed and most operations are invalid.
+        /// </summary>
         public void Destroy()
         {
             lock (_worldLock)
@@ -264,19 +347,38 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Getters
-#if UNITY_2020_3_OR_NEWER
+        /// <summary>
+        /// Returns cached aspect instance of type <typeparamref name="TAspect"/> for use with queries and direct pool access.
+        /// </summary>
+        /// <typeparam name="TAspect">Aspect type (must have parameterless constructor).</typeparam>
+        /// <returns>Cached aspect instance of type <typeparamref name="TAspect"/>.</returns>
         [UnityEngine.Scripting.Preserve]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TAspect GetAspect<TAspect>() where TAspect : new()
         {
             return Get<AspectCache<TAspect>>().Instance;
         }
+
+        /// <summary>
+        /// Shortcut: obtain one cached aspect instance by out parameter. See GetAspect for details.
+        /// </summary>
+        /// <typeparam name="TAspect0">Aspect type.</typeparam>
+        /// <param name="a0">Out parameter receiving the cached aspect instance.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetAspects<TAspect0>(out TAspect0 a0)
             where TAspect0 : new()
         {
             a0 = GetAspect<TAspect0>();
         }
+
+        /// <summary>
+        /// Shortcut: obtain two cached aspect instances by out parameters. See GetAspect for details.
+        /// </summary>
+        /// <typeparam name="TAspect0">First aspect type.</typeparam>
+        /// <typeparam name="TAspect1">Second aspect type.</typeparam>
+        /// <param name="a0">Out parameter receiving the first cached aspect instance.</param>
+        /// <param name="a1">Out parameter receiving the second cached aspect instance.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetAspects<TAspect0, TAspect1>(out TAspect0 a0, out TAspect1 a1)
             where TAspect0 : new()
             where TAspect1 : new()
@@ -284,6 +386,17 @@ namespace DCFApixels.DragonECS
             a0 = GetAspect<TAspect0>();
             a1 = GetAspect<TAspect1>();
         }
+
+        /// <summary>
+        /// Shortcut: obtain three cached aspect instances by out parameters. See GetAspect for details.
+        /// </summary>
+        /// <typeparam name="TAspect0">First aspect type.</typeparam>
+        /// <typeparam name="TAspect1">Second aspect type.</typeparam>
+        /// <typeparam name="TAspect2">Third aspect type.</typeparam>
+        /// <param name="a0">Out parameter receiving the first cached aspect instance.</param>
+        /// <param name="a1">Out parameter receiving the second cached aspect instance.</param>
+        /// <param name="a2">Out parameter receiving the third cached aspect instance.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetAspects<TAspect0, TAspect1, TAspect2>(out TAspect0 a0, out TAspect1 a1, out TAspect2 a2)
             where TAspect0 : new()
             where TAspect1 : new()
@@ -293,6 +406,19 @@ namespace DCFApixels.DragonECS
             a1 = GetAspect<TAspect1>();
             a2 = GetAspect<TAspect2>();
         }
+
+        /// <summary>
+        /// Shortcut: obtain four cached aspect instances by out parameters. See GetAspect for details.
+        /// </summary>
+        /// <typeparam name="TAspect0">First aspect type.</typeparam>
+        /// <typeparam name="TAspect1">Second aspect type.</typeparam>
+        /// <typeparam name="TAspect2">Third aspect type.</typeparam>
+        /// <typeparam name="TAspect3">Fourth aspect type.</typeparam>
+        /// <param name="a0">Out parameter receiving the first cached aspect instance.</param>
+        /// <param name="a1">Out parameter receiving the second cached aspect instance.</param>
+        /// <param name="a2">Out parameter receiving the third cached aspect instance.</param>
+        /// <param name="a3">Out parameter receiving the fourth cached aspect instance.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetAspects<TAspect0, TAspect1, TAspect2, TAspect3>(out TAspect0 a0, out TAspect1 a1, out TAspect2 a2, out TAspect3 a3)
             where TAspect0 : new()
             where TAspect1 : new()
@@ -304,6 +430,13 @@ namespace DCFApixels.DragonECS
             a2 = GetAspect<TAspect2>();
             a3 = GetAspect<TAspect3>();
         }
+
+        /// <summary>
+        /// Returns cached aspect instance and its compiled <c>EcsMask</c>. The mask describes the include/exclude/any component sets.
+        /// </summary>
+        /// <typeparam name="TAspect">Aspect type.</typeparam>
+        /// <param name="mask">Out parameter receiving the compiled mask used by the returned aspect.</param>
+        /// <returns>Cached aspect instance of type <typeparamref name="TAspect"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TAspect GetAspect<TAspect>(out EcsMask mask) where TAspect : new()
         {
@@ -311,6 +444,14 @@ namespace DCFApixels.DragonECS
             mask = result.Mask;
             return result.Instance;
         }
+
+        /// <summary>
+        /// Returns cached Where-query executor and aspect.
+        /// </summary>
+        /// <typeparam name="TExecutor">Executor type derived from MaskQueryExecutor.</typeparam>
+        /// <typeparam name="TAspect">Aspect type.</typeparam>
+        /// <param name="executor">Out parameter receiving the cached executor instance.</param>
+        /// <param name="aspect">Out parameter receiving the cached aspect instance.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetQueryCache<TExecutor, TAspect>(out TExecutor executor, out TAspect aspect)
             where TExecutor : MaskQueryExecutor, new()
@@ -321,31 +462,65 @@ namespace DCFApixels.DragonECS
             aspect = cmp.Aspcet;
         }
 
+        /// <summary>
+        /// Access to world-scoped component of type <typeparamref name="T"/>. Use for global per-world singletons and caches.
+        /// </summary>
+        /// <returns>Reference to the world-scoped component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get<T>() where T : struct
         {
             return ref WorldComponentPool<T>.GetForWorld(ID);
         }
+
+        /// <summary>
+        /// Checks whether world-scoped component <typeparamref name="T"/> exists.
+        /// </summary>
+        /// <returns>True if the component is present; otherwise, false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has<T>() where T : struct
         {
             return WorldComponentPool<T>.Has(ID);
         }
+
+        /// <summary>
+        /// Access to a world-scoped component of type <typeparamref name="T"/> without runtime checks. 
+        /// Use only when caller guarantees existence and correctness.
+        /// </summary>
+        /// <returns>Reference to the world-scoped component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetUnchecked<T>() where T : struct
         {
             return ref WorldComponentPool<T>.GetForWorldUnchecked(ID);
         }
+
+        /// <summary>
+        /// Static access to a world-scoped component of type <typeparamref name="T"/>. Use for global per-world singletons and caches.
+        /// </summary>
+        /// <param name="worldID">Target world identifier.</param>
+        /// <returns>Reference to the world-scoped component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T Get<T>(short worldID) where T : struct
         {
             return ref WorldComponentPool<T>.GetForWorld(worldID);
         }
+
+        /// <summary>
+        /// Static check whether world-scoped component <typeparamref name="T"/> exists.
+        /// </summary>
+        /// <param name="worldID">Target world identifier.</param>
+        /// <returns>True if the component is present; otherwise, false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Has<T>(short worldID) where T : struct
         {
             return WorldComponentPool<T>.Has(worldID);
         }
+
+        /// <summary>
+        /// Static access to a world-scoped component of type <typeparamref name="T"/> without runtime checks. 
+        /// Use only when caller guarantees existence and correctness.
+        /// </summary>
+        /// <param name="worldID">Target world identifier.</param>
+        /// <returns>Reference to the world-scoped component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetUnchecked<T>(short worldID) where T : struct
         {
@@ -356,18 +531,35 @@ namespace DCFApixels.DragonECS
         #region Entity
 
         #region New/Del
+        /// <summary>
+        /// Create entity and return its packed entlong identifier (world id + generation + entity id), a stable handle
+        /// that includes world and generation information for detecting stale references.
+        /// </summary>
+        /// <returns>Packed entlong identifier for the created entity.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public entlong NewEntityLong()
         {
             int entityID = NewEntity();
             return GetEntityLong(entityID);
         }
+
+        /// <summary>
+        /// Create entity with a requested integer id and return its packed entlong identifier (world id + generation + entity id), a stable handle
+        /// that includes world and generation information for detecting stale references.
+        /// </summary>
+        /// <param name="entityID">Requested integer entity id to allocate.</param>
+        /// <returns>Packed entlong identifier for the created entity.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public entlong NewEntityLong(int entityID)
         {
             NewEntity(entityID);
             return GetEntityLong(entityID);
         }
+
+        /// <summary>
+        /// Create entity and return new entity id.
+        /// </summary>
+        /// <returns>Created entity id.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity()
         {
@@ -375,6 +567,13 @@ namespace DCFApixels.DragonECS
             CreateConcreteEntity(entityID);
             return entityID;
         }
+
+        /// <summary>
+        /// Create a new entity with the specified integer id.
+        /// </summary>
+        /// <param name="entityID">Requested integer entity id to create.</param>
+        /// <returns>Integer id of the created entity.</returns>
+        /// <returns>Created entity id (same as requested).</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity(int entityID)
         {
@@ -406,7 +605,13 @@ namespace DCFApixels.DragonECS
             MoveToEmptyEntities(entityID, false);
         }
 
-
+        /// <summary>
+        /// Attempts to mark the entity for deletion and enqueue it into the DelEntityBuffer for deferred processing (automatically or manually).
+        /// Returns true if the entity exists and was scheduled; otherwise, false.
+        /// Also updates the version and notifies registered listeners.
+        /// </summary>
+        /// <param name="entity">Packed entlong identifying the entity to delete.</param>
+        /// <returns>True if deletion was scheduled; false if the entlong was invalid or entity not alive.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryDelEntity(entlong entity)
         {
@@ -417,6 +622,14 @@ namespace DCFApixels.DragonECS
             }
             return false;
         }
+
+        /// <summary>
+        /// Attempts to mark the entity for deletion and enqueue it into the DelEntityBuffer for deferred processing (automatically or manually).
+        /// Returns true if the entity exists and was scheduled; otherwise, false.
+        /// Also updates the version and notifies registered listeners.
+        /// </summary>
+        /// <param name="entityID">Integer id of the entity to delete.</param>
+        /// <returns>True if deletion was scheduled; false if entity id was not used.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryDelEntity(int entityID)
         {
@@ -427,11 +640,23 @@ namespace DCFApixels.DragonECS
             }
             return false;
         }
+
+        /// <summary>
+        /// Marks the entity for deletion and enqueues it into the DelEntityBuffer for deferred processing (automatically or manually).
+        /// Also updates the version and notifies registered listeners.
+        /// </summary>
+        /// <param name="entity">Packed entlong identifying the entity to delete.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DelEntity(entlong entity)
         {
             DelEntity(entity.ID);
         }
+
+        /// <summary>
+        /// Marks the entity for deletion and enqueues it into the DelEntityBuffer for deferred processing (automatically or manually).
+        /// Also updates the version and notifies registered listeners.
+        /// </summary>
+        /// <param name="entityID">Integer id of the entity to delete.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DelEntity(int entityID)
         {
@@ -537,6 +762,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        /// <summary>
+        /// Return a span-like collection (EcsSpan) of currently alive entities.
+        /// Automatically processes deferred deletes if enabled.
+        /// Use for efficient iteration over entity ids.
+        /// </summary>
+        /// <returns>EcsSpan representing the current alive entities in the world.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan()
         {
@@ -546,12 +777,24 @@ namespace DCFApixels.DragonECS
             }
             return GetCurrentEntities_Internal();
         }
+
+        /// <summary>
+        /// Pack the given entity id with world id and generation into entlong. Useful for creating stable handles.
+        /// </summary>
+        /// <param name="entityID">Integer entity id to pack.</param>
+        /// <returns>Packed entlong representing the entity in this world.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe entlong GetEntityLong(int entityID)
         {
             long x = (long)ID << 48 | (long)GetGen(entityID) << 32 | (long)entityID;
             return *(entlong*)&x;
         }
+
+        /// <summary>
+        /// Initialize an entity slot's generation before any entity is created. Intended for low-level pre-initialization.
+        /// </summary>
+        /// <param name="entityID">Entity slot id to initialize.</param>
+        /// <param name="gen">Initial generation value to store in the slot.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void InitEntitySlot(int entityID, short gen)
         {
@@ -563,17 +806,36 @@ namespace DCFApixels.DragonECS
             _entityDispenser.Upsize(entityID);
             _entities[entityID].gen = gen;
         }
+
+        /// <summary>
+        /// Return a RawEntLong containing the raw entity id, generation and world id without packing into entlong.
+        /// </summary>
+        /// <param name="entityID">Integer entity id to pack.</param>
+        /// <returns>RawEntLong representing the entity in this world.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RawEntLong GetRawEntLong(int entityID)
         {
             return new RawEntLong(entityID, _entities[entityID].gen, ID);
         }
+
+        /// <summary>
+        /// Check whether the specified entity id with the given generation is alive in this world.
+        /// </summary>
+        /// <param name="entityID">Entity id to check.</param>
+        /// <param name="gen">Generation value to compare with the slot.</param>
+        /// <returns>True if the slot's generation matches <paramref name="gen"/> and the slot is marked used.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(int entityID, short gen)
         {
             ref var slot = ref _entities[entityID];
             return slot.gen == gen && slot.isUsed;
         }
+
+        /// <summary>
+        /// Check whether the entlong represents an alive entity in this world.
+        /// </summary>
+        /// <param name="entity">Packed entlong to check.</param>
+        /// <returns>True if entity belongs to this world and represents an alive entity.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(entlong entity)
         {
@@ -585,11 +847,22 @@ namespace DCFApixels.DragonECS
             ref var slot = ref _entities[entity.GetIDUnchecked()];
             return slot.gen == entity.GetIDUnchecked() && slot.isUsed;
         }
+
+        /// <summary>
+        /// Returns true if the internal slot for the given entity id is marked as used (alive).
+        /// </summary>
+        /// <param name="entityID">Entity id to query.</param>
+        /// <returns>True when the slot for <paramref name="entityID"/> is currently used.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsUsed(int entityID)
         {
             return _entities[entityID].isUsed;
         }
+        /// <summary>
+        /// Return generation for the entity slot.
+        /// </summary>
+        /// <param name="entityID">Entity id to query.</param>
+        /// <returns>Current generation value stored in the entity slot.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetGen(int entityID)
         {
@@ -604,16 +877,35 @@ namespace DCFApixels.DragonECS
                 return slotGen;
             }
         }
+        /// <summary>
+        /// Return number of components currently attached to the entity.
+        /// </summary>
+        /// <param name="entityID">Entity id to query.</param>
+        /// <returns>Short integer count of components attached to the entity.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetComponentsCount(int entityID)
         {
             return _entities[entityID].componentsCount;
         }
 
+        /// <summary>
+        /// Checks whether the entity's component composition matches the given mask, 
+        /// converting it to an <see cref="EcsMask"/> first.
+        /// </summary>
+        /// <param name="mask">Component mask to test against.</param>
+        /// <param name="entityID">Entity id to check.</param>
+        /// <returns>True if the entity satisfies all include, exclude, and any conditions of the mask.</returns>
         public bool IsMatchesMask(IComponentMask mask, int entityID)
         {
             return IsMatchesMask(mask.ToMask(this), entityID);
         }
+
+        /// <summary>
+        /// Checks whether the entity's component composition matches the EcsMask.
+        /// </summary>
+        /// <param name="mask">Component mask to test against.</param>
+        /// <param name="entityID">Entity id to check.</param>
+        /// <returns>True if the entity satisfies all include, exclude, and any conditions of the mask.</returns>
         public bool IsMatchesMask(EcsMask mask, int entityID)
         {
 #if DEBUG
@@ -621,7 +913,6 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (mask.WorldID != ID) { return false; }
 #endif
-
 
 #if DEBUG && DRAGONECS_DEEP_DEBUG
             bool IsMatchesMaskDeepDebug(EcsMask mask_, int entityID_)
@@ -733,10 +1024,12 @@ namespace DCFApixels.DragonECS
                     delCount++;
                 }
             }
+#if DEBUG
             if (delCount > 0)
             {
                 EcsDebug.PrintWarning($"Detected and deleted {delCount} leaking entities.");
             }
+#endif
             _deleteLeakedEntitesLastVersion = _version;
             return delCount > 0;
         }
@@ -757,11 +1050,16 @@ namespace DCFApixels.DragonECS
             }
             return delCount;
         }
-        #endregion
-
-        //TODO протестить Copy Clone Move Remove
+#endregion
 
         #region CopyEntity
+        /// <summary>
+        /// Copy all components from <paramref name="fromEntityID"/> to <paramref name="toEntityID"/> within this world.
+        /// Efficient implementation uses a temporary buffer and calls pool.Copy for each component.
+        /// </summary>
+        /// <param name="fromEntityID">Source entity id.</param>
+        /// <param name="toEntityID">Destination entity id.</param>
+        /// <remarks>Components are copied by pool.Copy; destination will receive new component data but its prior components are not removed.</remarks>
         public unsafe void CopyEntity(int fromEntityID, int toEntityID)
         {
             const int BUFFER_THRESHOLD = 100;
@@ -791,16 +1089,14 @@ namespace DCFApixels.DragonECS
             {
                 MemoryAllocator.Free(poolIdsPtr);
             }
-
-
-            //foreach (var pool in _pools)
-            //{
-            //    if (pool.Has(fromEntityID))
-            //    {
-            //        pool.Copy(fromEntityID, toEntityID);
-            //    }
-            //}
         }
+
+        /// <summary>
+        /// Copy selected components (by component type ids span) from source to destination entity in this world.
+        /// </summary>
+        /// <param name="fromEntityID">Source entity id.</param>
+        /// <param name="toEntityID">Destination entity id.</param>
+        /// <param name="componentTypeIDs">Span of component type ids to copy.</param>
         public void CopyEntity(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
         {
             foreach (var poolID in componentTypeIDs)
@@ -812,6 +1108,13 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
+        /// <summary>
+        /// Copy all components from this world entity to <paramref name="toEntityID"/> in <paramref name="toWorld"/>.
+        /// Components are translated by pools and copied across worlds where supported.
+        /// </summary>
+        /// <param name="fromEntityID">Source entity id in this world.</param>
+        /// <param name="toWorld">Target world where components will be copied.</param>
+        /// <param name="toEntityID">Destination entity id in the target world.</param>
         public unsafe void CopyEntity(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
             const int BUFFER_THRESHOLD = 100;
@@ -839,15 +1142,15 @@ namespace DCFApixels.DragonECS
             {
                 MemoryAllocator.Free(poolIdsPtr);
             }
-
-            //foreach (var pool in _pools)
-            //{
-            //    if (pool.Has(fromEntityID))
-            //    {
-            //        pool.Copy(fromEntityID, toWorld, toEntityID);
-            //    }
-            //}
         }
+
+        /// <summary>
+        /// Copy selected components from this world entity to another world entity using provided component type ids.
+        /// </summary>
+        /// <param name="fromEntityID">Source entity id in this world.</param>
+        /// <param name="toWorld">Target world.</param>
+        /// <param name="toEntityID">Destination entity id in target world.</param>
+        /// <param name="componentTypeIDs">Span of component type ids to copy across worlds.</param>
         public void CopyEntity(int fromEntityID, EcsWorld toWorld, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
         {
             foreach (var poolID in componentTypeIDs)
@@ -862,24 +1165,49 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region CloneEntity
+        /// <summary>
+        /// Create a new entity as a clone of <paramref name="entityID"/> inside this world and return its id.
+        /// Copies all components from the source to the new entity.
+        /// </summary>
+        /// <param name="entityID">Source entity id to clone.</param>
+        /// <returns>Newly created entity id that is a clone of the source.</returns>
         public int CloneEntity(int entityID)
         {
             int newEntity = NewEntity();
             CopyEntity(entityID, newEntity);
             return newEntity;
         }
+        /// <summary>
+        /// Create a new entity and copy only specified componentTypeIDs from source entity.
+        /// </summary>
+        /// <param name="entityID">Source entity id.</param>
+        /// <param name="componentTypeIDs">Span of component type ids to copy.</param>
+        /// <returns>Newly created entity id.</returns>
         public int CloneEntity(int entityID, ReadOnlySpan<int> componentTypeIDs)
         {
             int newEntity = NewEntity();
             CopyEntity(entityID, newEntity, componentTypeIDs);
             return newEntity;
         }
+        /// <summary>
+        /// Create a new entity in this world and copy components from source entity in another world.
+        /// </summary>
+        /// <param name="entityID">Source entity id in the source world.</param>
+        /// <param name="toWorld">Target world to copy into (usually same world).</param>
+        /// <returns>Newly created entity id in this world.</returns>
         public int CloneEntity(int entityID, EcsWorld toWorld)
         {
             int newEntity = NewEntity();
             CopyEntity(entityID, toWorld, newEntity);
             return newEntity;
         }
+        /// <summary>
+        /// Create a new entity in this world and copy specified components from a source entity in another world.
+        /// </summary>
+        /// <param name="entityID">Source entity id.</param>
+        /// <param name="toWorld">Target world.</param>
+        /// <param name="componentTypeIDs">Component type ids to copy.</param>
+        /// <returns>New entity id in this world.</returns>
         public int CloneEntity(int entityID, EcsWorld toWorld, ReadOnlySpan<int> componentTypeIDs)
         {
             int newEntity = NewEntity();
@@ -887,6 +1215,12 @@ namespace DCFApixels.DragonECS
             return newEntity;
         }
 
+        /// <summary>
+        /// Copy components from <paramref name="fromEntityID"/> to an existing <paramref name="toEntityID"/> and
+        /// remove any extra components existing on the destination that are not present on the source.
+        /// </summary>
+        /// <param name="fromEntityID">Source entity id.</param>
+        /// <param name="toEntityID">Destination entity id to overwrite/align with source.</param>
         public void CloneEntity(int fromEntityID, int toEntityID)
         {
             CopyEntity(fromEntityID, toEntityID);
@@ -902,6 +1236,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region MoveComponents
+        /// <summary>
+        /// Move specified components from one entity to another: copy then delete from source.
+        /// </summary>
+        /// <param name="fromEntityID">Source entity id.</param>
+        /// <param name="toEntityID">Destination entity id.</param>
+        /// <param name="componentTypeIDs">Span of component type ids to move.</param>
         public void MoveComponents(int fromEntityID, int toEntityID, ReadOnlySpan<int> componentTypeIDs)
         {
             foreach (var poolID in componentTypeIDs)
@@ -917,6 +1257,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region RemoveComponents
+        /// <summary>
+        /// Remove specified components from the given entity if they exist.
+        /// </summary>
+        /// <param name="fromEntityID">Entity id to remove components from.</param>
+        /// <param name="componentTypeIDs">Span of component type ids to remove.</param>
         public void RemoveComponents(int fromEntityID, ReadOnlySpan<int> componentTypeIDs)
         {
             foreach (var poolID in componentTypeIDs)
@@ -930,13 +1275,23 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #endregion
+#endregion
 
         #region DelEntBuffer
+        /// <summary>
+        /// Disable automatic processing of the deferred-delete buffer and return a scope object which will restore the previous value on dispose.
+        /// Use in a using block to temporarily disable auto-release behavior.
+        /// </summary>
+        /// <returns>Scope object which will restore previous auto-release setting when disposed.</returns>
         public IsEnableAutoReleaseDelEntBufferScope DisableAutoReleaseDelEntBuffer()
         {
             return new IsEnableAutoReleaseDelEntBufferScope(this, false);
         }
+        /// <summary>
+        /// Enable automatic processing of the deferred-delete buffer and return a scope object which will restore the previous value on dispose.
+        /// Use in a using block to temporarily enable auto-release behavior.
+        /// </summary>
+        /// <returns>Scope object which will restore previous auto-release setting when disposed.</returns>
         public IsEnableAutoReleaseDelEntBufferScope EnableAutoReleaseDelEntBuffer()
         {
             return new IsEnableAutoReleaseDelEntBufferScope(this, true);
@@ -964,10 +1319,18 @@ namespace DCFApixels.DragonECS
                 End();
             }
         }
+        /// <summary>
+        /// Release and process all entities currently stored in the deferred-delete buffer.
+        /// Components will be removed and entity ids freed as part of processing.
+        /// </summary>
         public void ReleaseDelEntityBufferAll()
         {
             ReleaseDelEntityBuffer(-1);
         }
+        /// <summary>
+        /// Release and process up to <paramref name="count"/> entities from the deferred-delete buffer. If count is negative, process all.
+        /// </summary>
+        /// <param name="count">Maximum number of deferred deletes to process; negative means all.</param>
         public void ReleaseDelEntityBuffer(int count)
         {
             if (_emptyEntitiesLength <= 0 && _delEntBufferCount <= 0) { return; }
@@ -1038,6 +1401,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Upsize
+        /// <summary>
+        /// Ensure internal entity storage capacity is at least <paramref name="minSize"/>.
+        /// </summary>
+        /// <param name="minSize">Minimal required capacity for entity storage.</param>
         public void Upsize(int minSize)
         {
             _entityDispenser.Upsize(minSize);
@@ -1086,19 +1453,35 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Listeners
+        /// <summary>
+        /// Add a listener for world-level events (resize, release DelEntityBuffer, destroy).
+        /// </summary>
+        /// <param name="worldEventListener">Listener to add.</param>
         public void AddListener(IEcsWorldEventListener worldEventListener)
         {
             _listeners.Add(worldEventListener);
         }
+        /// <summary>
+        /// Remove a previously added world-level event listener.
+        /// </summary>
+        /// <param name="worldEventListener">Listener to remove.</param>
         public void RemoveListener(IEcsWorldEventListener worldEventListener)
         {
             _listeners.Remove(worldEventListener);
         }
+        /// <summary>
+        /// Add an entity-level event listener (new, migrate, del notifications).
+        /// </summary>
+        /// <param name="entityEventListener">Listener to add.</param>
         public void AddListener(IEcsEntityEventListener entityEventListener)
         {
             _entityListeners.Add(entityEventListener);
             _hasAnyEntityListener = _entityListeners.Count > 0;
         }
+        /// <summary>
+        /// Remove a previously added entity-level event listener.
+        /// </summary>
+        /// <param name="entityEventListener">Listener to remove.</param>
         public void RemoveListener(IEcsEntityEventListener entityEventListener)
         {
             _entityListeners.Remove(entityEventListener);
@@ -1107,6 +1490,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        /// <summary>
+        /// Force increment of the internal world version counter. Use for external operations that need to mark the world as changed.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AggressiveUpVersion() { UpVersion(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1121,10 +1507,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpVersionLeaked()
         {
-            unchecked
-            {
-                _version++;
-            }
+            unchecked { _version++; }
         }
         #endregion
 
@@ -1163,43 +1546,67 @@ namespace DCFApixels.DragonECS
                 EntityID = entityID;
             }
         }
+        /// <summary>
+        /// Return an EntitySlotMeta helper for an entity id. Use to read and set debug metadata (Name, Color) for the slot.
+        /// </summary>
+        /// <param name="entityID">Entity id to get metadata for.</param>
+        /// <returns>EntitySlotMeta struct bound to the specified entity id.</returns>
         public EntitySlotMeta GetEntitySlotMeta(int entityID)
         {
             return new EntitySlotMeta(this, entityID);
         }
         public delegate void EntityMetaChangedHandler(EntitySlotMeta meta);
+
         public event EntityMetaChangedHandler EntityMetaChanged = delegate { };
 
         [ThreadStatic]
         private static int[] _componentIDsBuffer;
         [ThreadStatic]
         private static object[] _componentsBuffer;
+
+        /// <summary>
+        /// Return a readonly span of component type ids attached to the given entity. Backed by a thread-static buffer.
+        /// </summary>
+        /// <param name="entityID">Entity id to query.</param>
+        /// <returns>ReadOnlySpan of component type ids currently attached to the entity.</returns>
         public ReadOnlySpan<int> GetComponentTypeIDsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
             return new ReadOnlySpan<int>(_componentIDsBuffer, 0, count);
-		}
-		public int GetFirstComponentTypeIDFor(int entityID)
-		{
-			int poolIndex = 0;
-			for (int chunkIndex = entityID << _entityComponentMaskLengthBitShift,
-		        chunkIndexMax = chunkIndex + _entityComponentMaskLength;
-		        chunkIndex < chunkIndexMax;
-		        chunkIndex++)
+        }
+        /// <summary>
+        /// Return the first (lowest) component type id attached to the entity or -1 if none.
+        /// </summary>
+        /// <param name="entityID">Entity id to query.</param>
+        /// <returns>First component type id or -1 when entity has no components.</returns>
+        public int GetFirstComponentTypeIDFor(int entityID)
+        {
+            int poolIndex = 0;
+            for (int chunkIndex = entityID << _entityComponentMaskLengthBitShift,
+                chunkIndexMax = chunkIndex + _entityComponentMaskLength;
+                chunkIndex < chunkIndexMax;
+                chunkIndex++)
             {
-				int chunk = _entityComponentMasks[chunkIndex];
-				if (chunk == 0)
-				{
-					poolIndex += COMPONENT_MASK_CHUNK_SIZE;
-				}
+                int chunk = _entityComponentMasks[chunkIndex];
+                if (chunk == 0)
+                {
+                    poolIndex += COMPONENT_MASK_CHUNK_SIZE;
+                }
                 else
                 {
-					return BitsUtility.GetHighBitNumber(chunk) + poolIndex;
-				}
-			}
+                    return BitsUtility.GetHighBitNumber(chunk) + poolIndex;
+                }
+            }
             return -1;
-		}
-		public unsafe void GetComponentPoolsFor(int entityID, List<IEcsPool> list)
+        }
+
+        /// <summary>
+        /// Populate <paramref name="bufferList"/> with IEcsPool references for each component attached to the entity.
+        /// Efficient for inspection or iteration when pool objects are required.
+        /// </summary>
+        /// <param name="entityID">Entity id to query.</param>
+        /// <param name="bufferList">List to be filled with pool references (cleared or filled appropriately).</param>
+        public unsafe void GetComponentPoolsFor(int entityID, List<IEcsPool> bufferList)
         {
             const int BUFFER_THRESHOLD = 256;
 
@@ -1207,7 +1614,7 @@ namespace DCFApixels.DragonECS
 
             if (count <= 0)
             {
-                list.Clear();
+                bufferList.Clear();
                 return;
             }
 
@@ -1224,19 +1631,19 @@ namespace DCFApixels.DragonECS
 
             GetComponentTypeIDsFor_Internal(entityID, poolIdsPtr, count);
 
-            if (list.Count == count)
+            if (bufferList.Count == count)
             {
                 for (int i = 0; i < count; i++)
                 {
-                    list[i] = _pools[poolIdsPtr[i]];
+                    bufferList[i] = _pools[poolIdsPtr[i]];
                 }
             }
             else
             {
-                list.Clear();
+                bufferList.Clear();
                 for (int i = 0; i < count; i++)
                 {
-                    list.Add(_pools[poolIdsPtr[i]]);
+                    bufferList.Add(_pools[poolIdsPtr[i]]);
                 }
             }
 
@@ -1245,6 +1652,11 @@ namespace DCFApixels.DragonECS
                 MemoryAllocator.Free(poolIdsPtr);
             }
         }
+        /// <summary>
+        /// Return a readonly span of raw component objects attached to the specified entity. Uses a thread-static buffer.
+        /// </summary>
+        /// <param name="entityID">Entity id to query.</param>
+        /// <returns>ReadOnlySpan of raw component objects for the entity.</returns>
         public ReadOnlySpan<object> GetComponentsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
@@ -1256,22 +1668,32 @@ namespace DCFApixels.DragonECS
             }
             return new ReadOnlySpan<object>(_componentsBuffer, 0, count);
         }
-        public void GetComponentsFor(int entityID, List<object> list)
+        /// <summary>
+        /// Populate the provided list with raw component objects attached to the entity.
+        /// </summary>
+        /// <param name="entityID">Entity id to query.</param>
+        /// <param name="bufferList">List to be filled with component objects.</param>
+        public void GetComponentsFor(int entityID, List<object> bufferList)
         {
-            list.Clear();
+            bufferList.Clear();
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
             for (int i = 0; i < count; i++)
             {
-                list.Add(_pools[_componentIDsBuffer[i]].GetRaw(entityID));
+                bufferList.Add(_pools[_componentIDsBuffer[i]].GetRaw(entityID));
             }
         }
-        public void GetComponentTypesFor(int entityID, HashSet<Type> typeSet)
+        /// <summary>
+        /// Fill the provided HashSet with System.Type objects for each component attached to the entity.
+        /// </summary>
+        /// <param name="entityID">Entity id to query.</param>
+        /// <param name="typeBufferSet">HashSet to be filled with component System.Type objects.</param>
+        public void GetComponentTypesFor(int entityID, HashSet<Type> typeBufferSet)
         {
-            typeSet.Clear();
+            typeBufferSet.Clear();
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
             for (int i = 0; i < count; i++)
             {
-                typeSet.Add(_pools[_componentIDsBuffer[i]].ComponentType);
+                typeBufferSet.Add(_pools[_componentIDsBuffer[i]].ComponentType);
             }
         }
         private int GetComponentTypeIDsFor_Internal(int entityID, ref int[] componentIDs)
@@ -1566,14 +1988,6 @@ namespace DCFApixels.DragonECS
             {
                 self.ReleaseDelEntityBufferAll();
             }
-        }
-    }
-    public static class IntExtensions
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static entlong ToEntityLong(this int self, EcsWorld world)
-        {
-            return world.GetEntityLong(self);
         }
     }
     #endregion
