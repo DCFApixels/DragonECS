@@ -133,14 +133,17 @@ namespace DCFApixels.DragonECS
         public int IndexOf(int entityID) { return _source.IndexOf(entityID); }
 
         /// <summary>
-        /// Copy group entity ids into the provided array starting at arrayIndex.
+        /// Copy the group's entity ids into the destination array starting at the specified index.
         /// </summary>
+        /// <param name="array">Destination array to copy entity ids into.</param>
+        /// <param name="arrayIndex">Starting index in the destination array.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(int[] array, int arrayIndex) { _source.CopyTo(array, arrayIndex); }
 
         /// <summary>
-        /// Create a mutable clone of the underlying group.
+        /// Create a pooled mutable clone of this group. The clone is obtained from the world's group pool.
         /// </summary>
+        /// <returns>A new <see cref="EcsGroup"/> containing the same entities.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone() { return _source.Clone(); }
 
@@ -159,6 +162,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Return a span containing all entity ids in the group.
         /// </summary>
+        /// <returns>Span of all entity ids.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan() { return _source.ToSpan(); }
 
@@ -395,6 +399,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        /// <summary>
+        /// Convert the group's contents to a diagnostic string.
+        /// </summary>
+        /// <returns>Human-readable representation of the group's entities.</returns>
         public override string ToString()
         {
             return _source != null ? _source.ToString() : "NULL";
@@ -608,6 +616,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constrcutors/Dispose
+        /// <summary>
+        /// Rent or create a new group associated with the specified world.
+        /// The returned group is taken from the world's internal pool and must be released via Dispose().
+        /// </summary>
+        /// <param name="world">World that will own the created group.</param>
+        /// <returns>New or pooled <see cref="EcsGroup"/> instance bound to the given world.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsGroup New(EcsWorld world)
         {
@@ -648,6 +662,7 @@ namespace DCFApixels.DragonECS
         }
         public void Dispose()
         {
+            // anchor: no-op placeholder for upcoming automated edits
             _source.ReleaseGroup(this);
         }
         #endregion
@@ -780,6 +795,11 @@ namespace DCFApixels.DragonECS
             _count--;
         }
 
+        /// <summary>
+        /// Remove entity ids from the group that are no longer marked as used in the owning world.
+        /// Iterates the group's contents and removes any entity that the world reports as unused.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveUnusedEntityIDs()
         {
             foreach (var entityID in this)
@@ -793,6 +813,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Clear
+        /// <summary>
+        /// Remove all entities from the group.
+        /// If the owning world is not destroyed this will also return sparse pages to the world's page pool.
+        /// </summary>
         public void Clear()
         {
             if (_count == 0) { return; }
@@ -820,6 +844,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Upsize
+        /// <summary>
+        /// Ensure the internal dense array has capacity for at least minSize elements.
+        /// </summary>
+        /// <param name="minSize">Minimum required capacity.</param>
         public void Upsize(int minSize)
         {
             if (minSize >= _dense.Length)
@@ -831,6 +859,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region CopyFrom/Clone/Slice/ToSpan/ToArray
+        /// <summary>
+        /// Replace this group's contents with the contents of the provided group.
+        /// Existing items will be cleared and the source group's entities copied in order.
+        /// </summary>
+        /// <param name="group">Source group to copy from.</param>
         public void CopyFrom(EcsGroup group)
         {
 #if DEBUG
@@ -848,11 +881,19 @@ namespace DCFApixels.DragonECS
                 Add_Internal(entityID);
             }
         }
+        /// <summary>
+        /// Replace this group's contents with the contents of a read-only group view.
+        /// </summary>
+        /// <param name="group">Read-only group to copy from.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyFrom(EcsReadonlyGroup group)
         {
             CopyFrom(group.GetSource_Internal());
         }
+        /// <summary>
+        /// Replace this group's contents with the entity ids from the provided span.
+        /// </summary>
+        /// <param name="span">Source span containing entity ids.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyFrom(EcsSpan span)
         {
@@ -865,6 +906,11 @@ namespace DCFApixels.DragonECS
                 Add_Internal(span[i]);
             }
         }
+        /// <summary>
+        /// Copy the group's entity ids into the destination array starting at the specified index.
+        /// </summary>
+        /// <param name="array">Destination array to copy entity ids into.</param>
+        /// <param name="arrayIndex">Starting index in the destination array.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(int[] array, int arrayIndex)
         {
@@ -873,6 +919,10 @@ namespace DCFApixels.DragonECS
                 array[arrayIndex++] = item;
             }
         }
+        /// <summary>
+        /// Create a pooled mutable clone of this group. The clone is obtained from the world's group pool.
+        /// </summary>
+        /// <returns>A new <see cref="EcsGroup"/> containing the same entities.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone()
         {
@@ -880,11 +930,22 @@ namespace DCFApixels.DragonECS
             result.CopyFrom(this);
             return result;
         }
+        /// <summary>
+        /// Return a span view starting at the given index to the end of the group.
+        /// </summary>
+        /// <param name="start">Start index in dense ordering (0-based).</param>
+        /// <returns>Slice span of entity ids.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start)
         {
             return Slice(start, _count - start);
         }
+        /// <summary>
+        /// Return a span view of the group's entities starting at start with specified length.
+        /// </summary>
+        /// <param name="start">Start index in dense ordering (0-based).</param>
+        /// <param name="length">Number of elements in the slice.</param>
+        /// <returns>Span of entity ids.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start, int length)
         {
@@ -896,17 +957,31 @@ namespace DCFApixels.DragonECS
 #endif
             return new EcsSpan(WorldID, _dense, start + 1, length);
         }
+        /// <summary>
+        /// Return a span containing all entity ids in this group.
+        /// </summary>
+        /// <returns>Span of all entity ids.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan()
         {
             return new EcsSpan(WorldID, _dense, 1, _count);
         }
+        /// <summary>
+        /// Convert the group contents to a managed int array.
+        /// </summary>
+        /// <returns>Array containing the group's entity ids in dense order.</returns>
         public int[] ToArray()
         {
             int[] result = new int[_count];
             Array.Copy(_dense, 1, result, 0, _count);
             return result;
         }
+
+        /// <summary>
+        /// Copy the group's entity ids into a reusable buffer and return the number of elements written.
+        /// </summary>
+        /// <param name="dynamicBuffer">Buffer to receive the entity ids. Will be resized if too small.</param>
+        /// <returns>Number of entity ids written into the buffer.</returns>
         public int ToArray(ref int[] dynamicBuffer)
         {
             if (dynamicBuffer.Length < _count)
@@ -920,6 +995,11 @@ namespace DCFApixels.DragonECS
             }
             return i;
         }
+
+        /// <summary>
+        /// Add all entity ids of the group into the provided collection.
+        /// </summary>
+        /// <param name="collection">Collection to populate with entity ids.</param>
         public void ToCollection(ICollection<int> collection)
         {
             foreach (var e in this)
@@ -932,7 +1012,10 @@ namespace DCFApixels.DragonECS
         #region Set operations
 
         #region UnionWith
-        /// <summary>as Union sets</summary>
+        /// <summary>
+        /// Add all elements from the specified group into this group (set union).
+        /// </summary>
+        /// <param name="group">Group whose elements to add.</param>
         public void UnionWith(EcsGroup group)
         {
 #if DEBUG
@@ -942,10 +1025,18 @@ namespace DCFApixels.DragonECS
 #endif
             foreach (var entityID in group) { UnionWithStep(entityID); }
         }
-        /// <summary>as Union sets</summary>
+
+        /// <summary>
+        /// Add all elements from the specified read-only group into this group (set union).
+        /// </summary>
+        /// <param name="group">Read-only group whose elements to add.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UnionWith(EcsReadonlyGroup group) { UnionWith(group.GetSource_Internal()); }
-        /// <summary>as Union sets</summary>
+
+        /// <summary>
+        /// Add all entity ids from the provided span into this group (set union).
+        /// </summary>
+        /// <param name="span">Span containing entity ids to add.</param>
         public void UnionWith(EcsSpan span)
         {
 #if DEBUG
@@ -955,6 +1046,11 @@ namespace DCFApixels.DragonECS
 #endif
             foreach (var entityID in span) { UnionWithStep(entityID); }
         }
+
+        /// <summary>
+        /// Add all elements from the enumerable into this group (set union).
+        /// </summary>
+        /// <param name="other">Enumerable containing entity ids to add.</param>
         public void UnionWith(IEnumerable<int> other)
         {
             foreach (var entityID in other) { UnionWithStep(entityID); }
@@ -970,7 +1066,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region ExceptWith
-        /// <summary>as Except sets</summary>
+        /// <summary>
+        /// Remove all elements contained in the specified group from this group (set difference).
+        /// </summary>
+        /// <param name="group">Group whose elements should be removed from this group.</param>
         public void ExceptWith(EcsGroup group)
         {
 #if DEBUG
@@ -994,10 +1093,16 @@ namespace DCFApixels.DragonECS
                 foreach (var entityID in group) { ExceptWithStep_Internal(entityID); }
             }
         }
-        /// <summary>as Except sets</summary>
+        /// <summary>
+        /// Remove all elements contained in the specified read-only group from this group (set difference).
+        /// </summary>
+        /// <param name="group">Read-only group whose elements should be removed from this group.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExceptWith(EcsReadonlyGroup group) { ExceptWith(group.GetSource_Internal()); }
-        /// <summary>as Except sets</summary>
+        /// <summary>
+        /// Remove all entity ids from the provided span from this group (set difference).
+        /// </summary>
+        /// <param name="span">Span containing entity ids to remove.</param>
         public void ExceptWith(EcsSpan span)
         {
 #if DEBUG
@@ -1007,6 +1112,10 @@ namespace DCFApixels.DragonECS
 #endif
             foreach (var entityID in span) { ExceptWithStep_Internal(entityID); }
         }
+        /// <summary>
+        /// Remove all elements found in the enumerable from this group (set difference).
+        /// </summary>
+        /// <param name="other">Enumerable containing entity ids to remove.</param>
         public void ExceptWith(IEnumerable<int> other)
         {
             foreach (var entityID in other) { ExceptWithStep_Internal(entityID); }
@@ -1022,7 +1131,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IntersectWith
-        /// <summary>as Intersect sets</summary>
+        /// <summary>
+        /// Keep only elements that are also present in the specified group (set intersection).
+        /// </summary>
+        /// <param name="group">Group to intersect with.</param>
         public void IntersectWith(EcsGroup group)
         {
 #if DEBUG
@@ -1039,10 +1151,16 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
-        /// <summary>as Intersect sets</summary>
+        /// <summary>
+        /// Keep only elements that are also present in the specified read-only group (set intersection).
+        /// </summary>
+        /// <param name="group">Read-only group to intersect with.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void IntersectWith(EcsReadonlyGroup group) { IntersectWith(group.GetSource_Internal()); }
-        /// <summary>as Intersect sets</summary>
+        /// <summary>
+        /// Keep only entity ids that are also present in the provided span (set intersection).
+        /// </summary>
+        /// <param name="span">Span to intersect with.</param>
         public void IntersectWith(EcsSpan span)
         {
 #if DEBUG
@@ -1059,6 +1177,10 @@ namespace DCFApixels.DragonECS
             }
             ClearUnmarked_Internal();
         }
+        /// <summary>
+        /// Keep only elements that are also present in the provided enumerable (set intersection).
+        /// </summary>
+        /// <param name="other">Enumerable to intersect with.</param>
         public void IntersectWith(IEnumerable<int> other)
         {
             if (other is ISet<int> set)
@@ -1087,7 +1209,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region SymmetricExceptWith
-        /// <summary>as Symmetric Except sets</summary>
+        /// <summary>
+        /// Perform symmetric difference with the specified group: elements present in either set but not in both. (set symmetric difference)
+        /// </summary>
+        /// <param name="group">Group to symmetric-except with.</param>
         public void SymmetricExceptWith(EcsGroup group)
         {
 #if DEBUG
@@ -1097,11 +1222,17 @@ namespace DCFApixels.DragonECS
 #endif
             foreach (var entityID in group) { SymmetricExceptWithStep_Internal(entityID); }
         }
-        /// <summary>as Symmetric Except sets</summary>
+        /// <summary>
+        /// Perform symmetric difference with the specified read-only group: elements present in either set but not in both. (set symmetric difference)
+        /// </summary>
+        /// <param name="group">Read-only group to symmetric-except with.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SymmetricExceptWith(EcsReadonlyGroup group) { SymmetricExceptWith(group.GetSource_Internal()); }
 
-        /// <summary>as Symmetric Except sets</summary>
+        /// <summary>
+        /// Perform symmetric difference with the provided span: elements present in either set but not in both. (set symmetric difference)
+        /// </summary>
+        /// <param name="span">Span to symmetric-except with.</param>
         public void SymmetricExceptWith(EcsSpan span)
         {
 #if DEBUG
@@ -1111,6 +1242,10 @@ namespace DCFApixels.DragonECS
 #endif
             foreach (var entityID in span) { SymmetricExceptWithStep_Internal(entityID); }
         }
+        /// <summary>
+        /// Perform symmetric difference with the provided enumerable: elements present in either set but not in both. (set symmetric difference)
+        /// </summary>
+        /// <param name="other">Enumerable to symmetric-except with.</param>
         public void SymmetricExceptWith(IEnumerable<int> other)
         {
             foreach (var entityID in other) { SymmetricExceptWithStep_Internal(entityID); }
@@ -1129,6 +1264,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Inverse
+        /// <summary>
+        /// Replace this group with the inverse set relative to the world's entities: entities present in the world but not in this group.
+        /// </summary>
         public void Inverse()
         {
             if (_count == 0)
@@ -1154,6 +1292,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region SetEquals
+        /// <summary>
+        /// Determines whether this group contains exactly the same entity ids as the specified group.
+        /// </summary>
+        /// <param name="group">Group to compare with.</param>
+        /// <returns>True if both sets contain the same entity ids; otherwise false.</returns>
         public bool SetEquals(EcsGroup group)
         {
 #if DEBUG
@@ -1171,8 +1314,18 @@ namespace DCFApixels.DragonECS
             }
             return true;
         }
+        /// <summary>
+        /// Determines whether this group contains exactly the same entity ids as the specified read-only group.
+        /// </summary>
+        /// <param name="group">Read-only group to compare with.</param>
+        /// <returns>True if both sets contain the same entity ids; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetEquals(EcsReadonlyGroup group) { return SetEquals(group.GetSource_Internal()); }
+        /// <summary>
+        /// Determines whether this group contains exactly the same entity ids as the specified span.
+        /// </summary>
+        /// <param name="span">Span to compare with.</param>
+        /// <returns>True if both sets contain the same entity ids; otherwise false.</returns>
         public bool SetEquals(EcsSpan span)
         {
 #if DEBUG
@@ -1190,6 +1343,11 @@ namespace DCFApixels.DragonECS
             }
             return true;
         }
+        /// <summary>
+        /// Determines whether this group contains exactly the same entity ids as the specified enumerable.
+        /// </summary>
+        /// <param name="other">Enumerable to compare with.</param>
+        /// <returns>True if both sets contain the same entity ids; otherwise false.</returns>
         public bool SetEquals(IEnumerable<int> other)
         {
             if (other is ICollection collection && collection.Count != Count) { return false; }
@@ -1205,6 +1363,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Overlaps
+        /// <summary>
+        /// Determines whether this group and the specified group share at least one common entity id.
+        /// </summary>
+        /// <param name="group">Group to check for intersection.</param>
+        /// <returns>True if there is any overlapping element; otherwise false.</returns>
         public bool Overlaps(EcsGroup group)
         {
 #if DEBUG
@@ -1234,8 +1397,18 @@ namespace DCFApixels.DragonECS
             }
             return false;
         }
+        /// <summary>
+        /// Determines whether this group and the specified read-only group share at least one common entity id.
+        /// </summary>
+        /// <param name="group">Read-only group to check for intersection.</param>
+        /// <returns>True if there is any overlapping element; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Overlaps(EcsReadonlyGroup group) { return Overlaps(group.GetSource_Internal()); }
+        /// <summary>
+        /// Determines whether this group and the specified span share at least one common entity id.
+        /// </summary>
+        /// <param name="span">Span to check for intersection.</param>
+        /// <returns>True if there is any overlapping element; otherwise false.</returns>
         public bool Overlaps(EcsSpan span)
         {
 #if DEBUG
@@ -1252,6 +1425,11 @@ namespace DCFApixels.DragonECS
             }
             return false;
         }
+        /// <summary>
+        /// Determines whether this group and the specified enumerable share at least one common entity id.
+        /// </summary>
+        /// <param name="other">Enumerable to check for intersection.</param>
+        /// <returns>True if there is any overlapping element; otherwise false.</returns>
         public bool Overlaps(IEnumerable<int> other)
         {
             foreach (var entityID in other)
@@ -1266,6 +1444,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IsSubsetOf/IsProperSubsetOf
+        /// <summary>
+        /// Determines whether all entity ids from this group are also present in the specified collection.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a subset; otherwise false.</returns>
         public bool IsSubsetOf(EcsGroup group)
         {
 #if DEBUG
@@ -1277,8 +1460,18 @@ namespace DCFApixels.DragonECS
             if (group.Count < Count) { return false; }
             return IsSubsetOf_Internal(group);
         }
+        /// <summary>
+        /// Determines whether all entity ids from this group are also present in the specified read-only group.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(EcsReadonlyGroup group) { return IsSubsetOf(group.GetSource_Internal()); }
+        /// <summary>
+        /// Determines whether all entity ids from this group are also present in the specified span.
+        /// </summary>
+        /// <param name="span">The span to compare against.</param>
+        /// <returns>True if this group is a subset; otherwise false.</returns>
         public bool IsSubsetOf(EcsSpan span)
         {
 #if DEBUG
@@ -1290,6 +1483,11 @@ namespace DCFApixels.DragonECS
             if (span.Count < Count) { return false; }
             return IsSubsetOf_Internal(span);
         }
+        /// <summary>
+        /// Determines whether all entity ids from this group are also present in the specified enumerable collection.
+        /// </summary>
+        /// <param name="other">The collection to compare against.</param>
+        /// <returns>True if this group is a subset; otherwise false.</returns>
         public bool IsSubsetOf(IEnumerable<int> other)
         {
             if (Count == 0) { return true; }
@@ -1299,6 +1497,11 @@ namespace DCFApixels.DragonECS
 
         // ================================================================================
 
+        /// <summary>
+        /// Determines whether this group is a proper subset of the specified collection (i.e., all elements are present and the sets are not equal).
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a proper subset; otherwise false.</returns>
         public bool IsProperSubsetOf(EcsGroup group)
         {
 #if DEBUG
@@ -1310,8 +1513,18 @@ namespace DCFApixels.DragonECS
             if (group.Count <= Count) { return false; }
             return IsSubsetOf_Internal(group);
         }
+        /// <summary>
+        /// Determines whether this group is a proper subset of the specified read-only group.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a proper subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSubsetOf(EcsReadonlyGroup group) { return IsProperSubsetOf(group.GetSource_Internal()); }
+        /// <summary>
+        /// Determines whether this group is a proper subset of the specified span.
+        /// </summary>
+        /// <param name="span">The span to compare against.</param>
+        /// <returns>True if this group is a proper subset; otherwise false.</returns>
         public bool IsProperSubsetOf(EcsSpan span)
         {
 #if DEBUG
@@ -1323,6 +1536,11 @@ namespace DCFApixels.DragonECS
             if (span.Count <= Count) { return false; }
             return IsSubsetOf_Internal(span);
         }
+        /// <summary>
+        /// Determines whether this group is a proper subset of the specified enumerable collection.
+        /// </summary>
+        /// <param name="other">The collection to compare against.</param>
+        /// <returns>True if this group is a proper subset; otherwise false.</returns>
         public bool IsProperSubsetOf(IEnumerable<int> other)
         {
             if (Count == 0) { return true; }
@@ -1378,6 +1596,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region IsSupersetOf/IsProperSupersetOf
+        /// <summary>
+        /// Determines whether this group contains all entity ids from the specified collection.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a superset; otherwise false.</returns>
         public bool IsSupersetOf(EcsGroup group)
         {
 #if DEBUG
@@ -1388,8 +1611,18 @@ namespace DCFApixels.DragonECS
             if (group.Count > Count) { return false; }
             return IsSupersetOf_Internal(group);
         }
+        /// <summary>
+        /// Determines whether this group contains all entity ids from the specified read-only group.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a superset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(EcsReadonlyGroup group) { return IsSupersetOf(group.GetSource_Internal()); }
+        /// <summary>
+        /// Determines whether this group contains all entity ids from the specified span.
+        /// </summary>
+        /// <param name="span">The span to compare against.</param>
+        /// <returns>True if this group is a superset; otherwise false.</returns>
         public bool IsSupersetOf(EcsSpan span)
         {
 #if DEBUG
@@ -1400,6 +1633,11 @@ namespace DCFApixels.DragonECS
             if (span.Count > Count) { return false; }
             return IsSupersetOf_Internal(span);
         }
+        /// <summary>
+        /// Determines whether this group contains all entity ids from the specified enumerable collection.
+        /// </summary>
+        /// <param name="other">The collection to compare against.</param>
+        /// <returns>True if this group is a superset; otherwise false.</returns>
         public bool IsSupersetOf(IEnumerable<int> other)
         {
             if (other is ICollection collection && collection.Count > Count) { return false; }
@@ -1408,6 +1646,11 @@ namespace DCFApixels.DragonECS
 
         // ================================================================================
 
+        /// <summary>
+        /// Determines whether this group is a proper superset of the specified collection (i.e., contains all elements and the sets are not equal).
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a proper superset; otherwise false.</returns>
         public bool IsProperSupersetOf(EcsGroup group)
         {
 #if DEBUG
@@ -1418,8 +1661,18 @@ namespace DCFApixels.DragonECS
             if (group.Count >= Count) { return false; }
             return IsSupersetOf_Internal(group);
         }
+        /// <summary>
+        /// Determines whether this group is a proper superset of the specified read-only group.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a proper superset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSupersetOf(EcsReadonlyGroup group) { return IsProperSupersetOf(group.GetSource_Internal()); }
+        /// <summary>
+        /// Determines whether this group is a proper superset of the specified span.
+        /// </summary>
+        /// <param name="span">The span to compare against.</param>
+        /// <returns>True if this group is a proper superset; otherwise false.</returns>
         public bool IsProperSupersetOf(EcsSpan span)
         {
 #if DEBUG
@@ -1430,6 +1683,11 @@ namespace DCFApixels.DragonECS
             if (span.Count >= Count) { return false; }
             return IsSupersetOf_Internal(span);
         }
+        /// <summary>
+        /// Determines whether this group is a proper superset of the specified enumerable collection.
+        /// </summary>
+        /// <param name="other">The collection to compare against.</param>
+        /// <returns>True if this group is a proper superset; otherwise false.</returns>
         public bool IsProperSupersetOf(IEnumerable<int> other)
         {
             if (other is ICollection collection && collection.Count >= Count) { return false; }
@@ -1478,8 +1736,18 @@ namespace DCFApixels.DragonECS
         #region Static Set operations
 
         #region Union
-        /// <summary>as Intersect sets</summary>
-        /// <returns>new group from pool</returns>
+
+        /// <summary>
+        /// Create a new group that contains the union of two groups. The result is obtained from the world's group pool.
+        /// </summary>
+        /// <param name="a">First input group.</param>
+        /// <param name="b">Second input group.</param>
+        /// <returns>New pooled group containing elements present in either input group.</returns>
+ult is obtained from the world's group pool.
+        /// </summary>
+        /// <param name="a">First input group.</param>
+        /// <param name="b">Second input group.</param>
+        /// <returns>New pooled group containing elements present in either input group.</returns>
         public static EcsGroup Union(EcsGroup a, EcsGroup b)
         {
 #if DEBUG
@@ -1500,12 +1768,24 @@ namespace DCFApixels.DragonECS
         }
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains the union of two read-only groups. The result is obtained from the world's group pool.
+        /// </summary>
+        /// <param name="a">First input read-only group.</param>
+        /// <param name="b">Second input read-only group.</param>
+        /// <returns>New pooled group containing elements present in either input group.</returns>
         public static EcsGroup Union(EcsReadonlyGroup a, EcsReadonlyGroup b)
         {
             return Union(a.GetSource_Internal(), b.GetSource_Internal());
         }
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains the union of two spans. The result is obtained from the world's group pool.
+        /// </summary>
+        /// <param name="a">First input span.</param>
+        /// <param name="b">Second input span.</param>
+        /// <returns>New pooled group containing elements present in either input span.</returns>
         public static EcsGroup Union(EcsSpan a, EcsSpan b)
         {
 #if DEBUG
@@ -1529,6 +1809,12 @@ namespace DCFApixels.DragonECS
         #region Except
         /// <summary>as Except sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains elements present in the first group but not in the second (set difference).
+        /// </summary>
+        /// <param name="a">Source group.</param>
+        /// <param name="b">Group with elements to exclude.</param>
+        /// <returns>New pooled group containing the difference a \ b.</returns>
         public static EcsGroup Except(EcsGroup a, EcsGroup b)
         {
 #if DEBUG
@@ -1548,6 +1834,12 @@ namespace DCFApixels.DragonECS
         }
         /// <summary>as Except sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains elements present in the span but not in the group.
+        /// </summary>
+        /// <param name="a">Source span.</param>
+        /// <param name="b">Group with elements to exclude.</param>
+        /// <returns>New pooled group containing the difference a \ b.</returns>
         public static EcsGroup Except(EcsSpan a, EcsGroup b)
         {
 #if DEBUG
@@ -1567,6 +1859,12 @@ namespace DCFApixels.DragonECS
         }
         /// <summary>as Except sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains elements present in the first span but not in the second.
+        /// </summary>
+        /// <param name="a">First input span.</param>
+        /// <param name="b">Second input span.</param>
+        /// <returns>New pooled group containing the difference a \ b.</returns>
         public static EcsGroup Except(EcsSpan a, EcsSpan b)
         {
 #if DEBUG
@@ -1581,6 +1879,12 @@ namespace DCFApixels.DragonECS
         }
         /// <summary>as Except sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains elements present in the first read-only group but not in the second.
+        /// </summary>
+        /// <param name="a">First input read-only group.</param>
+        /// <param name="b">Second input read-only group.</param>
+        /// <returns>New pooled group containing the difference a \ b.</returns>
         public static EcsGroup Except(EcsReadonlyGroup a, EcsReadonlyGroup b)
         {
             return Except(a.GetSource_Internal(), b.GetSource_Internal());
@@ -1590,6 +1894,12 @@ namespace DCFApixels.DragonECS
         #region Intersect
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains the intersection of two groups. The result is obtained from the world's group pool.
+        /// </summary>
+        /// <param name="a">First input group.</param>
+        /// <param name="b">Second input group.</param>
+        /// <returns>New pooled group containing elements present in both input groups.</returns>
         public static EcsGroup Intersect(EcsGroup a, EcsGroup b)
         {
 #if DEBUG
@@ -1609,6 +1919,12 @@ namespace DCFApixels.DragonECS
         }
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains elements present both in the span and in the group.
+        /// </summary>
+        /// <param name="a">Input span.</param>
+        /// <param name="b">Input group.</param>
+        /// <returns>New pooled group containing elements present in both inputs.</returns>
         public static EcsGroup Intersect(EcsSpan a, EcsGroup b)
         {
 #if DEBUG
@@ -1628,13 +1944,25 @@ namespace DCFApixels.DragonECS
         }
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains elements present both in the group and in the span.
+        /// </summary>
+        /// <param name="a">Input group.</param>
+        /// <param name="b">Input span.</param>
+        /// <returns>New pooled group containing elements present in both inputs.</returns>
         public static EcsGroup Intersect(EcsGroup a, EcsSpan b)
         {
-            //операция симметричная, можно просто переставить параметры
+            // Operation is symmetric; forward to the span/group overload.
             return Intersect(b, a);
         }
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains the intersection of two spans.
+        /// </summary>
+        /// <param name="a">First input span.</param>
+        /// <param name="b">Second input span.</param>
+        /// <returns>New pooled group containing elements present in both spans.</returns>
         public static EcsGroup Intersect(EcsSpan a, EcsSpan b)
         {
 #if DEBUG
@@ -1649,6 +1977,12 @@ namespace DCFApixels.DragonECS
         }
         /// <summary>as Intersect sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains the intersection of two read-only groups.
+        /// </summary>
+        /// <param name="a">First input read-only group.</param>
+        /// <param name="b">Second input read-only group.</param>
+        /// <returns>New pooled group containing elements present in both inputs.</returns>
         public static EcsGroup Intersect(EcsReadonlyGroup a, EcsReadonlyGroup b)
         {
             return Intersect(a.GetSource_Internal(), b.GetSource_Internal());
@@ -1658,6 +1992,13 @@ namespace DCFApixels.DragonECS
         #region SymmetricExcept
         /// <summary>as Symmetric Except sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains the symmetric difference between two groups.
+        /// The result contains elements present in either group but not in both.
+        /// </summary>
+        /// <param name="a">First input group.</param>
+        /// <param name="b">Second input group.</param>
+        /// <returns>New pooled group containing the symmetric difference.</returns>
         public static EcsGroup SymmetricExcept(EcsGroup a, EcsGroup b)
         {
 #if DEBUG
@@ -1684,6 +2025,12 @@ namespace DCFApixels.DragonECS
         }
         /// <summary>as Symmetric Except sets</summary>
         /// <returns>new group from pool</returns>
+        /// <summary>
+        /// Create a new group that contains the symmetric difference between two spans.
+        /// </summary>
+        /// <param name="a">First input span.</param>
+        /// <param name="b">Second input span.</param>
+        /// <returns>New pooled group containing the symmetric difference.</returns>
         public static EcsGroup SymmetricExcept(EcsSpan a, EcsSpan b)
         {
 #if DEBUG
@@ -1707,6 +2054,12 @@ namespace DCFApixels.DragonECS
             result.ClearMarked_Internal();
             return result;
         }
+        /// <summary>
+        /// Create a new group that contains the symmetric difference between two read-only groups.
+        /// </summary>
+        /// <param name="a">First input read-only group.</param>
+        /// <param name="b">Second input read-only group.</param>
+        /// <returns>New pooled group containing the symmetric difference.</returns>
         public static EcsGroup SymmetricExcept(EcsReadonlyGroup a, EcsReadonlyGroup b)
         {
             return SymmetricExcept(a.GetSource_Internal(), b.GetSource_Internal());
@@ -1714,6 +2067,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Inverse
+        /// <summary>
+        /// Create a new group that contains the inverse of the provided group relative to the world's entities.
+        /// The result is obtained from the world's group pool.
+        /// </summary>
+        /// <param name="a">Input group to invert.</param>
+        /// <returns>New pooled group containing entities present in the world but not in the input group.</returns>
         public static EcsGroup Inverse(EcsGroup a)
         {
             EcsGroup result = a._source.GetFreeGroup();
@@ -1726,10 +2085,20 @@ namespace DCFApixels.DragonECS
             }
             return result;
         }
+        /// <summary>
+        /// Create a new group that contains the inverse of the provided read-only group relative to the world's entities.
+        /// </summary>
+        /// <param name="a">Read-only group to invert.</param>
+        /// <returns>New pooled group containing entities present in the world but not in the input group.</returns>
         public static EcsGroup Inverse(EcsReadonlyGroup a)
         {
             return Inverse(a.GetSource_Internal());
         }
+        /// <summary>
+        /// Create a new group that contains the inverse of the provided span relative to the world's entities.
+        /// </summary>
+        /// <param name="a">Span to invert.</param>
+        /// <returns>New pooled group containing entities present in the world but not in the input span.</returns>
         public static EcsGroup Inverse(EcsSpan a)
         {
             EcsGroup result = a.World.GetFreeGroup();
@@ -1772,6 +2141,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region HiBitMarking
+        // Hi-bit marking: use highest bit of int to mark entities during set operations
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void MarkEntity_Internal(int entityID)
         {
@@ -1819,8 +2189,16 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        /// <summary>
+        /// Return the first entity id in the group.
+        /// </summary>
+        /// <returns>First entity id in dense ordering.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _dense[1]; }
+        /// <summary>
+        /// Return the last entity id in the group.
+        /// </summary>
+        /// <returns>Last entity id in dense ordering.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _dense[_count]; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1850,6 +2228,10 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
+        /// <summary>
+        /// Convert the group's contents to a diagnostic string.
+        /// </summary>
+        /// <returns>Human-readable representation of the group's entities.</returns>
         public override string ToString()
         {
             return CollectionUtility.EntitiesToString(_dense.Skip(1).Take(_count), "group");
@@ -1857,8 +2239,18 @@ namespace DCFApixels.DragonECS
         void ICollection<int>.Add(int item) { Add(item); }
         bool ICollection<int>.Contains(int item) { return Has(item); }
 
+        /// <summary>
+        /// Implicitly obtain a read-only view over this group.
+        /// </summary>
+        /// <param name="a">Source group to convert.</param>
+        /// <returns>Read-only view of the group.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsReadonlyGroup(EcsGroup a) { return a.Readonly; }
+        /// <summary>
+        /// Implicitly convert this group into an <see cref="EcsSpan"/> representing its entities.
+        /// </summary>
+        /// <param name="a">Source group to convert.</param>
+        /// <returns>Span view over the group's entities.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsSpan(EcsGroup a) { return a.ToSpan(); }
         internal class DebuggerProxy
