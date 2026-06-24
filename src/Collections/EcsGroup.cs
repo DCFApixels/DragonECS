@@ -1736,14 +1736,8 @@ namespace DCFApixels.DragonECS
         #region Static Set operations
 
         #region Union
-
         /// <summary>
         /// Create a new group that contains the union of two groups. The result is obtained from the world's group pool.
-        /// </summary>
-        /// <param name="a">First input group.</param>
-        /// <param name="b">Second input group.</param>
-        /// <returns>New pooled group containing elements present in either input group.</returns>
-ult is obtained from the world's group pool.
         /// </summary>
         /// <param name="a">First input group.</param>
         /// <param name="b">Second input group.</param>
@@ -1766,8 +1760,6 @@ ult is obtained from the world's group pool.
             }
             return result;
         }
-        /// <summary>as Intersect sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains the union of two read-only groups. The result is obtained from the world's group pool.
         /// </summary>
@@ -1778,8 +1770,6 @@ ult is obtained from the world's group pool.
         {
             return Union(a.GetSource_Internal(), b.GetSource_Internal());
         }
-        /// <summary>as Intersect sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains the union of two spans. The result is obtained from the world's group pool.
         /// </summary>
@@ -1807,8 +1797,6 @@ ult is obtained from the world's group pool.
         #endregion
 
         #region Except
-        /// <summary>as Except sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains elements present in the first group but not in the second (set difference).
         /// </summary>
@@ -1832,8 +1820,6 @@ ult is obtained from the world's group pool.
             }
             return result;
         }
-        /// <summary>as Except sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains elements present in the span but not in the group.
         /// </summary>
@@ -1857,8 +1843,6 @@ ult is obtained from the world's group pool.
             }
             return result;
         }
-        /// <summary>as Except sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains elements present in the first span but not in the second.
         /// </summary>
@@ -1877,8 +1861,6 @@ ult is obtained from the world's group pool.
             result.ExceptWith(b);
             return result;
         }
-        /// <summary>as Except sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains elements present in the first read-only group but not in the second.
         /// </summary>
@@ -1892,8 +1874,6 @@ ult is obtained from the world's group pool.
         #endregion
 
         #region Intersect
-        /// <summary>as Intersect sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains the intersection of two groups. The result is obtained from the world's group pool.
         /// </summary>
@@ -1917,8 +1897,6 @@ ult is obtained from the world's group pool.
             }
             return result;
         }
-        /// <summary>as Intersect sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains elements present both in the span and in the group.
         /// </summary>
@@ -1942,8 +1920,6 @@ ult is obtained from the world's group pool.
             }
             return result;
         }
-        /// <summary>as Intersect sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains elements present both in the group and in the span.
         /// </summary>
@@ -1955,8 +1931,6 @@ ult is obtained from the world's group pool.
             // Operation is symmetric; forward to the span/group overload.
             return Intersect(b, a);
         }
-        /// <summary>as Intersect sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains the intersection of two spans.
         /// </summary>
@@ -1975,8 +1949,6 @@ ult is obtained from the world's group pool.
             result.IntersectWith(b);
             return result;
         }
-        /// <summary>as Intersect sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains the intersection of two read-only groups.
         /// </summary>
@@ -1990,8 +1962,6 @@ ult is obtained from the world's group pool.
         #endregion
 
         #region SymmetricExcept
-        /// <summary>as Symmetric Except sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains the symmetric difference between two groups.
         /// The result contains elements present in either group but not in both.
@@ -2023,8 +1993,6 @@ ult is obtained from the world's group pool.
             }
             return result;
         }
-        /// <summary>as Symmetric Except sets</summary>
-        /// <returns>new group from pool</returns>
         /// <summary>
         /// Create a new group that contains the symmetric difference between two spans.
         /// </summary>
