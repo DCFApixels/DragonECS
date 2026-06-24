@@ -22,7 +22,10 @@ namespace DCFApixels.DragonECS
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public sealed class EcsStaticMask : IEquatable<EcsStaticMask>, IComponentMask
     {
+        /// <summary>Represents an empty mask (no conditions).</summary>
         public static readonly EcsStaticMask Empty;
+
+        /// <summary>Represents a broken mask (invalid or conflicting conditions).</summary>
         public static readonly EcsStaticMask Broken;
 
         private static readonly Stack<BuilderInstance> _buildersPool = new Stack<BuilderInstance>();
@@ -53,34 +56,42 @@ namespace DCFApixels.DragonECS
         private readonly EcsMaskFlags _flags;
 
         #region Properties
-        /// <summary> Sorted set including constraints presented as global type codes. </summary>
+        /// <summary>Gets the sorted set of Include condition type codes.</summary>
         public ReadOnlySpan<EcsTypeCode> IncTypeCodes
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _incs; }
         }
-        /// <summary> Sorted set excluding constraints presented as global type codes. </summary>
+
+        /// <summary>Gets the sorted set of Exclude condition type codes.</summary>
         public ReadOnlySpan<EcsTypeCode> ExcTypeCodes
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _excs; }
         }
-        /// <summary> Sorted set any constraints presented as global type codes. </summary>
+
+        /// <summary>Gets the sorted set of Any condition type codes.</summary>
         public ReadOnlySpan<EcsTypeCode> AnyTypeCodes
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _anys; }
         }
+
+        /// <summary>Gets the flags indicating which condition groups are present.</summary>
         public EcsMaskFlags Flags
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _flags; }
         }
+
+        /// <summary>Indicates whether this mask has no conditions.</summary>
         public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _flags == EcsMaskFlags.Empty; }
         }
+
+        /// <summary>Indicates whether this mask is broken (conflicting conditions).</summary>
         public bool IsBroken
         {
             get { return (_flags & EcsMaskFlags.Broken) != 0; }
@@ -102,22 +113,84 @@ namespace DCFApixels.DragonECS
                 _flags = EcsMaskFlags.Broken;
             }
         }
+        /// <summary>Creates a new empty builder for constructing a static mask.</summary>
         public static Builder New() { return Builder.New(); }
+
+        /// <summary>Creates a new builder and adds an Include condition for type <typeparamref name="T"/>.</summary>
+        /// <typeparam name="T">Component type.</typeparam>
+        /// <returns>A builder with the Include condition already applied.</returns>
         public static Builder Inc<T>() { return Builder.New().Inc<T>(); }
+
+        /// <summary>Creates a new builder and adds an Exclude condition for type <typeparamref name="T"/>.</summary>
+        /// <typeparam name="T">Component type.</typeparam>
+        /// <returns>A builder with the Exclude condition already applied.</returns>
         public static Builder Exc<T>() { return Builder.New().Exc<T>(); }
+
+        /// <summary>Creates a new builder and adds an Any condition for type <typeparamref name="T"/>.</summary>
+        /// <typeparam name="T">Component type.</typeparam>
+        /// <returns>A builder with the Any condition already applied.</returns>
         public static Builder Any<T>() { return Builder.New().Any<T>(); }
+
+        /// <summary>Creates a new builder and adds an Include condition for the specified component type.</summary>
+        /// <param name="type">Component type.</param>
+        /// <returns>A builder with the Include condition applied.</returns>
         public static Builder Inc(Type type) { return Builder.New().Inc(type); }
+
+        /// <summary>Creates a new builder and adds an Exclude condition for the specified component type.</summary>
+        /// <param name="type">Component type.</param>
+        /// <returns>A builder with the Exclude condition applied.</returns>
         public static Builder Exc(Type type) { return Builder.New().Exc(type); }
+
+        /// <summary>Creates a new builder and adds an Any condition for the specified component type.</summary>
+        /// <param name="type">Component type.</param>
+        /// <returns>A builder with the Any condition applied.</returns>
         public static Builder Any(Type type) { return Builder.New().Any(type); }
+
+        /// <summary>Creates a new builder and adds an Include condition for the specified component types.</summary>
+        /// <param name="types">Array of component types.</param>
+        /// <returns>A builder with the Include conditions applied.</returns>
         public static Builder Inc(params Type[] types) { return Builder.New().Inc(types); }
+
+        /// <summary>Creates a new builder and adds an Exclude condition for the specified component types.</summary>
+        /// <param name="types">Array of component types.</param>
+        /// <returns>A builder with the Exclude conditions applied.</returns>
         public static Builder Exc(params Type[] types) { return Builder.New().Exc(types); }
+
+        /// <summary>Creates a new builder and adds an Any condition for the specified component types.</summary>
+        /// <param name="types">Array of component types.</param>
+        /// <returns>A builder with the Any conditions applied.</returns>
         public static Builder Any(params Type[] types) { return Builder.New().Any(types); }
+
+        /// <summary>Creates a new builder and adds an Include condition for the specified component type code.</summary>
+        /// <param name="typeCode">Component type code.</param>
+        /// <returns>A builder with the Include condition applied.</returns>
         public static Builder Inc(EcsTypeCode typeCode) { return Builder.New().Inc(typeCode); }
+
+        /// <summary>Creates a new builder and adds an Exclude condition for the specified component type code.</summary>
+        /// <param name="typeCode">Component type code.</param>
+        /// <returns>A builder with the Exclude condition applied.</returns>
         public static Builder Exc(EcsTypeCode typeCode) { return Builder.New().Exc(typeCode); }
+
+        /// <summary>Creates a new builder and adds an Any condition for the specified component type code.</summary>
+        /// <param name="typeCode">Component type code.</param>
+        /// <returns>A builder with the Any condition applied.</returns>
         public static Builder Any(EcsTypeCode typeCode) { return Builder.New().Any(typeCode); }
+
+        /// <summary>Creates a new builder and adds an Include condition for the specified component type code.</summary>
+        /// <param name="typeCodes">Array of component type codes.</param>
+        /// <returns>A builder with the Include conditions applied.</returns>
         public static Builder Inc(params EcsTypeCode[] typeCodes) { return Builder.New().Inc(typeCodes); }
+
+        /// <summary>Creates a new builder and adds an Exclude condition for the specified component type code.</summary>
+        /// <param name="typeCodes">Array of component type codes.</param>
+        /// <returns>A builder with the Exclude conditions applied.</returns>
         public static Builder Exc(params EcsTypeCode[] typeCodes) { return Builder.New().Exc(typeCodes); }
+
+        /// <summary>Creates a new builder and adds an Any condition for the specified component type code.</summary>
+        /// <param name="typeCodes">Array of component type codes.</param>
+        /// <returns>A builder with the Any conditions applied.</returns>
         public static Builder Any(params EcsTypeCode[] typeCodes) { return Builder.New().Any(typeCodes); }
+
         private static EcsStaticMask CreateMask(Key key)
         {
             if (_ids.TryGetValue(key, out EcsStaticMask result) == false)
@@ -218,13 +291,28 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
+        /// <summary>Converts this static mask into a world‑specific <see cref="EcsMask"/> for the given world.</summary>
+        /// <param name="world">The world to bind the mask to.</param>
+        /// <returns>A world‑specific mask instance.</returns>
         public EcsMask ToMask(EcsWorld world) { return EcsMask.FromStatic(world, this); }
+
+        /// <summary>Determines whether this mask equals another by ID.</summary>
+        /// <param name="other">The other mask.</param>
+        /// <returns>True if equal; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(EcsStaticMask other) { return ID == other.ID; }
+
+        /// <summary>Gets the hash code (based on ID).</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() { return ID; }
+
+        /// <summary>Determines whether this mask equals another object.</summary>
+        /// <param name="obj">The object to compare.</param>
+        /// <returns>True if equal; otherwise false.</returns>
         public override bool Equals(object obj) { return Equals((EcsStaticMask)obj); }
-        public override string ToString() { return CreateLogString(_incs, _excs); }
+
+        /// <summary>Returns a string representation of the mask showing Include, Exclude and Any sets.</summary>
+        public override string ToString() { return CreateLogString(_incs, _excs, _anys); }
         #endregion
 
         #region Builder
@@ -568,13 +656,13 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Debug utils
-        private static string CreateLogString(EcsTypeCode[] inc, EcsTypeCode[] exc)
+        private static string CreateLogString(EcsTypeCode[] inc, EcsTypeCode[] exc, EcsTypeCode[] any)
         {
 #if DEBUG
             string converter(EcsTypeCode o) { return EcsTypeCodeManager.FindTypeOfCode(o).ToString(); }
-            return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))})";
+            return $"Inc({string.Join(", ", inc.Select(converter))}) Exc({string.Join(", ", exc.Select(converter))}) Any({string.Join(", ", any.Select(converter))})";
 #else
-            return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)})"; // Release optimization
+            return $"Inc({string.Join(", ", inc)}) Exc({string.Join(", ", exc)}) Any({string.Join(", ", exc)})"; // Release optimization
 #endif
         }
         internal class DebuggerProxy
@@ -582,10 +670,12 @@ namespace DCFApixels.DragonECS
             private EcsStaticMask _source;
 
             public readonly int ID;
-            public readonly EcsTypeCode[] included;
-            public readonly EcsTypeCode[] excluded;
-            public readonly Type[] includedTypes;
-            public readonly Type[] excludedTypes;
+            public readonly EcsTypeCode[] incs;
+            public readonly EcsTypeCode[] excs;
+            public readonly EcsTypeCode[] anys;
+            public readonly Type[] incsTypes;
+            public readonly Type[] excsTypes;
+            public readonly Type[] anysTypes;
 
             public bool IsEmpty { get { return _source.IsEmpty; } }
             public bool IsBroken { get { return _source.IsBroken; } }
@@ -595,15 +685,17 @@ namespace DCFApixels.DragonECS
                 _source = mask;
 
                 ID = mask.ID;
-                included = mask._incs;
-                excluded = mask._excs;
+                incs = mask._incs;
+                excs = mask._excs;
+                anys = mask._anys;
                 Type converter(EcsTypeCode o) { return EcsTypeCodeManager.FindTypeOfCode(o).Type; }
-                includedTypes = included.Select(converter).ToArray();
-                excludedTypes = excluded.Select(converter).ToArray();
+                incsTypes = incs.Select(converter).ToArray();
+                excsTypes = excs.Select(converter).ToArray();
+                anysTypes = anys.Select(converter).ToArray();
             }
             public override string ToString()
             {
-                return CreateLogString(included, excluded);
+                return CreateLogString(incs, excs, anys);
             }
         }
 
