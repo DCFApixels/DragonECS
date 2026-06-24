@@ -60,27 +60,37 @@ namespace DCFApixels.DragonECS
         private bool _isLocked;
 
         #region Properites
-        /// <summary>Количество хранимых значений в пуле.</summary>
+        /// <summary>
+        /// Number of stored values in the pool.
+        /// </summary>
         public int Count
         {
             get { return _itemsCount; }
         }
-        /// <summary>Вместимость внутреннего массива значений.</summary>
+        /// <summary>
+        /// Capacity of the internal values array.
+        /// </summary>
         public int Capacity
         {
             get { return _itemsLength; }
         }
-        /// <summary>Внутренний идентификатор типа компонента для данного пула.</summary>
+        /// <summary>
+        /// Internal component type identifier for this value pool.
+        /// </summary>
         public int ComponentTypeID
         {
             get { return _registrar.ComponentTypeID; }
         }
-        /// <summary>CLR-тип компонента, хранимого в пуле.</summary>
+        /// <summary>
+        /// Type of the component stored by this pool.
+        /// </summary>
         public Type ComponentType
         {
             get { return typeof(T); }
         }
-        /// <summary>Мир, которому принадлежит пул значений.</summary>
+        /// <summary>
+        /// The world instance that owns this value pool.
+        /// </summary>
         public EcsWorld World
         {
             get { return _registrar.World; }
@@ -89,9 +99,11 @@ namespace DCFApixels.DragonECS
         {
             get { return false; }
         }
-        /// <summary>Получить ссылку на значение по индексу внутри пула.</summary>
-        /// <param name="index">Индекс значения.</param>
-        /// <returns>Ссылка на элемент типа T.</returns>
+        /// <summary>
+        /// Get component by entity id inside the pool.
+        /// </summary>
+        /// <param name="index">Entity identifier.</param>
+        /// <returns>Reference to the component instance.</returns>
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -168,6 +180,11 @@ namespace DCFApixels.DragonECS
         {
             return new NativeEcsValuePool<T>(_sharedStore);
         }
+        /// <summary>
+        /// Add a value component for the specified entity and return a reference to it.
+        /// </summary>
+        /// <param name="entityID">Entity identifier to add the component to.</param>
+        /// <returns>Reference to the added value component.</returns>
         public ref T Add(int entityID)
         {
             ref int itemIndex = ref _mapping[entityID];
@@ -201,6 +218,12 @@ namespace DCFApixels.DragonECS
             EcsComponentLifecycle<T>.OnAdd(_isCustomLifecycle, _customLifecycle, ref result, _registrar.WorldID, entityID);
             return ref result;
         }
+        /// <summary>
+        /// Get a reference to the value component for the specified entity.
+        /// Throws in DEBUG if the component is not present.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Reference to the stored value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get(int entityID)
         {
@@ -279,6 +302,10 @@ namespace DCFApixels.DragonECS
             _itemsCount--;
             _registrar.UnregisterComponent(entityID);
         }
+        /// <summary>
+        /// Try to remove the value component from the specified entity if present.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
         public void TryDel(int entityID)
         {
             if (Has(entityID))

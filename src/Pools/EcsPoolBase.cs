@@ -198,26 +198,37 @@ namespace DCFApixels.DragonECS
     public interface IEcsReadonlyPool : IEcsMember
     {
         #region Properties
-        /// <summary>Внутренний идентификатор типа компонента.</summary>
+        /// <summary>
+        /// Internal component type identifier for this pool.
+        /// </summary>
         int ComponentTypeID { get; }
-        /// <summary>CLR-тип компонента, хранящегося в пуле.</summary>
+        /// <summary>
+        /// Type of the component stored in this pool.
+        /// </summary>
         Type ComponentType { get; }
-        /// <summary>Мир, которому принадлежит пул.</summary>
+        /// <summary>
+        /// The world instance that owns this pool.
+        /// </summary>
         EcsWorld World { get; }
-        /// <summary>Количество элементов в пуле.</summary>
+        /// <summary>
+        /// Number of components stored in the pool.
+        /// </summary>
         int Count { get; }
-        /// <summary>Пул доступен только для чтения.</summary>
         bool IsReadOnly { get; }
         #endregion
 
         #region Methods
-        /// <summary>Проверяет, содержит ли указанный сущность компонент в пуле.</summary>
-        /// <param name="entityID">Идентификатор сущности.</param>
-        /// <returns>True если компонент присутствует.</returns>
+        /// <summary>
+        /// Check whether the specified entity has a component in this pool.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>True when the component is present.</returns>
         bool Has(int entityID);
-        /// <summary>Возвращает необработанное представление компонента для заданной сущности.</summary>
-        /// <param name="entityID">Идентификатор сущности.</param>
-        /// <returns>Необработанный объект компонента.</returns>
+        /// <summary>
+        /// Returns a raw object of the component for the specified entity. Note that value types are boxed.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Raw component object.</returns>
         object GetRaw(int entityID);
         #endregion
 

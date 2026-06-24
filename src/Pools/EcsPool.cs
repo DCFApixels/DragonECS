@@ -61,27 +61,37 @@ namespace DCFApixels.DragonECS
 
 
         #region Properites
-        /// <summary>Количество компонентов, хранящихся в пуле.</summary>
+        /// <summary>
+        /// Number of components stored in the pool.
+        /// </summary>
         public int Count
         {
             get { return _itemsCount; }
         }
-        /// <summary>Ёмкость внутреннего массива компонентов.</summary>
+        /// <summary>
+        /// Capacity of the internal component array.
+        /// </summary>
         public int Capacity
         {
             get { return _items.Length; }
         }
-        /// <summary>Внутренний идентификатор типа компонента для данного пула.</summary>
+        /// <summary>
+        /// Internal component type identifier for this pool.
+        /// </summary>
         public int ComponentTypeID
         {
             get { return _registrar.ComponentTypeID; }
         }
-        /// <summary>CLR-тип компонента, хранящегося в пуле.</summary>
+        /// <summary>
+        /// Type of the component stored in this pool.
+        /// </summary>
         public Type ComponentType
         {
             get { return typeof(T); }
         }
-        /// <summary>Мир, которому принадлежит этот пул.</summary>
+        /// <summary>
+        /// The world instance that owns this pool.
+        /// </summary>
         public EcsWorld World
         {
             get { return _registrar.World; }
@@ -90,13 +100,15 @@ namespace DCFApixels.DragonECS
         {
             get { return false; }
         }
-        /// <summary>Получить компонент по индексу внутри пула.</summary>
-        /// <param name="index">Индекс компонента внутри пула.</param>
-        /// <returns>Ссылка на компонент.</returns>
-        public ref T this[int index]
+        /// <summary>
+        /// Get component by entity id inside the pool.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Reference to the component instance.</returns>
+        public ref T this[int entityID]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return ref Get(index); }
+            get { return ref Get(entityID); }
         }
         #endregion
 
@@ -136,6 +148,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
+        /// <summary>
+        /// Add a component for the specified entity and return a reference to the component.
+        /// </summary>
+        /// <param name="entityID">Entity identifier to add the component to.</param>
+        /// <returns>Reference to the added component instance.</returns>
         public ref T Add(int entityID)
         {
             ref int itemIndex = ref _mapping[entityID];
@@ -180,6 +197,12 @@ namespace DCFApixels.DragonECS
 #endif
             return ref result;
         }
+        /// <summary>
+        /// Get a reference to the component for the specified entity.
+        /// Throws when the component is not present in DEBUG mode.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Reference to the component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get(int entityID)
         {
@@ -191,6 +214,11 @@ namespace DCFApixels.DragonECS
 #endif
             return ref _items[_mapping[entityID]];
         }
+        /// <summary>
+        /// Read-only access to the component for the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Read-only reference to the component.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID)
         {
@@ -207,11 +235,20 @@ namespace DCFApixels.DragonECS
             }
             return ref Add(entityID);
         }
+        /// <summary>
+        /// Check whether the specified entity has a component in this pool.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>True when the component is present.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
         {
             return _mapping[entityID] != 0;
         }
+        /// <summary>
+        /// Remove component from the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Del(int entityID)
         {
@@ -245,6 +282,10 @@ namespace DCFApixels.DragonECS
                 _isDensified = true;
             }
         }
+        /// <summary>
+        /// Try to remove the component from the specified entity if present.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
         public void TryDel(int entityID)
         {
             if (Has(entityID))
@@ -252,6 +293,12 @@ namespace DCFApixels.DragonECS
                 Del(entityID);
             }
         }
+        /// <summary>
+        /// Copy component data from one entity to another inside the same world.
+        /// </summary>
+        /// <param name="fromEntityID">Source entity identifier.</param>
+        /// <param name="toEntityID">Destination entity identifier.</param>
+        /// <remarks>Uses custom copy logic if the component implements <see cref="IEcsComponentCopy{T}"/>; otherwise falls back to default copying.</remarks>
         public void Copy(int fromEntityID, int toEntityID)
         {
 #if DEBUG
@@ -261,6 +308,12 @@ namespace DCFApixels.DragonECS
 #endif
             EcsComponentCopy<T>.Copy(_isCustomCopy, _customCopy, ref Get(fromEntityID), ref TryAddOrGet(toEntityID));
         }
+        /// <summary>
+        /// Copy component data from one entity to another inside the another world.
+        /// </summary>
+        /// <param name="fromEntityID">Source entity identifier.</param>
+        /// <param name="toEntityID">Destination entity identifier.</param>
+        /// <remarks>Uses custom copy logic if the component implements <see cref="IEcsComponentCopy{T}"/>; otherwise falls back to default copying.</remarks>
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if DEBUG
@@ -271,6 +324,9 @@ namespace DCFApixels.DragonECS
             EcsComponentCopy<T>.Copy(_isCustomCopy, _customCopy, ref Get(fromEntityID), ref toWorld.GetPool<T>().TryAddOrGet(toEntityID));
         }
 
+        /// <summary>
+        /// Remove all components from the pool and unregister them from the world.
+        /// </summary>
         public void ClearAll()
         {
 #if DEBUG
@@ -402,7 +458,7 @@ namespace DCFApixels.DragonECS
 
         #region Other
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InvokeOnAdd(int entityID, ref T component)
+        private void InvokeOnAdd(int entityID, ref T component)
         {
             if (_isCustomLifecycle)
             {
@@ -414,7 +470,7 @@ namespace DCFApixels.DragonECS
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InvokeOnDel(int entityID, int itemIndex)
+        private void InvokeOnDel(int entityID, int itemIndex)
         {
             if (_isCustomLifecycle)
             {

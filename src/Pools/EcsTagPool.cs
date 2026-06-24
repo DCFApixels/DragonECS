@@ -62,22 +62,30 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Properites
-        /// <summary>Количество сущностей, имеющих этот тег в мире.</summary>
+        /// <summary>
+        /// Number of entities that currently have this tag in the world.
+        /// </summary>
         public int Count
         {
             get { return _count; }
         }
-        /// <summary>Внутренний идентификатор типа компонента.</summary>
+        /// <summary>
+        /// Internal component type identifier for this tag pool.
+        /// </summary>
         public int ComponentTypeID
         {
             get { return _registrar.ComponentTypeID; }
         }
-        /// <summary>CLR-тип компонента (тега).</summary>
+        /// <summary>
+        /// Type of the tag component stored in this pool.
+        /// </summary>
         public Type ComponentType
         {
             get { return typeof(T); }
         }
-        /// <summary>Мир, которому принадлежит пул тегов.</summary>
+        /// <summary>
+        /// The world instance that owns this tag pool.
+        /// </summary>
         public EcsWorld World
         {
             get { return _registrar.World; }
@@ -86,8 +94,10 @@ namespace DCFApixels.DragonECS
         {
             get { return false; }
         }
-        /// <summary>Проверяет или устанавливает наличие тега для сущности.</summary>
-        /// <param name="index">Идентификатор сущности.</param>
+        /// <summary>
+        /// Check or set whether the specified entity has this tag.
+        /// </summary>
+        /// <param name="index">Entity identifier.</param>
         public bool this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -113,6 +123,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Method
+        /// <summary>
+        /// Add the tag to the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier to add the tag to.</param>
         public void Add(int entityID)
         {
 #if DEBUG
@@ -130,6 +144,10 @@ namespace DCFApixels.DragonECS
             if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
 #endif
         }
+        /// <summary>
+        /// Try to add the tag to the specified entity if it is not present.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
         public void TryAdd(int entityID)
         {
             if (Has(entityID) == false)
@@ -137,11 +155,20 @@ namespace DCFApixels.DragonECS
                 Add(entityID);
             }
         }
+        /// <summary>
+        /// Check whether the specified entity has this tag.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>True when the tag is present on the entity.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
         {
             return _mapping[entityID];
         }
+        /// <summary>
+        /// Remove the tag from the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
         public void Del(int entityID)
         {
 #if DEBUG
