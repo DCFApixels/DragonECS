@@ -102,6 +102,14 @@ namespace DCFApixels.DragonECS.Core.Internal
             _filteredEntitiesCount = _iterator.CacheTo(span, ref _filteredEntities);
         }
 
+        /// <summary>
+        /// Executes the mask query against all entities currently alive in the world,
+        /// and returns an unsafe span of matching entity IDs.
+        /// The result is cached internally and reused if the world state hasn't changed.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="EcsUnsafeSpan"/> containing the entity IDs that satisfy the mask conditions.
+        /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsUnsafeSpan Execute()
         {
@@ -130,6 +138,17 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
             return new EcsUnsafeSpan(World.ID, _filteredAllEntities.Ptr, _filteredAllEntitiesCount); ;
         }
+
+        /// <summary>
+        /// Executes the mask query only on the subset of entities provided in the given span,
+        /// returning an unsafe span of those that match the mask.
+        /// </summary>
+        /// <param name="span">
+        /// The span of entity IDs to filter against the mask. Must belong to the same world.
+        /// </param>
+        /// <returns>
+        /// An <see cref="EcsUnsafeSpan"/> containing the matching entity IDs from the supplied span.
+        /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsUnsafeSpan ExecuteFor(EcsSpan span)
         {
@@ -151,6 +170,16 @@ namespace DCFApixels.DragonECS.Core.Internal
             return new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount); ;
         }
 
+        /// <summary>
+        /// Executes the mask query against all world entities and sorts the resulting entity IDs
+        /// using the specified comparison delegate.
+        /// </summary>
+        /// <param name="comparison">
+        /// The comparison function used to order the entity IDs in the result.
+        /// </param>
+        /// <returns>
+        /// An <see cref="EcsUnsafeSpan"/> containing the sorted list of matching entity IDs.
+        /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsUnsafeSpan Execute(Comparison<int> comparison)
         {
@@ -158,6 +187,20 @@ namespace DCFApixels.DragonECS.Core.Internal
             SortHalper.Sort(_filteredAllEntities.AsSpan(_filteredAllEntitiesCount), comparison);
             return new EcsUnsafeSpan(World.ID, _filteredAllEntities.Ptr, _filteredAllEntitiesCount);
         }
+
+        /// <summary>
+        /// Executes the mask query on the given span of entity IDs and sorts the matching results
+        /// using the specified comparison delegate.
+        /// </summary>
+        /// <param name="source">
+        /// The span of entity IDs to filter against the mask. Must belong to the same world.
+        /// </param>
+        /// <param name="comparison">
+        /// The comparison function used to order the entity IDs in the result.
+        /// </param>
+        /// <returns>
+        /// An <see cref="EcsUnsafeSpan"/> containing the sorted matching entity IDs from the source span.
+        /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsUnsafeSpan ExecuteFor(EcsSpan source, Comparison<int> comparison)
         {
@@ -169,6 +212,14 @@ namespace DCFApixels.DragonECS.Core.Internal
             SortHalper.Sort(_filteredEntities.AsSpan(_filteredEntitiesCount), comparison);
             return new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount);
         }
+
+        /// <summary>
+        /// Returns a managed snapshot of the current query result as an <see cref="EcsSpan"/>.
+        /// This method internally calls <see cref="Execute()"/> and converts the unsafe span to a safe span.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="EcsSpan"/> containing the entity IDs that match the mask.
+        /// </returns>
         public override EcsSpan Snapshot() { return Execute(); }
         #endregion
     }
