@@ -110,12 +110,31 @@ namespace DCFApixels.DragonECS.Core.Internal
             _iterator.CacheTo(span, _filteredGroup);
         }
 
+        /// <summary>
+        /// Executes the mask query against all entities currently alive in the world
+        /// and returns a read‑only group containing the matching entity IDs.
+        /// The result is cached internally and reused if the world state hasn't changed.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="EcsReadonlyGroup"/> that contains the entity IDs satisfying the mask conditions.
+        /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup Execute()
         {
             Execute_Iternal();
             return _filteredAllGroup;
         }
+
+        /// <summary>
+        /// Executes the mask query only on the subset of entities provided in the given span,
+        /// and returns a read‑only group of those that match the mask.
+        /// </summary>
+        /// <param name="span">
+        /// The span of entity IDs to filter against the mask. Must belong to the same world.
+        /// </param>
+        /// <returns>
+        /// An <see cref="EcsReadonlyGroup"/> containing the matching entity IDs from the supplied span.
+        /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup ExecuteFor(EcsSpan span)
         {
@@ -126,6 +145,14 @@ namespace DCFApixels.DragonECS.Core.Internal
             ExecuteFor_Iternal(span);
             return _filteredGroup;
         }
+
+        /// <summary>
+        /// Returns a managed snapshot of the current query result as an <see cref="EcsSpan"/>.
+        /// This method internally calls <see cref="Execute()"/> and converts the resulting group to a span.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="EcsSpan"/> containing the entity IDs that match the mask.
+        /// </returns>
         public override EcsSpan Snapshot() { return Execute(); }
         #endregion
     }
