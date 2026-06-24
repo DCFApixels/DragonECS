@@ -68,6 +68,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _itemsCount; }
         }
+
         /// <summary>
         /// Capacity of the internal component array.
         /// </summary>
@@ -75,6 +76,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _items.Length; }
         }
+
         /// <summary>
         /// Internal component type identifier for this pool.
         /// </summary>
@@ -82,6 +84,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _registrar.ComponentTypeID; }
         }
+
         /// <summary>
         /// Type of the component stored in this pool.
         /// </summary>
@@ -89,6 +92,7 @@ namespace DCFApixels.DragonECS
         {
             get { return typeof(T); }
         }
+
         /// <summary>
         /// The world instance that owns this pool.
         /// </summary>
@@ -100,6 +104,7 @@ namespace DCFApixels.DragonECS
         {
             get { return false; }
         }
+
         /// <summary>
         /// Get component by entity id inside the pool.
         /// </summary>
@@ -117,6 +122,7 @@ namespace DCFApixels.DragonECS
         /// Create an empty EcsPool.
         /// </summary>
         public EcsPool() { _isDensified = true; }
+
         /// <summary>
         /// Create an EcsPool with an explicit initial capacity for components.
         /// </summary>
@@ -156,6 +162,7 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <param name="entityID">Entity identifier to add the component to.</param>
         /// <returns>Reference to the added component instance.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Add(int entityID)
         {
             ref int itemIndex = ref _mapping[entityID];
@@ -200,6 +207,7 @@ namespace DCFApixels.DragonECS
 #endif
             return ref result;
         }
+
         /// <summary>
         /// Get a reference to the component for the specified entity.
         /// Throws when the component is not present in DEBUG mode.
@@ -217,6 +225,7 @@ namespace DCFApixels.DragonECS
 #endif
             return ref _items[_mapping[entityID]];
         }
+
         /// <summary>
         /// Read-only access to the component for the specified entity.
         /// </summary>
@@ -230,6 +239,12 @@ namespace DCFApixels.DragonECS
 #endif
             return ref _items[_mapping[entityID]];
         }
+
+        /// <summary>
+        /// Gets a reference to the component for the specified entity, or adds it if the component is not present.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Reference to the component instance (either existing or newly added).</returns>
         public ref T TryAddOrGet(int entityID)
         {
             if (Has(entityID))
@@ -238,6 +253,7 @@ namespace DCFApixels.DragonECS
             }
             return ref Add(entityID);
         }
+
         /// <summary>
         /// Check whether the specified entity has a component in this pool.
         /// </summary>
@@ -248,6 +264,7 @@ namespace DCFApixels.DragonECS
         {
             return _mapping[entityID] != 0;
         }
+
         /// <summary>
         /// Remove component from the specified entity.
         /// </summary>
@@ -285,6 +302,7 @@ namespace DCFApixels.DragonECS
                 _isDensified = true;
             }
         }
+
         /// <summary>
         /// Try to remove the component from the specified entity if present.
         /// </summary>
@@ -296,6 +314,7 @@ namespace DCFApixels.DragonECS
                 Del(entityID);
             }
         }
+
         /// <summary>
         /// Copy component data from one entity to another inside the same world.
         /// </summary>
@@ -311,6 +330,7 @@ namespace DCFApixels.DragonECS
 #endif
             EcsComponentCopy<T>.Copy(_isCustomCopy, _customCopy, ref Get(fromEntityID), ref TryAddOrGet(toEntityID));
         }
+
         /// <summary>
         /// Copy component data from one entity to another inside the another world.
         /// </summary>

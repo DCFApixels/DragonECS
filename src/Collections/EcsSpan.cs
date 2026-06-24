@@ -366,6 +366,7 @@ namespace DCFApixels.DragonECS
 
 namespace DCFApixels.DragonECS.Core
 {
+    /// <remarks>Suitable for use in Unity Jobs or other high‑performance contexts.</remarks>
 #if ENABLE_IL2CPP
     using Unity.IL2CPP.CompilerServices;
     [Il2CppSetOption(Option.NullChecks, false)]

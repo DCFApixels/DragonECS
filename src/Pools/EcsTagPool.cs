@@ -69,6 +69,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _count; }
         }
+
         /// <summary>
         /// Internal component type identifier for this tag pool.
         /// </summary>
@@ -76,6 +77,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _registrar.ComponentTypeID; }
         }
+
         /// <summary>
         /// Type of the tag component stored in this pool.
         /// </summary>
@@ -83,6 +85,7 @@ namespace DCFApixels.DragonECS
         {
             get { return typeof(T); }
         }
+
         /// <summary>
         /// The world instance that owns this tag pool.
         /// </summary>
@@ -94,6 +97,7 @@ namespace DCFApixels.DragonECS
         {
             get { return false; }
         }
+
         /// <summary>
         /// Check or set whether the specified entity has this tag.
         /// </summary>
@@ -144,6 +148,7 @@ namespace DCFApixels.DragonECS
             if (_hasAnyListener) { _listeners.InvokeOnAdd(entityID); }
 #endif
         }
+
         /// <summary>
         /// Try to add the tag to the specified entity if it is not present.
         /// </summary>
@@ -155,6 +160,7 @@ namespace DCFApixels.DragonECS
                 Add(entityID);
             }
         }
+
         /// <summary>
         /// Check whether the specified entity has this tag.
         /// </summary>
@@ -165,6 +171,7 @@ namespace DCFApixels.DragonECS
         {
             return _mapping[entityID];
         }
+
         /// <summary>
         /// Remove the tag from the specified entity.
         /// </summary>
@@ -211,6 +218,7 @@ namespace DCFApixels.DragonECS
 #endif
             toWorld.GetPool<T>().TryAdd(toEntityID);
         }
+
         /// <summary>
         /// Set or clear the tag flag on the specified entity.
         /// </summary>
@@ -230,6 +238,7 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
+
         /// <summary>
         /// Toggle tag presence for the specified entity: add if missing, remove if present.
         /// </summary>
@@ -245,6 +254,7 @@ namespace DCFApixels.DragonECS
                 Add(entityID);
             }
         }
+
         /// <summary>
         /// Clear all tag entries from the pool and unregister them from the world.
         /// </summary>
