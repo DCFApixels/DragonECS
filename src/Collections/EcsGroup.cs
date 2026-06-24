@@ -38,6 +38,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source == null; }
         }
+
         /// <summary>
         /// Identifier of the world that owns the group.
         /// </summary>
@@ -46,6 +47,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.WorldID; }
         }
+
         /// <summary>
         /// The <see cref="EcsWorld"/> instance that owns the group.
         /// </summary>
@@ -54,6 +56,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.World; }
         }
+
         /// <summary>
         /// Number of entities currently contained in the group.
         /// </summary>
@@ -62,6 +65,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.Count; }
         }
+
         /// <summary>
         /// Current dense-array capacity used by the group.
         /// </summary>
@@ -70,14 +74,16 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.CapacityDense; }
         }
+
         /// <summary>
-        /// Low-level span of longs backing internal group data. Use for advanced scenarios.
+        /// Returns a span of packed entity identifiers (<see cref="entlong"/>) – equivalent to a regular span of entity IDs
         /// </summary>
         public EcsLongsSpan Longs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.Longs; }
         }
+
         /// <summary>
         /// True when the group has been released back to the world's pool and should not be used.
         /// </summary>
@@ -86,6 +92,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.IsReleased; }
         }
+
         /// <summary>
         /// Indexer returning the entity id at the specified dense index.
         /// </summary>
@@ -116,6 +123,7 @@ namespace DCFApixels.DragonECS
         /// <returns>True when the entity is contained; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID) { return _source.Has(entityID); }
+
         /// <summary>
         /// Get the dense index of the specified entity in the group.
         /// </summary>
@@ -123,46 +131,55 @@ namespace DCFApixels.DragonECS
         /// <returns>Dense index of the entity or -1 when not found.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID) { return _source.IndexOf(entityID); }
+
         /// <summary>
         /// Copy group entity ids into the provided array starting at arrayIndex.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(int[] array, int arrayIndex) { _source.CopyTo(array, arrayIndex); }
+
         /// <summary>
         /// Create a mutable clone of the underlying group.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone() { return _source.Clone(); }
+
         /// <summary>
         /// Return a span representing a slice of the group's dense array starting at start.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start) { return _source.Slice(start); }
+
         /// <summary>
         /// Return a span representing a slice of the group's dense array with specified length.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start, int length) { return _source.Slice(start, length); }
+
         /// <summary>
         /// Return a span containing all entity ids in the group.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan() { return _source.ToSpan(); }
+
         /// <summary>
         /// Convert the group contents to a managed int[] array.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int[] ToArray() { return _source.ToArray(); }
+
         /// <summary>
         /// Copy group contents into a reusable buffer and return the written length.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ToArray(ref int[] dynamicBuffer) { return _source.ToArray(ref dynamicBuffer); }
+        
         /// <summary>
         /// Add all entity ids of the group into the provided collection.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ToCollection(ICollection<int> collection) { _source.ToCollection(collection); }
+        
         /// <summary>
         /// Get a value-type enumerator for iterating over entity ids in the group.
         /// </summary>
@@ -174,6 +191,7 @@ namespace DCFApixels.DragonECS
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _source.First(); }
+
         /// <summary>
         /// Return the last entity id in the group.
         /// </summary>
@@ -531,6 +549,10 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new EcsReadonlyGroup(this); }
         }
+
+        /// <summary>
+        /// Returns a span of packed entity identifiers (<see cref="entlong"/>) – equivalent to a regular span of entity IDs
+        /// </summary>
         public EcsLongsSpan Longs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
