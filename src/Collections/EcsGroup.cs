@@ -10,7 +10,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 //_dense заполняется с индекса 1
 //в операциях изменяющих состояние группы нельзя итерироваться по this, либо осторожно учитывать этот момент
@@ -21,48 +20,75 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 8)]
+    /// <summary>
+    /// Read-only lightweight view over an <see cref="EcsGroup"/> instance.
+    /// Provides safe accessors and non-mutating convenience methods for consumers.
+    /// </summary>
     [DebuggerTypeProxy(typeof(EcsGroup.DebuggerProxy))]
     public readonly ref struct EcsReadonlyGroup
     {
         private readonly EcsGroup _source;
 
         #region Properties
+        /// <summary>
+        /// Returns true when the underlying group reference is null.
+        /// </summary>
         public bool IsNull
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source == null; }
         }
+        /// <summary>
+        /// Identifier of the world that owns the group.
+        /// </summary>
         public int WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.WorldID; }
         }
+        /// <summary>
+        /// The <see cref="EcsWorld"/> instance that owns the group.
+        /// </summary>
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.World; }
         }
+        /// <summary>
+        /// Number of entities currently contained in the group.
+        /// </summary>
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.Count; }
         }
+        /// <summary>
+        /// Current dense-array capacity used by the group.
+        /// </summary>
         public int CapacityDense
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.CapacityDense; }
         }
+        /// <summary>
+        /// Low-level span of longs backing internal group data. Use for advanced scenarios.
+        /// </summary>
         public EcsLongsSpan Longs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.Longs; }
         }
+        /// <summary>
+        /// True when the group has been released back to the world's pool and should not be used.
+        /// </summary>
         public bool IsReleazed
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.IsReleased; }
         }
+        /// <summary>
+        /// Indexer returning the entity id at the specified dense index.
+        /// </summary>
         public int this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -71,6 +97,10 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
+        /// <summary>
+        /// Create a read-only view over the provided <see cref="EcsGroup"/>.
+        /// </summary>
+        /// <param name="source">Source group to wrap.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup(EcsGroup source)
         {
@@ -79,83 +109,264 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
+        /// <summary>
+        /// Check whether the specified entity id is present in the group.
+        /// </summary>
+        /// <param name="entityID">Entity identifier to check.</param>
+        /// <returns>True when the entity is contained; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID) { return _source.Has(entityID); }
+        /// <summary>
+        /// Get the dense index of the specified entity in the group.
+        /// </summary>
+        /// <param name="entityID">Entity identifier to locate.</param>
+        /// <returns>Dense index of the entity or -1 when not found.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID) { return _source.IndexOf(entityID); }
+        /// <summary>
+        /// Copy group entity ids into the provided array starting at arrayIndex.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(int[] array, int arrayIndex) { _source.CopyTo(array, arrayIndex); }
+        /// <summary>
+        /// Create a mutable clone of the underlying group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup Clone() { return _source.Clone(); }
+        /// <summary>
+        /// Return a span representing a slice of the group's dense array starting at start.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start) { return _source.Slice(start); }
+        /// <summary>
+        /// Return a span representing a slice of the group's dense array with specified length.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start, int length) { return _source.Slice(start, length); }
+        /// <summary>
+        /// Return a span containing all entity ids in the group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan() { return _source.ToSpan(); }
+        /// <summary>
+        /// Convert the group contents to a managed int[] array.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int[] ToArray() { return _source.ToArray(); }
+        /// <summary>
+        /// Copy group contents into a reusable buffer and return the written length.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ToArray(ref int[] dynamicBuffer) { return _source.ToArray(ref dynamicBuffer); }
+        /// <summary>
+        /// Add all entity ids of the group into the provided collection.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ToCollection(ICollection<int> collection) { _source.ToCollection(collection); }
+        /// <summary>
+        /// Get a value-type enumerator for iterating over entity ids in the group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup.Enumerator GetEnumerator() { return _source.GetEnumerator(); }
 
+        /// <summary>
+        /// Return the first entity id in the group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _source.First(); }
+        /// <summary>
+        /// Return the last entity id in the group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _source.Last(); }
 
+        /// <summary>
+        /// Determines whether this group contains exactly the same entity IDs as the specified collection.
+        /// </summary>
+        /// <param name="group">The collection to compare.</param>
+        /// <returns>True if both sets are equal; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetEquals(EcsGroup group) { return _source.SetEquals(group); }
+
+        /// <summary>
+        /// Determines whether this group contains exactly the same entity IDs as the specified read-only group.
+        /// </summary>
+        /// <param name="group">The collection to compare.</param>
+        /// <returns>True if both sets are equal; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetEquals(EcsReadonlyGroup group) { return _source.SetEquals(group._source); }
+
+        /// <summary>
+        /// Determines whether this group contains exactly the same entity IDs as the specified span.
+        /// </summary>
+        /// <param name="span">The span to compare.</param>
+        /// <returns>True if both sets are equal; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetEquals(EcsSpan span) { return _source.SetEquals(span); }
+
+        /// <summary>
+        /// Determines whether this group contains exactly the same entity IDs as the specified enumerable collection.
+        /// </summary>
+        /// <param name="other">The collection to compare.</param>
+        /// <returns>True if both sets are equal; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetEquals(IEnumerable<int> other) { return _source.SetEquals(other); }
 
+        /// <summary>Determines whether this group and the specified collection share at least one common entity ID.</summary>
+        /// <param name="group">The collection to check for intersection.</param>
+        /// <returns>True if there is any overlapping element; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Overlaps(EcsGroup group) { return _source.Overlaps(group); }
+
+        /// <summary>
+        /// Determines whether this group and the specified read-only group share at least one common entity ID.
+        /// </summary>
+        /// <param name="group">The collection to check for intersection.</param>
+        /// <returns>True if there is any overlapping element; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Overlaps(EcsReadonlyGroup group) { return _source.Overlaps(group._source); }
+
+        /// <summary>
+        /// Determines whether this group and the specified span share at least one common entity ID.
+        /// </summary>
+        /// <param name="span">The span to check for intersection.</param>
+        /// <returns>True if there is any overlapping element; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Overlaps(EcsSpan span) { return _source.Overlaps(span); }
+
+        /// <summary>
+        /// Determines whether this group and the specified enumerable collection share at least one common entity ID.
+        /// </summary>
+        /// <param name="other">The collection to check for intersection.</param>
+        /// <returns>True if there is any overlapping element; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Overlaps(IEnumerable<int> other) { return _source.Overlaps(other); }
 
+        /// <summary>
+        /// Determines whether all entity IDs from this group are also present in the specified collection.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(EcsGroup group) { return _source.IsSubsetOf(group); }
+
+        /// <summary>
+        /// Determines whether all entity IDs from this group are also present in the specified read-only group.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(EcsReadonlyGroup group) { return _source.IsSubsetOf(group._source); }
+
+        /// <summary>
+        /// Determines whether all entity IDs from this group are also present in the specified span.
+        /// </summary>
+        /// <param name="span">The span to compare against.</param>
+        /// <returns>True if this group is a subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(EcsSpan span) { return _source.IsSubsetOf(span); }
+
+        /// <summary>
+        /// Determines whether all entity IDs from this group are also present in the specified enumerable collection.
+        /// </summary>
+        /// <param name="other">The collection to compare against.</param>
+        /// <returns>True if this group is a subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(IEnumerable<int> other) { return _source.IsSubsetOf(other); }
 
+        /// <summary>
+        /// Determines whether this group is a proper subset of the specified collection (i.e., all elements are present and the sets are not equal).
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a proper subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSubsetOf(EcsGroup group) { return _source.IsProperSubsetOf(group); }
+
+        /// <summary>
+        /// Determines whether this group is a proper subset of the specified read-only group.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a proper subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSubsetOf(EcsReadonlyGroup group) { return _source.IsProperSubsetOf(group._source); }
+
+        /// <summary>
+        /// Determines whether this group is a proper subset of the specified span.
+        /// </summary>
+        /// <param name="span">The span to compare against.</param>
+        /// <returns>True if this group is a proper subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSubsetOf(EcsSpan span) { return _source.IsProperSubsetOf(span); }
+
+        /// <summary>
+        /// Determines whether this group is a proper subset of the specified enumerable collection.
+        /// </summary>
+        /// <param name="other">The collection to compare against.</param>
+        /// <returns>True if this group is a proper subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSubsetOf(IEnumerable<int> other) { return _source.IsProperSubsetOf(other); }
 
+        /// <summary>
+        /// Determines whether this group contains all entity IDs from the specified collection.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a superset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(EcsGroup group) { return _source.IsSupersetOf(group); }
+
+        /// <summary>
+        /// Determines whether this group contains all entity IDs from the specified read-only group.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a superset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(EcsReadonlyGroup group) { return _source.IsSupersetOf(group._source); }
+
+        /// <summary>
+        /// Determines whether this group contains all entity IDs from the specified span.
+        /// </summary>
+        /// <param name="span">The span to compare against.</param>
+        /// <returns>True if this group is a superset; otherwise false.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(EcsSpan span) { return _source.IsSupersetOf(span); }
+
+        /// <summary>
+        /// Determines whether this group contains all entity IDs from the specified enumerable collection.
+        /// </summary>
+        /// <param name="other">The collection to compare against.</param>
+        /// <returns>True if this group is a superset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(IEnumerable<int> other) { return _source.IsSupersetOf(other); }
 
+        /// <summary>
+        /// Determines whether this group is a proper superset of the specified collection (i.e., contains all elements and the sets are not equal).
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a proper superset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSupersetOf(EcsGroup group) { return _source.IsProperSupersetOf(group); }
+
+        /// <summary>
+        /// Determines whether this group is a proper superset of the specified read-only group.
+        /// </summary>
+        /// <param name="group">The collection to compare against.</param>
+        /// <returns>True if this group is a proper superset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSupersetOf(EcsReadonlyGroup group) { return _source.IsProperSupersetOf(group._source); }
+
+        /// <summary>
+        /// Determines whether this group is a proper superset of the specified span.
+        /// </summary>
+        /// <param name="span">The span to compare against.</param>
+        /// <returns>True if this group is a proper superset; otherwise false.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSupersetOf(EcsSpan span) { return _source.IsProperSupersetOf(span); }
+
+        /// <summary>
+        /// Determines whether this group is a proper superset of the specified enumerable collection.
+        /// </summary>
+        /// <param name="other">The collection to compare against.</param>
+        /// <returns>True if this group is a proper superset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSupersetOf(IEnumerable<int> other) { return _source.IsProperSupersetOf(other); }
         #endregion

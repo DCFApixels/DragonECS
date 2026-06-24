@@ -156,10 +156,17 @@ namespace DCFApixels.DragonECS
                 _worldComponentPools._count - _builtinWorldComponentsCount);
             //return new ReadOnlySpan<WorldComponentPoolAbstract>(_worldComponentPools._items, 0, _builtinWorldComponentsCount);
         }
+        /// <summary>
+        /// Returns a read-only span of all registered world singleton component pools including builtins.
+        /// </summary>
         public ReadOnlySpan<WorldComponentPoolAbstract> GetAllWorldComponents()
         {
             return _worldComponentPools.AsReadOnlySpan();
         }
+        /// <summary>
+        /// Abstract base describing a controller for a per-world singleton component pool.
+        /// Implementations provide typed access and lifecycle hooks for world-specific data.
+        /// </summary>
         public abstract class WorldComponentPoolAbstract
         {
             protected static readonly Type[] _builtinTypes = new Type[]
@@ -176,10 +183,25 @@ namespace DCFApixels.DragonECS
                 if (type.IsGenericType) { type = type.GetGenericTypeDefinition(); }
                 _isBuiltin = Array.IndexOf(_builtinTypes, type) >= 0;
             }
+            /// <summary>
+            /// The System.Type of the world component handled by this controller.
+            /// </summary>
             public abstract Type ComponentType { get; }
+            /// <summary>
+            /// Ensure the component exists for the specified world id.
+            /// </summary>
             public abstract void Has(short worldID);
+            /// <summary>
+            /// Release and destroy the component instance for the specified world id.
+            /// </summary>
             public abstract void Release(short worldID);
+            /// <summary>
+            /// Get the raw (untyped) component instance for the specified world id.
+            /// </summary>
             public abstract object GetRaw(short worldID);
+            /// <summary>
+            /// Set the raw (untyped) component instance for the specified world id.
+            /// </summary>
             public abstract void SetRaw(short worldID, object raw);
         }
         private static class WorldComponentPool<T>

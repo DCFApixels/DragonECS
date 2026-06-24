@@ -17,6 +17,13 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
+    /// <summary>
+    /// Lightweight read-only span of entity ids belonging to a specific world.
+    /// Use returned spans from queries and groups to iterate or convert to arrays.
+    /// </summary>
+    /// <remarks>
+    /// The span always contains a set of unique entity identifiers — no duplicates are present.
+    /// </remarks>
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly ref struct EcsSpan
     {
@@ -24,30 +31,48 @@ namespace DCFApixels.DragonECS
         private readonly short _worldID;
 
         #region Properties
+        /// <summary>
+        /// True when the span does not reference a valid world (null world id).
+        /// </summary>
         public bool IsNull
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _worldID == 0; }
         }
+        /// <summary>
+        /// Identifier of the world this span belongs to.
+        /// </summary>
         public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _worldID; }
         }
+        /// <summary>
+        /// The EcsWorld instance owning the entities in this span.
+        /// </summary>
         public EcsWorld World
         {
             get { return EcsWorld.GetWorld(_worldID); }
         }
+        /// <summary>
+        /// Number of entity ids in the span.
+        /// </summary>
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _values.Length; }
         }
+        /// <summary>
+        /// Returns a span of packed entity identifiers (<see cref="entlong"/>) – equivalent to a regular span of entity IDs
+        /// </summary>
         public EcsLongsSpan Longs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new EcsLongsSpan(this); }
         }
+        /// <summary>
+        /// True when the span represents the world's current live entities collection.
+        /// </summary>
         public bool IsSourceEntities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -56,6 +81,9 @@ namespace DCFApixels.DragonECS
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.ArrayBoundsChecks, true)]
 #endif
+        /// <summary>
+        /// Indexer to access the entity id at the given index in the span.
+        /// </summary>
         public int this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -90,11 +118,23 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Slice/ToArray
+        /// <summary>
+        /// Return a slice of this span starting at the specified index.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start) { return new EcsSpan(_worldID, _values.Slice(start)); }
+        /// <summary>
+        /// Return a slice of this span with specified start and length.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start, int length) { return new EcsSpan(_worldID, _values.Slice(start, length)); }
+        /// <summary>
+        /// Convert the span to a managed array of entity ids.
+        /// </summary>
         public int[] ToArray() { return _values.ToArray(); }
+        /// <summary>
+        /// Copy entity ids into a reusable buffer. Returns the number of elements written.
+        /// </summary>
         public int ToArray(ref int[] dynamicBuffer)
         {
             if (dynamicBuffer.Length < _values.Length)
@@ -108,6 +148,9 @@ namespace DCFApixels.DragonECS
             }
             return i;
         }
+        /// <summary>
+        /// Add all entity ids from the span into the provided collection.
+        /// </summary>
         public void ToCollection(ICollection<int> collection)
         {
             foreach (var e in this)

@@ -7,6 +7,10 @@ namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {
+        /// <summary>
+        /// World-level cache that holds a pool implementation instance of type T.
+        /// Used to lazily create or retrieve a pool implementation bound to the world.
+        /// </summary>
         internal readonly struct PoolCache<T> : IEcsWorldComponent<PoolCache<T>>
             where T : IEcsPoolImplementation, new()
         {
@@ -21,6 +25,10 @@ namespace DCFApixels.DragonECS
                 component = default;
             }
         }
+        /// <summary>
+        /// Cached aspect instance and its precomputed mask for a given aspect type T.
+        /// The cache ensures aspect construction happens once per world.
+        /// </summary>
         internal readonly struct AspectCache<T> : IEcsWorldComponent<AspectCache<T>>
             where T : new()
         {
@@ -45,6 +53,10 @@ namespace DCFApixels.DragonECS
             }
         }
 
+        /// <summary>
+        /// Cache tying a query executor instance and its aspect value for a specific mask.
+        /// Executor is initialized for the world and mask during cache creation.
+        /// </summary>
         internal readonly struct WhereQueryCache<TExecutor, TAspcet> : IEcsWorldComponent<WhereQueryCache<TExecutor, TAspcet>>
             where TExecutor : MaskQueryExecutor, new()
             where TAspcet : new()

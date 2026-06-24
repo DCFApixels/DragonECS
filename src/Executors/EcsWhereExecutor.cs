@@ -29,16 +29,25 @@ namespace DCFApixels.DragonECS.Core.Internal
         public bool _isDestroyed = false;
 
         #region Properties
+        /// <summary>
+        /// Version number representing the internal cached result state for this executor.
+        /// </summary>
         public sealed override long Version
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _version; }
         }
+        /// <summary>
+        /// Indicates whether the executor's cached results are still valid for the world state.
+        /// </summary>
         public sealed override bool IsCached
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _versionsChecker.Check(); }
         }
+        /// <summary>
+        /// Number of entities in the last cached result set.
+        /// </summary>
         public sealed override int LastCachedCount
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

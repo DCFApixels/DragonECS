@@ -39,10 +39,10 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Collect currently registered mask query executors into the provided list when the internal cache has changed.
+        /// Collects currently registered mask query executors into the provided list when the internal cache has changed.
         /// </summary>
-        /// <param name="result">List to fill with MaskQueryExecutor instances.</param>
-        /// <param name="version">Reference to caller's version number; updated to current count when changed.</param>
+        /// <param name="result">The list to fill with MaskQueryExecutor instances.</param>
+        /// <param name="version">Reference to the caller's version number; updated to the current count when changed.</param>
         public void GetMaskQueryExecutors(List<MaskQueryExecutor> result, ref int version)
         {
             if (_executorCoures == null || version == _executorCoures.Count)
