@@ -193,7 +193,7 @@ namespace DCFApixels.DragonECS
         public int First() { return _source.First(); }
 
         /// <summary>
-        /// Return the last entity id in the group.
+        /// Returns a lightweight span view of the group's entity IDs as an <see cref="EcsSpan"/>.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _source.Last(); }
@@ -524,26 +524,46 @@ namespace DCFApixels.DragonECS
         internal static readonly long _nullPagePtrFake = (long)_nullPage;
 
         #region Properties
+        /// <summary>
+        /// Identifier of the world that owns the group.
+        /// </summary>
         public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.ID; }
         }
+
+        /// <summary>
+        /// The <see cref="EcsWorld"/> instance that owns the group.
+        /// </summary>
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source; }
         }
+
+        /// <summary>
+        /// Number of entities currently contained in the group.
+        /// </summary>
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _count; }
         }
+
+        /// <summary>
+        /// Current dense-array capacity used by the group.
+        /// </summary>
         public int CapacityDense
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _dense.Length; }
         }
+
+        /// <summary>
+        /// Gets a read-only view of this <see cref="EcsGroup"/> instance.
+        /// Provides safe, non‑mutating access to the group's contents.
+        /// </summary>
         public EcsReadonlyGroup Readonly
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -558,6 +578,10 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new EcsLongsSpan(this); }
         }
+
+        /// <summary>
+        /// True when the group has been released back to the world's pool and should not be used.
+        /// </summary>
         public bool IsReleased
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -565,6 +589,9 @@ namespace DCFApixels.DragonECS
         }
         bool ICollection<int>.IsReadOnly { get { return false; } }
 
+        /// <summary>
+        /// Indexer returning the entity id at the specified dense index.
+        /// </summary>
         public int this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -40,6 +40,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _worldID == 0; }
         }
+
         /// <summary>
         /// Identifier of the world this span belongs to.
         /// </summary>
@@ -48,6 +49,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _worldID; }
         }
+
         /// <summary>
         /// The EcsWorld instance owning the entities in this span.
         /// </summary>
@@ -55,6 +57,7 @@ namespace DCFApixels.DragonECS
         {
             get { return EcsWorld.GetWorld(_worldID); }
         }
+
         /// <summary>
         /// Number of entity ids in the span.
         /// </summary>
@@ -63,6 +66,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _values.Length; }
         }
+
         /// <summary>
         /// Returns a span of packed entity identifiers (<see cref="entlong"/>) – equivalent to a regular span of entity IDs
         /// </summary>
@@ -179,8 +183,16 @@ namespace DCFApixels.DragonECS
 
         #region Other
         public ReadOnlySpan<int> AsSystemSpan() { return _values; }
+
+        /// <summary>
+        /// Return the first entity id in the group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _values[0]; }
+
+        /// <summary>
+        /// Return the last entity id in the group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _values[_values.Length - 1]; }
         public override string ToString()
@@ -237,30 +249,53 @@ namespace DCFApixels.DragonECS
         private readonly EcsSpan _source;
 
         #region Properties
+        /// <summary>
+        /// True when the span does not reference a valid world (null world id).
+        /// </summary>
         public bool IsNull
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.IsNull; }
         }
+
+        /// <summary>
+        /// Identifier of the world this span belongs to.
+        /// </summary>
         public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.WorldID; }
         }
+
+        /// <summary>
+        /// The EcsWorld instance owning the entities in this span.
+        /// </summary>
         public EcsWorld World
         {
             get { return _source.World; }
         }
+
+        /// <summary>
+        /// Number of entity ids in the span.
+        /// </summary>
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.Count; }
         }
+
+        /// <summary>
+        /// True when the span represents the world's current live entities collection.
+        /// </summary>
         public bool IsSourceEntities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _source.IsSourceEntities; }
         }
+
+        /// <summary>
+        /// Indexer to access the entity id at the given index in the span.
+        /// </summary>
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.ArrayBoundsChecks, true)]
 #endif
@@ -280,12 +315,27 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Slice/ToSpan/ToArry
+        /// <summary>
+        /// Return a slice of this span starting at the specified index.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsLongsSpan Slice(int start) { return new EcsLongsSpan(_source.Slice(start)); }
+
+        /// <summary>
+        /// Return a slice of this span with specified start and length.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsLongsSpan Slice(int start, int length) { return new EcsLongsSpan(_source.Slice(start, length)); }
+
+        /// <summary>
+        /// Convert to standard entity ID span .
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan() { return _source; }
+
+        /// <summary>
+        /// Convert the span to a managed array of entlongs.
+        /// </summary>
         public entlong[] ToArray()
         {
             entlong[] result = new entlong[_source.Count];
@@ -296,6 +346,10 @@ namespace DCFApixels.DragonECS
             }
             return result;
         }
+
+        /// <summary>
+        /// Copy entity ids into a reusable buffer. Returns the number of elements written.
+        /// </summary>
         public int ToArray(ref entlong[] dynamicBuffer)
         {
             if (dynamicBuffer.Length < _source.Count)
@@ -309,6 +363,10 @@ namespace DCFApixels.DragonECS
             }
             return i;
         }
+
+        /// <summary>
+        /// Add all entlongs from the span into the provided collection.
+        /// </summary>
         public void ToCollection(ICollection<entlong> collection)
         {
             foreach (var e in this)
@@ -351,8 +409,15 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Other
+        /// <summary>
+        /// Return the first entity id in the group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public entlong First() { return _source.World.GetEntityLong(_source.First()); }
+
+        /// <summary>
+        /// Return the last entity id in the group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public entlong Last() { return _source.World.GetEntityLong(_source.Last()); }
         public override string ToString()
@@ -510,6 +575,10 @@ namespace DCFApixels.DragonECS.Core
             }
             return new EcsUnsafeSpan(_worldID, _values, start, length);
         }
+
+        /// <summary>
+        /// Convert to standard entity ID span .
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan() { return new EcsSpan(_worldID, new ReadOnlySpan<int>(_values, _length)); }
 
@@ -559,8 +628,15 @@ namespace DCFApixels.DragonECS.Core
         #endregion
 
         #region Other
+        /// <summary>
+        /// Return the first entity id in the group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _values[0]; }
+
+        /// <summary>
+        /// Return the last entity id in the group.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _values[_length - 1]; }
         public override string ToString()
