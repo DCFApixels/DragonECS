@@ -9,6 +9,10 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
+    /// <summary>
+    /// Dependency injection helper that holds injection nodes and branches for pipeline initialization
+    /// and runtime injection of objects into systems and services.
+    /// </summary>
     public class Injector : IInjector
     {
         private readonly EcsPipeline _pipeline;
@@ -65,18 +69,31 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
+        /// <summary>
+        /// The pipeline associated with this injector.
+        /// </summary>
         public EcsPipeline Pipelie
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pipeline; }
         }
 
+        /// <summary>
+        /// Create an injector bound to the specified pipeline.
+        /// </summary>
+        /// <param name="pipeline">Pipeline used to initialize injection nodes.</param>
         public Injector(EcsPipeline pipeline)
         {
             _pipeline = pipeline;
         }
 
         #region Inject/Extract/AddNode
+        /// <summary>
+        /// Inject an object into matching injection nodes. Nodes whose declared types are assignable
+        /// from the object's runtime type will receive the object.
+        /// </summary>
+        /// <typeparam name="T">Type of the injected object.</typeparam>
+        /// <param name="obj">Object instance to inject.</param>
         public void Inject<T>(T obj)
         {
             Type tType = typeof(T);
@@ -113,6 +130,10 @@ namespace DCFApixels.DragonECS
                 block.InjectTo(this);
             }
         }
+        /// <summary>
+        /// Extract all injectable dependencies into the provided target if it supports IEcsInjectProcess.
+        /// </summary>
+        /// <param name="target">Target object to receive extracted dependencies.</param>
         public void ExtractAllTo(object target)
         {
             if (target is IEcsInjectProcess == false) { return; }
@@ -122,6 +143,11 @@ namespace DCFApixels.DragonECS
                 node.Value.ExtractTo(target);
             }
         }
+        /// <summary>
+        /// Extract a single dependency of type T from the injector.
+        /// </summary>
+        /// <typeparam name="T">Requested dependency type.</typeparam>
+        /// <returns>Injected dependency instance.</returns>
         public T Extract<T>()
         {
             return (T)Extract_Internal(typeof(T));
@@ -134,6 +160,10 @@ namespace DCFApixels.DragonECS
             }
             throw new InjectionException($"The injection graph is missing a node for {type.Name} type. To create a node, use the Injector.AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
         }
+        /// <summary>
+        /// Add a node for type T to the injector if absent.
+        /// Returns true when a new node was added.
+        /// </summary>
         public bool AddNode<T>()
         {
             if (_nodes.ContainsKey(typeof(T))) { return false; }

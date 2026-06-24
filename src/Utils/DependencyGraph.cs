@@ -9,16 +9,48 @@ namespace DCFApixels.DragonECS.Core
 {
     using VertexID = DependencyGraphVertextID;
     public enum DependencyGraphVertextID : short { NULL = 0 }
+    /// <summary>
+    /// Represents a directed dependency graph over values of type T.
+    /// Provides vertex management, dependency registration and topological sorting.
+    /// </summary>
     public interface IDependencyGraph<T> : IReadOnlyCollection<T>
     {
+        /// <summary>
+        /// Read-only collection of registered dependency edges as pairs (from, to).
+        /// </summary>
         ReadonlyDependenciesCollection<T> Dependencies { get; }
+        /// <summary>
+        /// Add a vertex to the graph. Returns the internal vertex id.
+        /// </summary>
         VertexID AddVertex(T vertex, bool isLocked);
+        /// <summary>
+        /// Check whether the graph contains a vertex with the given value.
+        /// </summary>
         bool ContainsVertex(T vertex);
+        /// <summary>
+        /// Resolve or create the vertex id for the given value.
+        /// </summary>
         VertexID GetVertexID(T vertex);
+        /// <summary>
+        /// Get the original vertex value from its internal id.
+        /// </summary>
         T GetVertexFromID(VertexID vertexID);
+        /// <summary>
+        /// Remove a vertex from the graph by value. Returns true when removed.
+        /// </summary>
         bool RemoveVertex(T vertex);
+        /// <summary>
+        /// Add a directed dependency edge from fromID to toID.
+        /// </summary>
         void AddDependency(VertexID fromID, VertexID toID, bool moveToRight);
+        /// <summary>
+        /// Merge another dependency graph into this graph.
+        /// </summary>
         void MergeWith(IDependencyGraph<T> other);
+        /// <summary>
+        /// Perform topological sort and return vertices in dependency order.
+        /// Throws on cyclic dependencies.
+        /// </summary>
         T[] Sort();
     }
     public static class DependencyGraphExtensions
