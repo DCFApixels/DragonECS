@@ -660,13 +660,37 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(entlong a, entlong b) { return a._full != b._full; }
 
+        /// <summary>
+        /// Provides a shorthand syntax to create an <see cref="entlong"/> from an entity ID and a world,
+        /// equivalent to calling the constructor <c>new entlong(world, id)</c>.
+        /// </summary>
+        /// <param name="a">Tuple containing entity ID and world.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator entlong((int entityID, EcsWorld world) a) { return Combine_Internal(a.entityID, a.world); }
+
+        /// <summary>
+        /// Provides a shorthand syntax to create an <see cref="entlong"/> from a world and an entity ID,
+        /// equivalent to calling the constructor <c>new entlong(world, id)</c>.
+        /// </summary>
+        /// <param name="a">Tuple containing world and entity ID.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator entlong((EcsWorld world, int entityID) a) { return Combine_Internal(a.entityID, a.world); }
 
+        /// <summary>
+        /// Provides a shorthand syntax to obtain an <see cref="entlong"/> from an existing entity and a world,
+        /// with validation that the entity belongs to the specified world.
+        /// Equivalent to constructing <c>new entlong(world, entity)</c> (which validates world match).
+        /// </summary>
+        /// <param name="a">Tuple containing entity and world.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator entlong((entlong entity, EcsWorld world) a) { return Combine_Internal(a.entity, a.world); }
+
+        /// <summary>
+        /// Provides a shorthand syntax to obtain an <see cref="entlong"/> from a world and an existing entity,
+        /// with validation that the entity belongs to the specified world.
+        /// Equivalent to constructing <c>new entlong(world, entity)</c>.
+        /// </summary>
+        /// <param name="a">Tuple containing world and entity.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator entlong((EcsWorld world, entlong entity) a) { return Combine_Internal(a.entity, a.world); }
 
