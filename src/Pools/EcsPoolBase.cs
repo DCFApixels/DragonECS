@@ -19,10 +19,29 @@ namespace DCFApixels.DragonECS.Core
     public interface IEcsPoolImplementation : IEcsPool
     {
         #region Methods
+        /// <summary>
+        /// Initialize pool implementation with a registrar for world and component id.
+        /// </summary>
+        /// <param name="registrar">Registrar bound to the target world and component id.</param>
         void OnInit(EcsWorld.ComponentsRegistrar registrar);
+        /// <summary>
+        /// Notify pool that world entity capacity has changed.
+        /// </summary>
+        /// <param name="newSize">New world capacity (number of entity slots).</param>
         void OnWorldResize(int newSize);
+        /// <summary>
+        /// Called when a deferred-delete buffer is released so the pool can remove components for affected entities.
+        /// </summary>
+        /// <param name="buffer">Span of entity ids to process.</param>
         void OnReleaseDelEntityBuffer(ReadOnlySpan<int> buffer);
+        /// <summary>
+        /// Called when the owning world is being destroyed so the pool can free resources.
+        /// </summary>
         void OnWorldDestroy();
+        /// <summary>
+        /// Debug-only notification that the pool lock state changed.
+        /// </summary>
+        /// <param name="locked">True when pool is locked.</param>
         void OnLockedChanged_Debug(bool locked);
         #endregion
     }
@@ -244,12 +263,44 @@ namespace DCFApixels.DragonECS
     public interface IEcsPool : IEcsReadonlyPool
     {
         #region Methods
+        /// <summary>
+        /// Add an empty component placeholder for the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
         void AddEmpty(int entityID);
+        /// <summary>
+        /// Add raw component data for the specified entity (object boxed or reference expected by pool implementation).
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <param name="dataRaw">Raw component data.</param>
         void AddRaw(int entityID, object dataRaw);
+        /// <summary>
+        /// Set raw component data for the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <param name="dataRaw">Raw component data.</param>
         void SetRaw(int entityID, object dataRaw);
+        /// <summary>
+        /// Remove component for the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
         void Del(int entityID);
+        /// <summary>
+        /// Remove all components from this pool and unregister them from the world.
+        /// </summary>
         void ClearAll();
+        /// <summary>
+        /// Copy component data from one entity to another inside the same world.
+        /// </summary>
+        /// <param name="fromEntityID">Source entity identifier.</param>
+        /// <param name="toEntityID">Destination entity identifier.</param>
         void Copy(int fromEntityID, int toEntityID);
+        /// <summary>
+        /// Copy component data from one entity in this world to another entity in a different world.
+        /// </summary>
+        /// <param name="fromEntityID">Source entity identifier.</param>
+        /// <param name="toWorld">Destination world.</param>
+        /// <param name="toEntityID">Destination entity identifier.</param>
         void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID);
         #endregion
     }

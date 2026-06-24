@@ -176,6 +176,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
+        /// <summary>
+        /// Return a native (unmanaged) view over the pool storage.
+        /// </summary>
+        /// <returns>NativeEcsValuePool wrapper for direct unmanaged access.</returns>
+        /// <remarks>Suitable for use in Unity Jobs or other high‑performance contexts.</remarks>
         public NativeEcsValuePool<T> AsNative()
         {
             return new NativeEcsValuePool<T>(_sharedStore);
@@ -240,6 +245,12 @@ namespace DCFApixels.DragonECS
 #endif
             return ref _items[_mapping[entityID]];
         }
+        /// <summary>
+        /// Ensure a value component exists for the specified entity and return a reference to it.
+        /// Adds the component when missing, otherwise returns existing reference.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Reference to the existing or newly added value component.</returns>
         public ref T TryAddOrGet(int entityID)
         {
 #if DEBUG

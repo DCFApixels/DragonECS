@@ -211,6 +211,11 @@ namespace DCFApixels.DragonECS
 #endif
             toWorld.GetPool<T>().TryAdd(toEntityID);
         }
+        /// <summary>
+        /// Set or clear the tag flag on the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <param name="isHas">True to add the tag; false to remove it.</param>
         public void Set(int entityID, bool isHas)
         {
             if (isHas != Has(entityID))
@@ -225,6 +230,10 @@ namespace DCFApixels.DragonECS
                 }
             }
         }
+        /// <summary>
+        /// Toggle tag presence for the specified entity: add if missing, remove if present.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
         public void Toggle(int entityID)
         {
             if (Has(entityID))
@@ -236,7 +245,9 @@ namespace DCFApixels.DragonECS
                 Add(entityID);
             }
         }
-
+        /// <summary>
+        /// Clear all tag entries from the pool and unregister them from the world.
+        /// </summary>
         public void ClearAll()
         {
 #if DEBUG

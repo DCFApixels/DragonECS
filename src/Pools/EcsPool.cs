@@ -113,14 +113,17 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors/Init/Destroy
+        /// <summary>
+        /// Create an empty EcsPool.
+        /// </summary>
         public EcsPool() { _isDensified = true; }
-        public EcsPool(int capacity, int recycledCapacity = -1)
+        /// <summary>
+        /// Create an EcsPool with an explicit initial capacity for components.
+        /// </summary>
+        /// <param name="capacity">Initial internal capacity (will be rounded to power-of-two).</param>
+        public EcsPool(int capacity)
         {
             capacity = ArrayUtility.CeilPow2Safe(capacity);
-            if (recycledCapacity < 0)
-            {
-                recycledCapacity = capacity / 2;
-            }
             _items = new T[capacity];
             _memHandler = MemoryAllocator.AllocAndInit<int>(capacity * 2);
             _dense = UnsafeArray<int>.Manual(_memHandler.Ptr, capacity);
