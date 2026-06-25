@@ -12,6 +12,10 @@ using static DCFApixels.DragonECS.EcsConsts;
 
 namespace DCFApixels.DragonECS
 {
+    /// <summary>
+    /// Interface for systems or modules that specify default addition parameters
+    /// when they are added to a pipeline builder.
+    /// </summary>
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "...")]
@@ -23,6 +27,10 @@ namespace DCFApixels.DragonECS
 
     public sealed partial class EcsPipeline
     {
+        /// <summary>
+        /// Builder for constructing an <see cref="EcsPipeline"/>.
+        /// Provides a fluent API for adding systems, modules, and configuring layers.
+        /// </summary>
         public partial class Builder : IEcsModule
         {
             private SystemNode[] _systemNodes = new SystemNode[256];
@@ -35,22 +43,22 @@ namespace DCFApixels.DragonECS
             private readonly Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>(8);
             private readonly StructList<InitDeclaredRunner> _initDeclaredRunners = new StructList<InitDeclaredRunner>(4);
 
+            /// <summary>Provides access to layer management for the pipeline being built.</summary>
             public readonly LayersMap Layers;
+
+            /// <summary>Provides access to dependency injection configuration.</summary>
             public readonly InitInjectionList Injections;
+
+            /// <summary>Provides access to configuration container for the pipeline.</summary>
             public readonly Configurator Configs;
 
             private AddParams _defaultAddParams = new AddParams(BASIC_LAYER, 0, false);
 
             private HashSet<Type> _uniqueSystemsSet = new HashSet<Type>();
 
-            #region Properties
-            //private ReadOnlySpan<SystemNode> SystemRecords
-            //{
-            //    get { return new ReadOnlySpan<SystemNode>(_systemNodes, 0, _systemNodesCount); }
-            //}
-            #endregion
-
             #region Constructors
+            /// <summary>Initializes a new pipeline builder with an optional configuration container.</summary>
+            /// <param name="config">Optional configuration container. If null, a default container is created.</param>
             public Builder(IConfigContainerWriter config = null)
             {
                 if (config == null) { config = new ConfigContainer(); }
@@ -69,6 +77,15 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Add IEcsProcess
+            /// <summary>Adds a system to the pipeline with the specified parameters.</summary>
+            /// <param name="system">The system to add.</param>
+            /// <param name="parameters">Addition parameters (layer, sort order, uniqueness).</param>
+            /// <returns>The builder instance for chaining.</returns>
+            /// <remarks>
+            /// its <see cref="IEcsModule.Import"/> method is invoked to import other systems, and then the system itself
+            /// is added to the pipeline (unless it was already added manually inside the <see cref="IEcsModule.Import"/> implementation).
+            /// The system is added with the same layer, sort order, and uniqueness parameters as the module import.
+            /// </remarks>
             public Builder Add(IEcsProcess system, AddParams parameters)
             {
                 return AddSystem_Internal(system, parameters);
@@ -176,6 +193,15 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region AddModule IEcsModule
+            /// <summary>Adds a module to the pipeline with the specified parameters.</summary>
+            /// <param name="module">The module to import.</param>
+            /// <param name="parameters">Addition parameters (layer, sort order, uniqueness).</param>
+            /// <returns>The builder instance for chaining.</returns>
+            /// <remarks>
+            /// If the module also implements <see cref="IEcsProcess"/>, it is treated both as a module and as a system:
+            /// its <see cref="IEcsModule.Import"/> method is invoked first, and then the module itself is added as a system
+            /// to the pipeline using the same addition parameters.
+            /// </remarks>
             public Builder AddModule(IEcsModule module, AddParams parameters)
             {
                 if (module is IEcsProcess system)
@@ -206,6 +232,14 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Add Raw
+            /// <summary>
+            /// Adds a raw object (system or module) to the pipeline with the specified parameters.
+            /// The object must implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.
+            /// </summary>
+            /// <param name="raw">The object to add (must be an <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>).</param>
+            /// <param name="parameters">Addition parameters (layer, sort order, uniqueness).</param>
+            /// <returns>The builder instance for chaining.</returns>
+            /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
             public Builder Add(object raw, AddParams parameters)
             {
                 return AddRaw_Internal(raw, parameters);
@@ -222,6 +256,9 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Add other
+            /// <summary>Declares a runner that will be instantiated when the pipeline is built.</summary>
+            /// <typeparam name="TRunner">The runner type (must inherit <see cref="EcsRunner"/> and implement <see cref="IEcsRunner"/>).</typeparam>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder AddRunner<TRunner>() where TRunner : EcsRunner, IEcsRunner, new()
             {
                 _initDeclaredRunners.Add(new InitDeclaredRunner<TRunner>());
@@ -271,6 +308,9 @@ namespace DCFApixels.DragonECS
                 _freeNodesCount++;
                 _systemNodesCount--;
             }
+            /// <summary>Removes all systems of the specified type from the builder.</summary>
+            /// <typeparam name="TSystem">The system type to remove.</typeparam>
+            /// <returns>The builder instance for chaining.</returns>
             public Builder Remove<TSystem>()
             {
                 _uniqueSystemsSet.Remove(typeof(TSystem));
@@ -303,6 +343,9 @@ namespace DCFApixels.DragonECS
 #if DEBUG
             private static EcsProfilerMarker _buildMarker = new EcsProfilerMarker("EcsPipeline.Build");
 #endif
+
+            /// <summary>Builds the pipeline with all added systems, modules, and runners.</summary>
+            /// <returns>The constructed <see cref="EcsPipeline"/> instance.</returns>
             public EcsPipeline Build()
             {
 #if DEBUG
@@ -393,35 +436,62 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region InitInjector
+            /// <summary>
+            /// Provides configuration for dependency injection within the pipeline builder.
+            /// </summary>
             public readonly struct InitInjectionList
             {
                 private readonly Builder _pipelineBuilder;
+
+                /// <summary>Gets the underlying injection list.</summary>
                 public readonly Injector.InjectionList Instance;
                 public InitInjectionList(Injector.InjectionList instance, Builder pipelineBuilder)
                 {
                     Instance = instance;
                     _pipelineBuilder = pipelineBuilder;
                 }
+
+                /// <summary>Adds an injection node for type <typeparamref name="T"/>.</summary>
+                /// <typeparam name="T">The type to register for injection.</typeparam>
+                /// <returns>The builder instance for chaining.</returns>
                 public Builder AddNode<T>()
                 {
                     Instance.AddNode<T>();
                     return _pipelineBuilder;
                 }
+
+                /// <summary>Injects a specific object instance into the pipeline.</summary>
+                /// <typeparam name="T">The type of the object.</typeparam>
+                /// <param name="obj">The object instance to inject.</param>
+                /// <returns>The builder instance for chaining.</returns>
                 public Builder Inject<T>(T obj)
                 {
                     Instance.Inject(obj);
                     return _pipelineBuilder;
                 }
+
+                /// <summary>Extracts an object instance from the injection container.</summary>
+                /// <typeparam name="T">The type of the object.</typeparam>
+                /// <param name="obj">Outputs the extracted object.</param>
+                /// <returns>The builder instance for chaining.</returns>
                 public Builder Extract<T>(ref T obj)
                 {
                     Instance.Extract(ref obj);
                     return _pipelineBuilder;
                 }
+
+                /// <summary>Merges another injection list into this one.</summary>
+                /// <param name="other">The other injection list.</param>
+                /// <returns>The builder instance for chaining.</returns>
                 public Builder Merge(Injector.InjectionList other)
                 {
                     Instance.MergeWith(other);
                     return _pipelineBuilder;
                 }
+
+                /// <summary>Merges another <see cref="InitInjectionList"/> into this one.</summary>
+                /// <param name="other">The other injection list.</param>
+                /// <returns>The builder instance for chaining.</returns>
                 public Builder MergeWith(InitInjectionList other)
                 {
                     Instance.MergeWith(other.Instance);
@@ -431,6 +501,9 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Configurator
+            /// <summary>
+            /// Provides configuration container access for the pipeline builder.
+            /// </summary>
             public readonly struct Configurator
             {
                 private readonly IConfigContainerWriter _configs;
@@ -440,10 +513,17 @@ namespace DCFApixels.DragonECS
                     _configs = configs;
                     _builder = builder;
                 }
+
+                /// <summary>Gets the underlying configuration container writer.</summary>
                 public IConfigContainerWriter Instance
                 {
                     get { return _configs; }
                 }
+
+                /// <summary>Sets a configuration value by type.</summary>
+                /// <typeparam name="T">The type of the configuration value.</typeparam>
+                /// <param name="value">The value to set.</param>
+                /// <returns>The builder instance for chaining.</returns>
                 public Builder Set<T>(T value)
                 {
                     _configs.Set(value);
@@ -554,6 +634,8 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region SerializableTemplate
+            /// <summary>Generates a serializable template from the current builder state.</summary>
+            /// <returns>An <see cref="EcsPipelineTemplate"/> that can be serialized.</returns>
             public EcsPipelineTemplate GenerateSerializableTemplate()
             {
                 var it = new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
@@ -604,14 +686,25 @@ namespace DCFApixels.DragonECS
     public static partial class EcsPipelineBuilderExtensions
     {
         #region Simple Builders
+        /// <summary>Creates a pipeline from a single module (builds without initialization).</summary>
+        /// <param name="module">The module to import.</param>
+        /// <returns>The built <see cref="EcsPipeline"/> instance.</returns>
         public static EcsPipeline ToPipeline(this IEcsModule module)
         {
             return EcsPipeline.New().Add(module).Build();
         }
+
+        /// <summary>Creates a pipeline from a single module and immediately initializes it.</summary>
+        /// <param name="module">The module to import.</param>
+        /// <returns>The built and initialized <see cref="EcsPipeline"/> instance.</returns>
         public static EcsPipeline ToPipelineAndInit(this IEcsModule module)
         {
             return EcsPipeline.New().Add(module).BuildAndInit();
         }
+
+        /// <summary>Creates a pipeline from a collection of modules (builds without initialization).</summary>
+        /// <param name="modules">The modules to import.</param>
+        /// <returns>The built <see cref="EcsPipeline"/> instance.</returns>
         public static EcsPipeline ToPipeline(this IEnumerable<IEcsModule> modules)
         {
             var result = EcsPipeline.New();
@@ -621,6 +714,10 @@ namespace DCFApixels.DragonECS
             }
             return result.Build();
         }
+
+        /// <summary>Creates a pipeline from a collection of modules and immediately initializes it.</summary>
+        /// <param name="modules">The modules to import.</param>
+        /// <returns>The built and initialized <see cref="EcsPipeline"/> instance.</returns>
         public static EcsPipeline ToPipelineAndInit(this IEnumerable<IEcsModule> modules)
         {
             var result = modules.ToPipeline();
@@ -630,61 +727,136 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Add IEcsProcess
+        /// <summary>Adds a system to the pipeline with default parameters.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system)
         {
             return self.Add(system, AddParams.Default);
         }
+
+        /// <summary>Adds a system to the specified layer.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <param name="layerName">The layer name (overrides default).</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, string layerName)
         {
             return self.Add(system, new AddParams(layerName: layerName));
         }
+
+        /// <summary>Adds a system with the specified sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <param name="sortOrder">The sort order (lower values execute first).</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, int sortOrder)
         {
             return self.Add(system, new AddParams(sortOrder: sortOrder));
         }
+
+        /// <summary>Adds a system with the specified uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <param name="isUnique">Whether the system should be added as a unique instance (prevents duplicates).</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, bool isUnique)
         {
             return self.Add(system, new AddParams(isUnique: isUnique));
         }
+
+        /// <summary>Adds a system to the specified layer with the given sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <param name="layerName">The layer name (overrides default).</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, string layerName, int sortOrder)
         {
             return self.Add(system, new AddParams(layerName: layerName, sortOrder: sortOrder));
         }
+
+        /// <summary>Adds a system to the specified layer with the given uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <param name="layerName">The layer name (overrides default).</param>
+        /// <param name="isUnique">Whether the system should be added as a unique instance (prevents duplicates).</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, string layerName, bool isUnique)
         {
             return self.Add(system, new AddParams(layerName: layerName, isUnique: isUnique));
         }
+
+        /// <summary>Adds a system with the specified sort order and uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <param name="sortOrder">The sort order (lower values execute first).</param>
+        /// <param name="isUnique">Whether the system should be added as a unique instance (prevents duplicates).</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, int sortOrder, bool isUnique)
         {
             return self.Add(system, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
         }
+
+        /// <summary>Adds a system with the specified layer, sort order, and uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <param name="layerName">The layer name (overrides default).</param>
+        /// <param name="sortOrder">The sort order (lower values execute first).</param>
+        /// <param name="isUnique">Whether the system should be added as a unique instance (prevents duplicates).</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, string layerName, int sortOrder, bool isUnique)
         {
             return self.Add(system, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
         }
+
+        /// <summary>Adds a system as a unique instance with default parameters.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEcsProcess system)
         {
             return self.Add(system, new AddParams(isUnique: true));
         }
+
+        /// <summary>Adds a system as a unique instance to the specified layer.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEcsProcess system, string layerName)
         {
             return self.Add(system, new AddParams(layerName: layerName, isUnique: true));
         }
+
+        /// <summary>Adds a system as a unique instance with the specified sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEcsProcess system, int sortOrder)
         {
             return self.Add(system, new AddParams(sortOrder: sortOrder, isUnique: true));
         }
+
+        /// <summary>Adds a system as a unique instance to the specified layer with the given sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="system">The system to add.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEcsProcess system, string layerName, int sortOrder)
         {
@@ -693,61 +865,148 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region AddModule IEcsModule
+        /// <summary>Adds a module with default parameters.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module (its <see cref="IEcsModule.Import"/> is called) and as a system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module)
         {
             return self.AddModule(module, AddParams.Default);
         }
+
+        /// <summary>Adds a module to the specified layer.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, string layerName)
         {
             return self.AddModule(module, new AddParams(layerName: layerName));
         }
+
+        /// <summary>Adds a module with the specified sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, int sortOrder)
         {
             return self.AddModule(module, new AddParams(sortOrder: sortOrder));
         }
+
+        /// <summary>Adds a module with the specified uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <param name="isUnique">Whether the module (and its systems) should be added as unique.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, bool isUnique)
         {
             return self.AddModule(module, new AddParams(isUnique: isUnique));
         }
+
+        /// <summary>Adds a module to the specified layer with the given sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, string layerName, int sortOrder)
         {
             return self.AddModule(module, new AddParams(layerName: layerName, sortOrder: sortOrder));
         }
+
+        /// <summary>Adds a module to the specified layer with the given uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="isUnique">Whether the module is unique.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, string layerName, bool isUnique)
         {
             return self.AddModule(module, new AddParams(layerName: layerName, isUnique: isUnique));
         }
+
+        /// <summary>Adds a module with the specified sort order and uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <param name="isUnique">Whether the module is unique.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, int sortOrder, bool isUnique)
         {
             return self.AddModule(module, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
         }
+
+        /// <summary>Adds a module with the specified layer, sort order, and uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <param name="isUnique">Whether the module is unique.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModule(this EcsPipeline.Builder self, IEcsModule module, string layerName, int sortOrder, bool isUnique)
         {
             return self.AddModule(module, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
         }
+
+        /// <summary>Adds a module as a unique instance with default parameters.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a unique system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModuleUnique(this EcsPipeline.Builder self, IEcsModule module)
         {
             return self.AddModule(module, new AddParams(isUnique: true));
         }
+
+        /// <summary>Adds a module as a unique instance to the specified layer.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a unique system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModuleUnique(this EcsPipeline.Builder self, IEcsModule module, string layerName)
         {
             return self.AddModule(module, new AddParams(layerName: layerName, isUnique: true));
         }
+
+        /// <summary>Adds a module as a unique instance with the specified sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a unique system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModuleUnique(this EcsPipeline.Builder self, IEcsModule module, int sortOrder)
         {
             return self.AddModule(module, new AddParams(sortOrder: sortOrder, isUnique: true));
         }
+
+        /// <summary>Adds a module as a unique instance to the specified layer with the given sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="module">The module to import.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <remarks>If the module also implements <see cref="IEcsProcess"/>, it is added as both a module and a unique system.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddModuleUnique(this EcsPipeline.Builder self, IEcsModule module, string layerName, int sortOrder)
         {
@@ -756,61 +1015,148 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Add Raw
+        /// <summary>Adds a raw object (system or module) with default parameters.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add (must implement <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>).</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw)
         {
             return self.Add(raw, AddParams.Default);
         }
+
+        /// <summary>Adds a raw object to the specified layer.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, string layerName)
         {
             return self.Add(raw, new AddParams(layerName: layerName));
         }
+
+        /// <summary>Adds a raw object with the specified sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, int sortOrder)
         {
             return self.Add(raw, new AddParams(sortOrder: sortOrder));
         }
+
+        /// <summary>Adds a raw object with the specified uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <param name="isUnique">Whether the object should be added as unique.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, bool isUnique)
         {
             return self.Add(raw, new AddParams(isUnique: isUnique));
         }
+
+        /// <summary>Adds a raw object to the specified layer with the given sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, string layerName, int sortOrder)
         {
             return self.Add(raw, new AddParams(layerName: layerName, sortOrder: sortOrder));
         }
+
+        /// <summary>Adds a raw object to the specified layer with the given uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="isUnique">Whether the object is unique.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, string layerName, bool isUnique)
         {
             return self.Add(raw, new AddParams(layerName: layerName, isUnique: isUnique));
         }
+
+        /// <summary>Adds a raw object with the specified sort order and uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <param name="isUnique">Whether the object is unique.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, int sortOrder, bool isUnique)
         {
             return self.Add(raw, new AddParams(sortOrder: sortOrder, isUnique: isUnique));
         }
+
+        /// <summary>Adds a raw object with the specified layer, sort order, and uniqueness flag.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <param name="isUnique">Whether the object is unique.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, object raw, string layerName, int sortOrder, bool isUnique)
         {
             return self.Add(raw, new AddParams(layerName: layerName, sortOrder: sortOrder, isUnique: isUnique));
         }
+
+        /// <summary>Adds a raw object as a unique instance with default parameters.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, object raw)
         {
             return self.Add(raw, new AddParams(isUnique: true));
         }
+
+        /// <summary>Adds a raw object as a unique instance to the specified layer.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, object raw, string layerName)
         {
             return self.Add(raw, new AddParams(layerName: layerName, isUnique: true));
         }
+
+        /// <summary>Adds a raw object as a unique instance with the specified sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, object raw, int sortOrder)
         {
             return self.Add(raw, new AddParams(sortOrder: sortOrder, isUnique: true));
         }
+
+        /// <summary>Adds a raw object as a unique instance to the specified layer with the given sort order.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="raw">The object to add.</param>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <returns>The builder instance for chaining.</returns>
+        /// <exception cref="ArgumentException">Thrown if the object type does not implement either <see cref="IEcsProcess"/> or <see cref="IEcsModule"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, object raw, string layerName, int sortOrder)
         {
@@ -820,17 +1166,31 @@ namespace DCFApixels.DragonECS
     }
 
     #region AddParams
+    /// <summary>
+    /// Parameters that control how a system or module is added to a pipeline.
+    /// Includes layer name, sort order, uniqueness flag, and override flags.
+    /// </summary>
     [Serializable]
     [DataContract]
     public struct AddParams : IEquatable<AddParams>
     {
+        /// <summary>Default addition parameters (no overrides).</summary>
         public static readonly AddParams Default = new AddParams();
+
+        /// <summary>The layer name where the system will be placed.</summary>
         [DataMember] public string layerName;
+
+        /// <summary>Sort order within the layer (lower values execute first).</summary>
         [DataMember] public int sortOrder;
+
+        /// <summary>Whether the system should be added as a unique instance (prevents duplicates).</summary>
         [DataMember] public bool isUnique;
+
+        /// <summary>Flags indicating which fields should override default values.</summary>
         [DataMember] public AddParamsFlags flags;
 
         #region Properties
+        /// <summary>Indicates whether the layer name should override the default.</summary>
         public bool IsOverwriteLayerName
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -838,6 +1198,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { flags = value ? flags | AddParamsFlags.OverwriteLayerName : flags & ~AddParamsFlags.OverwriteLayerName; }
         }
+        /// <summary>Indicates whether the sort order should override the default.</summary>
         public bool IsOverwriteSortOrder
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -845,6 +1206,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { flags = value ? flags | AddParamsFlags.OverwriteSortOrder : flags & ~AddParamsFlags.OverwriteSortOrder; }
         }
+        /// <summary>Indicates whether the uniqueness flag should override the default.</summary>
         public bool IsOverwriteIsUnique
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -855,6 +1217,8 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
+        /// <summary>Creates parameters with a specified layer name (overrides layer name).</summary>
+        /// <param name="layerName">The layer name.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(string layerName)
         {
@@ -863,6 +1227,9 @@ namespace DCFApixels.DragonECS
             this.isUnique = default;
             flags = AddParamsFlags.OverwriteLayerName;
         }
+
+        /// <summary>Creates parameters with a specified sort order (overrides sort order).</summary>
+        /// <param name="sortOrder">The sort order.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(int sortOrder)
         {
@@ -871,6 +1238,9 @@ namespace DCFApixels.DragonECS
             this.isUnique = default;
             flags = AddParamsFlags.OverwriteSortOrder;
         }
+
+        /// <summary>Creates parameters with a specified uniqueness flag (overrides uniqueness).</summary>
+        /// <param name="isUnique">Whether the system is unique.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(bool isUnique)
         {
@@ -880,6 +1250,10 @@ namespace DCFApixels.DragonECS
             flags = AddParamsFlags.OverwriteIsUnique;
         }
 
+
+        /// <summary>Creates parameters with layer name and sort order.</summary>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="sortOrder">The sort order.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(string layerName, int sortOrder)
         {
@@ -888,6 +1262,10 @@ namespace DCFApixels.DragonECS
             this.isUnique = default;
             flags = AddParamsFlags.OverwriteLayerName | AddParamsFlags.OverwriteSortOrder;
         }
+
+        /// <summary>Creates parameters with layer name and uniqueness flag.</summary>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="isUnique">Whether the system is unique.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(string layerName, bool isUnique)
         {
@@ -896,6 +1274,10 @@ namespace DCFApixels.DragonECS
             this.isUnique = isUnique;
             flags = AddParamsFlags.OverwriteLayerName | AddParamsFlags.OverwriteIsUnique;
         }
+
+        /// <summary>Creates parameters with sort order and uniqueness flag.</summary>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <param name="isUnique">Whether the system is unique.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(int sortOrder, bool isUnique)
         {
@@ -905,6 +1287,10 @@ namespace DCFApixels.DragonECS
             flags = AddParamsFlags.OverwriteSortOrder | AddParamsFlags.OverwriteIsUnique;
         }
 
+        /// <summary>Creates parameters with all fields specified.</summary>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <param name="isUnique">Whether the system is unique.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(string layerName, int sortOrder, bool isUnique)
         {
@@ -913,6 +1299,12 @@ namespace DCFApixels.DragonECS
             this.isUnique = isUnique;
             flags = AddParamsFlags.None.SetOverwriteAll(true);
         }
+
+        /// <summary>Creates parameters with all fields and explicit override flags.</summary>
+        /// <param name="layerName">The layer name.</param>
+        /// <param name="sortOrder">The sort order.</param>
+        /// <param name="isUnique">Whether the system is unique.</param>
+        /// <param name="overrideFlags">Flags indicating which fields override defaults.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AddParams(string layerName, int sortOrder, bool isUnique, AddParamsFlags overrideFlags)
         {
@@ -924,6 +1316,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Overwrite
+        /// <summary>Overwrites this instance with values from another, respecting override flags.</summary>
+        /// <param name="other">The other parameters.</param>
+        /// <returns>A new <see cref="AddParams"/> instance with merged values.</returns>
         public AddParams Overwrite(AddParams other)
         {
             AddParams result = this;
@@ -982,14 +1377,16 @@ namespace DCFApixels.DragonECS
     [Flags]
     public enum AddParamsFlags : byte
     {
+        /// <summary>No overrides.</summary>
         None = 0,
+        /// <summary>Override the layer name.</summary>
         OverwriteLayerName = 1 << 0,
+        /// <summary>Override the sort order.</summary>
         OverwriteSortOrder = 1 << 1,
+        /// <summary>Override the uniqueness flag.</summary>
         OverwriteIsUnique = 1 << 2,
 
-        /// <summary>
-        /// Ignore call IEcsModule.Import(Builder b)
-        /// </summary>
+        /// <summary>Ignore the call to <see cref="IEcsModule.Import(EcsPipeline.Builder)"/>.</summary>
         NoImport = 1 << 7,
     }
     public static class AddParamsFlagsUtility

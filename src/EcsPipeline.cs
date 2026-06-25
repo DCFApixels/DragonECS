@@ -13,13 +13,28 @@ using static DCFApixels.DragonECS.EcsConsts;
 
 namespace DCFApixels.DragonECS
 {
+    /// <summary>
+    /// Base marker interface for all ECS members (systems, modules, etc.).
+    /// </summary>
     public interface IEcsMember { }
+
+    /// <summary>
+    /// Marker interface for members that are associated with a specific component type.
+    /// </summary>
     public interface IEcsComponentMember : IEcsMember { }
+
+    /// <summary>
+    /// Interface for members that have a human‑readable name.
+    /// </summary>
     public interface INamedMember
     {
+        /// <summary>Gets the name of the member.</summary>
         string Name { get; }
     }
 
+    /// <summary>
+    /// Interface for systems that need a reference to their owning <see cref="EcsPipeline"/>.
+    /// </summary>
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "...")]
@@ -51,26 +66,37 @@ namespace DCFApixels.DragonECS
 #endif
 
         #region Properties
+        /// <summary>Gets the configuration container used by this pipeline.</summary>
         public IConfigContainer Configs
         {
             get { return _configs; }
         }
+
+        /// <summary>Gets the dependency injector used to resolve system dependencies.</summary>
         public Injector Injector
         {
             get { return _injector; }
         }
+
+        /// <summary>Gets a process wrapper containing all systems in the pipeline.</summary>
         public EcsProcess<IEcsProcess> AllSystems
         {
             get { return new EcsProcess<IEcsProcess>(_allSystems); }
         }
+
+        /// <summary>Gets a read‑only dictionary of all registered runners by their interface type.</summary>
         public IReadOnlyDictionary<Type, IEcsRunner> AllRunners
         {
             get { return _runners; }
         }
+
+        /// <summary>Indicates whether the pipeline has been initialized.</summary>
         public bool IsInit
         {
             get { return _isInit; }
         }
+
+        /// <summary>Indicates whether the pipeline has been destroyed.</summary>
         public bool IsDestroyed
         {
             get { return _isDestoryed; }
@@ -78,12 +104,22 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Constructors
+        /// <summary>Initializes a new pipeline with the specified systems and optional configuration.</summary>
+        /// <param name="systems">The systems to include in the pipeline.</param>
+        /// <param name="configs">Optional configuration container. If null, a default container is created.</param>
+        /// <param name="injectionList">Optional list of injections to apply during initialization.</param>
         public EcsPipeline(ReadOnlySpan<IEcsProcess> systems, IConfigContainer configs = null, Injector.InjectionList injectionList = null) :
             this(systems.ToArray(), configs, injectionList)
         { }
+
+        /// <summary>Initializes a new pipeline with the specified systems and optional configuration.</summary>
+        /// <param name="systems">The systems to include in the pipeline.</param>
+        /// <param name="configs">Optional configuration container. If null, a default container is created.</param>
+        /// <param name="injectionList">Optional list of injections to apply during initialization.</param>
         public EcsPipeline(IEnumerable<IEcsProcess> systems, IConfigContainer configs = null, Injector.InjectionList injectionList = null) :
             this(systems.ToArray(), configs, injectionList)
         { }
+
         private EcsPipeline(IEcsProcess[] systems, IConfigContainer configs, Injector.InjectionList injectionList)
         {
             if (configs == null)
@@ -116,6 +152,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetProcess
+        /// <summary>Returns a process wrapper containing all systems of type <typeparamref name="T"/>.</summary>
+        /// <typeparam name="T">The process type to filter by.</typeparam>
+        /// <returns>A process wrapper containing the matching systems.</returns>
         public EcsProcess<T> GetProcess<T>() where T : IEcsProcess
         {
             Type type = typeof(T);
@@ -152,6 +191,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region GetRunner
+        /// <summary>Gets or creates a runner instance of type <typeparamref name="TRunner"/>.</summary>
+        /// <typeparam name="TRunner">The runner type to get or create.</typeparam>
+        /// <returns>An instance of the requested runner.</returns>
         public TRunner GetRunnerInstance<TRunner>() where TRunner : EcsRunner, IEcsRunner, new()
         {
             Type runnerType = typeof(TRunner);
@@ -172,6 +214,11 @@ namespace DCFApixels.DragonECS
             Injector.Inject(runnerInstance);
             return runnerInstance;
         }
+
+        /// <summary>Gets an existing runner by its interface type.</summary>
+        /// <typeparam name="T">The interface type of the runner.</typeparam>
+        /// <returns>The runner instance.</returns>
+        /// <exception cref="Exception">Thrown if no matching runner is found.</exception>
         public T GetRunner<T>() where T : IEcsProcess
         {
             if (_runners.TryGetValue(typeof(T), out IEcsRunner result))
@@ -181,6 +228,11 @@ namespace DCFApixels.DragonECS
             Throw.Exception("No matching runner found.");
             return default;
         }
+
+        /// <summary>Tries to get an existing runner by its interface type.</summary>
+        /// <typeparam name="T">The interface type of the runner.</typeparam>
+        /// <param name="runner">Outputs the runner instance if found.</param>
+        /// <returns>True if a matching runner was found; otherwise false.</returns>
         public bool TryGetRunner<T>(out T runner) where T : IEcsProcess
         {
             if (_runners.TryGetValue(typeof(T), out IEcsRunner result))
@@ -201,6 +253,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region LifeCycle
+        /// <summary>Initializes the pipeline by calling PreInit and Init runners.</summary>
         public void Init()
         {
             if (_isInit == true)
@@ -224,6 +277,7 @@ namespace DCFApixels.DragonECS
 #endif
         }
 
+        /// <summary>Executes the Run phase of the pipeline.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run()
         {
@@ -233,6 +287,8 @@ namespace DCFApixels.DragonECS
 #endif
             _runRunnerCache.Run();
         }
+
+        /// <summary>Destroys the pipeline and releases all resources.</summary>
         public void Destroy()
         {
 #if DEBUG || DRAGONECS_STABILITY_MODE
@@ -249,6 +305,9 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Builder
+        /// <summary>Creates a new pipeline builder.</summary>
+        /// <param name="config">Optional configuration container to use for the builder.</param>
+        /// <returns>A new <see cref="Builder"/> instance.</returns>
         public static Builder New(IConfigContainerWriter config = null)
         {
             return new Builder(config);
@@ -257,14 +316,29 @@ namespace DCFApixels.DragonECS
     }
 
     #region EcsModule
+    /// <summary>
+    /// Represents a module that can be imported into an <see cref="EcsPipeline"/>.
+    /// </summary>
     public interface IEcsModule
     {
+        /// <summary>Imports the module's systems into the pipeline builder.</summary>
+        /// <param name="b">The pipeline builder to add systems to.</param>
         void Import(EcsPipeline.Builder b);
     }
+
+    /// <summary>
+    /// Base class for modules that also support dependency injection.
+    /// </summary>
+    /// <typeparam name="T">The concrete module type (used for injection).</typeparam>
     public abstract class EcsModule<T> : IEcsModule, IInjectionUnit, IEcsDefaultAddParams
     {
         AddParams IEcsDefaultAddParams.AddParams { get { return AddParams; } }
+
+        /// <summary>Gets the default add parameters for systems added by this module.</summary>
         protected virtual AddParams AddParams { get { return default; } }
+
+        /// <summary>Imports the module's systems into the pipeline builder.</summary>
+        /// <param name="b">The pipeline builder to add systems to.</param>
         public abstract void Import(EcsPipeline.Builder b);
         void IInjectionUnit.InitInjectionNode(InjectionGraph nodes) { nodes.AddNode<T>(); }
         public EcsModule() { if (GetType() != typeof(T)) { Throw.UndefinedException(); } }
@@ -274,10 +348,19 @@ namespace DCFApixels.DragonECS
     #region Extensions
     public static partial class EcsPipelineExtensions
     {
+        /// <summary>Checks whether the pipeline is null or has been destroyed.</summary>
+        /// <param name="self">The pipeline instance.</param>
+        /// <returns>True if the pipeline is null or destroyed; otherwise false.</returns>
         public static bool IsNullOrDestroyed(this EcsPipeline self)
         {
             return self == null || self.IsDestroyed;
         }
+
+        /// <summary>Adds a range of systems to the pipeline builder.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="range">The systems to add.</param>
+        /// <param name="layerName">Optional layer name for the systems.</param>
+        /// <returns>The builder instance for chaining.</returns>
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEnumerable<IEcsProcess> range, string layerName = null)
         {
             foreach (var item in range)
@@ -286,6 +369,12 @@ namespace DCFApixels.DragonECS
             }
             return self;
         }
+
+        /// <summary>Adds a range of systems to the builder, skipping any that are already present.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <param name="range">The systems to add.</param>
+        /// <param name="layerName">Optional layer name for the systems.</param>
+        /// <returns>The builder instance for chaining.</returns>
         public static EcsPipeline.Builder AddUnique(this EcsPipeline.Builder self, IEnumerable<IEcsProcess> range, string layerName = null)
         {
             foreach (var item in range)
@@ -294,6 +383,10 @@ namespace DCFApixels.DragonECS
             }
             return self;
         }
+
+        /// <summary>Builds the pipeline and immediately initializes it.</summary>
+        /// <param name="self">The builder instance.</param>
+        /// <returns>The initialized pipeline instance.</returns>
         public static EcsPipeline BuildAndInit(this EcsPipeline.Builder self)
         {
             EcsPipeline result = self.Build();
@@ -304,6 +397,10 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region SystemsLayerMarkerSystem
+    /// <summary>
+    /// Auxiliary system used to mark and organize pipeline layers.
+    /// This system is automatically added to the pipeline during layer management.
+    /// </summary>
     [MetaTags(MetaTags.HIDDEN)]
     [MetaColor(MetaColor.Black)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
@@ -314,6 +411,9 @@ namespace DCFApixels.DragonECS
         public readonly string name;
         public readonly string layerNameSpace;
         public readonly string layerName;
+
+        /// <summary>Initializes a new layer marker with the specified layer name.</summary>
+        /// <param name="name">The fully qualified layer name (may include namespace).</param>
         public SystemsLayerMarkerSystem(string name)
         {
             this.name = name;
@@ -334,18 +434,26 @@ namespace DCFApixels.DragonECS
     #endregion
 
     #region EcsProcess
+    /// <summary>
+    /// A read‑only collection of <see cref="IEcsProcess"/> systems.
+    /// Provides a non‑generic view of systems in a pipeline.
+    /// </summary>
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public readonly struct EcsProcessRaw : IReadOnlyCollection<IEcsProcess>
     {
+        /// <summary>An empty process collection.</summary>
         public static readonly EcsProcessRaw Empty = new EcsProcessRaw(Array.Empty<IEcsProcess>());
         private readonly Array _systems;
 
         #region Properties
+        /// <summary>Indicates whether the collection is null or empty.</summary>
         public bool IsNullOrEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _systems == null || _systems.Length <= 0; }
         }
+
+        /// <summary>Gets the number of systems in the collection.</summary>
         public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -356,6 +464,10 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _systems.Length; }
         }
+
+        /// <summary>Gets the system at the specified index.</summary>
+        /// <param name="index">The zero‑based index.</param>
+        /// <returns>The system at the given index.</returns>
         public IEcsProcess this[int index]
         {
             get { return (IEcsProcess)_systems.GetValue(index); }
