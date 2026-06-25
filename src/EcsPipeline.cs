@@ -37,7 +37,7 @@ namespace DCFApixels.DragonECS
     /// </summary>
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
-    [MetaDescription(AUTHOR, "...")]
+    [MetaDescription(AUTHOR, "Interface for systems that need a reference to their owning EcsPipeline")]
     [MetaID("DragonECS_F064557C92010419AB677453893D00AE")]
     public interface IEcsPipelineMember : IEcsProcess
     {
@@ -410,7 +410,7 @@ namespace DCFApixels.DragonECS
     [MetaTags(MetaTags.HIDDEN)]
     [MetaColor(MetaColor.Black)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
-    [MetaDescription(AUTHOR, "An auxiliary type of system for dividing a pipeline into layers. This system is automatically added to the EcsPipeline.")]
+    [MetaDescription(AUTHOR, "Auxiliary system used to mark and organize pipeline layers. This system is automatically added to the pipeline during layer management.")]
     [MetaID("DragonECS_42596C7C9201D0B85D1335E6E4704B57")]
     public class SystemsLayerMarkerSystem : IEcsProcess
     {
