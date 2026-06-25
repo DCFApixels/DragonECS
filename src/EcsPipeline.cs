@@ -41,6 +41,10 @@ namespace DCFApixels.DragonECS
     [MetaID("DragonECS_F064557C92010419AB677453893D00AE")]
     public interface IEcsPipelineMember : IEcsProcess
     {
+        /// <summary>
+        /// Gets the pipeline instance that owns this member. The setter is used internally by the pipeline
+        /// to assign itself during initialization; systems should only read this property.
+        /// </summary>
         EcsPipeline Pipeline { get; set; }
     }
 
@@ -341,11 +345,13 @@ namespace DCFApixels.DragonECS
         /// <param name="b">The pipeline builder to add systems to.</param>
         public abstract void Import(EcsPipeline.Builder b);
         void IInjectionUnit.InitInjectionNode(InjectionGraph nodes) { nodes.AddNode<T>(); }
+        /// <summary>Initializes a new instance of the module.</summary>
         public EcsModule() { if (GetType() != typeof(T)) { Throw.UndefinedException(); } }
     }
     #endregion
 
     #region Extensions
+    /// <summary>Provides extension methods for pipeline building and initialization.</summary>
     public static partial class EcsPipelineExtensions
     {
         /// <summary>Checks whether the pipeline is null or has been destroyed.</summary>
@@ -408,8 +414,11 @@ namespace DCFApixels.DragonECS
     [MetaID("DragonECS_42596C7C9201D0B85D1335E6E4704B57")]
     public class SystemsLayerMarkerSystem : IEcsProcess
     {
+        /// <summary>The fully qualified layer name, including namespace.</summary>
         public readonly string name;
+        /// <summary>The namespace part of the layer name.</summary>
         public readonly string layerNameSpace;
+        /// <summary>The layer name without namespace.</summary>
         public readonly string layerName;
 
         /// <summary>Initializes a new layer marker with the specified layer name.</summary>
@@ -429,6 +438,7 @@ namespace DCFApixels.DragonECS
                 layerName = name;
             }
         }
+        /// <summary>Returns a string representation of the layer marker.</summary>
         public override string ToString() { return name; }
     }
     #endregion
@@ -488,6 +498,7 @@ namespace DCFApixels.DragonECS
         {
             return ((IEnumerable<IEcsProcess>)(EcsProcess<IEcsProcess>)this).GetEnumerator();
         }
+        /// <summary>Returns an enumerator that iterates through the collection.</summary>
         public IEnumerator GetEnumerator()
         {
             return _systems.GetEnumerator();
@@ -525,19 +536,26 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    /// <summary>
+    /// A read‑only collection of <typeparamref name="TProcess"/> systems.
+    /// Provides a type-safe view of systems in a pipeline.
+    /// </summary>
     [DebuggerTypeProxy(typeof(EcsProcess<>.DebuggerProxy))]
     public readonly struct EcsProcess<TProcess> : IReadOnlyCollection<TProcess>
         where TProcess : IEcsProcess
     {
+        /// <summary>An empty process collection.</summary>
         public static readonly EcsProcess<TProcess> Empty = new EcsProcess<TProcess>(Array.Empty<TProcess>());
         private readonly TProcess[] _systems;
 
         #region Properties
+        /// <summary>Indicates whether the collection is null or empty.</summary>
         public bool IsNullOrEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _systems == null || _systems.Length <= 0; }
         }
+        /// <summary>Gets the number of systems in the collection.</summary>
         public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -548,6 +566,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _systems.Length; }
         }
+        /// <summary>Gets the system at the specified index.</summary>
         public TProcess this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -564,10 +583,12 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Converts
+        /// <summary>Converts an <see cref="EcsProcessRaw"/> to <see cref="EcsProcess{TProcess}"/>.</summary>
         public static explicit operator EcsProcess<TProcess>(EcsProcessRaw raw)
         {
             return new EcsProcess<TProcess>(raw.GetSystems_Internal<TProcess>());
         }
+        /// <summary>Converts an <see cref="EcsProcess{TProcess}"/> to <see cref="EcsProcessRaw"/>.</summary>
         public static implicit operator EcsProcessRaw(EcsProcess<TProcess> process)
         {
             return new EcsProcessRaw(process._systems);
@@ -576,19 +597,24 @@ namespace DCFApixels.DragonECS
 
         #region Enumerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        /// <summary>Returns an enumerator that iterates through the collection.</summary>
         public Enumerator GetEnumerator() { return new Enumerator(_systems); }
         IEnumerator<TProcess> IEnumerable<TProcess>.GetEnumerator() { return GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+        /// <summary>Enumerates the systems in an <see cref="EcsProcess{TProcess}"/> collection.</summary>
         public struct Enumerator : IEnumerator<TProcess>
         {
             private readonly TProcess[] _systems;
             private int _index;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            /// <summary>Initializes a new enumerator for the specified systems array.</summary>
+            /// <param name="systems">The array of systems to enumerate.</param>
             public Enumerator(TProcess[] systems)
             {
                 _systems = systems;
                 _index = -1;
             }
+            /// <summary>Gets the current system in the collection.</summary>
             public TProcess Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -596,8 +622,11 @@ namespace DCFApixels.DragonECS
             }
             object IEnumerator.Current { get { return Current; } }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            /// <summary>Advances the enumerator to the next system.</summary>
+            /// <returns>True if there is a next system; otherwise false.</returns>
             public bool MoveNext() { return ++_index < _systems.Length; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            /// <summary>Sets the enumerator to its initial position.</summary>
             public void Reset() { _index = -1; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
