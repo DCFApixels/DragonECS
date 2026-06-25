@@ -48,6 +48,64 @@ namespace DCFApixels.DragonECS
         EcsPipeline Pipeline { get; set; }
     }
 
+    /// <summary>
+    /// Container and engine for systems. Responsible for configuring the execution order of systems,
+    /// providing a mechanism for messaging between systems, and a dependency injection mechanism.
+    /// </summary>
+    /// <example>
+    /// Creating and using a pipeline:
+    /// <code>
+    /// <![CDATA[
+    /// using DCFApixels.DragonECS;
+    /// using UnityEngine;
+    /// 
+    /// public class EcsRoot : MonoBehaviour
+    /// {
+    ///     private EcsPipeline _pipeline;
+    ///     private EcsDefaultWorld _world;
+    /// 
+    ///     private void Start()
+    ///     {
+    ///         // Create a world for entities and components.
+    ///         _world = new EcsDefaultWorld();
+    /// 
+    ///         // Create a pipeline for systems.
+    ///         _pipeline = EcsPipeline.New()
+    ///             // Add systems.
+    ///             // .Add(new SomeSystem1())
+    ///             // .Add(new SomeSystem2())
+    ///             // .Add(new SomeSystem3())
+    ///             // Inject the world into systems.
+    ///             .Inject(_world)
+    ///             // Other injections.
+    ///             // .Inject(SomeData)
+    ///             // Finalize pipeline construction.
+    ///             .Build();
+    /// 
+    ///         // Initialize the pipeline and run IEcsPreInit.PreInit() and IEcsInit.Init() on all added systems.
+    ///         _pipeline.Init();
+    ///     }
+    /// 
+    ///     private void Update()
+    ///     {
+    ///         // Invoke IEcsRun.Run() on all added systems.
+    ///         _pipeline.Run();
+    ///     }
+    /// 
+    ///     private void OnDestroy()
+    ///     {
+    ///         // Invoke IEcsDestroy.Destroy() on all added systems.
+    ///         _pipeline.Destroy();
+    ///         _pipeline = null;
+    /// 
+    ///         // Delete worlds that will no longer be used.
+    ///         _world.Destroy();
+    ///         _world = null;
+    ///     }
+    /// }
+    /// ]]>
+    /// </code>
+    /// </example>
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(PACK_GROUP, OTHER_GROUP)]
     [MetaDescription(AUTHOR, "Container and engine for systems. Responsible for configuring the execution order of systems, providing a mechanism for messaging between systems, and a dependency injection mechanism.")]
