@@ -139,6 +139,7 @@ namespace DCFApixels.DragonECS
             _itemsLength = capacity;
             _itemsHandler = Alloc<T>(_itemsLength);
             _items = _itemsHandler.Ptr;
+            _sharedStore->_itemsCapacity = capacity;
             _sharedStore->_items = _items;
             _recycledItemsLength = recycledCapacity;
             _recycledItemsHandler = Alloc<int>(_recycledItemsLength);
@@ -155,12 +156,14 @@ namespace DCFApixels.DragonECS
             _mapping = _mappingHandler.Ptr;
 
             _sharedStore->_mapping = _mapping;
+            _sharedStore->_worldCapacity = registrar.World.Capacity;
             var worldConfig = registrar.World.Configs.GetWorldConfigOrDefault();
             if (_items == null)
             {
                 _itemsLength = ArrayUtility.NextPow2(worldConfig.PoolComponentsCapacity);
                 _itemsHandler = Alloc<T>(_itemsLength);
                 _items = _itemsHandler.Ptr;
+                _sharedStore->_itemsCapacity = _itemsLength;
                 _sharedStore->_items = _items;
             }
             if (_recycledItems == null)
@@ -223,6 +226,7 @@ namespace DCFApixels.DragonECS
                     _itemsLength = ArrayUtility.NextPow2(_itemsLength << 1);
                     _itemsHandler = Realloc(_itemsHandler, _itemsLength);
                     _items = _itemsHandler.Ptr;
+                    _sharedStore->_itemsCapacity = _itemsLength;
                     _sharedStore->_items = _items;
                 }
             }
@@ -293,6 +297,7 @@ namespace DCFApixels.DragonECS
                         _itemsLength = ArrayUtility.NextPow2(_itemsLength << 1);
                         _itemsHandler = Realloc(_itemsHandler, _itemsLength);
                         _items = _itemsHandler.Ptr;
+                        _sharedStore->_itemsCapacity = _itemsLength;
                         _sharedStore->_items = _items;
                     }
                 }
@@ -415,6 +420,7 @@ namespace DCFApixels.DragonECS
         {
             _mappingHandler = ReallocAndInit<int>(_mappingHandler, newSize);
             _mapping = _mappingHandler.Ptr;
+            _sharedStore->_worldCapacity = newSize;
 
             _sharedStore->_mapping = _mapping;
         }
@@ -574,6 +580,8 @@ namespace DCFApixels.DragonECS
     {
         public short _worldID;
         public int _componentTypeID;
+        public int _itemsCapacity;
+        public int _worldCapacity;
 #if UNITY_2020_3_OR_NEWER
         [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
 #endif
@@ -583,6 +591,16 @@ namespace DCFApixels.DragonECS
 #endif
         public void* _items;
     }
+
+    /// <summary>
+    /// Unsafe native view of a value pool, providing direct pointer‑based access to unmanaged components.
+    /// Designed for high‑performance scenarios and use inside Unity Jobs.
+    /// </summary>
+    /// <typeparam name="T">The unmanaged component type, must implement <see cref="IEcsValueComponent"/>.</typeparam>
+    /// <remarks>
+    /// This view does not perform bounds or presence checks for performance reasons.
+    /// Use <see cref="Has"/> to validate presence before accessing data.
+    /// </remarks>
     public readonly unsafe struct NativeEcsValuePool<T>
         where T : unmanaged, IEcsValueComponent
     {
@@ -590,16 +608,33 @@ namespace DCFApixels.DragonECS
         [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
 #endif
         private readonly EcsValuePoolSharedStore* _store;
+
+
+        /// <summary>
+        /// Gets the ID of the world that owns this pool.
+        /// </summary>
         public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _store->_worldID; }
         }
+
+
+        /// <summary>
+        /// Gets the internal component type identifier.
+        /// </summary>
         public int ComponentTypeID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _store->_componentTypeID; }
         }
+
+        /// <summary>
+        /// Gets a reference to the component for the specified entity.
+        /// </summary>
+        /// <param name="entityID">The entity identifier.</param>
+        /// <returns>A reference to the component instance.</returns>
+        /// <remarks>Does not check whether the entity has the component; ensure <see cref="Has"/> returns true before use.</remarks>
         public ref T this[int entityID]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -611,12 +646,60 @@ namespace DCFApixels.DragonECS
             _store = store;
         }
 
+        /// <summary>
+        /// Checks whether the specified entity has this component.
+        /// </summary>
+        /// <param name="entityID">The entity identifier.</param>
+        /// <returns>True if the component is present; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(int entityID) { return _store->_mapping[entityID] != 0; }
+        public bool Has(int entityID) 
+        {
+#if DEBUG || DRAGONECS_STABILITY_MODE
+            if (entityID <= 0 || entityID >= _store->_worldCapacity) 
+            {
+#if DEBUG
+                Throw.ArgumentOutOfRange();
+#else
+                return false;   
+#endif
+            }
+#endif
+            return _store->_mapping[entityID] != 0; 
+        }
+
+        /// <summary>
+        /// Gets a reference to the component for the specified entity.
+        /// </summary>
+        /// <param name="entityID">The entity identifier.</param>
+        /// <returns>A reference to the component instance.</returns>
+        /// <remarks>Does not validate presence; call <see cref="Has"/> first to avoid accessing uninitialized memory.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Get(int entityID) { return ref ((T*)_store->_items)[_store->_mapping[entityID]]; }
+        public ref T Get(int entityID) 
+        {
+#if DEBUG
+            if (entityID <= 0 || entityID >= _store->_worldCapacity) { Throw.ArgumentOutOfRange(); }
+            var mappingIndex = _store->_mapping[entityID];
+            if (mappingIndex <= 0 || mappingIndex >= _store->_itemsCapacity) { Throw.ArgumentOutOfRange(); }
+#endif
+#if DRAGONECS_STABILITY_MODE
+            if (entityID <= 0 || entityID >= _store->_worldCapacity) { return ref ((T*)_store->_items)[0]; }
+            var mappingIndex = _store->_mapping[entityID];
+            if(mappingIndex <= 0 || mappingIndex >= _store->_itemsCapacity) { return ref ((T*)_store->_items)[0]; }
+#endif
+            return ref ((T*)_store->_items)[_store->_mapping[entityID]]; 
+        }
+
+        /// <summary>
+        /// Gets a read‑only reference to the component for the specified entity.
+        /// </summary>
+        /// <param name="entityID">The entity identifier.</param>
+        /// <returns>A read‑only reference to the component instance.</returns>
+        /// <remarks>Does not validate presence; call <see cref="Has"/> first to avoid accessing uninitialized memory.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T Read(int entityID) { return ref Get(entityID); }
+        public ref readonly T Read(int entityID) 
+        {
+            return ref Get(entityID); 
+        }
     }
 
     public static class EcsValuePoolExtensions
