@@ -61,6 +61,10 @@ namespace DCFApixels.DragonECS
     /// Primary container for entities and components. Manages entity ids, component pools, queries, masks and other world-scoped resources. 
     /// Use it to create and destroy entities, access component pools, run queries and manage world lifecycle.
     /// </summary>
+    /// <remarks>
+    /// Worlds are not thread-safe for structural modifications (entity creation/deletion, component add/remove) without external synchronization;
+    /// however, different worlds can be processed independently in separate threads.
+    /// </remarks>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -157,7 +161,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Current entity storage capacity..
+        /// Current entity storage capacity.
         /// </summary>
         public int Capacity
         {
@@ -213,28 +217,38 @@ namespace DCFApixels.DragonECS
 
         #region Constructors/Destroy
         /// <summary>
-        /// Create a new world with default configuration. Use overloads to provide explicit configuration or world id.
+        /// Initializes a new world with default configuration and an automatically assigned world ID.
         /// </summary>
         public EcsWorld() : this(ConfigContainer.Empty, null, -1) { }
-        
+
         /// <summary>
-        /// Create a new world with default configuration. Use overloads to provide explicit configuration or world id.
+        /// Initializes a new world with the specified configuration and optional world ID. If no configuration is provided, default settings are used.
         /// </summary>
+        /// <param name="config">Optional configuration object that controls initial capacities and buffer sizes. If <c>null</c>, default values are applied.</param>
+        /// <param name="worldID">Optional explicit world identifier. Use <c>-1</c> (default) to let the system assign a unique ID automatically.</param>
         public EcsWorld(EcsWorldConfig config = null, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), null, worldID) { }
-        
+
         /// <summary>
-        /// Create a new world with default configuration. Use overloads to provide explicit configuration or world id.
+        /// Initializes a new world with a custom configuration container and optional world ID. This allows for advanced configuration beyond the standard <see cref="EcsWorldConfig"/>.
         /// </summary>
+        /// <param name="configs">Custom configuration container that can hold multiple settings (e.g., pool sizes, debug flags). Must not be <c>null</c>.</param>
+        /// <param name="worldID">Optional explicit world ID. Pass <c>-1</c> to have the system generate a unique ID automatically.</param>
         public EcsWorld(IConfigContainer configs, short worldID = -1) : this(configs, null, worldID) { }
-        
+
         /// <summary>
-        /// Create a new world with default configuration. Use overloads to provide explicit configuration or world id.
+        /// Initializes a new world with the specified configuration, a human‑readable name, and optional world ID. The name is useful for debugging and logging.
         /// </summary>
+        /// <param name="config">Optional configuration object. If <c>null</c>, default capacities are used.</param>
+        /// <param name="name">Optional name for the world (e.g., "GameWorld", "PhysicsWorld"). May be empty.</param>
+        /// <param name="worldID">Optional explicit world ID. Default <c>-1</c> triggers automatic ID assignment.</param>
         public EcsWorld(EcsWorldConfig config = null, string name = null, short worldID = -1) : this(config == null ? ConfigContainer.Empty : new ConfigContainer().Set(config), name, worldID) { }
-       
+
         /// <summary>
-        /// Create a new world with default configuration. Use overloads to provide explicit configuration or world id.
+        /// Initializes a new world with a custom configuration container, a human‑readable name, and optional world ID. This is the most flexible constructor, allowing full control over configuration and identification.
         /// </summary>
+        /// <param name="configs">Custom configuration container. Must be provided (non‑null).</param>
+        /// <param name="name">Optional name for debugging and diagnostics. Can be <c>null</c> or empty.</param>
+        /// <param name="worldID">Optional explicit world ID. If <c>-1</c>, the system will assign a unique ID.</param>
         public EcsWorld(IConfigContainer configs, string name = null, short worldID = -1)
         {
             lock (_worldLock)
@@ -319,7 +333,10 @@ namespace DCFApixels.DragonECS
                 {
                     for (int i = Entities.Count - 1; i >= 0; i--)
                     {
-                        DelEntity(Entities[i]);
+                        if (IsUsed(Entities[i]))
+                        {
+                            DelEntity(Entities[i]);
+                        }
                     }
                 }
                 ReleaseDelEntityBufferAll();
