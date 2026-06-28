@@ -15,14 +15,19 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    /// <summary> Component without data. </summary>
+    /// <summary>
+    /// Marker interface for tag components (data‑less flags) stored in a compact bool‑array storage.
+    /// </summary>
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Tag component or component without data.")]
     [MetaID("DragonECS_8D3E547C92013C6A2C2DFC8D2F1FA297")]
     public interface IEcsTagComponent : IEcsComponentMember { }
 
-    /// <summary> Pool for IEcsTagComponent components. </summary>
+    /// <summary>
+    /// Bool‑array based storage for tag components with add, remove, and has operations.
+    /// </summary>
+    /// <typeparam name="T">The tag component type, which must implement <see cref="IEcsTagComponent"/>.</typeparam>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]

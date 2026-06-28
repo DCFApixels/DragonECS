@@ -15,14 +15,20 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    /// <summary>Standard component</summary>
+    /// <summary>
+    /// A marker interface for struct components that are stored in a general-purpose component storage.
+    /// </summary>
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Standard component.")]
     [MetaID("DragonECS_84D2537C9201D6F6B92FEC1C8883A07A")]
     public interface IEcsComponent : IEcsComponentMember { }
 
-    /// <summary>Pool for IEcsComponent components</summary>
+    /// <summary>
+    /// A component storage (pool) that provides methods for adding, reading, editing, and removing
+    /// <typeparamref name="T"/> components on entities.
+    /// </summary>
+    /// <typeparam name="T">The component type, which must implement <see cref="IEcsComponent"/>.</typeparam>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]

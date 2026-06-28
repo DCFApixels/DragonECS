@@ -16,14 +16,20 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace DCFApixels.DragonECS
 {
-    /// <summary>Value type component</summary>
+    /// <summary>
+    /// Marker interface for unmanaged component structs stored in a value pool.
+    /// </summary>
     [MetaColor(MetaColor.DragonRose)]
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Value type component.")]
     [MetaID("DragonECS_B053D6FA9C01208AFD1922E6A1D57D83")]
     public interface IEcsValueComponent : IEcsComponentMember { }
 
-    /// <summary>Pool for IEcsValueComponent components</summary>
+    /// <summary>
+    /// Storage for unmanaged components that provides a native view for low‑level access.
+    /// </summary>
+    /// <typeparam name="T">The component type, which must implement <see cref="IEcsValueComponent"/> and be unmanaged.</typeparam>
+    /// <remarks>Use <see cref="AsNative"/> to obtain a native view for use inside Unity Jobs.</remarks>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
