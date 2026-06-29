@@ -106,10 +106,6 @@ namespace DCFApixels.DragonECS
         {
             get { return _registrar.World; }
         }
-        public bool IsReadOnly
-        {
-            get { return false; }
-        }
 
         /// <summary>
         /// Get component by entity id inside the pool.
@@ -649,11 +645,6 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.Count; }
-        }
-        public bool IsReadOnly
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _pool.IsReadOnly; }
         }
         public ref readonly T this[int entityID]
         {

@@ -233,7 +233,6 @@ namespace DCFApixels.DragonECS
         /// Number of components stored in the pool.
         /// </summary>
         int Count { get; }
-        bool IsReadOnly { get; }
         #endregion
 
         #region Methods

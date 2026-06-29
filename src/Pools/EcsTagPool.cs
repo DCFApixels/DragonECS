@@ -98,10 +98,6 @@ namespace DCFApixels.DragonECS
         {
             get { return _registrar.World; }
         }
-        public bool IsReadOnly
-        {
-            get { return false; }
-        }
 
         /// <summary>
         /// Check or set whether the specified entity has this tag.
@@ -429,11 +425,6 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.Count; }
-        }
-        public bool IsReadOnly
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _pool.IsReadOnly; }
         }
         public bool this[int entityID]
         {

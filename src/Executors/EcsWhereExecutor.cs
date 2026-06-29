@@ -136,7 +136,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 }
             }
 #endif
-            return new EcsUnsafeSpan(World.ID, _filteredAllEntities.Ptr, _filteredAllEntitiesCount); ;
+            return new EcsUnsafeSpan(World.ID, _filteredAllEntities.Ptr, _filteredAllEntitiesCount);
         }
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 }
             }
 #endif
-            return new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount); ;
+            return new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount);
         }
 
         /// <summary>

@@ -73,6 +73,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _itemsCount; }
         }
+
         /// <summary>
         /// Capacity of the internal values array.
         /// </summary>
@@ -80,6 +81,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _itemsLength; }
         }
+
         /// <summary>
         /// Internal component type identifier for this value pool.
         /// </summary>
@@ -87,6 +89,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _registrar.ComponentTypeID; }
         }
+
         /// <summary>
         /// Type of the component stored by this pool.
         /// </summary>
@@ -94,6 +97,7 @@ namespace DCFApixels.DragonECS
         {
             get { return typeof(T); }
         }
+
         /// <summary>
         /// The world instance that owns this value pool.
         /// </summary>
@@ -101,10 +105,7 @@ namespace DCFApixels.DragonECS
         {
             get { return _registrar.World; }
         }
-        public bool IsReadOnly
-        {
-            get { return false; }
-        }
+
         /// <summary>
         /// Get component by entity id inside the pool.
         /// </summary>
@@ -530,11 +531,6 @@ namespace DCFApixels.DragonECS
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.Count; }
-        }
-        public bool IsReadOnly
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _pool.IsReadOnly; }
         }
         public ref readonly T this[int entityID]
         {
