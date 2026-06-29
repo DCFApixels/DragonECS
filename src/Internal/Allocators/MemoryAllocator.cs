@@ -13,6 +13,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         private static ulong _inrement = 0;
         private static IdDispenser _idDispenser;
         private static HandlerDebugInfo[] _debugInfos;
+        private static int _releaseIDsCounter = 0;
 #endif
 
         static MemoryAllocator()
@@ -246,6 +247,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         private static void Free_Internal(Meta* handledPtr)
         {
+            const int DensifyThreshold = 256;
 #if DEBUG
             if (handledPtr == null)
             {
@@ -253,7 +255,13 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
             lock (_idDispenser)
             {
+                _releaseIDsCounter++;
                 _idDispenser.Release(handledPtr->ID);
+                if(_releaseIDsCounter >= DensifyThreshold)
+                {
+                    _idDispenser.Sort();
+                    _releaseIDsCounter = 0;
+                }
                 _debugInfos[handledPtr->ID] = default;
             }
             handledPtr->ID = default;
