@@ -165,17 +165,6 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 return Alloc_Internal(newByteLength, newType);
             }
-            //#if DEBUG
-            //            int id = 0;
-            //            lock (_idDispenser)
-            //            {
-            //                if (_debugInfos.Length <= _idDispenser.Count)
-            //                {
-            //                    Array.Resize(ref _debugInfos, ArrayUtility.NextPow2(_idDispenser.Count));
-            //                }
-            //                id = _idDispenser.UseFree();
-            //            }
-            //#endif
 #if DEBUG
             var id = target.GetHandledPtr()->ID;
 #endif

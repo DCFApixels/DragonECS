@@ -37,7 +37,7 @@ namespace DCFApixels.DragonECS
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsComponent components.")]
     [MetaID("DragonECS_C501547C9201A4B03FC25632E4FAAFD7")]
-    [DebuggerDisplay("Count: {Count} Type: {ComponentType}")]
+    [DebuggerDisplay(" Count: {Count} Component: {ComponentType}")]
     public sealed unsafe class EcsPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T>, IEntityStorage, IComponentMask //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsComponent
     {
@@ -49,10 +49,12 @@ namespace DCFApixels.DragonECS
         private int _itemsCount = 0;
         private int _recycledItemsCount = 0;
 
-        private MemoryAllocator.HMem<int> _memHandler;
         private UnsafeArray<int> _dense;
         private UnsafeArray<int> _itemEntites;
         private int _usedBlockCount;
+        private bool _isDensified;
+
+        private MemoryAllocator.HMem<int> _denseHandler;
 
         private readonly IEcsComponentLifecycle<T> _customLifecycle = EcsComponentLifecycle<T>.CustomHandler;
         private readonly bool _isCustomLifecycle = EcsComponentLifecycle<T>.IsCustom;
@@ -123,7 +125,10 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Create an empty EcsPool.
         /// </summary>
-        public EcsPool() { _isDensified = true; }
+        public EcsPool() 
+        { 
+            _isDensified = true; 
+        }
 
         /// <summary>
         /// Create an EcsPool with an explicit initial capacity for components.
@@ -133,9 +138,10 @@ namespace DCFApixels.DragonECS
         {
             capacity = ArrayUtility.CeilPow2Safe(capacity);
             _items = new T[capacity];
-            _memHandler = MemoryAllocator.AllocAndInit<int>(capacity * 2);
-            _dense = UnsafeArray<int>.Manual(_memHandler.Ptr, capacity);
-            _itemEntites = UnsafeArray<int>.Manual(_memHandler.Ptr + capacity, capacity);
+            _denseHandler = MemoryAllocator.AllocAndInit<int>(capacity * 2);
+            _dense = UnsafeArray<int>.Manual(_denseHandler.Ptr, capacity);
+            _itemEntites = UnsafeArray<int>.Manual(_denseHandler.Ptr + capacity, capacity);
+            _isDensified = true;
         }
         void IEcsPoolImplementation.OnInit(EcsWorld.ComponentsRegistrar registrar)
         {
@@ -147,14 +153,14 @@ namespace DCFApixels.DragonECS
             {
                 var capacity = ArrayUtility.CeilPow2Safe(worldConfig.PoolComponentsCapacity);
                 _items = new T[capacity];
-                _memHandler = MemoryAllocator.AllocAndInit<int>(capacity * 2);
-                _dense = UnsafeArray<int>.Manual(_memHandler.Ptr, capacity);
-                _itemEntites = UnsafeArray<int>.Manual(_memHandler.Ptr + capacity, capacity);
+                _denseHandler = MemoryAllocator.AllocAndInit<int>(capacity * 2);
+                _dense = UnsafeArray<int>.Manual(_denseHandler.Ptr, capacity);
+                _itemEntites = UnsafeArray<int>.Manual(_denseHandler.Ptr + capacity, capacity);
             }
         }
         void IEcsPoolImplementation.OnWorldDestroy()
         {
-            _memHandler.Dispose();
+            _denseHandler.Dispose();
         }
         #endregion
 
@@ -192,9 +198,9 @@ namespace DCFApixels.DragonECS
                     var capacity = ArrayUtility.NextPow2(itemIndex);
                     Array.Resize(ref _items, capacity);
 
-                    _memHandler = MemoryAllocator.ReallocAndInit<int>(_memHandler, capacity * 2);
-                    _dense = UnsafeArray<int>.Manual(_memHandler.Ptr, capacity);
-                    _itemEntites = UnsafeArray<int>.Manual(_memHandler.Ptr + capacity, capacity);
+                    _denseHandler = MemoryAllocator.ReallocAndInit<int>(_denseHandler, capacity * 2);
+                    _dense = UnsafeArray<int>.Manual(_denseHandler.Ptr, capacity);
+                    _itemEntites = UnsafeArray<int>.Manual(_denseHandler.Ptr + capacity, capacity);
                     _dense.AsSpan().Slice(oldCapacity, oldCapacity).CopyTo(_itemEntites.AsSpan());
                 }
                 _usedBlockCount++;
@@ -386,7 +392,6 @@ namespace DCFApixels.DragonECS
         }
 
 
-        private bool _isDensified;
         private void Densify()
         {
             if (_isDensified) { return; }

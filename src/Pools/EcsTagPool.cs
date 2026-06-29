@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS
     [MetaGroup(EcsConsts.PACK_GROUP, EcsConsts.POOLS_GROUP)]
     [MetaDescription(EcsConsts.AUTHOR, "Pool for IEcsTagComponent components. EcsTagPool is optimized for storing tag components or components without data.")]
     [MetaID("DragonECS_9D80547C9201E852E4F17324EAC1E15A")]
-    [DebuggerDisplay("Count: {Count} Type: {ComponentType}")]
+    [DebuggerDisplay("Count: {Count} Tag: {ComponentType}")]
     public sealed class EcsTagPool<T> : IEcsPoolImplementation<T>, IEcsStructPool<T>, IEnumerable<T>, IComponentMask //IEnumerable<T> - IntelliSense hack
         where T : struct, IEcsTagComponent
     {
