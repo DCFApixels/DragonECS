@@ -95,7 +95,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Type of the component stored by this pool.
+        /// Type of the component stored in this pool.
         /// </summary>
         public Type ComponentType
         {
@@ -113,16 +113,19 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Get component by entity id inside the pool.
         /// </summary>
-        /// <param name="index">Entity identifier.</param>
+        /// <param name="entityID">Entity identifier.</param>
         /// <returns>Reference to the component instance.</returns>
-        public ref T this[int index]
+        public ref T this[int entityID]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return ref Get(index); }
+            get { return ref Get(entityID); }
         }
         #endregion
 
         #region Constructors/Init/Destroy
+        /// <summary>
+        /// Create an empty EcsValuePool.
+        /// </summary>
         public EcsValuePool()
         {
             if (_sharedStore == null)
@@ -131,6 +134,10 @@ namespace DCFApixels.DragonECS
             }
             _isDensified = true;
         }
+        /// <summary>
+        /// Create an EcsValuePool with an explicit initial capacity for components.
+        /// </summary>
+        /// <param name="capacity">Initial internal capacity (will be rounded to power-of-two).</param>
         public EcsValuePool(int capacity)
         {
             if (_sharedStore == null)
@@ -282,8 +289,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Ensure a value component exists for the specified entity and return a reference to it.
-        /// Adds the component when missing, otherwise returns existing reference.
+        /// Gets a reference to the component for the specified entity, or adds it if the component is not present.
         /// </summary>
         /// <param name="entityID">Entity identifier.</param>
         /// <returns>Reference to the existing or newly added value component.</returns>
@@ -371,7 +377,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Copy component data from one entity to another inside the another world.
+        /// Copy component data from one entity to another inside another world.
         /// </summary>
         /// <param name="fromEntityID">Source entity identifier.</param>
         /// <param name="toEntityID">Destination entity identifier.</param>
@@ -551,6 +557,10 @@ namespace DCFApixels.DragonECS
 #if DRAGONECS_DEEP_DEBUG
         private int _toSpans = 0;
 #endif
+        /// <summary>
+        /// Get a span of all entities that have <typeparamref name="T"/> component.
+        /// </summary>
+        /// <returns>A read-only span of entity identifiers.</returns>
         public EcsSpan ToSpan()
         {
 #if DRAGONECS_DEEP_DEBUG
@@ -592,13 +602,13 @@ namespace DCFApixels.DragonECS
 
         #region Listeners
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-        public void AddListener(IEcsPoolEventListener listener)
+        void IEcsReadonlyPool.AddListener(IEcsPoolEventListener listener)
         {
-            EcsDebug.PrintWarning($"the {nameof(AddListener)} method is not supported for the {nameof(EcsValuePool<T>)}.");
+            EcsDebug.PrintWarning($"the {nameof(IEcsReadonlyPool.AddListener)} method is not supported for the {nameof(EcsValuePool<T>)}.");
         }
-        public void RemoveListener(IEcsPoolEventListener listener)
+        void IEcsReadonlyPool.RemoveListener(IEcsPoolEventListener listener)
         {
-            EcsDebug.PrintWarning($"the {nameof(RemoveListener)} method is not supported for the {nameof(EcsValuePool<T>)}.");
+            EcsDebug.PrintWarning($"the {nameof(IEcsReadonlyPool.RemoveListener)} method is not supported for the {nameof(EcsValuePool<T>)}.");
         }
 #endif
         #endregion
@@ -646,26 +656,43 @@ namespace DCFApixels.DragonECS
         private readonly EcsValuePool<T> _pool;
 
         #region Properties
+        /// <summary>
+        /// Internal component type identifier for this value pool.
+        /// </summary>
         public int ComponentTypeID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.ComponentTypeID; }
         }
+        /// <summary>
+        /// Type of the component stored in this pool.
+        /// </summary>
         public Type ComponentType
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.ComponentType; }
         }
+        /// <summary>
+        /// The world instance that owns this value pool.
+        /// </summary>
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.World; }
         }
+        /// <summary>
+        /// Number of stored values in the pool.
+        /// </summary>
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.Count; }
         }
+        /// <summary>
+        /// Get component by entity id inside the pool.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Read-only reference to the component.</returns>
         public ref readonly T this[int entityID]
         {
             get { return ref _pool.Read(entityID); }
@@ -680,19 +707,39 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
+        /// <summary>
+        /// Check whether the specified entity has this component.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>True when the component is present.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID) { return _pool.Has(entityID); }
+        /// <summary>
+        /// Get a reference to the component for the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Read-only reference to the component.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Get(int entityID) { return ref _pool.Read(entityID); }
+        /// <summary>
+        /// Read-only access to the component for the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Read-only reference to the component.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID) { return ref _pool.Read(entityID); }
+        /// <summary>
+        /// Get raw component data for the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Raw component data as an object.</returns>
         object IEcsReadonlyPool.GetRaw(int entityID) { return _pool.Read(entityID); }
 
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+        void IEcsReadonlyPool.AddListener(IEcsPoolEventListener listener) { ((IEcsReadonlyPool)_pool).AddListener(listener); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RemoveListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+        void IEcsReadonlyPool.RemoveListener(IEcsPoolEventListener listener) { ((IEcsReadonlyPool)_pool).AddListener(listener); }
 #endif
         #endregion
 

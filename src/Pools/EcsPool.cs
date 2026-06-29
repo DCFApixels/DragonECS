@@ -340,7 +340,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Copy component data from one entity to another inside the another world.
+        /// Copy component data from one entity to another inside another world.
         /// </summary>
         /// <param name="fromEntityID">Source entity identifier.</param>
         /// <param name="toEntityID">Destination entity identifier.</param>
@@ -530,6 +530,10 @@ namespace DCFApixels.DragonECS
 #if DRAGONECS_DEEP_DEBUG
         private int _toSpans = 0;
 #endif
+        /// <summary>
+        /// Get a span of all entities that have <typeparamref name="T"/> component.
+        /// </summary>
+        /// <returns>A read-only span of entity identifiers.</returns>
         public EcsSpan ToSpan()
         {
 #if DRAGONECS_DEEP_DEBUG
@@ -571,12 +575,20 @@ namespace DCFApixels.DragonECS
 
         #region Listeners
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
+        /// <summary>
+        /// Subscribes a listener to component Add/Del/Get events on this pool.
+        /// </summary>
+        /// <param name="listener">The listener instance to add.</param>
         public void AddListener(IEcsPoolEventListener listener)
         {
             if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
             _listeners.Add(listener);
             _hasAnyListener = _listeners.Count > 0;
         }
+        /// <summary>
+        /// Remove a pool event listener.
+        /// </summary>
+        /// <param name="listener">The listener instance to remove.</param>
         public void RemoveListener(IEcsPoolEventListener listener)
         {
             if (listener == null) { EcsPoolThrowHelper.ThrowNullListener(); }
@@ -631,26 +643,43 @@ namespace DCFApixels.DragonECS
         private readonly EcsPool<T> _pool;
 
         #region Properties
+        /// <summary>
+        /// Internal component type identifier for this pool.
+        /// </summary>
         public int ComponentTypeID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.ComponentTypeID; }
         }
+        /// <summary>
+        /// Type of the component stored in this pool.
+        /// </summary>
         public Type ComponentType
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.ComponentType; }
         }
+        /// <summary>
+        /// The world instance that owns this pool.
+        /// </summary>
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.World; }
         }
+        /// <summary>
+        /// Number of components stored in the pool.
+        /// </summary>
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _pool.Count; }
         }
+        /// <summary>
+        /// Get component by entity id inside the pool.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Read-only reference to the component.</returns>
         public ref readonly T this[int entityID]
         {
             get { return ref _pool.Read(entityID); }
@@ -665,17 +694,45 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Methods
+        /// <summary>
+        /// Check whether the specified entity has this component.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>True when the component is present.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID) { return _pool.Has(entityID); }
+        /// <summary>
+        /// Get a reference to the component for the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Read-only reference to the component.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Get(int entityID) { return ref _pool.Read(entityID); }
+        /// <summary>
+        /// Read-only access to the component for the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Read-only reference to the component.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID) { return ref _pool.Read(entityID); }
+        /// <summary>
+        /// Get raw component data for the specified entity.
+        /// </summary>
+        /// <param name="entityID">Entity identifier.</param>
+        /// <returns>Raw component data as an object.</returns>
         object IEcsReadonlyPool.GetRaw(int entityID) { return _pool.Read(entityID); }
 
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
+        /// <summary>
+        /// Add a pool event listener.
+        /// </summary>
+        /// <param name="listener">The listener instance to add.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+        /// <summary>
+        /// Remove a pool event listener.
+        /// </summary>
+        /// <param name="listener">The listener instance to remove.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
 #endif
