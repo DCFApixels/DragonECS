@@ -650,15 +650,10 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID) 
         {
-#if DEBUG || DRAGONECS_STABILITY_MODE
-            if (entityID <= 0 || entityID >= _store->_worldCapacity) 
-            {
 #if DEBUG
-                Throw.ArgumentOutOfRange();
-#else
-                return false;   
-#endif
-            }
+            if (entityID <= 0 || entityID >= _store->_worldCapacity) { Throw.ArgumentOutOfRange(); }
+#elif  DRAGONECS_STABILITY_MODE
+            if (entityID <= 0 || entityID >= _store->_worldCapacity) { return false; }
 #endif
             return _store->_mapping[entityID] != 0; 
         }
@@ -676,8 +671,7 @@ namespace DCFApixels.DragonECS
             if (entityID <= 0 || entityID >= _store->_worldCapacity) { Throw.ArgumentOutOfRange(); }
             var mappingIndex = _store->_mapping[entityID];
             if (mappingIndex <= 0 || mappingIndex >= _store->_itemsCapacity) { Throw.ArgumentOutOfRange(); }
-#endif
-#if DRAGONECS_STABILITY_MODE
+#elif DRAGONECS_STABILITY_MODE
             if (entityID <= 0 || entityID >= _store->_worldCapacity) { return ref ((T*)_store->_items)[0]; }
             var mappingIndex = _store->_mapping[entityID];
             if(mappingIndex <= 0 || mappingIndex >= _store->_itemsCapacity) { return ref ((T*)_store->_items)[0]; }

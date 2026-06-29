@@ -15,7 +15,9 @@ using System.Runtime.CompilerServices;
 
 namespace DCFApixels.DragonECS.Core
 {
-    /// <summary> Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>. </summary>
+    /// <summary>
+    /// Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.
+    /// </summary>
     public interface IEcsPoolImplementation : IEcsPool
     {
         #region Methods
@@ -46,7 +48,9 @@ namespace DCFApixels.DragonECS.Core
         #endregion
     }
 
-    /// <summary> Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>. </summary>
+    /// <summary> 
+    /// Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.
+    /// </summary>
     /// <typeparam name="T"> Component type. </typeparam>
     public interface IEcsPoolImplementation<T> : IEcsPoolImplementation { }
 
@@ -211,8 +215,8 @@ namespace DCFApixels.DragonECS
 {
     #region Interfaces
     /// <summary>
-    /// Публичный интерфейс только для чтения для пула компонентов.
-    /// Предоставляет базовые методы и свойства для проверки наличия компонента и доступа к необработанным данным.
+    /// Public read‑only interface for a component pool.
+    /// Provides basic methods and properties for checking component presence and accessing raw data.
     /// </summary>
     public interface IEcsReadonlyPool : IEcsMember
     {
@@ -221,14 +225,17 @@ namespace DCFApixels.DragonECS
         /// Internal component type identifier for this pool.
         /// </summary>
         int ComponentTypeID { get; }
+
         /// <summary>
         /// Type of the component stored in this pool.
         /// </summary>
         Type ComponentType { get; }
+
         /// <summary>
         /// The world instance that owns this pool.
         /// </summary>
         EcsWorld World { get; }
+
         /// <summary>
         /// Number of components stored in the pool.
         /// </summary>

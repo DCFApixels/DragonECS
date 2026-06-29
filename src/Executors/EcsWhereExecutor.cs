@@ -91,9 +91,12 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ExecuteFor_Iternal(EcsSpan span)
         {
-#if DEBUG || DRAGONECS_STABILITY_MODE
+#if DEBUG
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
             if (span.WorldID != World.ID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
+#elif DRAGONECS_STABILITY_MODE
+            if (span.IsNull) { _filteredEntitiesCount = 0; }
+            if (span.WorldID != World.ID) { _filteredEntitiesCount = 0; }
 #endif
             if (_filteredEntities.IsCreated == false)
             {
