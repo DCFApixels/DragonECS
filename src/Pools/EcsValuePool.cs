@@ -605,7 +605,6 @@ namespace DCFApixels.DragonECS
 #endif
         private readonly EcsValuePoolSharedStore* _store;
 
-
         /// <summary>
         /// Gets the ID of the world that owns this pool.
         /// </summary>
@@ -614,7 +613,6 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _store->_worldID; }
         }
-
 
         /// <summary>
         /// Gets the internal component type identifier.
@@ -630,7 +628,6 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <param name="entityID">The entity identifier.</param>
         /// <returns>A reference to the component instance.</returns>
-        /// <remarks>Does not check whether the entity has the component; ensure <see cref="Has"/> returns true before use.</remarks>
         public ref T this[int entityID]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -663,7 +660,6 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <param name="entityID">The entity identifier.</param>
         /// <returns>A reference to the component instance.</returns>
-        /// <remarks>Does not validate presence; call <see cref="Has"/> first to avoid accessing uninitialized memory.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get(int entityID) 
         {
@@ -684,7 +680,6 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <param name="entityID">The entity identifier.</param>
         /// <returns>A read‑only reference to the component instance.</returns>
-        /// <remarks>Does not validate presence; call <see cref="Has"/> first to avoid accessing uninitialized memory.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int entityID) 
         {
