@@ -586,6 +586,22 @@ namespace DCFApixels.DragonECS
         /// Each call to LockPool_Debug increments the counter; UnlockPool_Debug decrements it.
         /// The pool is considered locked when the counter is greater than zero.
         /// </remarks>
+        public void LockPool_Debug<T>()
+        {
+            LockPool_Debug(GetComponentTypeID<T>());
+        }
+
+        /// <summary>
+        /// Locks the pool for structural changes (component add/remove) in debug mode.
+        /// While locked, any attempt to add or remove a component will throw an exception,
+        /// helping to detect unsafe concurrent modifications. Also flushes pending deferred deletions
+        /// to prevent interference during the locked section.
+        /// </summary>
+        /// <remarks>
+        /// The lock is implemented as a reference counter, allowing nested locks.
+        /// Each call to LockPool_Debug increments the counter; UnlockPool_Debug decrements it.
+        /// The pool is considered locked when the counter is greater than zero.
+        /// </remarks>
         /// <param name="componentTypeID">Internal component type identifier.</param>
         public void LockPool_Debug(int componentTypeID)
         {
@@ -601,6 +617,21 @@ namespace DCFApixels.DragonECS
             _pools[componentTypeID].OnLockedChanged_Debug(true);
 #endif
         }
+
+        /// <summary>
+        /// Releases the pool lock acquired by <see cref="LockPool_Debug"/>.
+        /// Must be called in a balanced pair. After release, structural changes become allowed again
+        /// </summary>
+        /// <remarks>
+        /// This method decrements the reference counter. If the counter drops to zero,
+        /// the lock is fully released. An imbalance (calling Unlock more times than Lock)
+        /// will trigger a debug assertion.
+        /// </remarks>
+        public void UnlockPool_Debug<T>()
+        {
+            UnlockPool_Debug(GetComponentTypeID<T>());
+        }
+
         /// <summary>
         /// Releases the pool lock acquired by <see cref="LockPool_Debug"/>.
         /// Must be called in a balanced pair. After release, structural changes become allowed again
