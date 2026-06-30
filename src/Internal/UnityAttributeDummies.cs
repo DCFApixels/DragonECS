@@ -9,4 +9,11 @@ namespace UnityEngine.Scripting
     [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class | AttributeTargets.Constructor | AttributeTargets.Delegate | AttributeTargets.Enum | AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Interface | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Struct, Inherited = false)]
     internal class PreserveAttribute : Attribute { }
 }
+namespace UnityEngine
+{
+    /// <summary>
+    /// Dummy stub for Unity's HideInCallstackAttribute to compile outside Unity environment (no actual preservation effect).
+    /// </summary>
+    internal class HideInCallstackAttribute : Attribute { }
+}
 #endif

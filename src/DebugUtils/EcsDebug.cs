@@ -97,9 +97,7 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region Print
-#if UNITY_2021_3_OR_NEWER
         [UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintWarning(object v)
         {
@@ -108,9 +106,7 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.PrintWarning(v);
 #endif
         }
-#if UNITY_2021_3_OR_NEWER
         [UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintError(object v)
         {
@@ -119,9 +115,7 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.PrintError(v);
 #endif
         }
-#if UNITY_2021_3_OR_NEWER
         [UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintErrorAndBreak(object v)
         {
@@ -130,9 +124,7 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.PrintErrorAndBreak(v);
 #endif
         }
-#if UNITY_2021_3_OR_NEWER
         [UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintPass(object v)
         {
@@ -141,9 +133,7 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.PrintPass(v);
 #endif
         }
-#if UNITY_2021_3_OR_NEWER
         [UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print()
         {
@@ -152,9 +142,7 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.Print();
 #endif
         }
-#if UNITY_2021_3_OR_NEWER
         [UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(object v)
         {
@@ -163,9 +151,7 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.Print(v);
 #endif
         }
-#if UNITY_2021_3_OR_NEWER
         [UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Print(string tag, object v)
         {
@@ -174,9 +160,7 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.Print(tag, v);
 #endif
         }
-#if UNITY_2021_3_OR_NEWER
         [UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintJson(object v)
         {
@@ -186,9 +170,7 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.Print(json);
 #endif
         }
-#if UNITY_2021_3_OR_NEWER
         [UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintJson(string tag, object v)
         {
@@ -198,9 +180,7 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.Print(tag, json);
 #endif
         }
-#if UNITY_2021_3_OR_NEWER
 		[UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintJsonWithProperties(object v)
         {
@@ -210,9 +190,7 @@ namespace DCFApixels.DragonECS
             DebugService.CurrentThreadInstance.Print(json);
 #endif
         }
-#if UNITY_2021_3_OR_NEWER
 		[UnityEngine.HideInCallstack]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrintJsonWithProperties(string tag, object v)
         {
