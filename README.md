@@ -67,6 +67,7 @@ The [ECS](https://en.wikipedia.org/wiki/Entity_component_system) Framework aims 
   - [Queries](#queries)
   - [Collections](#collections)
   - [ECS Root](#ecs-root)
+- [Multithreading](#multithreading)
 - [Debug](#debug)
   - [Meta Attributes](#meta-attributes)
   - [EcsDebug](#ecsdebug)
@@ -432,34 +433,41 @@ _world = new EcsDefaultWorld(config);
 ```
 
 ## Pool
-Stash of components, providing methods for adding, reading, editing, and removing components on entities. Several pool types are available:
-* `EcsPool` - universal pool for struct components implementing `IEcsComponent`;
-* `EcsTagPool` - pool optimized for tag components implementing `IEcsTagComponent`;
+Component storage that provides methods for adding, reading, editing, and removing components on entities. Pools can have different implementations for different use cases. Custom pool implementations are also supported.
+
+There are three built‑in pool types:
+
+* `EcsPool` - Universal pool. Stores struct components implementing `IEcsComponent`;
+* `EcsTagPool` – Optimized for tag components. Stores struct components implementing `IEcsTagComponent`;
+* `EcsValuePool` – Designed for unmanaged components and provides a Native view for Unity Jobs support. Stores unmanaged components implementing `IEcsValueComponent`;
 
 Pools provide 5 common methods and their variations:
 ``` c#
 // One way to get a pool from the world.
 EcsPool<Pose> poses = _world.GetPool<Pose>();
  
-// Adds component to entity, throws an exception if the entity already has the component.
+// Adds a component to the entity. Adding the same component again will throw an error. Use TryAddOrGet when unsure.
 ref var addedPose = ref poses.Add(entityID);
  
-// Returns existing component, throws an exception if the entity does not have this component.
+// Returns the component. Attempting to get a component from an entity that doesn't have it will throw an error.
 ref var gottenPose = ref poses.Get(entityID);
  
-// Returns a read-only component, throwing an exception if the entity does not have this component. 
+// Returns a read‑only component. Attempting to get a component from an entity that doesn't have it will throw an error.
 ref readonly var readonlyPose = ref poses.Read(entityID);
  
 // Returns true if the entity has the component, otherwise false.
 if (poses.Has(entityID)) { /* ... */ }
  
-// Removes component from entity, throws an exception if the entity does not have this component.
+// Removes the component from the entity. Attempting to remove a component that doesn't exist will throw an error.
 poses.Del(entityID);
 ```
-> [!WARNING]
-> Exceptions are disabled in the `Release` build.
 
-> There are "Safe" methods that first check presence or absence of a component are prefixed with `Try`.
+> [!WARNING]
+> In Release builds, correctness checks for calls (`Add`/`Get`/`Del`) are disabled for better performance.
+
+> Use `Try`‑methods – they check component presence and do not cause errors on invalid calls.
+
+> Defining `DRAGONECS_STABILITY_MODE` enables checks in Release with safe handling instead of exceptions. See [Define Symbols](#define-symbols) for more details.
 
 <details> 
 <summary>Custom Pools</summary>
@@ -828,6 +836,87 @@ public class EcsRoot
 
 </br>
 
+# Multithreading
+
+### Principles
+DragonECS supports multithreading, but with certain rules:
+* Read operations (getting components, iteration) can be performed in parallel as long as no structural changes occur.
+* Structural changes (creating/destroying entities, adding/removing components) are not thread‑safe and must be synchronized.
+* Separate worlds can be processed in isolation in different threads, including structural changes, because each world maintains its own state. Retrieving world‑scoped singleton components is thread‑safe, even though they share a common static storage.
+
+Two approaches are available for parallel iteration:
+* Classic Threads – a separate extension for thread‑based concurrency (see [ClassicThreads](https://github.com/DCFApixels/DragonECS-ClassicThreads)).
+* Unity Jobs – built‑in support via Native views of EcsValuePool<T> pools.
+
+### Example with Unity Jobs
+Obtain a list of entities using `WhereUnsafe` (outside a job), then pass it to a parallel job for processing:
+```c#
+EcsWorld _world;
+class Aspect : EcsAspect
+{
+    // Пул для unmanaged компонентов.
+    public EcsValuePool<Cmp> Cmps = Inc;
+}
+public void Run()
+{
+    var job = new Job()
+    {
+        // Идентично Where, но возвращает unmanaged список сущностей.
+        Entities = _world.WhereUnsafe(out Aspect a),
+        // Конвертация пула в unmanaged версию
+        Cmps = a.Cmps.AsNative(),
+        X = 10f,
+    };
+    JobHandle jobHandle = job.Schedule(job.Entities.Count, 64);
+    jobHandle.Complete();
+}
+```
+```c#
+// Unmanaged компонент.
+public struct Cmp : IEcsValueComponent
+{
+    public float A;
+}
+private struct Job : IJobParallelFor
+{
+    public EcsUnsafeSpan Entities;
+    public NativeEcsValuePool<Cmp> Cmps;
+    public float X;
+    public Job(EcsUnsafeSpan entities, float x)
+    {
+        Entities = entities;
+        X = x;
+    }
+    public void Execute(int index)
+    {
+        var e = Entities[index];
+        Cmps[e].A += X;
+    }
+}
+```
+
+### Debugging
+To detect places where concurrent modification occurs, use pool locks (Debug only):
+
+```c#
+// Lock the pool – prevents structural changes (Add/Del) for this component type.
+world.LockPool_Debug<SomeComponent>();   
+
+// Attempting to add the component will throw an exception in Debug builds.
+world.GetPool<SomeComponent>().Add(entityID_1);
+
+// Reading (Get) remains unrestricted.
+world.GetPool<SomeComponent>().Get(entityID_2);
+
+// Release the lock.
+world.UnlockPool_Debug<SomeComponent>();
+
+// Now Add is allowed again.
+world.GetPool<SomeComponent>().Add(entityID_1);
+```
+
+</br>
+
 # Debug
 The framework provides tools for debugging and logging, independent of the environment. Many types have DebuggerProxy implementations for more informative display in IDEs.
 ## Meta Attributes
@@ -944,11 +1033,11 @@ using (_marker.Auto())
 </br>
 
 # Define Symbols
-+ `DRAGONECS_DISABLE_POOLS_EVENTS` - Disables reactive behavior in pools.
++ `DRAGONECS_DISABLE_POOLS_EVENTS` - Disables reactive behavior in pools. Recommended for performance improvement when reactive behavior is not required.
 + `DRAGONECS_ENABLE_DEBUG_SERVICE` - Enables EcsDebug functionality in release builds.
-+ `DRAGONECS_STABILITY_MODE` - By default, many exception checks are skipped in release builds for performance. This define replaces checks with error-resilient code to increase stability at the cost of some performance.
++ `DRAGONECS_STABILITY_MODE` - In Debug builds, invalid operations throw exceptions. In Release, these checks are removed for performance. Defining this macro restores them in Release, but replaces exceptions with safe fallback behavior. This trade‑off makes development faster and more forgiving, at the cost of slightly reduced runtime performance.
 + `DRAGONECS_DISABLE_CATH_EXCEPTIONS` - Turns off the default exception handling behavior. By default, the framework will catch exceptions with the exception information output via EcsDebug and continue working.
-+ `REFLECTION_DISABLED` - Restricts the framework's use of Reflection.
++ `REFLECTION_DISABLED` - Restricts the framework's use of Reflection. Required for Native AOT in reflection‑free mode.
 + `DISABLE_DEBUG` - For environments where manual DEBUG disabling is not supported (e.g., Unity).
 
 </br>

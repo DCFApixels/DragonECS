@@ -67,6 +67,7 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
   - [查询](#查询)
   - [集合](#集合)
   - [ECS入口](#ECS入口)
+- [Multithreading](#multithreading)
 - [Debug](#debug)
   - [Meta Attributes](#meta-attributes)
   - [EcsDebug](#ecsdebug)
@@ -435,33 +436,43 @@ _world = new EcsDefaultWorld(config);
 ```
 
 ## 池子
-是组件的存储库，池子有添加/读取/编辑/删除实体上组件的方法。有几种类型的池，用于不同的目的：
-* `EcsPool` - 通用池，存储实现 `IEcsComponent` 接口的 struct 组件；
-* `EcsTagPool` - 为标签组件优化的特殊池，用于存储带有 `IEcsTagComponent` 的组件;
+组件存储器，提供在实体上添加、读取、修改和删除组件的方法。池可以针对不同使用场景有不同的实现，同时也支持自定义池实现。
+
+内置三种池类型：
+
+* `EcsPool` – 主要通用池。存储实现 `IEcsComponent` 的 struct 组件；
+
+* `EcsTagPool` – 针对 Tag 组件优化。存储实现 `IEcsTagComponent` 的 struct 组件；
+
+* `EcsValuePool` – 专为 unmanaged 组件设计，并提供 Native 视图以支持 Unity Jobs。存储实现 `IEcsValueComponent` 的 unmanaged 组件；
 
 池有5种主要方法及其品种：
 ``` c#
-// 从世界中获取组件池的一种方法。
+// 从世界获取池的一种方式。
 EcsPool<Pose> poses = _world.GetPool<Pose>();
  
-// 向实体添加一个组件，如果实体已经拥有该组件，则抛出异常。
+// 向实体添加组件。重复添加同一组件会引发错误。不确定时请使用 TryAddOrGet。
 ref var addedPose = ref poses.Add(entityID);
  
-// 返回一个组件，如果实体没有该组件，则抛出异常。
+// 返回组件。尝试获取一个不存在该组件的实体上的组件会引发错误。
 ref var gettedPose = ref poses.Get(entityID);
  
-// 返回一个只读组件，如果实体没有该组件，则抛出异常。
+// 返回只读组件。尝试获取一个不存在该组件的实体上的组件会引发错误。
 ref readonly var readonlyPose = ref poses.Read(entityID);
  
 // 如果实体具有组件，则返回true，否则返回false。
 if (poses.Has(entityID)) { /* ... */ }
  
-// 从实体中删除组件，如果实体没有此组件，则抛发异常。
+// 从实体移除组件。尝试移除不存在的组件会引发错误。
 poses.Del(entityID);
 ```
-> 有一些 “安全 ”方法会首先检查组件是否存在，这些方法的名称以 “Try ”开头。
+
+> [!WARNING]
+> 在 Release 构建中，为提升性能，调用（`Add`/`Get`/`Del`）的正确性检查会被禁用。
     
-> 可以实现用户池。稍后将介绍这一功能。
+> 请使用 `Try` 开头的方法 – 它们会先检查组件是否存在，无效调用不会导致错误。
+
+> 定义 `DRAGONECS_STABILITY_MODE` 可在 Release 中启用检查，并以安全处理代替异常。详见 定义符号。
 
 ## 掩码
 用于根据组件的存在与否来过滤实体。通常掩码不单独使用，而是作为 `EcsAspect` 的一部分，用于查询时过滤实体。
@@ -794,6 +805,87 @@ public class EcsRoot
 
 </br>
 
+# Multithreading
+
+### Principles
+DragonECS supports multithreading, but with certain rules:
+* Read operations (getting components, iteration) can be performed in parallel as long as no structural changes occur.
+* Structural changes (creating/destroying entities, adding/removing components) are not thread‑safe and must be synchronized.
+* Separate worlds can be processed in isolation in different threads, including structural changes, because each world maintains its own state. Retrieving world‑scoped singleton components is thread‑safe, even though they share a common static storage.
+
+Two approaches are available for parallel iteration:
+* Classic Threads – a separate extension for thread‑based concurrency (see [ClassicThreads](https://github.com/DCFApixels/DragonECS-ClassicThreads)).
+* Unity Jobs – built‑in support via Native views of EcsValuePool<T> pools.
+
+### Example with Unity Jobs
+Obtain a list of entities using `WhereUnsafe` (outside a job), then pass it to a parallel job for processing:
+```c#
+EcsWorld _world;
+class Aspect : EcsAspect
+{
+    // Пул для unmanaged компонентов.
+    public EcsValuePool<Cmp> Cmps = Inc;
+}
+public void Run()
+{
+    var job = new Job()
+    {
+        // Идентично Where, но возвращает unmanaged список сущностей.
+        Entities = _world.WhereUnsafe(out Aspect a),
+        // Конвертация пула в unmanaged версию
+        Cmps = a.Cmps.AsNative(),
+        X = 10f,
+    };
+    JobHandle jobHandle = job.Schedule(job.Entities.Count, 64);
+    jobHandle.Complete();
+}
+```
+```c#
+// Unmanaged компонент.
+public struct Cmp : IEcsValueComponent
+{
+    public float A;
+}
+private struct Job : IJobParallelFor
+{
+    public EcsUnsafeSpan Entities;
+    public NativeEcsValuePool<Cmp> Cmps;
+    public float X;
+    public Job(EcsUnsafeSpan entities, float x)
+    {
+        Entities = entities;
+        X = x;
+    }
+    public void Execute(int index)
+    {
+        var e = Entities[index];
+        Cmps[e].A += X;
+    }
+}
+```
+
+### Debugging
+To detect places where concurrent modification occurs, use pool locks (Debug only):
+
+```c#
+// Lock the pool – prevents structural changes (Add/Del) for this component type.
+world.LockPool_Debug<SomeComponent>();   
+
+// Attempting to add the component will throw an exception in Debug builds.
+world.GetPool<SomeComponent>().Add(entityID_1);
+
+// Reading (Get) remains unrestricted.
+world.GetPool<SomeComponent>().Get(entityID_2);
+
+// Release the lock.
+world.UnlockPool_Debug<SomeComponent>();
+
+// Now Add is allowed again.
+world.GetPool<SomeComponent>().Add(entityID_1);
+```
+
+</br>
+
 # Debug
 该框架提供了额外的调试和日志记录工具，不依赖于环境此外，许多类型都有自己的 DebuggerProxy，以便在 IDE 中更详细地显示信息。
 ## Meta Attributes
@@ -909,13 +1001,12 @@ using (_marker.Auto())
 </br>
 
 # Define Symbols
-+ `DRAGONECS_DISABLE_POOLS_EVENTS` - 禁用池子事件的响应行为。
++ `DRAGONECS_DISABLE_POOLS_EVENTS` - 禁用池中的响应式行为。当不需要响应式行为时，建议启用此选项以提高性能。
 + `DRAGONECS_ENABLE_DEBUG_SERVICE` - 在发布版中启用 EcsDebug 的工作。
-+ `DRAGONECS_STABILITY_MODE` - 默认情况下，为了优化，框架在发布版本中跳过许多异常检查。此定义不是跳过检查，而是将其替换为能够解决错误的代码。这提高了稳定性，但降低了执行速度。
++ `DRAGONECS_STABILITY_MODE` - 在 Debug 构建中，无效操作会引发异常。在 Release 构建中，为了性能会移除这些检查。定义此宏可在 Release 中恢复这些检查，但会将异常替换为安全的回退处理。这种权衡加快了开发进程，并使代码对错误更加宽容，代价是运行时性能略有下降。
 + `DRAGONECS_DISABLE_CATH_EXCEPTIONS` - 禁用默认的异常处理行为。默认情况下，框架将捕获异常并通过 EcsDebug 输出异常信息，然后继续执行。
-+ `REFLECTION_DISABLED` - 完全限制框架内部代码中的 Reflection 使用。
++ `REFLECTION_DISABLED` - 完全限制框架内部代码中的 Reflection 使用。用于 Native AOT 的无反射模式。
 + `DISABLE_DEBUG` - 用于不支持手动禁用 DEBUG 的环境，例如 Unity。
-+ `ENABLE_DUMMY_SPAN` - 如果环境不支持 Span 类型，则启用它的替代。
 
 </br>
 
