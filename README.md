@@ -846,7 +846,7 @@ DragonECS supports multithreading, but with certain rules:
 
 Two approaches are available for parallel iteration:
 * Classic Threads – a separate extension for thread‑based concurrency (see [ClassicThreads](https://github.com/DCFApixels/DragonECS-ClassicThreads)).
-* Unity Jobs – built‑in support via Native views of EcsValuePool<T> pools.
+* Unity Jobs – built‑in support via Native views of `EcsValuePool<T>` pools.
 
 ### Example with Unity Jobs
 Obtain a list of entities using `WhereUnsafe` (outside a job), then pass it to a parallel job for processing:

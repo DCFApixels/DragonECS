@@ -67,7 +67,7 @@ DragonECS 是一个[实体组件系统](https://www.imooc.com/article/331544)框
   - [查询](#查询)
   - [集合](#集合)
   - [ECS入口](#ECS入口)
-- [Multithreading](#multithreading)
+- [多线程](#多线程)
 - [Debug](#debug)
   - [Meta Attributes](#meta-attributes)
   - [EcsDebug](#ecsdebug)
@@ -805,34 +805,34 @@ public class EcsRoot
 
 </br>
 
-# Multithreading
+# 多线程
 
-### Principles
-DragonECS supports multithreading, but with certain rules:
-* Read operations (getting components, iteration) can be performed in parallel as long as no structural changes occur.
-* Structural changes (creating/destroying entities, adding/removing components) are not thread‑safe and must be synchronized.
-* Separate worlds can be processed in isolation in different threads, including structural changes, because each world maintains its own state. Retrieving world‑scoped singleton components is thread‑safe, even though they share a common static storage.
+### 基本原则
+DragonECS 支持多线程，但需遵循以下规则：
+* 读取操作（获取组件、迭代）可在无结构更改的前提下并行执行。
+* 结构更改（创建/删除实体、添加/删除组件）非线程安全，必须同步执行。
+* 独立世界可以在不同线程中隔离处理，包括结构更改，因为每个世界拥有独立状态。获取世界范围的单例组件是线程安全的，尽管它们共享静态存储。
 
 Two approaches are available for parallel iteration:
-* Classic Threads – a separate extension for thread‑based concurrency (see [ClassicThreads](https://github.com/DCFApixels/DragonECS-ClassicThreads)).
-* Unity Jobs – built‑in support via Native views of EcsValuePool<T> pools.
+* Classic Threads – 独立的线程扩展库（详见 [ClassicThreads](https://github.com/DCFApixels/DragonECS-ClassicThreads)).
+* Unity Jobs – 通过 `EcsValuePool<T>` 池的 Native 视图内置支持.
 
-### Example with Unity Jobs
-Obtain a list of entities using `WhereUnsafe` (outside a job), then pass it to a parallel job for processing:
+### Unity Jobs 示例
+在 Job 外部通过 `WhereUnsafe` 获取实体列表，然后传递给并行 Job 处理:
 ```c#
 EcsWorld _world;
 class Aspect : EcsAspect
 {
-    // Пул для unmanaged компонентов.
+    // 用于 unmanaged 组件的池。
     public EcsValuePool<Cmp> Cmps = Inc;
 }
 public void Run()
 {
     var job = new Job()
     {
-        // Идентично Where, но возвращает unmanaged список сущностей.
+        // 与 Where 相同，但返回 unmanaged 实体列表。
         Entities = _world.WhereUnsafe(out Aspect a),
-        // Конвертация пула в unmanaged версию
+        // 将池转换为 unmanaged 版本
         Cmps = a.Cmps.AsNative(),
         X = 10f,
     };
@@ -841,7 +841,7 @@ public void Run()
 }
 ```
 ```c#
-// Unmanaged компонент.
+// Unmanaged 组件。
 public struct Cmp : IEcsValueComponent
 {
     public float A;
@@ -865,22 +865,22 @@ private struct Job : IJobParallelFor
 ```
 
 ### Debugging
-To detect places where concurrent modification occurs, use pool locks (Debug only):
+要检测发生并发修改的位置，可使用池锁（仅限 Debug 模式）：
 
 ```c#
-// Lock the pool – prevents structural changes (Add/Del) for this component type.
+// 锁定池 —— 禁止对该组件类型进行结构更改（Add/Del）。
 world.LockPool_Debug<SomeComponent>();   
 
-// Attempting to add the component will throw an exception in Debug builds.
+// 尝试添加组件会在 Debug 构建中引发异常。
 world.GetPool<SomeComponent>().Add(entityID_1);
 
-// Reading (Get) remains unrestricted.
+// 读取（Get）不受影响。
 world.GetPool<SomeComponent>().Get(entityID_2);
 
-// Release the lock.
+// 解锁。
 world.UnlockPool_Debug<SomeComponent>();
 
-// Now Add is allowed again.
+// 现在 Add 再次可用。
 world.GetPool<SomeComponent>().Add(entityID_1);
 ```
 
