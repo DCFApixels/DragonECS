@@ -826,14 +826,14 @@ namespace DCFApixels.DragonECS
         /// <param name="entityID">The entity identifier.</param>
         /// <returns>True if the component is present; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has(int entityID) 
+        public bool Has(int entityID)
         {
 #if DEBUG
             if (entityID <= 0 || entityID >= _store->_worldCapacity) { Throw.ArgumentOutOfRange(); }
 #elif  DRAGONECS_STABILITY_MODE
             if (entityID <= 0 || entityID >= _store->_worldCapacity) { return false; }
 #endif
-            return _store->_mapping[entityID] != 0; 
+            return _store->_mapping[entityID] != 0;
         }
 
         /// <summary>
@@ -842,7 +842,7 @@ namespace DCFApixels.DragonECS
         /// <param name="entityID">The entity identifier.</param>
         /// <returns>A reference to the component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Get(int entityID) 
+        public ref T Get(int entityID)
         {
 #if DEBUG
             if (entityID <= 0 || entityID >= _store->_worldCapacity) { Throw.ArgumentOutOfRange(); }
@@ -853,7 +853,7 @@ namespace DCFApixels.DragonECS
             var mappingIndex = _store->_mapping[entityID];
             if(mappingIndex <= 0 || mappingIndex >= _store->_itemsCapacity) { return ref ((T*)_store->_items)[0]; }
 #endif
-            return ref ((T*)_store->_items)[_store->_mapping[entityID]]; 
+            return ref ((T*)_store->_items)[_store->_mapping[entityID]];
         }
 
         /// <summary>
@@ -862,9 +862,9 @@ namespace DCFApixels.DragonECS
         /// <param name="entityID">The entity identifier.</param>
         /// <returns>A read‑only reference to the component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T Read(int entityID) 
+        public ref readonly T Read(int entityID)
         {
-            return ref Get(entityID); 
+            return ref Get(entityID);
         }
     }
 

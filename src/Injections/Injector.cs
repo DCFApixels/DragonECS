@@ -387,7 +387,7 @@ namespace DCFApixels.DragonECS
                     instance.Inject(_injectedData);
                 }
             }
-            
+
             internal static void Clear()
             {
                 _Empty_Internal._injections.Clear();

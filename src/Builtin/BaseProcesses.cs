@@ -146,8 +146,8 @@ namespace DCFApixels.DragonECS.Core.Internal
                     EcsDebug.PrintError(e);
 				}
 #endif
-				finally
-				{
+                finally
+                {
                     pair.cleanup?.RunFinally();
                 }
                 _markers[i].End();
@@ -165,8 +165,8 @@ namespace DCFApixels.DragonECS.Core.Internal
 				finally { }
             }
 #endif
-		}
-	}
+        }
+    }
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]

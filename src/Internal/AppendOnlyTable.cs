@@ -32,8 +32,8 @@ namespace DCFApixels.DragonECS.Core.Internal
         private static bool _isInitialized = false;
         //private static int _version;
 
-        private static readonly bool _isUnmanaged = 
-            RuntimeHelpers.IsReferenceOrContainsReferences<TKey>() == false && 
+        private static readonly bool _isUnmanaged =
+            RuntimeHelpers.IsReferenceOrContainsReferences<TKey>() == false &&
             RuntimeHelpers.IsReferenceOrContainsReferences<TValue>() == false;
 
         #region Public
@@ -43,7 +43,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             private readonly bool _isInitialized;
             public bool IsInitialized
             {
-                get { return  _isInitialized; }
+                get { return _isInitialized; }
             }
             public int Count
             {
@@ -259,7 +259,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         public static void Clear()
         {
             Debug.Assert(_isInitialized, NotInitializedMessage);
-            if(_count <= 0)
+            if (_count <= 0)
             {
                 _count = 0;
                 return;
@@ -268,7 +268,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 Array.Fill(_occupied, false);
                 _count = 0;
-                return; 
+                return;
             }
             for (int i = 0; i < _occupied.Length; i++)
             {
@@ -278,7 +278,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                     _values[i] = default;
                     _occupied[i] = false;
                     _count--;
-                    if(_count == 0)
+                    if (_count == 0)
                     {
                         break;
                     }

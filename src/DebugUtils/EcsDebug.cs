@@ -201,31 +201,31 @@ namespace DCFApixels.DragonECS
 #if UNITY_2021_3_OR_NEWER
 		[UnityEngine.HideInCallstack]
 #endif
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void PrintJsonWithProperties(object v)
-		{
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PrintJsonWithProperties(object v)
+        {
 #if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
-			string json = JsonDebugger.ToJsonLog(v, true);
-			OnPrint(string.Empty, json);
-			DebugService.CurrentThreadInstance.Print(json);
+            string json = JsonDebugger.ToJsonLog(v, true);
+            OnPrint(string.Empty, json);
+            DebugService.CurrentThreadInstance.Print(json);
 #endif
-		}
+        }
 #if UNITY_2021_3_OR_NEWER
 		[UnityEngine.HideInCallstack]
 #endif
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void PrintJsonWithProperties(string tag, object v)
-		{
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PrintJsonWithProperties(string tag, object v)
+        {
 #if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
-			string json = JsonDebugger.ToJsonLog(v, true);
-			OnPrint(tag, json);
-			DebugService.CurrentThreadInstance.Print(tag, json);
+            string json = JsonDebugger.ToJsonLog(v, true);
+            OnPrint(tag, json);
+            DebugService.CurrentThreadInstance.Print(tag, json);
 #endif
-		}
-		#endregion
+        }
+        #endregion
 
-		#region Other
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        #region Other
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Break()
         {
 #if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE

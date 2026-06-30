@@ -73,7 +73,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 sb.Append(((float)value).ToString(System.Globalization.CultureInfo.InvariantCulture));
                 return;
             }
-            if(type == typeof(double))
+            if (type == typeof(double))
             {
                 sb.Append(((double)value).ToString(System.Globalization.CultureInfo.InvariantCulture));
                 return;
@@ -90,7 +90,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
             if (type.IsEnum)
             {
-                if(type.TryGetAttribute(out FlagsAttribute _))
+                if (type.TryGetAttribute(out FlagsAttribute _))
                 {
                     sb.Append(type.FullName);
                     sb.Append('.');
@@ -183,7 +183,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 
             // Collections
             IEnumerable enumerable = value as IEnumerable;
-            if(enumerable != null)
+            if (enumerable != null)
             {
                 try
                 {
@@ -241,35 +241,35 @@ namespace DCFApixels.DragonECS.Core.Internal
 
                 if (withProperties)
                 {
-					// Properties
-					var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-					foreach (var prop in properties)
-					{
-						if (prop.GetIndexParameters().Length > 0 ||
-							prop.GetMethod == null ||
-							prop.GetMethod.IsStatic)
-						{
-							continue;
-						}
+                    // Properties
+                    var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    foreach (var prop in properties)
+                    {
+                        if (prop.GetIndexParameters().Length > 0 ||
+                            prop.GetMethod == null ||
+                            prop.GetMethod.IsStatic)
+                        {
+                            continue;
+                        }
 
-						NewLine(ref linesCounter, sb, indent + 1, indentStep);
-						sb.Append('"');
-						sb.Append(prop.Name);
-						sb.Append('"');
-						sb.Append(':').Append(' ');
+                        NewLine(ref linesCounter, sb, indent + 1, indentStep);
+                        sb.Append('"');
+                        sb.Append(prop.Name);
+                        sb.Append('"');
+                        sb.Append(':').Append(' ');
 
-						object propValue;
-						try
-						{
-							propValue = prop.GetValue(value);
-						}
-						catch (Exception cathcedE)
-						{
-							propValue = cathcedE;
-						}
-						ToJsonLog_Internal(ref linesCounter, propValue, sb, visited, indent + 1, indentStep, withProperties);
-					}
-				}
+                        object propValue;
+                        try
+                        {
+                            propValue = prop.GetValue(value);
+                        }
+                        catch (Exception cathcedE)
+                        {
+                            propValue = cathcedE;
+                        }
+                        ToJsonLog_Internal(ref linesCounter, propValue, sb, visited, indent + 1, indentStep, withProperties);
+                    }
+                }
 
                 NewLine(ref linesCounter, sb, indent, indentStep);
                 sb.Append('}');

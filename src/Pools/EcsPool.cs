@@ -125,9 +125,9 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Create an empty EcsPool.
         /// </summary>
-        public EcsPool() 
-        { 
-            _isDensified = true; 
+        public EcsPool()
+        {
+            _isDensified = true;
         }
 
         /// <summary>
@@ -302,7 +302,7 @@ namespace DCFApixels.DragonECS
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnDel(entityID); }
 #endif
-            if(_itemsCount == 0)
+            if (_itemsCount == 0)
             {
                 _itemsCount = 0;
                 _usedBlockCount = 0;
@@ -369,7 +369,7 @@ namespace DCFApixels.DragonECS
             if (_itemsCount <= 0) { return; }
             var span = _registrar.World.Where(out SingleAspect<T> _);
 #if DRAGONECS_DEEP_DEBUG
-            if(span.Count != _itemsCount)
+            if (span.Count != _itemsCount)
             {
                 Throw.DeepDebugException();
             }
@@ -446,14 +446,14 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-            if(useds.Count != _itemsCount)
+            if (useds.Count != _itemsCount)
             {
                 Throw.DeepDebugException();
             }
 
             var result = new EcsSpan(_registrar.WorldID, new ReadOnlySpan<int>(_dense.ptr + 1, _itemsCount));
             Core.Unchecked.UncheckedUtility.CheckSpanValideDebug(result);
-            if(newUsedBlockCount > _usedBlockCount)
+            if (newUsedBlockCount > _usedBlockCount)
             {
                 Throw.DeepDebugException();
             }
@@ -506,7 +506,7 @@ namespace DCFApixels.DragonECS
             {
                 _customLifecycle.OnDel(ref _items[itemIndex], _registrar.WorldID, entityID);
             }
-            else if(RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            else if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
             {
                 _items[itemIndex] = default;
             }
@@ -557,7 +557,7 @@ namespace DCFApixels.DragonECS
             }
             foreach (var e in result)
             {
-                if(Has(e) == false)
+                if (Has(e) == false)
                 {
                     Throw.DeepDebugException();
                 }
@@ -598,7 +598,7 @@ namespace DCFApixels.DragonECS
             }
         }
 #endif
-#endregion
+        #endregion
 
         #region IEnumerator - IntelliSense hack
         IEnumerator<T> IEnumerable<T>.GetEnumerator() { throw new NotImplementedException(); }
@@ -736,7 +736,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
 #endif
-#endregion
+        #endregion
 
         #region Convertors
         public static implicit operator ReadonlyEcsPool<T>(EcsPool<T> a) { return new ReadonlyEcsPool<T>(a); }

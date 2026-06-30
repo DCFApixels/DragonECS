@@ -602,7 +602,7 @@ namespace DCFApixels.DragonECS
         private Type[] _anyTypes_Debug;
         public ReadOnlySpan<Type> GetIncTypes_Debug()
         {
-            if(_incTypes_Debug == null)
+            if (_incTypes_Debug == null)
             {
                 _incTypes_Debug = GetTypes(IncTypeCodes);
             }
@@ -610,7 +610,7 @@ namespace DCFApixels.DragonECS
         }
         public ReadOnlySpan<Type> GetExcTypes_Debug()
         {
-            if(_excTypes_Debug == null)
+            if (_excTypes_Debug == null)
             {
                 _excTypes_Debug = GetTypes(ExcTypeCodes);
             }
@@ -1170,7 +1170,7 @@ namespace DCFApixels.DragonECS
                         }
 
                         return true;
-                        skip: continue;
+                    skip: continue;
                     }
                     return false; //exit
                 }
@@ -1323,7 +1323,7 @@ namespace DCFApixels.DragonECS
                             }
                         }
                         return true;
-                        skip: continue;
+                    skip: continue;
                     }
                     return false;
                 }

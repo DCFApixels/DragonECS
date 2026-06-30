@@ -246,7 +246,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 _releaseIDsCounter++;
                 _idDispenser.Release(handledPtr->ID);
-                if(_releaseIDsCounter >= DensifyThreshold)
+                if (_releaseIDsCounter >= DensifyThreshold)
                 {
                     _idDispenser.Sort();
                     _releaseIDsCounter = 0;

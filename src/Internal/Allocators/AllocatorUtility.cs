@@ -30,7 +30,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 case EcsMaskFlags.Empty:
                     {
-                        if(array.Length < source.Count)
+                        if (array.Length < source.Count)
                         {
                             array = Realloc<int>(array, source.Count);
                         }

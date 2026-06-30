@@ -230,7 +230,7 @@ namespace DCFApixels.DragonECS
 				        }
 #endif
                         finally { }
-						_markers[i].End();
+                        _markers[i].End();
                     }
 #else
                     foreach (var item in _process)
@@ -248,9 +248,9 @@ namespace DCFApixels.DragonECS
                         finally { }
                     }
 #endif
-				}
+                }
 
-				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public void Run<TData>(ActionWithData<TProcess, TData> translationCallback, ref TData data)
                 {
 #if DEBUG
@@ -261,15 +261,15 @@ namespace DCFApixels.DragonECS
                         try
                         {
                             translationCallback(_process[i], ref data);
-						}
+                        }
 #if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                         catch (Exception e)
                         {
                             EcsDebug.PrintError(e);
 				        }
 #endif
-						finally { }
-						_markers[i].End();
+                        finally { }
+                        _markers[i].End();
                     }
 #else
                     foreach (var item in _process)
@@ -287,9 +287,9 @@ namespace DCFApixels.DragonECS
                         finally { }
                     }
 #endif
-				}
-				#endregion
-			}
+                }
+                #endregion
+            }
             #endregion
 
             #region RunHelperWithFinally
@@ -394,8 +394,8 @@ namespace DCFApixels.DragonECS
                             EcsDebug.PrintError(e);
 				        }
 #endif
-						finally
-						{
+                        finally
+                        {
                             if (pair.runFinally != null)
                             {
                                 translationFinnalyCallback(pair.runFinally);
@@ -422,9 +422,9 @@ namespace DCFApixels.DragonECS
                         }
                     }
 #endif
-				}
+                }
 
-				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public void Run<TData>(
                     ActionWithData<TProcess, TData> translationCallback,
                     ActionWithData<TProcessFinally, TData> translationFinnalyCallback,
@@ -446,8 +446,8 @@ namespace DCFApixels.DragonECS
                             EcsDebug.PrintError(e);
 				        }
 #endif
-						finally
-						{
+                        finally
+                        {
                             if (pair.runFinally != null)
                             {
                                 translationFinnalyCallback(pair.runFinally, ref data);
@@ -477,9 +477,9 @@ namespace DCFApixels.DragonECS
                         }
                     }
 #endif
-				}
-				#endregion
-			}
+                }
+                #endregion
+            }
             #endregion
         }
     }

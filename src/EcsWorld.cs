@@ -1067,7 +1067,7 @@ namespace DCFApixels.DragonECS
             }
             return delCount;
         }
-#endregion
+        #endregion
 
         #region CopyEntity
         /// <summary>
@@ -1292,7 +1292,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-#endregion
+        #endregion
 
         #region DelEntBuffer
         /// <summary>
@@ -1533,7 +1533,7 @@ namespace DCFApixels.DragonECS
         {
             public readonly EcsWorld World;
             public readonly int EntityID;
-         
+
             public string Name
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
