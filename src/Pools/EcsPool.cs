@@ -160,7 +160,30 @@ namespace DCFApixels.DragonECS
         }
         void IEcsPoolImplementation.OnWorldDestroy()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        ~EcsPool()
+        {
+#if DEBUG
+            lock (this)
+#endif
+            {
+                Dispose(false);
+            }
+        }
+        private bool _disposed = false;
+        private void Dispose(bool disposing)
+        {
+            if (_disposed) { return; }
+            if (disposing)
+            {
+                // Free managed resources here
+            }
+            // Free unmanaged resources here
             _denseHandler.Dispose();
+
+            _disposed = true;
         }
         #endregion
 

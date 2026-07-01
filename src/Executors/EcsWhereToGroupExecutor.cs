@@ -1,6 +1,7 @@
 ﻿#if DISABLE_DEBUG
 #undef DEBUG
 #endif
+using System;
 using System.Runtime.CompilerServices;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
@@ -63,7 +64,35 @@ namespace DCFApixels.DragonECS.Core.Internal
             if (_isDestroyed) { return; }
             _isDestroyed = true;
             _filteredAllGroup.Dispose();
+            if(_filteredGroup != null && _filteredGroup.IsReleased == false)
+            {
+                _filteredGroup.Dispose();
+            }
+
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        ~EcsWhereToGroupExecutor()
+        {
+#if DEBUG
+            lock (this)
+#endif
+            {
+                Dispose(false);
+            }
+        }
+        private bool _disposed = false;
+        private void Dispose(bool disposing)
+        {
+            if (_disposed) { return; }
+            if (disposing)
+            {
+                // Free managed resources here
+            }
+            // Free unmanaged resources here
             _versionsChecker.Dispose();
+
+            _disposed = true;
         }
         #endregion
 

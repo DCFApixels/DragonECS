@@ -15,25 +15,25 @@ namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {
-        private readonly Dictionary<(Type, object), IQueryExecutorImplementation> _executorCoures;
+        private readonly Dictionary<(Type, object), IQueryExecutorImplementation> _executors;
 
         public TExecutor GetExecutorForMask<TExecutor>(IComponentMask gmask)
             where TExecutor : MaskQueryExecutor, new()
         {
             var executorType = typeof(TExecutor);
             //проверяет ключ по абстрактной маске
-            if (_executorCoures.TryGetValue((executorType, gmask), out IQueryExecutorImplementation executor) == false)
+            if (_executors.TryGetValue((executorType, gmask), out IQueryExecutorImplementation executor) == false)
             {
                 var mask = gmask.ToMask(this);
                 //проверяет ключ по конкретной маске, или что конкретная и абстрактая одна и таже
                 if (mask == gmask ||
-                    _executorCoures.TryGetValue((executorType, mask), out executor) == false)
+                    _executors.TryGetValue((executorType, mask), out executor) == false)
                 {
                     TExecutor executorCore = new TExecutor();
                     executorCore.Initialize(this, mask);
                     executor = executorCore;
                 }
-                _executorCoures.Add((executorType, gmask), executor);
+                _executors.Add((executorType, gmask), executor);
             }
             return (TExecutor)executor;
         }
@@ -45,14 +45,14 @@ namespace DCFApixels.DragonECS
         /// <param name="version">Reference to the caller's version number; updated to the current count when changed.</param>
         public void GetMaskQueryExecutors(List<MaskQueryExecutor> result, ref int version)
         {
-            if (_executorCoures == null || version == _executorCoures.Count)
+            if (_executors == null || version == _executors.Count)
             {
                 return;
             }
 
             result.Clear();
 
-            foreach (var item in _executorCoures)
+            foreach (var item in _executors)
             {
                 if (item.Value is MaskQueryExecutor x)
                 {
@@ -60,7 +60,7 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-            version = _executorCoures.Count;
+            version = _executors.Count;
         }
     }
 }

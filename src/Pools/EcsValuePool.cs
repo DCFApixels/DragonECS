@@ -184,14 +184,36 @@ namespace DCFApixels.DragonECS
                 _itemEntites = UnsafeArray<int>.Manual(_denseHandler.Ptr + capacity, capacity);
             }
         }
-        void IEcsPoolImplementation.OnWorldDestroy() { }
+        void IEcsPoolImplementation.OnWorldDestroy()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
         ~EcsValuePool()
         {
+#if DEBUG
+            lock (this)
+#endif
+            {
+                Dispose(false);
+            }
+        }
+        private bool _disposed = false;
+        private void Dispose(bool disposing)
+        {
+            if (_disposed) { return; }
+            if (disposing)
+            {
+                // Free managed resources here
+            }
+            // Free unmanaged resources here
             Free(_mappingHandler);
             Free(_itemsHandler);
             Free(_denseHandler);
 
             Free(_sharedStore);
+
+            _disposed = true;
         }
         #endregion
 

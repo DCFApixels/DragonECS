@@ -299,7 +299,7 @@ namespace DCFApixels.DragonECS
                 int entitiesCapacity = ArrayUtility.CeilPow2Safe(config.EntitiesCapacity);
                 _entityDispenser = new IdDispenser(entitiesCapacity, 0, OnEntityDispenserResized);
 
-                _executorCoures = new Dictionary<(Type, object), IQueryExecutorImplementation>(config.PoolComponentsCapacity);
+                _executors = new Dictionary<(Type, object), IQueryExecutorImplementation>(config.PoolComponentsCapacity);
 
                 GetComponentTypeID<NullComponent>();
                 OnWorldCreated?.Invoke(this);
@@ -344,8 +344,23 @@ namespace DCFApixels.DragonECS
                 _isDestroyed = true;
                 _listeners.InvokeOnWorldDestroy();
                 _entityDispenser = null;
-                _pools = null;
                 _nullPool = null;
+                {
+                    int iMax = _poolsCount + 10;
+                    if (iMax > _pools.Length)
+                    {
+                        iMax = _pools.Length;
+                    }
+                    for (int i = 0; i < iMax; i++)
+                    {
+                        var pool = _pools[i];
+                        if (pool != null)
+                        {
+                            pool.OnWorldDestroy();
+                        }
+                    }
+                    _pools = null;
+                }
                 _worlds[ID] = null;
                 ReleaseData(ID);
                 _worldIdDispenser.Release(ID);
@@ -354,10 +369,11 @@ namespace DCFApixels.DragonECS
                 _cmpTypeCode_2_CmpTypeIDs = null;
                 DisposeGroups();
 
-                foreach (var item in _executorCoures)
+                foreach (var item in _executors)
                 {
                     item.Value.Destroy();
                 }
+                _executors.Clear();
                 //_entities - не обнуляется для работы entlong.IsAlive
             }
         }

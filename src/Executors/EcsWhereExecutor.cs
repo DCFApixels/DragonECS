@@ -64,6 +64,29 @@ namespace DCFApixels.DragonECS.Core.Internal
         protected sealed override void OnDestroy()
         {
             if (_isDestroyed) { return; }
+            _isDestroyed = true;
+
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        ~EcsWhereExecutor()
+        {
+#if DEBUG
+            lock (this)
+#endif
+            {
+                Dispose(false);
+            }
+        }
+        private bool _disposed = false;
+        private void Dispose(bool disposing)
+        {
+            if (_disposed) { return; }
+            if (disposing)
+            {
+                // Free managed resources here
+            }
+            // Free unmanaged resources here
             if (_filteredAllEntities.IsCreated)
             {
                 _filteredAllEntities.DisposeAndReset();
@@ -72,8 +95,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 _filteredEntities.DisposeAndReset();
             }
-            _isDestroyed = true;
             _versionsChecker.Dispose();
+
+            _disposed = true;
         }
         #endregion
 
