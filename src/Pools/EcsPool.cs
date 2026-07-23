@@ -218,7 +218,7 @@ namespace DCFApixels.DragonECS
                 if (itemIndex >= _items.Length)
                 {
                     var oldCapacity = _items.Length;
-                    var capacity = ArrayUtility.NextPow2(itemIndex);
+                    var capacity = ArrayUtility.NextPow2(itemIndex + 1);
                     Array.Resize(ref _items, capacity);
 
                     _denseHandler = MemoryAllocator.ReallocAndInit<int>(_denseHandler, capacity * 2);
