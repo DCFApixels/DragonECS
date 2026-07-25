@@ -1327,9 +1327,9 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
       </a> 
     </td>
     <td align="center">
-      <a href="https://play.google.com/store/apps/details?id=com.ZlodeyStudios.OrdersMatter">
-        Order matters
-        <img src="https://github.com/user-attachments/assets/c55b2647-9b6e-4145-98ff-c3d094600fa1">
+      <a href="https://play.google.com/store/apps/details?id=com.CozyCaptain.SSD">
+        Super Star Drop
+        <img src="https://github.com/user-attachments/assets/99871eb1-c725-44fa-8da3-4a0e3b55081d" alt="screenshot">
       </a> 
     </td>
   </tr>
@@ -1338,14 +1338,16 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
 
   <tr>
     <td align="center">
+      <a href="https://play.google.com/store/apps/details?id=com.ZlodeyStudios.OrdersMatter">
+        Order matters
+        <img src="https://github.com/user-attachments/assets/c55b2647-9b6e-4145-98ff-c3d094600fa1">
+      </a> 
+    </td>
+    <td align="center">
       <a href="https://yandex.ru/games/app/206024?utm_source=game_popup_menu">
         Башенки Смерти
         <img src="https://github.com/user-attachments/assets/70fc55a0-c911-49f8-ba75-f503437f087f" alt="screenshot">
       </a> 
-    </td>
-    <td align="center">
-        _____________
-        <img tabindex="-1" src="https://github.com/user-attachments/assets/3fa1ca6d-29f6-43e6-aafe-cc9648d20490" alt="screenshot">
     </td>
   </tr>
 </table>
