@@ -361,6 +361,8 @@ namespace DCFApixels.DragonECS
                     }
                     _pools = null;
                 }
+                _componentIDsBuffer = null;
+                _componentsBuffer = null;
                 _worlds[ID] = null;
                 ReleaseData(ID);
                 _worldIdDispenser.Release(ID);
@@ -1592,16 +1594,14 @@ namespace DCFApixels.DragonECS
 
         public event EntityMetaChangedHandler EntityMetaChanged = delegate { };
 
-        [ThreadStatic]
-        private static int[] _componentIDsBuffer;
-        [ThreadStatic]
-        private static object[] _componentsBuffer;
+        private int[] _componentIDsBuffer;
+        private object[] _componentsBuffer;
 
         /// <summary>
-        /// Return a readonly span of component type ids attached to the given entity. Backed by a thread-static buffer.
+        /// Return a readonly span of component type ids attached to the given entity. Backed by this world's temporary buffer.
         /// </summary>
         /// <param name="entityID">Entity id to query.</param>
-        /// <returns>ReadOnlySpan of component type ids currently attached to the entity.</returns>
+        /// <returns>ReadOnlySpan of component type ids currently attached to the entity; may be overwritten by the next component-inspection call on this world.</returns>
         public ReadOnlySpan<int> GetComponentTypeIDsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
@@ -1686,10 +1686,10 @@ namespace DCFApixels.DragonECS
             }
         }
         /// <summary>
-        /// Return a readonly span of raw component objects attached to the specified entity. Uses a thread-static buffer.
+        /// Return a readonly span of raw component objects attached to the specified entity. Backed by this world's temporary buffer.
         /// </summary>
         /// <param name="entityID">Entity id to query.</param>
-        /// <returns>ReadOnlySpan of raw component objects for the entity.</returns>
+        /// <returns>ReadOnlySpan of raw component objects for the entity; may be overwritten by the next component-inspection call on this world.</returns>
         public ReadOnlySpan<object> GetComponentsFor(int entityID)
         {
             int count = GetComponentTypeIDsFor_Internal(entityID, ref _componentIDsBuffer);
