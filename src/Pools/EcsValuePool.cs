@@ -258,7 +258,7 @@ namespace DCFApixels.DragonECS
                 if (itemIndex >= _itemsLength)
                 {
                     var oldCapacity = _itemsLength;
-                    var capacity = ArrayUtility.NextPow2(itemIndex + 1);
+                    var capacity = ArrayUtility.NextPow2(itemIndex);
                     _itemsLength = capacity;
 
                     _itemsHandler = Realloc(_itemsHandler, capacity);
@@ -425,17 +425,31 @@ namespace DCFApixels.DragonECS
             if (_isLocked) { return; }
 #endif
             _recycledItemsCount = 0; // спереди чтобы обнулялось, так как Del не обнуляет
-            if (_itemsCount <= 0) { return; }
-            var span = _registrar.World.Where(out SinglePoolAspect<EcsValuePool<T>> _);
+            if (_itemsCount <= 0)
+            {
+                _usedBlockCount = 0;
+                _isDensified = true;
+                return;
+            }
+            var span = _registrar.World.Where(_staticMask);
+#if DRAGONECS_DEEP_DEBUG
+            if (span.Count != _itemsCount)
+            {
+                Throw.DeepDebugException();
+            }
+#endif
             foreach (var entityID in span)
             {
                 ref int itemIndex = ref _mapping[entityID];
-                EcsComponentLifecycle<T>.OnDel(_isCustomLifecycle, _customLifecycle, ref ((T*)_items)[itemIndex], _registrar.WorldID, entityID);
+                InvokeOnDel(entityID, itemIndex);
+                _itemEntites.ptr[itemIndex] = 0;
                 itemIndex = 0;
                 _registrar.UnregisterComponent(entityID);
             }
             _itemsCount = 0;
+            _usedBlockCount = 0;
             _recycledItemsCount = 0;
+            _isDensified = true;
         }
         private void Densify()
         {
