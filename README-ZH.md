@@ -1236,8 +1236,10 @@ public struct WorldComponent : IEcsWorldComponent<WorldComponent>
       </a> 
     </td>
     <td align="center">
-        _____________
-        <img tabindex="-1" src="https://github.com/user-attachments/assets/3fa1ca6d-29f6-43e6-aafe-cc9648d20490" alt="screenshot">
+      <a href="https://github.com/DCFApixels/asteroids">
+        Asteroids
+        <img src="https://github.com/user-attachments/assets/8697c817-8510-4c4e-b035-8097acddb499" alt="screenshot">
+      </a> 
     </td>
   </tr>
 </table>
