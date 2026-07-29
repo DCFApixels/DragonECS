@@ -240,7 +240,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 #if DEBUG
             if (handledPtr == null)
             {
-                throw new ArgumentNullException();
+                Throw.MemoryAllocator_HandledPointerIsNull();
             }
             lock (_idDispenser)
             {
@@ -343,11 +343,11 @@ namespace DCFApixels.DragonECS.Core.Internal
 #if DEBUG
                 if (totalBytes % sizeof(U) != 0)
                 {
-                    throw new InvalidOperationException($"Cannot cast Memory<{typeof(T).Name}> to Memory<{typeof(U).Name}> because the size of the underlying memory ({totalBytes} bytes) is not a multiple of the size of {typeof(U).Name} ({sizeof(U)} bytes).");
+                    Throw.MemoryAllocator_CannotCast<T, U>(totalBytes);
                 }
                 if (newLengthLong > int.MaxValue)
                 {
-                    throw new InvalidOperationException($"Resulting length ({newLengthLong}) exceeds int.MaxValue.");
+                    Throw.MemoryAllocator_CastLengthExceedsIntMax(newLengthLong);
                 }
 #endif
 
@@ -378,7 +378,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             public Span<T> AsSpan(int length)
             {
 #if DEBUG
-                if (length > Length) { Throw.UndefinedException(); }
+                if (length > Length) { Throw.MemoryAllocator_SpanLengthOutOfRange(length, Length); }
 #endif
                 return new Span<T>(Ptr, length);
             }

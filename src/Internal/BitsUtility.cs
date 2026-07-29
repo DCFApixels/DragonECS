@@ -665,7 +665,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             public bool MoveNext() { return _count-- > 0; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            void IEnumerator.Reset() { throw new NotSupportedException(); }
+            void IEnumerator.Reset() { Throw.BitEnumerator_ResetNotSupported(); }
         }
     }
 
@@ -705,7 +705,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             public bool MoveNext() { return _count-- > 0; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            void IEnumerator.Reset() { throw new NotSupportedException(); }
+            void IEnumerator.Reset() { Throw.BitEnumerator_ResetNotSupported(); }
         }
     }
 
@@ -745,7 +745,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             public bool MoveNext() { return _count-- > 0; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            void IEnumerator.Reset() { throw new NotSupportedException(); }
+            void IEnumerator.Reset() { Throw.BitEnumerator_ResetNotSupported(); }
         }
     }
 
@@ -785,7 +785,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             public bool MoveNext() { return _count-- > 0; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            void IEnumerator.Reset() { throw new NotSupportedException(); }
+            void IEnumerator.Reset() { Throw.BitEnumerator_ResetNotSupported(); }
         }
     }
     #endregion

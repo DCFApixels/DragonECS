@@ -267,7 +267,7 @@ namespace DCFApixels.DragonECS
 
             if (hex[0] != '#' && hex.Length != 7 && hex.Length != 9)
             {
-                throw new ArgumentException($"Invalid hex color format: {input}");
+                Throw.MetaColor_InvalidHexFormat(input);
             }
             bool withAlpha = hex.Length != 9;
             hex = hex.TrimStart('#');
@@ -283,7 +283,7 @@ namespace DCFApixels.DragonECS
         {
             int high = HexCharToValue(str[0]);
             int low = HexCharToValue(str[1]);
-            if (high == -1 || low == -1) { throw new ArgumentException($"Invalid hex color format: {input}"); }
+            if (high == -1 || low == -1) { Throw.MetaColor_InvalidHexFormat(input); }
             return (byte)((high << 4) | low);
         }
         private static int HexCharToValue(char c)

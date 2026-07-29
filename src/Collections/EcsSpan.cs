@@ -201,10 +201,10 @@ namespace DCFApixels.DragonECS
 #pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
         [Obsolete("Equals() on EcsSpan will always throw an exception. Use the equality operator instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool Equals(object obj) { throw new NotSupportedException(); }
+        public override bool Equals(object obj) { Throw.EntitySpan_EqualsNotSupported(); return false; }
         [Obsolete("GetHashCode() on EcsSpan will always throw an exception.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override int GetHashCode() { throw new NotSupportedException(); }
+        public override int GetHashCode() { Throw.EntitySpan_GetHashCodeNotSupported(); return 0; }
 #pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
 
         internal class DebuggerProxy
@@ -426,10 +426,10 @@ namespace DCFApixels.DragonECS
 #pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
         [Obsolete("Equals() on EcsLongSpan will always throw an exception. Use the equality operator instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool Equals(object obj) { throw new NotSupportedException(); }
+        public override bool Equals(object obj) { Throw.EntitySpan_EqualsNotSupported(); return false; }
         [Obsolete("GetHashCode() on EcsLongSpan will always throw an exception.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override int GetHashCode() { throw new NotSupportedException(); }
+        public override int GetHashCode() { Throw.EntitySpan_GetHashCodeNotSupported(); return 0; }
 #pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
         #endregion
     }
@@ -521,7 +521,7 @@ namespace DCFApixels.DragonECS.Core
 #if DEBUG
                 if ((uint)index >= (uint)_length || (uint)index < 0)
                 {
-                    ThrowHelper.ThrowIndexOutOfRangeException();
+                    Throw.EntitySpan_IndexOutOfRange();
                 }
 #elif DRAGONECS_STABILITY_MODE
                 return EcsConsts.NULL_ENTITY_ID;
@@ -557,7 +557,7 @@ namespace DCFApixels.DragonECS.Core
         {
             if ((uint)start > (uint)_length)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException();
+                Throw.EntitySpan_SliceOutOfRange();
             }
             return new EcsUnsafeSpan(_worldID, _values, start, _length - start);
         }
@@ -570,7 +570,7 @@ namespace DCFApixels.DragonECS.Core
         {
             if ((uint)start > (uint)_length || (uint)length > (uint)(_length - start))
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException();
+                Throw.EntitySpan_SliceOutOfRange();
             }
             return new EcsUnsafeSpan(_worldID, _values, start, length);
         }
@@ -649,12 +649,6 @@ namespace DCFApixels.DragonECS.Core
         public override int GetHashCode()
         {
             return *_values ^ _length ^ (_worldID << 16);
-        }
-        private static class ThrowHelper
-        {
-            public static void ThrowIndexOutOfRangeException() => throw new IndexOutOfRangeException();
-            public static void ThrowArgumentOutOfRangeException() => throw new ArgumentOutOfRangeException();
-            public static void ThrowInvalidOperationException() => throw new InvalidOperationException();
         }
         #endregion
     }

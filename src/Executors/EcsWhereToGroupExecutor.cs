@@ -120,7 +120,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 }
                 if (_filteredAllGroup.SetEquals(_filteredGroup) == false)
                 {
-                    throw new System.InvalidOperationException();
+                    Throw.WhereToGroupExecutor_CacheMismatch();
                 }
 #endif
             }

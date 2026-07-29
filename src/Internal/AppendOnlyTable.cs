@@ -292,19 +292,19 @@ namespace DCFApixels.DragonECS.Core.Internal
         private const string NotInitializedMessage = "Table is not initialized. Call Initialize before using.";
         private static void ThrowAlreadyInitialized()
         {
-            throw new InvalidOperationException("Table is already initialized. To reinitialize use Reset (if implemented) or restart the application.");
+            Throw.AppendOnlyTable_AlreadyInitialized();
         }
         private static void ThrowInvalidCapacity(int capacity)
         {
-            throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "Initial capacity must be greater than 0.");
+            Throw.ArgumentOutOfRange(nameof(capacity), capacity, "Initial capacity must be greater than 0.");
         }
         private static void ThrowKeyAlreadyExists(TKey key)
         {
-            throw new ArgumentException($"An element with the key '{key}' already exists.");
+            Throw.AppendOnlyTable_KeyAlreadyExists(key);
         }
         private static void ThrowKeyNotFound(TKey key)
         {
-            throw new KeyNotFoundException($"The key '{key}' was not found in the dictionary.");
+            Throw.KeyNotFoundException(key);
         }
         //private static void ThrowVersionChanged()
         //{

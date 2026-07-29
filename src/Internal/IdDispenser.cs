@@ -314,17 +314,17 @@ namespace DCFApixels.DragonECS.Core.Internal
         private static class ThrowHalper
         {
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsAlreadyInUse(int id) { throw new ArgumentException($"Id {id} is already in use."); }
+            public static void ThrowIsAlreadyInUse(int id) { Throw.IdDispenser_IsAlreadyInUse(id); }
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsHasBeenReserved(int id) { throw new ArgumentException($"Id {id} has been reserved."); }
+            public static void ThrowIsHasBeenReserved(int id) { Throw.IdDispenser_IsHasBeenReserved(id); }
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsNotUsed(int id) { throw new ArgumentException($"Id {id} is not used."); }
+            public static void ThrowIsNotUsed(int id) { Throw.IdDispenser_IsNotUsed(id); }
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsNotAvailable(int id) { throw new ArgumentException($"Id {id} is not available."); }
+            public static void ThrowIsNotAvailable(int id) { Throw.IdDispenser_IsNotAvailable(id); }
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void ThrowIsNullID(int id) { throw new ArgumentException($"Id {id} cannot be released because it is used as a null id."); }
+            public static void ThrowIsNullID(int id) { Throw.IdDispenser_IsNullID(id); }
             [MethodImpl(MethodImplOptions.NoInlining)]
-            public static void UndefinedException() { throw new Exception(); }
+            public static void UndefinedException() { Throw.UndefinedException(); }
         }
 
         private class DebuggerProxy

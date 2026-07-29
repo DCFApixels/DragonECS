@@ -65,7 +65,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         public void Add(int key, TValue value)
         {
 #if DEBUG
-            if (Contains(key)) { throw new ArgumentException("Contains(hashKey) is true"); }
+            if (Contains(key)) { Throw.SparseArray_KeyAlreadyExists(key); }
 #endif
             Insert(key, value);
         }

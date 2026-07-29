@@ -62,7 +62,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            void IEnumerator.Reset() { throw new NotSupportedException(); }
+            void IEnumerator.Reset() { Throw.ArrayEnumerator_ResetNotSupported(); }
         }
     }
     internal readonly struct LinkedListIterator<T> : IEnumerable<T>
@@ -265,7 +265,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             public bool MoveNext() { return ++_current < _max; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            void IEnumerator.Reset() { throw new NotSupportedException(); }
+            void IEnumerator.Reset() { Throw.ArrayEnumerator_ResetNotSupported(); }
 
         }
     }

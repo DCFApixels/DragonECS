@@ -146,7 +146,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             public bool MoveNext() { return ++_index < _length; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            void IEnumerator.Reset() { throw new NotSupportedException(); }
+            void IEnumerator.Reset() { Throw.UnsafeArrayEnumerator_ResetNotSupported(); }
         }
 
         internal class DebuggerProxy

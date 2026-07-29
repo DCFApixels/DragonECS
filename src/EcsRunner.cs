@@ -50,12 +50,12 @@ namespace DCFApixels.DragonECS
                 Type baseTypeArgument = baseType.GenericTypeArguments[0];
                 if (baseTypeArgument != targetInterface)
                 {
-                    Throw.UndefinedException();
+                    Throw.Implementation_RunnerImplementationRulesViolation(runnerType, targetInterface, baseTypeArgument);
                 }
 
                 if (!runnerType.GetInterfaces().Any(o => o == targetInterface))
                 {
-                    throw new ImplementationException($"Runner {GetGenericTypeFullName(runnerType, 1)} does not implement interface {GetGenericTypeFullName(baseTypeArgument, 1)}.");
+                    Throw.Implementation_RunnerDoesNotImplementInterface(runnerType, baseTypeArgument);
                 }
 #pragma warning restore IL2070 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.
 #endif

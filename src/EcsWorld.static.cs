@@ -300,7 +300,7 @@ namespace DCFApixels.DragonECS
 #if DEBUG && DRAGONECS_DEEP_DEBUG
                     if (itemIndex >= _worlds.Length)
                     {
-                        Throw.UndefinedException();
+                        Throw.DeepDebugException();
                     }
 #endif
                     if (itemIndex != 0)

@@ -78,7 +78,7 @@ namespace DCFApixels.DragonECS
             if (result != _nullPool)
             {
 #if DEBUG
-                if (result.ComponentTypeID != componentTypeID) { Throw.UndefinedException(); }
+                if (result.ComponentTypeID != componentTypeID) { Throw.Pool_ComponentTypeIDMismatch(result, componentTypeID, result.ComponentTypeID); }
 #endif
                 return result;
             }

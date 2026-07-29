@@ -702,12 +702,12 @@ namespace DCFApixels.DragonECS
 #if DEBUG
         private static void CheckConstraints(EcsTypeCode[] incs, EcsTypeCode[] excs, EcsTypeCode[] anys)
         {
-            if (CheckRepeats(incs)) { throw new ArgumentException("The values in the Include constraints are repeated."); }
-            if (CheckRepeats(excs)) { throw new ArgumentException("The values in the Exclude constraints are repeated."); }
-            if (CheckRepeats(anys)) { throw new ArgumentException("The values in the Any constraints are repeated."); }
-            if (OverlapsArray(incs, excs)) { throw new ArgumentException("Conflicting Include and Exclude constraints."); }
-            if (OverlapsArray(incs, anys)) { throw new ArgumentException("Conflicting Include and Any constraints."); }
-            if (OverlapsArray(anys, excs)) { throw new ArgumentException("Conflicting Any and Exclude constraints."); }
+            if (CheckRepeats(incs)) { Throw.StaticMask_HasRepeatedConstraints("Include"); }
+            if (CheckRepeats(excs)) { Throw.StaticMask_HasRepeatedConstraints("Exclude"); }
+            if (CheckRepeats(anys)) { Throw.StaticMask_HasRepeatedConstraints("Any"); }
+            if (OverlapsArray(incs, excs)) { Throw.StaticMask_HasConflictingConstraints("Include", "Exclude"); }
+            if (OverlapsArray(incs, anys)) { Throw.StaticMask_HasConflictingConstraints("Include", "Any"); }
+            if (OverlapsArray(anys, excs)) { Throw.StaticMask_HasConflictingConstraints("Any", "Exclude"); }
         }
         private static bool CheckRepeats(EcsTypeCode[] array)
         {

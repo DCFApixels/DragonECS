@@ -60,17 +60,17 @@ namespace DCFApixels.DragonECS.Core
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowDifferentTypes()
         {
-            throw new ArgumentException($"The component instance type and the pool component type are different.");
+            Throw.Pool_DifferentComponentTypes();
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowAlreadyHasComponent<T>(int entityID)
         {
-            throw new ArgumentException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName<T>()}.");
+            Throw.Pool_AlreadyHasComponent<T>(entityID);
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNotHaveComponent<T>(int entityID)
         {
-            throw new ArgumentException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName<T>()}.");
+            Throw.Pool_DoesNotHaveComponent<T>(entityID);
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowEntityIsNotAlive(EcsWorld world, int entityID)
@@ -80,27 +80,27 @@ namespace DCFApixels.DragonECS.Core
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowAlreadyHasComponent(Type type, int entityID)
         {
-            throw new ArgumentException($"Entity({entityID}) already has component {EcsDebugUtility.GetGenericTypeName(type)}.");
+            Throw.Pool_AlreadyHasComponent(type, entityID);
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNotHaveComponent(Type type, int entityID)
         {
-            throw new ArgumentException($"Entity({entityID}) has no component {EcsDebugUtility.GetGenericTypeName(type)}.");
+            Throw.Pool_DoesNotHaveComponent(type, entityID);
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNullListener()
         {
-            throw new ArgumentNullException("Listener is null");
+            Throw.ArgumentNull("listener", "Listener cannot be null.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNullComponent()
         {
-            throw new ArgumentNullException("Component is null");
+            Throw.ArgumentNull("component", "Component cannot be null.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowPoolLocked()
         {
-            throw new InvalidOperationException("The pool is currently locked and cannot add or remove components.");
+            Throw.Pool_IsLocked();
         }
     }
     #endregion
@@ -126,7 +126,8 @@ namespace DCFApixels.DragonECS.Core.Internal
             get
             {
 #if DEBUG
-                throw new NullInstanceException();
+                Throw.NullInstanceException("Attempted to access World on EcsNullPool placeholder instance.");
+                return EcsWorld.GetWorld(0);
 #else
                 return EcsWorld.GetWorld(0);
 #endif
@@ -144,25 +145,26 @@ namespace DCFApixels.DragonECS.Core.Internal
         void IEcsPool.Del(int entityID)
         {
 #if DEBUG
-            throw new NullInstanceException();
+            Throw.NullInstanceException("Attempted to delete a component from EcsNullPool placeholder instance.");
 #endif
         }
         void IEcsPool.AddEmpty(int entityID)
         {
 #if DEBUG
-            throw new NullInstanceException();
+            Throw.NullInstanceException("Attempted to add an empty component to EcsNullPool placeholder instance.");
 #endif
         }
         void IEcsPool.AddRaw(int entityID, object dataRaw)
         {
 #if DEBUG
-            throw new NullInstanceException();
+            Throw.NullInstanceException("Attempted to add raw component data to EcsNullPool placeholder instance.");
 #endif
         }
         object IEcsReadonlyPool.GetRaw(int entityID)
         {
 #if DEBUG
-            throw new NullInstanceException();
+            Throw.NullInstanceException("Attempted to get raw component data from EcsNullPool placeholder instance.");
+            return null;
 #else
             return null;
 #endif
@@ -170,25 +172,25 @@ namespace DCFApixels.DragonECS.Core.Internal
         void IEcsPool.SetRaw(int entity, object dataRaw)
         {
 #if DEBUG
-            throw new NullInstanceException();
+            Throw.NullInstanceException("Attempted to set raw component data on EcsNullPool placeholder instance.");
 #endif
         }
         void IEcsPool.Copy(int fromEntityID, int toEntityID)
         {
 #if DEBUG
-            throw new NullInstanceException();
+            Throw.NullInstanceException("Attempted to copy a component from EcsNullPool placeholder instance.");
 #endif
         }
         void IEcsPool.Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if DEBUG
-            throw new NullInstanceException();
+            Throw.NullInstanceException("Attempted to copy a component from EcsNullPool placeholder instance to another world.");
 #endif
         }
         void IEcsPool.ClearAll()
         {
 #if DEBUG
-            throw new NullInstanceException();
+            Throw.NullInstanceException("Attempted to clear EcsNullPool placeholder instance.");
 #endif
         }
         #endregion

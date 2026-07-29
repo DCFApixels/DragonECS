@@ -158,7 +158,8 @@ namespace DCFApixels.DragonECS
             {
                 return node.CurrentInjectedDependencyRaw;
             }
-            throw new InjectionException($"The injection graph is missing a node for {type.Name} type. To create a node, use the Injector.AddNode<{type.Name}>() method directly in the injector or in the implementation of the IInjectionUnit for {type.Name}.");
+            Throw.Injection_NodeNotFound(type);
+            return null;
         }
         /// <summary>
         /// Add a node for type T to the injector if absent.
@@ -234,7 +235,7 @@ namespace DCFApixels.DragonECS
                         return;
                     }
                 }
-                Throw.UndefinedException();
+                Throw.Injection_ExtractNotFound(type);
             }
             public void MergeWith(InjectionList other)
             {
@@ -295,7 +296,7 @@ namespace DCFApixels.DragonECS
                 {
                     foreach (var requiredInjectionType in requiredInjectionTypes)
                     {
-                        throw new InjectionException($"A systems in the pipeline implements IEcsInject<{requiredInjectionType.Name}> interface, but no suitable injection node was found in the Injector. To create a node, use Injector.AddNode<{requiredInjectionType.Name}>() or implement the IInjectionUnit interface for the type being injected.");
+                        Throw.Injection_RequiredNodeNotFound(requiredInjectionType);
                     }
                 }
 #endif

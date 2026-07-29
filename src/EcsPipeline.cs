@@ -416,7 +416,15 @@ namespace DCFApixels.DragonECS
         public abstract void Import(EcsPipeline.Builder b);
         void IInjectionUnit.InitInjectionNode(InjectionGraph nodes) { nodes.AddNode<T>(); }
         /// <summary>Initializes a new instance of the module.</summary>
-        public EcsModule() { if (GetType() != typeof(T)) { Throw.UndefinedException(); } }
+        public EcsModule()
+        {
+            Type actualType = GetType();
+            Type expectedType = typeof(T);
+            if (actualType != expectedType)
+            {
+                Throw.Module_GenericTypeMismatch(actualType, expectedType);
+            }
+        }
     }
     #endregion
 

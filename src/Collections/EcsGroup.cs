@@ -410,10 +410,10 @@ namespace DCFApixels.DragonECS
 #pragma warning disable CS0809 // Устаревший член переопределяет неустаревший член
         [Obsolete("Equals() on EcsGroup will always throw an exception. Use the equality operator instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool Equals(object obj) { throw new NotSupportedException(); }
+        public override bool Equals(object obj) { Throw.EcsReadonlyGroup_EqualsNotSupported(); return false; }
         [Obsolete("GetHashCode() on EcsGroup will always throw an exception.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override int GetHashCode() { throw new NotSupportedException(); }
+        public override int GetHashCode() { Throw.EcsReadonlyGroup_GetHashCodeNotSupported(); return 0; }
 #pragma warning restore CS0809 // Устаревший член переопределяет неустаревший член
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator EcsSpan(EcsReadonlyGroup a) { return a.ToSpan(); }
@@ -2162,7 +2162,7 @@ namespace DCFApixels.DragonECS
             public bool MoveNext() { return --_index > 0; }  // проверка с учтом что отсчет начинается с индекса 1 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
-            void IEnumerator.Reset() { throw new NotSupportedException(); }
+            void IEnumerator.Reset() { Throw.EcsGroupEnumerator_ResetNotSupported(); }
         }
         #endregion
 

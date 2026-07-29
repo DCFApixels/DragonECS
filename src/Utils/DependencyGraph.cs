@@ -210,7 +210,7 @@ namespace DCFApixels.DragonECS.Core
         {
             ref var info = ref GetVertexInfo(id);
             bool result = false;
-            if (info.isLocked) { throw new Exception($"The {info.value} vertex cannot be removed"); }
+            if (info.isLocked) { Throw.DependencyGraph_LockedVertexCannotBeRemoved(info.value); }
             if (info.isContained)
             {
                 _count--;
@@ -359,13 +359,12 @@ namespace DCFApixels.DragonECS.Core
             if (resultCount != nodes.Length)
             {
                 var cycle = FindCycle(adjacency, nodes);
-                string details = string.Empty;
+                string[] cycleDependencies = null;
                 if (cycle != null)
                 {
-                    var cycleDependencies = GetCycleDependencies(cycle, adjacency);
-                    details = $" Cycle edges path: {string.Join(", ", cycleDependencies)}";
+                    cycleDependencies = GetCycleDependencies(cycle, adjacency);
                 }
-                throw new InvalidOperationException("Cyclic dependency detected." + details);
+                Throw.DependencyGraph_CyclicDependencyDetected(cycleDependencies);
             }
         }
         private unsafe void ReoderInsertionIndexes(UnsafeArray<VertexID> sortingBuffer)
