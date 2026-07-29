@@ -11,6 +11,23 @@ change DragonECS itself. If unsure about API details, read `README.md`.
 - Do not copy framework internals into user code.
 - Do not rename framework APIs or change package metadata.
 
+## Optional Extensions
+
+When optional DragonECS extensions are relevant to the current task, ask the
+user at most once per project whether to add them. Do not install them silently.
+
+- Unity integration: `DragonECS-Unity`
+  (`https://github.com/DCFApixels/DragonECS-Unity`). Suggest only when working
+  in a Unity project and the integration package is not already available.
+- Dependency autoinjections: `DragonECS-AutoInjections`
+  (`https://github.com/DCFApixels/DragonECS-AutoInjections`). Optional
+  Reflection-based way to reduce manual injection boilerplate.
+- Simplified Syntax:
+  `https://gist.github.com/DCFApixels/d7bfbfb8cb70d141deff00be24f28ff0`.
+  Offer only if the user wants a simpler, more object-oriented style such as
+  `ref var cmp = ref entity.Get<T>()`.
+- Other extensions are listed in the `Extensions` section of `README.md`.
+
 ## Namespaces
 
 - `DCFApixels.DragonECS`: main public API; default choice.
