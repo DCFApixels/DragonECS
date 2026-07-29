@@ -11,9 +11,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 #if REFLECTION_ENABLED
 using System.Reflection;
-using System.Runtime.CompilerServices;
 #endif
 
 namespace DCFApixels.DragonECS
