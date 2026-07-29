@@ -88,32 +88,11 @@ namespace DCFApixels.DragonECS.Core.Internal
     internal readonly struct EcsTypeCodeKey : IEquatable<EcsTypeCodeKey>
     {
         public readonly Type Type;
-        public readonly string NameKey;
-        public EcsTypeCodeKey(Type type, string nameKey)
-        {
-            Type = type;
-            NameKey = nameKey;
-        }
-        public bool Equals(EcsTypeCodeKey other)
-        {
-            return Type == other.Type && NameKey == other.NameKey;
-        }
-        public override bool Equals(object obj)
-        {
-            return obj is EcsTypeCodeKey other && Equals(other);
-        }
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Type, NameKey);
-        }
-        public override string ToString()
-        {
-            if (string.IsNullOrEmpty(NameKey))
-            {
-                return Type.ToString();
-            }
-            return $"{Type} {NameKey}";
-        }
-        public static implicit operator EcsTypeCodeKey(Type type) { return new EcsTypeCodeKey(type, string.Empty); }
+        public EcsTypeCodeKey(Type type) { Type = type; }
+        public bool Equals(EcsTypeCodeKey other) { return Type == other.Type; }
+        public override bool Equals(object obj) { return obj is EcsTypeCodeKey other && Equals(other); }
+        public override int GetHashCode() { return Type == null ? 0 : Type.GetHashCode(); }
+        public override string ToString() { return Type == null ? string.Empty : Type.ToString(); }
+        public static implicit operator EcsTypeCodeKey(Type type) { return new EcsTypeCodeKey(type); }
     }
 }
