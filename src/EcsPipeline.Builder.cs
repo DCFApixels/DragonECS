@@ -41,7 +41,7 @@ namespace DCFApixels.DragonECS
             private int _freeNodesCount = 0;
 
             private readonly Dictionary<string, LayerSystemsList> _layerLists = new Dictionary<string, LayerSystemsList>(8);
-            private readonly StructList<InitDeclaredRunner> _initDeclaredRunners = new StructList<InitDeclaredRunner>(4);
+            private StructList<InitDeclaredRunner> _initDeclaredRunners = new StructList<InitDeclaredRunner>(4);
 
             /// <summary>Provides access to layer management for the pipeline being built.</summary>
             public readonly LayersMap Layers;
