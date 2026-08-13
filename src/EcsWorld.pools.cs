@@ -284,7 +284,7 @@ namespace DCFApixels.DragonECS
                 }
 
                 Type componentType = newPool.ComponentType;
-#if DEBUG //проверка соответсвия типов
+#if DEBUG //проверка соответствия типов
 #pragma warning disable IL2090 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.
                 if (componentType != newPool.GetType().GetInterfaces()
                     .First(o => o.IsGenericType && o.GetGenericTypeDefinition() == typeof(IEcsPoolImplementation<>))
@@ -344,7 +344,7 @@ namespace DCFApixels.DragonECS
 
                 if (oldPool != _nullPool)
                 {
-                    Throw.Exception("Attempt to initialize a pool with the indetifier of an already existing pool.");
+                    Throw.Exception("Attempt to initialize a pool with the identifier of an already existing pool.");
                 }
 
                 _pools[componentTypeID] = newPool;

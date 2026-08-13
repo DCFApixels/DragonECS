@@ -100,7 +100,7 @@ namespace DCFApixels.DragonECS
         private const int COMPONENT_MASK_CHUNK_SIZE = 32;
 
         //"лениво" обновляется только для NewEntity
-        private long _deleteLeakedEntitesLastVersion = 0;
+        private long _deleteLeakedEntitiesLastVersion = 0;
         //обновляется в NewEntity и в DelEntity
         private long _version = 0;
 
@@ -1045,7 +1045,7 @@ namespace DCFApixels.DragonECS
         #region Leaked
         public bool DeleteLeakedEntites()
         {
-            if (_deleteLeakedEntitesLastVersion == _version)
+            if (_deleteLeakedEntitiesLastVersion == _version)
             {
                 return false;
             }
@@ -1065,12 +1065,12 @@ namespace DCFApixels.DragonECS
                 EcsDebug.PrintWarning($"Detected and deleted {delCount} leaking entities.");
             }
 #endif
-            _deleteLeakedEntitesLastVersion = _version;
+            _deleteLeakedEntitiesLastVersion = _version;
             return delCount > 0;
         }
         public int CountLeakedEntitesDebug()
         {
-            if (_deleteLeakedEntitesLastVersion == _version)
+            if (_deleteLeakedEntitiesLastVersion == _version)
             {
                 return 0;
             }
@@ -1380,16 +1380,16 @@ namespace DCFApixels.DragonECS
 
             count = Math.Max(0, Math.Min(count, _delEntBufferCount));
             _delEntBufferCount -= count;
-            int slisedCount = count;
+            int slicedCount = count;
 
-            for (int i = 0; i < slisedCount; i++)
+            for (int i = 0; i < slicedCount; i++)
             {
                 int e = _delEntBuffer[i];
                 if (_entities[e].componentsCount <= 0)
                 {
                     int tmp = _delEntBuffer[i];
-                    _delEntBuffer[i] = _delEntBuffer[--slisedCount];
-                    _delEntBuffer[slisedCount] = tmp;
+                    _delEntBuffer[i] = _delEntBuffer[--slicedCount];
+                    _delEntBuffer[slicedCount] = tmp;
                     i--;
                 }
             }
@@ -1397,12 +1397,12 @@ namespace DCFApixels.DragonECS
             //если фулл очистка то _delEntBufferCount будет 0
 
             ReadOnlySpan<int> fullBuffer = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);
-            if (slisedCount > 0)
+            if (slicedCount > 0)
             {
-                ReadOnlySpan<int> bufferSlised = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, slisedCount);
+                ReadOnlySpan<int> bufferSliced = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, slicedCount);
                 for (int i = 0; i < _poolsCount; i++)
                 {
-                    _pools[i].OnReleaseDelEntityBuffer(bufferSlised);
+                    _pools[i].OnReleaseDelEntityBuffer(bufferSliced);
                 }
             }
             for (int i = 0; i < _groups.Count; i++)
@@ -1536,7 +1536,7 @@ namespace DCFApixels.DragonECS
             unchecked
             {
                 _version++;
-                _deleteLeakedEntitesLastVersion++;
+                _deleteLeakedEntitiesLastVersion++;
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1739,8 +1739,8 @@ namespace DCFApixels.DragonECS
             const int LO_CHANK_HALF = 65535;
             const int HI_CHANK_HALF = -65536;
             const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
-            // проверка на itemsCount <= 0 не обяательна, алгоритм не ломается,
-            // только впустую отрабатыват по всем чанкам,
+            // проверка на itemsCount <= 0 не обязательна, алгоритм не ломается,
+            // только впустую отрабатывает по всем чанкам,
             // но как правильно для пустых сущностей этот алгоритм не применим.
             int poolIndex = 0;
             int bit;
@@ -1807,8 +1807,8 @@ namespace DCFApixels.DragonECS
             const int LO_CHANK_HALF = 65535;
             const int HI_CHANK_HALF = -65536;
             const int COMPONENT_MASK_CHUNK_SIZE_HALF = COMPONENT_MASK_CHUNK_SIZE / 2;
-            // проверка на itemsCount <= 0 не обяательна, алгоритм не ломается,
-            // только впустую отрабатыват по всем чанкам,
+            // проверка на itemsCount <= 0 не обязательна, алгоритм не ломается,
+            // только впустую отрабатывает по всем чанкам,
             // но как правильно для пустых сущностей этот алгоритм не применим.
             int poolIndex = 0;
             int bit;

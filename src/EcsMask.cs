@@ -183,19 +183,19 @@ namespace DCFApixels.DragonECS
             int resultLength = 0;
             for (int i = 0; i < sortedArray.Length;)
             {
-                int chankIndexX = sortedArray[i] >> EcsMaskChunck.DIV_SHIFT;
+                int chunkIndexX = sortedArray[i] >> EcsMaskChunck.DIV_SHIFT;
                 int maskX = 0;
                 do
                 {
                     EcsMaskChunck bitJ = EcsMaskChunck.FromID(sortedArray[i]);
-                    if (bitJ.chunkIndex != chankIndexX)
+                    if (bitJ.chunkIndex != chunkIndexX)
                     {
                         break;
                     }
                     maskX |= bitJ.mask;
                     i++;
                 } while (i < sortedArray.Length);
-                buffer[resultLength++] = new EcsMaskChunck(chankIndexX, maskX);
+                buffer[resultLength++] = new EcsMaskChunck(chunkIndexX, maskX);
             }
 
             EcsMaskChunck[] result = new EcsMaskChunck[resultLength];
@@ -881,7 +881,7 @@ namespace DCFApixels.DragonECS
 
             EcsWorld.PoolSlot[] counts = World._poolSlots;
             int maxBufferSize = Math.Max(Math.Max(sortIncBuffer.Length, sortExcBuffer.Length), sortAnyBuffer.Length);
-            int maxEntites = int.MaxValue;
+            int maxEntities = int.MaxValue;
 
             EcsMaskChunck* preSortingBuffer;
             if (maxBufferSize < STACK_BUFFER_THRESHOLD)
@@ -901,8 +901,8 @@ namespace DCFApixels.DragonECS
             }
             if (_sortIncChunckBuffer.Length > 0)
             {
-                maxEntites = counts[_sortIncBuffer.ptr[0]].count;
-                if (maxEntites <= 0)
+                maxEntities = counts[_sortIncBuffer.ptr[0]].count;
+                if (maxEntities <= 0)
                 {
                     return 0;
                 }
@@ -913,9 +913,9 @@ namespace DCFApixels.DragonECS
                 SortHalper.Sort(sortExcBuffer.AsSpan(), new ExcCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortExcBuffer, _sortExcChunckBuffer);
             }
-            // Выражение IncCount < (AllEntitesCount - ExcCount) мало вероятно будет истинным.
+            // Выражение IncCount < (AllEntitiesCount - ExcCount) мало вероятно будет истинным.
             // ExcCount = максимальное количество ентитей с исключеющим ограничением и IncCount = минимальоне количество ентитей с включающим ограничением
-            // Поэтому исключающее ограничение игнорируется для maxEntites.
+            // Поэтому исключающее ограничение игнорируется для maxEntities.
 
 
             if (_sortAnyChunckBuffer.Length > 1)
@@ -923,9 +923,9 @@ namespace DCFApixels.DragonECS
                 SortHalper.Sort(sortAnyBuffer.AsSpan(), new ExcCountComparer(counts));
                 ConvertToChuncks(preSortingBuffer, sortAnyBuffer, _sortAnyChunckBuffer);
             }
-            // Any не влияет на maxEntites если есть Inc и сложно высчитывается если нет Inc
+            // Any не влияет на maxEntities если есть Inc и сложно высчитывается если нет Inc
 
-            return maxEntites;
+            return maxEntities;
         }
         private unsafe bool TryGetEntityStorage(out IEntityStorage storage, out IEcsPool pool)
         {

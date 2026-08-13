@@ -64,12 +64,12 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void Pipeline_MethodCalledAfterInitialisation(string methodName)
+        internal static void Pipeline_MethodCalledAfterInitialization(string methodName)
         {
             throw new InvalidOperationException($"It is forbidden to call {methodName}, after initialization {nameof(EcsPipeline)}.");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void Pipeline_MethodCalledBeforeInitialisation(string methodName)
+        internal static void Pipeline_MethodCalledBeforeInitialization(string methodName)
         {
             throw new InvalidOperationException($"It is forbidden to call {methodName}, before initialization {nameof(EcsPipeline)}.");
         }
@@ -139,7 +139,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void Quiery_ArgumentDifferentWorldsException()
+        internal static void Query_ArgumentDifferentWorldsException()
         {
             ArgumentDifferentWorldsException();
         }

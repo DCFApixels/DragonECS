@@ -121,7 +121,7 @@ namespace DCFApixels.DragonECS
         private EcsRunRunner _runRunnerCache;
 
         private bool _isInit = false;
-        private bool _isDestoryed = false;
+        private bool _isDestroyed = false;
 
 #if DEBUG
         private static EcsProfilerMarker _initMarker = new EcsProfilerMarker("EcsPipeline.Init");
@@ -173,7 +173,7 @@ namespace DCFApixels.DragonECS
         /// </summary>
         public bool IsDestroyed
         {
-            get { return _isDestoryed; }
+            get { return _isDestroyed; }
         }
         #endregion
 
@@ -219,7 +219,7 @@ namespace DCFApixels.DragonECS
         }
         ~EcsPipeline()
         {
-            if (_isDestoryed) { return; }
+            if (_isDestroyed) { return; }
             if (_isInit == false) { Init(); }
             Destroy();
         }
@@ -356,8 +356,8 @@ namespace DCFApixels.DragonECS
         public void Run()
         {
 #if DEBUG || DRAGONECS_STABILITY_MODE
-            if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Run)); }
-            if (_isDestoryed) { Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run)); }
+            if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialization(nameof(Run)); }
+            if (_isDestroyed) { Throw.Pipeline_MethodCalledAfterDestruction(nameof(Run)); }
 #endif
             _runRunnerCache.Run();
         }
@@ -366,14 +366,14 @@ namespace DCFApixels.DragonECS
         public void Destroy()
         {
 #if DEBUG || DRAGONECS_STABILITY_MODE
-            if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialisation(nameof(Destroy)); }
+            if (!_isInit) { Throw.Pipeline_MethodCalledBeforeInitialization(nameof(Destroy)); }
 #endif
-            if (_isDestoryed)
+            if (_isDestroyed)
             {
                 EcsDebug.PrintWarning($"This {nameof(EcsPipeline)} has already been destroyed");
                 return;
             }
-            _isDestoryed = true;
+            _isDestroyed = true;
             GetRunnerInstance<EcsDestroyRunner>().Destroy();
         }
         #endregion

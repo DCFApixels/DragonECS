@@ -103,7 +103,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 
         #region Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Execute_Iternal()
+        private void Execute_Internal()
         {
             World.ReleaseDelEntityBufferAllAuto();
             if (_versionsChecker.CheckAndNext() == false)
@@ -113,11 +113,11 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ExecuteFor_Iternal(EcsSpan span)
+        private void ExecuteFor_Internal(EcsSpan span)
         {
 #if DEBUG
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
-            if (span.WorldID != World.ID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
+            if (span.WorldID != World.ID) { Throw.Query_ArgumentDifferentWorldsException(); }
 #elif DRAGONECS_STABILITY_MODE
             if (span.IsNull) { _filteredEntitiesCount = 0; }
             if (span.WorldID != World.ID) { _filteredEntitiesCount = 0; }
@@ -140,7 +140,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsUnsafeSpan Execute()
         {
-            Execute_Iternal();
+            Execute_Internal();
 #if DEBUG && DRAGONECS_DEEP_DEBUG
             var result = new EcsUnsafeSpan(World.ID, _filteredAllEntities.Ptr, _filteredAllEntitiesCount);
             using (EcsGroup group = EcsGroup.New(World))
@@ -183,7 +183,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 return Execute();
             }
-            ExecuteFor_Iternal(span);
+            ExecuteFor_Internal(span);
 #if DEBUG && DRAGONECS_DEEP_DEBUG
             var result = new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount);
             foreach (var e in result)
@@ -210,7 +210,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsUnsafeSpan Execute(Comparison<int> comparison)
         {
-            Execute_Iternal();
+            Execute_Internal();
             SortHalper.Sort(_filteredAllEntities.AsSpan(_filteredAllEntitiesCount), comparison);
             return new EcsUnsafeSpan(World.ID, _filteredAllEntities.Ptr, _filteredAllEntitiesCount);
         }
@@ -235,7 +235,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 return Execute(comparison);
             }
-            ExecuteFor_Iternal(source);
+            ExecuteFor_Internal(source);
             SortHalper.Sort(_filteredEntities.AsSpan(_filteredEntitiesCount), comparison);
             return new EcsUnsafeSpan(World.ID, _filteredEntities.Ptr, _filteredEntitiesCount);
         }

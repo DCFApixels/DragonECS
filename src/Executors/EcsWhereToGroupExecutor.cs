@@ -98,7 +98,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 
         #region Methods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Execute_Iternal()
+        private void Execute_Internal()
         {
             World.ReleaseDelEntityBufferAllAuto();
             if (_versionsChecker.CheckAndNext() == false)
@@ -126,11 +126,11 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ExecuteFor_Iternal(EcsSpan span)
+        private void ExecuteFor_Internal(EcsSpan span)
         {
 #if DEBUG
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
-            if (span.WorldID != World.ID) { Throw.Quiery_ArgumentDifferentWorldsException(); }
+            if (span.WorldID != World.ID) { Throw.Query_ArgumentDifferentWorldsException(); }
 #elif DRAGONECS_STABILITY_MODE
             if (span.IsNull) { _filteredGroup.Clear(); }
             if (span.WorldID != World.ID) { _filteredGroup.Clear(); }
@@ -154,7 +154,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsReadonlyGroup Execute()
         {
-            Execute_Iternal();
+            Execute_Internal();
             return _filteredAllGroup;
         }
 
@@ -175,7 +175,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 return Execute();
             }
-            ExecuteFor_Iternal(span);
+            ExecuteFor_Internal(span);
             return _filteredGroup;
         }
 

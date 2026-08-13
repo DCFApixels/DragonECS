@@ -188,7 +188,7 @@ namespace DCFApixels.DragonECS
                     list = new LayerSystemsList(layer);
                     _layerLists.Add(layer, list);
                 }
-                list.lasyInitSystemsCount++;
+                list.lazyInitSystemsCount++;
             }
             #endregion
 
@@ -292,7 +292,7 @@ namespace DCFApixels.DragonECS
             private void RemoveAt(int prevIndex, int removedNodeIndex)
             {
                 ref var removedeNode = ref _systemNodes[removedNodeIndex];
-                _layerLists[removedeNode.layerName].lasyInitSystemsCount--;
+                _layerLists[removedeNode.layerName].lazyInitSystemsCount--;
                 _systemNodes[prevIndex].next = removedeNode.next;
                 removedeNode = default;
 
@@ -367,14 +367,14 @@ namespace DCFApixels.DragonECS
                     if (Layers.Contains(item.Key))
                     {
                         item.Value.Init();
-                        allSystemsLength += item.Value.lasyInitSystemsCount + 1;
+                        allSystemsLength += item.Value.lazyInitSystemsCount + 1;
                     }
                     else
                     {
-                        basicLayerList.lasyInitSystemsCount += item.Value.lasyInitSystemsCount;
+                        basicLayerList.lazyInitSystemsCount += item.Value.lazyInitSystemsCount;
                     }
                 }
-                allSystemsLength += basicLayerList.lasyInitSystemsCount + 1;
+                allSystemsLength += basicLayerList.lazyInitSystemsCount + 1;
                 basicLayerList.Init();
 
                 foreach (ref readonly SystemNode node in it)
@@ -536,7 +536,7 @@ namespace DCFApixels.DragonECS
             #region LayerSystemsList
             private class LayerSystemsList
             {
-                public int lasyInitSystemsCount = 0;
+                public int lazyInitSystemsCount = 0;
 
                 public Item[] records = null;
                 public int recordsCount = 0;
@@ -556,7 +556,7 @@ namespace DCFApixels.DragonECS
                 {
                     if (IsInit) { Throw.UndefinedException(); }
 
-                    records = new Item[lasyInitSystemsCount + 1];
+                    records = new Item[lazyInitSystemsCount + 1];
                     Add(new SystemsLayerMarkerSystem(_layerName), int.MinValue, false);
                 }
                 public void AddList(LayerSystemsList other)
