@@ -12,14 +12,20 @@
         <Title>DragonECS</Title>
         <Version>1.1.8</Version>
         <Authors>DCFApixels</Authors>
-        <Description>ECS Framework for Game Engines with C# and .Net Platform</Description>
-        <Copyright>DCFApixels</Copyright>
+        <Description>Entity Component System framework for C# game engines and .NET</Description>
+        <Copyright>Copyright © DCFApixels</Copyright>
         <RepositoryUrl>https://github.com/DCFApixels/DragonECS</RepositoryUrl>
-        <PackageLicenseUrl>https://github.com/DCFApixels/DragonECS/blob/main/LICENSE.meta</PackageLicenseUrl>
+        <PackageProjectUrl>https://github.com/DCFApixels/DragonECS</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+        <RepositoryType>git</RepositoryType>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageTags>ecs; gamedev; unity; dragonecs</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
+      <None Include="README.md" Pack="true" PackagePath="" />
+      <None Include="LICENSE.md" Pack="true" PackagePath="" />
       <None Remove="**/*.meta" />
       <None Remove="package.json" />
       <None Remove="DragonECS.asmdef" />
