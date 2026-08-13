@@ -403,7 +403,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID)
         {
-            for (int i = 1; i < self.Count; i++) { self[i].OnGet(entityID); }
+            for (int i = 0; i < self.Count; i++) { self[i].OnGet(entityID); }
         }
         [Conditional("DRAGONECS_ENABLE_POOLS_EVENTS")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
