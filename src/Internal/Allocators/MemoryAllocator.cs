@@ -236,8 +236,8 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         private static void Free_Internal(Meta* handledPtr)
         {
-            const int DensifyThreshold = 256;
 #if DEBUG
+            const int DensifyThreshold = 256;
             if (handledPtr == null)
             {
                 Throw.MemoryAllocator_HandledPointerIsNull();
@@ -295,8 +295,10 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         internal struct StateDebugInfo
         {
+#if DEBUG
             public HandlerDebugInfo[] debugInfos;
             public IdDispenser idDispenser;
+#endif
         }
         #endregion
 
