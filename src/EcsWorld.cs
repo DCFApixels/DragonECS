@@ -1245,7 +1245,7 @@ namespace DCFApixels.DragonECS
         /// <returns>New entity id in this world.</returns>
         public int CloneEntity(int entityID, EcsWorld toWorld, ReadOnlySpan<int> componentTypeIDs)
         {
-            int newEntity = NewEntity();
+            int newEntity = toWorld.NewEntity();
             CopyEntity(entityID, toWorld, newEntity, componentTypeIDs);
             return newEntity;
         }

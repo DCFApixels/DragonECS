@@ -246,7 +246,7 @@ namespace DCFApixels.DragonECS
         public void InitPoolInstance(IEcsPoolImplementation poolImplementation)
         {
 #if DEBUG
-            if (Count > 0) { Throw.World_MethodCalledAfterEntityCreation(nameof(InitEntitySlot)); }
+            if (Count > 0) { Throw.World_MethodCalledAfterEntityCreation(nameof(InitPoolInstance)); }
 #elif DRAGONECS_STABILITY_MODE
             if (Count > 0) { return; }
 #endif

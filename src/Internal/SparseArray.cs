@@ -36,7 +36,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         public TValue this[int keyX, int keyY]
         {
             get { return _entries[FindEntry((keyX << 16) | keyY)].value; }
-            set { Insert(keyX + (keyY << 16), value); }
+            set { Insert((keyX << 16) | keyY, value); }
         }
         public TValue this[int key]
         {
