@@ -1232,7 +1232,7 @@ namespace DCFApixels.DragonECS
         /// <returns>Newly created entity id in this world.</returns>
         public int CloneEntity(int entityID, EcsWorld toWorld)
         {
-            int newEntity = NewEntity();
+            int newEntity = toWorld.NewEntity();
             CopyEntity(entityID, toWorld, newEntity);
             return newEntity;
         }
