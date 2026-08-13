@@ -880,7 +880,7 @@ namespace DCFApixels.DragonECS
             if (entity.GetWorldIDUnchecked() != ID) { return false; }
 #endif
             ref var slot = ref _entities[entity.GetIDUnchecked()];
-            return slot.gen == entity.GetIDUnchecked() && slot.isUsed;
+            return slot.gen == entity._gen && slot.isUsed;
         }
 
         /// <summary>
