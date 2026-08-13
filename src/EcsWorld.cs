@@ -875,9 +875,9 @@ namespace DCFApixels.DragonECS
         public bool IsAlive(entlong entity)
         {
 #if DEBUG
-            if (entity.GetWorldIDUnchecked() != ID) { Throw.World_MaskDoesntBelongWorld(); }
+            if (entity._world != ID) { Throw.World_MaskDoesntBelongWorld(); }
 #elif DRAGONECS_STABILITY_MODE
-            if (entity.GetWorldIDUnchecked() != ID) { return false; }
+            if (entity._world != ID) { return false; }
 #endif
             ref var slot = ref _entities[entity.GetIDUnchecked()];
             return slot.gen == entity._gen && slot.isUsed;
