@@ -62,7 +62,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Clear()
         {
-            AllocatorUtility.ClearAllocatedMemory(_ptr, 0, _byteSize);
+            DragonUnsafe.ClearMemory(_ptr, 0, _byteSize);
         }
     }
 }

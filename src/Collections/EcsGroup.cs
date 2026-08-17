@@ -425,7 +425,7 @@ namespace DCFApixels.DragonECS
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
 
-        private MemoryAllocator.Handler[] _groupSparsePagePool = new MemoryAllocator.Handler[64];
+        private MemoryAllocator.HPtr[] _groupSparsePagePool = new MemoryAllocator.HPtr[64];
         private int _groupSparsePagePoolCount = 0;
 
         #region Pages
@@ -436,7 +436,7 @@ namespace DCFApixels.DragonECS
                 return MemoryAllocator.AllocAndInit<int>(EcsGroup.PAGE_SIZE).Ptr;
             }
             var takedPage = _groupSparsePagePool[--_groupSparsePagePoolCount];
-            _groupSparsePagePool[_groupSparsePagePoolCount] = MemoryAllocator.Handler.Empty;
+            _groupSparsePagePool[_groupSparsePagePoolCount] = MemoryAllocator.HPtr.Empty;
             return takedPage.As<int>();
         }
         internal void ReturnPage(int* page)
@@ -452,13 +452,13 @@ namespace DCFApixels.DragonECS
             if (_groupSparsePagePoolCount >= _groupSparsePagePool.Length)
             {
                 var old = _groupSparsePagePool;
-                _groupSparsePagePool = new MemoryAllocator.Handler[_groupSparsePagePoolCount << 1];
+                _groupSparsePagePool = new MemoryAllocator.HPtr[_groupSparsePagePoolCount << 1];
                 for (int j = 0; j < old.Length; j++)
                 {
                     _groupSparsePagePool[j] = old[j];
                 }
             }
-            _groupSparsePagePool[_groupSparsePagePoolCount++] = MemoryAllocator.Handler.FromDataPtr(page);
+            _groupSparsePagePool[_groupSparsePagePoolCount++] = MemoryAllocator.HPtr.FromDataPtr(page);
         }
         private void DisposeGroups()
         {
@@ -522,7 +522,7 @@ namespace DCFApixels.DragonECS
         private EcsWorld _source;
         private int[] _dense; // 0 индекс для нулевой записи
         private PageSlot* _sparsePages; //Старший бит занят временной маркировкой в операциях над множествами
-        private MemoryAllocator.Handler _sparsePagesHandler; //Старший бит занят временной маркировкой в операциях над множествами
+        private MemoryAllocator.HPtr _sparsePagesHandler; //Старший бит занят временной маркировкой в операциях над множествами
         private int _sparsePagesCount;
         private int _totalCapacity;
         private int _count = 0;

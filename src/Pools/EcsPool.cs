@@ -49,8 +49,8 @@ namespace DCFApixels.DragonECS
         private int _itemsCount = 0;
         private int _recycledItemsCount = 0;
 
-        private UnsafeArray<int> _dense;
-        private UnsafeArray<int> _itemEntities;
+        private UnsafeSegment<int> _dense;
+        private UnsafeSegment<int> _itemEntities;
         private int _usedBlockCount;
         private bool _isDensified;
 
@@ -139,8 +139,8 @@ namespace DCFApixels.DragonECS
             capacity = ArrayUtility.CeilPow2Safe(capacity);
             _items = new T[capacity];
             _denseHandler = MemoryAllocator.AllocAndInit<int>(capacity * 2);
-            _dense = UnsafeArray<int>.Manual(_denseHandler.Ptr, capacity);
-            _itemEntities = UnsafeArray<int>.Manual(_denseHandler.Ptr + capacity, capacity);
+            _dense = new UnsafeSegment<int>(_denseHandler.Ptr, capacity);
+            _itemEntities = new UnsafeSegment<int>(_denseHandler.Ptr + capacity, capacity);
             _isDensified = true;
         }
         void IEcsPoolImplementation.OnInit(EcsWorld.ComponentsRegistrar registrar)
@@ -154,8 +154,8 @@ namespace DCFApixels.DragonECS
                 var capacity = ArrayUtility.CeilPow2Safe(worldConfig.PoolComponentsCapacity);
                 _items = new T[capacity];
                 _denseHandler = MemoryAllocator.AllocAndInit<int>(capacity * 2);
-                _dense = UnsafeArray<int>.Manual(_denseHandler.Ptr, capacity);
-                _itemEntities = UnsafeArray<int>.Manual(_denseHandler.Ptr + capacity, capacity);
+                _dense = new UnsafeSegment<int>(_denseHandler.Ptr, capacity);
+                _itemEntities = new UnsafeSegment<int>(_denseHandler.Ptr + capacity, capacity);
             }
         }
         void IEcsPoolImplementation.OnWorldDestroy()
@@ -181,7 +181,11 @@ namespace DCFApixels.DragonECS
                 // Free managed resources here
             }
             // Free unmanaged resources here
-            _denseHandler.Dispose();
+            if (_denseHandler.IsCreated)
+            {
+                _denseHandler.Dispose();
+                _denseHandler = default;
+            }
 
             _disposed = true;
         }
@@ -209,7 +213,7 @@ namespace DCFApixels.DragonECS
             _itemsCount++;
             if (_recycledItemsCount > 0)
             {
-                itemIndex = _dense.ptr[_itemsCount];
+                itemIndex = _dense.Ptr[_itemsCount];
                 _recycledItemsCount--;
             }
             else
@@ -222,16 +226,16 @@ namespace DCFApixels.DragonECS
                     Array.Resize(ref _items, capacity);
 
                     _denseHandler = MemoryAllocator.ReallocAndInit<int>(_denseHandler, capacity * 2);
-                    _dense = UnsafeArray<int>.Manual(_denseHandler.Ptr, capacity);
-                    _itemEntities = UnsafeArray<int>.Manual(_denseHandler.Ptr + capacity, capacity);
+                    _dense = new UnsafeSegment<int>(_denseHandler.Ptr, capacity);
+                    _itemEntities = new UnsafeSegment<int>(_denseHandler.Ptr + capacity, capacity);
                     _dense.AsSpan().Slice(oldCapacity, oldCapacity).CopyTo(_itemEntities.AsSpan());
                 }
                 _usedBlockCount++;
             }
-            _dense.ptr[_itemsCount] = entityID;
+            _dense.Ptr[_itemsCount] = entityID;
             _registrar.RegisterComponent(entityID);
             ref T result = ref _items[itemIndex];
-            _itemEntities.ptr[itemIndex] = entityID;
+            _itemEntities.Ptr[itemIndex] = entityID;
             InvokeOnAdd(entityID, ref _items[itemIndex]);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
             if (_hasAnyListener) { _listeners.InvokeOnAddAndGet(entityID); }
@@ -313,9 +317,9 @@ namespace DCFApixels.DragonECS
             if (_isLocked) { return; }
 #endif
             InvokeOnDel(entityID, itemIndex);
-            _itemEntities.ptr[itemIndex] = 0;
+            _itemEntities.Ptr[itemIndex] = 0;
 
-            _dense.ptr[_itemsCount] = itemIndex;
+            _dense.Ptr[_itemsCount] = itemIndex;
             _itemsCount--;
             itemIndex = 0;
 
@@ -401,7 +405,7 @@ namespace DCFApixels.DragonECS
             {
                 ref int itemIndex = ref _mapping[entityID];
                 InvokeOnDel(entityID, itemIndex);
-                _itemEntities.ptr[itemIndex] = 0;
+                _itemEntities.Ptr[itemIndex] = 0;
                 itemIndex = 0;
                 _registrar.UnregisterComponent(entityID);
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
@@ -420,19 +424,19 @@ namespace DCFApixels.DragonECS
             if (_isDensified) { return; }
             var newUsedBlockCount = 0;
 
-            _dense.ptr[0] = 0;
+            _dense.Ptr[0] = 0;
             int denseIndex = 1;
             int recycleIndex = denseIndex + _itemsCount;
             for (int i = 1; i <= _usedBlockCount; i++)
             {
-                var e = _itemEntities.ptr[i];
+                var e = _itemEntities.Ptr[i];
                 if (e == 0)
                 {
-                    _dense.ptr[recycleIndex++] = i;
+                    _dense.Ptr[recycleIndex++] = i;
                 }
                 else
                 {
-                    _dense.ptr[denseIndex++] = e;
+                    _dense.Ptr[denseIndex++] = e;
                     newUsedBlockCount = i;
                 }
             }
@@ -567,7 +571,7 @@ namespace DCFApixels.DragonECS
             _toSpans++;
 #endif
             Densify();
-            var result = new EcsSpan(_registrar.WorldID, new ReadOnlySpan<int>(_dense.ptr + 1, _itemsCount));
+            var result = new EcsSpan(_registrar.WorldID, new ReadOnlySpan<int>(_dense.Ptr + 1, _itemsCount));
 #if DRAGONECS_DEEP_DEBUG
             //var r2 = _registrar.World.WhereToGroup(out SingleAspect<T> _);
             //if(r2.SetEquals(result) == false)

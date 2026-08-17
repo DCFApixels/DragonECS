@@ -264,7 +264,7 @@ namespace DCFApixels.DragonECS.Core
             if (_count <= BUFFER_THRESHOLD)
             {
                 var ptr = stackalloc VertexID[_count];
-                var buffer = UnsafeArray<VertexID>.Manual(ptr, _count);
+                var buffer = new UnsafeSegment<VertexID>(ptr, _count);
                 TopoSorting(buffer);
                 ReoderInsertionIndexes(buffer);
                 TopoSorting(buffer);
@@ -273,14 +273,14 @@ namespace DCFApixels.DragonECS.Core
             else
             {
                 var ptr = TempBuffer<VertexID, VertexID>.Get(_count);
-                var buffer = UnsafeArray<VertexID>.Manual(ptr, _count);
+                var buffer = new UnsafeSegment<VertexID>(ptr, _count);
                 TopoSorting(buffer);
                 ReoderInsertionIndexes(buffer);
                 TopoSorting(buffer);
                 return ConvertIdsToTsArray(buffer);
             }
         }
-        private unsafe void TopoSorting(UnsafeArray<VertexID> sortingBuffer)
+        private unsafe void TopoSorting(UnsafeSegment<VertexID> sortingBuffer)
         {
             VertexID[] nodes = new VertexID[_count];
             var adjacency = new List<(VertexID To, int DependencyIndex)>[GetVertexInfosCount()];
@@ -338,7 +338,7 @@ namespace DCFApixels.DragonECS.Core
                 zeroInDegree.RemoveAt(0);
 
                 GetVertexInfo(current).sortingIndex = resultCount;
-                sortingBuffer.ptr[resultCount++] = current;
+                sortingBuffer.Ptr[resultCount++] = current;
 
                 var adjacencyList = adjacency[(int)current];
                 for (int i = 0; i < adjacencyList.Count; i++)
@@ -367,7 +367,7 @@ namespace DCFApixels.DragonECS.Core
                 Throw.DependencyGraph_CyclicDependencyDetected(cycleDependencies);
             }
         }
-        private unsafe void ReoderInsertionIndexes(UnsafeArray<VertexID> sortingBuffer)
+        private unsafe void ReoderInsertionIndexes(UnsafeSegment<VertexID> sortingBuffer)
         {
             for (int i = 0; i < GetVertexInfosCount(); i++)
             {
@@ -388,7 +388,7 @@ namespace DCFApixels.DragonECS.Core
 
             for (int i = sortingBuffer.Length - 1; i >= 0; i--)
             {
-                var id = sortingBuffer.ptr[i];
+                var id = sortingBuffer.Ptr[i];
                 ref var info = ref GetVertexInfo(id);
                 if (info.moveToRight)
                 {
@@ -401,16 +401,16 @@ namespace DCFApixels.DragonECS.Core
 
             for (int i = 0; i < sortingBuffer.Length; i++)
             {
-                ref var info = ref GetVertexInfo(sortingBuffer.ptr[i]);
+                ref var info = ref GetVertexInfo(sortingBuffer.Ptr[i]);
                 info.insertionIndex = i;
 
             }
         }
-        private static unsafe void MoveElement<TValue>(ref UnsafeArray<TValue> array, int oldIndex, int newIndex) where TValue : unmanaged
+        private static unsafe void MoveElement<TValue>(ref UnsafeSegment<TValue> array, int oldIndex, int newIndex) where TValue : unmanaged
         {
             if (oldIndex == newIndex) return;
 
-            var ptr = array.ptr;
+            var ptr = array.Ptr;
             TValue item = ptr[oldIndex];
 
             int elementSize = sizeof(TValue);
@@ -436,12 +436,12 @@ namespace DCFApixels.DragonECS.Core
 
             ptr[newIndex] = item;
         }
-        private unsafe T[] ConvertIdsToTsArray(UnsafeArray<VertexID> buffer)
+        private unsafe T[] ConvertIdsToTsArray(UnsafeSegment<VertexID> buffer)
         {
             T[] result = new T[buffer.Length];
             for (int i = 0; i < result.Length; i++)
             {
-                result[i] = GetVertexInfo(buffer.ptr[i]).value;
+                result[i] = GetVertexInfo(buffer.Ptr[i]).value;
             }
             return result;
         }

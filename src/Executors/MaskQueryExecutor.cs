@@ -148,7 +148,7 @@ namespace DCFApixels.DragonECS.Core
     public readonly unsafe struct WorldStateVersionsChecker : IDisposable
     {
         private readonly EcsWorld _world;
-        private readonly MemoryAllocator.Handler _handler;
+        private readonly MemoryAllocator.HPtr _handler;
         private readonly int* _componentIDs;
         // _versions[0]                          world version
         // _versions[-> EcsMask.Inc.Length]      inc versions
@@ -161,6 +161,11 @@ namespace DCFApixels.DragonECS.Core
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _versions[0]; }
+        }
+        public bool IsCreated
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _handler.IsCreated; }
         }
 
         /// <summary>

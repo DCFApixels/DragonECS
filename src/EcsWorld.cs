@@ -1112,7 +1112,7 @@ namespace DCFApixels.DragonECS
                 poolIdsPtr = MemoryAllocator.Alloc<int>(count).Ptr;
             }
 
-            UnsafeArray<int> ua = UnsafeArray<int>.Manual(poolIdsPtr, count);
+            UnsafeSegment<int> ua = new UnsafeSegment<int>(poolIdsPtr, count);
 
             GetComponentTypeIDsFor_Internal(fromEntityID, poolIdsPtr, count);
             for (int i = 0; i < count; i++)
@@ -1380,26 +1380,29 @@ namespace DCFApixels.DragonECS
 
             count = Math.Max(0, Math.Min(count, _delEntBufferCount));
             _delEntBufferCount -= count;
+            int bufferStart = _delEntBufferCount;
             int slicedCount = count;
+            int slicedEnd = bufferStart + slicedCount;
 
-            for (int i = 0; i < slicedCount; i++)
+            for (int i = bufferStart; i < slicedEnd; i++)
             {
                 int e = _delEntBuffer[i];
                 if (_entities[e].componentsCount <= 0)
                 {
                     int tmp = _delEntBuffer[i];
-                    _delEntBuffer[i] = _delEntBuffer[--slicedCount];
-                    _delEntBuffer[slicedCount] = tmp;
+                    _delEntBuffer[i] = _delEntBuffer[--slicedEnd];
+                    _delEntBuffer[slicedEnd] = tmp;
+                    slicedCount--;
                     i--;
                 }
             }
 
             //если фулл очистка то _delEntBufferCount будет 0
 
-            ReadOnlySpan<int> fullBuffer = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, count);
+            ReadOnlySpan<int> fullBuffer = new ReadOnlySpan<int>(_delEntBuffer, bufferStart, count);
             if (slicedCount > 0)
             {
-                ReadOnlySpan<int> bufferSliced = new ReadOnlySpan<int>(_delEntBuffer, _delEntBufferCount, slicedCount);
+                ReadOnlySpan<int> bufferSliced = new ReadOnlySpan<int>(_delEntBuffer, bufferStart, slicedCount);
                 for (int i = 0; i < _poolsCount; i++)
                 {
                     _pools[i].OnReleaseDelEntityBuffer(bufferSliced);

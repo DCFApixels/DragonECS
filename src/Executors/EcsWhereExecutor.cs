@@ -95,7 +95,11 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 _filteredEntities.DisposeAndReset();
             }
-            _versionsChecker.Dispose();
+            if (_versionsChecker.IsCreated)
+            {
+                _versionsChecker.Dispose();
+                _versionsChecker = default;
+            }
 
             _disposed = true;
         }
