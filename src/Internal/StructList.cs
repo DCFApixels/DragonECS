@@ -130,6 +130,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 _items[i++] = _items[i];
             }
+            _count--;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(T item)
