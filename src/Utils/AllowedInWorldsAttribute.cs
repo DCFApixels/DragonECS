@@ -6,7 +6,7 @@ using System;
 
 namespace DCFApixels.DragonECS
 {
-    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
     public sealed class AllowedInWorldsAttribute : Attribute
     {
         public object[] AllowedWorlds;
@@ -19,6 +19,7 @@ namespace DCFApixels.DragonECS
         {
             if (componentType.TryGetAttribute(out AllowedInWorldsAttribute attribute))
             {
+                Type worldType = world.GetType();
                 foreach (var worldTag in attribute.AllowedWorlds)
                 {
                     bool result = false;
