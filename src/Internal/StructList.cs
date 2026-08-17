@@ -126,11 +126,15 @@ namespace DCFApixels.DragonECS.Core.Internal
 #if DEBUG
             if (index < 0 || index >= _count) { Throw.ArgumentOutOfRange(); }
 #endif
-            for (int i = index; i < _count;)
+            for (int i = index; i < _count - 1; i++)
             {
-                _items[i++] = _items[i];
+                _items[i] = _items[i + 1];
             }
             _count--;
+            if (_IsManaged)
+            {
+                _items[_count] = default;
+            }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(T item)
