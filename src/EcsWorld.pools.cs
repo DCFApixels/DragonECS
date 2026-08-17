@@ -220,6 +220,7 @@ namespace DCFApixels.DragonECS
             if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue((int)componentTypeCode, out int ComponentTypeID) == false)
             {
                 ComponentTypeID = _poolsCount++;
+                EnsurePoolsCapacity(_poolsCount);
                 _cmpTypeCode_2_CmpTypeIDs.Add((int)componentTypeCode, ComponentTypeID);
             }
             return ComponentTypeID;
@@ -229,6 +230,7 @@ namespace DCFApixels.DragonECS
             if (_cmpTypeCode_2_CmpTypeIDs.TryGetValue((int)componentTypeCode, out componentTypeID) == false)
             {
                 componentTypeID = _poolsCount++;
+                EnsurePoolsCapacity(_poolsCount);
                 _cmpTypeCode_2_CmpTypeIDs.Add((int)componentTypeCode, componentTypeID);
                 return true;
             }
@@ -303,42 +305,12 @@ namespace DCFApixels.DragonECS
                 else
                 {
                     componentTypeID = _poolsCount++;
+                    EnsurePoolsCapacity(_poolsCount);
                     _poolTypeCode_2_CmpTypeIDs[poolTypeCode] = componentTypeID;
                     _cmpTypeCode_2_CmpTypeIDs[componentTypeCode] = componentTypeID;
                 }
 
-                if (_poolsCount >= _pools.Length)
-                {
-                    int oldCapacity = _pools.Length;
-                    Array.Resize(ref _pools, _pools.Length << 1);
-                    Array.Resize(ref _poolSlots, _pools.Length);
-                    ArrayUtility.Fill(_pools, _nullPool, oldCapacity, oldCapacity - _pools.Length);
-
-                    int newEntityComponentMaskLength = CalcEntityComponentMaskLength(); //_pools.Length / COMPONENT_MASK_CHUNK_SIZE + 1;
-                    int dif = newEntityComponentMaskLength - _entityComponentMaskLength;
-                    if (dif > 0)
-                    {
-                        int[] newEntityComponentMasks = new int[_entitiesCapacity * newEntityComponentMaskLength];
-                        int indxMax = _entityComponentMaskLength * _entitiesCapacity;
-                        int indx = 0;
-                        int newIndx = 0;
-                        int nextIndx = _entityComponentMaskLength;
-                        while (indx < indxMax)
-                        {
-                            while (indx < nextIndx)
-                            {
-                                newEntityComponentMasks[newIndx] = _entityComponentMasks[indx];
-                                indx++;
-                                newIndx++;
-                            }
-                            newIndx += dif;
-                            nextIndx += _entityComponentMaskLength;
-                        }
-                        SetEntityComponentMaskLength(newEntityComponentMaskLength);
-                        _entityComponentMasks = newEntityComponentMasks;
-                    }
-
-                }
+                EnsurePoolsCapacity(componentTypeID + 1);
 
                 var oldPool = _pools[componentTypeID];
 
@@ -351,6 +323,41 @@ namespace DCFApixels.DragonECS
                 newPool.OnInit(ComponentsRegistrar.Create_Internal(this, componentTypeID));
 
                 OnPoolInitialized?.Invoke(newPool);
+            }
+        }
+        private void EnsurePoolsCapacity(int minCapacity)
+        {
+            if (minCapacity <= _pools.Length) { return; }
+
+            int oldCapacity = _pools.Length;
+            int newCapacity = ArrayUtility.CeilPow2Safe(minCapacity);
+
+            Array.Resize(ref _pools, newCapacity);
+            Array.Resize(ref _poolSlots, newCapacity);
+            ArrayUtility.Fill(_pools, _nullPool, oldCapacity, newCapacity - oldCapacity);
+
+            int newEntityComponentMaskLength = CalcEntityComponentMaskLength();
+            int dif = newEntityComponentMaskLength - _entityComponentMaskLength;
+            if (dif > 0)
+            {
+                int[] newEntityComponentMasks = new int[_entitiesCapacity * newEntityComponentMaskLength];
+                int indxMax = _entityComponentMaskLength * _entitiesCapacity;
+                int indx = 0;
+                int newIndx = 0;
+                int nextIndx = _entityComponentMaskLength;
+                while (indx < indxMax)
+                {
+                    while (indx < nextIndx)
+                    {
+                        newEntityComponentMasks[newIndx] = _entityComponentMasks[indx];
+                        indx++;
+                        newIndx++;
+                    }
+                    newIndx += dif;
+                    nextIndx += _entityComponentMaskLength;
+                }
+                SetEntityComponentMaskLength(newEntityComponentMaskLength);
+                _entityComponentMasks = newEntityComponentMasks;
             }
         }
         #endregion
