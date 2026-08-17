@@ -838,7 +838,7 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (Count > 0) { return; }
 #endif
-            _entityDispenser.Upsize(entityID);
+            _entityDispenser.Upsize(entityID + 1);
             _entities[entityID].gen = gen;
         }
 
