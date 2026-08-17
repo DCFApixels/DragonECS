@@ -853,6 +853,14 @@ namespace DCFApixels.DragonECS
             return new RawEntLong(entityID, _entities[entityID].gen, ID);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsAliveSafe_Internal(int entityID, short gen)
+        {
+            if (entityID < 0 || entityID >= _entitiesCapacity) { return false; }
+            ref var slot = ref _entities[entityID];
+            return slot.gen == gen && slot.isUsed;
+        }
+
         /// <summary>
         /// Check whether the specified entity id with the given generation is alive in this world.
         /// </summary>
@@ -862,6 +870,11 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(int entityID, short gen)
         {
+#if DEBUG
+            if (entityID < 0 || entityID >= _entitiesCapacity) { Throw.World_EntityDoesntBelongWorld(); }
+#elif DRAGONECS_STABILITY_MODE
+            if (entityID < 0 || entityID >= _entitiesCapacity) { return false; }
+#endif
             ref var slot = ref _entities[entityID];
             return slot.gen == gen && slot.isUsed;
         }
@@ -875,7 +888,7 @@ namespace DCFApixels.DragonECS
         public bool IsAlive(entlong entity)
         {
 #if DEBUG
-            if (entity._world != ID) { Throw.World_MaskDoesntBelongWorld(); }
+            if (entity._world != ID) { Throw.World_EntityDoesntBelongWorld(); }
 #elif DRAGONECS_STABILITY_MODE
             if (entity._world != ID) { return false; }
 #endif
@@ -1040,7 +1053,7 @@ namespace DCFApixels.DragonECS
 #endif
             return true;
         }
-        #endregion
+#endregion
 
         #region Leaked
         public bool DeleteLeakedEntites()
@@ -1310,7 +1323,7 @@ namespace DCFApixels.DragonECS
         }
         #endregion
 
-        #endregion
+#endregion
 
         #region DelEntBuffer
         /// <summary>

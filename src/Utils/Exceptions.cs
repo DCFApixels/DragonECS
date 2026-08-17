@@ -95,6 +95,11 @@ namespace DCFApixels.DragonECS.Core.Internal
             throw new InvalidOperationException($"The mask doesn't belong in this world");
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void World_EntityDoesntBelongWorld()
+        {
+            throw new InvalidOperationException($"The entity doesn't belong in this world");
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void World_EntityIsNotContained(int entityID)
         {
             throw new ArgumentException($"An entity with identifier {entityID} is not contained in this world");

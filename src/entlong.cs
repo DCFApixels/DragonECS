@@ -55,7 +55,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return EcsWorld.TryGetWorld(_world, out EcsWorld world) && world.IsAlive(_id, _gen);
+                return EcsWorld.TryGetWorld(_world, out EcsWorld world) && world.IsAliveSafe_Internal(_id, _gen);
             }
         }
 
@@ -348,7 +348,7 @@ namespace DCFApixels.DragonECS
         public bool TryUnpack(EcsWorld world)
         {
             if (world.ID != _world) { return false; }
-            return world.IsAlive(_id, _gen);
+            return world.IsAliveSafe_Internal(_id, _gen);
         }
 
         /// <summary>Attempts to unpack the entity ID using a given world. Returns true if valid.</summary>
@@ -361,7 +361,7 @@ namespace DCFApixels.DragonECS
         {
             if (world.ID != _world) { id = EcsConsts.NULL_ENTITY_ID; return false; }
             id = _id;
-            return world.IsAlive(_id, _gen);
+            return world.IsAliveSafe_Internal(_id, _gen);
         }
 
         /// <summary>Attempts to unpack the entity ID and generation using a given world. Returns true if valid.</summary>
@@ -376,7 +376,7 @@ namespace DCFApixels.DragonECS
             if (world.ID != _world) { gen = 0; id = EcsConsts.NULL_ENTITY_ID; return false; }
             gen = _gen;
             id = _id;
-            return world.IsAlive(_id, _gen);
+            return world.IsAliveSafe_Internal(_id, _gen);
         }
 
         /// <summary>Attempts to unpack the entity ID using a given mask. Returns true if the entity is alive and matches the mask.</summary>
@@ -389,7 +389,7 @@ namespace DCFApixels.DragonECS
         {
             if (mask.WorldID != _world) { id = EcsConsts.NULL_ENTITY_ID; return false; }
             id = _id;
-            return mask.World.IsAlive(_id, _gen) && mask.World.IsMatchesMask(mask, _id);
+            return mask.World.IsAliveSafe_Internal(_id, _gen) && mask.World.IsMatchesMask(mask, _id);
         }
 
         /// <summary>Attempts to unpack the entity ID and generation using a given mask. Returns true if valid.</summary>
@@ -404,7 +404,7 @@ namespace DCFApixels.DragonECS
             if (mask.WorldID != _world) { gen = 0; id = EcsConsts.NULL_ENTITY_ID; return false; }
             gen = _gen;
             id = _id;
-            return mask.World.IsAlive(_id, _gen) && mask.World.IsMatchesMask(mask, _id);
+            return mask.World.IsAliveSafe_Internal(_id, _gen) && mask.World.IsMatchesMask(mask, _id);
         }
 
         /// <summary>Attempts to unpack the entity ID using a given aspect. Returns true if the entity is alive and matches the aspect.</summary>
@@ -417,7 +417,7 @@ namespace DCFApixels.DragonECS
         {
             if (aspect.World.ID != _world) { id = EcsConsts.NULL_ENTITY_ID; return false; }
             id = _id;
-            return aspect.World.IsAlive(_id, _gen) && aspect.IsMatches(_id);
+            return aspect.World.IsAliveSafe_Internal(_id, _gen) && aspect.IsMatches(_id);
         }
 
         /// <summary>Attempts to unpack the entity ID and generation using a given aspect. Returns true if valid.</summary>
@@ -432,7 +432,7 @@ namespace DCFApixels.DragonECS
             if (aspect.World.ID != _world) { gen = 0; id = EcsConsts.NULL_ENTITY_ID; return false; }
             gen = _gen;
             id = _id;
-            return aspect.World.IsAlive(_id, _gen) && aspect.IsMatches(_id);
+            return aspect.World.IsAliveSafe_Internal(_id, _gen) && aspect.IsMatches(_id);
         }
         #endregion
 
