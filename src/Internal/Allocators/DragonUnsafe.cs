@@ -47,9 +47,20 @@ namespace DCFApixels.DragonECS.Core.Internal
         {
             return new UnsafeSegment<T>(Align(memory.Ptr), memory.Length);
         }
+        internal static int CalculateSizeOf<T>() where T : struct
+        {
+#if UNITY_2020_3_OR_NEWER
+            return UnsafeUtility.SizeOf<T>();
+#else
+            T value = default;
+            Span<T> span = MemoryMarshal.CreateSpan(ref value, 1);
+            return MemoryMarshal.AsBytes(span).Length;
+#endif
+        }
 
 
 
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
         internal static Array CreateArray_Debug(Type type, int elementSize, byte* data, int byteLength)
         {
             int count = byteLength / elementSize;
@@ -76,6 +87,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             [FieldOffset(0)]
             public Array array;
         }
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 
         #region itterator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -193,7 +205,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 #if UNITY_2020_3_OR_NEWER
             int alignment = UnsafeUtility.AlignOf<T>();
 #else
-            int alignment = System.Runtime.CompilerServices.Unsafe.SizeOf<AlignmentProbe>() - sizeof(T);
+            int alignment =  DragonUnsafe.CalculateSizeOf<AlignmentProbe>() - DragonUnsafe.CalculateSizeOf<T>();
 #endif
             if (alignment <= 0 || (alignment & (alignment - 1)) != 0)
             {
