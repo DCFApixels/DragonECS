@@ -313,6 +313,7 @@ namespace DCFApixels.DragonECS
                         _recycledItems[_recycledItemsCount++] = itemIndex;
                         _items[itemIndex] = default;
                         itemIndex = 0;
+                        _count--;
                     }
                 }
             }
