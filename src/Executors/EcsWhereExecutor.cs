@@ -123,8 +123,11 @@ namespace DCFApixels.DragonECS.Core.Internal
             if (span.IsNull) { Throw.ArgumentNull(nameof(span)); }
             if (span.WorldID != World.ID) { Throw.Query_ArgumentDifferentWorldsException(); }
 #elif DRAGONECS_STABILITY_MODE
-            if (span.IsNull) { _filteredEntitiesCount = 0; }
-            if (span.WorldID != World.ID) { _filteredEntitiesCount = 0; }
+            if (span.IsNull || span.WorldID != World.ID)
+            {
+                _filteredEntitiesCount = 0;
+                return;
+            }
 #endif
             if (_filteredEntities.IsCreated == false)
             {
