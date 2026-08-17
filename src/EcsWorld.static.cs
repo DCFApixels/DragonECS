@@ -339,7 +339,7 @@ namespace DCFApixels.DragonECS
                 }
                 public override void SetRaw(short worldID, object raw)
                 {
-                    WorldComponentPool<T>.GetItem(worldID) = (T)raw;
+                    WorldComponentPool<T>.GetForWorld(worldID) = (T)raw;
                 }
                 public sealed override void Has(short worldID)
                 {
@@ -347,7 +347,7 @@ namespace DCFApixels.DragonECS
                 }
                 public sealed override object GetRaw(short worldID)
                 {
-                    return WorldComponentPool<T>.GetItem(worldID);
+                    return WorldComponentPool<T>.GetForWorld(worldID);
                 }
                 public sealed override void Release(short worldID)
                 {
