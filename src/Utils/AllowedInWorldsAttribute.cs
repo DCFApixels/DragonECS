@@ -17,7 +17,6 @@ namespace DCFApixels.DragonECS
 
         public static void CheckAllows(EcsWorld world, Type componentType)
         {
-            Type worldType = world.GetType();
             if (componentType.TryGetAttribute(out AllowedInWorldsAttribute attribute))
             {
                 foreach (var worldTag in attribute.AllowedWorlds)
