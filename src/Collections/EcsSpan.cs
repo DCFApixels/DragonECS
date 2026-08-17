@@ -519,12 +519,9 @@ namespace DCFApixels.DragonECS.Core
             get
             {
 #if DEBUG
-                if ((uint)index >= (uint)_length || (uint)index < 0)
-                {
-                    Throw.EntitySpan_IndexOutOfRange();
-                }
+                if ((uint)index >= (uint)_length || (uint)index < 0) { Throw.EntitySpan_IndexOutOfRange(); }
 #elif DRAGONECS_STABILITY_MODE
-                return EcsConsts.NULL_ENTITY_ID;
+                if ((uint)index >= (uint)_length || (uint)index < 0) { return EcsConsts.NULL_ENTITY_ID; }
 #endif
                 return _values[index];
             }
