@@ -27,7 +27,7 @@ namespace DCFApixels.DragonECS.Core.Unchecked
 
         #region Properties
         public EcsWorld World { get { return EcsWorld.GetWorld(worldID); } }
-        public StateFlag State { get { return full == 0 ? StateFlag.Null : World.IsAlive(id, gen) ? StateFlag.Alive : StateFlag.Dead; } }
+        public StateFlag State { get { return full == 0 ? StateFlag.Null : World.IsAliveSafe_Internal(id, gen) ? StateFlag.Alive : StateFlag.Dead; } }
         #endregion
 
         #region Constructors/Deconstructors
