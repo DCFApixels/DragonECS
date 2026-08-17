@@ -363,8 +363,8 @@ namespace DCFApixels.DragonECS
                 }
                 _componentIDsBuffer = null;
                 _componentsBuffer = null;
-                _worlds[ID] = null;
                 ReleaseData(ID);
+                _worlds[ID] = null;
                 _worldIdDispenser.Release(ID);
                 _worldIdDispenser.Sort();
                 _poolTypeCode_2_CmpTypeIDs = null;
