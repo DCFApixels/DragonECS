@@ -213,16 +213,19 @@ namespace DCFApixels.DragonECS.Core.Internal
                 _markers[i].End();
             }
 #else
-            foreach (var item in Process)
+            foreach (var pair in _pairs)
             {
-                try { item.Run(); }
+                try { pair.run.Run(); }
 #if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
                 catch (Exception e)
                 {
                     EcsDebug.PrintError(e);
 				}
 #endif
-				finally { }
+				finally
+                {
+                    pair.cleanup?.RunFinally();
+                }
             }
 #endif
         }
