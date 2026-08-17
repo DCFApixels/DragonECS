@@ -144,7 +144,7 @@ namespace DCFApixels.DragonECS
             {
                 _sharedStore = Alloc<EcsValuePoolSharedStore>(1).Ptr;
             }
-            capacity = ArrayUtility.NextPow2(capacity);
+            capacity = ArrayUtility.CeilPow2Safe(capacity);
             _itemsLength = capacity;
             _itemsHandler = Alloc<T>(_itemsLength);
             _items = _itemsHandler.Ptr;
@@ -775,7 +775,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IEcsReadonlyPool.AddListener(IEcsPoolEventListener listener) { ((IEcsReadonlyPool)_pool).AddListener(listener); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IEcsReadonlyPool.RemoveListener(IEcsPoolEventListener listener) { ((IEcsReadonlyPool)_pool).AddListener(listener); }
+        void IEcsReadonlyPool.RemoveListener(IEcsPoolEventListener listener) { ((IEcsReadonlyPool)_pool).RemoveListener(listener); }
 #endif
         #endregion
 

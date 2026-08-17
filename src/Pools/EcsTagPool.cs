@@ -521,7 +521,7 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <param name="listener">The listener instance to remove.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RemoveListener(IEcsPoolEventListener listener) { _pool.AddListener(listener); }
+        public void RemoveListener(IEcsPoolEventListener listener) { _pool.RemoveListener(listener); }
 #endif
         #endregion
 
