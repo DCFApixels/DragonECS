@@ -44,7 +44,7 @@ namespace DCFApixels.DragonECS
             }
             else
             {
-                return $"[{Author}] Text";
+                return $"[{Author}] {Text}";
             }
         }
 
