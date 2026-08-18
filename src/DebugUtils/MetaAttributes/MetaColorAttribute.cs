@@ -263,19 +263,23 @@ namespace DCFApixels.DragonECS
         }
         private static MetaColor ParseHex(string input)
         {
-            var hex = input.AsSpan().Trim();
-
-            if (hex[0] != '#' && hex.Length != 7 && hex.Length != 9)
+            if (string.IsNullOrWhiteSpace(input))
             {
                 Throw.MetaColor_InvalidHexFormat(input);
             }
-            bool withAlpha = hex.Length != 9;
+            var hex = input.AsSpan().Trim();
+
+            if (hex[0] != '#' || (hex.Length != 7 && hex.Length != 9))
+            {
+                Throw.MetaColor_InvalidHexFormat(input);
+            }
+            bool hasAlpha = hex.Length == 9;
             hex = hex.TrimStart('#');
 
             byte r = TryParseHexByte(input, hex.Slice(0, 2));
             byte g = TryParseHexByte(input, hex.Slice(2, 2));
             byte b = TryParseHexByte(input, hex.Slice(4, 2));
-            byte a = withAlpha ? byte.MaxValue : TryParseHexByte(input, hex.Slice(6, 2));
+            byte a = hasAlpha ? TryParseHexByte(input, hex.Slice(6, 2)) : byte.MaxValue;
 
             return new MetaColor(r, g, b, a);
         }
@@ -330,7 +334,8 @@ namespace DCFApixels.DragonECS
             byte maxChannel = Math.Max(Math.Max(r, g), b);
             if (maxChannel == minChannel)
             {
-                return default;
+                byte contrast = maxChannel < 128 ? byte.MaxValue : byte.MinValue;
+                return new MetaColor(contrast, contrast, contrast);
             }
             float factor = 255f / (maxChannel - minChannel);
             return new MetaColor((byte)((r - minChannel) * factor), (byte)((g - minChannel) * factor), (byte)((b - minChannel) * factor));
