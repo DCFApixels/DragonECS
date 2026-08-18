@@ -33,7 +33,7 @@ namespace DCFApixels.DragonECS
         public static TypeMeta FindRootTypeMeta(this ITypeMeta meta)
         {
             ITypeMeta result = meta;
-            while (result.BaseMeta != null) { result = meta.BaseMeta; }
+            while (result.BaseMeta != null) { result = result.BaseMeta; }
             return (TypeMeta)result;
         }
     }
@@ -88,7 +88,8 @@ namespace DCFApixels.DragonECS
         private bool _isComponent;
         private bool _isPool;
 
-        private InitFlag _initFlags = InitFlag.None;
+        private volatile InitFlag _initFlags = InitFlag.None;
+        private readonly object _initLock = new object();
 
         #region Constructors
         static TypeMeta()
@@ -187,9 +188,15 @@ namespace DCFApixels.DragonECS
         {
             if (_initFlags.HasFlag(InitFlag.Name) == false)
             {
-                (_name, _isCustomName) = MetaGenerator.GetMetaName(this);
-                _typeName = _isCustomName ? MetaGenerator.GetTypeName(_type) : _name;
-                _initFlags |= InitFlag.Name;
+                lock (_initLock)
+                {
+                    if (_initFlags.HasFlag(InitFlag.Name) == false)
+                    {
+                        (_name, _isCustomName) = MetaGenerator.GetMetaName(this);
+                        _typeName = _isCustomName ? MetaGenerator.GetTypeName(_type) : _name;
+                        _initFlags |= InitFlag.Name;
+                    }
+                }
             }
         }
         public bool IsCustomName
@@ -223,8 +230,14 @@ namespace DCFApixels.DragonECS
         {
             if (_initFlags.HasFlag(InitFlag.Color) == false)
             {
-                (_color, _isCustomColor) = MetaGenerator.GetColor(this);
-                _initFlags |= InitFlag.Color;
+                lock (_initLock)
+                {
+                    if (_initFlags.HasFlag(InitFlag.Color) == false)
+                    {
+                        (_color, _isCustomColor) = MetaGenerator.GetColor(this);
+                        _initFlags |= InitFlag.Color;
+                    }
+                }
             }
         }
         public bool IsCustomColor
@@ -252,8 +265,14 @@ namespace DCFApixels.DragonECS
             {
                 if (_initFlags.HasFlag(InitFlag.Description) == false)
                 {
-                    _description = MetaGenerator.GetDescription(this);
-                    _initFlags |= InitFlag.Description;
+                    lock (_initLock)
+                    {
+                        if (_initFlags.HasFlag(InitFlag.Description) == false)
+                        {
+                            _description = MetaGenerator.GetDescription(this);
+                            _initFlags |= InitFlag.Description;
+                        }
+                    }
                 }
                 return _description;
             }
@@ -267,8 +286,14 @@ namespace DCFApixels.DragonECS
             {
                 if (_initFlags.HasFlag(InitFlag.Group) == false)
                 {
-                    _group = MetaGenerator.GetGroup(this);
-                    _initFlags |= InitFlag.Group;
+                    lock (_initLock)
+                    {
+                        if (_initFlags.HasFlag(InitFlag.Group) == false)
+                        {
+                            _group = MetaGenerator.GetGroup(this);
+                            _initFlags |= InitFlag.Group;
+                        }
+                    }
                 }
                 return _group;
             }
@@ -280,10 +305,16 @@ namespace DCFApixels.DragonECS
         {
             if (_initFlags.HasFlag(InitFlag.Tags) == false)
             {
-                _tags = MetaGenerator.GetTags(this);
-                _initFlags |= InitFlag.Tags;
-                _isHidden = _tags.Contains(MetaTags.HIDDEN);
-                _isObsolete = _tags.Contains(MetaTags.OBSOLETE);
+                lock (_initLock)
+                {
+                    if (_initFlags.HasFlag(InitFlag.Tags) == false)
+                    {
+                        _tags = MetaGenerator.GetTags(this);
+                        _isHidden = _tags.Contains(MetaTags.HIDDEN);
+                        _isObsolete = _tags.Contains(MetaTags.OBSOLETE);
+                        _initFlags |= InitFlag.Tags;
+                    }
+                }
             }
         }
         public IReadOnlyList<string> Tags
@@ -325,8 +356,14 @@ namespace DCFApixels.DragonECS
         {
             if (_initFlags.HasFlag(InitFlag.MetaID) == false)
             {
-                _metaID = MetaGenerator.GetMetaID(_type);
-                _initFlags |= InitFlag.MetaID;
+                lock (_initLock)
+                {
+                    if (_initFlags.HasFlag(InitFlag.MetaID) == false)
+                    {
+                        _metaID = MetaGenerator.GetMetaID(_type);
+                        _initFlags |= InitFlag.MetaID;
+                    }
+                }
             }
         }
         public string MetaID
@@ -347,8 +384,14 @@ namespace DCFApixels.DragonECS
             {
                 if (_initFlags.HasFlag(InitFlag.TypeCode) == false)
                 {
-                    _typeCode = EcsTypeCodeManager.Get(_type);
-                    _initFlags |= InitFlag.TypeCode;
+                    lock (_initLock)
+                    {
+                        if (_initFlags.HasFlag(InitFlag.TypeCode) == false)
+                        {
+                            _typeCode = EcsTypeCodeManager.Get(_type);
+                            _initFlags |= InitFlag.TypeCode;
+                        }
+                    }
                 }
                 return _typeCode;
             }
@@ -356,15 +399,25 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region ReflectionInfo
+        private void InitReflectionInfo()
+        {
+            if (_initFlags.HasFlag(InitFlag.ReflectionInfo) == false)
+            {
+                lock (_initLock)
+                {
+                    if (_initFlags.HasFlag(InitFlag.ReflectionInfo) == false)
+                    {
+                        MetaGenerator.GetReflectionInfo(this);
+                        _initFlags |= InitFlag.ReflectionInfo;
+                    }
+                }
+            }
+        }
         public bool IsComponent
         {
             get
             {
-                if (_initFlags.HasFlag(InitFlag.ReflectionInfo) == false)
-                {
-                    MetaGenerator.GetReflectionInfo(this);
-                    _initFlags |= InitFlag.ReflectionInfo;
-                }
+                InitReflectionInfo();
                 return _isComponent;
             }
         }
@@ -372,11 +425,7 @@ namespace DCFApixels.DragonECS
         {
             get
             {
-                if (_initFlags.HasFlag(InitFlag.ReflectionInfo) == false)
-                {
-                    MetaGenerator.GetReflectionInfo(this);
-                    _initFlags |= InitFlag.ReflectionInfo;
-                }
+                InitReflectionInfo();
                 return _isProcess;
             }
         }
@@ -384,11 +433,7 @@ namespace DCFApixels.DragonECS
         {
             get
             {
-                if (_initFlags.HasFlag(InitFlag.ReflectionInfo) == false)
-                {
-                    MetaGenerator.GetReflectionInfo(this);
-                    _initFlags |= InitFlag.ReflectionInfo;
-                }
+                InitReflectionInfo();
                 return _isPool;
             }
         }
@@ -406,6 +451,7 @@ namespace DCFApixels.DragonECS
                 _ = Tags;
                 _ = MetaID;
                 _ = TypeCode;
+                _ = IsComponent;
             }
             return this;
         }
@@ -472,10 +518,9 @@ namespace DCFApixels.DragonECS
             var atrs = Attribute.GetCustomAttributes(type, typeof(DragonMetaAttribute), true);
             if (atrs.Length > 0)
             {
-                if (atrs.Length == 1 && atrs[0] is MetaProxyAttribute &&
-                    type.TryGetAttributeInherited(out MetaProxyAttribute mpa, out Type declaringAtrType))
+                if (atrs.Length == 1 && atrs[0] is MetaProxyAttribute)
                 {
-                    return ((MetaProxyBase)Activator.CreateInstance(mpa.Type, type, declaringAtrType)).IsInherit == false;
+                    return Get(type)._proxy.IsInherit == false;
                 }
                 return true;
             }
