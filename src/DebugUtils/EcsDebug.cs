@@ -331,23 +331,19 @@ namespace DCFApixels.DragonECS
         #region ProfilerMarkesrs
         public int RegisterMark(string name)
         {
-            int id;
-            if (_nameIdTable.TryGetValue(name, out id) == false)
+            lock (_lock)
             {
-                lock (_lock)
+                if (_nameIdTable.TryGetValue(name, out int id) == false)
                 {
-                    if (_nameIdTable.TryGetValue(name, out id) == false)
+                    id = _idDispenser.UseFree();
+                    _nameIdTable.Add(name, id);
+                    foreach (var service in _threadServiceClonesSet)
                     {
-                        id = _idDispenser.UseFree();
-                        _nameIdTable.Add(name, id);
-                        foreach (var service in _threadServiceClonesSet)
-                        {
-                            service.OnNewProfilerMark(id, name);
-                        }
+                        service.OnNewProfilerMark(id, name);
                     }
                 }
+                return id;
             }
-            return id;
         }
         public void DeleteMark(string name)
         {
@@ -358,7 +354,7 @@ namespace DCFApixels.DragonECS
                 _idDispenser.Release(id);
                 foreach (var service in _threadServiceClonesSet)
                 {
-                    service.OnNewProfilerMark(id, name);
+                    service.OnDelProfilerMark(id);
                 }
                 OnDelProfilerMark(id);
             }
