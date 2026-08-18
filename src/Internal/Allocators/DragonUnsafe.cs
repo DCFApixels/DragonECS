@@ -139,7 +139,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 if (array.Length <= count)
                 {
-                    array = Realloc<int>(array, array.Length << 1);
+                    array = Realloc<int>(array, Math.Max(array.Length << 1, 4));
                 }
                 array.Ptr[count++] = enumerator.Current;
             }
@@ -154,7 +154,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 if (array.Length <= count)
                 {
-                    array = Realloc<int>(array, array.Length << 1);
+                    array = Realloc<int>(array, Math.Max(array.Length << 1, 4));
                 }
                 array.Ptr[count++] = enumerator.Current;
             }
