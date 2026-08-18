@@ -35,7 +35,7 @@ namespace DCFApixels.DragonECS
                 executorCore.Initialize(this, mask);
                 executor = executorCore;
 
-                _executors.Add((executorType, abstractMask), executor);
+                _executors.Add((executorType, mask), executor);
             }
             if (ReferenceEquals(abstractMask, mask) == false)
             {
