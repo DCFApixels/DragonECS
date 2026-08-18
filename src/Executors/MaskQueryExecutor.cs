@@ -15,26 +15,33 @@ namespace DCFApixels.DragonECS
 {
     public partial class EcsWorld
     {
-        private readonly Dictionary<(Type, object), IQueryExecutorImplementation> _executors;
+        private readonly Dictionary<(Type ExecutorType, object Mask), IQueryExecutorImplementation> _executors;
 
-        public TExecutor GetExecutorForMask<TExecutor>(IComponentMask gmask)
+        public TExecutor GetExecutorForMask<TExecutor>(IComponentMask abstractMask)
             where TExecutor : MaskQueryExecutor, new()
         {
             var executorType = typeof(TExecutor);
             //проверяет ключ по абстрактной маске
-            if (_executors.TryGetValue((executorType, gmask), out IQueryExecutorImplementation executor) == false)
+            if (_executors.TryGetValue((executorType, abstractMask), out IQueryExecutorImplementation executor))
             {
-                var mask = gmask.ToMask(this);
-                //проверяет ключ по конкретной маске, или что конкретная и абстрактая одна и таже
-                if (mask == gmask ||
-                    _executors.TryGetValue((executorType, mask), out executor) == false)
-                {
-                    TExecutor executorCore = new TExecutor();
-                    executorCore.Initialize(this, mask);
-                    executor = executorCore;
-                }
-                _executors.Add((executorType, gmask), executor);
+                return (TExecutor)executor;
             }
+
+            var mask = abstractMask.ToMask(this);
+            //проверяет ключ по конкретной маске, или что конкретная и абстрактая одна и таже
+            if (_executors.TryGetValue((executorType, mask), out executor) == false)
+            {
+                TExecutor executorCore = new TExecutor();
+                executorCore.Initialize(this, mask);
+                executor = executorCore;
+
+                _executors.Add((executorType, abstractMask), executor);
+            }
+            if (ReferenceEquals(abstractMask, mask) == false)
+            {
+                _executors.Add((executorType, abstractMask), executor);
+            }
+
             return (TExecutor)executor;
         }
 
@@ -51,10 +58,9 @@ namespace DCFApixels.DragonECS
             }
 
             result.Clear();
-
             foreach (var item in _executors)
             {
-                if (item.Value is MaskQueryExecutor x)
+                if (item.Key.Mask is EcsMask && item.Value is MaskQueryExecutor x)
                 {
                     result.Add(x);
                 }
@@ -204,12 +210,12 @@ namespace DCFApixels.DragonECS.Core
             var slots = _world._poolSlots;
             for (int i = 1; i < _count; i++)
             {
-                if (_versions[i] == slots[_componentIDs[i]].version)
+                if (_versions[i] != slots[_componentIDs[i]].version)
                 {
                     return false;
                 }
             }
-            return true;
+            return _isNotOnlyExc;
         }
         /// <summary>
         /// Refresh internal captured versions to current world state.
