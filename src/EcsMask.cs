@@ -266,7 +266,11 @@ namespace DCFApixels.DragonECS
         {
             return _staticMask;
         }
-        EcsMask IComponentMask.ToMask(EcsWorld world) { return this; }
+        EcsMask IComponentMask.ToMask(EcsWorld world)
+        {
+            if (World != world) { ToStatic().ToMask(world); }
+            return this;
+        }
 
         /// <summary>Returns an iterator that can be used to perform queries against entities using this mask.</summary>
         /// <returns>An <see cref="EcsMaskIterator"/> instance for this mask.</returns>
