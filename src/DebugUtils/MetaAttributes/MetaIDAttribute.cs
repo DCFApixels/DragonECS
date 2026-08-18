@@ -52,8 +52,7 @@ namespace DCFApixels.DragonECS
         //}
         public static bool IsGenericID(string id)
         {
-            return string.IsNullOrEmpty(id) == false &&
-                id[id.Length - 1] == '>' && id.IndexOf('<') > 0;
+            return string.IsNullOrEmpty(id) == false && id[id.Length - 1] == '>' && id.IndexOf('<') > 0;
         }
         public static bool IsValidID(string id)
         {
