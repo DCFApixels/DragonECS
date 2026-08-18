@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -8,7 +9,10 @@ namespace DCFApixels.DragonECS.Core.Internal
 {
     internal static class JsonDebugger
     {
-        private readonly static List<string> _indentsChache = new List<string>();
+        private const int MAX_DEPTH = 32;
+
+        [ThreadStatic]
+        private static List<string> _indentsCache;
         internal static string ToJsonLog(object obj, bool withProperties)
         {
             if (obj == null) { return "null"; }
@@ -21,12 +25,16 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         private static string GetIndentString(int count)
         {
-            int newSize = count + 1;
-            while (newSize > _indentsChache.Count)
+            if (_indentsCache == null)
             {
-                _indentsChache.Add(new string(' ', _indentsChache.Count));
+                _indentsCache = new List<string>();
             }
-            return _indentsChache[count];
+            int newSize = count + 1;
+            while (newSize > _indentsCache.Count)
+            {
+                _indentsCache.Add(new string(' ', _indentsCache.Count));
+            }
+            return _indentsCache[count];
         }
         private static void NewLine(
             ref int linesCounter,
@@ -52,6 +60,11 @@ namespace DCFApixels.DragonECS.Core.Internal
                 sb.Append("null");
                 return;
             }
+            if (indent >= MAX_DEPTH)
+            {
+                sb.Append("#MAX_DEPTH#");
+                return;
+            }
 
             Type type = value.GetType();
 
@@ -61,7 +74,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 string str = value as string;
                 if (str == null)
                 {
-                    str = rawString.ToString();
+                    str = new string(rawString.ToArray());
                 }
                 EscapeString(str, sb);
                 sb.Append('"');
@@ -90,6 +103,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
             if (type.IsEnum)
             {
+                sb.Append('"');
                 if (type.TryGetAttribute(out FlagsAttribute _))
                 {
                     sb.Append(type.FullName);
@@ -100,7 +114,14 @@ namespace DCFApixels.DragonECS.Core.Internal
                 {
                     sb.Append(value.ToString());
                 }
-
+                sb.Append('"');
+                return;
+            }
+            if (type == typeof(char))
+            {
+                sb.Append('"');
+                EscapeString(value.ToString(), sb);
+                sb.Append('"');
                 return;
             }
             if (type == typeof(DateTime))
@@ -125,9 +146,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             if (value is Exception e)
             {
                 sb.Append('"');
-                sb.Append(type.Name);
-                sb.Append(':').Append(' ');
-                sb.Append(e.Message);
+                EscapeString(type.Name + ": " + e.Message, sb);
                 sb.Append('"');
                 return;
             }
@@ -157,7 +176,8 @@ namespace DCFApixels.DragonECS.Core.Internal
                 if (list.Length == 1)
                 {
                     sb.Append('"');
-                    sb.Append(del.Target.GetType().FullName);
+                    Type ownerType = del.Target == null ? del.Method.DeclaringType : del.Target.GetType();
+                    sb.Append(ownerType == null ? "<static>" : ownerType.FullName);
                     sb.Append('.');
                     sb.Append(del.Method.Name);
                     sb.Append('"');
@@ -171,11 +191,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 if (visited.TryGetValue(value, out var line))
                 {
-                    sb.Append('#');
-                    sb.Append(type.Name);
-                    sb.Append('#');
-                    sb.Append(line);
-                    sb.Append('#');
+                    sb.Append('#').Append(type.Name).Append('#').Append(line).Append('#');
                     return;
                 }
                 visited.Add(value, linesCounter);
@@ -229,6 +245,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 {
                     if (field.IsStatic) { continue; }
 
+                    sb.Append(',');
                     NewLine(ref linesCounter, sb, indent + 1, indentStep);
                     sb.Append('"');
                     sb.Append(field.Name);
@@ -252,6 +269,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                             continue;
                         }
 
+                        sb.Append(',');
                         NewLine(ref linesCounter, sb, indent + 1, indentStep);
                         sb.Append('"');
                         sb.Append(prop.Name);
