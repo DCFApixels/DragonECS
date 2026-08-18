@@ -122,31 +122,33 @@ namespace DCFApixels.DragonECS
         }
         public static string ParseIDFromTypeName(string name)
         {
-            char* buffer = TempBuffer<MetaIDAttribute, char>.Get(name.Length);
-            int count = 0;
-            //skip name[0] char
-            for (int i = 1, iMax = name.Length; i < iMax; i++)
+            var memory = TempAllocator.Alloc<char>(name.Length);
+            using (memory)
             {
-                char current = name[i];
-                if (current == '_')
+                char* buffer = memory.Ptr;
+                int count = 0;
+                //skip name[0] char
+                for (int i = 1, iMax = name.Length; i < iMax; i++)
                 {
-                    if (++i >= iMax) { break; }
-                    current = name[i];
-                    switch (current)
+                    char current = name[i];
+                    if (current == '_')
                     {
-                        case '_': current = '_'; break;
-                        case '1': current = '<'; break;
-                        case '2': current = '>'; break;
-                        case '3': current = ','; break;
-                        case '4': current = ' '; break;
-                        default:
-                            buffer[count++] = '_';
-                            break;
+                        if (++i >= iMax) { break; }
+                        current = name[i];
+                        switch (current)
+                        {
+                            case '_': current = '_'; break;
+                            case '1': current = '<'; break;
+                            case '2': current = '>'; break;
+                            case '3': current = ','; break;
+                            case '4': current = ' '; break;
+                            default: buffer[count++] = '_'; break;
+                        }
                     }
+                    buffer[count++] = current;
                 }
-                buffer[count++] = current;
+                return new string(buffer, 0, count);
             }
-            return new string(buffer, 0, count);
         }
 
         public static string GenerateNewUniqueIDWithAttribute()

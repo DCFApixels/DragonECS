@@ -14,9 +14,22 @@ namespace DCFApixels.DragonECS.Core.Internal
     internal unsafe struct TempAllocatorBlock
     {
         public byte* Allocation;
+        public TempAllocatorBlock* Previous;
         public TempAllocatorBlock* Next;
+        public TempAllocatorAllocationHeader* LastAllocation;
         public int Capacity;
         public int Offset;
+        public int ActiveMarkersCount;
+    }
+
+    internal unsafe struct TempAllocatorAllocationHeader
+    {
+        public TempAllocatorBlock* Block;
+        public int PreviousHeaderOffset;
+        public int PreviousOffsetAndState;
+#if DEBUG
+        public uint State;
+#endif
     }
 
     internal unsafe struct TempAllocatorState
@@ -24,6 +37,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         public TempAllocatorBlock* First;
         public TempAllocatorBlock* Current;
         public TempAllocatorBlock* Last;
+        public uint ActiveMarkerVersion;
     }
 
     internal sealed class TempAllocatorStateFinalizer : IDisposable
@@ -59,10 +73,45 @@ namespace DCFApixels.DragonECS.Core.Internal
 #if !UNITY_2020_3_OR_NEWER
         private const int INITIAL_CAPACITY_IN_BYTES = 4096;
         private const int BLOCK_ALIGNMENT = 16;
+#if DEBUG
+        private const uint ALLOCATION_STATE_ACTIVE = 0xD6A6EC51;
+        private const uint ALLOCATION_STATE_FREED = 0xD6A6EC5F;
+#endif
+        private const int NO_PREVIOUS_HEADER = -1;
+        private const int FREED_OFFSET_MASK = int.MinValue;
+        private const int OFFSET_VALUE_MASK = int.MaxValue;
 
         [ThreadStatic] private static TempAllocatorState _state;
         [ThreadStatic] private static TempAllocatorStateFinalizer _stateFinalizer;
+        [ThreadStatic] private static uint _markerVersion;
 #endif
+
+        public readonly struct Marker
+        {
+#if !UNITY_2020_3_OR_NEWER
+            internal readonly TempAllocatorBlock* Block;
+            internal readonly TempAllocatorAllocationHeader* LastAllocation;
+            internal readonly int Offset;
+            internal readonly uint Version;
+            internal readonly uint PreviousVersion;
+            internal readonly int ThreadID;
+
+            internal Marker(
+                TempAllocatorBlock* block,
+                TempAllocatorAllocationHeader* lastAllocation,
+                int offset,
+                uint version,
+                uint previousVersion)
+            {
+                Block = block;
+                LastAllocation = lastAllocation;
+                Offset = offset;
+                Version = version;
+                PreviousVersion = previousVersion;
+                ThreadID = Environment.CurrentManagedThreadId;
+            }
+#endif
+        }
 
         #region AllocAndInit
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,12 +131,14 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static HMem<byte> AllocAndInit(int byteLength)
         {
+            ValidateByteLength(byteLength);
             return new HMem<byte>(AllocAndInit_Internal(byteLength, DEFAULT_ALIGNMENT), byteLength);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static HMem<byte> AllocAndInit(int byteLength, int alignment)
         {
+            ValidateAllocation(byteLength, alignment);
             return new HMem<byte>(AllocAndInit_Internal(byteLength, alignment), byteLength);
         }
 
@@ -124,12 +175,14 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static HMem<byte> Alloc(int byteLength)
         {
+            ValidateByteLength(byteLength);
             return new HMem<byte>(Alloc_Internal(byteLength, DEFAULT_ALIGNMENT), byteLength);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static HMem<byte> Alloc(int byteLength, int alignment)
         {
+            ValidateAllocation(byteLength, alignment);
             return new HMem<byte>(Alloc_Internal(byteLength, alignment), byteLength);
         }
 
@@ -142,36 +195,40 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void* AllocRaw(int byteLength, int alignment)
         {
-            ValidateAllocation(byteLength, alignment);
             if (byteLength == 0) { byteLength = 1; }
 
 #if UNITY_2020_3_OR_NEWER
             return UnsafeUtility.Malloc(byteLength, alignment, Allocator.Temp);
 #else
             TempAllocatorBlock* block = _state.Current;
-            while (block != null)
-            {
-                void* result;
-                if (TryAlloc(block, byteLength, alignment, out result))
-                {
-                    _state.Current = block;
-                    return result;
-                }
-                block = block->Next;
-            }
-
-            TempAllocatorStateFinalizer stateFinalizer = GetOrCreateStateFinalizer();
-            block = AppendBlock(ref _state, GetRequiredCapacity(byteLength, alignment));
-            _state.Current = block;
-            stateFinalizer.Capture(_state);
             void* allocation;
-            if (TryAlloc(block, byteLength, alignment, out allocation) == false)
+            if (block != null && TryAlloc(block, byteLength, alignment, out allocation))
+            {
+                return allocation;
+            }
+            return AllocRawSlow(byteLength, alignment, block);
+#endif
+        }
+
+#if !UNITY_2020_3_OR_NEWER
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void* AllocRawSlow(int byteLength, int alignment, TempAllocatorBlock* currentBlock)
+        {
+            TempAllocatorStateFinalizer stateFinalizer = GetOrCreateStateFinalizer();
+            TempAllocatorBlock* block = AppendBlock(ref _state, GetRequiredCapacity(byteLength, alignment));
+            stateFinalizer.Capture(_state);
+            void* result;
+            if (TryAlloc(block, byteLength, alignment, out result) == false)
             {
                 throw new InvalidOperationException("The temporary allocator created a block that is too small for the requested allocation.");
             }
-            return allocation;
-#endif
+
+            // An empty main block is retained for reuse. Once a larger block replaces it,
+            // it becomes retired and can be returned to the native allocator immediately.
+            TryReleaseRetiredBlock(currentBlock);
+            return result;
         }
+#endif
         #endregion
 
         #region ReallocAndInit
@@ -305,8 +362,9 @@ namespace DCFApixels.DragonECS.Core.Internal
 
         #region Free
         /// <summary>
-        /// Releases the allocation on Unity. The .NET bump backend reclaims memory only
-        /// through <see cref="Reset"/> or <see cref="Release"/>.
+        /// Releases the allocation. The .NET bump backend immediately rewinds allocations
+        /// freed in reverse order and defers out-of-order allocations until the newer ones
+        /// are released.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Free(HPtr target)
@@ -342,11 +400,109 @@ namespace DCFApixels.DragonECS.Core.Internal
             {
                 UnsafeUtility.Free(allocation, Allocator.Temp);
             }
+#else
+            if (allocation == null) { return; }
+
+            TempAllocatorAllocationHeader* header = GetAllocationHeader(allocation);
+#if DEBUG
+            if (header->State != ALLOCATION_STATE_ACTIVE)
+            {
+                throw new InvalidOperationException("The temporary allocation has already been freed or does not belong to this allocator.");
+            }
+#endif
+
+            TempAllocatorBlock* block = header->Block;
+            if (block->LastAllocation != header)
+            {
+                MarkAllocationFreed(header);
+                return;
+            }
+
+#if DEBUG
+            header->State = ALLOCATION_STATE_FREED;
+#endif
+
+            do
+            {
+                TempAllocatorAllocationHeader* last = block->LastAllocation;
+                block->Offset = GetPreviousOffset(last);
+                block->LastAllocation = GetPreviousAllocation(block, last);
+            }
+            while (block->LastAllocation != null && IsAllocationFreed(block->LastAllocation));
+
+            if (block->LastAllocation == null && block != _state.Current)
+            {
+                TryReleaseRetiredBlock(block);
+            }
 #endif
         }
         #endregion
 
         #region Lifetime
+        /// <summary>
+        /// Captures the current allocation frontier. Markers may be nested and must be
+        /// rewound in reverse order. Allocations that predate a marker must not be freed
+        /// before that marker is rewound.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Marker Mark()
+        {
+#if UNITY_2020_3_OR_NEWER
+            return default;
+#else
+            uint version = unchecked(++_markerVersion);
+            if (version == 0)
+            {
+                version = unchecked(++_markerVersion);
+            }
+
+            TempAllocatorBlock* block = _state.Current;
+            if (block != null)
+            {
+                block->ActiveMarkersCount++;
+            }
+            Marker marker = new Marker(
+                block,
+                block == null ? null : block->LastAllocation,
+                block == null ? 0 : block->Offset,
+                version,
+                _state.ActiveMarkerVersion);
+            _state.ActiveMarkerVersion = version;
+            return marker;
+#endif
+        }
+
+        /// <summary>
+        /// Restores the allocation frontier captured by <see cref="Mark"/>. On Unity,
+        /// Allocator.Temp memory is reclaimed at the engine-controlled boundary and this
+        /// method is a no-op, matching <see cref="Reset"/>.
+        /// </summary>
+        public static void Rewind(Marker marker)
+        {
+#if !UNITY_2020_3_OR_NEWER
+            if (marker.ThreadID != Environment.CurrentManagedThreadId)
+            {
+                throw new InvalidOperationException("A temporary allocator marker must be rewound on the thread that created it.");
+            }
+            if (_state.ActiveMarkerVersion != marker.Version)
+            {
+                throw new InvalidOperationException("Temporary allocator markers must be rewound once and in reverse order.");
+            }
+
+            TempAllocatorBlock* markerBlock = marker.Block;
+            if (markerBlock == null)
+            {
+                ClearAndKeepCurrentBlock(ref _state);
+            }
+            else
+            {
+                RewindToMarker(ref _state, markerBlock, marker.LastAllocation, marker.Offset);
+            }
+            _state.ActiveMarkerVersion = marker.PreviousVersion;
+            CaptureStateForFinalizer();
+#endif
+        }
+
         /// <summary>
         /// Rewinds the allocator owned by the current thread. All handles returned by
         /// the .NET backend become invalid. Unity resets Allocator.Temp at an engine-controlled
@@ -356,15 +512,11 @@ namespace DCFApixels.DragonECS.Core.Internal
         public static void Reset()
         {
 #if !UNITY_2020_3_OR_NEWER
+            _state.ActiveMarkerVersion = 0;
             if (_state.First == null) { return; }
 
-            TempAllocatorBlock* block = _state.First;
-            while (block != null)
-            {
-                block->Offset = 0;
-                block = block->Next;
-            }
-            _state.Current = _state.First;
+            ClearAndKeepCurrentBlock(ref _state);
+            CaptureStateForFinalizer();
 #endif
         }
 
@@ -400,18 +552,24 @@ namespace DCFApixels.DragonECS.Core.Internal
         private static int GetByteLength<T>(int count) where T : unmanaged
         {
             if (count < 0) { throw new ArgumentOutOfRangeException(nameof(count)); }
-            long byteLength = (long)sizeof(T) * count;
-            if (byteLength > int.MaxValue)
+            int elementSize = sizeof(T);
+            if (count > int.MaxValue / elementSize)
             {
                 throw new OutOfMemoryException("The requested temporary allocation is too large.");
             }
-            return (int)byteLength;
+            return count * elementSize;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ValidateByteLength(int byteLength)
+        {
+            if (byteLength < 0) { throw new ArgumentOutOfRangeException(nameof(byteLength)); }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void ValidateAllocation(int byteLength, int alignment)
         {
-            if (byteLength < 0) { throw new ArgumentOutOfRangeException(nameof(byteLength)); }
+            ValidateByteLength(byteLength);
             ValidateAlignment(alignment);
         }
 
@@ -449,6 +607,16 @@ namespace DCFApixels.DragonECS.Core.Internal
             return stateFinalizer;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void CaptureStateForFinalizer()
+        {
+            TempAllocatorStateFinalizer stateFinalizer = _stateFinalizer;
+            if (stateFinalizer != null)
+            {
+                stateFinalizer.Capture(_state);
+            }
+        }
+
         internal static void Release(ref TempAllocatorState state)
         {
             TempAllocatorBlock* block = state.First;
@@ -461,12 +629,129 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
         }
 
+        /// <summary>
+        /// Returns the number of native blocks retained by the current thread.
+        /// Intended for allocator diagnostics and regression tests.
+        /// </summary>
+        internal static int GetRetainedBlockCount()
+        {
+            int result = 0;
+            TempAllocatorBlock* block = _state.First;
+            while (block != null)
+            {
+                result++;
+                block = block->Next;
+            }
+            return result;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void TryReleaseRetiredBlock(TempAllocatorBlock* block)
+        {
+            if (block == null ||
+                block == _state.Current ||
+                block->LastAllocation != null ||
+                block->ActiveMarkersCount != 0)
+            {
+                return;
+            }
+
+            TempAllocatorBlock* previous = block->Previous;
+            TempAllocatorBlock* next = block->Next;
+            if (previous == null)
+            {
+                _state.First = next;
+            }
+            else
+            {
+                previous->Next = next;
+            }
+            if (next == null)
+            {
+                _state.Last = previous;
+            }
+            else
+            {
+                next->Previous = previous;
+            }
+
+            byte* allocation = block->Allocation;
+            CaptureStateForFinalizer();
+            MemoryAllocator.Free(allocation);
+        }
+
+        private static void RewindToMarker(
+            ref TempAllocatorState state,
+            TempAllocatorBlock* markerBlock,
+            TempAllocatorAllocationHeader* markerLastAllocation,
+            int markerOffset)
+        {
+            TempAllocatorBlock* current = state.Current;
+            if (current != markerBlock)
+            {
+                TempAllocatorBlock* releasedBlock = markerBlock->Next;
+                while (releasedBlock != current)
+                {
+                    TempAllocatorBlock* next = releasedBlock->Next;
+                    MemoryAllocator.Free(releasedBlock->Allocation);
+                    releasedBlock = next;
+                }
+
+                markerBlock->Next = current;
+                current->Previous = markerBlock;
+                current->LastAllocation = null;
+                current->Offset = 0;
+            }
+
+            markerBlock->LastAllocation = markerLastAllocation;
+            markerBlock->Offset = markerOffset;
+            markerBlock->ActiveMarkersCount--;
+            state.Last = current;
+
+            if (markerBlock != current && markerBlock->LastAllocation == null)
+            {
+                TryReleaseRetiredBlock(markerBlock);
+            }
+        }
+
+        private static void ClearAndKeepCurrentBlock(ref TempAllocatorState state)
+        {
+            TempAllocatorBlock* current = state.Current;
+            TempAllocatorBlock* block = state.First;
+            while (block != null)
+            {
+                TempAllocatorBlock* next = block->Next;
+                if (block != current)
+                {
+                    MemoryAllocator.Free(block->Allocation);
+                }
+                block = next;
+            }
+
+            if (current == null)
+            {
+                state.First = null;
+                state.Last = null;
+                return;
+            }
+
+            current->Previous = null;
+            current->Next = null;
+            current->LastAllocation = null;
+            current->Offset = 0;
+            current->ActiveMarkersCount = 0;
+            state.First = current;
+            state.Last = current;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryAlloc(TempAllocatorBlock* block, int byteLength, int alignment, out void* allocation)
         {
             byte* data = (byte*)(block + 1);
-            ulong unalignedAddress = (ulong)(data + block->Offset);
-            ulong alignedAddress = (unalignedAddress + (uint)alignment - 1) & ~((ulong)(uint)alignment - 1);
+            int previousOffset = block->Offset;
+            int effectiveAlignment = GetEffectiveAlignment(alignment);
+            ulong unalignedAddress = (ulong)(data + previousOffset + sizeof(TempAllocatorAllocationHeader));
+            ulong alignedAddress = (unalignedAddress + (uint)effectiveAlignment - 1) & ~((ulong)(uint)effectiveAlignment - 1);
             long endOffset = (long)(alignedAddress - (ulong)data) + byteLength;
             if (endOffset > block->Capacity)
             {
@@ -474,6 +759,17 @@ namespace DCFApixels.DragonECS.Core.Internal
                 return false;
             }
 
+            TempAllocatorAllocationHeader* header = (TempAllocatorAllocationHeader*)(alignedAddress - (uint)sizeof(TempAllocatorAllocationHeader));
+            header->Block = block;
+            header->PreviousHeaderOffset = block->LastAllocation == null
+                ? NO_PREVIOUS_HEADER
+                : (int)((byte*)block->LastAllocation - data);
+            header->PreviousOffsetAndState = previousOffset;
+#if DEBUG
+            header->State = ALLOCATION_STATE_ACTIVE;
+#endif
+
+            block->LastAllocation = header;
             block->Offset = (int)endOffset;
             allocation = (void*)alignedAddress;
             return true;
@@ -488,7 +784,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                 throw new OutOfMemoryException("The requested temporary allocation is too large.");
             }
 
-            TempAllocatorBlock* last = state.Last;
+            TempAllocatorBlock* last = state.Current;
             int capacity = last == null ? INITIAL_CAPACITY_IN_BYTES : last->Capacity;
             if (last != null)
             {
@@ -529,7 +825,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             else
             {
                 last->Next = block;
+                block->Previous = last;
             }
+            state.Current = block;
             state.Last = block;
             return block;
         }
@@ -537,12 +835,62 @@ namespace DCFApixels.DragonECS.Core.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int GetRequiredCapacity(int byteLength, int alignment)
         {
-            long requiredCapacity = (long)byteLength + alignment - 1;
+            int effectiveAlignment = GetEffectiveAlignment(alignment);
+            long requiredCapacity = (long)sizeof(TempAllocatorAllocationHeader) + byteLength + effectiveAlignment - 1;
             if (requiredCapacity > int.MaxValue)
             {
                 throw new OutOfMemoryException("The requested temporary allocation is too large.");
             }
             return (int)requiredCapacity;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int GetEffectiveAlignment(int alignment)
+        {
+            return alignment < IntPtr.Size ? IntPtr.Size : alignment;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static TempAllocatorAllocationHeader* GetAllocationHeader(void* allocation)
+        {
+            return (TempAllocatorAllocationHeader*)((byte*)allocation - sizeof(TempAllocatorAllocationHeader));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static TempAllocatorAllocationHeader* GetPreviousAllocation(
+            TempAllocatorBlock* block,
+            TempAllocatorAllocationHeader* allocation)
+        {
+            int offset = allocation->PreviousHeaderOffset;
+            return offset == NO_PREVIOUS_HEADER
+                ? null
+                : (TempAllocatorAllocationHeader*)((byte*)(block + 1) + offset);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int GetPreviousOffset(TempAllocatorAllocationHeader* allocation)
+        {
+            return allocation->PreviousOffsetAndState & OFFSET_VALUE_MASK;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsAllocationFreed(TempAllocatorAllocationHeader* allocation)
+        {
+#if DEBUG
+            return allocation->State == ALLOCATION_STATE_FREED;
+#else
+            return allocation->PreviousOffsetAndState < 0;
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void MarkAllocationFreed(TempAllocatorAllocationHeader* allocation)
+        {
+#if DEBUG
+            allocation->State = ALLOCATION_STATE_FREED;
+#else
+            allocation->PreviousOffsetAndState |= FREED_OFFSET_MASK;
+#endif
         }
 #endif
 
@@ -603,7 +951,8 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
                 return new HMem<U>(Handle, (int)newLengthLong);
             }
-            public void Dispose() { Handle.Dispose(); }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Dispose() { TempAllocator.Free(Ptr); }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Span<T> AsSpan() { return new Span<T>(Ptr, Length); }
@@ -683,7 +1032,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public U* As<U>() where U : unmanaged { return (U*)RawPtr; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose() { Free(this); }
+            public void Dispose() { TempAllocator.Free(Data); }
 
             #region Other
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
