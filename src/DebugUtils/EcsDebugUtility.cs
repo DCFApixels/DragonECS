@@ -4,6 +4,7 @@
 using DCFApixels.DragonECS.Core.Internal;
 using System;
 using System.Collections.Generic;
+using System.Text;
 #if DEBUG || !REFLECTION_DISABLED
 using System.Reflection;
 #endif
@@ -36,16 +37,25 @@ namespace DCFApixels.DragonECS
         private static string GetGenericTypeName_Internal(Type type, int maxDepth, bool isFull)
         {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
-            string typeName = isFull ? type.FullName : type.Name;
+            if (type == null) { return TypeMeta.NullTypeMeta.Name; }
+            Type nameSource = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
+            string typeName = isFull ? nameSource.FullName : nameSource.Name;
+            if (string.IsNullOrEmpty(typeName)) { typeName = nameSource.Name; }
             if (!type.IsGenericType || maxDepth == 0)
             {
                 return typeName;
             }
-            int genericInfoIndex = typeName.LastIndexOf('`');
-            if (genericInfoIndex > 0)
+            var nameBuilder = new StringBuilder(typeName.Length);
+            for (int i = 0; i < typeName.Length; i++)
             {
-                typeName = typeName.Remove(genericInfoIndex);
+                if (typeName[i] == '`')
+                {
+                    while (i + 1 < typeName.Length && char.IsDigit(typeName[i + 1])) { i++; }
+                    continue;
+                }
+                nameBuilder.Append(typeName[i]);
             }
+            typeName = nameBuilder.ToString();
 
             string genericParams = "";
             Type[] typeParameters = type.GetGenericArguments();
@@ -250,19 +260,19 @@ namespace DCFApixels.DragonECS
         {
             TypeMeta meta = GetTypeMeta(obj);
             tags = meta.Tags;
-            return tags.Count <= 0;
+            return tags.Count > 0;
         }
         public static bool TryGetTags<T>(out IReadOnlyCollection<string> tags)
         {
             TypeMeta meta = GetTypeMeta<T>();
             tags = meta.Tags;
-            return tags.Count <= 0;
+            return tags.Count > 0;
         }
         public static bool TryGetTags(Type type, out IReadOnlyCollection<string> tags)
         {
             TypeMeta meta = GetTypeMeta(type);
             tags = meta.Tags;
-            return tags.Count <= 0;
+            return tags.Count > 0;
         }
         #endregion
 
