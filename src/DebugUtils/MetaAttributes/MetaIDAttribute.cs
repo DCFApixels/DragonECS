@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace DCFApixels.DragonECS
@@ -51,11 +52,12 @@ namespace DCFApixels.DragonECS
         //}
         public static bool IsGenericID(string id)
         {
-            return id[id.Length - 1] == '>' || Regex.IsMatch(id, @"^[^,<>\s]*$");
+            return string.IsNullOrEmpty(id) == false &&
+                id[id.Length - 1] == '>' && id.IndexOf('<') > 0;
         }
         public static bool IsValidID(string id)
         {
-            return Regex.IsMatch(id, @"^[a-zA-Z0-9_]+$");
+            return string.IsNullOrEmpty(id) == false && Regex.IsMatch(id, @"^[a-zA-Z0-9_]+$");
         }
 
 
@@ -102,14 +104,22 @@ namespace DCFApixels.DragonECS
         }
         public static string ConvertIDToTypeName(string id)
         {
-            id = id.Replace("_1", "__");
-            id = id.Replace("_2", "__");
-            id = id.Replace("_3", "__");
-
-            id = id.Replace("<", "_1");
-            id = id.Replace(">", "_2");
-            id = id.Replace(",", "_3");
-            return "_" + id;
+            if (id == null) { return "_"; }
+            var result = new StringBuilder(id.Length + 1);
+            result.Append('_');
+            for (int i = 0; i < id.Length; i++)
+            {
+                switch (id[i])
+                {
+                    case '_': result.Append("__"); break;
+                    case '<': result.Append("_1"); break;
+                    case '>': result.Append("_2"); break;
+                    case ',': result.Append("_3"); break;
+                    case ' ': result.Append("_4"); break;
+                    default: result.Append(id[i]); break;
+                }
+            }
+            return result.ToString();
         }
         public static string ParseIDFromTypeName(string name)
         {
@@ -125,9 +135,14 @@ namespace DCFApixels.DragonECS
                     current = name[i];
                     switch (current)
                     {
+                        case '_': current = '_'; break;
                         case '1': current = '<'; break;
                         case '2': current = '>'; break;
                         case '3': current = ','; break;
+                        case '4': current = ' '; break;
+                        default:
+                            buffer[count++] = '_';
+                            break;
                     }
                 }
                 buffer[count++] = current;
