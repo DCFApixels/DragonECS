@@ -1168,13 +1168,15 @@ var _someDataB = _pipeline.Configs.Get<SomeDataB>();
 ```
 
 ## World Components
-World components attach additional data to worlds. World components are `struct` types. Access via `Get` is optimized and performs similarly to class field access.
+World components attach additional data to worlds and can be either `struct` or `class` types. Access via `Get` is optimized and performs similarly to class field access.
+
+Reference-type world components are initially `null` and must be assigned by the caller. The `IEcsWorldComponent<T>` lifecycle callbacks are supported only for `struct` components. If a reference type implements this interface, registering it prints a warning and its lifecycle callbacks are ignored.
 
 Get component:
 ``` c#
 ref WorldComponent component = ref _world.Get<WorldComponent>();
 ```
-Component implementation:
+Struct component implementation:
 ``` c#
 public struct WorldComponent
 {

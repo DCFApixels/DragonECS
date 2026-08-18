@@ -11,8 +11,8 @@ namespace DCFApixels.DragonECS
     /// <summary>
     /// Provides access to a world‑scoped singleton component of type <typeparamref name="T"/>.
     /// </summary>
-    /// <typeparam name="T">The component type, must be a struct.</typeparam>
-    public readonly struct Singleton<T> where T : struct
+    /// <typeparam name="T">The world component type.</typeparam>
+    public readonly struct Singleton<T>
     {
         /// <summary>The ID of the world that owns this singleton.</summary>
         public readonly short WorldID;

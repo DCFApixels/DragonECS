@@ -1135,13 +1135,15 @@ var _someDataB = _pipeline.Configs.Get<SomeDataB>();
 ```
 
 ## 世界组件
-使用世界组件可以将额外的数据附加到世界上. 世界组件使用 `struct` 类型来实现。访问组件的 `Get` 方法经过了速度优化，速度几乎与访问类字段相同。
+使用世界组件可以将额外的数据附加到世界上。世界组件可以使用 `struct` 或 `class` 类型。访问组件的 `Get` 方法经过了速度优化，速度几乎与访问类字段相同。
+
+引用类型的世界组件初始值为 `null`，必须由调用者赋值。`IEcsWorldComponent<T>` 生命周期回调仅支持 `struct` 组件。如果引用类型实现了此接口，注册时会输出警告，并忽略其生命周期回调。
 
 ``` c#
 // 获取组件。
 ref WorldComponent component = ref _world.Get<WorldComponent>();
 ```
-世界组件实现:
+结构体世界组件实现:
 ``` c#
 public struct WorldComponent
 {

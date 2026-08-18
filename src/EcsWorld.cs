@@ -502,7 +502,7 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <returns>Reference to the world-scoped component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Get<T>() where T : struct
+        public ref T Get<T>()
         {
             return ref WorldComponentPool<T>.GetForWorld(ID);
         }
@@ -512,7 +512,7 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <returns>True if the component is present; otherwise, false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has<T>() where T : struct
+        public bool Has<T>()
         {
             return WorldComponentPool<T>.Has(ID);
         }
@@ -523,7 +523,7 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <returns>Reference to the world-scoped component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T GetUnchecked<T>() where T : struct
+        public ref T GetUnchecked<T>()
         {
             return ref WorldComponentPool<T>.GetForWorldUnchecked(ID);
         }
@@ -534,7 +534,7 @@ namespace DCFApixels.DragonECS
         /// <param name="worldID">Target world identifier.</param>
         /// <returns>Reference to the world-scoped component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T Get<T>(short worldID) where T : struct
+        public static ref T Get<T>(short worldID)
         {
             return ref WorldComponentPool<T>.GetForWorld(worldID);
         }
@@ -545,7 +545,7 @@ namespace DCFApixels.DragonECS
         /// <param name="worldID">Target world identifier.</param>
         /// <returns>True if the component is present; otherwise, false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Has<T>(short worldID) where T : struct
+        public static bool Has<T>(short worldID)
         {
             return WorldComponentPool<T>.Has(worldID);
         }
@@ -557,7 +557,7 @@ namespace DCFApixels.DragonECS
         /// <param name="worldID">Target world identifier.</param>
         /// <returns>Reference to the world-scoped component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T GetUnchecked<T>(short worldID) where T : struct
+        public static ref T GetUnchecked<T>(short worldID)
         {
             return ref WorldComponentPool<T>.GetForWorldUnchecked(worldID);
         }
