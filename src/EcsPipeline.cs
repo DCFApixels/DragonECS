@@ -217,12 +217,6 @@ namespace DCFApixels.DragonECS
             _injector = new Injector(this);
             injectionList.InitInjectTo(_injector, this);
         }
-        ~EcsPipeline()
-        {
-            if (_isDestroyed) { return; }
-            if (_isInit == false) { Init(); }
-            Destroy();
-        }
         #endregion
 
         #region GetProcess
@@ -281,7 +275,10 @@ namespace DCFApixels.DragonECS
 #endif
             runnerInstance.Init_Internal(this);
             _runners.Add(runnerType, runnerInstance);
-            _runners.Add(runnerInstance.Interface, runnerInstance);
+            if (_runners.ContainsKey(runnerInstance.Interface) == false)
+            {
+                _runners.Add(runnerInstance.Interface, runnerInstance);
+            }
             Injector.ExtractAllTo(runnerInstance);
 
             // init after.
@@ -322,7 +319,11 @@ namespace DCFApixels.DragonECS
         #region Internal
         internal void OnRunnerDestroy_Internal(IEcsRunner runner)
         {
-            _runners.Remove(runner.Interface);
+            _runners.Remove(runner.GetType());
+            if (_runners.TryGetValue(runner.Interface, out IEcsRunner mapped) && ReferenceEquals(mapped, runner))
+            {
+                _runners.Remove(runner.Interface);
+            }
         }
         #endregion
 
