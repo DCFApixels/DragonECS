@@ -439,7 +439,10 @@ namespace DCFApixels.DragonECS
 #endif
                         finally
                         {
-                            translationFinnalyCallback(item.runFinally);
+                            if (item.runFinally != null)
+                            {
+                                translationFinnalyCallback(item.runFinally);
+                            }
                         }
                     }
 #endif
