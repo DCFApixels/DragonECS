@@ -856,8 +856,15 @@ namespace DCFApixels.DragonECS
             return new RawEntLong(entityID, _entities[entityID].gen, ID);
         }
 
+        /// <summary>
+        /// Safely checks whether an entity ID and generation identify an alive entity in this world.
+        /// Returns false when <paramref name="entityID"/> is outside the world's current entity capacity.
+        /// </summary>
+        /// <param name="entityID">Entity ID to check.</param>
+        /// <param name="gen">Generation value to compare with the entity slot.</param>
+        /// <returns>True when the entity slot exists, is used and has the specified generation; otherwise, false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool IsAliveSafe_Internal(int entityID, short gen)
+        public bool IsAliveSafe(int entityID, short gen)
         {
             if (entityID < 0 || entityID >= _entitiesCapacity) { return false; }
             ref var slot = ref _entities[entityID];
@@ -1036,7 +1043,7 @@ namespace DCFApixels.DragonECS
                 for (int i = 0; i < anyChuncks.Length; i++)
                 {
                     var bit = anyChuncks[i];
-                    if ((_entityComponentMasks[componentMaskStartIndex + bit.chunkIndex] & bit.mask) == bit.mask)
+                    if ((_entityComponentMasks[componentMaskStartIndex + bit.chunkIndex] & bit.mask) != 0)
                     {
 #if DEBUG && DRAGONECS_DEEP_DEBUG
                         if (true != deepDebug) { Throw.DeepDebugException(); }
@@ -1428,7 +1435,7 @@ namespace DCFApixels.DragonECS
             {
                 if (_groups[i].TryGetTarget(out EcsGroup group))
                 {
-                    if (group.IsReleased)
+                    if (group.IsReleased == false)
                     {
                         group.OnReleaseDelEntityBuffer_Internal(fullBuffer);
                     }
@@ -1819,7 +1826,7 @@ namespace DCFApixels.DragonECS
                 }
             }
 
-            return itemsCount;
+            return arrayIndex;
         }
         private unsafe void GetComponentTypeIDsFor_Internal(int entityID, int* componentIDs, int itemsCount)
         {
