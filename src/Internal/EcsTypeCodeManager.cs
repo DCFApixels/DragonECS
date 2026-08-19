@@ -24,7 +24,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         public static int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _codes.Count; }
+            get { lock (_lock) { return _codes.Count; } }
         }
         public static EcsTypeCode Get(Type type)
         {
@@ -40,19 +40,28 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsTypeCode Get<T>() { return EcsTypeCodeCache<T>.code; }
-        public static bool Has(Type type) { return _codes.Has(type); }
+        public static bool Has(Type type) { lock (_lock) { return _codes.Has(type); } }
         public static EcsTypeCodeKey FindTypeOfCode(EcsTypeCode typeCode)
         {
-            foreach (var item in _codes)
+            lock (_lock)
             {
-                if (item.Value == typeCode)
+                foreach (var item in _codes)
                 {
-                    return item.Key;
+                    if (item.Value == typeCode)
+                    {
+                        return item.Key;
+                    }
                 }
+                return null;
             }
-            return null;
         }
-        public static IEnumerable<TypeCodeInfo> GetDeclaredTypes() { return _codes.Select(o => new TypeCodeInfo(o.Key, o.Value)); }
+        public static IEnumerable<TypeCodeInfo> GetDeclaredTypes()
+        {
+            lock (_lock)
+            {
+                return _codes.Select(o => new TypeCodeInfo(o.Key, o.Value)).ToArray();
+            }
+        }
     }
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
