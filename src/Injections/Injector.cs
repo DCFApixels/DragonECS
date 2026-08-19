@@ -96,14 +96,15 @@ namespace DCFApixels.DragonECS
         /// <param name="obj">Object instance to inject.</param>
         public void Inject<T>(T obj)
         {
+            if (obj == null) { Throw.ArgumentNull(nameof(obj)); }
             Type tType = typeof(T);
             Type objType = obj.GetType();
+            if (_nodes.ContainsKey(tType) == false)
+            {
+                InitNode(new InjectionNode<T>());
+            }
             if (_branches.TryGetValue(objType, out InjectionBranch branch) == false)
             {
-                if (_nodes.ContainsKey(tType) == false)
-                {
-                    InitNode(new InjectionNode<T>());
-                }
                 bool hasObjTypeNode = _nodes.ContainsKey(objType);
                 if (hasObjTypeNode == false && obj is IInjectionUnit unit)
                 {
