@@ -72,7 +72,6 @@ namespace DCFApixels.DragonECS
             {
                 TAspcet aspect = world.GetAspect<TAspcet>(out EcsMask mask);
                 TExecutor instance = world.GetExecutorForMask<TExecutor>(mask);
-                instance.Initialize(world, mask);
                 component = new WhereQueryCache<TExecutor, TAspcet>(instance, aspect);
             }
             void IEcsWorldComponent<WhereQueryCache<TExecutor, TAspcet>>.OnDestroy(ref WhereQueryCache<TExecutor, TAspcet> component, EcsWorld world)
