@@ -311,6 +311,10 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         private static void Free_Internal(HPtr target)
         {
+            if (target.IsCreated == false)
+            {
+                return;
+            }
             Meta* handledPtr;
 #if DEBUG
             lock (_idDispenser)
@@ -384,7 +388,11 @@ namespace DCFApixels.DragonECS.Core.Internal
         #region Other
         internal static StateDebugInfo GetHandlerInfos_Debug()
         {
-            StateDebugInfo result = default;
+            StateDebugInfo result = new StateDebugInfo
+            {
+                DebugInfos = Array.Empty<HandleDebugInfo>(),
+                IDDispenser = null,
+            };
 #if DEBUG
             result.IDDispenser = _idDispenser;
             result.DebugInfos = _debugInfos;
