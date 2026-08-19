@@ -108,7 +108,8 @@ namespace DCFApixels.DragonECS
             if (_incs.Length > 0) { _flags |= EcsMaskFlags.Inc; }
             if (_excs.Length > 0) { _flags |= EcsMaskFlags.Exc; }
             if (_anys.Length > 0) { _flags |= EcsMaskFlags.Any; }
-            if ((_incs.Length & _excs.Length) == 1 && _incs[0] == _excs[0])
+            if (OverlapsArray(_incs, _excs) ||
+                (_anys.Length > 0 && IsSubarray(_excs, _anys)))
             {
                 _flags = EcsMaskFlags.Broken;
             }
@@ -263,9 +264,9 @@ namespace DCFApixels.DragonECS
             {
                 if (super[superI] == sub[subI])
                 {
-                    superI++;
+                    subI++;
                 }
-                subI++;
+                superI++;
             }
             return subI == sub.Length;
         }
@@ -446,14 +447,22 @@ namespace DCFApixels.DragonECS
             public Builder Any(IEnumerable<EcsTypeCode> typeCodes) { foreach (var typeCode in typeCodes) { Any(typeCode); } return this; }
             public Builder Combine(EcsStaticMask mask)
             {
+                return Combine(mask, 0);
+            }
+            public Builder Combine(EcsStaticMask mask, int order)
+            {
                 if (_version != _builder._version) { Throw.CantReuseBuilder(); }
-                _builder.Combine(mask);
+                _builder.Combine(mask, order);
                 return this;
             }
             public Builder Except(EcsStaticMask mask)
             {
+                return Except(mask, 0);
+            }
+            public Builder Except(EcsStaticMask mask, int order)
+            {
                 if (_version != _builder._version) { Throw.CantReuseBuilder(); }
-                _builder.Except(mask);
+                _builder.Except(mask, order);
                 return this;
             }
             #endregion
@@ -485,6 +494,7 @@ namespace DCFApixels.DragonECS
             private readonly List<Combined> _combineds = new List<Combined>();
             private bool _sortedCombinedChecker = true;
             private readonly List<Excepted> _excepteds = new List<Excepted>();
+            private bool _sortedExceptedChecker = true;
 
             internal int _version;
 
@@ -506,6 +516,7 @@ namespace DCFApixels.DragonECS
                 lock (_lock)
                 {
                     instance.Clear();
+                    instance._version++;
                     _buildersPool.Push(instance);
                 }
             }
@@ -514,6 +525,10 @@ namespace DCFApixels.DragonECS
                 _incsSet.Clear();
                 _excsSet.Clear();
                 _anysSet.Clear();
+                _combineds.Clear();
+                _excepteds.Clear();
+                _sortedCombinedChecker = true;
+                _sortedExceptedChecker = true;
             }
             #endregion
 
@@ -556,6 +571,10 @@ namespace DCFApixels.DragonECS
 
             public void Except(EcsStaticMask mask, int order = 0)
             {
+                if (_sortedExceptedChecker && order != 0)
+                {
+                    _sortedExceptedChecker = false;
+                }
                 _excepteds.Add(new Excepted(mask, order));
             }
             #endregion
@@ -579,7 +598,7 @@ namespace DCFApixels.DragonECS
 
                     if (_sortedCombinedChecker == false)
                     {
-                        _combineds.Sort((a, b) => a.order - b.order);
+                        _combineds.Sort((a, b) => a.order.CompareTo(b.order));
                     }
                     foreach (var item in _combineds)
                     {
@@ -609,6 +628,10 @@ namespace DCFApixels.DragonECS
 
                 if (_excepteds.Count > 0)
                 {
+                    if (_sortedExceptedChecker == false)
+                    {
+                        _excepteds.Sort((a, b) => a.order.CompareTo(b.order));
+                    }
                     foreach (var item in _excepteds)
                     {
                         //if (combinedIncs.Overlaps(item.mask._exc) || combinedExcs.Overlaps(item.mask._inc))
@@ -633,7 +656,6 @@ namespace DCFApixels.DragonECS
                 var key = new Key(inc, exc, any);
                 EcsStaticMask result = CreateMask(key);
 
-                _version++;
                 return result;
             }
             #endregion

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 #if ENABLE_IL2CPP
 using Unity.IL2CPP.CompilerServices;
 #endif
@@ -276,11 +277,21 @@ namespace DCFApixels.DragonECS
         /// <returns>An <see cref="EcsMaskIterator"/> instance for this mask.</returns>
         public EcsMaskIterator GetIterator()
         {
-            if (_iterator == null)
+            EcsMaskIterator iterator = _iterator;
+            if (iterator == null)
             {
-                _iterator = new EcsMaskIterator(EcsWorld.GetWorld(WorldID), this);
+                EcsMaskIterator created = new EcsMaskIterator(World, this);
+                iterator = Interlocked.CompareExchange(ref _iterator, created, null);
+                if (iterator == null)
+                {
+                    iterator = created;
+                }
+                else
+                {
+                    created.Dispose();
+                }
             }
-            return _iterator;
+            return iterator;
         }
         #endregion
 
@@ -879,24 +890,26 @@ namespace DCFApixels.DragonECS
         #region SortConstraints/TryFindEntityStorage
         private unsafe int SortConstraints_Internal()
         {
+            int maxBufferSize = Math.Max(Math.Max(_sortIncBuffer.Length, _sortExcBuffer.Length), _sortAnyBuffer.Length);
+            if (maxBufferSize < STACK_BUFFER_THRESHOLD)
+            {
+                EcsMaskChunck* preSortingBuffer = stackalloc EcsMaskChunck[maxBufferSize];
+                return SortConstraints_Internal(preSortingBuffer);
+            }
+
+            using (var memory = TempAllocator.Alloc<EcsMaskChunck>(maxBufferSize))
+            {
+                return SortConstraints_Internal(memory.Ptr);
+            }
+        }
+        private unsafe int SortConstraints_Internal(EcsMaskChunck* preSortingBuffer)
+        {
             UnsafeSegment<int> sortIncBuffer = _sortIncBuffer;
             UnsafeSegment<int> sortExcBuffer = _sortExcBuffer;
             UnsafeSegment<int> sortAnyBuffer = _sortAnyBuffer;
 
             EcsWorld.PoolSlot[] counts = World._poolSlots;
-            int maxBufferSize = Math.Max(Math.Max(sortIncBuffer.Length, sortExcBuffer.Length), sortAnyBuffer.Length);
             int maxEntities = int.MaxValue;
-
-            EcsMaskChunck* preSortingBuffer;
-            if (maxBufferSize < STACK_BUFFER_THRESHOLD)
-            {
-                EcsMaskChunck* ptr = stackalloc EcsMaskChunck[maxBufferSize];
-                preSortingBuffer = ptr;
-            }
-            else
-            {
-                preSortingBuffer = TempBuffer<EcsMaskIterator, EcsMaskChunck>.Get(maxBufferSize);
-            }
 
             if (_sortIncChunckBuffer.Length > 1)
             {
@@ -920,7 +933,6 @@ namespace DCFApixels.DragonECS
             // Выражение IncCount < (AllEntitiesCount - ExcCount) мало вероятно будет истинным.
             // ExcCount = максимальное количество ентитей с исключеющим ограничением и IncCount = минимальоне количество ентитей с включающим ограничением
             // Поэтому исключающее ограничение игнорируется для maxEntities.
-
 
             if (_sortAnyChunckBuffer.Length > 1)
             {
@@ -1062,7 +1074,7 @@ namespace DCFApixels.DragonECS
                 {
                     if (array.Length <= count)
                     {
-                        Array.Resize(ref array, array.Length << 1);
+                        Array.Resize(ref array, Math.Max(array.Length << 1, 4));
                     }
                     array[count++] = enumerator.Current;
                 }
@@ -1165,7 +1177,7 @@ namespace DCFApixels.DragonECS
                             for (int i = 0; i < _sortAnyChunckBuffer.Length; i++)
                             {
                                 var bit = _sortAnyChunckBuffer.Ptr[i];
-                                if ((_entityComponentMasks[entityLineStartIndex + bit.chunkIndex] & bit.mask) == bit.mask)
+                                if ((_entityComponentMasks[entityLineStartIndex + bit.chunkIndex] & bit.mask) != 0)
                                 {
                                     return true;
                                 }
@@ -1233,7 +1245,7 @@ namespace DCFApixels.DragonECS
                 {
                     if (array.Length <= count)
                     {
-                        Array.Resize(ref array, array.Length << 1);
+                        Array.Resize(ref array, Math.Max(array.Length << 1, 4));
                     }
                     array[count++] = enumerator.Current;
                 }
