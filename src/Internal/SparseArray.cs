@@ -27,7 +27,7 @@ namespace DCFApixels.DragonECS.Core.Internal
 
         private int _count;
 
-        private int _freeList;
+        private int _freeList = EMPTY;
         private int _freeCount;
 
         private int _modBitMask;
@@ -43,7 +43,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             get { return _entries[FindEntry(key)].value; }
             set { Insert(key, value); }
         }
-        public int Count { get { return _count; } }
+        public int Count { get { return _count - _freeCount; } }
         #endregion
 
         #region Constructors
@@ -94,6 +94,7 @@ namespace DCFApixels.DragonECS.Core.Internal
                     _entries[i].next = _freeList;
                     _entries[i].hashKey = -1;
                     _entries[i].value = default;
+                    _entries[i].occupied = false;
                     _freeList = i;
                     _freeCount++;
                     return true;
@@ -144,6 +145,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             _entries[index].next = _buckets[targetBucket];
             _entries[index].hashKey = key;
             _entries[index].value = value;
+            _entries[index].occupied = true;
             _buckets[targetBucket] = index;
         }
         #endregion
@@ -184,6 +186,8 @@ namespace DCFApixels.DragonECS.Core.Internal
                 }
                 Array.Clear(_entries, 0, _count);
                 _count = 0;
+                _freeList = EMPTY;
+                _freeCount = 0;
             }
         }
         #endregion
@@ -203,9 +207,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             Array.Copy(_entries, 0, newEntries, 0, _count);
             for (int i = 0; i < _count; i++)
             {
-                if (newEntries[i].hashKey >= 0)
+                if (newEntries[i].occupied)
                 {
-                    int bucket = newEntries[i].hashKey % newSize;
+                    int bucket = newEntries[i].hashKey & _modBitMask;
                     newEntries[i].next = newBuckets[bucket];
                     newBuckets[bucket] = i;
                 }
@@ -229,6 +233,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             public int next;        // Index of next entry, -1 if last
             public int hashKey;
             public TValue value;
+            public bool occupied;
         }
         #endregion
     }
