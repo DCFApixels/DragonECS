@@ -108,6 +108,9 @@ namespace DCFApixels.DragonECS.Core
         private StructList<VertexInfo> _vertexInfos = new StructList<VertexInfo>(32);
 
         private List<(VertexID from, VertexID to)> _dependencies = new List<(VertexID, VertexID)>(16);
+        private const sbyte MOVE_AFTER = -1;
+        private const sbyte MOVE_NONE = 0;
+        private const sbyte MOVE_BEFORE = 1;
         private readonly VertexID _basicVertexID;
         private int _increment = 1;
         private int _count;
@@ -191,10 +194,9 @@ namespace DCFApixels.DragonECS.Core
         {
             ref var info = ref GetVertexInfo(id);
 
-            if (info.isContained == false && info.isLocked || info.isLocked == false)
-            {
-                info.insertionIndex = _increment++;
-            }
+            // Every Add refreshes ordering, including repeated Add for locked vertices.
+            // Locking controls removal only.
+            info.insertionIndex = _increment++;
             if (info.isContained == false)
             {
                 _count++;
@@ -203,8 +205,11 @@ namespace DCFApixels.DragonECS.Core
         }
         public bool RemoveVertex(T vertex)
         {
-            var result = GetVertexID(vertex);
-            return RemoveVertexByID(result);
+            if (_vertexIDs.TryGetValue(vertex, out VertexID id) == false)
+            {
+                return false;
+            }
+            return RemoveVertexByID(id);
         }
         private bool RemoveVertexByID(VertexID id)
         {
@@ -226,7 +231,16 @@ namespace DCFApixels.DragonECS.Core
             ref var toInfo = ref GetVertexInfo(toVertexID);
             fromInfo.hasAnyDependency = true;
             toInfo.hasAnyDependency = true;
-            fromInfo.moveToRight = moveToRight;
+            // Before moves the source to the right; After moves the destination to the
+            // left. Assigning the mode here also implements last-operation-wins.
+            if (moveToRight)
+            {
+                fromInfo.moveDirection = MOVE_BEFORE;
+            }
+            else
+            {
+                toInfo.moveDirection = MOVE_AFTER;
+            }
             _dependencies.Add((fromVertexID, toVertexID));
         }
         #endregion
@@ -240,11 +254,15 @@ namespace DCFApixels.DragonECS.Core
                 {
                     this.AddDependency(graph.GetVertexFromID(otherDependency.from), graph.GetVertexFromID(otherDependency.to), false);
                 }
-                for (int i = 0; i < graph.GetVertexInfosCount(); i++)
+                for (int i = 1; i < graph.GetVertexInfosCount(); i++)
                 {
                     ref var otherLayerInfo = ref graph.GetVertexInfo(i);
-                    AddVertexByID(GetVertexID(graph.GetVertexFromID((VertexID)i)));
+                    if (otherLayerInfo.isContained)
+                    {
+                        AddVertex(graph.GetVertexFromID((VertexID)i), otherLayerInfo.isLocked);
+                    }
                 }
+                return;
             }
             foreach (var otherDependency in other.Dependencies)
             {
@@ -266,35 +284,30 @@ namespace DCFApixels.DragonECS.Core
                 var ptr = stackalloc VertexID[_count];
                 var buffer = new UnsafeSegment<VertexID>(ptr, _count);
                 TopoSorting(buffer);
-                ReoderInsertionIndexes(buffer);
-                TopoSorting(buffer);
                 return ConvertIdsToTsArray(buffer);
             }
             else
             {
-                var ptr = TempBuffer<VertexID, VertexID>.Get(_count);
-                var buffer = new UnsafeSegment<VertexID>(ptr, _count);
-                TopoSorting(buffer);
-                ReoderInsertionIndexes(buffer);
-                TopoSorting(buffer);
-                return ConvertIdsToTsArray(buffer);
+                using (var memory = TempAllocator.Alloc<VertexID>(_count))
+                {
+                    var buffer = memory.AsSegment();
+                    TopoSorting(buffer);
+                    return ConvertIdsToTsArray(buffer);
+                }
             }
         }
         private unsafe void TopoSorting(UnsafeSegment<VertexID> sortingBuffer)
         {
-            VertexID[] nodes = new VertexID[_count];
             var adjacency = new List<(VertexID To, int DependencyIndex)>[GetVertexInfosCount()];
 
-            for (int i = 0, j = 0; i < GetVertexInfosCount(); i++)
+            for (int i = 0; i < GetVertexInfosCount(); i++)
             {
                 VertexID layerID = (VertexID)i;
                 ref var info = ref GetVertexInfo(layerID);
                 adjacency[(int)layerID] = new List<(VertexID To, int DependencyIndex)>();
-                GetVertexInfo(layerID).inDegree = 0;
-                if (info.isContained)
-                {
-                    nodes[j++] = layerID;
-                }
+                info.inDegree = 0;
+                info.hasAnyDependency = false;
+                info.isBasicAutoAttached = false;
             }
 
             for (int i = 0; i < _dependencies.Count; i++)
@@ -303,138 +316,177 @@ namespace DCFApixels.DragonECS.Core
                 ref var fromInfo = ref GetVertexInfo(from);
                 ref var toInfo = ref GetVertexInfo(to);
 
-                if (fromInfo.isContained && toInfo.isContained)
-                {
-                    adjacency[(int)from].Add((to, i));
-                    toInfo.inDegree += 1;
-                }
+                // Dependency endpoints participate in sorting even when they are virtual
+                // (not contained). Virtual vertices are filtered only from the result.
+                fromInfo.hasAnyDependency = true;
+                toInfo.hasAnyDependency = true;
+                adjacency[(int)from].Add((to, i));
+                toInfo.inDegree += 1;
             }
 
-            // добавление зависимостей для нод без зависимостей.
+            // Add implicit Basic dependencies only for completely isolated contained
+            // vertices. Mark them so they are scheduled before explicit Basic successors.
             if (_basicVertexID != VertexID.NULL)
             {
                 var basicLayerAdjacencyList = adjacency[(int)_basicVertexID];
-                int inserIndex = basicLayerAdjacencyList.Count;
                 for (int i = 0; i < GetVertexInfosCount(); i++)
                 {
                     var toID = (VertexID)i;
                     ref var toInfo = ref GetVertexInfo(i);
-                    if (toInfo.isContained && toInfo.hasAnyDependency == false)
+                    if (toID != _basicVertexID && toInfo.isContained && toInfo.hasAnyDependency == false)
                     {
-                        basicLayerAdjacencyList.Insert(inserIndex, (toID, toInfo.insertionIndex));
+                        basicLayerAdjacencyList.Add((toID, -1));
+                        GetVertexInfo(_basicVertexID).hasAnyDependency = true;
                         toInfo.inDegree += 1;
+                        toInfo.isBasicAutoAttached = true;
                     }
                 }
             }
 
-            List<VertexID> zeroInDegree = new List<VertexID>(nodes.Length);
-            zeroInDegree.AddRange(nodes.Where(id => GetVertexInfo(id).inDegree == 0).OrderBy(id => GetVertexInfo(id).insertionIndex));
-
-            int resultCount = 0;
-
-            while (zeroInDegree.Count > 0)
-            {
-                var current = zeroInDegree[0];
-                zeroInDegree.RemoveAt(0);
-
-                GetVertexInfo(current).sortingIndex = resultCount;
-                sortingBuffer.Ptr[resultCount++] = current;
-
-                var adjacencyList = adjacency[(int)current];
-                for (int i = 0; i < adjacencyList.Count; i++)
-                {
-                    var (neighbor, _) = adjacencyList[i];
-                    ref var neighborInfo = ref GetVertexInfo(neighbor);
-                    neighborInfo.inDegree--;
-                    if (neighborInfo.inDegree == 0)
-                    {
-                        var neighborInsertionIndex = neighborInfo.insertionIndex;
-                        int insertIndex = zeroInDegree.FindIndex(id => GetVertexInfo(id).insertionIndex < neighborInsertionIndex);
-                        insertIndex = insertIndex < 0 ? 0 : insertIndex;
-                        zeroInDegree.Insert(insertIndex, neighbor);
-                    }
-                }
-            }
-
-            if (resultCount != nodes.Length)
-            {
-                var cycle = FindCycle(adjacency, nodes);
-                string[] cycleDependencies = null;
-                if (cycle != null)
-                {
-                    cycleDependencies = GetCycleDependencies(cycle, adjacency);
-                }
-                Throw.DependencyGraph_CyclicDependencyDetected(cycleDependencies);
-            }
-        }
-        private unsafe void ReoderInsertionIndexes(UnsafeSegment<VertexID> sortingBuffer)
-        {
+            // Along with contained vertices, sort every virtual vertex referenced by an edge.
+            int sortingNodesCount = 0;
             for (int i = 0; i < GetVertexInfosCount(); i++)
             {
                 ref var info = ref GetVertexInfo(i);
-                if (info.isContained == false) { continue; }
-                info.leftBeforeIndex = info.moveToRight ? int.MaxValue : 0;
-            }
-
-            foreach (var dependency in _dependencies)
-            {
-                ref var fromInfo = ref GetVertexInfo(dependency.from);
-                if (fromInfo.moveToRight)
+                if (info.isContained || info.hasAnyDependency)
                 {
-                    ref var toInfo = ref GetVertexInfo(dependency.to);
-                    fromInfo.leftBeforeIndex = Math.Min(toInfo.sortingIndex, fromInfo.leftBeforeIndex);
+                    sortingNodesCount++;
                 }
             }
 
-            for (int i = sortingBuffer.Length - 1; i >= 0; i--)
+            using (var nodesMemory = TempAllocator.Alloc<VertexID>(sortingNodesCount))
             {
-                var id = sortingBuffer.Ptr[i];
-                ref var info = ref GetVertexInfo(id);
-                if (info.moveToRight)
+                var nodes = nodesMemory.AsSegment();
+                for (int i = 0, j = 0; i < GetVertexInfosCount(); i++)
                 {
-                    if (info.leftBeforeIndex < sortingBuffer.Length)
+                    ref var info = ref GetVertexInfo(i);
+                    if (info.isContained || info.hasAnyDependency)
                     {
-                        MoveElement(ref sortingBuffer, i, info.leftBeforeIndex - 1);
+                        nodes.Ptr[j++] = (VertexID)i;
                     }
                 }
-            }
 
-            for (int i = 0; i < sortingBuffer.Length; i++)
-            {
-                ref var info = ref GetVertexInfo(sortingBuffer.Ptr[i]);
-                info.insertionIndex = i;
+                List<VertexID> zeroInDegree = new List<VertexID>(nodes.Length);
+                for (int i = 0; i < nodes.Length; i++)
+                {
+                    VertexID id = nodes.Ptr[i];
+                    if (GetVertexInfo(id).inDegree == 0)
+                    {
+                        zeroInDegree.Add(id);
+                    }
+                }
 
+                int processedCount = 0;
+                int resultCount = 0;
+
+                while (zeroInDegree.Count > 0)
+                {
+                    int currentIndex = SelectNextVertex(zeroInDegree);
+                    var current = zeroInDegree[currentIndex];
+                    zeroInDegree.RemoveAt(currentIndex);
+
+                    processedCount++;
+                    if (GetVertexInfo(current).isContained)
+                    {
+                        sortingBuffer.Ptr[resultCount++] = current;
+                    }
+
+                    var adjacencyList = adjacency[(int)current];
+                    for (int i = 0; i < adjacencyList.Count; i++)
+                    {
+                        var (neighbor, _) = adjacencyList[i];
+                        ref var neighborInfo = ref GetVertexInfo(neighbor);
+                        neighborInfo.inDegree--;
+                        if (neighborInfo.inDegree == 0)
+                        {
+                            zeroInDegree.Add(neighbor);
+                        }
+                    }
+                }
+
+                if (processedCount != nodes.Length)
+                {
+                    var cycle = FindCycle(adjacency, nodes);
+                    string[] cycleDependencies = null;
+                    if (cycle != null)
+                    {
+                        cycleDependencies = GetCycleDependencies(cycle, adjacency);
+                    }
+                    Throw.DependencyGraph_CyclicDependencyDetected(cycleDependencies);
+                }
             }
         }
-        private static unsafe void MoveElement<TValue>(ref UnsafeSegment<TValue> array, int oldIndex, int newIndex) where TValue : unmanaged
+
+        private int SelectNextVertex(List<VertexID> candidates)
         {
-            if (oldIndex == newIndex) return;
-
-            var ptr = array.Ptr;
-            TValue item = ptr[oldIndex];
-
-            int elementSize = sizeof(TValue);
-            int copyLength = Math.Abs(newIndex - oldIndex);
-
-            byte* source;
-            byte* destination;
-            long bytesToCopy = copyLength * elementSize;
-
-            if (oldIndex < newIndex)
+            int bestIndex = 0;
+            for (int i = 1; i < candidates.Count; i++)
             {
-                // Сдвиг вправо: копируем блок [oldIndex+1 ... newIndex] в [oldIndex ... newIndex-1]
-                source = (byte*)(ptr + oldIndex + 1);
-                destination = (byte*)(ptr + oldIndex);
+                if (CompareSchedulingPriority(candidates[i], candidates[bestIndex]) < 0)
+                {
+                    bestIndex = i;
+                }
             }
-            else
-            {
-                // Сдвиг влево: копируем блок [newIndex ... oldIndex-1] в [newIndex+1 ... oldIndex]
-                source = (byte*)(ptr + newIndex);
-                destination = (byte*)(ptr + newIndex + 1);
-            }
-            Buffer.MemoryCopy(source: source, destination: destination, destinationSizeInBytes: bytesToCopy, sourceBytesToCopy: bytesToCopy);
+            return bestIndex;
+        }
 
-            ptr[newIndex] = item;
+        private int CompareSchedulingPriority(VertexID leftID, VertexID rightID)
+        {
+            ref var left = ref GetVertexInfo(leftID);
+            ref var right = ref GetVertexInfo(rightID);
+
+            var leftCategory = GetSchedulingCategory(ref left);
+            var rightCategory = GetSchedulingCategory(ref right);
+            int result = ((int)leftCategory).CompareTo((int)rightCategory);
+            if (result != 0)
+            {
+                return result;
+            }
+
+            if (leftCategory == SchedulingCategory.After)
+            {
+                // For the same After target, the newest vertex is closest to the target.
+                result = right.insertionIndex.CompareTo(left.insertionIndex);
+                if (result != 0)
+                {
+                    return result;
+                }
+                return ((int)rightID).CompareTo((int)leftID);
+            }
+
+            // Normal, auto-attached and Before vertices retain insertion order. Delayed
+            // Before vertices therefore put the newest member closest to their target.
+            result = left.insertionIndex.CompareTo(right.insertionIndex);
+            if (result != 0)
+            {
+                return result;
+            }
+            return ((int)leftID).CompareTo((int)rightID);
+        }
+
+        private static SchedulingCategory GetSchedulingCategory(ref VertexInfo info)
+        {
+            if (info.isBasicAutoAttached)
+            {
+                return SchedulingCategory.BasicAutoAttached;
+            }
+            if (info.moveDirection == MOVE_AFTER)
+            {
+                return SchedulingCategory.After;
+            }
+            if (info.moveDirection == MOVE_BEFORE)
+            {
+                return SchedulingCategory.Before;
+            }
+            return SchedulingCategory.Normal;
+        }
+
+        private enum SchedulingCategory : byte
+        {
+            BasicAutoAttached,
+            After,
+            Normal,
+            Before,
         }
         private unsafe T[] ConvertIdsToTsArray(UnsafeSegment<VertexID> buffer)
         {
@@ -448,15 +500,16 @@ namespace DCFApixels.DragonECS.Core
         #endregion
 
         #region FindCycles
-        private List<VertexID> FindCycle(
+        private unsafe List<VertexID> FindCycle(
             List<(VertexID To, int DependencyIndex)>[] adjacency,
-            VertexID[] nodes)
+            UnsafeSegment<VertexID> nodes)
         {
             var visited = new Dictionary<VertexID, bool>();
             var recursionStack = new Stack<VertexID>();
 
-            foreach (var node in nodes)
+            for (int i = 0; i < nodes.Length; i++)
             {
+                VertexID node = nodes.Ptr[i];
                 if (FindCycleDFS(node, adjacency, visited, recursionStack))
                 {
                     return recursionStack.Reverse().ToList();
@@ -523,7 +576,7 @@ namespace DCFApixels.DragonECS.Core
         #region Other
         public bool ContainsVertex(T vertex)
         {
-            return GetVertexInfo(GetVertexID(vertex)).isContained;
+            return _vertexIDs.TryGetValue(vertex, out VertexID id) && GetVertexInfo(id).isContained;
         }
         public Enumerator GetEnumerator() { return new Enumerator(this); }
         IEnumerator<T> IEnumerable<T>.GetEnumerator() { return GetEnumerator(); }
@@ -544,16 +597,14 @@ namespace DCFApixels.DragonECS.Core
             object IEnumerator.Current { get { return Current; } }
             public bool MoveNext()
             {
-                if (_index++ >= _graph.GetVertexInfosCount()) { return false; }
-                ref var info = ref _graph.GetVertexInfo(_index);
-                if (info.isContained == false)
+                while (++_index < _graph.GetVertexInfosCount())
                 {
-                    return MoveNext();
+                    if (_graph.GetVertexInfo(_index).isContained)
+                    {
+                        return true;
+                    }
                 }
-                else
-                {
-                    return true;
-                }
+                return false;
             }
             public void Reset() { _index = -1; }
             public void Dispose() { }
@@ -568,12 +619,11 @@ namespace DCFApixels.DragonECS.Core
             public int insertionIndex;
             public bool isLocked;
             public bool isContained;
-            public bool moveToRight;
+            public sbyte moveDirection;
             //build
             public bool hasAnyDependency;
+            public bool isBasicAutoAttached;
             public int inDegree;
-            public int sortingIndex;
-            public int leftBeforeIndex;
             public VertexInfo(T name) : this()
             {
                 this.value = name;
