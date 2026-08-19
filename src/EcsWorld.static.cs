@@ -52,6 +52,11 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsWorld GetWorld(short worldID)
         {// ts
+#if DEBUG
+            if ((uint)worldID >= (uint)_worlds.Length) { Throw.ArgumentOutOfRange(); }
+#elif DRAGONECS_STABILITY_MODE
+            if ((uint)worldID >= (uint)_worlds.Length) { return null; }
+#endif
             return _worlds[worldID];
         }
         /// <summary>
@@ -64,7 +69,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetWorld(short worldID, out EcsWorld world)
         {// ts
-            if (worldID >= _worlds.Length)
+            if ((uint)worldID >= (uint)_worlds.Length)
             {
                 world = null;
                 return false;
@@ -211,6 +216,7 @@ namespace DCFApixels.DragonECS
             private static short _count;
             private static short[] _recycledItems = new short[4];
             private static short _recycledItemsCount;
+            private static bool _referenceTypeWarningPrinted;
             private static readonly IEcsWorldComponent<T> _interface = EcsWorldComponent<T>.CustomHandler;
             private static readonly Abstract _controller = new Abstract();
 
@@ -227,66 +233,73 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetForWorldUnchecked(short worldID)
             {// ts
+                short itemIndex;
+                lock (_worldLock)
+                {
+                    if ((uint)worldID >= (uint)_mapping.Length) { Throw.ArgumentOutOfRange(); }
+                    itemIndex = _mapping[worldID];
 #if DEBUG
-                if (_mapping[worldID] <= 0) { Throw.ArgumentOutOfRange(); }
+                    if (itemIndex <= 0) { Throw.ArgumentOutOfRange(); }
 #endif
-                return ref _items[_mapping[worldID]];
+                }
+                return ref _items[itemIndex];
             }
             public static int GetItemIndex(short worldID)
             {// ts
-                if (_mapping.Length < _worlds.Length)
+                lock (_worldLock)
                 {
-                    lock (_worldLock)
+                    if ((uint)worldID >= (uint)_worlds.Length) { Throw.ArgumentOutOfRange(); }
+                    if (_mapping.Length < _worlds.Length)
                     {
-                        if (_mapping.Length < _worlds.Length)
-                        {
-                            Array.Resize(ref _mapping, _worlds.Length);
-                        }
+                        Array.Resize(ref _mapping, _worlds.Length);
                     }
-                }
-                short itemIndex = _mapping[worldID];
-                if (itemIndex == 0)
-                {
-                    lock (_worldLock)
+                    short itemIndex = _mapping[worldID];
+                    if (itemIndex == 0)
                     {
-                        itemIndex = _mapping[worldID];
-                        if (itemIndex <= 0)
+                        if (typeof(T).IsValueType == false &&
+                            _referenceTypeWarningPrinted == false &&
+                            typeof(IEcsWorldComponent<T>).IsAssignableFrom(typeof(T)))
                         {
-                            if (_recycledItemsCount > 0)
-                            {
-                                _count++;
-                                itemIndex = _recycledItems[--_recycledItemsCount];
-                            }
-                            else
-                            {
-                                itemIndex = ++_count;
-                            }
-                            _mapping[worldID] = itemIndex;
+                            _referenceTypeWarningPrinted = true;
+                            EcsDebug.PrintWarning(
+                                $"Reference-type world component '{typeof(T)}' registered. " +
+                                "IEcsWorldComponent<T> lifecycle callbacks are supported only for structs and will be ignored.");
+                        }
 
-                            if (_items.Length <= itemIndex)
-                            {
-                                Array.Resize(ref _items, ArrayUtility.NextPow2(itemIndex));
-                            }
+                        if (_recycledItemsCount > 0)
+                        {
+                            _count++;
+                            itemIndex = _recycledItems[--_recycledItemsCount];
+                        }
+                        else
+                        {
+                            itemIndex = ++_count;
+                        }
+                        _mapping[worldID] = itemIndex;
+
+                        if (_items.Length <= itemIndex)
+                        {
+                            Array.Resize(ref _items, ArrayUtility.CeilPow2Safe(itemIndex + 1));
+                        }
 
 #if DEBUG
-                            AllowedInWorldsAttribute.CheckAllows(_worlds[worldID], typeof(T));
+                        AllowedInWorldsAttribute.CheckAllows(_worlds[worldID], typeof(T));
 #endif
 
-                            _interface.Init(ref _items[itemIndex], _worlds[worldID]);
+                        _interface.Init(ref _items[itemIndex], _worlds[worldID]);
 
-                            var world = GetWorld(worldID);
-                            world._worldComponentPools.Add(_controller);
-                            if (_controller._isBuiltin)
-                            {
-                                world._builtinWorldComponentsCount++;
-                                world._worldComponentPools.SwapAt(
-                                    world._worldComponentPools.Count - 1,
-                                    world._builtinWorldComponentsCount - 1);
-                            }
+                        var world = GetWorld(worldID);
+                        world._worldComponentPools.Add(_controller);
+                        if (_controller._isBuiltin)
+                        {
+                            world._builtinWorldComponentsCount++;
+                            world._worldComponentPools.SwapAt(
+                                world._worldComponentPools.Count - 1,
+                                world._builtinWorldComponentsCount - 1);
                         }
                     }
+                    return itemIndex;
                 }
-                return itemIndex;
             }
             private static void Release(short worldID)
             {// ts
@@ -308,7 +321,7 @@ namespace DCFApixels.DragonECS
                         _interface.OnDestroy(ref _items[itemIndex], _worlds[worldID]);
                         if (_recycledItemsCount >= _recycledItems.Length)
                         {
-                            Array.Resize(ref _recycledItems, ArrayUtility.NextPow2(_recycledItemsCount));
+                            Array.Resize(ref _recycledItems, ArrayUtility.CeilPow2Safe(_recycledItemsCount + 1));
                         }
                         _recycledItems[_recycledItemsCount++] = itemIndex;
                         _items[itemIndex] = default;
@@ -319,18 +332,18 @@ namespace DCFApixels.DragonECS
             }
             public static bool Has(short worldID)
             {// ts
-                if (_mapping.Length < _worlds.Length)
+                lock (_worldLock)
                 {
-                    lock (_worldLock)
+                    if ((uint)worldID >= (uint)_worlds.Length)
                     {
-                        if (_mapping.Length < _worlds.Length)
-                        {
-                            Array.Resize(ref _mapping, _worlds.Length);
-                        }
+                        return false;
                     }
+                    if (_mapping.Length < _worlds.Length)
+                    {
+                        Array.Resize(ref _mapping, _worlds.Length);
+                    }
+                    return _mapping[worldID] > 0;
                 }
-                short itemIndex = _mapping[worldID];
-                return itemIndex > 0;
             }
             private sealed class Abstract : WorldComponentPoolAbstract
             {
