@@ -173,6 +173,11 @@ namespace DCFApixels.DragonECS
                 {
                     _startIndex = newIndex;
                 }
+                else if (insertAfterIndex < 0)
+                {
+                    _systemNodes[newIndex].next = _startIndex;
+                    _startIndex = newIndex;
+                }
                 else
                 {
                     _systemNodes[newIndex].next = _systemNodes[insertAfterIndex].next;
@@ -281,7 +286,7 @@ namespace DCFApixels.DragonECS
                 }
                 Layers.MergeWith(other.Layers);
 
-                foreach (ref readonly SystemNode otherRecord in new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex))
+                foreach (ref readonly SystemNode otherRecord in new LinkedListCountIterator<SystemNode>(other._systemNodes, other._systemNodesCount, other._startIndex))
                 {
                     AddNode_Internal(otherRecord.system, otherRecord.layerName, otherRecord.sortOrder, otherRecord.isUnique);
                 }
@@ -292,8 +297,20 @@ namespace DCFApixels.DragonECS
             private void RemoveAt(int prevIndex, int removedNodeIndex)
             {
                 ref var removedeNode = ref _systemNodes[removedNodeIndex];
+                int nextIndex = removedeNode.next;
                 _layerLists[removedeNode.layerName].lazyInitSystemsCount--;
-                _systemNodes[prevIndex].next = removedeNode.next;
+                if (removedeNode.isUnique)
+                {
+                    _uniqueSystemsSet.Remove(removedeNode.system.GetType());
+                }
+                if (prevIndex < 0)
+                {
+                    _startIndex = nextIndex;
+                }
+                else
+                {
+                    _systemNodes[prevIndex].next = nextIndex;
+                }
                 removedeNode = default;
 
                 if (_endIndex == removedNodeIndex)
@@ -307,33 +324,31 @@ namespace DCFApixels.DragonECS
                 _freeIndex = removedNodeIndex;
                 _freeNodesCount++;
                 _systemNodesCount--;
+                if (_systemNodesCount == 0)
+                {
+                    _startIndex = -1;
+                    _endIndex = -1;
+                }
             }
             /// <summary>Removes all systems of the specified type from the builder.</summary>
             /// <typeparam name="TSystem">The system type to remove.</typeparam>
             /// <returns>The builder instance for chaining.</returns>
             public Builder Remove<TSystem>()
             {
-                _uniqueSystemsSet.Remove(typeof(TSystem));
-
-                if (_systemNodesCount <= 1)
+                int previousIndex = -1;
+                int currentIndex = _startIndex;
+                while (currentIndex >= 0)
                 {
-                    if (_systemNodesCount == 1 && _systemNodes[0].system is TSystem)
+                    int nextIndex = _systemNodes[currentIndex].next;
+                    if (_systemNodes[currentIndex].system is TSystem)
                     {
-                        _systemNodesCount = 0;
+                        RemoveAt(previousIndex, currentIndex);
                     }
-                    return this;
-                }
-
-                int enumIndex = _startIndex;
-                for (int i = 1; i < _systemNodesCount; i++)
-                {
-                    int nextIndex = _systemNodes[enumIndex].next;
-                    if (_systemNodes[nextIndex].system is TSystem)
+                    else
                     {
-                        RemoveAt(enumIndex, nextIndex);
-                        nextIndex = _systemNodes[enumIndex].next;
+                        previousIndex = currentIndex;
                     }
-                    enumIndex = nextIndex;
+                    currentIndex = nextIndex;
                 }
                 return this;
             }
@@ -640,7 +655,7 @@ namespace DCFApixels.DragonECS
             {
                 var it = new LinkedListCountIterator<SystemNode>(_systemNodes, _systemNodesCount, _startIndex);
                 EcsPipelineTemplate result = new EcsPipelineTemplate();
-                result.layers = new string[Layers.Count];
+                result.layers = Layers.Build();
                 result.records = new EcsPipelineTemplate.Record[it.Count];
                 int i = 0;
                 foreach (ref readonly SystemNode node in it)
