@@ -50,7 +50,10 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
             foreach (var runner in _pipeline.AllRunners)
             {
-                ExtractTo_Internal(runner.Value);
+                if (runner.Key == runner.Value.GetType())
+                {
+                    ExtractTo_Internal(runner.Value);
+                }
             }
         }
         public sealed override void ExtractTo(object target)
