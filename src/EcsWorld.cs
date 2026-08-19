@@ -373,7 +373,10 @@ namespace DCFApixels.DragonECS
 
                 foreach (var item in _executors)
                 {
-                    item.Value.Destroy();
+                    if (item.Key.Mask is EcsMask)
+                    {
+                        item.Value.Destroy();
+                    }
                 }
                 _executors.Clear();
                 //_entities - не обнуляется для работы entlong.IsAlive
