@@ -210,6 +210,10 @@ namespace DCFApixels.DragonECS
         /// <returns><c>true</c> if the entity satisfies all conditions; otherwise, <c>false</c>.</returns>
         public bool IsMatches(int entityID)
         {
+            if (_isBuilt == false)
+            {
+                Throw.Aspect_NotInitialized();
+            }
             return _source.IsMatchesMask(_mask, entityID);
         }
         #endregion
@@ -287,48 +291,57 @@ namespace DCFApixels.DragonECS
                     _constructorBuildersStack[_constructorBuildersStackIndex] = builder;
                 }
 
-                //Setup Builder
-                EcsStaticMask staticMask = null;
-                if (_staticMaskCache.TryGetValue(typeof(TAspect), out staticMask) == false)
+                TAspect newAspect = default;
+                object newAspectObj = null;
+                EcsAspect builtinAspect = null;
+                EcsMask mask = null;
+                try
                 {
-                    builder._maskBuilder = EcsStaticMask.New();
-                }
-                builder._world = world;
-
-                //Building
-                TAspect newAspect = new TAspect();
-                object newAspectObj = newAspect;
-                EcsAspect builtinAspect = newAspect as EcsAspect;
-                if (builtinAspect != null)
-                {
-                    builtinAspect._source = world;
-                    builtinAspect.Init(builder);
-                }
-                OnInit(newAspectObj, builder);
-
-                //Build Mask
-                if (staticMask == null)
-                {
-                    staticMask = builder._maskBuilder.Build();
-                    builder._maskBuilder = default;
-                    if (builtinAspect == null || builtinAspect.IsStaticInitialization)
+                    EcsStaticMask staticMask;
+                    if (_staticMaskCache.TryGetValue(typeof(TAspect), out staticMask) == false)
                     {
-                        _staticMaskCache.Add(typeof(TAspect), staticMask);
+                        builder._maskBuilder = EcsStaticMask.New();
+                    }
+                    builder._world = world;
+
+                    newAspect = new TAspect();
+                    newAspectObj = newAspect;
+                    builtinAspect = newAspect as EcsAspect;
+                    if (builtinAspect != null)
+                    {
+                        builtinAspect._source = world;
+                        builtinAspect.Init(builder);
+                    }
+                    OnInit(newAspectObj, builder);
+
+                    if (staticMask == null)
+                    {
+                        staticMask = builder._maskBuilder.Build();
+                        builder._maskBuilder = default;
+                        if (builtinAspect == null || builtinAspect.IsStaticInitialization)
+                        {
+                            _staticMaskCache.Add(typeof(TAspect), staticMask);
+                        }
+                    }
+                    mask = staticMask.ToMask(world);
+                    if (builtinAspect != null)
+                    {
+                        builtinAspect._mask = mask;
+                        builtinAspect._isBuilt = true;
                     }
                 }
-                EcsMask mask = staticMask.ToMask(world);
-                if (builtinAspect != null)
+                finally
                 {
-                    builtinAspect._mask = mask;
-                    //var pools = new IEcsPool[builder._poolsBufferCount];
-                    //Array.Copy(builder._poolsBuffer, pools, pools.Length);
-                    builtinAspect._isBuilt = true;
+                    if (builder._maskBuilder.IsNull == false)
+                    {
+                        builder._maskBuilder.Cancel();
+                    }
+                    builder._maskBuilder = default;
+                    builder._world = null;
+                    _constructorBuildersStackIndex--;
                 }
 
-                _constructorBuildersStackIndex--;
-
                 OnAfterInit(newAspectObj, mask);
-
                 return ((TAspect)newAspectObj, mask);
             }
             #endregion
@@ -339,7 +352,7 @@ namespace DCFApixels.DragonECS
             /// </summary>
             /// <typeparam name="T">The singleton component type.</typeparam>
             /// <returns>A singleton accessor.</returns>
-            public Singleton<T> Get<T>() where T : struct
+            public Singleton<T> Get<T>()
             {
                 return new Singleton<T>(_world.ID);
             }
@@ -413,7 +426,7 @@ namespace DCFApixels.DragonECS
                 var result = _world.GetAspect<TOtherAspect>();
                 if (_maskBuilder.IsNull == false)
                 {
-                    _maskBuilder.Combine(result.Mask._staticMask);
+                    _maskBuilder.Combine(result.Mask._staticMask, order);
                 }
                 return result;
             }
@@ -429,7 +442,7 @@ namespace DCFApixels.DragonECS
                 var result = _world.GetAspect<TOtherAspect>();
                 if (_maskBuilder.IsNull == false)
                 {
-                    _maskBuilder.Except(result.Mask._staticMask);
+                    _maskBuilder.Except(result.Mask._staticMask, order);
                 }
                 return result;
             }
@@ -473,6 +486,8 @@ namespace DCFApixels.DragonECS
         /// <param name="entityID">The entity identifier.</param>
         public virtual void Apply(short worldID, int entityID)
         {
+            if (_isBuilt == false) { Throw.Aspect_NotInitialized(); }
+
             EcsWorld world = EcsWorld.GetWorld(worldID);
             foreach (var incTypeID in _mask._incs)
             {
@@ -510,7 +525,16 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>Explicitly converts this aspect to an <see cref="EcsMask"/>.</summary>
-        EcsMask IComponentMask.ToMask(EcsWorld world) { return _mask; }
+        EcsMask IComponentMask.ToMask(EcsWorld world)
+        {
+            if (_isBuilt == false) { Throw.Aspect_NotInitialized(); }
+
+            if (_source != world)
+            {
+                return _mask.ToStatic().ToMask(world);
+            }
+            return _mask;
+        }
         #endregion
 
         #region Events
@@ -639,7 +663,7 @@ namespace DCFApixels.DragonECS.Core
         }
 
         /// <summary>Gets the singleton component instance from the world.</summary>
-        public T Get<T>() where T : struct
+        public T Get<T>()
         {
             return Builder.World.Get<T>();
         }

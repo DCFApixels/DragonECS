@@ -469,6 +469,11 @@ namespace DCFApixels.DragonECS.Core.Internal
         {
             throw new InvalidOperationException($"{methodName} can only be used during field initialization and in the constructor.");
         }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void Aspect_NotInitialized()
+        {
+            throw new InvalidOperationException("The aspect is not initialized. Obtain it through EcsWorld.GetAspect<TAspect>().");
+        }
     }
 }
 
