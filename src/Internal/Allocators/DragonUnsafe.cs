@@ -14,13 +14,20 @@ namespace DCFApixels.DragonECS.Core.Internal
 #endif
     internal static unsafe class DragonUnsafe
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ClearMemory(IntPtr ptr, int startByte, int lengthInBytes)
         {
             ClearMemory((byte*)ptr, startByte, lengthInBytes);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ClearMemory(byte* ptr, int startByte, int lengthInBytes)
         {
             new Span<byte>(ptr + startByte, lengthInBytes).Clear();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ClearMemory(HMem<int> memory)
+        {
+            memory.AsSpan().Clear();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InitializeMemory<T>(T* ptr, int length, T value) where T : unmanaged

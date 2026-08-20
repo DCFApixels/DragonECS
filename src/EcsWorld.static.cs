@@ -75,10 +75,7 @@ namespace DCFApixels.DragonECS
                 return false;
             }
             world = _worlds[worldID];
-            return
-                world != null &&
-                world.IsDestroyed == false &&
-                worldID != 0;
+            return world.IsNullOrDetroyed() == false && worldID != 0;
         }
 
         private void ReleaseData(short worldID)

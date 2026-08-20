@@ -254,8 +254,12 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetWorld(out EcsWorld world)
         {
-            world = EcsWorld.GetWorld(_world);
-            return IsAlive;
+            if (EcsWorld.TryGetWorld(_world, out world) == false)
+            {
+                world = null;
+                return false;
+            }
+            return world.IsAliveSafe(_id, _gen);
         }
 
         /// <summary>Attempts to retrieve the world ID. Returns true if the entity is alive.</summary>
@@ -295,9 +299,8 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUnpack(out int id, out EcsWorld world)
         {
-            world = GetWorld_Internal();
             id = _id;
-            return IsAlive;
+            return TryGetWorld(out world);
         }
 
         /// <summary>Attempts to unpack the entity ID, generation, and world. Returns true if alive.</summary>
@@ -308,10 +311,9 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUnpack(out int id, out short gen, out EcsWorld world)
         {
-            world = GetWorld_Internal();
             gen = _gen;
             id = _id;
-            return IsAlive;
+            return TryGetWorld(out world);
         }
 
         /// <summary>Attempts to unpack the entity ID and world ID. Returns true if alive.</summary>
