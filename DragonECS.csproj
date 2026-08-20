@@ -10,7 +10,7 @@
         <RootNamespace>DCFApixels.DragonECS</RootNamespace>
 
         <Title>DragonECS</Title>
-        <Version>1.1.10</Version>
+        <Version>1.1.11</Version>
         <Authors>DCFApixels</Authors>
         <Description>Entity Component System framework for C# game engines and .NET</Description>
         <Copyright>Copyright © DCFApixels</Copyright>
