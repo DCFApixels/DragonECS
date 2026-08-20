@@ -425,7 +425,7 @@ namespace DCFApixels.DragonECS
         private List<WeakReference<EcsGroup>> _groups = new List<WeakReference<EcsGroup>>();
         private Stack<EcsGroup> _groupsPool = new Stack<EcsGroup>(64);
 
-        private MemoryAllocator.HPtr[] _groupSparsePagePool = new MemoryAllocator.HPtr[64];
+        private MemoryAllocator.HMem<int>[] _groupSparsePagePool = new MemoryAllocator.HMem<int>[64];
         private int _groupSparsePagePoolCount = 0;
 
         #region Pages
@@ -436,8 +436,9 @@ namespace DCFApixels.DragonECS
                 return MemoryAllocator.AllocAndInit<int>(EcsGroup.PAGE_SIZE).Ptr;
             }
             var takedPage = _groupSparsePagePool[--_groupSparsePagePoolCount];
-            _groupSparsePagePool[_groupSparsePagePoolCount] = MemoryAllocator.HPtr.Empty;
-            return takedPage.As<int>();
+            _groupSparsePagePool[_groupSparsePagePoolCount] = default;
+            DragonUnsafe.ClearMemory(takedPage);
+            return takedPage.Ptr;
         }
         internal void ReturnPage(int* page)
         {
@@ -452,13 +453,13 @@ namespace DCFApixels.DragonECS
             if (_groupSparsePagePoolCount >= _groupSparsePagePool.Length)
             {
                 var old = _groupSparsePagePool;
-                _groupSparsePagePool = new MemoryAllocator.HPtr[_groupSparsePagePoolCount << 1];
+                _groupSparsePagePool = new MemoryAllocator.HMem<int>[_groupSparsePagePoolCount << 1];
                 for (int j = 0; j < old.Length; j++)
                 {
                     _groupSparsePagePool[j] = old[j];
                 }
             }
-            _groupSparsePagePool[_groupSparsePagePoolCount++] = MemoryAllocator.HPtr.FromDataPtr(page);
+            _groupSparsePagePool[_groupSparsePagePoolCount++] = new MemoryAllocator.HMem<int>(MemoryAllocator.HPtr.FromDataPtr(page), EcsGroup.PAGE_SIZE);
         }
         private void DisposeGroups()
         {
@@ -500,8 +501,9 @@ namespace DCFApixels.DragonECS
             {
                 if (TryGetWorld(group.WorldID, out EcsWorld sourceWorld))
                 {
-                    group.World.ReleaseGroup(group);
+                    sourceWorld.ReleaseGroup(group);
                 }
+                return;
             }
 #endif
             group._isReleased = true;
@@ -631,7 +633,7 @@ namespace DCFApixels.DragonECS
         {
             _source = world;
             _source.RegisterGroup(this);
-            _dense = new int[denseCapacity];
+            _dense = new int[Math.Max(denseCapacity, 2)];
             _totalCapacity = world.Capacity;
             _sparsePagesCount = CalcSparseSize(_totalCapacity);
             _sparsePagesHandler = MemoryAllocator.Alloc<PageSlot>(_sparsePagesCount);
@@ -717,7 +719,7 @@ namespace DCFApixels.DragonECS
         {
             if (++_count >= _dense.Length)
             {
-                Array.Resize(ref _dense, ArrayUtility.NextPow2(_count));
+                Array.Resize(ref _dense, ArrayUtility.CeilPow2_ClampOverflow(_count + 1));
             }
             _dense[_count] = entityID;
 
@@ -759,7 +761,7 @@ namespace DCFApixels.DragonECS
             return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ChangeIndexInSparse(int entityID, int index)
+        private void ChangeIndexInSparse(int entityID, int oldIndex, int newIndex)
         {
             ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
 #if DEBUG && DRAGONECS_DEEP_DEBUG
@@ -767,7 +769,7 @@ namespace DCFApixels.DragonECS
 #endif
             if (page.Count == 1)
             {
-                page.IndexesXOR = index;
+                page.IndexesXOR = newIndex;
             }
             else
             {
@@ -775,7 +777,8 @@ namespace DCFApixels.DragonECS
 #if DEBUG && DRAGONECS_DEEP_DEBUG
                 if (page.Indexes[localEntityID] == 0) { Throw.DeepDebugException(); }
 #endif
-                page.Indexes[localEntityID] = index;
+                page.Indexes[localEntityID] = newIndex;
+                page.IndexesXOR ^= oldIndex ^ newIndex;
             }
         }
 
@@ -785,23 +788,34 @@ namespace DCFApixels.DragonECS
             ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
             int localEntityID = entityID & PageSlot.MASK;
 
-            if (--page.Count == 0)
+            int removedIndex;
+            if (page.Count == 1)
             {
-                _dense[page.IndexesXOR] = _dense[_count]; //_dense[_sparse[entityID]] = _dense[_count];
-                ChangeIndexInSparse(_dense[_count], page.IndexesXOR); //_sparse[_dense[_count--]] = _sparse[entityID];
-                page.IndexesXOR = 0; //_sparse[entityID] = 0;
+                removedIndex = page.IndexesXOR;
+                page.Count = 0;
+                page.IndexesXOR = 0;
             }
             else
             {
-                _dense[page.Indexes[localEntityID]] = _dense[_count]; //_dense[_sparse[entityID]] = _dense[_count];
-                ChangeIndexInSparse(_dense[_count], page.Indexes[localEntityID]); //_sparse[_dense[_count--]] = _sparse[entityID];
-                page.IndexesXOR ^= page.Indexes[localEntityID];
-                page.Indexes[localEntityID] = 0; //_sparse[entityID] = 0; 
-                if (page.Count == 1)
-                {
-                    _source.ReturnPage(page.Indexes);
-                    page.Indexes = _nullPage;
-                }
+                removedIndex = page.Indexes[localEntityID];
+                page.Count--;
+                page.Indexes[localEntityID] = 0;
+                page.IndexesXOR ^= removedIndex;
+            }
+
+            int movedIndex = _count;
+            if (removedIndex != movedIndex)
+            {
+                int movedEntityID = _dense[movedIndex];
+                _dense[removedIndex] = movedEntityID;
+                ChangeIndexInSparse(movedEntityID, movedIndex, removedIndex);
+            }
+
+            if (page.Count == 1)
+            {
+                int* indexes = page.Indexes;
+                _source.ReturnPage(indexes);
+                page.Indexes = _nullPage;
             }
             _count--;
         }
@@ -839,10 +853,6 @@ namespace DCFApixels.DragonECS
                     ref PageSlot page = ref _sparsePages[i];
                     if (page.Indexes != _nullPage)
                     {
-                        for (int j = 0; j < PageSlot.SIZE; j++)
-                        {
-                            page.Indexes[j] = 0;
-                        }
                         _source.ReturnPage(page.Indexes);
                         page.Indexes = _nullPage;
                     }
@@ -1272,7 +1282,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Perform symmetric difference with the provided enumerable: elements present in either set but not in both. (set symmetric difference)
         /// </summary>
-        /// <param name="other">Enumerable to symmetric-except with.</param>
+        /// <param name="other">Set-like enumerable of unique entity IDs to symmetric-except with.</param>
         public void SymmetricExceptWith(IEnumerable<int> other)
         {
             foreach (var entityID in other) { SymmetricExceptWithStep_Internal(entityID); }
@@ -1376,19 +1386,17 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Determines whether this group contains exactly the same entity ids as the specified enumerable.
         /// </summary>
-        /// <param name="other">Enumerable to compare with.</param>
+        /// <param name="other">Set-like enumerable of unique entity IDs to compare with.</param>
         /// <returns>True if both sets contain the same entity ids; otherwise false.</returns>
         public bool SetEquals(IEnumerable<int> other)
         {
-            if (other is ICollection collection && collection.Count != Count) { return false; }
+            int otherCount = 0;
             foreach (var entityID in other)
             {
-                if (Has(entityID) == false)
-                {
-                    return false;
-                }
+                if (Has(entityID) == false) { return false; }
+                otherCount++;
             }
-            return true;
+            return otherCount == Count;
         }
         #endregion
 
@@ -1522,12 +1530,11 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Determines whether all entity ids from this group are also present in the specified enumerable collection.
         /// </summary>
-        /// <param name="other">The collection to compare against.</param>
+        /// <param name="other">Set-like collection of unique entity IDs to compare against.</param>
         /// <returns>True if this group is a subset; otherwise false.</returns>
         public bool IsSubsetOf(IEnumerable<int> other)
         {
             if (Count == 0) { return true; }
-            if (other is ICollection collection && collection.Count < Count) { return false; }
             return IsSubsetOf_Internal(other);
         }
 
@@ -1545,9 +1552,7 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (_source != group._source) { return false; }
 #endif
-            if (Count == 0) { return true; }
-            if (group.Count <= Count) { return false; }
-            return IsSubsetOf_Internal(group);
+            return group.Count > Count && IsSubsetOf_Internal(group);
         }
 
         /// <summary>
@@ -1570,21 +1575,24 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (WorldID != span.WorldID) { return false; }
 #endif
-            if (Count == 0) { return true; }
-            if (span.Count <= Count) { return false; }
-            return IsSubsetOf_Internal(span);
+            return span.Count > Count && IsSubsetOf_Internal(span);
         }
 
         /// <summary>
         /// Determines whether this group is a proper subset of the specified enumerable collection.
         /// </summary>
-        /// <param name="other">The collection to compare against.</param>
+        /// <param name="other">Set-like collection of unique entity IDs to compare against.</param>
         /// <returns>True if this group is a proper subset; otherwise false.</returns>
         public bool IsProperSubsetOf(IEnumerable<int> other)
         {
-            if (Count == 0) { return true; }
-            if (other is ICollection collection && collection.Count <= Count) { return false; }
-            return IsSubsetOf_Internal(other);
+            int otherCount = 0;
+            int matchedCount = 0;
+            foreach (var entityID in other)
+            {
+                otherCount++;
+                if (Has(entityID)) { matchedCount++; }
+            }
+            return otherCount > Count && matchedCount == Count;
         }
 
         // ================================================================================
@@ -1678,11 +1686,10 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Determines whether this group contains all entity ids from the specified enumerable collection.
         /// </summary>
-        /// <param name="other">The collection to compare against.</param>
+        /// <param name="other">Set-like collection of unique entity IDs to compare against.</param>
         /// <returns>True if this group is a superset; otherwise false.</returns>
         public bool IsSupersetOf(IEnumerable<int> other)
         {
-            if (other is ICollection collection && collection.Count > Count) { return false; }
             return IsSupersetOf_Internal(other);
         }
 
@@ -1724,19 +1731,23 @@ namespace DCFApixels.DragonECS
 #elif DRAGONECS_STABILITY_MODE
             if (WorldID != span.WorldID) { return false; }
 #endif
-            if (span.Count >= Count) { return false; }
-            return IsSupersetOf_Internal(span);
+            return span.Count < Count && IsSupersetOf_Internal(span);
         }
 
         /// <summary>
         /// Determines whether this group is a proper superset of the specified enumerable collection.
         /// </summary>
-        /// <param name="other">The collection to compare against.</param>
+        /// <param name="other">Set-like collection of unique entity IDs to compare against.</param>
         /// <returns>True if this group is a proper superset; otherwise false.</returns>
         public bool IsProperSupersetOf(IEnumerable<int> other)
         {
-            if (other is ICollection collection && collection.Count >= Count) { return false; }
-            return IsSupersetOf_Internal(other);
+            int otherCount = 0;
+            foreach (var entityID in other)
+            {
+                if (Has(entityID) == false) { return false; }
+                otherCount++;
+            }
+            return otherCount < Count;
         }
 
         // ================================================================================
