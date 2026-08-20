@@ -229,7 +229,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Determines whether this group contains exactly the same entity IDs as the specified enumerable collection.
         /// </summary>
-        /// <param name="other">The collection to compare.</param>
+        /// <param name="other">Set-like collection of unique entity IDs to compare.</param>
         /// <returns>True if both sets are equal; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetEquals(IEnumerable<int> other) { return _source.SetEquals(other); }
@@ -291,7 +291,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Determines whether all entity IDs from this group are also present in the specified enumerable collection.
         /// </summary>
-        /// <param name="other">The collection to compare against.</param>
+        /// <param name="other">Set-like collection of unique entity IDs to compare against.</param>
         /// <returns>True if this group is a subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSubsetOf(IEnumerable<int> other) { return _source.IsSubsetOf(other); }
@@ -323,7 +323,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Determines whether this group is a proper subset of the specified enumerable collection.
         /// </summary>
-        /// <param name="other">The collection to compare against.</param>
+        /// <param name="other">Set-like collection of unique entity IDs to compare against.</param>
         /// <returns>True if this group is a proper subset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSubsetOf(IEnumerable<int> other) { return _source.IsProperSubsetOf(other); }
@@ -355,7 +355,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Determines whether this group contains all entity IDs from the specified enumerable collection.
         /// </summary>
-        /// <param name="other">The collection to compare against.</param>
+        /// <param name="other">Set-like collection of unique entity IDs to compare against.</param>
         /// <returns>True if this group is a superset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSupersetOf(IEnumerable<int> other) { return _source.IsSupersetOf(other); }
@@ -387,7 +387,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Determines whether this group is a proper superset of the specified enumerable collection.
         /// </summary>
-        /// <param name="other">The collection to compare against.</param>
+        /// <param name="other">Set-like collection of unique entity IDs to compare against.</param>
         /// <returns>True if this group is a proper superset; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsProperSupersetOf(IEnumerable<int> other) { return _source.IsProperSupersetOf(other); }
