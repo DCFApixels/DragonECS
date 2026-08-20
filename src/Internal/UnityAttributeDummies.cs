@@ -9,6 +9,8 @@ namespace UnityEngine.Scripting
     [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class | AttributeTargets.Constructor | AttributeTargets.Delegate | AttributeTargets.Enum | AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Interface | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Struct, Inherited = false)]
     internal class PreserveAttribute : Attribute { }
 }
+#endif
+#if !UNITY_2021_3_OR_NEWER
 namespace UnityEngine
 {
     /// <summary>
