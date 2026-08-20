@@ -197,6 +197,8 @@ namespace DCFApixels.DragonECS.Core.Internal
         /// the original pointer, which must still be used for reallocation and release.
         /// The allocation must have at least <c>Value - 1</c> trailing bytes available.
         /// </summary>
+        /// <param name="pointer">Pointer to align.</param>
+        /// <returns>An aligned pointer within the same allocation, or null when <paramref name="pointer"/> is null.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T* Align(void* pointer)
         {

@@ -569,7 +569,7 @@ namespace DCFApixels.DragonECS
                 return World.GetPoolVersion(ComponentTypeID);
             }
             /// <summary>
-            /// Checks whether the specified entity has this component registered in the world..
+            /// Checks whether the specified entity has this component registered in the world.
             /// </summary>
             /// <param name="entityID">Entity identifier.</param>
             /// <returns>True if the component is registered for the entity; otherwise, false.</returns>
@@ -593,6 +593,7 @@ namespace DCFApixels.DragonECS
         /// Each call to LockPool_Debug increments the counter; UnlockPool_Debug decrements it.
         /// The pool is considered locked when the counter is greater than zero.
         /// </remarks>
+        /// <typeparam name="T">Component type whose pool should be locked.</typeparam>
         public void LockPool_Debug<T>()
         {
             LockPool_Debug(GetComponentTypeID<T>());
@@ -634,6 +635,7 @@ namespace DCFApixels.DragonECS
         /// the lock is fully released. An imbalance (calling Unlock more times than Lock)
         /// will trigger a debug assertion.
         /// </remarks>
+        /// <typeparam name="T">Component type whose pool should be unlocked.</typeparam>
         public void UnlockPool_Debug<T>()
         {
             UnlockPool_Debug(GetComponentTypeID<T>());

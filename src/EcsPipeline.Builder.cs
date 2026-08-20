@@ -82,9 +82,9 @@ namespace DCFApixels.DragonECS
             /// <param name="parameters">Addition parameters (layer, sort order, uniqueness).</param>
             /// <returns>The builder instance for chaining.</returns>
             /// <remarks>
-            /// its <see cref="IEcsModule.Import"/> method is invoked to import other systems, and then the system itself
-            /// is added to the pipeline (unless it was already added manually inside the <see cref="IEcsModule.Import"/> implementation).
-            /// The system is added with the same layer, sort order, and uniqueness parameters as the module import.
+            /// If <paramref name="system"/> also implements <see cref="IEcsModule"/>, its <see cref="IEcsModule.Import"/>
+            /// method is invoked first. Unless the module explicitly adds itself during import, the system is then inserted
+            /// before the imported systems using the same layer, sort order, and uniqueness parameters.
             /// </remarks>
             public Builder Add(IEcsProcess system, AddParams parameters)
             {
@@ -204,8 +204,8 @@ namespace DCFApixels.DragonECS
             /// <returns>The builder instance for chaining.</returns>
             /// <remarks>
             /// If the module also implements <see cref="IEcsProcess"/>, it is treated both as a module and as a system:
-            /// its <see cref="IEcsModule.Import"/> method is invoked first, and then the module itself is added as a system
-            /// to the pipeline using the same addition parameters.
+            /// its <see cref="IEcsModule.Import"/> method is invoked first. Unless the module explicitly adds itself during
+            /// import, it is then inserted as a system before the imported systems using the same addition parameters.
             /// </remarks>
             public Builder AddModule(IEcsModule module, AddParams parameters)
             {
@@ -777,7 +777,7 @@ namespace DCFApixels.DragonECS
         /// <summary>Adds a system with the specified uniqueness flag.</summary>
         /// <param name="self">The builder instance.</param>
         /// <param name="system">The system to add.</param>
-        /// <param name="isUnique">Whether the system should be added as a unique instance (prevents duplicates).</param>
+        /// <param name="isUnique">Whether to prevent adding another system with the same runtime type.</param>
         /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, bool isUnique)
@@ -801,7 +801,7 @@ namespace DCFApixels.DragonECS
         /// <param name="self">The builder instance.</param>
         /// <param name="system">The system to add.</param>
         /// <param name="layerName">The layer name (overrides default).</param>
-        /// <param name="isUnique">Whether the system should be added as a unique instance (prevents duplicates).</param>
+        /// <param name="isUnique">Whether to prevent adding another system with the same runtime type.</param>
         /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, string layerName, bool isUnique)
@@ -813,7 +813,7 @@ namespace DCFApixels.DragonECS
         /// <param name="self">The builder instance.</param>
         /// <param name="system">The system to add.</param>
         /// <param name="sortOrder">The sort order (lower values execute first).</param>
-        /// <param name="isUnique">Whether the system should be added as a unique instance (prevents duplicates).</param>
+        /// <param name="isUnique">Whether to prevent adding another system with the same runtime type.</param>
         /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, int sortOrder, bool isUnique)
@@ -826,7 +826,7 @@ namespace DCFApixels.DragonECS
         /// <param name="system">The system to add.</param>
         /// <param name="layerName">The layer name (overrides default).</param>
         /// <param name="sortOrder">The sort order (lower values execute first).</param>
-        /// <param name="isUnique">Whether the system should be added as a unique instance (prevents duplicates).</param>
+        /// <param name="isUnique">Whether to prevent adding another system with the same runtime type.</param>
         /// <returns>The builder instance for chaining.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsPipeline.Builder Add(this EcsPipeline.Builder self, IEcsProcess system, string layerName, int sortOrder, bool isUnique)
@@ -1198,7 +1198,7 @@ namespace DCFApixels.DragonECS
         /// <summary>Sort order within the layer (lower values execute first).</summary>
         [DataMember] public int sortOrder;
 
-        /// <summary>Whether the system should be added as a unique instance (prevents duplicates).</summary>
+        /// <summary>Whether to prevent adding another system with the same runtime type.</summary>
         [DataMember] public bool isUnique;
 
         /// <summary>Flags indicating which fields should override default values.</summary>

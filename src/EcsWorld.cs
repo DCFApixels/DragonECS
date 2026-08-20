@@ -134,7 +134,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Monotonic version counter, incremented on structural changes (entity add/remove, mask updates).
+        /// Monotonic version counter, incremented on structural changes such as entity creation, deletion, and component composition changes.
         /// </summary>
         public long Version
         {
@@ -246,7 +246,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Initializes a new world with a custom configuration container, a human‑readable name, and optional world ID. This is the most flexible constructor, allowing full control over configuration and identification.
         /// </summary>
-        /// <param name="configs">Custom configuration container. Must be provided (non‑null).</param>
+        /// <param name="configs">Custom configuration container. If <c>null</c>, the default container is used.</param>
         /// <param name="name">Optional name for debugging and diagnostics. Can be <c>null</c> or empty.</param>
         /// <param name="worldID">Optional explicit world ID. If <c>-1</c>, the system will assign a unique ID.</param>
         public EcsWorld(IConfigContainer configs, string name = null, short worldID = -1)
@@ -503,7 +503,12 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Access to world-scoped component of type <typeparamref name="T"/>. Use for global per-world singletons and caches.
         /// </summary>
+        /// <typeparam name="T">World-component type.</typeparam>
         /// <returns>Reference to the world-scoped component instance.</returns>
+        /// <remarks>
+        /// If a reference type implements <see cref="IEcsWorldComponent{T}"/>, a warning is printed once and its lifecycle
+        /// callbacks are ignored. Lifecycle callbacks are supported only for value types.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get<T>()
         {
@@ -513,6 +518,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Checks whether world-scoped component <typeparamref name="T"/> exists.
         /// </summary>
+        /// <typeparam name="T">World-component type.</typeparam>
         /// <returns>True if the component is present; otherwise, false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has<T>()
@@ -524,6 +530,7 @@ namespace DCFApixels.DragonECS
         /// Access to a world-scoped component of type <typeparamref name="T"/> without runtime checks. 
         /// Use only when caller guarantees existence and correctness.
         /// </summary>
+        /// <typeparam name="T">World-component type.</typeparam>
         /// <returns>Reference to the world-scoped component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetUnchecked<T>()
@@ -534,8 +541,13 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Static access to a world-scoped component of type <typeparamref name="T"/>. Use for global per-world singletons and caches.
         /// </summary>
+        /// <typeparam name="T">World-component type.</typeparam>
         /// <param name="worldID">Target world identifier.</param>
         /// <returns>Reference to the world-scoped component instance.</returns>
+        /// <remarks>
+        /// If a reference type implements <see cref="IEcsWorldComponent{T}"/>, a warning is printed once and its lifecycle
+        /// callbacks are ignored. Lifecycle callbacks are supported only for value types.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T Get<T>(short worldID)
         {
@@ -545,6 +557,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Static check whether world-scoped component <typeparamref name="T"/> exists.
         /// </summary>
+        /// <typeparam name="T">World-component type.</typeparam>
         /// <param name="worldID">Target world identifier.</param>
         /// <returns>True if the component is present; otherwise, false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -557,6 +570,7 @@ namespace DCFApixels.DragonECS
         /// Static access to a world-scoped component of type <typeparamref name="T"/> without runtime checks. 
         /// Use only when caller guarantees existence and correctness.
         /// </summary>
+        /// <typeparam name="T">World-component type.</typeparam>
         /// <param name="worldID">Target world identifier.</param>
         /// <returns>Reference to the world-scoped component instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -610,7 +624,6 @@ namespace DCFApixels.DragonECS
         /// Create a new entity with the specified integer id.
         /// </summary>
         /// <param name="entityID">Requested integer entity id to create.</param>
-        /// <returns>Integer id of the created entity.</returns>
         /// <returns>Created entity id (same as requested).</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int NewEntity(int entityID)
@@ -819,7 +832,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Pack the given entity id with world id and generation into entlong. Useful for creating stable handles.
         /// </summary>
-        /// <param name="entityID">Integer entity id to pack.</param>
+        /// <param name="entityID">Entity ID whose raw handle data should be returned.</param>
         /// <returns>Packed entlong representing the entity in this world.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe entlong GetEntityLong(int entityID)
@@ -877,6 +890,10 @@ namespace DCFApixels.DragonECS
         /// <param name="entityID">Entity id to check.</param>
         /// <param name="gen">Generation value to compare with the slot.</param>
         /// <returns>True if the slot's generation matches <paramref name="gen"/> and the slot is marked used.</returns>
+        /// <remarks>
+        /// In DEBUG builds an out-of-range ID throws; in stability mode it returns false. In unchecked builds the caller
+        /// is responsible for supplying an in-range ID. Use <see cref="IsAliveSafe(int, short)"/> when the range is unknown.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(int entityID, short gen)
         {
@@ -894,6 +911,10 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <param name="entity">Packed entlong to check.</param>
         /// <returns>True if entity belongs to this world and represents an alive entity.</returns>
+        /// <remarks>
+        /// In DEBUG builds a handle from another world throws; in stability mode it returns false. In unchecked builds
+        /// the caller is responsible for supplying a handle from this world with an in-range entity ID.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAlive(entlong entity)
         {
@@ -911,16 +932,17 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <param name="entityID">Entity id to query.</param>
         /// <returns>True when the slot for <paramref name="entityID"/> is currently used.</returns>
+        /// <remarks>The caller is responsible for supplying an in-range entity ID.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsUsed(int entityID)
         {
             return _entities[entityID].isUsed;
         }
         /// <summary>
-        /// Return generation for the entity slot.
+        /// Return the generation for an entity slot, advancing a sleeping slot to its next active generation when necessary.
         /// </summary>
         /// <param name="entityID">Entity id to query.</param>
-        /// <returns>Current generation value stored in the entity slot.</returns>
+        /// <returns>The active generation value stored in the entity slot.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetGen(int entityID)
         {
@@ -1248,11 +1270,11 @@ namespace DCFApixels.DragonECS
             return newEntity;
         }
         /// <summary>
-        /// Create a new entity in this world and copy components from source entity in another world.
+        /// Create a new entity in <paramref name="toWorld"/> and copy all components from the source entity in this world.
         /// </summary>
-        /// <param name="entityID">Source entity id in the source world.</param>
-        /// <param name="toWorld">Target world to copy into (usually same world).</param>
-        /// <returns>Newly created entity id in this world.</returns>
+        /// <param name="entityID">Source entity id in this world.</param>
+        /// <param name="toWorld">World in which the clone is created.</param>
+        /// <returns>Newly created entity id in <paramref name="toWorld"/>.</returns>
         public int CloneEntity(int entityID, EcsWorld toWorld)
         {
             int newEntity = toWorld.NewEntity();
@@ -1260,12 +1282,12 @@ namespace DCFApixels.DragonECS
             return newEntity;
         }
         /// <summary>
-        /// Create a new entity in this world and copy specified components from a source entity in another world.
+        /// Create a new entity in <paramref name="toWorld"/> and copy the specified components from the source entity in this world.
         /// </summary>
-        /// <param name="entityID">Source entity id.</param>
-        /// <param name="toWorld">Target world.</param>
+        /// <param name="entityID">Source entity id in this world.</param>
+        /// <param name="toWorld">World in which the clone is created.</param>
         /// <param name="componentTypeIDs">Component type ids to copy.</param>
-        /// <returns>New entity id in this world.</returns>
+        /// <returns>New entity id in <paramref name="toWorld"/>.</returns>
         public int CloneEntity(int entityID, EcsWorld toWorld, ReadOnlySpan<int> componentTypeIDs)
         {
             int newEntity = toWorld.NewEntity();

@@ -76,7 +76,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
         }).Ptr;
 
-        /// <summary>32-битный логарифм по основанию 2 (округление вниз). Для value = 0 возвращает 0.</summary>
+        /// <summary>Calculates the base-2 logarithm of a 32-bit value, rounded down. Returns zero for zero.</summary>
+        /// <param name="value">Value whose logarithm should be calculated.</param>
+        /// <returns>The zero-based position of the highest set bit, or zero when <paramref name="value"/> is zero.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Log2(uint value)
         {
@@ -94,7 +96,9 @@ namespace DCFApixels.DragonECS.Core.Internal
             return (int)Log2DeBruijn32[(value * 0x07C4ACDDu) >> 27];
         }
 
-        /// <summary>64-битный логарифм по основанию 2 (округление вниз). Для value = 0 возвращает 0.</summary>
+        /// <summary>Calculates the base-2 logarithm of a 64-bit value, rounded down. Returns zero for zero.</summary>
+        /// <param name="value">Value whose logarithm should be calculated.</param>
+        /// <returns>The zero-based position of the highest set bit, or zero when <paramref name="value"/> is zero.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Log2(ulong value)
         {

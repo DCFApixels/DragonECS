@@ -100,7 +100,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Check or set whether the specified entity has this tag.
+        /// Check whether the specified entity has this tag.
         /// </summary>
         /// <param name="entityID">Entity identifier.</param>
         public bool this[int entityID]
@@ -209,11 +209,11 @@ namespace DCFApixels.DragonECS
             }
         }
         /// <summary>
-        /// Copy component data from one entity to another inside the same world.
+        /// Add this tag to another entity in the same world when the source entity has the tag.
         /// </summary>
         /// <param name="fromEntityID">Source entity identifier.</param>
         /// <param name="toEntityID">Destination entity identifier.</param>
-        /// <remarks>Uses custom copy logic if the component implements <see cref=\"IEcsComponentCopy{T}\"/>; otherwise falls back to default copying.</remarks>
+        /// <remarks>A tag has no component data to copy.</remarks>
         public void Copy(int fromEntityID, int toEntityID)
         {
 #if DEBUG
@@ -224,17 +224,12 @@ namespace DCFApixels.DragonECS
             TryAdd(toEntityID);
         }
         /// <summary>
-        /// Copy component data from one entity to another inside another world.
+        /// Add this tag to an entity in <paramref name="toWorld"/> when the source entity has the tag.
         /// </summary>
         /// <param name="fromEntityID">Source entity identifier.</param>
+        /// <param name="toWorld">Destination world.</param>
         /// <param name="toEntityID">Destination entity identifier.</param>
-        /// <remarks>Uses custom copy logic if the component implements <see cref=\"IEcsComponentCopy{T}\"/>; otherwise falls back to default copying.</remarks>
-        /// <summary>
-        /// Copy component data from one entity to another inside another world.
-        /// </summary>
-        /// <param name="fromEntityID">Source entity identifier.</param>
-        /// <param name="toEntityID">Destination entity identifier.</param>
-        /// <remarks>Uses custom copy logic if the component implements <see cref=\"IEcsComponentCopy{T}\"/>; otherwise falls back to default copying.</remarks>
+        /// <remarks>A tag has no component data to copy.</remarks>
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)
         {
 #if DEBUG
@@ -472,7 +467,7 @@ namespace DCFApixels.DragonECS
             get { return _pool.Count; }
         }
         /// <summary>
-        /// Check or set whether the specified entity has this tag.
+        /// Check whether the specified entity has this tag.
         /// </summary>
         /// <param name="entityID">Entity identifier.</param>
         public bool this[int entityID]

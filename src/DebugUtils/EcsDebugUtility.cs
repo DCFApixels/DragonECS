@@ -74,7 +74,11 @@ namespace DCFApixels.DragonECS
         #endregion
 
         #region AutoToString
-        /// <summary> slow but automatic conversion of ValueType to string in the format "name(field1, field2... fieldn)" </summary>
+        /// <summary>Uses reflection to format the fields of a value type as <c>TypeName(value1, value2, ...)</c>.</summary>
+        /// <typeparam name="T">Value type to format.</typeparam>
+        /// <param name="self">Value to format.</param>
+        /// <param name="isWriteName">Whether to include the type name before the field values.</param>
+        /// <returns>The formatted field values, or an empty string when reflection is unavailable.</returns>
         public static string AutoToString<T>(this T self, bool isWriteName = true) where T : struct
         {
             return AutoToString(self, typeof(T), isWriteName);

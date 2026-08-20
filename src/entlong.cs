@@ -15,7 +15,7 @@ using System.Runtime.InteropServices;
 namespace DCFApixels.DragonECS
 {
     /// <summary>
-    /// Strong identifier / permanent entity identifier that packs entity ID, generation, and world ID into a single 64‑bit value.
+    /// Generation-aware entity handle that packs an entity ID, generation, and world ID into a single 64‑bit value.
     /// </summary>
     /// <remarks>[        id 32        |  gen 16  | world 16 ]</remarks>
     [StructLayout(LayoutKind.Explicit, Pack = 2, Size = 8)]
@@ -80,7 +80,10 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Gets the entity ID.
         /// </summary>
-        /// <remarks>Throws in DEBUG mode if the entity is not alive; in STABILITY_MODE returns <see cref="EcsConsts.NULL_ENTITY_ID"/></remarks>
+        /// <remarks>
+        /// In DEBUG mode a dead handle throws; in stability mode it returns <see cref="EcsConsts.NULL_ENTITY_ID"/>.
+        /// In unchecked builds the caller is responsible for ensuring that the handle is alive.
+        /// </remarks>
         public int ID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -96,9 +99,12 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Gets the generation number of the entity..
+        /// Gets the generation number of the entity.
         /// </summary>
-        /// <remarks>Throws in DEBUG mode if not alive; in STABILITY_MODE returns default(short)</remarks>
+        /// <remarks>
+        /// In DEBUG mode a dead handle throws; in stability mode it returns the default <see cref="short"/> value.
+        /// In unchecked builds the caller is responsible for ensuring that the handle is alive.
+        /// </remarks>
         public short Gen
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -116,7 +122,10 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Gets the <see cref="EcsWorld"/> instance that owns this entity.
         /// </summary>
-        /// <remarks>Throws in DEBUG mode if not alive.</remarks>
+        /// <remarks>
+        /// In DEBUG mode a dead handle throws; in stability mode it resolves to the null-world entry. In unchecked builds
+        /// the caller is responsible for ensuring that the handle is alive and its world ID is valid.
+        /// </remarks>
         public EcsWorld World
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -132,7 +141,10 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Gets the world ID of the owning world.
         /// </summary>
-        /// <remarks>Throws in DEBUG mode if not alive; in STABILITY_MODE returns <see cref="EcsConsts.NULL_WORLD_ID"/>.</remarks>
+        /// <remarks>
+        /// In DEBUG mode a dead handle throws; in stability mode it returns <see cref="EcsConsts.NULL_WORLD_ID"/>.
+        /// In unchecked builds the caller is responsible for ensuring that the handle is alive.
+        /// </remarks>
         public short WorldID
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -185,7 +197,7 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <param name="world">The world to associate with.</param>
         /// <param name="entity">The source entity.</param>
-        /// <remarks>In DEBUG mode, throws if worlds differ; in STABILITY_MODE, returns null if they differ.</remarks>
+        /// <remarks>In DEBUG mode differing worlds throw; in stability mode they produce the null identifier.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public entlong(EcsWorld world, entlong entity) : this()
         {
@@ -213,7 +225,7 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <param name="entity">The source entity.</param>
         /// <param name="world">The world to associate with.</param>
-        /// <remarks>In DEBUG mode, throws if worlds differ; in STABILITY_MODE, returns null if they differ.</remarks>
+        /// <remarks>In DEBUG mode differing worlds throw; in stability mode they produce the null identifier.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public entlong(entlong entity, EcsWorld world) : this(world, entity) { }
 
@@ -239,7 +251,7 @@ namespace DCFApixels.DragonECS
 
         #region Unpacking Try
         /// <summary>Attempts to retrieve the entity ID. Returns true if the entity is alive; otherwise false.</summary>
-        /// <param name="id">Outputs the entity ID if successful.</param>
+        /// <param name="id">Receives the stored entity ID, including when the method returns false.</param>
         /// <returns>True if the entity is alive; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetID(out int id)
@@ -263,7 +275,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>Attempts to retrieve the world ID. Returns true if the entity is alive.</summary>
-        /// <param name="worldID">Outputs the world ID if successful.</param>
+        /// <param name="worldID">Receives the stored world ID, including when the method returns false.</param>
         /// <returns>True if alive; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetWorldID(out short worldID)
@@ -273,7 +285,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>Attempts to retrieve the generation number. Returns true if the entity is alive.</summary>
-        /// <param name="gen">Outputs the generation if successful.</param>
+        /// <param name="gen">Receives the stored generation, including when the method returns false.</param>
         /// <returns>True if alive; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetGen(out short gen)
@@ -596,7 +608,8 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>Gets the world instance without any validation (fast path).</summary>
-        /// <returns>The raw world instance (may be null if world ID is invalid).</returns>
+        /// <returns>The world table entry for the stored world ID; it may be null for an unused or destroyed in-range ID.</returns>
+        /// <remarks>Supplying a packed value with an out-of-range world ID follows <see cref="EcsWorld.GetWorld(short)"/> build-mode behavior.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsWorld GetWorldUnchecked()
         {

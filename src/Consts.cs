@@ -25,7 +25,7 @@
 
         public const int NULL_ENTITY_ID = 0;
         public const short NULL_WORLD_ID = 0;
-        /// meta subgroups
+        // Metadata subgroups.
 
         public const string PACK_GROUP = "_" + FRAMEWORK_NAME + "/_Core";
         public const string WORLDS_GROUP = "Worlds";

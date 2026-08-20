@@ -366,6 +366,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         /// freed in reverse order and defers out-of-order allocations until the newer ones
         /// are released.
         /// </summary>
+        /// <param name="target">Allocation handle to release.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Free(HPtr target)
         {
@@ -444,6 +445,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         /// rewound in reverse order. Allocations that predate a marker must not be freed
         /// before that marker is rewound.
         /// </summary>
+        /// <returns>A marker representing the current allocation frontier.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Marker Mark()
         {
@@ -477,6 +479,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         /// Allocator.Temp memory is reclaimed at the engine-controlled boundary and this
         /// method is a no-op, matching <see cref="Reset"/>.
         /// </summary>
+        /// <param name="marker">Most recently active marker to rewind.</param>
         public static void Rewind(Marker marker)
         {
 #if !UNITY_2020_3_OR_NEWER
@@ -633,6 +636,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         /// Returns the number of native blocks retained by the current thread.
         /// Intended for allocator diagnostics and regression tests.
         /// </summary>
+        /// <returns>The number of retained native blocks.</returns>
         internal static int GetRetainedBlockCount()
         {
             int result = 0;

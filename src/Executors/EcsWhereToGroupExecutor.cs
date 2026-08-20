@@ -182,12 +182,13 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
 
         /// <summary>
-        /// Returns a managed snapshot of the current query result as an <see cref="EcsSpan"/>.
-        /// This method internally calls <see cref="Execute()"/> and converts the resulting group to a span.
+        /// Returns the current query result as an <see cref="EcsSpan"/> view.
+        /// This method internally calls <see cref="Execute()"/> and exposes the resulting group's storage.
         /// </summary>
         /// <returns>
         /// An <see cref="EcsSpan"/> containing the entity IDs that match the mask.
         /// </returns>
+        /// <remarks>The executor owns the backing group and may mutate it on a subsequent execution.</remarks>
         public override EcsSpan Snapshot() { return Execute(); }
         #endregion
     }

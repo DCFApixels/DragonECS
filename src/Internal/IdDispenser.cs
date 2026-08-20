@@ -63,7 +63,8 @@ namespace DCFApixels.DragonECS.Core.Internal
         #endregion
 
         #region Use/Reserve/Realese
-        /// <summary>Marks as used and returns next free id.</summary>
+        /// <summary>Marks the next free identifier as used.</summary>
+        /// <returns>The identifier that was marked as used.</returns>
         public int UseFree()
         {
             int ptr = _usedCount;
@@ -72,7 +73,8 @@ namespace DCFApixels.DragonECS.Core.Internal
             Move_FromFree_ToUsed(id);
             return id;
         }
-        /// <summary>Marks as used a free or reserved id, after this id cannot be retrieved via UseFree.</summary>
+        /// <summary>Marks a free or reserved identifier as used so it cannot be returned by <see cref="UseFree"/>.</summary>
+        /// <param name="id">Identifier to mark as used.</param>
         public void Use(int id)
         {
             CheckIDOrUpsize(id);

@@ -67,7 +67,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Returns a span of packed entity identifiers (<see cref="entlong"/>) – equivalent to a regular span of entity IDs
+        /// Returns a view that exposes the same entities as packed <see cref="entlong"/> handles.
         /// </summary>
         public EcsLongsSpan Longs
         {
@@ -87,6 +87,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Indexer to access the entity id at the given index in the span.
         /// </summary>
+        /// <param name="index">Zero-based index in the span.</param>
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.ArrayBoundsChecks, true)]
 #endif
@@ -125,25 +126,33 @@ namespace DCFApixels.DragonECS
 
         #region Slice/ToArray
         /// <summary>
-        /// Return a slice of this span starting at the specified index.
+        /// Returns a slice of this span starting at the specified index.
         /// </summary>
+        /// <param name="start">Zero-based start index.</param>
+        /// <returns>A span over the remaining entities.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start) { return new EcsSpan(_worldID, _values.Slice(start)); }
 
         /// <summary>
-        /// Return a slice of this span with specified start and length.
+        /// Returns a slice of this span with the specified start and length.
         /// </summary>
+        /// <param name="start">Zero-based start index.</param>
+        /// <param name="length">Number of entities in the slice.</param>
+        /// <returns>A span over the requested range.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start, int length) { return new EcsSpan(_worldID, _values.Slice(start, length)); }
 
         /// <summary>
-        /// Convert the span to a managed array of entity ids.
+        /// Converts the span to a managed array of entity ids.
         /// </summary>
+        /// <returns>A new array containing the entity ids.</returns>
         public int[] ToArray() { return _values.ToArray(); }
 
         /// <summary>
-        /// Copy entity ids into a reusable buffer. Returns the number of elements written.
+        /// Copies entity ids into a reusable buffer, growing it when necessary.
         /// </summary>
+        /// <param name="dynamicBuffer">Reusable destination buffer.</param>
+        /// <returns>The number of elements written.</returns>
         public int ToArray(ref int[] dynamicBuffer)
         {
             if (dynamicBuffer.Length < _values.Length)
@@ -159,8 +168,9 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Add all entity ids from the span into the provided collection.
+        /// Adds all entity ids from the span to the provided collection.
         /// </summary>
+        /// <param name="collection">Collection that receives the entity ids.</param>
         public void ToCollection(ICollection<int> collection)
         {
             foreach (var e in this)
@@ -184,14 +194,18 @@ namespace DCFApixels.DragonECS
         public ReadOnlySpan<int> AsSystemSpan() { return _values; }
 
         /// <summary>
-        /// Return the first entity id in the group.
+        /// Returns the first entity id in the span.
         /// </summary>
+        /// <returns>The first entity id.</returns>
+        /// <remarks>The span must not be empty.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _values[0]; }
 
         /// <summary>
-        /// Return the last entity id in the group.
+        /// Returns the last entity id in the span.
         /// </summary>
+        /// <returns>The last entity id.</returns>
+        /// <remarks>The span must not be empty.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _values[_values.Length - 1]; }
         public override string ToString()
@@ -238,6 +252,9 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
+    /// <summary>
+    /// Read-only view that exposes the entities of an <see cref="EcsSpan"/> as packed <see cref="entlong"/> handles.
+    /// </summary>
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -275,7 +292,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Number of entity ids in the span.
+        /// Number of packed entity handles in the span.
         /// </summary>
         public int Count
         {
@@ -293,8 +310,9 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Indexer to access the entity id at the given index in the span.
+        /// Indexer to access the packed entity handle at the given index.
         /// </summary>
+        /// <param name="index">Zero-based index in the span.</param>
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.ArrayBoundsChecks, true)]
 #endif
@@ -315,26 +333,33 @@ namespace DCFApixels.DragonECS
 
         #region Slice/ToSpan/ToArry
         /// <summary>
-        /// Return a slice of this span starting at the specified index.
+        /// Returns a slice of this span starting at the specified index.
         /// </summary>
+        /// <param name="start">Zero-based start index.</param>
+        /// <returns>A packed-handle view over the remaining entities.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsLongsSpan Slice(int start) { return new EcsLongsSpan(_source.Slice(start)); }
 
         /// <summary>
-        /// Return a slice of this span with specified start and length.
+        /// Returns a slice of this span with the specified start and length.
         /// </summary>
+        /// <param name="start">Zero-based start index.</param>
+        /// <param name="length">Number of entities in the slice.</param>
+        /// <returns>A packed-handle view over the requested range.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsLongsSpan Slice(int start, int length) { return new EcsLongsSpan(_source.Slice(start, length)); }
 
         /// <summary>
-        /// Convert to standard entity ID span .
+        /// Converts this packed-handle view to the underlying entity ID span.
         /// </summary>
+        /// <returns>The underlying entity ID span.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan() { return _source; }
 
         /// <summary>
-        /// Convert the span to a managed array of entlongs.
+        /// Converts the span to a managed array of packed entity handles.
         /// </summary>
+        /// <returns>A new array containing the packed entity handles.</returns>
         public entlong[] ToArray()
         {
             entlong[] result = new entlong[_source.Count];
@@ -347,8 +372,10 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Copy entity ids into a reusable buffer. Returns the number of elements written.
+        /// Copies packed entity handles into a reusable buffer, growing it when necessary.
         /// </summary>
+        /// <param name="dynamicBuffer">Reusable destination buffer.</param>
+        /// <returns>The number of elements written.</returns>
         public int ToArray(ref entlong[] dynamicBuffer)
         {
             if (dynamicBuffer.Length < _source.Count)
@@ -364,8 +391,9 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Add all entlongs from the span into the provided collection.
+        /// Adds all packed entity handles from the span to the provided collection.
         /// </summary>
+        /// <param name="collection">Collection that receives the packed entity handles.</param>
         public void ToCollection(ICollection<entlong> collection)
         {
             foreach (var e in this)
@@ -409,14 +437,18 @@ namespace DCFApixels.DragonECS
 
         #region Other
         /// <summary>
-        /// Return the first entity id in the group.
+        /// Returns the first packed entity handle in the span.
         /// </summary>
+        /// <returns>The first packed entity handle.</returns>
+        /// <remarks>The span must not be empty.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public entlong First() { return _source.World.GetEntityLong(_source.First()); }
 
         /// <summary>
-        /// Return the last entity id in the group.
+        /// Returns the last packed entity handle in the span.
         /// </summary>
+        /// <returns>The last packed entity handle.</returns>
+        /// <remarks>The span must not be empty.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public entlong Last() { return _source.World.GetEntityLong(_source.Last()); }
         public override string ToString()
@@ -437,9 +469,17 @@ namespace DCFApixels.DragonECS
 
 namespace DCFApixels.DragonECS.Core
 {
-    /// <remarks>Suitable for use in Unity Jobs or other high‑performance contexts.</remarks>
 #if ENABLE_IL2CPP
     using Unity.IL2CPP.CompilerServices;
+#endif
+    /// <summary>
+    /// Pointer-backed read-only span of entity ids belonging to a specific world.
+    /// </summary>
+    /// <remarks>
+    /// Suitable for use in Unity Jobs or other high‑performance contexts. The span does not own the referenced memory;
+    /// the caller must ensure that memory remains valid for the entire lifetime of the span.
+    /// </remarks>
+#if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
@@ -490,7 +530,7 @@ namespace DCFApixels.DragonECS.Core
         }
 
         /// <summary>
-        /// Returns a span of packed entity identifiers (<see cref="entlong"/>) – equivalent to a regular span of entity IDs
+        /// Returns a view that exposes the same entities as packed <see cref="entlong"/> handles.
         /// </summary>
         public EcsLongsSpan Longs
         {
@@ -510,6 +550,7 @@ namespace DCFApixels.DragonECS.Core
         /// <summary>
         /// Indexer to access the entity id at the given index in the span.
         /// </summary>
+        /// <param name="index">Zero-based index in the span.</param>
 #if ENABLE_IL2CPP
         [Il2CppSetOption(Option.ArrayBoundsChecks, true)]
 #endif
@@ -547,8 +588,10 @@ namespace DCFApixels.DragonECS.Core
 
         #region Slice/ToArray
         /// <summary>
-        /// Return a slice of this span starting at the specified index.
+        /// Returns a slice of this span starting at the specified index.
         /// </summary>
+        /// <param name="start">Zero-based start index.</param>
+        /// <returns>An unsafe span over the remaining entities.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsUnsafeSpan Slice(int start)
         {
@@ -560,8 +603,11 @@ namespace DCFApixels.DragonECS.Core
         }
 
         /// <summary>
-        /// Return a slice of this span with specified start and length.
+        /// Returns a slice of this span with the specified start and length.
         /// </summary>
+        /// <param name="start">Zero-based start index.</param>
+        /// <param name="length">Number of entities in the slice.</param>
+        /// <returns>An unsafe span over the requested range.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsUnsafeSpan Slice(int start, int length)
         {
@@ -573,19 +619,23 @@ namespace DCFApixels.DragonECS.Core
         }
 
         /// <summary>
-        /// Convert to standard entity ID span .
+        /// Converts this pointer-backed view to a standard entity ID span.
         /// </summary>
+        /// <returns>A standard read-only entity span over the same memory.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan ToSpan() { return new EcsSpan(_worldID, new ReadOnlySpan<int>(_values, _length)); }
 
         /// <summary>
-        /// Convert the span to a managed array of entity ids.
+        /// Converts the span to a managed array of entity ids.
         /// </summary>
+        /// <returns>A new array containing the entity ids.</returns>
         public int[] ToArray() { return new ReadOnlySpan<int>(_values, _length).ToArray(); }
 
         /// <summary>
-        /// Copy entity ids into a reusable buffer. Returns the number of elements written.
+        /// Copies entity ids into a reusable buffer, growing it when necessary.
         /// </summary>
+        /// <param name="dynamicBuffer">Reusable destination buffer.</param>
+        /// <returns>The number of elements written.</returns>
         public int ToArray(ref int[] dynamicBuffer)
         {
             if (dynamicBuffer.Length < _length)
@@ -601,8 +651,9 @@ namespace DCFApixels.DragonECS.Core
         }
 
         /// <summary>
-        /// Add all entity ids from the span into the provided collection.
+        /// Adds all entity ids from the span to the provided collection.
         /// </summary>
+        /// <param name="collection">Collection that receives the entity ids.</param>
         public void ToCollection(ICollection<int> collection)
         {
             foreach (var e in this)
@@ -625,14 +676,18 @@ namespace DCFApixels.DragonECS.Core
 
         #region Other
         /// <summary>
-        /// Return the first entity id in the group.
+        /// Returns the first entity id in the span.
         /// </summary>
+        /// <returns>The first entity id.</returns>
+        /// <remarks>The span must not be empty.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _values[0]; }
 
         /// <summary>
-        /// Return the last entity id in the group.
+        /// Returns the last entity id in the span.
         /// </summary>
+        /// <returns>The last entity id.</returns>
+        /// <remarks>The span must not be empty.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _values[_length - 1]; }
         public override string ToString()

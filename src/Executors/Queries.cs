@@ -13,6 +13,11 @@ namespace DCFApixels.DragonECS
         EcsSpan ToSpan();
     }
 
+    /// <summary>Provides filtering extensions for world-bound entity storages and spans.</summary>
+    /// <remarks>
+    /// Query results are views over storage owned by cached executors. A later query that uses the same executor may
+    /// overwrite or mutate that storage. Convert a span to an array, or clone a returned group, when the result must persist.
+    /// </remarks>
     public static class QueriesExtensions
     {
         #region Where

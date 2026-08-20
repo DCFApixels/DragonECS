@@ -10,7 +10,8 @@ using System.Runtime.CompilerServices;
 namespace DCFApixels.DragonECS.Core
 {
     /// <summary>
-    /// Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.
+    /// Low-level lifecycle contract for custom component-pool implementations.
+    /// Application code should normally use <see cref="IEcsPool"/> or a concrete typed pool.
     /// </summary>
     public interface IEcsPoolImplementation : IEcsPool
     {
@@ -42,10 +43,11 @@ namespace DCFApixels.DragonECS.Core
         #endregion
     }
 
-    /// <summary> 
-    /// Only used to implement a custom pool. In other contexts use IEcsPool or IEcsPool<T>.
+    /// <summary>
+    /// Typed marker for custom component-pool implementations.
+    /// Application code should normally use <see cref="IEcsPool"/> or a concrete typed pool.
     /// </summary>
-    /// <typeparam name="T"> Component type. </typeparam>
+    /// <typeparam name="T">Component type stored by the pool.</typeparam>
     public interface IEcsPoolImplementation<T> : IEcsPoolImplementation { }
 
     #region EcsPoolThrowHelper
@@ -307,7 +309,8 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    /// <summary> A pool for struct components. </summary>
+    /// <summary>A typed pool contract for value-type components.</summary>
+    /// <typeparam name="T">Value type stored by the pool.</typeparam>
     public interface IEcsStructPool<T> : IEcsPool where T : struct
     {
         #region Methods
@@ -317,7 +320,8 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    /// <summary> A pool for reference components of type T that instantiates components itself. </summary>
+    /// <summary>A pool for reference components that instantiates component objects itself.</summary>
+    /// <typeparam name="T">Reference type stored by the pool.</typeparam>
     public interface IEcsClassPool<T> : IEcsPool where T : class
     {
         #region Methods
@@ -326,7 +330,8 @@ namespace DCFApixels.DragonECS
         #endregion
     }
 
-    /// <summary> A pool for reference components of type T, which does not instantiate components itself but receives components from external sources. </summary>
+    /// <summary>A pool for reference components supplied by external code rather than instantiated by the pool.</summary>
+    /// <typeparam name="T">Reference type stored by the pool.</typeparam>
     public interface IEcsHybridPool<T> : IEcsPool where T : class
     {
         #region Methods
@@ -368,11 +373,14 @@ namespace DCFApixels.DragonECS
     #region Callbacks Interface
     public interface IEcsPoolEventListener
     {
-        /// <summary>Called after adding an entity to the pool, but before changing values</summary>
+        /// <summary>Called after a component is added and before the caller can modify the returned value.</summary>
+        /// <param name="entityID">Entity whose component was added.</param>
         void OnAdd(int entityID);
-        /// <summary>Is called when EcsPool.Get or EcsPool.Add is called, but before changing values</summary>
+        /// <summary>Called when mutable component access is requested through an add or get operation.</summary>
+        /// <param name="entityID">Entity whose component was requested.</param>
         void OnGet(int entityID);
-        /// <summary>Called after deleting an entity from the pool</summary>
+        /// <summary>Called after the component is removed from the pool.</summary>
+        /// <param name="entityID">Entity whose component was removed.</param>
         void OnDel(int entityID);
     }
     public static class PoolEventListExtensions

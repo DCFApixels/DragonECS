@@ -166,6 +166,8 @@ namespace DCFApixels.DragonECS
         /// Add a node for type T to the injector if absent.
         /// Returns true when a new node was added.
         /// </summary>
+        /// <typeparam name="T">Dependency contract represented by the node.</typeparam>
+        /// <returns>True when a node was added; false when it already existed.</returns>
         public bool AddNode<T>()
         {
             if (_nodes.ContainsKey(typeof(T))) { return false; }

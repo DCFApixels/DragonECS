@@ -44,11 +44,14 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Return the EcsWorld instance for the specified world id.
+        /// Return the world table entry for the specified world ID without checking whether the world is alive.
         /// </summary>
         /// <param name="worldID">World identifier.</param>
-        /// <returns>EcsWorld instance (may be null for unknown or destroyed worlds).</returns>
-        /// <remarks>Thread-safe</remarks>
+        /// <returns>The registered world, or null for an unused or destroyed in-range world ID.</returns>
+        /// <remarks>
+        /// In DEBUG builds an out-of-range ID throws <see cref="ArgumentOutOfRangeException"/>; in stability mode it
+        /// returns null. In unchecked builds the caller is responsible for supplying an in-range ID. Thread-safe.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EcsWorld GetWorld(short worldID)
         {// ts
@@ -65,7 +68,7 @@ namespace DCFApixels.DragonECS
         /// <param name="worldID">World identifier to lookup.</param>
         /// <param name="world">Out parameter receiving the world when found and valid.</param>
         /// <returns>True if a valid, non-destroyed world was found; otherwise false.</returns>
-        /// <remarks>Thread-safe</remarks>
+        /// <remarks>Thread-safe.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetWorld(short worldID, out EcsWorld world)
         {// ts
@@ -95,7 +98,11 @@ namespace DCFApixels.DragonECS
         /// <typeparam name="T">Type of world-scoped component or controller.</typeparam>
         /// <param name="worldID">World identifier.</param>
         /// <returns>Reference to the data instance for the specified world.</returns>
-        /// <remarks>Thread-safe</remarks>
+        /// <remarks>
+        /// Registration and lookup are thread-safe; concurrent access to the returned value must be synchronized by the caller.
+        /// If a reference type implements <see cref="IEcsWorldComponent{T}"/>, a warning is printed once and its lifecycle
+        /// callbacks are ignored. Lifecycle callbacks are supported only for value types.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetData<T>(short worldID)
         {
@@ -107,7 +114,7 @@ namespace DCFApixels.DragonECS
         /// <typeparam name="T">Type of world-scoped component or controller.</typeparam>
         /// <param name="worldID">World identifier.</param>
         /// <returns>True if the data instance exists for the world; otherwise false.</returns>
-        /// <remarks>Thread-safe</remarks>
+        /// <remarks>Thread-safe.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasData<T>(short worldID)
         {
@@ -120,7 +127,7 @@ namespace DCFApixels.DragonECS
         /// <typeparam name="T">Type of world-scoped component or controller.</typeparam>
         /// <param name="worldID">World identifier.</param>
         /// <returns>Reference to the data instance for the specified world (unchecked).</returns>
-        /// <remarks>Thread-safe</remarks>
+        /// <remarks>Lookup is thread-safe; concurrent access to the returned value must be synchronized by the caller.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetDataUnchecked<T>(short worldID)
         {
@@ -161,6 +168,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Returns a read-only span of all registered world singleton component pools including builtins.
         /// </summary>
+        /// <returns>All registered world-component pool controllers.</returns>
         public ReadOnlySpan<WorldComponentPoolAbstract> GetAllWorldComponents()
         {
             return _worldComponentPools.AsReadOnlySpan();
@@ -190,20 +198,26 @@ namespace DCFApixels.DragonECS
             /// </summary>
             public abstract Type ComponentType { get; }
             /// <summary>
-            /// Ensure the component exists for the specified world id.
+            /// Invoke the implementation's presence check for the specified world id.
             /// </summary>
+            /// <param name="worldID">World identifier to check.</param>
             public abstract void Has(short worldID);
             /// <summary>
             /// Release and destroy the component instance for the specified world id.
             /// </summary>
+            /// <param name="worldID">World identifier whose component should be released.</param>
             public abstract void Release(short worldID);
             /// <summary>
             /// Get the raw (untyped) component instance for the specified world id.
             /// </summary>
+            /// <param name="worldID">World identifier whose component should be returned.</param>
+            /// <returns>The boxed component value.</returns>
             public abstract object GetRaw(short worldID);
             /// <summary>
             /// Set the raw (untyped) component instance for the specified world id.
             /// </summary>
+            /// <param name="worldID">World identifier whose component should be set.</param>
+            /// <param name="raw">Boxed component value.</param>
             public abstract void SetRaw(short worldID, object raw);
         }
         private static class WorldComponentPool<T>

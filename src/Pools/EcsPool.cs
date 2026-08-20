@@ -351,7 +351,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Copy component data from one entity to another inside the same world.
+        /// Copies component data from one entity to another in the same world.
         /// </summary>
         /// <param name="fromEntityID">Source entity identifier.</param>
         /// <param name="toEntityID">Destination entity identifier.</param>
@@ -367,9 +367,10 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Copy component data from one entity to another inside another world.
+        /// Copies component data from an entity in this pool's world to an entity in another world.
         /// </summary>
         /// <param name="fromEntityID">Source entity identifier.</param>
+        /// <param name="toWorld">Destination world.</param>
         /// <param name="toEntityID">Destination entity identifier.</param>
         /// <remarks>Uses custom copy logic if the component implements <see cref="IEcsComponentCopy{T}"/>; otherwise falls back to default copying.</remarks>
         public void Copy(int fromEntityID, EcsWorld toWorld, int toEntityID)

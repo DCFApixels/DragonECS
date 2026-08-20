@@ -225,12 +225,13 @@ namespace DCFApixels.DragonECS
 
         #region Object
         /// <summary>Returns a string representation of the mask, showing the condition sets.</summary>
+        /// <returns>A diagnostic representation of the mask.</returns>
         public override string ToString()
         {
             return CreateLogString(WorldID, _incs, _excs, _anys);
         }
         /// <summary>Determines whether this mask is equal to another mask (by ID and world).</summary>
-        /// <param name="mask">The other mask.</param>
+        /// <param name="mask">The non-null mask to compare.</param>
         /// <returns>True if equal; otherwise false.</returns>
         public bool Equals(EcsMask mask)
         {
@@ -238,6 +239,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>Determines whether this mask equals another object (must be an <see cref="EcsMask"/>).</summary>
+        /// <param name="obj">Object to compare with this mask.</param>
         /// <returns>True if equal; otherwise false.</returns>
         public override bool Equals(object obj)
         {
@@ -245,6 +247,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>Gets the hash code for this mask (based on ID and world ID).</summary>
+        /// <returns>A hash code derived from the mask and world identifiers.</returns>
         public override int GetHashCode()
         {
             return unchecked(ID ^ (WorldID * EcsConsts.MAGIC_PRIME));
@@ -768,6 +771,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>Returns a string representation of the chunk (index, mask, bit count).</summary>
+        /// <returns>A diagnostic representation of the chunk.</returns>
         public override string ToString()
         {
             return $"mask({chunkIndex}, {mask}, {BitsUtility.CountBits(mask)})";
@@ -1083,7 +1087,7 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Other
-            /// <summary>Converts the result to a <see cref="List{int}"/>.</summary>
+            /// <summary>Converts the result to a <see cref="List{T}"/> of entity IDs.</summary>
             /// <returns>A new list containing all matching entity IDs.</returns>
             public List<int> ToList()
             {
@@ -1093,6 +1097,7 @@ namespace DCFApixels.DragonECS
             }
 
             /// <summary>Returns a string representation of the enumeration.</summary>
+            /// <returns>A diagnostic representation of the matching entity ids.</returns>
             public override string ToString() { return CollectionUtility.EntitiesToString(ToList(), "it"); }
             #endregion
 
@@ -1254,7 +1259,8 @@ namespace DCFApixels.DragonECS
             #endregion
 
             #region Other
-            /// <summary>Converts the result to a <see cref="List{int}"/>.</summary>
+            /// <summary>Converts the result to a <see cref="List{T}"/> of entity IDs.</summary>
+            /// <returns>A new list containing all matching entity IDs.</returns>
             public List<int> ToList()
             {
                 List<int> ints = new List<int>();
@@ -1263,6 +1269,7 @@ namespace DCFApixels.DragonECS
             }
 
             /// <summary>Returns a string representation of the enumeration.</summary>
+            /// <returns>A diagnostic representation of the matching entity ids.</returns>
             public override string ToString() { return CollectionUtility.EntitiesToString(ToList(), "inc_it"); }
             #endregion
 

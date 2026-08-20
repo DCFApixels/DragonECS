@@ -153,7 +153,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Gets a read‑only dictionary of all registered runners by their interface type.
+        /// Gets a read‑only dictionary of registered runners keyed by concrete runner type and advertised runner interface type.
         /// </summary>
         public IReadOnlyDictionary<Type, IEcsRunner> AllRunners
         {
@@ -455,7 +455,7 @@ namespace DCFApixels.DragonECS
             return self;
         }
 
-        /// <summary>Adds a range of systems to the builder, skipping any that are already present.</summary>
+        /// <summary>Adds a range of systems to the builder, skipping systems whose runtime type is already registered as unique.</summary>
         /// <param name="self">The builder instance.</param>
         /// <param name="range">The systems to add.</param>
         /// <param name="layerName">Optional layer name for the systems.</param>
@@ -518,6 +518,7 @@ namespace DCFApixels.DragonECS
             }
         }
         /// <summary>Returns a string representation of the layer marker.</summary>
+        /// <returns>The full layer marker name.</returns>
         public override string ToString() { return name; }
     }
     #endregion
@@ -619,6 +620,7 @@ namespace DCFApixels.DragonECS
     /// Provides a type‑safe filtered view when the specific process type is known at compile time,
     /// and can be converted to <see cref="EcsProcessRaw"/> without boxing.
     /// </summary>
+    /// <typeparam name="TProcess">Process interface or implementation type exposed by the collection.</typeparam>
     [DebuggerTypeProxy(typeof(EcsProcess<>.DebuggerProxy))]
     public readonly struct EcsProcess<TProcess> : IReadOnlyCollection<TProcess>
         where TProcess : IEcsProcess

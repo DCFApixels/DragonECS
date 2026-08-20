@@ -22,7 +22,7 @@ namespace DCFApixels.DragonECS
 #endif
     /// <summary>
     /// Read-only lightweight view over an <see cref="EcsGroup"/> instance.
-    /// Provides safe accessors and non-mutating convenience methods for consumers.
+    /// Provides non-mutating accessors and convenience methods for consumers.
     /// </summary>
     [DebuggerTypeProxy(typeof(EcsGroup.DebuggerProxy))]
     public readonly ref struct EcsReadonlyGroup
@@ -76,7 +76,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Returns a span of packed entity identifiers (<see cref="entlong"/>) – equivalent to a regular span of entity IDs
+        /// Returns a view that exposes the same entities as packed <see cref="entlong"/> handles.
         /// </summary>
         public EcsLongsSpan Longs
         {
@@ -96,6 +96,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Indexer returning the entity id at the specified dense index.
         /// </summary>
+        /// <param name="index">Zero-based dense index.</param>
         public int this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -128,7 +129,7 @@ namespace DCFApixels.DragonECS
         /// Get the dense index of the specified entity in the group.
         /// </summary>
         /// <param name="entityID">Entity identifier to locate.</param>
-        /// <returns>Dense index of the entity or -1 when not found.</returns>
+        /// <returns>One-based dense index of the entity, or 0 when it is not present.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID) { return _source.IndexOf(entityID); }
 
@@ -148,14 +149,19 @@ namespace DCFApixels.DragonECS
         public EcsGroup Clone() { return _source.Clone(); }
 
         /// <summary>
-        /// Return a span representing a slice of the group's dense array starting at start.
+        /// Returns a span representing a slice of the group's dense array starting at <paramref name="start"/>.
         /// </summary>
+        /// <param name="start">Zero-based start index.</param>
+        /// <returns>A span over the remaining entity ids.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start) { return _source.Slice(start); }
 
         /// <summary>
-        /// Return a span representing a slice of the group's dense array with specified length.
+        /// Returns a span representing a slice of the group's dense array with the specified length.
         /// </summary>
+        /// <param name="start">Zero-based start index.</param>
+        /// <param name="length">Number of entity ids in the slice.</param>
+        /// <returns>A span over the requested range.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsSpan Slice(int start, int length) { return _source.Slice(start, length); }
 
@@ -167,38 +173,47 @@ namespace DCFApixels.DragonECS
         public EcsSpan ToSpan() { return _source.ToSpan(); }
 
         /// <summary>
-        /// Convert the group contents to a managed int[] array.
+        /// Converts the group contents to a managed array of entity ids.
         /// </summary>
+        /// <returns>A new array containing the group's entity ids.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int[] ToArray() { return _source.ToArray(); }
 
         /// <summary>
-        /// Copy group contents into a reusable buffer and return the written length.
+        /// Copies the group contents into a reusable buffer, growing it when necessary.
         /// </summary>
+        /// <param name="dynamicBuffer">Reusable destination buffer.</param>
+        /// <returns>The number of entity ids written.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ToArray(ref int[] dynamicBuffer) { return _source.ToArray(ref dynamicBuffer); }
 
         /// <summary>
-        /// Add all entity ids of the group into the provided collection.
+        /// Adds all entity ids in the group to the provided collection.
         /// </summary>
+        /// <param name="collection">Collection that receives the entity ids.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ToCollection(ICollection<int> collection) { _source.ToCollection(collection); }
 
         /// <summary>
-        /// Get a value-type enumerator for iterating over entity ids in the group.
+        /// Gets a value-type enumerator for iterating over entity ids in the group.
         /// </summary>
+        /// <returns>An enumerator over the group's entity ids.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EcsGroup.Enumerator GetEnumerator() { return _source.GetEnumerator(); }
 
         /// <summary>
-        /// Return the first entity id in the group.
+        /// Returns the first entity id in the group.
         /// </summary>
+        /// <returns>The first entity id.</returns>
+        /// <remarks>The group must not be empty.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _source.First(); }
 
         /// <summary>
-        /// Returns a lightweight span view of the group's entity IDs as an <see cref="EcsSpan"/>.
+        /// Returns the last entity id in the group.
         /// </summary>
+        /// <returns>The last entity id.</returns>
+        /// <remarks>The group must not be empty.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _source.Last(); }
 
@@ -517,6 +532,14 @@ namespace DCFApixels.DragonECS
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
+    /// <summary>
+    /// Mutable set of unique entity IDs owned by an <see cref="EcsWorld"/>.
+    /// </summary>
+    /// <remarks>
+    /// Inputs to set operations are expected to represent sets and therefore must not contain duplicate entity IDs.
+    /// Query, world, and group APIs return spans that satisfy this contract. World-bound inputs combined in one operation
+    /// are expected to belong to the same world.
+    /// </remarks>
     [DebuggerTypeProxy(typeof(DebuggerProxy))]
     public unsafe class EcsGroup : IDisposable, IEnumerable<int>, ISet<int>, IEntityStorage
     {
@@ -572,7 +595,7 @@ namespace DCFApixels.DragonECS
 
         /// <summary>
         /// Gets a read-only view of this <see cref="EcsGroup"/> instance.
-        /// Provides safe, non‑mutating access to the group's contents.
+        /// Provides non‑mutating access to the group's contents.
         /// </summary>
         public EcsReadonlyGroup Readonly
         {
@@ -581,7 +604,7 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Returns a span of packed entity identifiers (<see cref="entlong"/>) – equivalent to a regular span of entity IDs
+        /// Returns a view that exposes the same entities as packed <see cref="entlong"/> handles.
         /// </summary>
         public EcsLongsSpan Longs
         {
@@ -602,6 +625,7 @@ namespace DCFApixels.DragonECS
         /// <summary>
         /// Indexer returning the entity id at the specified dense index.
         /// </summary>
+        /// <param name="index">Zero-based dense index.</param>
         public int this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -686,7 +710,7 @@ namespace DCFApixels.DragonECS
         /// Get the dense index of the specified entity in the group.
         /// </summary>
         /// <param name="entityID">Entity identifier to locate.</param>
-        /// <returns>Dense index of the entity or -1 when not found.</returns>
+        /// <returns>One-based dense index of the entity, or 0 when it is not present.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID)
         {
@@ -2230,6 +2254,7 @@ namespace DCFApixels.DragonECS
         /// Return the first entity id in the group.
         /// </summary>
         /// <returns>First entity id in dense ordering.</returns>
+        /// <remarks>The group must not be empty.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int First() { return _dense[1]; }
 
@@ -2237,6 +2262,7 @@ namespace DCFApixels.DragonECS
         /// Return the last entity id in the group.
         /// </summary>
         /// <returns>Last entity id in dense ordering.</returns>
+        /// <remarks>The group must not be empty.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Last() { return _dense[_count]; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

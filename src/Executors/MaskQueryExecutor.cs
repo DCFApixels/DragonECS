@@ -141,9 +141,13 @@ namespace DCFApixels.DragonECS.Core
         protected abstract void OnInitialize();
         protected abstract void OnDestroy();
         /// <summary>
-        /// Produce a snapshot span of entity ids matching the executor's mask.
+        /// Return the current matching entities as an <see cref="EcsSpan"/> view.
         /// </summary>
-        /// <returns>EcsSpan containing matched entity ids.</returns>
+        /// <returns>A view containing the matching entity IDs.</returns>
+        /// <remarks>
+        /// The executor owns the backing storage and may overwrite it on a subsequent execution. Call
+        /// <see cref="EcsSpan.ToArray()"/> when an independent snapshot is required.
+        /// </remarks>
         public abstract EcsSpan Snapshot();
     }
 

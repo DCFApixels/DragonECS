@@ -540,7 +540,8 @@ namespace DCFApixels.DragonECS
 #endif
         }
         public override string ToString() { return Name; }
-        /// <returns> Unique ID </returns>
+        /// <summary>Returns the cached unique identifier used as this metadata object's hash code.</summary>
+        /// <returns>The metadata object's unique identifier.</returns>
         public override int GetHashCode() { return _uniqueID; }
         private class DebuggerProxy : ITypeMeta
         {

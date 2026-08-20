@@ -115,6 +115,7 @@ namespace DCFApixels.DragonECS
             }
         }
         /// <summary>Creates a new empty builder for constructing a static mask.</summary>
+        /// <returns>A new empty mask builder.</returns>
         public static Builder New() { return Builder.New(); }
 
         /// <summary>Creates a new builder and adds an Include condition for type <typeparamref name="T"/>.</summary>
@@ -298,21 +299,25 @@ namespace DCFApixels.DragonECS
         public EcsMask ToMask(EcsWorld world) { return EcsMask.FromStatic(world, this); }
 
         /// <summary>Determines whether this mask equals another by ID.</summary>
-        /// <param name="other">The other mask.</param>
+        /// <param name="other">The non-null mask to compare.</param>
         /// <returns>True if equal; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(EcsStaticMask other) { return ID == other.ID; }
 
         /// <summary>Gets the hash code (based on ID).</summary>
+        /// <returns>The static mask identifier.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() { return ID; }
 
-        /// <summary>Determines whether this mask equals another object.</summary>
-        /// <param name="obj">The object to compare.</param>
-        /// <returns>True if equal; otherwise false.</returns>
+        /// <summary>Determines whether this mask equals a boxed <see cref="EcsStaticMask"/>.</summary>
+        /// <param name="obj">The boxed, non-null <see cref="EcsStaticMask"/> to compare.</param>
+        /// <returns>True if both masks have the same ID; otherwise false.</returns>
+        /// <exception cref="InvalidCastException"><paramref name="obj"/> is not an <see cref="EcsStaticMask"/>.</exception>
+        /// <exception cref="NullReferenceException"><paramref name="obj"/> is null.</exception>
         public override bool Equals(object obj) { return Equals((EcsStaticMask)obj); }
 
         /// <summary>Returns a string representation of the mask showing Include, Exclude and Any sets.</summary>
+        /// <returns>A diagnostic representation of the mask.</returns>
         public override string ToString() { return CreateLogString(_incs, _excs, _anys); }
         #endregion
 

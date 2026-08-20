@@ -13,6 +13,7 @@ namespace DCFApixels.DragonECS.Core
     /// Represents a directed dependency graph over values of type T.
     /// Provides vertex management, dependency registration and topological sorting.
     /// </summary>
+    /// <typeparam name="T">Vertex value type.</typeparam>
     public interface IDependencyGraph<T> : IReadOnlyCollection<T>
     {
         /// <summary>
@@ -20,37 +21,54 @@ namespace DCFApixels.DragonECS.Core
         /// </summary>
         ReadonlyDependenciesCollection<T> Dependencies { get; }
         /// <summary>
-        /// Add a vertex to the graph. Returns the internal vertex id.
+        /// Adds a vertex to the result set. Re-adding a vertex refreshes its insertion order.
         /// </summary>
+        /// <param name="vertex">Vertex value to add.</param>
+        /// <param name="isLocked">Whether subsequent removal attempts should throw.</param>
+        /// <returns>The stable internal identifier assigned to the vertex value.</returns>
         VertexID AddVertex(T vertex, bool isLocked);
         /// <summary>
-        /// Check whether the graph contains a vertex with the given value.
+        /// Checks whether the vertex is currently included in the graph's result set.
         /// </summary>
+        /// <param name="vertex">Vertex value to check.</param>
+        /// <returns>True when the vertex is included; otherwise false.</returns>
         bool ContainsVertex(T vertex);
         /// <summary>
-        /// Resolve or create the vertex id for the given value.
+        /// Resolves the stable identifier for a vertex value, creating a virtual vertex when necessary.
         /// </summary>
+        /// <param name="vertex">Vertex value to resolve.</param>
+        /// <returns>The stable internal vertex identifier.</returns>
         VertexID GetVertexID(T vertex);
         /// <summary>
-        /// Get the original vertex value from its internal id.
+        /// Gets the original vertex value from its internal identifier.
         /// </summary>
+        /// <param name="vertexID">Internal vertex identifier.</param>
+        /// <returns>The corresponding vertex value.</returns>
         T GetVertexFromID(VertexID vertexID);
         /// <summary>
-        /// Remove a vertex from the graph by value. Returns true when removed.
+        /// Removes a vertex from the result set without removing dependency edges that reference it.
         /// </summary>
+        /// <param name="vertex">Vertex value to remove.</param>
+        /// <returns>True when the vertex was included and has been removed; otherwise false.</returns>
         bool RemoveVertex(T vertex);
         /// <summary>
-        /// Add a directed dependency edge from fromID to toID.
+        /// Adds a directed dependency edge from <paramref name="fromID"/> to <paramref name="toID"/>.
         /// </summary>
+        /// <param name="fromID">Identifier of the vertex that must be ordered first.</param>
+        /// <param name="toID">Identifier of the vertex that must be ordered later.</param>
+        /// <param name="moveToRight">True to bias the source toward the right; false to bias the destination toward the left.</param>
         void AddDependency(VertexID fromID, VertexID toID, bool moveToRight);
         /// <summary>
         /// Merge another dependency graph into this graph.
         /// </summary>
+        /// <param name="other">Graph whose vertices and edges should be merged.</param>
         void MergeWith(IDependencyGraph<T> other);
         /// <summary>
-        /// Perform topological sort and return vertices in dependency order.
-        /// Throws on cyclic dependencies.
+        /// Performs a topological sort. Virtual vertices referenced only by dependencies participate
+        /// in ordering but are omitted from the returned array.
         /// </summary>
+        /// <returns>The included vertices in dependency order.</returns>
+        /// <exception cref="InvalidOperationException">The graph contains a dependency cycle.</exception>
         T[] Sort();
     }
     public static class DependencyGraphExtensions

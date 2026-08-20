@@ -357,7 +357,9 @@ namespace DCFApixels.DragonECS
                 return new Singleton<T>(_world.ID);
             }
 
-            /// <summary>Adds the pool type <typeparamref name="TPool"/> to the Include condition and caches it.</summary>
+            /// <summary>Adds the component type of a pool to the Include condition and caches the pool.</summary>
+            /// <typeparam name="TPool">Pool implementation type.</typeparam>
+            /// <returns>The cached pool instance.</returns>
             public TPool IncludePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = CachePool<TPool>();
@@ -365,7 +367,9 @@ namespace DCFApixels.DragonECS
                 return pool;
             }
 
-            /// <summary>Adds the pool type <typeparamref name="TPool"/> to the Exclude condition and caches it.</summary>
+            /// <summary>Adds the component type of a pool to the Exclude condition and caches the pool.</summary>
+            /// <typeparam name="TPool">Pool implementation type.</typeparam>
+            /// <returns>The cached pool instance.</returns>
             public TPool ExcludePool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = CachePool<TPool>();
@@ -373,7 +377,9 @@ namespace DCFApixels.DragonECS
                 return pool;
             }
 
-            /// <summary>Adds the pool type <typeparamref name="TPool"/> to the Any condition and caches it.</summary>
+            /// <summary>Adds the component type of a pool to the Any condition and caches the pool.</summary>
+            /// <typeparam name="TPool">Pool implementation type.</typeparam>
+            /// <returns>The cached pool instance.</returns>
             public TPool AnyPool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 var pool = CachePool<TPool>();
@@ -381,7 +387,9 @@ namespace DCFApixels.DragonECS
                 return pool;
             }
 
-            /// <summary>Caches the pool type <typeparamref name="TPool"/> without affecting the mask (Optional).</summary>
+            /// <summary>Caches a pool without adding a filtering condition to the mask.</summary>
+            /// <typeparam name="TPool">Pool implementation type.</typeparam>
+            /// <returns>The cached pool instance.</returns>
             public TPool OptionalPool<TPool>() where TPool : IEcsPoolImplementation, new()
             {
                 return CachePool<TPool>();
@@ -394,6 +402,7 @@ namespace DCFApixels.DragonECS
             }
 
             /// <summary>Adds the specified component type to the Include condition.</summary>
+            /// <param name="type">Component type to include.</param>
             public void SetMaskInclude(Type type)
             {
                 if (_maskBuilder.IsNull) { return; }
@@ -401,6 +410,7 @@ namespace DCFApixels.DragonECS
             }
 
             /// <summary>Adds the specified component type to the Exclude condition.</summary>
+            /// <param name="type">Component type to exclude.</param>
             public void SetMaskExclude(Type type)
             {
                 if (_maskBuilder.IsNull) { return; }
@@ -408,6 +418,7 @@ namespace DCFApixels.DragonECS
             }
 
             /// <summary>Adds the specified component type to the Any condition.</summary>
+            /// <param name="type">Component type to add to the Any condition.</param>
             public void SetMaskAny(Type type)
             {
                 if (_maskBuilder.IsNull) { return; }
@@ -524,7 +535,9 @@ namespace DCFApixels.DragonECS
             _staticMaskCache.Clear();
         }
 
-        /// <summary>Explicitly converts this aspect to an <see cref="EcsMask"/>.</summary>
+        /// <summary>Converts this aspect to a mask bound to the specified world.</summary>
+        /// <param name="world">World to which the returned mask must be bound.</param>
+        /// <returns>This aspect's cached mask, or an equivalent mask converted for another world.</returns>
         EcsMask IComponentMask.ToMask(EcsWorld world)
         {
             if (_isBuilt == false) { Throw.Aspect_NotInitialized(); }
@@ -587,6 +600,8 @@ namespace DCFApixels.DragonECS.Core
         }
 
         /// <summary>Caches the pool and adds it to the Include condition.</summary>
+        /// <typeparam name="T">Pool implementation type.</typeparam>
+        /// <returns>The cached pool instance.</returns>
         public T GetInstance<T>() where T : IEcsPoolImplementation, new()
         {
             return _builder.IncludePool<T>();
@@ -606,6 +621,8 @@ namespace DCFApixels.DragonECS.Core
         }
 
         /// <summary>Caches the pool and adds it to the Exclude condition.</summary>
+        /// <typeparam name="T">Pool implementation type.</typeparam>
+        /// <returns>The cached pool instance.</returns>
         public T GetInstance<T>() where T : IEcsPoolImplementation, new()
         {
             return _builder.ExcludePool<T>();
@@ -625,6 +642,8 @@ namespace DCFApixels.DragonECS.Core
         }
 
         /// <summary>Caches the pool and adds it to the Any condition.</summary>
+        /// <typeparam name="T">Pool implementation type.</typeparam>
+        /// <returns>The cached pool instance.</returns>
         public T GetInstance<T>() where T : IEcsPoolImplementation, new()
         {
             return _builder.AnyPool<T>();
@@ -644,6 +663,8 @@ namespace DCFApixels.DragonECS.Core
         }
 
         /// <summary>Caches the pool without adding any condition to the mask.</summary>
+        /// <typeparam name="T">Pool implementation type.</typeparam>
+        /// <returns>The cached pool instance.</returns>
         public T GetInstance<T>() where T : IEcsPoolImplementation, new()
         {
             return _builder.OptionalPool<T>();
@@ -663,6 +684,8 @@ namespace DCFApixels.DragonECS.Core
         }
 
         /// <summary>Gets the singleton component instance from the world.</summary>
+        /// <typeparam name="T">World-component type.</typeparam>
+        /// <returns>The world-scoped component value.</returns>
         public T Get<T>()
         {
             return Builder.World.Get<T>();
