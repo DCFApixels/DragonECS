@@ -57,7 +57,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         internal static int CalculateSizeOf<T>() where T : struct
         {
 #if UNITY_2020_3_OR_NEWER
-            return UnsafeUtility.SizeOf<T>();
+            return Unity.Collections.LowLevel.Unsafe.UnsafeUtility.SizeOf<T>();
 #else
             T value = default;
             Span<T> span = MemoryMarshal.CreateSpan(ref value, 1);
