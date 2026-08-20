@@ -458,8 +458,8 @@ namespace DCFApixels.DragonECS
         internal void ReturnPage(int* page)
         {
 #if DEBUG && DRAGONECS_DEEP_DEBUG
-            var h = MemoryAllocator.Handler.FromDataPtr(page);
-            if (h.GetID_Debug() == 0 || page == null)
+            var h = MemoryAllocator.HPtr.FromDataPtr(page);
+            if (h.IsCreated == false)
             {
                 Throw.DeepDebugException();
             }

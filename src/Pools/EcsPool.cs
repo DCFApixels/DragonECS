@@ -449,7 +449,7 @@ namespace DCFApixels.DragonECS
 
             for (int i = 1; i <= newUsedBlockCount; i++)
             {
-                var value = _dense.ptr[i];
+                var value = _dense.Ptr[i];
                 if (i <= _itemsCount)
                 {
                     if (useds.Add(value) == false)
@@ -463,7 +463,7 @@ namespace DCFApixels.DragonECS
                     {
                         Throw.DeepDebugException();
                     }
-                    var e = _itemEntities.ptr[value];
+                    var e = _itemEntities.Ptr[value];
                     bool isHasComponent = Has(e);
                     bool isUsedsContains = useds.Contains(e);
                     bool isWorldUsed = _registrar.World.IsUsed(e);
@@ -479,7 +479,7 @@ namespace DCFApixels.DragonECS
                 Throw.DeepDebugException();
             }
 
-            var result = new EcsSpan(_registrar.WorldID, new ReadOnlySpan<int>(_dense.ptr + 1, _itemsCount));
+            var result = new EcsSpan(_registrar.WorldID, new ReadOnlySpan<int>(_dense.Ptr + 1, _itemsCount));
             Core.Unchecked.UncheckedUtility.CheckSpanValideDebug(result);
             if (newUsedBlockCount > _usedBlockCount)
             {
