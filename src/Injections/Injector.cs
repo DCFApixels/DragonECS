@@ -244,7 +244,7 @@ namespace DCFApixels.DragonECS
             {
                 foreach (var item in other._injections)
                 {
-                    FindMonoWorld(item);
+                    FindMonoWorld(item.Raw);
                     _injections.Add(item);
                 }
                 foreach (var item in other._nodes)
