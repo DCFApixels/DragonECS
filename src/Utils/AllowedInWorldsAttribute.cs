@@ -12,7 +12,7 @@ namespace DCFApixels.DragonECS
         public object[] AllowedWorlds;
         public AllowedInWorldsAttribute(params object[] allowedWorlds)
         {
-            AllowedWorlds = allowedWorlds;
+            AllowedWorlds = allowedWorlds ?? Array.Empty<object>();
         }
 
         public static void CheckAllows(EcsWorld world, Type componentType)
@@ -22,6 +22,7 @@ namespace DCFApixels.DragonECS
                 Type worldType = world.GetType();
                 foreach (var worldTag in attribute.AllowedWorlds)
                 {
+                    if (worldTag == null) { continue; }
                     bool result = false;
                     if (worldTag is Type worldTypeTag)
                     {
