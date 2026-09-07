@@ -27,6 +27,7 @@ namespace DCFApixels.DragonECS
         public EcsProfilerMarker(string name)
         {
 #if DEBUG || DRAGONECS_ENABLE_DEBUG_SERVICE
+            if (name == null) { Throw.ArgumentNull(nameof(name)); }
             id = DebugService.CurrentThreadInstance.RegisterMark(name);
 #endif
         }
@@ -349,14 +350,13 @@ namespace DCFApixels.DragonECS
         {
             lock (_lock)
             {
-                int id = _nameIdTable[name];
+                if (_nameIdTable.TryGetValue(name, out int id) == false) { return; }
                 _nameIdTable.Remove(name);
                 _idDispenser.Release(id);
                 foreach (var service in _threadServiceClonesSet)
                 {
                     service.OnDelProfilerMark(id);
                 }
-                OnDelProfilerMark(id);
             }
         }
 
@@ -513,6 +513,7 @@ namespace DCFApixels.DragonECS.Core
 
         public sealed override void ProfilerMarkBegin(int id)
         {
+            if ((uint)id >= (uint)_stopwatchs.Length || _stopwatchs[id].Stopwatch == null) { return; }
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
             _stopwatchs[id].Stopwatch.Start();
@@ -525,6 +526,7 @@ namespace DCFApixels.DragonECS.Core
         }
         public sealed override void ProfilerMarkEnd(int id)
         {
+            if ((uint)id >= (uint)_stopwatchs.Length || _stopwatchs[id].Stopwatch == null) { return; }
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.DarkGray;
             _stopwatchs[id].Stopwatch.Stop();
