@@ -20,6 +20,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         public int Capacity;
         public int Offset;
         public int ActiveMarkersCount;
+        public int OwnerThreadID;
     }
 
     internal unsafe struct TempAllocatorAllocationHeader
@@ -405,6 +406,11 @@ namespace DCFApixels.DragonECS.Core.Internal
             if (allocation == null) { return; }
 
             TempAllocatorAllocationHeader* header = GetAllocationHeader(allocation);
+            TempAllocatorBlock* block = header->Block;
+            if (block->OwnerThreadID != Environment.CurrentManagedThreadId)
+            {
+                ThrowCrossThreadFree();
+            }
 #if DEBUG
             if (header->State != ALLOCATION_STATE_ACTIVE)
             {
@@ -412,7 +418,6 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
 #endif
 
-            TempAllocatorBlock* block = header->Block;
             if (block->LastAllocation != header)
             {
                 MarkAllocationFreed(header);
@@ -437,6 +442,14 @@ namespace DCFApixels.DragonECS.Core.Internal
             }
 #endif
         }
+
+#if !UNITY_2020_3_OR_NEWER
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ThrowCrossThreadFree()
+        {
+            throw new InvalidOperationException("A temporary allocation must be freed on the thread that created it.");
+        }
+#endif
         #endregion
 
         #region Lifetime
@@ -821,6 +834,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             *block = default;
             block->Allocation = allocation;
             block->Capacity = capacity;
+            block->OwnerThreadID = Environment.CurrentManagedThreadId;
 
             if (last == null)
             {

@@ -70,12 +70,14 @@ namespace DCFApixels.DragonECS.Core.Internal
         internal static HandleDebugInfo[] CreateCurrentHandlesList_Debug()
         {
 #if DEBUG
-            var result = new HandleDebugInfo[_idDispenser.Count];
+            var result = new HandleDebugInfo[Math.Max(0, _idDispenser.Count - 1)];
             int i = 0;
             foreach (var id in _idDispenser)
             {
+                if (_idDispenser.IsNullID(id)) { continue; }
                 result[i++] = _debugInfos[id];
             }
+            if (i != result.Length) { Array.Resize(ref result, i); }
             SortHalper.SortBy<HandleDebugInfo, ulong>(result, o => o.Increment);
             return result;
 #else
@@ -183,9 +185,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         private static HPtr ReallocAndInit_Internal(HPtr target, int oldByteLength, int newByteLength, Type newType, int elementSize, int alignment, int alignmentPadding)
         {
-#if DEBUG
             if (oldByteLength < 0) { throw new ArgumentOutOfRangeException(nameof(oldByteLength)); }
-#endif
             int initializedByteLength = target.IsCreated ? Math.Min(oldByteLength, newByteLength) : 0;
             HPtr handler = Realloc_Internal(target, newByteLength, newType, elementSize, alignment, alignmentPadding);
             int allocatedDataByteLength = newByteLength + alignmentPadding;
@@ -719,17 +719,11 @@ namespace DCFApixels.DragonECS.Core.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool Equals(HPtr other)
             {
-                bool result = other.Data == Data;
 #if DEBUG
-                if (result && (other._identity != _identity))
-                {
-                    throw new InvalidOperationException(
-                        $"The handles reference the same memory address but have different identities. " +
-                        $"Expected {_identity}, actual {other._identity}. " +
-                        $"The allocation was likely released and its address was reused.");
-                }
+                return other.Data == Data && other._identity == _identity;
+#else
+                return other.Data == Data;
 #endif
-                return result;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
