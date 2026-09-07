@@ -38,6 +38,19 @@ namespace DCFApixels.DragonECS
         {
 #if DEBUG || !REFLECTION_DISABLED //в дебажных утилитах REFLECTION_DISABLED только в релизном билде работает
             if (type == null) { return TypeMeta.NullTypeMeta.Name; }
+            if (type.HasElementType)
+            {
+                string suffix;
+                if (type.IsArray)
+                {
+                    int rank = type.GetArrayRank();
+                    suffix = rank == 1 ? "[]" : "[" + new string(',', rank - 1) + "]";
+                }
+                else if (type.IsPointer) { suffix = "*"; }
+                else if (type.IsByRef) { suffix = "&"; }
+                else { suffix = string.Empty; }
+                return GetGenericTypeName_Internal(type.GetElementType(), maxDepth, isFull) + suffix;
+            }
             Type nameSource = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
             string typeName = isFull ? nameSource.FullName : nameSource.Name;
             if (string.IsNullOrEmpty(typeName)) { typeName = nameSource.Name; }
