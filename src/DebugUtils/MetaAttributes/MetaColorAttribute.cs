@@ -4,6 +4,7 @@
 using DCFApixels.DragonECS.Core;
 using DCFApixels.DragonECS.Core.Internal;
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
@@ -274,7 +275,7 @@ namespace DCFApixels.DragonECS
                 Throw.MetaColor_InvalidHexFormat(input);
             }
             bool hasAlpha = hex.Length == 9;
-            hex = hex.TrimStart('#');
+            hex = hex.Slice(1);
 
             byte r = TryParseHexByte(input, hex.Slice(0, 2));
             byte g = TryParseHexByte(input, hex.Slice(2, 2));
@@ -359,16 +360,28 @@ namespace DCFApixels.DragonECS
         public static MetaColor operator /(float b, MetaColor a)
         {
             return new MetaColor(
-                (byte)(a.r / b),
-                (byte)(a.g / b),
-                (byte)(a.b / b));
+                DivideChannel(b, a.r),
+                DivideChannel(b, a.g),
+                DivideChannel(b, a.b));
         }
         public static MetaColor operator /(MetaColor a, MetaColor b)
         {
             return new MetaColor(
-                (byte)(a.r / b.r),
-                (byte)(a.g / b.g),
-                (byte)(a.b / b.b));
+                DivideChannel(a.r, b.r),
+                DivideChannel(a.g, b.g),
+                DivideChannel(a.b, b.b));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static byte DivideChannel(byte numerator, byte denominator)
+        {
+            return denominator == 0 ? (numerator == 0 ? byte.MinValue : byte.MaxValue) : (byte)(numerator / denominator);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static byte DivideChannel(float numerator, byte denominator)
+        {
+            return denominator == 0 ? (numerator == 0 ? byte.MinValue : byte.MaxValue) : (byte)(numerator / denominator);
         }
 
         public static MetaColor operator *(MetaColor a, float b)
@@ -426,9 +439,9 @@ namespace DCFApixels.DragonECS
         public static MetaColor operator -(byte b, MetaColor a)
         {
             return new MetaColor(
-                (byte)(a.r - b),
-                (byte)(a.g - b),
-                (byte)(a.b - b));
+                (byte)(b - a.r),
+                (byte)(b - a.g),
+                (byte)(b - a.b));
         }
         public static MetaColor operator -(MetaColor a, MetaColor b)
         {
