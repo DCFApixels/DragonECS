@@ -543,7 +543,7 @@ namespace DCFApixels.DragonECS
         public Type Type
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _systems.GetType().GetElementType(); }
+            get { return _systems == null ? null : _systems.GetType().GetElementType(); }
         }
         public bool IsNullOrEmpty
         {
@@ -553,17 +553,21 @@ namespace DCFApixels.DragonECS
         public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _systems.Length; }
+            get { return _systems == null ? 0 : _systems.Length; }
         }
         int IReadOnlyCollection<IEcsProcess>.Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _systems.Length; }
+            get { return _systems == null ? 0 : _systems.Length; }
         }
 
         public IEcsProcess this[int index]
         {
-            get { return (IEcsProcess)_systems.GetValue(index); }
+            get
+            {
+                if (_systems == null) { throw new IndexOutOfRangeException(); }
+                return (IEcsProcess)_systems.GetValue(index);
+            }
         }
         #endregion
 
@@ -583,7 +587,7 @@ namespace DCFApixels.DragonECS
         }
         public IEnumerator GetEnumerator()
         {
-            return _systems.GetEnumerator();
+            return (_systems ?? Array.Empty<IEcsProcess>()).GetEnumerator();
         }
         #endregion
 
@@ -591,7 +595,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal T[] GetSystems_Internal<T>()
         {
-            return (T[])_systems;
+            return _systems == null ? Array.Empty<T>() : (T[])_systems;
         }
         #endregion
 
@@ -637,17 +641,21 @@ namespace DCFApixels.DragonECS
         public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _systems.Length; }
+            get { return _systems == null ? 0 : _systems.Length; }
         }
         int IReadOnlyCollection<TProcess>.Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _systems.Length; }
+            get { return _systems == null ? 0 : _systems.Length; }
         }
         public TProcess this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _systems[index]; }
+            get
+            {
+                if (_systems == null) { throw new IndexOutOfRangeException(); }
+                return _systems[index];
+            }
         }
         #endregion
 
@@ -682,7 +690,7 @@ namespace DCFApixels.DragonECS
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator(TProcess[] systems)
             {
-                _systems = systems;
+                _systems = systems ?? Array.Empty<TProcess>();
                 _index = -1;
             }
             public TProcess Current
