@@ -218,8 +218,12 @@ namespace DCFApixels.DragonECS.Core.Internal
             _entries = newEntries;
         }
 
-        private int NormalizeCapacity(int capacity)
+        private static int NormalizeCapacity(int capacity)
         {
+            if (capacity > (1 << 30))
+            {
+                Throw.ArgumentOutOfRange(nameof(capacity), capacity, "Capacity cannot exceed 2^30.");
+            }
             int result = MIN_CAPACITY;
             while (result < capacity) result <<= 1;
             return result;
