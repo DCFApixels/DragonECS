@@ -14,6 +14,7 @@ namespace DCFApixels.DragonECS.Core
         private static string[] _splitBuffer;
         public static unsafe string[] Split(char separator, string value)
         {
+            if (string.IsNullOrEmpty(value)) { return Array.Empty<string>(); }
             if (_splitBuffer == null)
             {
                 _splitBuffer = new string[128];
