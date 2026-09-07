@@ -155,7 +155,7 @@ namespace DCFApixels.DragonECS
         /// <returns>The number of elements written.</returns>
         public int ToArray(ref int[] dynamicBuffer)
         {
-            if (dynamicBuffer.Length < _values.Length)
+            if (dynamicBuffer == null || dynamicBuffer.Length < _values.Length)
             {
                 Array.Resize(ref dynamicBuffer, ArrayUtility.CeilPow2(_values.Length));
             }
@@ -378,7 +378,7 @@ namespace DCFApixels.DragonECS
         /// <returns>The number of elements written.</returns>
         public int ToArray(ref entlong[] dynamicBuffer)
         {
-            if (dynamicBuffer.Length < _source.Count)
+            if (dynamicBuffer == null || dynamicBuffer.Length < _source.Count)
             {
                 Array.Resize(ref dynamicBuffer, ArrayUtility.CeilPow2(_source.Count));
             }
@@ -638,7 +638,7 @@ namespace DCFApixels.DragonECS.Core
         /// <returns>The number of elements written.</returns>
         public int ToArray(ref int[] dynamicBuffer)
         {
-            if (dynamicBuffer.Length < _length)
+            if (dynamicBuffer == null || dynamicBuffer.Length < _length)
             {
                 Array.Resize(ref dynamicBuffer, ArrayUtility.CeilPow2(_length));
             }
@@ -700,7 +700,7 @@ namespace DCFApixels.DragonECS.Core
         }
         public override int GetHashCode()
         {
-            return *_values ^ _length ^ (_worldID << 16);
+            return (_length > 0 ? *_values : 0) ^ _length ^ (_worldID << 16);
         }
         #endregion
     }
