@@ -77,7 +77,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Clear() { AppendOnlyTable<TKey, TValue>.Clear(); }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Enumerator GetEnumerator() { return new Enumerator(); }
+            public Enumerator GetEnumerator() { return new Enumerator(0); }
             IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() { return GetEnumerator(); }
             IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         }
