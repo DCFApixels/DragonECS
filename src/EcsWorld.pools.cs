@@ -666,7 +666,7 @@ namespace DCFApixels.DragonECS
                     Throw.OpeningClosingMethodsBalanceError();
                 }
             }
-            _pools[componentTypeID].OnLockedChanged_Debug(false);
+            _pools[componentTypeID].OnLockedChanged_Debug(slot.lockedCounter != 0);
 #endif
         }
         /// <summary>
