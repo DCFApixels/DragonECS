@@ -55,6 +55,7 @@ namespace DCFApixels.DragonECS
             private AddParams _defaultAddParams = new AddParams(BASIC_LAYER, 0, false);
 
             private HashSet<Type> _uniqueSystemsSet = new HashSet<Type>();
+            private bool _isBuilt;
 
             #region Constructors
             /// <summary>Initializes a new pipeline builder with an optional configuration container.</summary>
@@ -94,6 +95,7 @@ namespace DCFApixels.DragonECS
             private bool _systemModuleAdded;
             private Builder AddSystem_Internal(IEcsProcess system, AddParams settedAddParams)
             {
+                if (system == null) { Throw.ArgumentNull(nameof(system)); }
                 AddParams prms = _defaultAddParams;
                 if (system is IEcsDefaultAddParams overrideInterface)
                 {
@@ -117,15 +119,20 @@ namespace DCFApixels.DragonECS
                         _systemModule = system;
                         _systemModuleAdded = false;
                         int importHeadIndex = _endIndex;
-                        AddModule_Internal(module, prms);
-                        if (_systemModuleAdded == false)
-                        { //Если система не была добавлена вручную, то она будет добавлена перед тем что было импортировано через IEcsModule
-                            InsertAfterNode_Internal(importHeadIndex, system, prms.layerName, prms.sortOrder, prms.isUnique);
+                        try
+                        {
+                            AddModule_Internal(module, prms);
+                            if (_systemModuleAdded == false)
+                            { //Если система не была добавлена вручную, то она будет добавлена перед тем что было импортировано через IEcsModule
+                                InsertAfterNode_Internal(importHeadIndex, system, prms.layerName, prms.sortOrder, prms.isUnique);
+                            }
+                            return this;
                         }
-
-                        _systemModule = systemModulePrev;
-                        _systemModuleAdded = systemModuleAddedPrev;
-                        return this;
+                        finally
+                        {
+                            _systemModule = systemModulePrev;
+                            _systemModuleAdded = systemModuleAddedPrev;
+                        }
                     }
                 }
 
@@ -217,6 +224,7 @@ namespace DCFApixels.DragonECS
             }
             private Builder AddModule_Internal(IEcsModule module, AddParams settedAddParams)
             {
+                if (module == null) { Throw.ArgumentNull(nameof(module)); }
                 if (settedAddParams.flags.IsNoImport() == false)
                 {
                     AddParams prms = _defaultAddParams;
@@ -226,9 +234,14 @@ namespace DCFApixels.DragonECS
                     }
                     var oldDefaultAddParams = _defaultAddParams;
                     _defaultAddParams = prms.Overwrite(settedAddParams);
-
-                    module.Import(this);
-                    _defaultAddParams = oldDefaultAddParams;
+                    try
+                    {
+                        module.Import(this);
+                    }
+                    finally
+                    {
+                        _defaultAddParams = oldDefaultAddParams;
+                    }
                 }
 
                 Injections.Inject(module);
@@ -251,6 +264,7 @@ namespace DCFApixels.DragonECS
             }
             private Builder AddRaw_Internal(object raw, AddParams settedAddParams)
             {
+                if (raw == null) { Throw.ArgumentNull(nameof(raw)); }
                 switch (raw)
                 {
                     case IEcsProcess system: return AddSystem_Internal(system, settedAddParams);
@@ -363,6 +377,8 @@ namespace DCFApixels.DragonECS
             /// <returns>The constructed <see cref="EcsPipeline"/> instance.</returns>
             public EcsPipeline Build()
             {
+                if (_isBuilt) { Throw.CantReuseBuilder(); }
+                _isBuilt = true;
 #if DEBUG
                 _buildMarker.Begin();
 #endif
@@ -560,6 +576,7 @@ namespace DCFApixels.DragonECS
                 private int _lastSortOrder;
                 //private int _lastAddOrder;
                 private bool _isSorted = true;
+                private int _nextAddOrder;
 
                 private string _layerName;
 
@@ -579,12 +596,12 @@ namespace DCFApixels.DragonECS
                     for (int i = 1; i < other.recordsCount; i++)
                     {
                         var otherRecord = other.records[i];
-                        AddItem_Internal(otherRecord);
+                        Add(otherRecord.system, otherRecord.sortOrder, otherRecord.isUnique);
                     }
                 }
                 public void Add(IEcsProcess system, int sortOrder, bool isUnique)
                 {
-                    AddItem_Internal(new Item(system, sortOrder, isUnique));
+                    AddItem_Internal(new Item(system, sortOrder, isUnique, _nextAddOrder++));
                 }
                 private void AddItem_Internal(Item item)
                 {
@@ -635,15 +652,18 @@ namespace DCFApixels.DragonECS
                 public readonly IEcsProcess system;
                 public readonly int sortOrder;
                 public readonly bool isUnique;
-                public Item(IEcsProcess system, int sortOrder, bool isUnique)
+                private readonly int _addOrder;
+                public Item(IEcsProcess system, int sortOrder, bool isUnique, int addOrder)
                 {
                     this.system = system;
                     this.sortOrder = sortOrder;
                     this.isUnique = isUnique;
+                    _addOrder = addOrder;
                 }
                 public int CompareTo(Item other)
                 {
-                    return sortOrder - other.sortOrder;
+                    int result = sortOrder.CompareTo(other.sortOrder);
+                    return result != 0 ? result : _addOrder.CompareTo(other._addOrder);
                 }
             }
             #endregion
@@ -1360,7 +1380,8 @@ namespace DCFApixels.DragonECS
         {
             return sortOrder == other.sortOrder &&
                 layerName == other.layerName &&
-                isUnique == other.isUnique;
+                isUnique == other.isUnique &&
+                flags == other.flags;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj)
@@ -1370,7 +1391,7 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
-            return HashCode.Combine(sortOrder, layerName, isUnique);
+            return HashCode.Combine(sortOrder, layerName, isUnique, flags);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
