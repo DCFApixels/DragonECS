@@ -224,11 +224,24 @@ namespace DCFApixels.DragonECS
         }
         public bool IsConflictWith(EcsStaticMask otherMask)
         {
-            return OverlapsArray(_incs, otherMask._excs) || OverlapsArray(_excs, otherMask._incs) || OverlapsArray(_anys, otherMask._excs) || OverlapsArray(_anys, otherMask._incs);
+            return OverlapsArray(_incs, otherMask._excs) ||
+                OverlapsArray(_excs, otherMask._incs) ||
+                OverlapsArray(_anys, otherMask._excs) ||
+                OverlapsArray(_anys, otherMask._incs) ||
+                OverlapsArray(otherMask._anys, _excs) ||
+                OverlapsArray(otherMask._anys, _incs);
         }
         private static bool IsSubmask(EcsStaticMask super, EcsStaticMask sub)
         {
-            return IsSubarray(sub._incs, super._incs) && IsSuperarray(sub._excs, super._excs) && IsSubarray(sub._anys, super._anys);
+            return IsSubarray(sub._incs, super._incs) &&
+                IsSuperarray(sub._excs, super._excs) &&
+                IsAnySubmask(super._anys, sub._anys);
+        }
+        private static bool IsAnySubmask(EcsTypeCode[] super, EcsTypeCode[] sub)
+        {
+            if (super.Length == 0) { return true; }
+            if (sub.Length == 0) { return false; }
+            return IsSubarray(super, sub);
         }
 
         private static bool OverlapsArray(EcsTypeCode[] l, EcsTypeCode[] r)
@@ -299,10 +312,10 @@ namespace DCFApixels.DragonECS
         public EcsMask ToMask(EcsWorld world) { return EcsMask.FromStatic(world, this); }
 
         /// <summary>Determines whether this mask equals another by ID.</summary>
-        /// <param name="other">The non-null mask to compare.</param>
+        /// <param name="other">The mask to compare, or null.</param>
         /// <returns>True if equal; otherwise false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(EcsStaticMask other) { return ID == other.ID; }
+        public bool Equals(EcsStaticMask other) { return other != null && ID == other.ID; }
 
         /// <summary>Gets the hash code (based on ID).</summary>
         /// <returns>The static mask identifier.</returns>
@@ -310,11 +323,9 @@ namespace DCFApixels.DragonECS
         public override int GetHashCode() { return ID; }
 
         /// <summary>Determines whether this mask equals a boxed <see cref="EcsStaticMask"/>.</summary>
-        /// <param name="obj">The boxed, non-null <see cref="EcsStaticMask"/> to compare.</param>
+        /// <param name="obj">Object to compare.</param>
         /// <returns>True if both masks have the same ID; otherwise false.</returns>
-        /// <exception cref="InvalidCastException"><paramref name="obj"/> is not an <see cref="EcsStaticMask"/>.</exception>
-        /// <exception cref="NullReferenceException"><paramref name="obj"/> is null.</exception>
-        public override bool Equals(object obj) { return Equals((EcsStaticMask)obj); }
+        public override bool Equals(object obj) { return obj is EcsStaticMask other && Equals(other); }
 
         /// <summary>Returns a string representation of the mask showing Include, Exclude and Any sets.</summary>
         /// <returns>A diagnostic representation of the mask.</returns>

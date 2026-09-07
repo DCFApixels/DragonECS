@@ -231,11 +231,11 @@ namespace DCFApixels.DragonECS
             return CreateLogString(WorldID, _incs, _excs, _anys);
         }
         /// <summary>Determines whether this mask is equal to another mask (by ID and world).</summary>
-        /// <param name="mask">The non-null mask to compare.</param>
+        /// <param name="mask">The mask to compare, or null.</param>
         /// <returns>True if equal; otherwise false.</returns>
         public bool Equals(EcsMask mask)
         {
-            return ID == mask.ID && WorldID == mask.WorldID;
+            return mask != null && ID == mask.ID && WorldID == mask.WorldID;
         }
 
         /// <summary>Determines whether this mask equals another object (must be an <see cref="EcsMask"/>).</summary>
@@ -272,8 +272,7 @@ namespace DCFApixels.DragonECS
         }
         EcsMask IComponentMask.ToMask(EcsWorld world)
         {
-            if (World != world) { ToStatic().ToMask(world); }
-            return this;
+            return World == world ? this : ToStatic().ToMask(world);
         }
 
         /// <summary>Returns an iterator that can be used to perform queries against entities using this mask.</summary>
@@ -301,7 +300,7 @@ namespace DCFApixels.DragonECS
         #region Operators
         public static EcsMask operator -(EcsMask a, EcsMask b)
         {
-            return a.World.Get<WorldMaskComponent>().ExceptMask(a, b);
+            return a.World.Get<WorldMaskComponent>().ExceptMask(a, ((IComponentMask)b).ToMask(a.World));
         }
         public static EcsMask operator -(EcsMask a, IComponentMask b)
         {
@@ -313,7 +312,7 @@ namespace DCFApixels.DragonECS
         }
         public static EcsMask operator +(EcsMask a, EcsMask b)
         {
-            return a.World.Get<WorldMaskComponent>().CombineMask(a, b);
+            return a.World.Get<WorldMaskComponent>().CombineMask(a, ((IComponentMask)b).ToMask(a.World));
         }
         public static EcsMask operator +(EcsMask a, IComponentMask b)
         {
@@ -414,10 +413,6 @@ namespace DCFApixels.DragonECS
                 int operation = OpMaskKey.EXCEPT_OP;
                 if (_opMasks.TryGetValue(new OpMaskKey(a.ID, b.ID, operation), out EcsMask result) == false)
                 {
-                    if (a.IsConflictWith(b))
-                    {
-                        return a.World.Get<WorldMaskComponent>().BrokenMask;
-                    }
                     result = ConvertFromStatic(EcsStaticMask.New().Combine(a._staticMask).Except(b._staticMask).Build());
                     _opMasks.Add(new OpMaskKey(a.ID, b.ID, operation), result);
                 }
@@ -1076,9 +1071,10 @@ namespace DCFApixels.DragonECS
                 var enumerator = GetEnumerator();
                 while (enumerator.MoveNext())
                 {
-                    if (array.Length <= count)
+                    if (array == null || array.Length <= count)
                     {
-                        Array.Resize(ref array, Math.Max(array.Length << 1, 4));
+                        int currentLength = array == null ? 0 : array.Length;
+                        Array.Resize(ref array, Math.Max(currentLength << 1, 4));
                     }
                     array[count++] = enumerator.Current;
                 }
@@ -1248,9 +1244,10 @@ namespace DCFApixels.DragonECS
                 var enumerator = GetEnumerator();
                 while (enumerator.MoveNext())
                 {
-                    if (array.Length <= count)
+                    if (array == null || array.Length <= count)
                     {
-                        Array.Resize(ref array, Math.Max(array.Length << 1, 4));
+                        int currentLength = array == null ? 0 : array.Length;
+                        Array.Resize(ref array, Math.Max(currentLength << 1, 4));
                     }
                     array[count++] = enumerator.Current;
                 }
