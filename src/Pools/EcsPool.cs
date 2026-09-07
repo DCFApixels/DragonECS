@@ -562,6 +562,7 @@ namespace DCFApixels.DragonECS
         /// Get a span of all entities that have <typeparamref name="T"/> component.
         /// </summary>
         /// <returns>A read-only span of entity identifiers.</returns>
+        /// <remarks>The returned view is invalidated by structural changes to this pool, including adding or removing components.</remarks>
         public EcsSpan ToSpan()
         {
 #if DRAGONECS_DEEP_DEBUG
