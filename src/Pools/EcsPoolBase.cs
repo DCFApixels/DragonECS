@@ -389,17 +389,26 @@ namespace DCFApixels.DragonECS
         public static void InvokeOnAdd(this List<IEcsPoolEventListener> self, int entityID)
         {
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            for (int i = 0; i < self.Count; i++) { self[i].OnAdd(entityID); }
+            int i = 0;
+            while (i < self.Count)
+            {
+                IEcsPoolEventListener listener = self[i];
+                listener.OnAdd(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
+            }
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnAddAndGet(this List<IEcsPoolEventListener> self, int entityID)
         {
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            for (int i = 0; i < self.Count; i++)
+            int i = 0;
+            while (i < self.Count)
             {
-                self[i].OnAdd(entityID);
-                self[i].OnGet(entityID);
+                IEcsPoolEventListener listener = self[i];
+                listener.OnAdd(entityID);
+                listener.OnGet(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
             }
 #endif
         }
@@ -407,14 +416,26 @@ namespace DCFApixels.DragonECS
         public static void InvokeOnGet(this List<IEcsPoolEventListener> self, int entityID)
         {
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            for (int i = 0; i < self.Count; i++) { self[i].OnGet(entityID); }
+            int i = 0;
+            while (i < self.Count)
+            {
+                IEcsPoolEventListener listener = self[i];
+                listener.OnGet(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
+            }
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnDel(this List<IEcsPoolEventListener> self, int entityID)
         {
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            for (int i = 0; i < self.Count; i++) { self[i].OnDel(entityID); }
+            int i = 0;
+            while (i < self.Count)
+            {
+                IEcsPoolEventListener listener = self[i];
+                listener.OnDel(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
+            }
 #endif
         }
 
@@ -422,35 +443,56 @@ namespace DCFApixels.DragonECS
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnAdd(this StructList<IEcsPoolEventListener> self, int entityID)
+        internal static void InvokeOnAdd(this ref StructList<IEcsPoolEventListener> self, int entityID)
         {
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            for (int i = 0; i < self.Count; i++) { self[i].OnAdd(entityID); }
-#endif
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnAddAndGet(this StructList<IEcsPoolEventListener> self, int entityID)
-        {
-#if !DRAGONECS_DISABLE_POOLS_EVENTS
-            for (int i = 0; i < self.Count; i++)
+            int i = 0;
+            while (i < self.Count)
             {
-                self[i].OnAdd(entityID);
-                self[i].OnGet(entityID);
+                IEcsPoolEventListener listener = self[i];
+                listener.OnAdd(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
             }
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnGet(this StructList<IEcsPoolEventListener> self, int entityID)
+        internal static void InvokeOnAddAndGet(this ref StructList<IEcsPoolEventListener> self, int entityID)
         {
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            for (int i = 0; i < self.Count; i++) { self[i].OnGet(entityID); }
+            int i = 0;
+            while (i < self.Count)
+            {
+                IEcsPoolEventListener listener = self[i];
+                listener.OnAdd(entityID);
+                listener.OnGet(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
+            }
 #endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void InvokeOnDel(this StructList<IEcsPoolEventListener> self, int entityID)
+        internal static void InvokeOnGet(this ref StructList<IEcsPoolEventListener> self, int entityID)
         {
 #if !DRAGONECS_DISABLE_POOLS_EVENTS
-            for (int i = 0; i < self.Count; i++) { self[i].OnDel(entityID); }
+            int i = 0;
+            while (i < self.Count)
+            {
+                IEcsPoolEventListener listener = self[i];
+                listener.OnGet(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
+            }
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void InvokeOnDel(this ref StructList<IEcsPoolEventListener> self, int entityID)
+        {
+#if !DRAGONECS_DISABLE_POOLS_EVENTS
+            int i = 0;
+            while (i < self.Count)
+            {
+                IEcsPoolEventListener listener = self[i];
+                listener.OnDel(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
+            }
 #endif
         }
     }
