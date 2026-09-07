@@ -18,7 +18,10 @@ namespace DCFApixels.DragonECS
         [Obsolete(DragonMetaAttributeHalper.EMPTY_NO_SENSE_MESSAGE)]
         public MetaGroupAttribute() { }
         public MetaGroupAttribute(string name) { Name = name; }
-        public MetaGroupAttribute(params string[] path) { Name = string.Join(SEPARATOR, path); }
+        public MetaGroupAttribute(params string[] path)
+        {
+            Name = path == null ? string.Empty : string.Join(SEPARATOR, path);
+        }
     }
     [DebuggerDisplay("{Name}")]
     public class MetaGroup
@@ -55,26 +58,25 @@ namespace DCFApixels.DragonECS
         }
         public bool IsEmpty
         {
-            get { return this == Empty; }
+            get { return Name == UNGROUPED; }
         }
         private MetaGroup(string name)
         {
-            if (string.IsNullOrEmpty(name))
+            if (string.IsNullOrEmpty(name) || name == UNGROUPED)
             {
                 Name = UNGROUPED;
                 return;
             }
-            name = Regex.Replace(name, @"(\s*[\/\\]+\s*)+", SEPARATOR_STR).Trim();
-            if (name[name.Length - 1] != SEPARATOR)
+            name = Regex.Replace(name, @"(\s*[\/\\]+\s*)+", SEPARATOR_STR).Trim().Trim(SEPARATOR);
+            if (name.Length == 0)
             {
-                name += SEPARATOR;
+                Name = UNGROUPED;
+                return;
             }
-            if (name[0] == SEPARATOR)
-            {
-                name = name.Substring(1);
-            }
-            Name = Regex.Replace(name, PATTERN, "");
-            Name = string.Intern(Name);
+
+            name = Regex.Replace(name + SEPARATOR, PATTERN, "");
+            name = Regex.Replace(name, @"(\s*[\/\\]+\s*)+", SEPARATOR_STR).Trim().Trim(SEPARATOR);
+            Name = name.Length == 0 ? UNGROUPED : string.Intern(name + SEPARATOR);
         }
         public static MetaGroup FromName(string name)
         {
@@ -86,7 +88,7 @@ namespace DCFApixels.DragonECS
         }
         public static MetaGroup FromName(params string[] path)
         {
-            return FromName(string.Join(SEPARATOR, path));
+            return path == null ? Empty : FromName(string.Join(SEPARATOR, path));
         }
         public static MetaGroup FromNameSpace(Type type)
         {

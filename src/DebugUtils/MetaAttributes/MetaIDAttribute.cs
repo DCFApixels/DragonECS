@@ -10,7 +10,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace DCFApixels.DragonECS
 {
@@ -56,7 +55,20 @@ namespace DCFApixels.DragonECS
         }
         public static bool IsValidID(string id)
         {
-            return string.IsNullOrEmpty(id) == false && Regex.IsMatch(id, @"^[a-zA-Z0-9_]+$");
+            if (string.IsNullOrEmpty(id)) { return false; }
+            for (int i = 0; i < id.Length; i++)
+            {
+                char c = id[i];
+                if ((c >= 'a' && c <= 'z') ||
+                    (c >= 'A' && c <= 'Z') ||
+                    (c >= '0' && c <= '9') ||
+                    c == '_')
+                {
+                    continue;
+                }
+                return false;
+            }
+            return true;
         }
 
 
@@ -267,6 +279,12 @@ namespace DCFApixels.DragonECS
                 else
                 {
                     _listsCount = 0;
+                }
+
+                _collisionsCount = 0;
+                for (int i = 0; i < _listsCount; i++)
+                {
+                    _collisionsCount += _linkedLists[i].count;
                 }
             }
 
