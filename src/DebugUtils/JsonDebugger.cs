@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace DCFApixels.DragonECS.Core.Internal
@@ -10,6 +11,7 @@ namespace DCFApixels.DragonECS.Core.Internal
     internal static class JsonDebugger
     {
         private const int MAX_DEPTH = 32;
+        private static readonly IEqualityComparer<object> _referenceComparer = new ReferenceComparer();
 
         [ThreadStatic]
         private static List<string> _indentsCache;
@@ -18,7 +20,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             if (obj == null) { return "null"; }
             var sb = new StringBuilder();
             int linesCounter = 0;
-            var visited = new Dictionary<object, int>();
+            var visited = new Dictionary<object, int>(_referenceComparer);
             ToJsonLog_Internal(ref linesCounter, obj, sb, visited, 0, 2, withProperties);
             string json = sb.ToString();
             return json;
@@ -321,6 +323,12 @@ namespace DCFApixels.DragonECS.Core.Internal
                         break;
                 }
             }
+        }
+
+        private sealed class ReferenceComparer : IEqualityComparer<object>
+        {
+            public new bool Equals(object x, object y) { return ReferenceEquals(x, y); }
+            public int GetHashCode(object obj) { return RuntimeHelpers.GetHashCode(obj); }
         }
     }
 }
