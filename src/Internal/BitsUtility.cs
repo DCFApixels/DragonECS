@@ -62,6 +62,19 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetLowBitNumber(int bits)
+        {
+            if (bits == 0) { return -1; }
+            int bit = 0;
+            while ((bits & 1) == 0)
+            {
+                bits >>= 1;
+                bit++;
+            }
+            return bit;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetBitNumbersNoAlloc(int bits, ref int[] numbers)
         {
             return GetBitNumbersNoAlloc((uint)bits, ref numbers);
