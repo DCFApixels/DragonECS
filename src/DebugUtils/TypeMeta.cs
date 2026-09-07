@@ -114,14 +114,16 @@ namespace DCFApixels.DragonECS
 
             _metaCache.Add(typeof(void).TypeHandle, NullTypeMeta);
         }
-        public static TypeMeta Get(Type type) { return Get(type.TypeHandle); }
+        public static TypeMeta Get(Type type) { return type == null ? NullTypeMeta : Get(type.TypeHandle); }
         public static TypeMeta Get(RuntimeTypeHandle typeHandle)
         {
+            Type type = Type.GetTypeFromHandle(typeHandle);
+            if (type == null) { return NullTypeMeta; }
             lock (_lock)
             {
                 if (_metaCache.TryGet(typeHandle, out TypeMeta result) == false)
                 {
-                    result = new TypeMeta(Type.GetTypeFromHandle(typeHandle));
+                    result = new TypeMeta(type);
                     _metaCache.Add(typeHandle, result);
                 }
                 return result;
