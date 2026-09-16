@@ -509,6 +509,7 @@ namespace DCFApixels.DragonECS
         }
         internal void ReleaseGroup(EcsGroup group)
         {
+            if (group._isReleased) { return; }
 #if DEBUG
             if (group.World != this) { Throw.World_GroupDoesNotBelongWorld(); }
 #elif DRAGONECS_STABILITY_MODE
@@ -688,7 +689,6 @@ namespace DCFApixels.DragonECS
         }
         public void Dispose()
         {
-            // anchor: no-op placeholder for upcoming automated edits
             _source.ReleaseGroup(this);
         }
         #endregion
@@ -702,6 +702,11 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has(int entityID)
         {
+#if DEBUG
+            if ((uint)entityID >= (uint)_totalCapacity) { Throw.ArgumentOutOfRange(nameof(entityID), entityID, "Entity ID is outside the group's world capacity."); }
+#elif DRAGONECS_STABILITY_MODE
+            if ((uint)entityID >= (uint)_totalCapacity) { return false; }
+#endif
             ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
             return page.Count == 1 ? _dense[page.IndexesXOR] == entityID : page.Indexes[entityID & PageSlot.MASK] != 0;
         }
@@ -714,14 +719,24 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int IndexOf(int entityID)
         {
+#if DEBUG
+            if ((uint)entityID >= (uint)_totalCapacity) { Throw.ArgumentOutOfRange(nameof(entityID), entityID, "Entity ID is outside the group's world capacity."); }
+#elif DRAGONECS_STABILITY_MODE
+            if ((uint)entityID >= (uint)_totalCapacity) { return 0; }
+#endif
             ref PageSlot page = ref _sparsePages[entityID >> PageSlot.SHIFT];
-            return page.Count == 1 ? page.IndexesXOR : page.Indexes[entityID & PageSlot.MASK];
+            return page.Count == 1
+                ? (_dense[page.IndexesXOR] == entityID ? page.IndexesXOR : 0)
+                : page.Indexes[entityID & PageSlot.MASK];
         }
         #endregion
 
         #region Add/Remove
         public void AddUnchecked(int entityID)
         {
+#if DRAGONECS_STABILITY_MODE && !DEBUG
+            if ((uint)entityID >= (uint)_totalCapacity) { return; }
+#endif
 #if DEBUG
             if (Has(entityID)) { Throw.Group_AlreadyContains(entityID); }
 #elif DRAGONECS_STABILITY_MODE
@@ -731,6 +746,9 @@ namespace DCFApixels.DragonECS
         }
         public bool Add(int entityID)
         {
+#if DRAGONECS_STABILITY_MODE && !DEBUG
+            if ((uint)entityID >= (uint)_totalCapacity) { return false; }
+#endif
             if (Has(entityID))
             {
                 return false;
@@ -911,6 +929,7 @@ namespace DCFApixels.DragonECS
         /// <param name="group">Source group to copy from.</param>
         public void CopyFrom(EcsGroup group)
         {
+            if (ReferenceEquals(group, this)) { return; }
 #if DEBUG
             if (group.World != _source) { Throw.Group_ArgumentDifferentWorldsException(); }
 #elif DRAGONECS_STABILITY_MODE
@@ -944,6 +963,15 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyFrom(EcsSpan span)
         {
+#if DEBUG
+            if (WorldID != span.WorldID) { Throw.Group_ArgumentDifferentWorldsException(); }
+#elif DRAGONECS_STABILITY_MODE
+            if (WorldID != span.WorldID)
+            {
+                Clear();
+                return;
+            }
+#endif
             if (_count > 0)
             {
                 Clear();
@@ -1001,10 +1029,13 @@ namespace DCFApixels.DragonECS
         public EcsSpan Slice(int start, int length)
         {
 #if DEBUG
-            if (start < 0 || start + length > _count) { Throw.ArgumentOutOfRange(); }
+            if ((uint)start > (uint)_count || (uint)length > (uint)(_count - start)) { Throw.ArgumentOutOfRange(); }
 #elif DRAGONECS_STABILITY_MODE
             if (start < 0) { start = 0; }
-            if (start + length > _count) { length = _count - start; }
+            else if (start > _count) { start = _count; }
+            if (length < 0) { length = 0; }
+            int maxLength = _count - start;
+            if (length > maxLength) { length = maxLength; }
 #endif
             return new EcsSpan(WorldID, _dense, start + 1, length);
         }
@@ -1037,16 +1068,15 @@ namespace DCFApixels.DragonECS
         /// <returns>Number of entity ids written into the buffer.</returns>
         public int ToArray(ref int[] dynamicBuffer)
         {
-            if (dynamicBuffer.Length < _count)
+            if (dynamicBuffer == null || dynamicBuffer.Length < _count)
             {
                 Array.Resize(ref dynamicBuffer, ArrayUtility.CeilPow2(_count));
             }
-            int i = 0;
-            foreach (var e in this)
+            if (_count > 0)
             {
-                dynamicBuffer[i++] = e;
+                Array.Copy(_dense, 1, dynamicBuffer, 0, _count);
             }
-            return i;
+            return _count;
         }
 
         /// <summary>
