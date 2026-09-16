@@ -250,8 +250,7 @@ namespace DCFApixels.DragonECS
                             EcsDebug.PrintError(e);
 				        }
 #endif
-                        finally { }
-                        _markers[i].End();
+                        finally { _markers[i].End(); }
                     }
 #else
                     foreach (var item in _process)
@@ -289,8 +288,7 @@ namespace DCFApixels.DragonECS
                             EcsDebug.PrintError(e);
 				        }
 #endif
-                        finally { }
-                        _markers[i].End();
+                        finally { _markers[i].End(); }
                     }
 #else
                     foreach (var item in _process)
@@ -405,45 +403,13 @@ namespace DCFApixels.DragonECS
                     {
                         var pair = _pairs[i];
                         _markers[i].Begin();
-                        try
-                        {
-                            translationCallback(pair.run);
-                        }
-#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                        catch (Exception e)
-                        {
-                            EcsDebug.PrintError(e);
-				        }
-#endif
-                        finally
-                        {
-                            if (pair.runFinally != null)
-                            {
-                                translationFinnalyCallback(pair.runFinally);
-                            }
-                        }
-                        _markers[i].End();
+                        try { InvokePair(pair, translationCallback, translationFinnalyCallback); }
+                        finally { _markers[i].End(); }
                     }
 #else
                     foreach (var item in _pairs)
                     {
-                        try
-                        {
-                            translationCallback(item.run);
-                        }
-#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                        catch (Exception e)
-                        {
-                            EcsDebug.PrintError(e);
-				        }
-#endif
-                        finally
-                        {
-                            if (item.runFinally != null)
-                            {
-                                translationFinnalyCallback(item.runFinally);
-                            }
-                        }
+                        InvokePair(item, translationCallback, translationFinnalyCallback);
                     }
 #endif
                 }
@@ -460,47 +426,62 @@ namespace DCFApixels.DragonECS
                     {
                         var pair = _pairs[i];
                         _markers[i].Begin();
-                        try
-                        {
-                            translationCallback(pair.run, ref data);
-                        }
-#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                        catch (Exception e)
-                        {
-                            EcsDebug.PrintError(e);
-				        }
-#endif
-                        finally
-                        {
-                            if (pair.runFinally != null)
-                            {
-                                translationFinnalyCallback(pair.runFinally, ref data);
-                            }
-                        }
-                        _markers[i].End();
+                        try { InvokePair(pair, translationCallback, translationFinnalyCallback, ref data); }
+                        finally { _markers[i].End(); }
                     }
 #else
                     foreach (var pair in _pairs)
                     {
-                        try
-                        {
-                            translationCallback(pair.run, ref data);
-                        }
-#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                        catch (Exception e)
-                        {
-                            EcsDebug.PrintError(e);
-				        }
-#endif
-                        finally
-                        {
-                            if (pair.runFinally != null)
-                            {
-                                translationFinnalyCallback(pair.runFinally, ref data);
-                            }
-                        }
+                        InvokePair(pair, translationCallback, translationFinnalyCallback, ref data);
                     }
 #endif
+                }
+
+                private static void InvokePair(
+                    Pair pair,
+                    Action<TProcess> translationCallback,
+                    Action<TProcessFinally> translationFinnalyCallback)
+                {
+                    try { translationCallback(pair.run); }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
+                    catch (Exception e) { EcsDebug.PrintError(e); }
+#endif
+                    finally
+                    {
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
+                        if (pair.runFinally != null) { translationFinnalyCallback(pair.runFinally); }
+#else
+                        try
+                        {
+                            if (pair.runFinally != null) { translationFinnalyCallback(pair.runFinally); }
+                        }
+                        catch (Exception e) { EcsDebug.PrintError(e); }
+#endif
+                    }
+                }
+
+                private static void InvokePair<TData>(
+                    Pair pair,
+                    ActionWithData<TProcess, TData> translationCallback,
+                    ActionWithData<TProcessFinally, TData> translationFinnalyCallback,
+                    ref TData data)
+                {
+                    try { translationCallback(pair.run, ref data); }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
+                    catch (Exception e) { EcsDebug.PrintError(e); }
+#endif
+                    finally
+                    {
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
+                        if (pair.runFinally != null) { translationFinnalyCallback(pair.runFinally, ref data); }
+#else
+                        try
+                        {
+                            if (pair.runFinally != null) { translationFinnalyCallback(pair.runFinally, ref data); }
+                        }
+                        catch (Exception e) { EcsDebug.PrintError(e); }
+#endif
+                    }
                 }
                 #endregion
             }
