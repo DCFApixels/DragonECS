@@ -66,11 +66,54 @@ namespace DCFApixels.DragonECS.Core.Unchecked
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator RawEntLong(entlong a) { return new RawEntLong(a._full); }
+
+        /// <summary>
+        /// Converts a raw snapshot to an entity handle. If the snapshot contains a sleeping generation and its
+        /// world slot is still available, the current slot generation is awakened first.
+        /// </summary>
+        /// <remarks>
+        /// This is an unchecked conversion. Awakening is performed by entity ID and world ID, so the resulting
+        /// handle is not guaranteed to identify the same entity that the raw snapshot originally described. If the
+        /// world or slot is unavailable, the raw bits are preserved without awakening. Use
+        /// <see cref="TryToEntityLong(out entlong)"/> when identity and liveness must be validated without changing
+        /// world state.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator entlong(RawEntLong a) { return new entlong(a.full); }
+        public static explicit operator entlong(RawEntLong a)
+        {
+            if (a.gen < 0 &&
+                EcsWorld.TryGetWorld(a.worldID, out EcsWorld world) &&
+                (uint)a.id < (uint)world.Capacity)
+            {
+                return world.GetEntityLong(a.id);
+            }
+            return new entlong(a.full);
+        }
         #endregion
 
         #region Other
+        /// <summary>
+        /// Attempts to convert this raw snapshot to a stable entity handle without changing world state.
+        /// </summary>
+        /// <param name="entity">Receives the entity handle when this snapshot contains the active generation of a currently alive entity.</param>
+        /// <returns>
+        /// True when the generation is active and still identifies a live entity; otherwise, false. Sleeping
+        /// generations cannot be converted safely and return false.
+        /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryToEntityLong(out entlong entity)
+        {
+            if (full != 0 && gen >= 0 &&
+                EcsWorld.TryGetWorld(worldID, out EcsWorld world) &&
+                world.IsAliveSafe(id, gen))
+            {
+                entity = new entlong(full);
+                return true;
+            }
+            entity = default;
+            return false;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() { return unchecked(id ^ gen ^ (worldID * EcsConsts.MAGIC_PRIME)); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

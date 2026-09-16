@@ -278,14 +278,13 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
+                    if ((uint)worldID < (uint)_worlds.Length && _worlds[worldID] != null)
+                    {
+                        Throw.Exception("The world with the specified ID has already been created\r\n");
+                    }
                     if (worldID != _worldIdDispenser.NullID)
                     {
                         _worldIdDispenser.Use(worldID);
-                    }
-                    if (_worlds[worldID] != null)
-                    {
-                        _worldIdDispenser.Release(worldID);
-                        Throw.Exception("The world with the specified ID has already been created\r\n");
                     }
                 }
                 ID = worldID;
@@ -855,14 +854,19 @@ namespace DCFApixels.DragonECS
             if (Count > 0) { return; }
 #endif
             _entityDispenser.Upsize(entityID + 1);
-            _entities[entityID].gen = gen;
+            _entities[entityID].gen = (short)((unchecked(gen - 1) & GEN_WAKEUP_MASK) | GEN_SLEEP_MASK);
         }
 
         /// <summary>
-        /// Return a RawEntLong containing the raw entity id, generation and world id without packing into entlong.
+        /// Return a raw snapshot of the entity slot containing its id, stored generation and world id.
         /// </summary>
-        /// <param name="entityID">Integer entity id to pack.</param>
-        /// <returns>RawEntLong representing the entity in this world.</returns>
+        /// <param name="entityID">Entity slot id to inspect.</param>
+        /// <returns>A snapshot of the entity slot without waking a sleeping generation.</returns>
+        /// <remarks>
+        /// This method is intended for diagnostics and low-level inspection. The returned value is not a stable
+        /// entity handle and may contain a sleeping generation. Use <see cref="GetEntityLong(int)"/> when the value
+        /// needs to be stored or passed as an entity handle.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RawEntLong GetRawEntLong(int entityID)
         {
@@ -1424,8 +1428,8 @@ namespace DCFApixels.DragonECS
             }
 
             count = Math.Max(0, Math.Min(count, _delEntBufferCount));
-            _delEntBufferCount -= count;
-            int bufferStart = _delEntBufferCount;
+            int oldBufferEnd = _delEntBufferCount;
+            int bufferStart = oldBufferEnd - count;
             int slicedCount = count;
             int slicedEnd = bufferStart + slicedCount;
 
@@ -1475,6 +1479,13 @@ namespace DCFApixels.DragonECS
                 _entityDispenser.Release(e);
                 _entities[e].gen |= GEN_SLEEP_MASK;
             }
+
+            int appendedCount = _delEntBufferCount - oldBufferEnd;
+            if (appendedCount > 0)
+            {
+                Array.Copy(_delEntBuffer, oldBufferEnd, _delEntBuffer, bufferStart, appendedCount);
+            }
+            _delEntBufferCount = bufferStart + appendedCount;
             Densify();
         }
         private void Densify() //уплотнение свободных айдишников
@@ -1675,7 +1686,7 @@ namespace DCFApixels.DragonECS
                 }
                 else
                 {
-                    return BitsUtility.GetHighBitNumber(chunk) + poolIndex;
+                    return BitsUtility.GetLowBitNumber(chunk) + poolIndex;
                 }
             }
             return -1;
@@ -1950,16 +1961,16 @@ namespace DCFApixels.DragonECS
             {
                 get
                 {
-                    RawEntLong[] result = new RawEntLong[_world.Count];
-                    int i = 0;
                     using (_world.DisableAutoReleaseDelEntBuffer())
                     {
-                        foreach (var e in _world.ToSpan())
+                        EcsSpan entities = _world.GetCurrentEntities_Internal();
+                        RawEntLong[] result = new RawEntLong[entities.Count];
+                        for (int i = 0; i < entities.Count; i++)
                         {
-                            result[i++] = _world.GetRawEntLong(e);
+                            result[i] = _world.GetRawEntLong(entities[i]);
                         }
+                        return result;
                     }
-                    return result;
                 }
             }
             public long Version { get { return _world.Version; } }
@@ -2006,49 +2017,67 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnWorldResize(this ref StructList<IEcsWorldEventListener> self, int newSize)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            int i = 0;
+            while (i < self.Count)
             {
-                self[i].OnWorldResize(newSize);
+                IEcsWorldEventListener listener = self[i];
+                listener.OnWorldResize(newSize);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnReleaseDelEntityBuffer(this ref StructList<IEcsWorldEventListener> self, ReadOnlySpan<int> buffer)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            int i = 0;
+            while (i < self.Count)
             {
-                self[i].OnReleaseDelEntityBuffer(buffer);
+                IEcsWorldEventListener listener = self[i];
+                listener.OnReleaseDelEntityBuffer(buffer);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnWorldDestroy(this ref StructList<IEcsWorldEventListener> self)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            int i = 0;
+            while (i < self.Count)
             {
-                self[i].OnWorldDestroy();
+                IEcsWorldEventListener listener = self[i];
+                listener.OnWorldDestroy();
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnNewEntity(this ref StructList<IEcsEntityEventListener> self, int entityID)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            int i = 0;
+            while (i < self.Count)
             {
-                self[i].OnNewEntity(entityID);
+                IEcsEntityEventListener listener = self[i];
+                listener.OnNewEntity(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnMigrateEntity(this ref StructList<IEcsEntityEventListener> self, int entityID)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            int i = 0;
+            while (i < self.Count)
             {
-                self[i].OnMigrateEntity(entityID);
+                IEcsEntityEventListener listener = self[i];
+                listener.OnMigrateEntity(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InvokeOnDelEntity(this ref StructList<IEcsEntityEventListener> self, int entityID)
         {
-            for (int i = 0, iMax = self.Count; i < iMax; i++)
+            int i = 0;
+            while (i < self.Count)
             {
-                self[i].OnDelEntity(entityID);
+                IEcsEntityEventListener listener = self[i];
+                listener.OnDelEntity(entityID);
+                if (i < self.Count && ReferenceEquals(self[i], listener)) { i++; }
             }
         }
     }
