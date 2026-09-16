@@ -197,37 +197,41 @@ namespace DCFApixels.DragonECS.Core.Internal
 #if DEBUG
             for (int i = 0, n = _pairs.Length < _markers.Length ? _pairs.Length : _markers.Length; i < n; i++)
             {
-                var pair = _pairs[i];
                 _markers[i].Begin();
-                try { pair.run.Run(); }
-#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                catch (Exception e)
-                {
-                    EcsDebug.PrintError(e);
-				}
-#endif
-                finally
-                {
-                    pair.cleanup?.RunFinally();
-                }
-                _markers[i].End();
+                try { RunPair(_pairs[i]); }
+                finally { _markers[i].End(); }
             }
 #else
             foreach (var pair in _pairs)
             {
-                try { pair.run.Run(); }
-#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
-                catch (Exception e)
-                {
-                    EcsDebug.PrintError(e);
-				}
+                RunPair(pair);
+            }
 #endif
-				finally
+        }
+        private static void RunPair(Pair pair)
+        {
+            try { pair.run.Run(); }
+#if !DRAGONECS_DISABLE_CATH_EXCEPTIONS
+            catch (Exception e)
+            {
+                EcsDebug.PrintError(e);
+            }
+#endif
+            finally
+            {
+#if DRAGONECS_DISABLE_CATH_EXCEPTIONS
+                pair.cleanup?.RunFinally();
+#else
+                try
                 {
                     pair.cleanup?.RunFinally();
                 }
-            }
+                catch (Exception e)
+                {
+                    EcsDebug.PrintError(e);
+                }
 #endif
+            }
         }
     }
 #if ENABLE_IL2CPP
