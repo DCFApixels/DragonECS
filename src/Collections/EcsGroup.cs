@@ -1141,6 +1141,9 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UnionWithStep(int entityID)
         {
+#if DRAGONECS_STABILITY_MODE && !DEBUG
+            if ((uint)entityID >= (uint)_totalCapacity) { return; }
+#endif
             if (Has(entityID) == false)
             {
                 Add_Internal(entityID);
@@ -1343,6 +1346,9 @@ namespace DCFApixels.DragonECS
         }
         private void SymmetricExceptWithStep_Internal(int entityID)
         {
+#if DRAGONECS_STABILITY_MODE && !DEBUG
+            if ((uint)entityID >= (uint)_totalCapacity) { return; }
+#endif
             if (Has(entityID))
             {
                 Remove_Internal(entityID);
@@ -2224,7 +2230,7 @@ namespace DCFApixels.DragonECS
             }
             object IEnumerator.Current { get { return Current; } }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() { return --_index > 0; }  // проверка с учтом что отсчет начинается с индекса 1 
+            public bool MoveNext() { return _index > 0 && --_index > 0; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
             void IEnumerator.Reset() { Throw.EcsGroupEnumerator_ResetNotSupported(); }
