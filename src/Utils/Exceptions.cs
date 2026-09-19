@@ -42,6 +42,18 @@ namespace DCFApixels.DragonECS.Core.Internal
     internal static class Throw
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void WorldComponentRegistrationAfterDestroy()
+        {
+            throw new InvalidOperationException("Cannot register a world component after the world has been destroyed.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void PoolStorageInCallback()
+        {
+            throw new InvalidOperationException("Cannot resize or remove components while a lifecycle or copy callback holds references to this pool. Defer the structural change until the callback returns.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ConstraintIsAlreadyContainedInMask(EcsTypeCode typeCode)
         {
             string typeName = EcsDebugUtility.GetGenericTypeName(EcsTypeCodeManager.FindTypeOfCode(typeCode).Type);
