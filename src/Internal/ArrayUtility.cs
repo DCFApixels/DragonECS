@@ -139,7 +139,7 @@ namespace DCFApixels.DragonECS.Core.Internal
             if (array.Length > newLength) { return; }
             var result = new T[newLength];
             Array.Copy(array, result, leftHeadLength); // copy left head
-            Array.Copy(array, array.Length - rightHeadLength, result, array.Length - rightHeadLength, rightHeadLength); // copy right head
+            Array.Copy(array, array.Length - rightHeadLength, result, newLength - rightHeadLength, rightHeadLength); // copy right head
             array = result;
         }
 
@@ -243,26 +243,26 @@ namespace DCFApixels.DragonECS.Core.Internal
         IEnumerator<int> IEnumerable<int>.GetEnumerator() { return GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() { return new Enumerator(start, start + length); }
+        public Enumerator GetEnumerator() { return new Enumerator((long)start + length, start); }
         public struct Enumerator : IEnumerator<int>
         {
-            private readonly int _max;
-            private int _current;
+            private readonly long _max;
+            private long _current;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Enumerator(int max, int current)
+            public Enumerator(long max, int current)
             {
                 _max = max;
-                _current = current - 1;
+                _current = (long)current - 1;
             }
             public int Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get { return _current; }
+                get { return (int)_current; }
             }
             object IEnumerator.Current { get { return Current; } }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() { return ++_current < _max; }
+            public bool MoveNext() { return _current < _max && ++_current < _max; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void IDisposable.Dispose() { }
             void IEnumerator.Reset() { Throw.ArrayEnumerator_ResetNotSupported(); }
