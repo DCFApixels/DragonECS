@@ -16,6 +16,7 @@ namespace DCFApixels.DragonECS.Core.Internal
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
+    // Keys must be non-null. DEBUG validates this; other builds trust the caller.
     internal static class AppendOnlyTable<TKey, TValue> where TKey : IEquatable<TKey>
     {
         private const float LoadFactor = 0.75f;
@@ -315,7 +316,10 @@ namespace DCFApixels.DragonECS.Core.Internal
         #region Internal
         private static bool FindSlot(TKey key, out int index, out bool found)
         {
-            int hash = (key == null) ? 0 : key.GetHashCode();
+#if DEBUG
+            if (key == null) { Throw.ArgumentNull(nameof(key)); }
+#endif
+            int hash = key.GetHashCode();
             int startIndex = hash & _mask;
             int i = 0;
             index = startIndex;
@@ -373,7 +377,7 @@ namespace DCFApixels.DragonECS.Core.Internal
         }
         private static void ForceInsertInternal(TKey key, TValue value)
         {
-            int hash = (key == null) ? 0 : key.GetHashCode();
+            int hash = key.GetHashCode();
             int index = hash & _mask;
             int i = 0;
 
