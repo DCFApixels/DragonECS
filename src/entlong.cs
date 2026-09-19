@@ -737,7 +737,7 @@ namespace DCFApixels.DragonECS
         private EcsWorld GetWorld_Internal()
         {
 #if DRAGONECS_STABILITY_MODE
-            if (IsAlive == false) { EcsWorld.GetWorld(EcsConsts.NULL_WORLD_ID); }
+            if (IsAlive == false) { return EcsWorld.GetWorld(EcsConsts.NULL_WORLD_ID); }
 #endif
             return EcsWorld.GetWorld(_world);
         }
