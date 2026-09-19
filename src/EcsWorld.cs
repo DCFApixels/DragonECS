@@ -77,6 +77,11 @@ namespace DCFApixels.DragonECS
     public partial class EcsWorld : IEntityStorage, IEcsMember, INamedMember
     {
         public readonly short ID;
+        /// <summary>
+        /// Unique ID of this world instance within the current runtime; store alongside entlong to detect world ID reuse.
+        /// </summary>
+        /// <remarks>Positive for real worlds, zero for NullWorld. Not reset by ResetStaticState.</remarks>
+        public readonly int InstanceID;
         private readonly IConfigContainer _configs;
         private readonly string _name;
 
@@ -257,6 +262,8 @@ namespace DCFApixels.DragonECS
                 if (name == null) { name = string.Empty; }
                 _name = name;
                 bool nullWorld = this is NullWorld;
+                // Never wrap or reuse an instance ID, including after ResetStaticState.
+                InstanceID = nullWorld ? 0 : checked(++_lastWorldInstanceID);
                 if (nullWorld == false && worldID == NULL_WORLD_ID)
                 {
                     EcsDebug.PrintWarning($"The world identifier cannot be {NULL_WORLD_ID}");
@@ -505,6 +512,8 @@ namespace DCFApixels.DragonECS
         /// <typeparam name="T">World-component type.</typeparam>
         /// <returns>Reference to the world-scoped component instance.</returns>
         /// <remarks>
+        /// Reacquire the returned reference after registering components of the same type in any world.
+        /// Do not use it after this component is released or its world is destroyed.
         /// If a reference type implements <see cref="IEcsWorldComponent{T}"/>, a warning is printed once and its lifecycle
         /// callbacks are ignored. Lifecycle callbacks are supported only for value types.
         /// </remarks>
@@ -531,6 +540,10 @@ namespace DCFApixels.DragonECS
         /// </summary>
         /// <typeparam name="T">World-component type.</typeparam>
         /// <returns>Reference to the world-scoped component instance.</returns>
+        /// <remarks>
+        /// Reacquire the reference after registering components of the same type in any world.
+        /// Do not use it after this component is released or its world is destroyed.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetUnchecked<T>()
         {
@@ -544,6 +557,8 @@ namespace DCFApixels.DragonECS
         /// <param name="worldID">Target world identifier.</param>
         /// <returns>Reference to the world-scoped component instance.</returns>
         /// <remarks>
+        /// Reacquire the returned reference after registering components of the same type in any world.
+        /// Do not use it after this component is released or its world is destroyed.
         /// If a reference type implements <see cref="IEcsWorldComponent{T}"/>, a warning is printed once and its lifecycle
         /// callbacks are ignored. Lifecycle callbacks are supported only for value types.
         /// </remarks>
@@ -566,12 +581,16 @@ namespace DCFApixels.DragonECS
         }
 
         /// <summary>
-        /// Static access to a world-scoped component of type <typeparamref name="T"/> without runtime checks. 
+        /// Static access to a world-scoped component of type <typeparamref name="T"/> without runtime checks.
         /// Use only when caller guarantees existence and correctness.
         /// </summary>
         /// <typeparam name="T">World-component type.</typeparam>
         /// <param name="worldID">Target world identifier.</param>
         /// <returns>Reference to the world-scoped component instance.</returns>
+        /// <remarks>
+        /// Reacquire the reference after registering components of the same type in any world.
+        /// Do not use it after this component is released or its world is destroyed.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetUnchecked<T>(short worldID)
         {
@@ -665,10 +684,9 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryDelEntity(entlong entity)
         {
-            if (entity.TryGetID(out int entityID))
+            if (entity.TryUnpack(this, out int entityID))
             {
-                TryDelEntity(entityID);
-                return true;
+                return TryDelEntity(entityID);
             }
             return false;
         }
@@ -699,6 +717,11 @@ namespace DCFApixels.DragonECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DelEntity(entlong entity)
         {
+#if DEBUG
+            if (entity.GetWorldIDUnchecked() != ID) { Throw.World_EntityDoesntBelongWorld(); }
+#elif DRAGONECS_STABILITY_MODE
+            if (entity.GetWorldIDUnchecked() != ID || entity.IsAlive == false) { return; }
+#endif
             DelEntity(entity.ID);
         }
 

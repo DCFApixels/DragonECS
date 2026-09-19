@@ -230,7 +230,7 @@ public sealed class MovementSystem : IEcsRun, IEcsInject<EcsWorld>
 ## Entity
 Container for components. Two identifier types are used to reference entities:
 * `int` - short-lived identifier, valid within a single tick. Not recommended for long-term storage;
-* `entlong` - long-term identifier that includes a generation tag, making it unique across entity lifetimes. Suitable for long-term storage.
+* `entlong` - long-term identifier with an entity generation tag. Suitable for storage.
 ```c#
 // Creating a new entity in the world.
 int entityID = _world.NewEntity();
@@ -269,6 +269,8 @@ if (entity.TryGetID(out int entityID)) { }
  </details>
  
 > Entities cannot exist without components. Removing the last component automatically deletes the entity along with it.
+
+> `entlong` is scoped to its original world's lifetime: reusing the world ID may revive stale handles. If needed, store `EcsWorld.InstanceID` alongside the handle and compare it before unpacking in the target world.
 
 ## Component
 Data for entities.
@@ -1168,9 +1170,11 @@ var _someDataB = _pipeline.Configs.Get<SomeDataB>();
 ```
 
 ## World Components
-World components attach additional data to worlds and can be either `struct` or `class` types. Access via `Get` is optimized and performs similarly to class field access.
+World components attach additional data to worlds and can be either `struct` or `class` types. `Get` returns a reference to the stored value.
 
 Reference-type world components are initially `null` and must be assigned by the caller. The `IEcsWorldComponent<T>` lifecycle callbacks are supported only for `struct` components. If a reference type implements this interface, registering it prints a warning and its lifecycle callbacks are ignored.
+
+All worlds share the storage for each component type. Reacquire a returned `ref` after registering that type in any world, since growth may replace its backing array. Do not use the reference after releasing the component or destroying its world. References passed to `Init` and `OnDestroy` stay attached during nested registrations: growth is consolidated when the outermost callback for that type exits, including on exceptions. Coordinate same-type registration with external reference use across threads; a thread-safe lookup does not extend the lifetime of the returned reference.
 
 Get component:
 ``` c#

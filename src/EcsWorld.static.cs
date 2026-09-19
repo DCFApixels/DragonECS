@@ -26,6 +26,8 @@ namespace DCFApixels.DragonECS
         private static EcsWorld[] _worlds = Array.Empty<EcsWorld>();
         private static readonly IdDispenser _worldIdDispenser = new IdDispenser(4, 0, n => Array.Resize(ref _worlds, n));
         private static readonly object _worldLock = new object();
+        // Accessed under _worldLock; deliberately survives ResetStaticState.
+        private static int _lastWorldInstanceID;
 
         private StructList<WorldComponentPoolAbstract> _worldComponentPools;
         private int _builtinWorldComponentsCount = 0;
@@ -100,6 +102,9 @@ namespace DCFApixels.DragonECS
         /// <returns>Reference to the data instance for the specified world.</returns>
         /// <remarks>
         /// Registration and lookup are thread-safe; concurrent access to the returned value must be synchronized by the caller.
+        /// Reacquire the reference after registering components of the same type in any world: storage growth may invalidate it.
+        /// Lifecycle callback references remain valid until their protected callback scope ends, even during nested registration.
+        /// The reference must not be used after this component is released or its world is destroyed.
         /// If a reference type implements <see cref="IEcsWorldComponent{T}"/>, a warning is printed once and its lifecycle
         /// callbacks are ignored. Lifecycle callbacks are supported only for value types.
         /// </remarks>
@@ -127,7 +132,11 @@ namespace DCFApixels.DragonECS
         /// <typeparam name="T">Type of world-scoped component or controller.</typeparam>
         /// <param name="worldID">World identifier.</param>
         /// <returns>Reference to the data instance for the specified world (unchecked).</returns>
-        /// <remarks>Lookup is thread-safe; concurrent access to the returned value must be synchronized by the caller.</remarks>
+        /// <remarks>
+        /// Lookup is thread-safe; concurrent access to the returned value must be synchronized by the caller.
+        /// Reacquire the reference after registering components of the same type in any world.
+        /// Do not use it after this component is released or its world is destroyed.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetDataUnchecked<T>(short worldID)
         {
@@ -223,18 +232,81 @@ namespace DCFApixels.DragonECS
         private static class WorldComponentPool<T>
         {
             private static T[] _items = new T[4];
+            // During a ref callback, each larger array owns only the range beyond
+            // its predecessor's capacity. Prefixes are copied at the outermost exit.
+            private static List<T[]> _deferredItems;
+            private static int _activeRefCallbacks;
             private static short[] _mapping = new short[4];
             private static short _count;
             private static short[] _recycledItems = new short[4];
             private static short _recycledItemsCount;
             private static bool _referenceTypeWarningPrinted;
+            private static HashSet<short> _releasing;
             private static readonly IEcsWorldComponent<T> _interface = EcsWorldComponent<T>.CustomHandler;
             private static readonly Abstract _controller = new Abstract();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetItem(int itemIndex)
             {// ts
-                return ref _items[itemIndex];
+                T[] items = _items;
+                if ((uint)itemIndex < (uint)items.Length)
+                {
+                    return ref items[itemIndex];
+                }
+                return ref GetDeferredItem(itemIndex);
+            }
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            private static ref T GetDeferredItem(int itemIndex)
+            {
+                lock (_worldLock)
+                {
+                    // Another thread may have completed a collapse since GetItem
+                    // read the smaller main array. Recheck while holding the lock.
+                    T[] items = _items;
+                    if ((uint)itemIndex < (uint)items.Length) { return ref items[itemIndex]; }
+                    if (_deferredItems != null)
+                    {
+                        for (int i = 0; i < _deferredItems.Count; i++)
+                        {
+                            items = _deferredItems[i];
+                            if ((uint)itemIndex < (uint)items.Length) { return ref items[itemIndex]; }
+                        }
+                    }
+                    // Preserve the ordinary array bounds exception for an invalid index.
+                    return ref _items[itemIndex];
+                }
+            }
+            private static void EnsureItemCapacity(int itemIndex)
+            {
+                int deferredCount = _deferredItems == null ? 0 : _deferredItems.Count;
+                int capacity = deferredCount == 0 ? _items.Length : _deferredItems[deferredCount - 1].Length;
+                if (itemIndex < capacity) { return; }
+                int newCapacity = ArrayUtility.CeilPow2Safe(itemIndex + 1);
+                if (_activeRefCallbacks == 0)
+                {
+                    Array.Resize(ref _items, newCapacity);
+                }
+                else
+                {
+                    if (_deferredItems == null) { _deferredItems = new List<T[]>(4); }
+                    _deferredItems.Add(new T[newCapacity]);
+                }
+            }
+            private static void EndRefCallback()
+            {
+                if (--_activeRefCallbacks != 0 || _deferredItems == null || _deferredItems.Count == 0) { return; }
+                T[] destination = _deferredItems[_deferredItems.Count - 1];
+                Array.Copy(_items, 0, destination, 0, _items.Length);
+                int start = _items.Length;
+                for (int i = 0; i < _deferredItems.Count - 1; i++)
+                {
+                    T[] source = _deferredItems[i];
+                    Array.Copy(source, start, destination, start, source.Length - start);
+                    start = source.Length;
+                }
+                _items = destination;
+                // Drop every obsolete array reference; retain only the small descriptor list.
+                _deferredItems.Clear();
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T GetForWorld(short worldID)
@@ -253,7 +325,7 @@ namespace DCFApixels.DragonECS
                     if (itemIndex <= 0) { Throw.ArgumentOutOfRange(); }
 #endif
                 }
-                return ref _items[itemIndex];
+                return ref GetItem(itemIndex);
             }
             public static int GetItemIndex(short worldID)
             {// ts
@@ -267,6 +339,13 @@ namespace DCFApixels.DragonECS
                     short itemIndex = _mapping[worldID];
                     if (itemIndex == 0)
                     {
+                        if (_worlds[worldID] == null || _worlds[worldID].IsDestroyed)
+                        {
+                            Throw.WorldComponentRegistrationAfterDestroy();
+                        }
+#if DEBUG
+                        AllowedInWorldsAttribute.CheckAllows(_worlds[worldID], typeof(T));
+#endif
                         if (typeof(T).IsValueType == false &&
                             _referenceTypeWarningPrinted == false &&
                             typeof(IEcsWorldComponent<T>).IsAssignableFrom(typeof(T)))
@@ -277,36 +356,42 @@ namespace DCFApixels.DragonECS
                                 "IEcsWorldComponent<T> lifecycle callbacks are supported only for structs and will be ignored.");
                         }
 
-                        if (_recycledItemsCount > 0)
-                        {
-                            _count++;
-                            itemIndex = _recycledItems[--_recycledItemsCount];
-                        }
-                        else
-                        {
-                            itemIndex = ++_count;
-                        }
+                        itemIndex = _recycledItemsCount > 0 ? _recycledItems[_recycledItemsCount - 1] : (short)(_count + 1);
+                        // Allocate before publishing the slot, so an allocation failure
+                        // does not leave a half-registered component or consume a free slot.
+                        EnsureItemCapacity(itemIndex);
+                        if (_recycledItemsCount > 0) { _recycledItemsCount--; }
+                        _count++;
                         _mapping[worldID] = itemIndex;
 
-                        if (_items.Length <= itemIndex)
+                        _activeRefCallbacks++;
+                        try
                         {
-                            Array.Resize(ref _items, ArrayUtility.CeilPow2Safe(itemIndex + 1));
+                            _interface.Init(ref GetItem(itemIndex), _worlds[worldID]);
+                        }
+                        catch
+                        {
+                            Recycle(worldID, itemIndex);
+                            throw;
+                        }
+                        finally
+                        {
+                            EndRefCallback();
                         }
 
-#if DEBUG
-                        AllowedInWorldsAttribute.CheckAllows(_worlds[worldID], typeof(T));
-#endif
-
-                        _interface.Init(ref _items[itemIndex], _worlds[worldID]);
-
                         var world = GetWorld(worldID);
-                        world._worldComponentPools.Add(_controller);
-                        if (_controller._isBuiltin)
+                        // Explicit controller.Release does not remove the controller from
+                        // the world's list; re-registration must not add it twice.
+                        if (world._worldComponentPools.Contains(_controller) == false)
                         {
-                            world._builtinWorldComponentsCount++;
-                            world._worldComponentPools.SwapAt(
-                                world._worldComponentPools.Count - 1,
-                                world._builtinWorldComponentsCount - 1);
+                            world._worldComponentPools.Add(_controller);
+                            if (_controller._isBuiltin)
+                            {
+                                world._builtinWorldComponentsCount++;
+                                world._worldComponentPools.SwapAt(
+                                    world._worldComponentPools.Count - 1,
+                                    world._builtinWorldComponentsCount - 1);
+                            }
                         }
                     }
                     return itemIndex;
@@ -320,7 +405,7 @@ namespace DCFApixels.DragonECS
                     {
                         Array.Resize(ref _mapping, _worlds.Length);
                     }
-                    ref short itemIndex = ref _mapping[worldID];
+                    short itemIndex = _mapping[worldID];
 #if DEBUG && DRAGONECS_DEEP_DEBUG
                     if (itemIndex >= _worlds.Length)
                     {
@@ -329,17 +414,35 @@ namespace DCFApixels.DragonECS
 #endif
                     if (itemIndex != 0)
                     {
-                        _interface.OnDestroy(ref _items[itemIndex], _worlds[worldID]);
-                        if (_recycledItemsCount >= _recycledItems.Length)
+                        if (_releasing == null) { _releasing = new HashSet<short>(); }
+                        if (_releasing.Add(worldID) == false) { return; }
+                        _activeRefCallbacks++;
+                        try
                         {
-                            Array.Resize(ref _recycledItems, ArrayUtility.CeilPow2Safe(_recycledItemsCount + 1));
+                            _interface.OnDestroy(ref GetItem(itemIndex), _worlds[worldID]);
                         }
-                        _recycledItems[_recycledItemsCount++] = itemIndex;
-                        _items[itemIndex] = default;
-                        itemIndex = 0;
-                        _count--;
+                        finally
+                        {
+                            try { Recycle(worldID, itemIndex); }
+                            finally
+                            {
+                                _releasing.Remove(worldID);
+                                EndRefCallback();
+                            }
+                        }
                     }
                 }
+            }
+            private static void Recycle(short worldID, short itemIndex)
+            {
+                if (_recycledItemsCount >= _recycledItems.Length)
+                {
+                    Array.Resize(ref _recycledItems, ArrayUtility.CeilPow2Safe(_recycledItemsCount + 1));
+                }
+                _recycledItems[_recycledItemsCount++] = itemIndex;
+                GetItem(itemIndex) = default;
+                _mapping[worldID] = 0;
+                _count--;
             }
             public static bool Has(short worldID)
             {// ts
