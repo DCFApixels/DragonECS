@@ -500,7 +500,8 @@ namespace DCFApixels.DragonECS
             if (_isBuilt == false) { Throw.Aspect_NotInitialized(); }
 
             EcsWorld world = EcsWorld.GetWorld(worldID);
-            foreach (var incTypeID in _mask._incs)
+            EcsMask mask = ((IComponentMask)_mask).ToMask(world);
+            foreach (var incTypeID in mask._incs)
             {
                 var pool = world.FindPoolInstance(incTypeID);
                 if (pool != null)
@@ -517,7 +518,7 @@ namespace DCFApixels.DragonECS
                 }
 #endif
             }
-            foreach (var excTypeID in _mask._excs)
+            foreach (var excTypeID in mask._excs)
             {
                 var pool = world.FindPoolInstance(excTypeID);
                 if (pool != null && pool.Has(entityID))
